@@ -48,9 +48,12 @@ hostname -s, hostname --domain and hostname --fqdn.
 - The installation user must have root (or sudo) privileges.
 
 
-0) We recommend creating a separate installation user account (Ex:
+0) We HIGHLY recommend creating a separate installation user account (Ex:
    esg-user) and give that user the ability to use sudo (i.e. create
-   an appropriate entry in /etc/sudoers).
+   an appropriate entry in /etc/sudoers). If not there maybe
+   undesirable results.  Ex: All of root's cronjobs getting nuked.  In
+   general it is a good idea to use the operating system mechanisms to
+   help sequester an installation such as this.
 
 
 1) LOGIN as the installation user
@@ -101,6 +104,7 @@ hostname -s, hostname --domain and hostname --fqdn.
         [y/N] means "N" is the default, you may just hit return
         Default values appear in "[]" brackets, hitting return uses them.
 
+   % esg-node --set-type data
    % esg-node --install --verify
 
    With the --verify flag verification tests are run throughout the

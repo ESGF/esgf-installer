@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #####
-# esg-node: ESG Data Node Application Stack
+# esg-node: ESGF Node Application Stack
 # chkconfig: 345 98 02
-# description: Installer for the ESG Data Node application stack
+# description: Installer for the ESGF Node application stack
 #
 #****************************************************************************
 #*                                                                          *
@@ -13,7 +13,7 @@
 #*      Division: S&T Global Security                                       *
 #*        Matrix: Atmospheric, Earth and Energy Division                    *
 #*       Program: PCMDI                                                     *
-#*       Project: Earth Systems Grid (ESG) Data Node Software Stack         *
+#*       Project: Earth Systems Grid Fed (ESGF) Node Software Stack         *
 #*  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
 #*                                                                          *
 #****************************************************************************
@@ -24,7 +24,7 @@
 #*   LLNL-CODE-420962                                                       *
 #*                                                                          *
 #*   All rights reserved. This file is part of the:                         *
-#*   Earth System Grid (ESG) Data Node Software Stack, Version 1.0          *
+#*   Earth System Grid Fed (ESGF) Node Software Stack, Version 1.0          *
 #*                                                                          *
 #*   For details, see http://esgf.org/                                      *
 #*   Please also read this link                                             *
@@ -1490,7 +1490,7 @@ configure_tomcat() {
 
     echo
     echo "*******************************"
-    echo "Configuring Tomcat... (for Data Node Manager)"
+    echo "Configuring Tomcat... (for Node Manager)"
     echo "*******************************"
     echo
 
@@ -1730,7 +1730,7 @@ test_tomcat() {
 }
 
 #####
-# Install The Data Node Manager
+# Install The Node Manager
 #####
 # - Takes boolean arg: 0 = setup / install mode (default)
 #                      1 = updated mode
@@ -1918,7 +1918,7 @@ configure_postgress() {
     
     echo
     echo "*******************************"
-    echo "Configuring Postgres... (for Data Node Manager)"
+    echo "Configuring Postgres... (for Node Manager)"
     echo "*******************************"
     echo
 
@@ -2410,7 +2410,7 @@ start_globus() {
         pushd ${workdir} >& /dev/null
         source ${scripts_dir}/esg-globus && start_globus_services "${directive}" $@
         data_node_ret=$?
-        [ ${data_node_ret} != 0 ] && echo "Could Not Start Globus Data Node related services (GridFTP)"
+        [ ${data_node_ret} != 0 ] && echo "Could Not Start Globus ESGF Node related services (GridFTP)"
         popd >& /dev/null
     fi
 
@@ -4206,7 +4206,7 @@ info() {
 
      This is required for publication.
 
-     Data Node:
+     ESGF Node:
                ---------
                |Tomcat   |
                |-Node Mgr|
@@ -4241,7 +4241,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         --workdir     - specify the directory used by the installation to download and build esg artifacts for installation
                         (default:~/workbench/esg - currently:$workdir)
         --install     - goes through the installation process
-                         will automatically start up data node services
+                         will automatically start up node services
         --verify      - runs the test code to verify installation
         --write-env   - writes the necessary env vars to file ${envfile}
         --version     - indicates the version of this script
@@ -4349,7 +4349,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
 done_remark() {
     echo ""
     echo "Finished!..."
-    echo "In order to see if this data node has been installed properly you may direct your browser to:"
+    echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${my_ip_address}/${node_app_context_root}"
     echo "http://${my_ip_address}/thredds"
     echo "http://${my_ip_address}/OpenidRelyingParty"

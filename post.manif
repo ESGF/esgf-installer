@@ -8,10 +8,10 @@
 
 [esgf-installer]
 
-../HOWTO
-../INSTALL
-../TODO
-../LICENSE
+./HOWTO
+./INSTALL
+./TODO
+./LICENSE
 
 ./esg-node
 ./esg-update

@@ -35,7 +35,7 @@ get_latest() {
     local ret
     echo "Checking...."
     if [ "$type" = "node" ]; then
-	checked_get ${esg_dist_url}/esg-node/${fetch_file} 
+	checked_get ${esg_dist_url}/esgf-installer/${fetch_file} 
         ret=$?
         ((ret == 1)) && echo "${type} install script already up-to-date"
         ((ret == 0)) && echo "Updated ${type} install script from PCMDI's ESG distribution site at LLNL"
@@ -105,8 +105,8 @@ checked_get() {
 }
 
 self_verify() {
-    #echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${esg_dist_url}/esg-node/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
-    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s ${esg_dist_url}/esg-node/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    #echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${esg_dist_url}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
+    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s ${esg_dist_url}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && echo " WARNING: Could not verify myself!" && return 3
     echo "[VERIFIED]"
     return 0

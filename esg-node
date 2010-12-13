@@ -26,9 +26,9 @@
 #*   All rights reserved. This file is part of the:                         *
 #*   Earth System Grid (ESG) Data Node Software Stack, Version 1.0          *
 #*                                                                          *
-#*   For details, see http://esg-repo.llnl.gov/esg-node/                    *
+#*   For details, see http://esgf.org/                                      *
 #*   Please also read this link                                             *
-#*    http://esg-repo.llnl.gov/LICENSE                                      *
+#*    http://esgf.org/LICENSE                                               *
 #*                                                                          *
 #*   * Redistribution and use in source and binary forms, with or           *
 #*   without modification, are permitted provided that the following        *
@@ -4003,8 +4003,8 @@ dedup() {
 
 #"private" function
 _verify() {
-    echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/esg-node/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
-    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/esg-node/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
+    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && return 3
     echo "[VERIFIED]"
     return 0

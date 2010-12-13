@@ -1,0 +1,149 @@
+
+Hello, 
+
+The following describes how to get started with installing the ESG
+Data Node.  The installation scripts may be in flux, as we
+continuously improve the process. Please provide us with your input
+regarding your installation experience.
+
+
+The update script can be fetched from our website at:
+http://rainbow.llnl.gov/dist/esgf-installer/esg-update
+
+Follow the instructions below describing how to run the update script.
+       
+The update and install scripts is written in bash and is intended to
+be run on CentOS/RedHat Linux distributions as *root* or a root
+effective user via "sudo -s" (IMPORTANT: Do not run scripts directly
+with sudo.  Straight sudo filters out needed environment variables!).  
+
+I suggest taking all the defaults presented and reading and following
+the script's suggestions.
+
+To help manage your expectations of the installation process, the
+following should give you a ballpark idea:
+
+The entire process takes approximately, a bit under, an hour.  There
+are about a 20 prompts for user input - almost all of which have
+resonable defaults (you can just hit enter - recommended).  The lion's
+share of the time is spent building the various tools and executibles
+(heads up: globus and python take a relatively long time to build :-\).
+We have worked hard to make the installation of the Data Node rather
+painless.
+
+Thank you for your participation!
+
+
+*************
+Instructions:
+*************
+- Before you do any installation REGISTER (get an account) at the
+gateway you intend to connect to:
+        (ESG-PCMDI) http://pcmdi3.llnl.gov/esgcet/
+- Be sure the machine you are installing on is a CentOS/Redhat linux
+family distribution.
+- Be sure the machine has a fully qualified hostname and responds to
+hostname -s, hostname --domain and hostname --fqdn.
+- The machine must have all development headers installed.
+- The installation user must have root (or sudo) privileges.
+
+
+0) We recommend creating a separate installation user account (Ex:
+   esg-user) and give that user the ability to use sudo (i.e. create
+   an appropriate entry in /etc/sudoers).
+
+
+1) LOGIN as the installation user
+
+
+2) From the installation user become root or root equiv....
+   
+   % sudo -s  
+   
+   (do not run the script directly from sudo because sudo filters env vars)
+
+
+3) Download the "update" script to /usr/local/bin on the target machine
+   % cd /usr/local/bin
+   % wget -O esg-update http://198.128.245.140/dist/esgf-installer/esg-update
+
+
+4) MAKE SURE YOU MANUALLY CHECK THE MD5 CHECKSUM!
+   (We don't want to run just any ol' script as root!!! :-)
+
+   % diff <(md5sum esg-update | tr -s " " | cut -d " " -f 1) <(curl -s http://198.128.245.140/dist/esgf-installer/esg-update.md5 | tr -s " " | cut -d " " -f 1)
+   
+   (there should be NO difference! i.e. the command returns you back to your prompt)
+
+   Besides the manual check the script is "self verifying".
+   If the script has been tampered with in any way, it will indicate
+   this and NOT RUN. At which point you must fetch the file from the
+   distribution site again. - step 3
+
+
+5) % chmod 555 esg-update
+
+   You only need to run esg-update initially to get the supporting
+   install scripts.  You may also run it in the future to subsequently
+   to get the latest revisions of install scripts.
+   
+
+6) Fetch the latest node installation script 
+   
+   (MD5 verification is done within the scripts from now on, so make
+   sure it always says "[VERIFIED]" after a file is fetched)
+   
+   % esg-update node
+
+7) Run the installation script (read prompts and instructions carefully...)
+   
+   Note on prompts...
+        [y/N] means "N" is the default, you may just hit return
+        Default values appear in "[]" brackets, hitting return uses them.
+
+   % esg-node --install --verify
+
+   With the --verify flag verification tests are run throughout the
+   installation procedure.  Also the last verification step of the
+   installation will perform a test publish to the chosen gateway
+   (default: ESG-PCMDI)
+
+   After the initial installation you may subsequently perform test
+   publications independently by using the --test-pub flag.
+
+   % esg-node --test-pub
+
+8) Join the appropriate mailing list...
+   End Users : esg-node-user@lists.llnl.gov
+   Developers: esg-node-dev@lists.llnl.gov
+   
+   Send an email to majordomo@lists.llnl.gov with the BODY:
+   subscribe <list-name>
+
+   Ex:
+   subscribe esg-node-user
+   and/or
+   subscribe esg-node-dev
+
+9) Subscribe to the ESGF Blog
+   Keep in the loop with the ESGF.org effort!
+
+   RSS: http://esgf.org/blog/?feed=rss2
+   
+   
+:-)
+
+********
+Note:
+Errant key strokes are picked up, so please be careful.
+
+As mentioned the script is in bash, so if you are so inclined, feel
+free to read it! However, do not modify the script, that would void
+the support contract :-).
+
+If you have any questions... contact me - Gavin (gavin@llnl.gov), or Bob
+or Dean. My number is +1-925-422-7436.
+
+Enjoy!
+
+-ESG Data Node Team

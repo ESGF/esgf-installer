@@ -1,0 +1,75 @@
+#!/bin/bash
+#*****************************************************************
+# Copyright (c) 2009  Larence Livermore National Security (LLNS)
+# Produced at the Lawrence Livermore National Laboratory
+# All rights reserved.
+#*****************************************************************
+#
+#  Organization: Lawrence Livermore National Lab (LLNL)
+#   Directorate: Computation
+#    Department: Computing Applications and Research
+#      Division: S&T Global Security
+#        Matrix: Atmospheric, Earth and Energy Division
+#       Program: PCMDI
+#       Project: Earth Systems Grid
+#  First Author: Gavin M. Bell (gavin@llnl.gov)
+#
+#   Description:
+#
+#*****************************************************************
+
+#For those of us that like using emacs (aka God's editor) and would like to
+#get some addtional functionality for finding methods and such
+#delights...
+#
+#Once you run this script you may use the 
+## For emacs/xemacs:
+#
+#    * M-. (or ESC-.): Find the definition of the symbol the cursor is currently positioned on.
+#
+#          o The symbol is displayed in the mini-buffer, confirm by
+#          pressing enter. The cursor will move to the definition of
+#          the symbol (a new buffer will be opened if the definition is
+#          in another file).
+#
+#          o The first time you do this, the mini-buffer will prompt
+#          you with "Visit tags table: (default TAGS)". If emacs has
+#          correctly guessed the location of the TAGS file, just hit
+#          enter, otherwise type the path to the TAGS file in your
+#          src/kern directory.
+#
+#          o If you want to use a different tags file later, use "M-x
+#          visit-tags-table" to specifiy what tags file to load.
+#
+#          o If you do not want to lookup the symbol under the cursor,
+#          you can type "M-. symbolname" instead of accepting the
+#          default.
+#
+#    * M-, (or ESC-,, or C-u M-.): Find the next occurrence of the
+#      symbol in the code (if the same symbol is defined several times)
+#
+#    * M-*: Go back to where you last invoked M-. or M-, (you can use
+#      this repeatedly to work your way back to where you started from)
+#
+#    * M-x tags-search regexp: search all files mentioned in TAGS for
+#      any occurrence of a regular expression. This is useful if you
+#      want to find all the places that a function is called from,
+#      rather than finding the definition from a call site.
+#
+#    * For more information, "info emacs"
+
+##################
+# Gavin's embarrassingly simple script to do a one line command for
+# generating etags :-).
+##################
+
+#CHANGE ME to match where your top level source code directory is :-)
+arg1=$1
+codebase_tld=${arg1:=$(pwd)}
+
+echo "Building Emacs TAGS file in: `hostname`@[$codebase_tld]"
+pushd $codebase_tld >& /dev/null
+find . -name "*.java" -o -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | etags -
+popd >& /dev/null
+echo "enjoy :-)"
+echo 

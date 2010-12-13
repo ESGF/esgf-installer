@@ -1,0 +1,18 @@
+#*****************************************************************#
+# Copyright (c) 2009  Larence Livermore National Security (LLNS)  #
+# All rights reserved.						  #
+#*****************************************************************#
+
+# This is a manifest, listing all the files to be posted to the
+# distribution server.
+
+[esgf-installer]
+
+../HOWTO
+../INSTALL
+../TODO
+../LICENSE
+
+./esg-node
+./esg-update
+

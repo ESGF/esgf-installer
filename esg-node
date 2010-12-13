@@ -98,7 +98,7 @@ init() {
     # Internal data-node code versions and supporting external libraries
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
-    cdat_version=${cdat_version:-"4.0.0"}
+    cdat_version=${cdat_version:-"6.0.alpha"}
     esgcet_version=${esgcet_version:-"2.7.3"}
     esgcet_python_version=${esgcet_python_version:-"2.6"}
     node_version=${node_version:-"0.9.0"}
@@ -1020,7 +1020,7 @@ test_postgress() {
 #####
 setup_cdat() {
     echo -n "Checking for CDAT (Pythong+CDMS) ${cdat_version}"
-    check_version_with "cdat" ${cdat_version} "${cdat_home}/bin/cdatversion"
+    check_version_with "cdat" ${cdat_version} '/usr/local/cdat/bin/python -c "import cdat_info; print cdat_info.Version"'
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -1446,7 +1446,7 @@ setup_tomcat() {
             ret=$?
             [ $ret == 0 ] && break
             sleep 1
-            ((wait_time--))
+            : ((wait_time--))
             echo -n "."
         done
         [ $ret == 0 ] && echo " [OK]" || echo " [FAIL]"
@@ -2238,7 +2238,7 @@ setup_tds() {
         ret=$?
         [ $ret == 0 ] && break
         sleep 1
-        ((wait_time--))
+        : ((wait_time--))
     done
 
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
@@ -3816,7 +3816,7 @@ check_version_with() {
     local target_version=$2
     local version_command=${3:-"${app_name} --version"}
 
-    local current_version=$(${version_command})
+    local current_version=$(eval ${version_command})
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
 
     (($DEBUG)) && echo " calling helper, check_version_helper ${current_version} >= ${target_version}"

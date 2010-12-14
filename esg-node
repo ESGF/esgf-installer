@@ -235,8 +235,8 @@ init() {
     tomcat_dist_url=http://download.filehat.com/apache/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
     utils_url=${esg_dist_url}/utils
-    thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version}/thredds.war
-    thredds_esg_dist_url=${esg_dist_url}/thredds/${tds_version}/thredds.war
+    thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/$(echo ${tds_version} | sed  -n 's/\(.*\).201[0-9]*.[0-9]*/\1/p')/thredds.war
+    thredds_esg_dist_url=${esg_dist_url}/thredds/$(echo ${tds_version} | sed  -n 's/\(.*\).201[0-9]*.[0-9]*/\1/p')/thredds.war
     thredds_content_dir=${thredds_content_dir:-${esg_root_dir}/content}
     #NOTE: This root dir should match a root set in the thredds setup 
     thredds_root_dir=${esg_root_dir}/data
@@ -1446,7 +1446,7 @@ setup_tomcat() {
             ret=$?
             [ $ret == 0 ] && break
             sleep 1
-            : ((wait_time--))
+            : $((wait_time--))
             echo -n "."
         done
         [ $ret == 0 ] && echo " [OK]" || echo " [FAIL]"
@@ -2008,7 +2008,7 @@ setup_tds() {
     #if [ ! -e ${thredds_dist_file} ]; then
     #   wget -O ${thredds_dist_file} ${thredds_dist_url}
     #   if [ $? != 0 ]; then
-    #       echo " ERROR: Could not download ${thredds_dist_url}, fetching the copy at PCMDI (LLNL)..."
+    #       echo " ERROR: Could not download ${thredds_dist_url},... fetching the copy at PCMDI (LLNL)..."
     checked_get ${thredds_dist_file} ${thredds_esg_dist_url}
     (( $? > 1 )) && echo " ERROR: Could not download ${thredds_esg_dist_url} either" && popd && checked_done 1
     #   fi
@@ -2238,7 +2238,7 @@ setup_tds() {
         ret=$?
         [ $ret == 0 ] && break
         sleep 1
-        : ((wait_time--))
+        : $((wait_time--))
     done
 
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1

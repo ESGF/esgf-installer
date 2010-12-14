@@ -101,7 +101,7 @@ init() {
     cdat_version=${cdat_version:-"6.0.alpha"}
     esgcet_version=${esgcet_version:-"2.7.3"}
     esgcet_python_version=${esgcet_python_version:-"2.6"}
-    node_version=${node_version:-"0.9.0"}
+    node_version=${node_version:-"0.9.1"}
 
     #see esg-orp project:
     esg_orp_version=${orp_version:-"1.0.1"}
@@ -241,7 +241,7 @@ init() {
     #NOTE: This root dir should match a root set in the thredds setup 
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
-    node_dist_url=${esg_dist_url}/esg-node/esg-node.${node_version}.tar.gz
+    node_dist_url=${esg_dist_url}/esg-node/esg-node-${node_version}.tar.gz
     node_db_name=esgcet
     node_app_context_root=esg-node
     node_app_home=${tomcat_install_dir}/webapps/${node_app_context_root}

@@ -1,10 +1,10 @@
 
 Hello, 
 
-The following describes how to get started with installing the ESG
-Data Node.  The installation scripts may be in flux, as we
-continuously improve the process. Please provide us with your input
-regarding your installation experience.
+The following describes how to get started with installing the ESGF
+Node.  The installation scripts may be in flux, as we continuously
+improve the process. Please provide us with your input regarding your
+installation experience.
 
 
 The update script can be fetched from our website at:
@@ -28,7 +28,7 @@ are about a 20 prompts for user input - almost all of which have
 resonable defaults (you can just hit enter - recommended).  The lion's
 share of the time is spent building the various tools and executibles
 (heads up: globus and python take a relatively long time to build :-\).
-We have worked hard to make the installation of the Data Node rather
+We have worked hard to make the installation of the ESGF Node rather
 painless.
 
 Thank you for your participation!
@@ -150,4 +150,4 @@ or Dean. My number is +1-925-422-7436.
 
 Enjoy!
 
--ESG Data Node Team
+-ESGF Node Team

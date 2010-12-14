@@ -1019,7 +1019,7 @@ test_postgress() {
 # Python/CDMS
 #####
 setup_cdat() {
-    echo -n "Checking for CDAT (Pythong+CDMS) ${cdat_version}"
+    echo -n "Checking for CDAT (Python+CDMS) ${cdat_version}"
     check_version_with "cdat" ${cdat_version} '/usr/local/cdat/bin/python -c "import cdat_info; print cdat_info.Version"'
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
@@ -1107,7 +1107,7 @@ write_cdat_install_log() {
 #####
 setup_esgcet() {
 
-    echo -n "Checking for esgcet (the publisher) ${esgcet_version}"
+    echo -n "Checking for esgcet (publisher) ${esgcet_version}"
     check_module_version esgcet ${esgcet_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0

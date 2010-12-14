@@ -1787,12 +1787,12 @@ setup_node() {
     node_dist_dir=$(echo ${node_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
 
     checked_get ${node_dist_file} ${node_dist_url}
-    no_new_update=$?
-
-    if((upgrade)); then
-        ((no_new_update == 1)) && echo "nothing more to do, you are up2date" && return 1
-        echo "Upgrading the ESG Node Manager..."
-        rm -rf ${node_dist_dir}
+    (( $? > 1 )) && echo " ERROR: Could not download ${node_dist_url} :-(" && popd && checked_done 1
+    
+    #make room for new install
+    if (( force_install )) ; then
+        echo "Removing Previous Installation of the ESGF Node Manager..."
+        [ -d "${node_dist_dir}" ] && rm -rf ${node_dist_dir} || echo "WARNING: Strange, can't locate previous install @ ${node_dist_dir}"
     fi
     
     echo "unpacking ${node_dist_file}..."
@@ -1833,6 +1833,7 @@ setup_node() {
 
     cp ${fetch_file} ${fetch_file}.tmpl
     if((upgrade)) && [ -e ${fetch_file}.saved ]; then
+        echo "Re-Instituting  ${fetch_file}... "
         #reuse the last esg-node.properties file...
         #pull it out of the tar archive we made a few lines up
         cp ${fetch_file}.saved ${fetch_file}

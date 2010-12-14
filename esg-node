@@ -104,7 +104,7 @@ init() {
     node_version=${node_version:-"0.9.1"}
 
     #see esg-orp project:
-    esg_orp_version=${orp_version:-"1.0.1"}
+    esg_orp_version=${orp_version:-"1.0.2"}
 
     #see esgf-security project:
     esgf_security_version=${esg_saml_version:-"1.0.2"}

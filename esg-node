@@ -3486,7 +3486,7 @@ pcheck() {
         ret=$?
         ((return_on_true)) && [ $ret == 0 ] && break
         ((iterations != 1)) && sleep ${wait_time}
-        ((iterations--))
+        : $((iterations--))
     done
     [ $ret == 0 ] && printf "\n${task_function} [OK]\n" || printf "\n${task_function} [FAIL]\n"
     return $ret

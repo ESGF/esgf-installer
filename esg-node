@@ -4493,6 +4493,7 @@ main() {
 
                 #The arg "1" indicates an upgrade (see functions)
                 setup_tomcat 1
+                setup_tds 1
 
                 [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT} ${myproxy_config_args}

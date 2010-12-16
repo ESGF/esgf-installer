@@ -1783,7 +1783,7 @@ setup_node() {
 
     local node_dist_file=${node_dist_url##*/}
     #strip off .tar.gz at the end
-    #(Ex: esg-node.0.9.0.tar.gz -> esg-node.0.9.0)
+    #(Ex: esg-node-0.9.0.tar.gz -> esg-node-0.9.0)
     node_dist_dir=$(echo ${node_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
 
     checked_get ${node_dist_file} ${node_dist_url}

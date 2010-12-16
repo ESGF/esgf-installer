@@ -73,7 +73,7 @@
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 progname=esg-node
-version="0.9.0"
+version="1.0.0"
 envfile="/etc/esg.env"
 
 #--------------
@@ -101,7 +101,7 @@ init() {
     cdat_version=${cdat_version:-"6.0.alpha"}
     esgcet_version=${esgcet_version:-"2.7.3"}
     esgcet_python_version=${esgcet_python_version:-"2.6"}
-    node_version=${node_version:-"0.9.1"}
+    node_manager_version=${node_manager_version:-"0.9.1"}
 
     #see esg-orp project:
     esg_orp_version=${orp_version:-"1.0.2"}
@@ -241,10 +241,10 @@ init() {
     #NOTE: This root dir should match a root set in the thredds setup 
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
-    node_dist_url=${esg_dist_url}/esg-node/esg-node-${node_version}.tar.gz
+    node_dist_url=${esg_dist_url}/esgf-node-manager/esg-node-manager-${node_manager_version}.tar.gz
     node_db_name=esgcet
-    node_app_context_root=esg-node
-    node_app_home=${tomcat_install_dir}/webapps/${node_app_context_root}
+    node_manager_app_context_root=esgf-node-manager
+    node_manager_app_home=${tomcat_install_dir}/webapps/${node_manager_app_context_root}
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
     my_ip_address=$(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
     show_summary_latch=0
@@ -1729,237 +1729,6 @@ test_tomcat() {
 
 }
 
-#####
-# Install The Node Manager
-#####
-# - Takes boolean arg: 0 = setup / install mode (default)
-#                      1 = updated mode
-#
-# In setup mode it is an idempotent install (default)
-# In update mode it will always pull down latest after archiving old
-#
-setup_node() {
-    echo -n "Checking for node manager ${node_version}"
-    check_webapp_version "esg-node" ${node_version}
-    local ret=$?
-    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
-
-    echo
-    echo "*******************************"
-    echo "Setting up The ESG Node Manager..."
-    echo "*******************************"
-    echo
-
-    local upgrade=${1:-0}
-
-    local default="Y"
-    ((force_install)) && default="N"
-    local dosetup
-    if [ -d ${node_app_home} ]; then 
-        echo "Detected an existing node manager installation..."
-        read -p "Do you want to continue with node manager installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        [ -z "${dosetup}" ] && dosetup=${default}
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-            echo "Skipping node manager installation and setup - will assume it's setup properly"
-            return 0
-        fi
-        
-        local dobackup="Y"
-        read -p "Do you want to make a back up of the existing distribution?? [Y/n] " dobackup
-        [ -z "${dobackup}" ] && dobackup=${default}
-        if [ "${dobackup}" = "Y" ] || [ "${dobackup}" = "y" ]; then
-            echo "Creating a backup archive of this web application $node_app_home"
-            backup ${node_app_home}
-        fi
-
-        echo
-    fi
-
-    mkdir -p ${workdir}
-    [ $? != 0 ] && return 1
-    pushd ${workdir} >& /dev/null
-    local fetch_file
-
-
-    local node_dist_file=${node_dist_url##*/}
-    #strip off .tar.gz at the end
-    #(Ex: esg-node-0.9.0.tar.gz -> esg-node-0.9.0)
-    node_dist_dir=$(echo ${node_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    checked_get ${node_dist_file} ${node_dist_url}
-    (( $? > 1 )) && echo " ERROR: Could not download ${node_dist_url} :-(" && popd && checked_done 1
-    
-    #make room for new install
-    if (( force_install )) ; then
-        echo "Removing Previous Installation of the ESGF Node Manager..."
-        [ -d "${node_dist_dir}" ] && rm -rf ${node_dist_dir} || echo "WARNING: Strange, can't locate previous install @ ${node_dist_dir}"
-    fi
-    
-    echo "unpacking ${node_dist_file}..."
-    tar xzf ${node_dist_file}
-    [ $? != 0 ] && echo " ERROR: Could not extract the ESG Node: ${node_dist_file}" && popd && checked_done 1
-    
-    pushd ${node_dist_dir} >& /dev/null
-
-    stop_tomcat
-
-    #strip the version number off(#.#.#) the dir and append .war to get the name of war file
-    #(Ex: esg-node-0.9.0 -> esg-node.war) 
-    local trimmed_name=$(pwd)/${node_dist_dir%-*}
-    node_war_file=${trimmed_name}.war
-    echo "node_war_file = "${node_war_file}
-
-    mkdir -p ${node_app_home}
-    cd ${node_app_home}
-
-
-    #----------------------------
-    fetch_file=esg-node.properties
-
-    #NOTE: The saving of the last config file must be done *BEFORE* we untar the new distro!
-    if ((upgrade)) && [ -e WEB-INF/classes/${fetch_file} ]; then
-        cp WEB-INF/classes/${fetch_file} WEB-INF/classes/${fetch_file}.saved
-        chmod 600 WEB-INF/classes/${fetch_file}*
-    fi
-
-    echo "Expanding war ${node_war_file} in $(pwd)"
-    $JAVA_HOME/bin/jar xf ${node_war_file}
-    
-    
-    #----------------------------
-    #Property file fetching and token replacement...
-    #----------------------------
-    pushd WEB-INF/classes >& /dev/null
-
-    cp ${fetch_file} ${fetch_file}.tmpl
-    if((upgrade)) && [ -e ${fetch_file}.saved ]; then
-        echo "Re-Instituting  ${fetch_file}... "
-        #reuse the last esg-node.properties file...
-        #pull it out of the tar archive we made a few lines up
-        cp ${fetch_file}.saved ${fetch_file}
-    else
-        #----------------------
-        pwd
-        echo -n "Replacing tokens... "
-
-        eval "perl -p -i -e 's/\\@db.driver\\@/${postgress_driver}/g' ${fetch_file}"    
-        echo -n "*"
-        eval "perl -p -i -e 's/\\@db.protocol\\@/${postgress_protocol}/g' ${fetch_file}"
-        echo -n "*"
-        
-        eval "perl -p -i -e 's/\\@db.host\\@/${postgress_host}/g' ${fetch_file}"    
-        echo -n "*"
-        eval "perl -p -i -e 's/\\@db.port\\@/${postgress_port}/g' ${fetch_file}"
-        echo -n "*"
-        eval "perl -p -i -e 's/\\@db.database\\@/${node_db_name}/g' ${fetch_file}"
-        echo -n "*"
-        eval "perl -p -i -e 's/\\@db.user\\@/${postgress_user}/g' ${fetch_file}"
-        echo -n "*"
-        eval "perl -p -i -e 's/\\@db.password\\@/${pg_sys_acct_passwd}/g' ${fetch_file}"
-        echo -n "*"
-        
-        eval "perl -p -i -e 's/\\@mail.smtp.host\\@/${mail_smtp_host}/g' ${fetch_file}"
-        echo -n "*"
-        eval "perl -p -i -e 's/\\@mail.admin.address\\@/${mail_admin_address}/g' ${fetch_file}"
-        echo -n "*"
-        echo " [OK]"
-        #----------------------
-    fi
-    chown -R ${tomcat_user} ${node_app_home}
-    chgrp -R ${tomcat_group} ${node_app_home}
-    unset fetch_file
-    popd >& /dev/null
-    #----------------------------
-
-    popd >& /dev/null
-    (( ! upgrade )) && configure_postgress
-    write_node_install_log
-    set_redirect
-    checked_done 0
-
-}
-
-write_node_install_log() {
-    echo "$(date ${date_format}) webapp:esg-node=${node_version} ${node_app_home}" >> ${install_logfile}
-    dedup ${install_logfile}
-    return 0
-}
-
-#setup the ROOT app's index.html to redirct to the esg-node's index page (BOOM!)
-set_redirect() {
-
-    local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
-
-    [ ! -e ${index_file} ] && echo "Sorry, No \"ROOT\" application found!" && return 1
-
-    local redirect_content="<head><meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=/esg-node\"></head>"
-
-    [ "${redirect_content}" = "$(cat ${index_file})" ] && echo "Redirect already setup" && return 0
-
-    local doit="Y"
-    read -p "Do you wish to setup the redirect to the esg-node's page? [Y/n]: " doit
-    [ "n" = "${doit}" ] || [ "N" = "${doit}" ] && return 0
-
-    mv ${index_file} ${index_file}.last
-
-    echo "${redirect_content}" > ${index_file}
-    chmod 644 ${index_file}
-    chown -R ${tomcat_user}  ${index_file}
-    chgrp -R ${tomcat_group} ${index_file}
-    echo "Redirect setup to /esg-node"
-    return 0
-}
-
-
-#--------------------------------------------------
-#NOTE: This must be run AFTER the esg node web app
-#      installation/configuration (setup_node) 
-#--------------------------------------------------
-configure_postgress() {
-    
-    echo
-    echo "*******************************"
-    echo "Configuring Postgres... (for Node Manager)"
-    echo "*******************************"
-    echo
-
-    start_postgress
-
-    #Create the database...
-    echo "Creating esg node database: ${node_db_name}"
-    echo "${postgress_install_dir}/bin/createdb ${node_db_name}"
-    ${postgress_install_dir}/bin/createdb ${node_db_name} >& /dev/null
-    (( $? > 1 )) && echo " ERROR: Could not create esg node database: ${node_db_name}" && return 0
-    
-    #TODO... Make the above call idempotent...
-    #NOTE: (zoiks) Need to be able to tell the difference between a
-    #database already there vs another error
-
-    pushd ${workdir}/${node_dist_dir:-esg-node.${node_version}}/db
-    [ $? != 0 ] && echo " ERROR: Could not find node distribution dir ${workdir}/${node_dist_dir}" && checked_done 1
-
-    echo "${ANT_HOME}/bin/ant -buildfile database-tasks.ant.xml \
-        -Dnode.property.file=${node_app_home}/WEB-INF/classes/esg-node.properties \
-        -Dsql.jdbc.base.url=${postgress_protocol}//${postgress_host}:${postgress_port}/ \
-        -Dsql.jdbc.database.name=${node_db_name} \
-        -Dsql.jdbc.database.user=${postgress_user} \
-        -Dsql.jdbc.database.password=${pg_sys_acct_passwd} \
-        -Dsql.jdbc.driver.jar=${node_app_home}/WEB-INF/lib/${postgress_jar} make_node_db"
-
-    ${ANT_HOME}/bin/ant -buildfile database-tasks.ant.xml \
-        -Dnode.property.file=${node_app_home}/WEB-INF/classes/esg-node.properties \
-        -Dsql.jdbc.base.url=${postgress_protocol}//${postgress_host}:${postgress_port}/ \
-        -Dsql.jdbc.database.name=${node_db_name} \
-        -Dsql.jdbc.database.user=${postgress_user} \
-        -Dsql.jdbc.database.password=${pg_sys_acct_passwd} \
-        -Dsql.jdbc.driver.jar=${node_app_home}/WEB-INF/lib/${postgress_jar} make_node_db >& /dev/null
-    (( $? > 1 )) && echo "ERROR: Could not create esg node database tables in ${node_db_name}" && return 1
-    
-    popd >& /dev/null
-    echo
-    echo
-    checked_done 0
-}
 
 #####
 # THREDDS Data Server
@@ -2293,10 +2062,6 @@ test_tds() {
 }
 
 
-
-
-
-
 #####
 # Globus Toolkit ->  MyProxy (client) & GridFTP (server)
 #####
@@ -2530,7 +2295,7 @@ setup_subsystem() {
     #fi
     echo
 
-    echo -n "${subsystem} setup for Data-Node... "
+    echo -n "${subsystem} setup for ESGF Node... "
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
@@ -2556,7 +2321,7 @@ show_summary() {
     if [ $((show_summary_latch == 0)) = 1 ]; then return 0; fi
     echo 
     echo "-------------------"
-    echo "  esg-node run summary: "
+    echo "  esgf node run summary: "
     echo "-------------------"
     echo "The following environment variables were used during last full install"
     echo "They are written to the file ${envfile}"
@@ -3529,12 +3294,12 @@ uninstall() {
         fi
 
         doit="N"
-        if [ -e ${node_app_home} ]; then
-            read -p "remove ESG Node web service? (${tomcat_install_dir}/webapps/${node_app_context_root}) [y/N]: " doit
+        if [ -e ${node_manager_app_home} ]; then
+            read -p "remove ESG Node web service? (${tomcat_install_dir}/webapps/${node_manager_app_context_root}) [y/N]: " doit
             if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-                echo "removing ${tomcat_install_dir}/webapps/${node_app_context_root}"
-                rm -rf ${tomcat_install_dir}/webapps/${node_app_context_root}
-                [ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/${node_app_context_root}"
+                echo "removing ${tomcat_install_dir}/webapps/${node_manager_app_context_root}"
+                rm -rf ${tomcat_install_dir}/webapps/${node_manager_app_context_root}
+                [ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/${node_manager_app_context_root}"
             fi
         fi 
 
@@ -3573,10 +3338,10 @@ uninstall() {
 
 set_classpath() {
     local CP="."
-    CP=${CP}:${node_app_home}/WEB-INF/classes
+    CP=${CP}:${node_manager_app_home}/WEB-INF/classes
     
-    for i in $( ls ${node_app_home}/WEB-INF/lib ); do
-        CP=${CP}:${node_app_home}/WEB-INF/lib/"$i"
+    for i in $( ls ${node_manager_app_home}/WEB-INF/lib ); do
+        CP=${CP}:${node_manager_app_home}/WEB-INF/lib/"$i"
     done
     
     CP=${CP}:${CATALINA_HOME}/lib/servlet-api.jar
@@ -4351,7 +4116,7 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${my_ip_address}/${node_app_context_root}"
+    echo "http://${my_ip_address}/${node_manager_app_context_root}"
     echo "http://${my_ip_address}/thredds"
     echo "http://${my_ip_address}/OpenidRelyingParty"
     echo 
@@ -4501,7 +4266,8 @@ main() {
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
 
                 #The arg "1" indicates an upgrade (see function)
-                setup_node 1
+                setup_subsystem node-manager esgf-node-manager 1
+                #setup_node 1
 
                 #---
                 start ${sel}
@@ -4783,7 +4549,7 @@ main() {
     [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_tds 
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && test_tds 
-    [ $((sel & INSTALL_BIT)) != 0 ] && setup_node #(tomcat off)
+    [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
 
     #---------------------------------------
     #Installation of "plugin" subsystems... & filters

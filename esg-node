@@ -4015,7 +4015,9 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         --clear       - removes the file holding the enironment state of last install
         --test-pub    - performs the publication test directly (same publication called in last step of install)
         --info        - provides a brief explaination of the DataNode
-        --upgrade|--update - upgrades/updates the node manager
+        --upgrade|--update|update - upgrades/updates the node manager
+        --force       - Will allow execution of installation|update code to be executed beyond the up2date checks.
+                        Basically allowing an installation|update as if starting from scratch.
 
         -------------------------------
         Configuration Selection

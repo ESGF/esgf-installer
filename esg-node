@@ -1421,9 +1421,9 @@ setup_tomcat() {
 
     if [ -d ${tomcat_install_dir}/webapps/examples ]; then
         local dodel="Y"
-        echo "For security reasons we recommend removing the examples web app"
+        echo "For security reasons we recommend removing the examples web app [$(readlink -f ${tomcat_install_dir}/webapps/examples)]"
         readlink -f ${tomcat_install_dir}/webapps/examples
-        read -p "Is the directory shown above correct? [Y/n] " dodel
+        ((VERBOSE)) && read -p "Is the directory shown above correct? [Y/n] " dodel
         if [ "${dodel}" = "Y" ] || [ "${dodel}" = "y" ] || [ -z "${dodel}" ]; then
             rm -rf ${tomcat_install_dir}/webapps/examples && echo "removed the examples webapp..."
         fi
@@ -1919,7 +1919,7 @@ setup_tds() {
                 [ -n "${input}" ] && gateway_name=$(echo ${input} | tr 'a-z' 'A-Z')
                 unset input
                 read -p "Please enter the Gateway Service Root [${ESG_GATEWAY_SVC_ROOT}] " input
-                [ -n "${input}" ] && gateway_service_root=${input}
+                [ -n "${input}" ] && gateway_service_root=$(echo ${input} | tr 'A-Z' 'a-z')
                 unset input
                 choice="(Manual Entry)"
                 ;;

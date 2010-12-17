@@ -1916,10 +1916,10 @@ setup_tds() {
                 gateway_name=${ESG_GATEWAY_NAME:-"ESG-PCMDI"}
                 gateway_service_root=${ESG_GATEWAY_SVC_ROOT:-"pcmdi3.llnl.gov/esgcet"}
                 read -p "Please enter the Gateway name [${ESG_GATEWAY_NAME}] " input
-                [ -n "${input}" ] && gateway_name=$input
+                [ -n "${input}" ] && gateway_name=$(echo ${input} | tr 'a-z' 'A-Z')
                 unset input
                 read -p "Please enter the Gateway Service Root [${ESG_GATEWAY_SVC_ROOT}] " input
-                [ -n "${input}" ] && gateway_service_root=$(echo ${input} | tr 'a-z' 'A-Z')
+                [ -n "${input}" ] && gateway_service_root=${input}
                 unset input
                 choice="(Manual Entry)"
                 ;;

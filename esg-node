@@ -241,10 +241,6 @@ init() {
     #NOTE: This root dir should match a root set in the thredds setup 
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
-    node_dist_url=${esg_dist_url}/esgf-node-manager/esg-node-manager-${node_manager_version}.tar.gz
-    node_db_name=esgcet
-    node_manager_app_context_root=esgf-node-manager
-    node_manager_app_home=${tomcat_install_dir}/webapps/${node_manager_app_context_root}
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
     my_ip_address=$(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
     show_summary_latch=0

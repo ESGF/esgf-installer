@@ -4260,6 +4260,7 @@ main() {
                 [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT} ${myproxy_config_args}
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
+                [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem web-fe esgf-web-fe 1
 
                 #The arg "1" indicates an upgrade (see function)
                 setup_subsystem node-manager esgf-node-manager 1
@@ -4569,6 +4570,7 @@ main() {
     # Gateway type install...
     #---------------------------------------
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "search subsystem" && setup_subsystem search esg-search $@
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
     [ $((sel & TEST_BIT)) != 0 ]    && [ $((sel & INDEX_BIT)) != 0 ] && echo "test search subsystem" && \
         source ${scripts_dir}/esg-search >& /dev/null && test_search_services
 

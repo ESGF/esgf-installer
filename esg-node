@@ -101,7 +101,7 @@ init() {
     cdat_version=${cdat_version:-"6.0.alpha"}
     esgcet_version=${esgcet_version:-"2.7.3"}
     esgcet_python_version=${esgcet_python_version:-"2.6"}
-    node_manager_version=${node_manager_version:-"0.9.1"}
+    node_manager_version=${node_manager_version:-"0.4.0"}
 
     #see esg-orp project:
     esg_orp_version=${orp_version:-"1.0.2"}
@@ -4018,7 +4018,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         -------------------------------
         Configuration Selection
         -------------------------------
-        --type | -t <data &| index &| idp> - Select type of node: \"data node\", \"index node\" and/or \"identity provider node\" (\"data\" is default)
+        --type | -t <data &| index &| idp> - Select type of node: \"data node\", \"index node\" and/or \"identity provider node\" (when in doubt use \"data\")
         --set-type  <data &| index &| idp> - Sets the type value to be used at next start up
         --get-type - returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)
 

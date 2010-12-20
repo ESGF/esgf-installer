@@ -241,10 +241,6 @@ init() {
     #NOTE: This root dir should match a root set in the thredds setup 
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
-    node_dist_url=${esg_dist_url}/esgf-node-manager/esg-node-manager-${node_manager_version}.tar.gz
-    node_db_name=esgcet
-    node_manager_app_context_root=esgf-node-manager
-    node_manager_app_home=${tomcat_install_dir}/webapps/${node_manager_app_context_root}
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
     my_ip_address=$(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
     show_summary_latch=0
@@ -4266,6 +4262,7 @@ main() {
                 [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT} ${myproxy_config_args}
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
+                [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem web-fe esgf-web-fe 1
 
                 #The arg "1" indicates an upgrade (see function)
                 setup_subsystem node-manager esgf-node-manager 1
@@ -4575,6 +4572,7 @@ main() {
     # Gateway type install...
     #---------------------------------------
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "search subsystem" && setup_subsystem search esg-search $@
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
     [ $((sel & TEST_BIT)) != 0 ]    && [ $((sel & INDEX_BIT)) != 0 ] && echo "test search subsystem" && \
         source ${scripts_dir}/esg-search >& /dev/null && test_search_services
 

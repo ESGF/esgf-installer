@@ -1652,7 +1652,7 @@ start_tomcat() {
     fi
     
     #Don't wait forever, but give tomcat some time before it starts
-    pcheck 5 2 1 -- check_tomcat_process
+    pcheck 10 2 1 -- check_tomcat_process
     [ $? != 0 ] && echo "Tomcat couldn't be started."
 
 }

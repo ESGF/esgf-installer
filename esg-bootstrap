@@ -121,7 +121,7 @@ then
     if (($# == 1)) && [ "$1" = "--help" ]; then
 	usage
     else
-	get_latest ${type}
+	get_latest
     fi
 fi
 exit 0

@@ -3666,7 +3666,7 @@ checked_get() {
     if (( $# == 1 )); then
         remote_file=${1}
         local_file=${1##*/}
-    elif (( $# == 2 )); then
+    elif (( $# >= 2 )); then
         local_file=${1}
         remote_file=${2}
     else

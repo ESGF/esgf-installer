@@ -557,7 +557,7 @@ setup_java() {
         if [ ! -e ${java_dist_file} ]; then
             echo "Don't see java distribution file $(pwd)/${java_dist_file} either"
             echo "Downloading Java from ${java_dist_url}"
-            checked_get ${java_dist_file} ${java_dist_url}
+            checked_get ${java_dist_file} ${java_dist_url} $((force_install))
             [ $? != 0 ] && echo " ERROR: Could not download Java" && popd && checked_done 1
             echo "unpacking ${java_dist_file}..."
             tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
@@ -887,14 +887,14 @@ setup_postgress() {
     cd $postgress_install_dir/data
     #Get files
     fetch_file=pg_hba.conf
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chmod 600 ${fetch_file}
 
 
     #Get File...
     fetch_file=postgresql.conf
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chmod 600 ${fetch_file}
 
@@ -1145,16 +1145,16 @@ setup_esgcet() {
         if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
             #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
             #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-            checked_get ${esg_dist_url}/externals/${esgcet_egg_file}
+            checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
             (( $? > 1 )) && return 0
             $cdat_home/bin/easy_install ${esgcet_egg_file}
             [ $? != 0 ] && checked_done 1
         elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
             #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet"
             #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet
-            checked_get ${esg_dist_url}/externals/${esgcet_egg_file}
+            checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
             (( $? > 1 )) && return 0
-            $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file}
+            $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file} $((force_install))
             [ $? != 0 ] && checked_done 1
         else
             echo "Not a valid selection... [${choice}] try again"
@@ -1226,7 +1226,7 @@ test_esgcet() {
     echo "esgcet test directory: [${esgcet_testdir}]"
     local fetch_file
     fetch_file=sftlf.nc
-    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url}/externals/${fetch_file}
+    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url}/externals/${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
 
@@ -1496,7 +1496,7 @@ configure_tomcat() {
     local genreq=N
 
     fetch_file=server.xml
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file}
+    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chmod 600 ${fetch_file}
 
@@ -1578,7 +1578,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
     if [ ! -e ${truststore_file} ]; then
         fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-        checked_get ${truststore_file} ${esg_dist_url}/certs/${fetch_file}
+        checked_get ${truststore_file} ${esg_dist_url}/certs/${fetch_file} $((force_install))
         if (( $? > 1 )); then
             echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
             echo "(note - the truststore password will probably not match!)"
@@ -1775,7 +1775,7 @@ setup_tds() {
     #   wget -O ${thredds_dist_file} ${thredds_dist_url}
     #   if [ $? != 0 ]; then
     #       echo " ERROR: Could not download ${thredds_dist_url},... fetching the copy at PCMDI (LLNL)..."
-    checked_get ${thredds_dist_file} ${thredds_esg_dist_url}
+    checked_get ${thredds_dist_file} ${thredds_esg_dist_url} $((force_install))
     (( $? > 1 )) && echo " ERROR: Could not download ${thredds_esg_dist_url} either" && popd && checked_done 1
     #   fi
     #fi
@@ -1804,7 +1804,7 @@ setup_tds() {
     pushd ${tomcat_conf_dir} >& /dev/null
 
     fetch_file=tomcat-users.xml
-    checked_get $tomcat_conf_dir/${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+    checked_get $tomcat_conf_dir/${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chown ${tomcat_user}  $tomcat_conf_dir/${fetch_file}
     chgrp ${tomcat_group} $tomcat_conf_dir/${fetch_file}
@@ -1856,13 +1856,13 @@ setup_tds() {
 
     mkdir -p ${tomcat_conf_dir}/Catalina/localhost
     fetch_file=thredds.xml
-    checked_get $tomcat_conf_dir/Catalina/localhost/${fetch_file} ${esg_dist_url}/externals/bootstrap/tomcat-${fetch_file}
+    checked_get $tomcat_conf_dir/Catalina/localhost/${fetch_file} ${esg_dist_url}/externals/bootstrap/tomcat-${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
     
     #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
     fetch_file=web.xml 
-    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} ${esg_dist_url}/thredds/thredds.${fetch_file}
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} 
     chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} 
@@ -2077,7 +2077,7 @@ setup_globus() {
     
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-globus
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
     popd >& /dev/null
@@ -2298,7 +2298,7 @@ setup_subsystem() {
 
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
-    checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}
+    checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
     popd >& /dev/null
@@ -2925,7 +2925,7 @@ create_keystore() {
     local key_alias=${4:-${keystore_alias}}
     local password=${5:-${keystore_password}}
     
-    checked_get ${utils_url}/ImportKey.class
+    checked_get ./ImportKey.class ${utils_url}/ImportKey.class $((force_install))
     (( $? > 1 )) && echo "Could not fetch keystore generator" && return 1
 
     [ ! -e ${private_key} ] && echo "Sorry, cannot find ${private_key}" && return 2
@@ -3024,9 +3024,9 @@ install_signed_certificate() {
 export_keystore_as_globus_hostkeys() {
     mkdir -p ${workdir}
     pushd ${workdir} >& /dev/null
-    checked_get ${utils_url}/ExportPriv.class
+    checked_get ./ExportPriv.class ${utils_url}/ExportPriv.class $((force_install))
     (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for exporting certificates" && popd && return 1
-    checked_get ${utils_url}/Base64Coder.class
+    checked_get ./Base64Coder.class ${utils_url}/Base64Coder.class $((force_install))
     (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for exporting certificates" && popd && return 1
     popd >& /dev/null
 
@@ -3131,9 +3131,9 @@ register() {
     mkdir -p ${workdir} # >& /dev/null
     pushd ${workdir} # >& /dev/null
     #Download the Java code used for certificate installation (into $workdir)
-    checked_get ${utils_url}/InstallCert.class
+    checked_get './InstallCert.class' ${utils_url}/InstallCert.class $((force_install))
     (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for installing certificates" && popd && return 1
-    checked_get ${utils_url}/'InstallCert$SavingTrustManager.class'
+    checked_get './InstallCert$SavingTrustManager.class' ${utils_url}/'InstallCert$SavingTrustManager.class' $((force_install))
     (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for installing certificates" && popd && return 1
     popd # >& /dev/null
 
@@ -3654,8 +3654,12 @@ check_for_update() {
 # USAGE: checked_get [file] http://www.foo.com/file
 #
 checked_get() {
-    check_for_update $@
-    [ $? != 0 ] && return 1
+    local force_get=${3:-0}
+    
+    if ((force_get == 0)); then
+        check_for_update $@
+        [ $? != 0 ] && return 1
+    fi
 
     local local_file
     local remote_file

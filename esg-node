@@ -3670,7 +3670,8 @@ checked_get() {
         local_file=${1}
         remote_file=${2}
     else
-        echo "function \"checked_get\":  Called with incorrect number of args! (fatal)"
+        echo "function \"checked_get\":  Called with incorrect number of args! (fatal) args[$@]"
+        echo " usage: checked_get [<local dest>] <remote source> [force_get (0|1)]"
         exit 1
     fi                      
     

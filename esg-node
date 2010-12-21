@@ -3799,7 +3799,7 @@ self_verify() {
             return 0
         elif [ "$choice" = "U" ] || [ "$choice" = "u" ]; then
             echo "Updating local script with script from distribution server..."
-            /usr/local/bin/esg-update node
+            /usr/local/bin/esg-bootstrap
             echo "Please re-run this updated script $0"
             echo
             exit 1

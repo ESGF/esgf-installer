@@ -7,10 +7,10 @@ improve the process. Please provide us with your input regarding your
 installation experience.
 
 
-The update script can be fetched from our website at:
-http://rainbow.llnl.gov/dist/esgf-installer/esg-update
+The bootstrap script can be fetched from our website at:
+http://rainbow.llnl.gov/dist/esgf-installer/esg-bootstrap
 
-Follow the instructions below describing how to run the update script.
+Follow the instructions below describing how to run the bootstrap script.
        
 The update and install scripts is written in bash and is intended to
 be run on CentOS/RedHat Linux distributions as *root* or a root
@@ -66,15 +66,15 @@ hostname -s, hostname --domain and hostname --fqdn.
    (do not run the script directly from sudo because sudo filters env vars)
 
 
-3) Download the "update" script to /usr/local/bin on the target machine
+3) Download the "bootstrap" script to /usr/local/bin on the target machine
    % cd /usr/local/bin
-   % wget -O esg-update http://198.128.245.140/dist/esgf-installer/esg-update
+   % wget -O esg-bootstrap http://198.128.245.140/dist/esgf-installer/esg-bootstrap
 
 
 4) MAKE SURE YOU MANUALLY CHECK THE MD5 CHECKSUM!
    (We don't want to run just any ol' script as root!!! :-)
 
-   % diff <(md5sum esg-update | tr -s " " | cut -d " " -f 1) <(curl -s http://198.128.245.140/dist/esgf-installer/esg-update.md5 | tr -s " " | cut -d " " -f 1)
+   % diff <(md5sum esg-bootstrap | tr -s " " | cut -d " " -f 1) <(curl -s http://198.128.245.140/dist/esgf-installer/esg-bootstrap.md5 | tr -s " " | cut -d " " -f 1)
    
    (there should be NO difference! i.e. the command returns you back to your prompt)
 
@@ -84,11 +84,11 @@ hostname -s, hostname --domain and hostname --fqdn.
    distribution site again. - step 3
 
 
-5) % chmod 555 esg-update
+5) % chmod 555 esg-bootstrap
 
-   You only need to run esg-update initially to get the supporting
-   install scripts.  You may also run it in the future to subsequently
-   to get the latest revisions of install scripts.
+   You only need to run esg-bootstrap initially to get the primary
+   install script.  You may also run it in the future to subsequently
+   to get the latest revisions of install script.
    
 
 6) Fetch the latest node installation script 
@@ -96,15 +96,19 @@ hostname -s, hostname --domain and hostname --fqdn.
    (MD5 verification is done within the scripts from now on, so make
    sure it always says "[VERIFIED]" after a file is fetched)
    
-   % esg-update node
+   % esg-bootstrap
+   
+   This downloads the main installation script "esg-node".
 
-7) Run the installation script (read prompts and instructions carefully...)
+7) Run the installation script "esg-node" (read prompts and instructions carefully...)
    
    Note on prompts...
         [y/N] means "N" is the default, you may just hit return
         Default values appear in "[]" brackets, hitting return uses them.
 
+   There is is no default type, so it must be specified (if in doubt use "data")
    % esg-node --set-type data
+
    % esg-node --install --verify
 
    With the --verify flag verification tests are run throughout the
@@ -116,6 +120,21 @@ hostname -s, hostname --domain and hostname --fqdn.
    publications independently by using the --test-pub flag.
 
    % esg-node --test-pub
+
+   #--------- Trouble Shooting TIP ------------
+   If the installation does not properly go through and for some
+   reason ends prematurely please run the script again.  There may be
+   situations where enough of a component was installed such that it
+   is detected and skipped.  Do not proceed to the next installation
+   phase.  Instead stop the script (ctrl-c) and then use the "--force"
+   flag to make the installation require your input to continue for
+   each component.  For those that have successfully been installe you
+   may skip them until you get to the 'problem' component's section
+   and which point you may attempt another reinstall of it [Y].
+   
+   % esg-node --force --install
+   #-------------------------------------------
+
 
 8) Join the appropriate mailing list...
    End Users : esg-node-user@lists.llnl.gov
@@ -134,6 +153,14 @@ hostname -s, hostname --domain and hostname --fqdn.
 
    RSS: http://esgf.org/blog/?feed=rss2
    
+   and check the web site
+   http://esgf.org
+
+   #--------- Trouble Shooting TIP ------------
+   # For passwords use characters [A-Za-z0-9]
+   #-------------------------------------------
+
+Thank you.
    
 :-)
 
@@ -143,7 +170,7 @@ Errant key strokes are picked up, so please be careful.
 
 As mentioned the script is in bash, so if you are so inclined, feel
 free to read it! However, do not modify the script, that would void
-the support contract :-).
+the support contract ;-).
 
 If you have any questions... contact me - Gavin (gavin@llnl.gov), or Bob
 or Dean. My number is +1-925-422-7436.

@@ -14,5 +14,4 @@
 ./LICENSE
 
 ./esg-node
-./esg-update
-
+./esg-bootstrap

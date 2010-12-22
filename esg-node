@@ -3623,7 +3623,7 @@ check_for_update() {
     if (( $# == 1 )); then
         remote_file=${1}
         local_file=$(readlink -f ${1##*/})
-    elif (( $# == 2 )); then
+    elif (( $# >= 2 )); then
         local_file=${1}
         remote_file=${2}
     else
@@ -3666,11 +3666,12 @@ checked_get() {
     if (( $# == 1 )); then
         remote_file=${1}
         local_file=${1##*/}
-    elif (( $# == 2 )); then
+    elif (( $# >= 2 )); then
         local_file=${1}
         remote_file=${2}
     else
-        echo "function \"checked_get\":  Called with incorrect number of args! (fatal)"
+        echo "function \"checked_get\":  Called with incorrect number of args! (fatal) args[$@]"
+        echo " usage: checked_get [<local dest>] <remote source> [force_get (0|1)]"
         exit 1
     fi                      
     
@@ -3798,7 +3799,7 @@ self_verify() {
             return 0
         elif [ "$choice" = "U" ] || [ "$choice" = "u" ]; then
             echo "Updating local script with script from distribution server..."
-            /usr/local/bin/esg-update node
+            /usr/local/bin/esg-bootstrap
             echo "Please re-run this updated script $0"
             echo
             exit 1

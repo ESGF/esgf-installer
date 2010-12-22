@@ -18,33 +18,20 @@ id_check() {
 }
 
 get_latest() {
-    local type="${1:-node}"
-    
-    if [ "${type}" != "node" ] && [ "${type}" != "gway" ]; then 
-	usage
-    fi
-	    
     script_install_dir=${install_prefix}/bin
     mkdir -p ${script_install_dir}
     #NOTE: boot script location is a RedHat/CentOS thing... to make this cross distro compatible clean this up.
     local init_scripts_dir=/etc/rc.d/init.d
     pushd $script_install_dir >& /dev/null
     #Get files
-    local fetch_file=esg-${type}
+    local fetch_file=esg-node
 
     local ret
     echo "Checking...."
-    if [ "$type" = "node" ]; then
-	checked_get ${esg_dist_url}/esgf-installer/${fetch_file} 
-        ret=$?
-        ((ret == 1)) && echo "${type} install script already up-to-date"
-        ((ret == 0)) && echo "Updated ${type} install script from PCMDI's ESG distribution site at LLNL"
-    else
-	checked_get ${esg_dist_url}/externals/bootstrap/${fetch_file} 
-        ret=$?
-        ((ret == 1)) && echo "${type} install script already up-to-date"
-        ((ret == 0)) && echo "Updated ${type} install script from PCMDI's ESG distribution site at LLNL"
-    fi
+    checked_get ${esg_dist_url}/esgf-installer/${fetch_file} 
+    ret=$?
+    ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node install script from PCMDI's ESGF distribution site at LLNL"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 ${fetch_file}
     [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}
@@ -117,8 +104,7 @@ self_verify() {
 usage() {
     printf "
     usage:
-        esg-update [ node ] [ gway ]
-
+        esg-bootstrap [--help]
     \n"
     exit 1
 }
@@ -131,14 +117,11 @@ if id_check
 then
     self_verify >& /dev/null
     (( $? > 0 )) && printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" && exit 1
-    echo "checking on updates for $@"
-    if (( ($# < 3) && ($# > 0) )); then
-	for type in "$@"
-	do
-	    get_latest ${type}
-	done
-    else
+    echo "checking for updates for the ESGF Node"
+    if (($# == 1)) && [ "$1" = "--help" ]; then
 	usage
+    else
+	get_latest
     fi
 fi
 exit 0

@@ -156,10 +156,6 @@ hostname -s, hostname --domain and hostname --fqdn.
    and check the web site
    http://esgf.org
 
-   #--------- Trouble Shooting TIP ------------
-   # For passwords use characters [A-Za-z0-9]
-   #-------------------------------------------
-
 Thank you.
    
 :-)

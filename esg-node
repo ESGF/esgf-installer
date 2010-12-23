@@ -4574,7 +4574,7 @@ main() {
 
 
     #---------------------------------------
-    # Gateway type install...
+    # Index type install...
     #---------------------------------------
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "search subsystem" && setup_subsystem search esg-search $@
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@

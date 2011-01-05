@@ -2278,19 +2278,26 @@ setup_subsystem() {
     local subsystem=$1
     [ -z "${subsystem}" ] && echo "setup_subsystem [${subsystem}] requires argument!!" && checked_done 1
     local server_dir=${2:-"${subsystem}"}
+    local subsystem_install_script=${scripts_dir}/esg-${subsystem}
     
-    echo
-    read -p "Would you like to set up ${subsystem} services? [Y/n] " dosetup
-    if [ "${dosetup}" = "N" ] || [ "${dosetup}" = "n" ] || [ "${dosetup}" = "no" ]; then
-        return 0
-    fi    
+    #---
+    #check that you have at one point in time fetched the subsystem's installation script
+    #if indeed you have we will assume you would like to proceed with setting up the latest...
+    #Otherwise we just ask you first before you pull down new code to your machine...
+    #---
+    local default="Y"
+    ((force_install)) && default="Y"
+    local dosetup
+    if [ ! -e ${subsystem_install_script} ] || ((force_install)) ; then
+        echo
+        read -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup
+        [ -z "${dosetup}" ] && dosetup=${default}
+        if [ "${dosetup}" = "N" ] || [ "${dosetup}" = "n" ] || [ "${dosetup}" = "no" ]; then
+            return 0
+        fi
+    fi
 
-    #if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-    #   echo "Skipping ${subsysem} installation"
-    #   return 0
-    #fi
     echo
-
     echo -n "${subsystem} setup for ESGF Node... "
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
@@ -2299,7 +2306,8 @@ setup_subsystem() {
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
-    (( $? > 1 )) && popd && return 1
+    local ret=$?
+    (( $ret > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
     popd >& /dev/null
 

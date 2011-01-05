@@ -4034,6 +4034,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         --type | -t <data &| index &| idp> - Select type of node: \"data node\", \"index node\" and/or \"identity provider node\" (when in doubt use \"data\")
         --set-type  <data &| index &| idp> - Sets the type value to be used at next start up
         --get-type - returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)
+        ((s|g)et-type flags are singular command flags, meaning they are not meant to work with other flags on the same command line)
 
         -------------------------------
         Globus Tool Management
@@ -4197,6 +4198,7 @@ main() {
                 unshift=1
                 ;;
             --set-type)
+                init
                 let sel=0
                 local tvalue
                 shift

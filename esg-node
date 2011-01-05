@@ -104,7 +104,7 @@ init() {
     node_manager_version=${node_manager_version:-"0.4.0"}
 
     #see esg-orp project:
-    esg_orp_version=${orp_version:-"1.0.2"}
+    esg_orp_version=${orp_version:="1.0.2"}
 
     #see esgf-security project:
     esgf_security_version=${esg_saml_version:-"1.0.2"}
@@ -3698,7 +3698,7 @@ checked_get() {
 #arg1 - a filesystem path
 backup() {
     [ -z "$1" ] && echo "backup - source must be provided as arg1" && return 1
-    [ -d "$1" ] && echo "backup - must take a directory! $1 not a directory" && return 1
+    [ ! -d "$1" ] && echo "backup - must take a directory! $1 not a directory" && return 1
     local source="$(readlink -f $1)"
     echo "Backup - Creating a backup archive of ${source}"
     pushd ${source%/*} >& /dev/null

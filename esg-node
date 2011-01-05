@@ -119,7 +119,7 @@ init() {
     curl_version=${curl_version:="7.20.1"}
     git_version=${git_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"}
-    ant_version=${ant_version:-"1.8.1"}
+    ant_version=${ant_version:-"1.8.2"}
     postgress_version=${postgress_version:-"8.4.5"}
     tomcat_version=${tomcat_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"}

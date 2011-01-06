@@ -2272,12 +2272,12 @@ test_publication() {
 #to this function is "xxx-xxx"
 #
 #arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
-#arg (2) - [optional] directory on the distribution site where script is fetched from Ex: orp
+#arg (2) - directory on the distribution site where script is fetched from Ex: orp
 #usage: setup_subsystem security orp - looks for the script esg-security in the distriubtion dir orp
 setup_subsystem() {
     local subsystem=$1
     [ -z "${subsystem}" ] && echo "setup_subsystem [${subsystem}] requires argument!!" && checked_done 1
-    local server_dir=${2:-"${subsystem}"}
+    local server_dir=${2:?"Must provide the name of the distribution directory where subsystem script lives - perhaps ${subsystem}?"}
     local subsystem_install_script=${scripts_dir}/esg-${subsystem}
     
     #---
@@ -2312,8 +2312,8 @@ setup_subsystem() {
     popd >& /dev/null
 
     #source subsystem file and go!
-    shift && echo "-->>> "
-    shift && echo "-->>> "
+    shift && (($DEBUG)) && echo "-->>> "
+    [ -n "${server_dir}" ] && shift && (($DEBUG)) && echo "-->>> "
     source ${scripts_dir}/${fetch_file} && echo ":-) " && setup_${subsystem//'-'/_} $@
     checked_done $?
 }

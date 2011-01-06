@@ -1138,30 +1138,30 @@ setup_esgcet() {
     pushd ${workdir} >& /dev/null
     
     #Gives you 30 seconds to make a choice or will choose "I" by default
-    local choice
-    while [ 1 ]; do
-        read -t $((1*60)) -p "Is this an install or update of the esgcet module? $([ "${mode}" = "I" ] && echo "[I/u]" || echo "[i/U]"): " choice
-        [ -z "${choice}" ] && choice=$(echo "${mode}" | tr [a-z] [A-Z])
-        if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
-            #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
-            #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-            checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
-            (( $? > 1 )) && return 0
-            $cdat_home/bin/easy_install ${esgcet_egg_file}
-            [ $? != 0 ] && checked_done 1
-        elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
-            #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet"
-            #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet
-            checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
-            (( $? > 1 )) && return 0
-            $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file} $((force_install))
-            [ $? != 0 ] && checked_done 1
-        else
-            echo "Not a valid selection... [${choice}] try again"
-            continue
-        fi
-        break
-    done
+    #local choice
+    #while [ 1 ]; do
+    #    read -t $((1*60)) -p "Is this an install or update of the esgcet module? $([ "${mode}" = "I" ] && echo "[I/u]" || echo "[i/U]"): " choice
+    #    [ -z "${choice}" ] && choice=$(echo "${mode}" | tr [a-z] [A-Z])
+    #    if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
+    #        #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
+    #        #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
+             checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+             (( $? > 1 )) && return 0
+             $cdat_home/bin/easy_install ${esgcet_egg_file}
+             [ $? != 0 ] && checked_done 1
+    #    elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
+    #        #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet"
+    #        #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet
+    #        checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    #        (( $? > 1 )) && return 0
+    #        $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file}
+    #        [ $? != 0 ] && checked_done 1
+    #    else
+    #        echo "Not a valid selection... [${choice}] try again"
+    #        continue
+    #    fi
+    #    break
+    #done
 
     if [ "${mode}" = "I" ]; then
         local input=""
@@ -3653,13 +3653,19 @@ check_for_update() {
 #  saves total bandwidth and it also allows the updating from the
 #  network process to be cronttab-able while parsimonious with
 #  resources.  It is also very good practice to make sure that code
-#  being executed is the RIGHT code!
+#  being executed is the RIGHT code! 
+#
+#  The 3rd token is the "force" flag value 1|0.
+#  1 = do not check for update, directly go and fetch the file regardless
+#  0 = first check for update availability. (default)
+#
+#  (When using the force flag you MUST specify the first two args!!)
 #
 # NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
 #       A return value of 1 only means that the file is up-to-date and there
 #       Is no reason to fetch it.
 #
-# USAGE: checked_get [file] http://www.foo.com/file
+# USAGE: checked_get [file] http://www.foo.com/file [<1|0>]
 #
 checked_get() {
     local force_get=${3:-0}

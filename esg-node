@@ -1187,9 +1187,8 @@ setup_esgcet() {
     popd >& /dev/null
     echo
     echo
-    if [ "${mode}" = "I" ]; then
-        write_esgcet_env
-    fi
+    write_esgcet_env
+    write_esgcet_install_log
     checked_done 0
 }
 
@@ -4274,7 +4273,7 @@ main() {
                 setup_ant
                 setup_postgress
                 #TODO: no check for cdat yet :-(
-                setup_esgcet
+                setup_esgcet 1
 
                 #The arg "1" indicates an upgrade (see functions)
                 setup_tomcat 1

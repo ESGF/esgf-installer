@@ -1740,6 +1740,8 @@ setup_tds() {
     echo "*******************************"
     echo
 
+    local upgrade=${1:-0}
+
     local dosetup
     if [ -d ${tomcat_install_dir}/webapps/thredds ]; then 
         echo "Detected an existing thredds installation..."
@@ -1785,14 +1787,29 @@ setup_tds() {
     #installing the thredds web app ("manually")
     cp ${thredds_dist_file} ${tomcat_install_dir}/webapps
     pushd ${tomcat_install_dir}/webapps
-    mkdir thredds
+    [ $? != 0 ] && echo " Error: could not go to ${tomcat_install_dir}/webapps directory be sure tomcat is installed!" && checked_done 1
+
+    mkdir -p thredds
     cd thredds
+
+    #move the current web.xml file out of the way
+    local webapp_config_file=${tomcat_install_dir}/webapps/thredds/WEB-INF/web.xml
+    if ((upgrade)) && [ -e ${webapp_config_file} ]; then
+        cp -v ${webapp_config_file} ${webapp_config_file}.saved
+    fi
+    
     jar xf ../${thredds_dist_file}
     cd ..
     chown -R ${tomcat_user}  thredds*
     chgrp -R ${tomcat_group} thredds*
     rm ${thredds_dist_file}
-    popd
+    
+    if ((upgrade)) ; then 
+        local version_property="Implementation-Version"
+        local current_version=$(sed -n '/^'${version_property}':[ ]*\(.*\)/p' ${tomcat_install_dir}/webapps/thredds/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null)
+        cp -v ${webapp_config_file}.saved ${webapp_config_file} && echo "Thredds upgraded to ${current_version} [OK]" && popd >& /dev/null && return 0
+    fi
+    popd >& /dev/null
     #-------------------------------------------
 
 
@@ -3613,6 +3630,9 @@ checked_done() {
         echo "Sorry..."
         echo "This action did not complete successfully"
         echo "Please re-run this task until successful before continuing further"
+        echo ""
+        echo "Also please review the installation FAQ it may assist you"
+        echo "http://esgf.org/wiki/Cmip5DataNode/FAQ"
         echo ""
         exit 1
     fi

@@ -1424,6 +1424,8 @@ setup_tomcat() {
         fi
     fi
 
+    checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt ${esg_dist_url}/robots.txt $((force_install))
+
     start_tomcat
 
     #---

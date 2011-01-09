@@ -4173,18 +4173,20 @@ TEST_BIT=2
 DATA_BIT=4
 INDEX_BIT=8
 IDP_BIT=16
-WRITE_ENV_BIT=32
+COMPUTE_BIT=32
+WRITE_ENV_BIT=64
 
 #NOTE: remember to adjust (below) when adding new bits!!
 MIN_BIT=4
-MAX_BIT=32
-ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT))
+MAX_BIT=64
+ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT))
 #---------------
 
 show_type() {
     [ $((sel & DATA_BIT)) != 0 ] && resolved_to+="data "
     [ $((sel & INDEX_BIT)) != 0 ] && resolved_to+="index "
     [ $((sel & IDP_BIT)) != 0 ] && resolved_to+="idp "
+    [ $((sel & COMPUTE_BIT)) != 0 ] && resolved_to+="compute "
     echo "node type: [ ${resolved_to}] (${sel}) "
 }
 
@@ -4218,6 +4220,7 @@ main() {
                     [ "data"  = "${tvalue}" ] && (( (sel & DATA_BIT) == 0 )) && ((sel+=DATA_BIT)) && selection_string+="${tvalue} "
                     [ "index" = "${tvalue}" ] && (( (sel & INDEX_BIT) == 0 )) && ((sel+=INDEX_BIT)) && selection_string+="${tvalue} "
                     [ "idp"   = "${tvalue}" ] && (( (sel & IDP_BIT) == 0 )) && ((sel+=IDP_BIT)) && selection_string+="${tvalue} "
+                    [ "compute" = "${tvalue}" ] && (( (sel & COMPUTE_BIT) == 0 )) && ((sel+=COMPUTE_BIT)) && selection_string+="${tvalue} "
                     shift
                 done
                 [ -z "${selection_string}" ] && echo "Unknown Node Type: [${tvalue}], Sorry :-(" && exit 1;
@@ -4236,6 +4239,7 @@ main() {
                     [ "data"  = "${tvalue}" ] && ((sel+=DATA_BIT))  && selection_string+="${tvalue} "
                     [ "index" = "${tvalue}" ] && ((sel+=INDEX_BIT)) && selection_string+="${tvalue} "
                     [ "idp"   = "${tvalue}" ] && ((sel+=IDP_BIT))   && selection_string+="${tvalue} "
+                    [ "compute" = "${tvalue}" ] && ((sel+=COMPUTE_BIT)) && selection_string+="${tvalue} "
                     shift
                 done
                 [ -z "${selection_string}" ] && echo "Unknown Node Type: [${tvalue}], Sorry :-(" && exit 1;
@@ -4305,6 +4309,7 @@ main() {
                 [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT} ${myproxy_config_args}
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem web-fe esgf-web-fe 1
+                [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
 
                 #The arg "1" indicates an upgrade (see function)
                 setup_subsystem node-manager esgf-node-manager 1
@@ -4570,9 +4575,11 @@ main() {
     read_sel
 
     (( force_install ))  && echo "(force install is ON)"
-    (( (sel & DATA_BIT ) != 0)) &&  echo "(data node type selected)"
-    (( (sel & INDEX_BIT ) != 0)) && echo "(index node type selected)"
-    (( (sel & IDP_BIT ) != 0)) &&   echo "(idp node type selected)"
+    (( (sel & DATA_BIT ) != 0))    && echo "(data node type selected)"
+    (( (sel & INDEX_BIT ) != 0))   && echo "(index node type selected)"
+    (( (sel & IDP_BIT ) != 0))     && echo "(idp node type selected)"
+    (( (sel & COMPUTE_BIT ) != 0)) && echo "(compute node type selected)"
+
     #---------------------------------------
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
@@ -4617,6 +4624,13 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
     [ $((sel & TEST_BIT)) != 0 ]    && [ $((sel & INDEX_BIT)) != 0 ] && echo "test search subsystem" && \
         source ${scripts_dir}/esg-search >& /dev/null && test_search_services
+
+
+    #---------------------------------------
+    # Compute type install...
+    #---------------------------------------
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server $@
+
 
     #---------------------------------------
     # Publishing Test...

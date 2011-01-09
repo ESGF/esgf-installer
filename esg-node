@@ -174,7 +174,7 @@ init() {
     export CATALINA_BASE=${CATALINA_HOME}
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
-    export X509_CERT_DIR=${X509_CERT_DIR:-${HOME}/.globus/certificates-esg}
+    export X509_CERT_DIR=${X509_CERT_DIR:-${HOME}/.globus/certificates}
     export ESG_ROOT_ID=${esg_root_id}
     
     myPATH=${install_prefix}/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
@@ -4359,7 +4359,7 @@ main() {
                 [ $? != 0 ] && echo && exit 1
                 init
                 echo "Clearing out certs..."
-                local cert_dir=${HOME}/.globus/certificates-esg
+                local cert_dir=${HOME}/.globus/certificates
                 [ -e ${cert_dir} ] && rm -rf ${cert_dir}
                 exit 0
                 ;;

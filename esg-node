@@ -4058,7 +4058,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         -------------------------------
         Configuration Type Selection
         -------------------------------
-        --type | -t <data &| index &| idp $| compute> - Select type of node: 
+        --type | -t <data &| index &| idp &| compute> - Select type of node: 
                    \"data\" node, 
                    \"index\" node, 
                    \"idp\" (identity provider) node and/or 

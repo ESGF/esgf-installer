@@ -3814,7 +3814,8 @@ _verify() {
 
 self_verify() {
     _verify 'http://198.128.245.140/dist' >& /dev/null 
-    if (( $? == 3 )); then 
+    local ret=$?
+    if (( ${ret} == 3 )); then 
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
         
         local choice="x"
@@ -3831,13 +3832,14 @@ self_verify() {
         if [ "$choice" = "C" ] || [ "$choice" = "c" ] || [ -z "$choice" ]; then
             echo "Continuing..."
             echo 
-            return 0
+            return $ret
         elif [ "$choice" = "U" ] || [ "$choice" = "u" ]; then
             echo "Updating local script with script from distribution server..."
             /usr/local/bin/esg-bootstrap
+            local update_ret=$?
             echo "Please re-run this updated script $0"
             echo
-            exit 1
+            exit $update_ret
         else
             echo "Exiting..."
             echo
@@ -4047,7 +4049,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         --verify      - runs the test code to verify installation
         --write-env   - writes the necessary env vars to file ${envfile}
         --version     - indicates the version of this script
-        --check       - checks if this script is the most up-to-date posted <u|C|x> (Update|Continue|eXit)
+        --check       - checks if this script is the most up-to-date posted <u|c|X> (Update|Continue|eXit)
         --clear       - removes the file holding the enironment state of last install
         --test-pub    - performs the publication test directly (same publication called in last step of install)
         --info        - provides a brief explaination of the DataNode
@@ -4067,7 +4069,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
                          when in doubt use \"data\")
         --set-type  <data &| index &| idp &| compute> - Sets the type value to be used at next start up
         --get-type - returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)
-        (note: (s|g)et-type flags are singular command flags, meaning they are not meant to work with other flags on the same command line)
+        (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
 
         -------------------------------
         Globus Tool Management
@@ -4099,7 +4101,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         status  - status on node's services
         restart - restarts the node's services (calls stop then start :-/)
         update  - update's the node's software stack to prescribed versions
-            (notice, no \"--\" to make rc friendly also chkconfig-able ;-)
+            (notice, no \"--\" flag prefix to make rc friendly also chkconfig-able ;-)
 
         -------------------------------
         To add this script to the linux boot sequence: (as root)
@@ -4373,7 +4375,7 @@ main() {
                 ;;
             --check)
                 shift
-                self_verify $1 && echo "$0 is up-to-date"
+                self_verify $1
                 exit $?
                 ;;
             --config-db)

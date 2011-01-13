@@ -4665,7 +4665,6 @@ esg_node_finally() {
     echo "(esg_datanode: cleaning up etc...)"
     chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
     chown -R ${installer_uid}:${installer_gid} ${HOME}/.globus >& /dev/null
-    reset
     exit 0
 }
 

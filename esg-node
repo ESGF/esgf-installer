@@ -199,7 +199,7 @@ init() {
     [ $? != 0 ] || [ -z "$installer_gid" ] && echo "installer_gid is not set" && exit 1
     installer_home=${HOME}
 
-    ((VERBOSE)) && echo "${installer_uid}:${installer_gid}:${installer_home}"
+    verbose_print "${installer_uid}:${installer_gid}:${installer_home}"
 
     #--------------
     # Script vars (internal)
@@ -291,19 +291,23 @@ check_prerequisites() {
     #----------------------------------------
     echo "Checking requisites... "
 
-    ((VERBOSE)) && echo -n "Checking for gmake... "
-    gmake --version >& /dev/null
-    ((VERBOSE)) && [ $? != 0 ] && echo "[FAIL]" && return 1
-    ((VERBOSE)) && echo "[OK]"
+    verbose_print -n "Checking for gcc or g++... "
+    gcc --version >& /dev/null || gg++ --version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
+    
+    verbose_print -n "Checking for gmake... "
+    gmake --version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
 
-    ((VERBOSE)) && echo -n "Checking for X11 libs... "
-    Xorg -version >& /dev/null 
-    ((VERBOSE)) && ( [ $? != 0 ] && echo "[WARNING] X11 is needed for publisher UI..." || echo "[OK]" )
+    verbose_print -n "Checking for openssl... "
+    openssl version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
+    
+    verbose_print -n "Checking for X11 libs... "
+    Xorg -version >& /dev/null && verbose_print "[OK]" || verbose_print "[WARNING] X11 is needed for publisher UI..."
     #----------------------------------------
 
     echo
     return 0
 }
+
 
 #####
 # Curl/libcurl (support library - needed to support HTTP protocol in GIT)
@@ -3208,6 +3212,12 @@ sync_with_java_truststore() {
 # General - Utility Functions
 ############################################
 
+#Needed to reduce the number of commands when wanting to make a verbose conditional print
+verbose_print() {
+    ((VERBOSE)) && eval echo $@
+    return 0
+}
+
 #NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
 #arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
 check_shmmax() {
@@ -4278,7 +4288,7 @@ main() {
                 stop ${sel}
                 exit 0
                 ;;
-            restart)
+            restart | --restart)
                 shift
                 (( $# != 0 )) && echo "error: \"restart\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                 check_prerequisites
@@ -4287,6 +4297,13 @@ main() {
                 sleep 2
                 start ${sel}
                 exit 0
+                ;;
+            status | --status)
+                shift
+                (( $# != 0 )) && echo "error: \"status\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
+                check_prerequisites
+                status
+                exit $?
                 ;;
             update | --update | upgrade | --upgrade )
                 shift
@@ -4339,6 +4356,9 @@ main() {
                 echo "Lawrence Livermore National Laboratory"
                 echo ""
                 exit 0
+                ;;
+            --debug) 
+                DEBUG=1
                 ;;
             --verbose) 
                 VERBOSE=1
@@ -4542,10 +4562,6 @@ main() {
                 [ "${#tmpargs}" = 0 ] && printf "\n\n must follow --myproxy with proper flags! \n\n" && usage
                 myproxy_config_args=${tmpargs[@]}
                 unset tmpargs
-                ;;
-            status | --status)
-                status
-                exit $?
                 ;;
             -h | --help)
                 usage

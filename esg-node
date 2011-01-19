@@ -3724,7 +3724,7 @@ checked_get() {
         cp -v ${local_file} ${local_file}.bak
         chmod 600 ${local_file}.bak
     fi
-    echo "Fetching file from ${remote_file} -to-> $(pwd)/${local_file}"
+    echo "Fetching file from ${remote_file} -to-> ${local_file}"
     wget --no-check-certificate -O ${local_file} ${remote_file}
     [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
     diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null

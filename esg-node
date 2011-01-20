@@ -3998,11 +3998,11 @@ info() {
     printf " 
 
      The goal of this script is to automate as many tasks as possible
-     regarding the installation of the software stack that is the Data
+     regarding the installation of the software stack that is the ESGF
      Node.  A software stack is a collection of tools that work in
      concert to perform a particular task or set of tasks that are
-     semantically united.  Essentially, the gestalt is the ESG
-     DataNode. The software stack is comprised of; Tomcat, Thredds,
+     semantically united.  Essentially, the gestalt is the ESGF
+     Node. The software stack is comprised of; Tomcat, Thredds,
      CDAT & CDMS, PostgreSQL, MyProxy and RedHat/CentOS. Through the
      installation process there are different accounts that are
      created that facilitate the communication between these separate

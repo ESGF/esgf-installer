@@ -2163,16 +2163,16 @@ test_globus() {
 
     ((ret)) && checked_done $ret
 
-    if [ $((sel & IDP_BIT)) != 0 ]; then
-        echo "Testing Globus Services for Index-Node... (MyProxy server)"
-        directive="gateway"
-        mkdir -p ${workdir}
-        [ $? != 0 ] && checked_done 1
-        pushd ${workdir} >& /dev/null
-        source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@
-        ret=$?
-        popd >& /dev/null
-    fi
+    #if [ $((sel & IDP_BIT)) != 0 ]; then
+    #    echo "Testing Globus Services for Index-Node... (MyProxy server)"
+    #    directive="gateway"
+    #    mkdir -p ${workdir}
+    #    [ $? != 0 ] && checked_done 1
+    #    pushd ${workdir} >& /dev/null
+    #    source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@
+    #    ret=$?
+    #    popd >& /dev/null
+    #fi
     checked_done $ret
 }
 

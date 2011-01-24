@@ -99,7 +99,7 @@ init() {
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
     cdat_version=${cdat_version:-"6.0.alpha"}
-    esgcet_version=${esgcet_version:-"2.7.4"}
+    esgcet_version=${esgcet_version:-"2.7.6"}
     esgcet_python_version=${esgcet_python_version:-"2.6"}
     node_manager_version=${node_manager_version:-"0.4.0"}
 
@@ -1635,7 +1635,7 @@ start_tomcat() {
 
     echo "Starting Tomcat (jsvc)..."
     pushd $tomcat_install_dir >& /dev/null
-    [ $((sel & IDP_BIT)) != 0 ]  && java_opts+=" -XX:MaxPermSize=128m"
+    [ $((sel & ALL_BIT)) != 0 ]  && java_opts+=" -XX:MaxPermSize=128m"
     jsvc_launch_command="JAVA_HOME=$java_install_dir ./bin/jsvc -Djava.awt.headless=true -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ./logs/catalina.out -errfile ./logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
     echo "$jsvc_launch_command"
     JAVA_HOME=${java_install_dir} ./bin/jsvc \
@@ -3724,6 +3724,7 @@ checked_get() {
         cp -v ${local_file} ${local_file}.bak
         chmod 600 ${local_file}.bak
     fi
+    echo "Fetching file from ${remote_file} -to-> ${local_file}"
     wget --no-check-certificate -O ${local_file} ${remote_file}
     [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
     diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
@@ -3997,11 +3998,11 @@ info() {
     printf " 
 
      The goal of this script is to automate as many tasks as possible
-     regarding the installation of the software stack that is the Data
+     regarding the installation of the software stack that is the ESGF
      Node.  A software stack is a collection of tools that work in
      concert to perform a particular task or set of tasks that are
-     semantically united.  Essentially, the gestalt is the ESG
-     DataNode. The software stack is comprised of; Tomcat, Thredds,
+     semantically united.  Essentially, the gestalt is the ESGF
+     Node. The software stack is comprised of; Tomcat, Thredds,
      CDAT & CDMS, PostgreSQL, MyProxy and RedHat/CentOS. Through the
      installation process there are different accounts that are
      created that facilitate the communication between these separate

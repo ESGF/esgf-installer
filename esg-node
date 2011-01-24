@@ -2161,7 +2161,7 @@ test_globus() {
         popd >& /dev/null
     fi
 
-    ((ret)) && checked_done $ret
+    ret=1
 
     #if [ $((sel & IDP_BIT)) != 0 ]; then
     #    echo "Testing Globus Services for Index-Node... (MyProxy server)"
@@ -2173,7 +2173,7 @@ test_globus() {
     #    ret=$?
     #    popd >& /dev/null
     #fi
-    checked_done $ret
+    return 0
 }
 
 # Starts the globus services by delegating out to esg-globus script
@@ -4645,7 +4645,7 @@ main() {
 
     #(myproxy)
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}"   && test_globus  ${IDP_BIT}  ${myproxy_config_args}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}]"  && test_globus  ${IDP_BIT}  ${myproxy_config_args}
 
     #---------------------------------------
     # Security Services Installation...

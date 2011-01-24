@@ -2120,16 +2120,16 @@ setup_globus() {
 
     ret=1
 
-    if [ $((sel & IDP_BIT)) != 0 ]; then
-        echo -n "Globus Setup for Index-Node... (MyProxy server) "
-        directive="gateway"
-        pushd ${workdir} >& /dev/null
-        source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@
-        ret=$?
-        popd >& /dev/null
-        [ ${ret} = 0 ] && write_globus_env || checked_done 1
-        touch ${globus_location}/esg_${progname}_installed
-    fi
+    #if [ $((sel & IDP_BIT)) != 0 ]; then
+    #    echo -n "Globus Setup for Index-Node... (MyProxy server) "
+    #    directive="gateway"
+    #    pushd ${workdir} >& /dev/null
+    #    source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@
+    #    ret=$?
+    #    popd >& /dev/null
+    #    [ ${ret} = 0 ] && write_globus_env || checked_done 1
+    #    touch ${globus_location}/esg_${progname}_installed
+    #fi
     return 0
 }
 
@@ -4217,7 +4217,7 @@ main() {
     #echo "arg ${i} = $1"
         local unshift=0
         case $1 in
-            --install | -i)
+            --install | install)
                 ((DEBUG)) && echo "INSTALL SERVICES"
                 (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
                 ;;
@@ -4235,10 +4235,10 @@ main() {
                 until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ]; do
                     tvalue=$(echo "$1" | tr 'A-Z' 'a-z')
                     #turn on the proper bit when string is detected
-                    [ "all"   = "${tvalue}" ] && sel=$ALL_BIT && selection_string="all " && shift && break
-                    [ "data"  = "${tvalue}" ] && (( (sel & DATA_BIT) == 0 )) && ((sel+=DATA_BIT)) && selection_string+="${tvalue} "
-                    [ "index" = "${tvalue}" ] && (( (sel & INDEX_BIT) == 0 )) && ((sel+=INDEX_BIT)) && selection_string+="${tvalue} "
-                    [ "idp"   = "${tvalue}" ] && (( (sel & IDP_BIT) == 0 )) && ((sel+=IDP_BIT)) && selection_string+="${tvalue} "
+                    [ "all"   = "${tvalue}" ]   && sel=$ALL_BIT && selection_string="all " && shift && break
+                    [ "data"  = "${tvalue}" ]   && (( (sel & DATA_BIT) == 0 ))    && ((sel+=DATA_BIT))    && selection_string+="${tvalue} "
+                    [ "index" = "${tvalue}" ]   && (( (sel & INDEX_BIT) == 0 ))   && ((sel+=INDEX_BIT))   && selection_string+="${tvalue} "
+                    [ "idp"   = "${tvalue}" ]   && (( (sel & IDP_BIT) == 0 ))     && ((sel+=IDP_BIT))     && selection_string+="${tvalue} "
                     [ "compute" = "${tvalue}" ] && (( (sel & COMPUTE_BIT) == 0 )) && ((sel+=COMPUTE_BIT)) && selection_string+="${tvalue} "
                     shift
                 done
@@ -4332,7 +4332,7 @@ main() {
                 setup_tds 1
 
                 [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
-                [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT} ${myproxy_config_args}
+                [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]"  && setup_globus ${IDP_BIT}  ${myproxy_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security 1
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem web-fe esgf-web-fe 1
@@ -4639,14 +4639,19 @@ main() {
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && (( ! no_globus )) && echo "test_globus [${IDP_BIT}" && test_globus ${IDP_BIT} ${myproxy_config_args}
+    #(gridftp)
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config_args}
+
+    #(myproxy)
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT}  ${gridftp_config_args}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "test_globus [${IDP_BIT}"   && test_globus ${IDP_BIT} ${myproxy_config_args}
 
     #---------------------------------------
     # Security Services Installation...
     #---------------------------------------
     [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
-
+    
     #---------------------------------------
     # Index type install...
     #---------------------------------------

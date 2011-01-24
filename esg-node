@@ -2087,10 +2087,10 @@ test_tds() {
 # The rest of the args are the following...
 # for data-node configuration (GridFTP stuff): ["with-bdm-config"|"bdm-config-only"] see esg-globus script
 # for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert] | ["install"|"update"])
-setup_globus() {
+my_setup_globus() {
     local sel=${1:-${sel:-0}}
-    echo "setup_globus for sel type ${sel}"
-    ((sel == 0)) && echo "setup_globus: no selection set, returning (1)" && return 1
+    echo "my_setup_globus for sel type ${sel}"
+    ((sel == 0)) && echo "my_setup_globus: no selection set, returning (1)" && return 1
     shift
     
     mkdir -p ${workdir}
@@ -2151,7 +2151,7 @@ test_globus() {
 
     local directive="notype"
     if [ $((sel & DATA_BIT))  != 0 ]; then
-        echo "Testinging Globus Services for Data-Node... (GridFTP server(s)) : [$@]"
+        echo "Testing Globus Services for Data-Node... (GridFTP server(s)) : [$@]"
         directive="datanode"
         mkdir -p ${workdir}
         [ $? != 0 ] && checked_done 1
@@ -4331,8 +4331,8 @@ main() {
                 setup_tomcat 1
                 setup_tds 1
 
-                [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
-                [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]"  && setup_globus ${IDP_BIT}  ${myproxy_config_args}
+                [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
+                [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${IDP_BIT}]"  && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security 1
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
                 [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem web-fe esgf-web-fe 1
@@ -4640,12 +4640,12 @@ main() {
     # Globus Installation...
     #---------------------------------------
     #(gridftp)
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "setup_globus [${DATA_BIT}]" && setup_globus ${DATA_BIT} ${gridftp_config_args}
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config_args}
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config_args}
 
     #(myproxy)
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "setup_globus [${IDP_BIT}]" && setup_globus ${IDP_BIT}  ${gridftp_config_args}
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "test_globus [${IDP_BIT}"   && test_globus ${IDP_BIT} ${myproxy_config_args}
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}"   && test_globus  ${IDP_BIT}  ${myproxy_config_args}
 
     #---------------------------------------
     # Security Services Installation...

@@ -213,7 +213,7 @@ init() {
     esg_dist_url=http://198.128.245.140/dist
     date_format="+%Y_%m_%d_%H%M%S"
     num_backups_to_keep=${num_backups_to_keep:-7}
-    compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2"
+    compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
     certificate_extensions="pem|crt|cert|key"
     java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://www.trieuvan.com/apache/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
@@ -2395,9 +2395,9 @@ fetch_esg_certificates() {
     #globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
-    local esg_trusted_certs_file=esg_trusted_certificates.tar.gz
+    local esg_trusted_certs_file=esg_trusted_certificates.tar
     (($DEBUG)) && echo "curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | zcat | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | zcat | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then

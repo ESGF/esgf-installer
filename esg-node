@@ -2120,16 +2120,16 @@ my_setup_globus() {
 
     ret=1
 
-    #if [ $((sel & IDP_BIT)) != 0 ]; then
-    #    echo -n "Globus Setup for Index-Node... (MyProxy server) "
-    #    directive="gateway"
-    #    pushd ${workdir} >& /dev/null
-    #    source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@
-    #    ret=$?
-    #    popd >& /dev/null
-    #    [ ${ret} = 0 ] && write_globus_env || checked_done 1
-    #    touch ${globus_location}/esg_${progname}_installed
-    #fi
+    if [ $((sel & IDP_BIT)) != 0 ]; then
+        echo -n "Globus Setup for Index-Node... (MyProxy server) "
+        directive="gateway"
+        pushd ${workdir} >& /dev/null
+        source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@
+        ret=$?
+        popd >& /dev/null
+        [ ${ret} = 0 ] && write_globus_env || checked_done 1
+        touch ${globus_location}/esg_${progname}_installed
+    fi
     return 0
 }
 
@@ -2163,16 +2163,16 @@ test_globus() {
 
     ret=1
 
-    #if [ $((sel & IDP_BIT)) != 0 ]; then
-    #    echo "Testing Globus Services for Index-Node... (MyProxy server)"
-    #    directive="gateway"
-    #    mkdir -p ${workdir}
-    #    [ $? != 0 ] && checked_done 1
-    #    pushd ${workdir} >& /dev/null
-    #    source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@
-    #    ret=$?
-    #    popd >& /dev/null
-    #fi
+    if [ $((sel & IDP_BIT)) != 0 ]; then
+        echo "Testing Globus Services for Index-Node... (MyProxy server)"
+        directive="gateway"
+        mkdir -p ${workdir}
+        [ $? != 0 ] && checked_done 1
+        pushd ${workdir} >& /dev/null
+        source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@
+        ret=$?
+        popd >& /dev/null
+    fi
     return 0
 }
 
@@ -2396,7 +2396,7 @@ fetch_esg_certificates() {
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    (($DEBUG)) && echo "curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | zcat | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    (($DEBUG)) && echo "curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
     curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')

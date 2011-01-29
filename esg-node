@@ -2425,8 +2425,8 @@ rebuild_truststore() {
     local tmp_dir=/tmp/esg_scratch
     mkdir -p ${tmp_dir}
 
-    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
-    [ -n "${simpleCA_cert}" ] && echo "Integrating in local simpleCA_cert" && cp -v ${simpleCA_cert} ${globus_global_certs_dir} && echo "[OK]"
+    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    [ -n "${simpleCA_cert}" ] && echo "Integrating in local simpleCA_cert" && cp -v ${simpleCA_cert} ${globus_global_certs_dir}/${simpleCA_cert}.0 && echo "[OK]"
 
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
     for cert_file in $cert_files; do

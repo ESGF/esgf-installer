@@ -4421,6 +4421,7 @@ main() {
             --fetch-esg-certs)
                 self_verify
                 shift
+                (( $# != 0 ))  && echo "error: \"--fetch-esg-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 fetch_esg_certificates

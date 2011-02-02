@@ -4536,7 +4536,7 @@ main() {
                 #acceptable args:  "with-bdm-config" | "bdm-config-only"
                 #Gather up tokens after this switch as long as the
                 #subsequent tokens do not start with "--"
-                local tmpargs=""#array to store args for this switch.
+                local tmpargs="" #array to store args for this switch.
                 local let index=0
                 shift
                 until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ]; do

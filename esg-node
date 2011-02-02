@@ -90,9 +90,9 @@ workdir=${workdir:-~/workbench/esg}
 install_logfile=${install_logfile:-"/etc/esg.install_log"}
 #--------------
 
+[ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
 init() {
-    [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
     #--------------------------------
     # Internal data-node code versions and supporting external libraries
@@ -154,7 +154,7 @@ init() {
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
-    gridftp_config_args=${gridftp_config_args:-"with-bdm-config"}
+    gridftp_config_args=${gridftp_config_args:-""}
     
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
@@ -3938,7 +3938,6 @@ show_svc_list() {
 #Starts the esg node
 start() {
     local let sel=${1:-${sel:-0}}
-    init
     ((DEBUG)) && echo "starting services... ($1)"
     read_sel
     
@@ -3963,7 +3962,6 @@ start() {
 #Stops the esg node
 stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
-    init
     read_sel
     source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config_args}
@@ -3975,7 +3973,6 @@ stop() {
 #Displays the status of the node...
 status() {
     #TODO conditionally reflect the status of globus (gridftp) process
-    init
     read_sel
     local ret=1
     if check_postgress_process && check_tomcat_process; then
@@ -4214,6 +4211,7 @@ show_type() {
 
 main() {
 
+    init
     let sel=0
     local selection_string
     while [ -n "$1" ]; do
@@ -4250,7 +4248,6 @@ main() {
                 unshift=1
                 ;;
             --set-type)
-                init
                 let sel=0
                 local tvalue
                 shift
@@ -4313,7 +4310,6 @@ main() {
                 shift
                 (( $# != 0 )) && echo "error: \"update\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                 self_verify
-                init
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
                 
@@ -4382,14 +4378,12 @@ main() {
                 self_verify
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
-                init
                 echo "Clearing out certs..."
                 local cert_dir=${HOME}/.globus/certificates
                 [ -e ${cert_dir} ] && rm -rf ${cert_dir}
                 exit 0
                 ;;
             --test-pub)
-                init
                 shift
                 echo "test_publication" && test_publication $@
                 exit
@@ -4405,7 +4399,6 @@ main() {
                 ;;
             --config-db)
                 self_verify
-                init
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
                 source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress $@
@@ -4414,13 +4407,11 @@ main() {
             --uninstall)
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
-                init
                 uninstall
                 exit
                 ;;
             --register)
                 self_verify
-                init
                 #First arg is the server
                 #Second arg is the password (not required)
                 shift
@@ -4430,7 +4421,6 @@ main() {
             --fetch-esg-certs)
                 self_verify
                 shift
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 fetch_esg_certificates
@@ -4440,7 +4430,6 @@ main() {
                 shift
                 (( $# != 0 ))  && echo "error: \"--rebuild-truststore\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                 self_verify
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 rebuild_truststore
@@ -4449,7 +4438,6 @@ main() {
             --add-my-cert-to-truststore)
                 self_verify
                 shift
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 add_my_cert_to_truststore $@
@@ -4458,7 +4446,6 @@ main() {
             --generate-ssl-key-and-csr)
                 self_verify
                 shift
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 #arg 1  -> what we want to name the private key
@@ -4472,7 +4459,6 @@ main() {
             --install-keypair)
                 self_verify
                 shift
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 install_keypair $@
@@ -4484,7 +4470,6 @@ main() {
             --install-signed-cert)
                 self_verify
                 shift
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 install_signed_certificate $@
@@ -4495,7 +4480,6 @@ main() {
             #*************
             --export-keys-to-globus)
                 shift
-                init
                 id | grep root >& /dev/null
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 export_keystore_as_globus_hostkeys
@@ -4545,8 +4529,9 @@ main() {
                     shift
                 done
                 unshift=1
-                [ "${#tmpargs}" = 0 ] && printf "\n\n must follow --gridftp-config with proper flag(s)! \n\n" && usage
+                [ "${#tmpargs}" = 0 ] && printf "\n\n must follow --gridftp-config with proper flag! \n\t[\"with-bdm-config\" | \"bdm-config-only\"]\n" && usage
                 gridftp_config_args=${tmpargs[@]}
+                (($DEBUG))&& echo "parsed from commandline - gridftp_config_args is [${gridftp_config_args}]"
                 unset tmpargs
                 ;;
             --myproxy)
@@ -4599,7 +4584,6 @@ main() {
         exit 0
     fi    
 
-    init
     read_sel
 
     (( force_install ))  && echo "(force install is ON)"

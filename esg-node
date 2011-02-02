@@ -4408,8 +4408,7 @@ main() {
                 init
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
-                
-                configure_postgress 
+                source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress $@
                 exit $?
                 ;;
             --uninstall)
@@ -4533,7 +4532,7 @@ main() {
                 force_install=1
                 ;;
             --gridftp-config)
-                (( (sel & DATA_BIT) == 0 )) && echo "Sorry, the --gridftp flag may only be used for \"node\" type commands" && exit 1
+                (( (sel & DATA_BIT) != 0 )) && echo "Sorry, the --gridftp flag may only be used for \"data\" installation type" && exit 1
                 #acceptable args:  "with-bdm-config" | "bdm-config-only"
                 #Gather up tokens after this switch as long as the
                 #subsequent tokens do not start with "--"

@@ -2236,7 +2236,7 @@ stop_globus() {
     fi
 
     if [ $((sel & IDP_BIT)) != 0 ]; then
-        echo "Stopping Globus Services for Index-Node... (MyProxy server)"
+        echo -n "Stopping Globus Services for Index-Node... (MyProxy server) "
         directive="gateway"
         mkdir -p ${workdir}
         [ $? != 0 ] && checked_done 1

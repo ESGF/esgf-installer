@@ -4556,7 +4556,7 @@ main() {
                 usage
                 ;;
             *)
-                printf "\n ERROR: unknown switch $1 \n\n" && exit 1
+                printf "\n ERROR: unknown switch \"$1\" \n\n" && exit 1
                 ;;
         esac
         ((!unshift)) && shift

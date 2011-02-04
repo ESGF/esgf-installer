@@ -2695,6 +2695,12 @@ install_keypair() {
 }
 
 #The following helper function creates a new keystore for your tomcat installation
+# arg 1 -> keystore name
+# arg 2 -> keystore alias
+# arg 3 -> keystore password
+# arg 4 -> private key
+# arg 5 -> public cert
+# arg 6.. -> intermediate certificate(s)
 make_fresh_keystore() {
     
     #-------------
@@ -2829,7 +2835,7 @@ make_fresh_keystore() {
     #-------------
     #Make empty keystore...
     #-------------
-    echo "creating keystore..."
+    echo -n "creating keystore... "
     #create a keystore with a self-signed cert
     local dname=${dname:-"CN=$(hostname --fqdn), OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
     [ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
@@ -2840,26 +2846,28 @@ make_fresh_keystore() {
         -validity 360 \
         -dname "${dname}" \
         -noprompt
-    [ $? != 0 ] && echo "Problem with generating initial keystore... :-(" && return 1
+    [ $? != 0 ] && (echo "Problem with generating initial keystore... [FAIL]" && return 1) || echo "[OK] "
 
-    echo "clearing keystore..."
+    echo -n "clearing keystore... "
     #delete the cert
     keytool -delete -alias "${keystore_alias}" -keystore "${keystore_name}" -storepass "${store_password}"
-    [ $? != 0 ] && echo "Problem with preparing initial keystore... :-(" && return 1
+    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
     
     #-------------
     #Convert your private key into from PEM to DER format that java likes
     #-------------
-    echo "converting private key..."
+    echo -n "converting private key... "
+    ((DEBUG)) && echo -n "openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} "
     openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} 
+    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
 
     #-------------
     #Now we gather up all the other keys in the key chain...
     #-------------
     echo -n "checking that chain is valid... "
-    ((DEBUG)) && echo "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle}"
+    ((DEBUG)) && echo -n "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} "
     local chain_check=$(openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} | grep -i error)
-    if [ -z "${chain_check}" ]; then  printf "[OK]\n\n"; else  printf "[FAIL] ${chain_check}\n\n"; return 1 ; fi
+    if [ -z "${chain_check}" ]; then  printf "[OK]\n\n"; else  printf "[FAIL]\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"; return 1 ; fi
 
     
     #-------------

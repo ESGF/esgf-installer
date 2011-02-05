@@ -221,6 +221,7 @@ init() {
     curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
     git_workdir=${workdir}/git
     git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+    node_db_name=esgcet
     postgress_workdir=${workdir}/postgress
     postgress_jar=postgresql-8.3-603.jdbc3.jar
     postgress_driver=org.postgresql.Driver
@@ -3783,16 +3784,31 @@ backup() {
 }
 
 backup_db() {
+    local my_node_db_name=${1:-${node_db_name}}
     mkdir -p ${esg_backup_dir}
     pushd ${esg_backup_dir} >& /dev/null
     
-    echo -n "Backing up database: ${node_db_name} to  ${node_db_name}_backup_$(date ${date_format}).sql"
-    pg_dump -U ${postgress_user} ${node_db_name} > ${node_db_name}_backup_$(date ${date_format}).sql
+    echo -n "Backing up database: ${my_node_db_name} -to->  ${my_node_db_name}_backup_$(date ${date_format}).sql"
+    pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
     [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
-    echo -n "Backing up security schema to ${node_db_name}_security_backup_$(date ${date_format}).sql"
-    pg_dump -U ${postgress_user} --schema security ${node_db_name} > ${node_db_name}_security_backup_$(date ${date_format}).sql
+
+    echo -n "Backing up esgf schema of ${my_node_db_name} -to-> ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql"
+    pg_dump -U ${postgress_user} --schema esgf ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
     [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
     
+    #-------------
+    #keep only the last num_backups_to_keep files
+    num_backups_to_keep=${num_backups_to_keep:-7}
+    pushd ${esg_backup_dir} >& /dev/null
+    files=(`ls -t | grep ${my_node_db_name##*/}.\*.sql | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
+    if (( ${#files[@]} > 0 )); then
+        echo "Tidying up a bit..."
+        echo "${#files[@]} old backup files to remove: ${files[@]}"
+        rm -v ${files[@]}
+    fi
+    popd >& /dev/null
+    #-------------
+
     popd >& /dev/null
     return 0
 }
@@ -4112,6 +4128,12 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         (deprecated) --export-keys-to-globus  - exports keystore certificates to globus host{cert,key}.pem files.
 
         -------------------------------
+        Database Management
+        -------------------------------
+        --config-db    - provides database only configuration to support based on note type (see --get-type)
+        --backup-db    - creates a backup of node database to file
+
+        -------------------------------
         Node Life Cycle Flags:
         -------------------------------
         start   - start the node's services
@@ -4409,6 +4431,14 @@ main() {
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
                 source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
+                exit $?
+                ;;
+            --backup-db)
+                self_verify
+                check_prerequisites
+                [ $? != 0 ] && echo && exit 1
+                shift
+                backup_db $@
                 exit $?
                 ;;
             --uninstall)

@@ -1257,7 +1257,7 @@ test_esgcet() {
 # arg 1 -> The password for the current keystore
 #####
 setup_tomcat() {
-    echo -n "Checking for tomcat ${tomcat_min_version}"
+    echo -n "Checking for tomcat >= ${tomcat_min_version}"
     check_app_version ${tomcat_install_dir} ${tomcat_min_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0

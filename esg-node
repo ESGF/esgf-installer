@@ -4645,8 +4645,8 @@ main() {
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && test_esgcet
     [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${keystore_password}
     [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE)) != 0 ] && setup_tds 
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE)) != 0 ] && test_tds 
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
     [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
 
     #---------------------------------------

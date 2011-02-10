@@ -1675,7 +1675,7 @@ stop_tomcat() {
 
     pushd $tomcat_install_dir >& /dev/null
     echo 
-    echo "stop tomcat: ./bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap"
+    echo "stop tomcat: ${tomcat_install_dir}/bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap"
     echo "(please wait)"
     sleep 1
     ${tomcat_install_dir}/bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap

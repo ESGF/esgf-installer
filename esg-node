@@ -4384,7 +4384,6 @@ main() {
                 echo "Version: $version"
                 echo "Earth Systems Grid Federation (http://esgf.org)"
                 echo "ESGF Node Installation Script"
-                echo "Lawrence Livermore National Laboratory"
                 echo ""
                 exit 0
                 ;;

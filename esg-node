@@ -121,7 +121,7 @@ init() {
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.2"} ; ant_min_version=${ant_min_version:-"1.8.2"}
     postgress_version=${postgress_version:-"9.0.3"} ; postgress_min_version=${postgress_min_version:-"8.4.5"}
-    tomcat_version=${tomcat_version:-"6.0.29"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
+    tomcat_version=${tomcat_version:-"6.0.32"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_version:-"4.2.20100908.2246"}
 
     #--------------------------------
@@ -1358,6 +1358,7 @@ setup_tomcat() {
         echo "[OK]"
     else
         echo "[NOT PRESENT]"
+        stop_tomcat
         echo "Building jsvc... (JAVA_HOME=$java_install_dir)"
 
         if [ -e commons-daemon-native.tar.gz ]; then
@@ -1389,7 +1390,7 @@ setup_tomcat() {
     #----------------------------------
     if ((upgrade)) ; then
         stop_tomcat
-        echo "Upgrading tomcat installation from $(readlink -f ${last_install} | sed -ne 's/.*-\(.*\)$/\1/p') to $(readlink - f ${tomcat_install_dir} | sed -ne 's/.*-\(.*\)$/\1/p')"
+        echo "Upgrading tomcat installation from $(readlink -f ${last_install} | sed -ne 's/.*-\(.*\)$/\1/p') to $(readlink -f ${tomcat_install_dir} | sed -ne 's/.*-\(.*\)$/\1/p')"
 
         echo -n "copying webapps... "
         cp -R ${last_install}/webapps ${tomcat_install_dir}/

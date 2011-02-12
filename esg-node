@@ -72,22 +72,23 @@
 
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
-progname=esg-node
+
+progname="esg-node"
 version="1.0.1 (Stuyvesant)"
 envfile="/etc/esg.env"
+install_logfile=${install_logfile:-"/etc/esg.install_log"}
 
 #--------------
 #User Defined / Settable (public)
 #--------------
 t=${0%.*}
-logfile=${logfile:-"/var/tmp/${t##*/}.out"}
 install_prefix=${install_prefix:-"/usr/local"}
 esg_root_dir=${esg_root_dir:-"/esg"}
 esg_config_type_file=${esg_root_dir}/config/config_type
 pg_secret_file=${esg_root_dir}/config/.esg_pg_pass
 ks_secret_file=${esg_root_dir}/config/.esg_keystore_pass
 workdir=${workdir:-~/workbench/esg}
-install_logfile=${install_logfile:-"/etc/esg.install_log"}
+logfile=${logfile:-"/var/tmp/${t##*/}.out"}
 #--------------
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"

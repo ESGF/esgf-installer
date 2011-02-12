@@ -3409,10 +3409,11 @@ check_postgress_process() {
 #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
 check_tomcat_process() {
     if [ -f ${tomcat_install_dir}/conf/server.xml ]; then
-        local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | xargs | sed 's/[ ]/|/gp' | uniq)
-        local procs="$(lsof -Pni | egrep '\*:('${ports}')\s+' | awk '{print $1}' | uniq | xargs)"
+        local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')
+        local procs="$(lsof -Pni TCP:$ports | tail -n +2 | awk '{print $1}' | sort | uniq | xargs)"
         [ -z "${procs}" ] && return 1 #No process running on ports
-        if [ jsvc = "${procs}" ]; then
+        local -i found=$(( $(expr "$procs" : '.*jsvc.*') > 0))
+        if (( found )); then
             echo "Tomcat (jsvc) process is running... " && return 0
         else
             echo " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [${procs}] ?? "

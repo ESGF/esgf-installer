@@ -100,7 +100,7 @@ init() {
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
     cdat_version=${cdat_version:-"6.0.alpha"}
-    esgcet_version=${esgcet_version:-"2.7.6"}
+    esgcet_version=${esgcet_version:-"2.7.7"}
     esgcet_python_version=${esgcet_python_version:-"2.6"}
     node_manager_version=${node_manager_version:-"0.4.0"}
 

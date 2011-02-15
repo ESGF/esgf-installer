@@ -87,13 +87,13 @@ esg_root_dir=${esg_root_dir:-"/esg"}
 esg_config_type_file=${esg_root_dir}/config/config_type
 pg_secret_file=${esg_root_dir}/config/.esg_pg_pass
 ks_secret_file=${esg_root_dir}/config/.esg_keystore_pass
-workdir=${workdir:-~/workbench/esg}
 logfile=${logfile:-"/var/tmp/${t##*/}.out"}
 #--------------
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
 init() {
+    ((DEBUG)) && echo "esg-node initilizing..."
 
     #--------------------------------
     # Internal data-node code versions and supporting external libraries
@@ -193,17 +193,10 @@ init() {
     #--------------
     # ID Setting
     #--------------
-    #Yes, I could make this more cleaver and not call id twice but use
-    #a single sed expression with two capture groups and then assign
-    #them accordingly... but sadly I have to brush up on my sed'ing
-    #:-\ But this works... Basically the installer id is based on the
-    #$HOME directory of this user
 
-    installer_uid=$(id ${HOME##*/} | sed 's/.*uid=\([0-9]*\).*/\1/')
-    [ $? != 0 ] || [ -z "$installer_uid" ] && echo "installer_uid is not set" && exit 1
-    installer_gid=$(id ${HOME##*/} | sed 's/.*gid=\([0-9]*\).*/\1/')
-    [ $? != 0 ] || [ -z "$installer_gid" ] && echo "installer_gid is not set" && exit 1
-    installer_home=${HOME}
+    installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u)}}
+    installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g)}}
+    installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
 
     verbose_print "${installer_uid}:${installer_gid}:${installer_home}"
 
@@ -214,6 +207,7 @@ init() {
     esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
     esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
     esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
+    workdir=${workdir:-${installer_home}/workbench/esg}
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
     esg_dist_url=http://198.128.245.140/dist
@@ -2185,7 +2179,7 @@ test_globus() {
 
 # Starts the globus services by delegating out to esg-globus script
 # arg1 selection bit vector ($sel)
-# args* (in the context of data node ->  ["with-bdm-config"|"bdm-config-only"])
+# args* (in the context of "data" node ->  ["with-bdm-config"|"bdm-config-only"])
 start_globus() {
     local sel=${1:-${sel:-0}}
     ((sel == 0)) && echo "start_globus: no selection set, returning (1)" && return 1
@@ -3236,6 +3230,11 @@ verbose_print() {
     return 0
 }
 
+debug_print() {
+    ((DEBUG)) && eval echo $@
+    return 0
+}
+
 #NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
 #arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
 check_shmmax() {
@@ -4264,9 +4263,9 @@ main() {
                 ((DEBUG)) && echo "sel = $sel "
                 ;;
             --type | -t)
-                #TODO: look for next arg if data node or if index node set the selection bit accordingly
+                #TODO: look for next arg if "data" node or if "index" node set the selection bit accordingly
                 #This also means that I can nott use 1 for basic install will have to use 1 for prerequisite
-                #and then another bit for data node vs index node
+                #and then another bit for "data" node vs "index" node
                 local tvalue
                 shift
                 until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ]; do

@@ -4428,6 +4428,7 @@ main() {
                 self_verify
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
+                read_sel
                 source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
                 exit $?
                 ;;

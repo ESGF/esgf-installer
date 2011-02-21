@@ -106,13 +106,13 @@ hostname -s, hostname --domain and hostname --fqdn.
         [y/N] means "N" is the default, you may just hit return
         Default values appear in "[]" brackets, hitting return uses them.
 
-   There is is no default type, so it must be specified (if in doubt use "data")
+   There is no default type, so it *must* be specified (if in doubt use "data")
    % esg-node --set-type data
 
    % esg-node --install --verify
 
    With the --verify flag verification tests are run throughout the
-   installation procedure.  Also the last verification step of the
+   installation procedure.  Also, the last verification step of the
    installation will perform a test publish to the chosen gateway
    (default: ESG-PCMDI)
 
@@ -165,7 +165,7 @@ Note:
 Errant key strokes are picked up, so please be careful.
 
 As mentioned the script is in bash, so if you are so inclined, feel
-free to read it! However, do not modify the script, that would void
+free to read it. However, do NOT modify the script, that would void
 the support contract ;-).
 
 If you have any questions... contact me - Gavin (gavin@llnl.gov), or Bob

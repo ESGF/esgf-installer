@@ -1185,9 +1185,15 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
-    echo "$cdat_home/bin/esgsetup --db"
-    $cdat_home/bin/esgsetup --db
-    [ $? != 0 ] && popd && checked_done 1
+    if [ "${mode}" = "U" ]; then
+        echo "${cdat_home}/bin/esginitialize -c"
+        ${cdat_home}/bin/esginitialize -c
+        [ $? != 0 ] && popd && checked_done 1
+    else
+        echo "$cdat_home/bin/esgsetup --db"
+        $cdat_home/bin/esgsetup --db
+        [ $? != 0 ] && popd && checked_done 1
+    fi
 
     popd >& /dev/null
     echo

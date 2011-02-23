@@ -745,9 +745,9 @@ setup_postgress() {
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 
     echo
-    echo "*******************************"
-    echo "Setting up PostgreSQL... ${postgress_version}"
-    echo "*******************************"
+    echo    "*******************************"
+    echo -n "Setting up PostgreSQL... ${postgress_version}" && ((upgrade)) && (echo "(upgrade)" || echo "(install)")
+    echo    "*******************************"
     echo
 
     local default="Y"
@@ -807,9 +807,10 @@ setup_postgress() {
         && gmake \
         && gmake install \
         && cd contrib/tablefunc/ \
-        && gmake \
-        && gmake install
+        && gmake
     then
+        stop_postgress
+        gmake install
         echo "Successfully Configured and Built PostgresSQL in: ${postgress_install_dir}"
     else
         echo" ERROR: Could NOT successfully build POSTGRESS!"

@@ -1354,8 +1354,10 @@ setup_tomcat() {
     if [ $? != 0 ]; then 
         echo " WARNING: There is no tomcat user \"$tomcat_user\" present on system"
         #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        /usr/sbin/groupadd -r -f ${tomcat_group}
-        [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
+        if (id -g ${tomcat_group} >& /dev/null); then
+            /usr/sbin/groupadd -r -f ${tomcat_group}
+            [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
+        fi
         /usr/sbin/useradd -r -c"Tomcat Server Identity" -g $tomcat_group $tomcat_user
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system account user \"$tomcat_user\"" && popd && checked_done 1
     fi

@@ -116,6 +116,9 @@ init() {
     openws_version=${openws_version:-"1.3.1"}
     xmltooling_version=${xmltooling_version:-"1.2.2"}
     xsgroup_role_version=${xsgroup_role_version:-"1.0.0"}
+
+    #see esgf-idp project:
+    esgf_idp_version=${esgf_idp_version:-"1.1.0"}
     
     #--------------------------------
     # External programs' versions
@@ -4371,9 +4374,10 @@ main() {
 
                 [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${IDP_BIT}]"  && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
-                [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security 1
-                [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem search esg-search 1
-                [ $((sel & INDEX_BIT)) != 0 ] && setup_subsystem web-fe esgf-web-fe 1
+                [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
+                [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
+                [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1
+                [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
                 [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
 
                 #The arg "1" indicates an upgrade (see function)
@@ -4685,6 +4689,7 @@ main() {
     # Security Services Installation...
     #---------------------------------------
     [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
+    [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
     
     #---------------------------------------
     # Index type install...

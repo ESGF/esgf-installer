@@ -882,10 +882,14 @@ setup_postgress() {
     #Start the database 
     start_postgress
 
-    echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
-    $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-    [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
-
+    #Check to see if there is a ${postgress_user} already on the system if not, make one
+    if [ -x ${postgress_install_dir}/bin/psql ] && (( $(psql -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
+        echo "${postgress_user} exists!! :-)";
+    else
+        echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
+        $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
+        [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
+    fi
     #stop_postgress && return 1 #See trap in 'main'... that is who calls this.
     
     local fetch_file

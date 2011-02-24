@@ -2351,7 +2351,7 @@ setup_subsystem() {
     #source subsystem file and go!
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
-    source ${scripts_dir}/${fetch_file} && echo ":-) " && setup_${subsystem//'-'/_} $@
+    source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} $@
     checked_done $?
 }
 

@@ -1056,10 +1056,10 @@ setup_cdat() {
     if [ ! -d ${workdir}/cdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
         git clone ${cdat_repo}
-        [ $? != 0 ] && \
-            echo "Could not fetch from GIT repo using git protocol... trying http protocol..." && \
+        [ ! -d ${workdir}/cdat/.git ] &&
+        echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..." && \
             git clone ${cdat_repo_http}
-        [ $? != 0 ] && echo "Could not fetch from cdat's repo" && checked_done 1
+        [ ! -d ${workdir}/cdat.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
     fi
     cd cdat >& /dev/null
     git checkout ${cdat_version}

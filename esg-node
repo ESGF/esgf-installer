@@ -4635,12 +4635,12 @@ main() {
     info
 
     local doit="n"
-    echo "----------------------------------------------------------"
-    echo "Please make sure you have installed ALL the prerequisites"
-    echo "Please read the prerequisite list here:"
-    echo "http://esgf.org/wiki/Cmip5DataNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
-    echo "Before continuing make sure they are ALL present on this system!!!!!!"
-    echo "----------------------------------------------------------"
+    echo "     ----------------------------------------------------------"
+    echo "     Please make sure you have installed ALL the prerequisites"
+    echo "     Please read the prerequisite list here:"
+    echo "     http://esgf.org/wiki/Cmip5DataNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
+    echo "     Before continuing make sure they are ALL present on this system!!!!!!"
+    echo "     ----------------------------------------------------------"
     echo
     read -p "Are you ready to begin the installation? [Y/n] " doit
     if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then

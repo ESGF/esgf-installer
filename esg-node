@@ -1056,10 +1056,11 @@ setup_cdat() {
     if [ ! -d ${workdir}/cdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
         git clone ${cdat_repo}
-        [ ! -d ${workdir}/cdat/.git ] &&
-        echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..." && \
+        if [ ! -d ${workdir}/cdat/.git ]; then
+            echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
             git clone ${cdat_repo_http}
-        [ ! -d ${workdir}/cdat.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            [ ! -d ${workdir}/cdat.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+        fi
     fi
     cd cdat >& /dev/null
     git checkout ${cdat_version}
@@ -4634,6 +4635,13 @@ main() {
     info
 
     local doit="n"
+    echo "----------------------------------------------------------"
+    echo "Please make sure you have installed ALL the prerequisites"
+    echo "Please read the prerequisite list here:"
+    echo "http://esgf.org/wiki/Cmip5DataNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
+    echo "Before continuing make sure they are ALL present on this system!!!!!!"
+    echo "----------------------------------------------------------"
+    echo
     read -p "Are you ready to begin the installation? [Y/n] " doit
     if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
         exit 0

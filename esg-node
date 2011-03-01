@@ -74,7 +74,7 @@ DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
 progname="esg-node"
-version="1.0.2 (Stuyvesant)"
+version="v1.0.2 (Stuyvesant)"
 envfile="/etc/esg.env"
 install_logfile=${install_logfile:-"/etc/esg.install_log"}
 
@@ -4792,6 +4792,7 @@ main() {
     #---------------------------------------
     start ${sel}
     done_remark
+    echo "${version}" |tee ${esg_root_dir}/version
     echo 
 }
 

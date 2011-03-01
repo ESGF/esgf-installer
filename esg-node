@@ -1813,7 +1813,8 @@ setup_tds() {
     #-------------------------------------------
     #installing the thredds web app ("manually") //zoiks
     echo "Installing thredds app..."
-    cp -v ${thredds_dist_file} ${tomcat_install_dir}/webapps
+    mkdir -p ${tomcat_install_dir}/webapps
+    cp -v ${thredds_dist_file} ${tomcat_install_dir}/webapps/
     pushd ${tomcat_install_dir}/webapps
     [ $? != 0 ] && echo " Error: could not go to ${tomcat_install_dir}/webapps directory be sure tomcat is installed!" && checked_done 1
 

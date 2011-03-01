@@ -1060,7 +1060,7 @@ setup_cdat() {
         if [ ! -d ${workdir}/cdat/.git ]; then
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
             git clone ${cdat_repo_http}
-            [ ! -d ${workdir}/cdat.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            [ ! -d ${workdir}/cdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
     cd cdat >& /dev/null
@@ -1811,8 +1811,9 @@ setup_tds() {
     stop_tomcat
     
     #-------------------------------------------
-    #installing the thredds web app ("manually")
-    cp ${thredds_dist_file} ${tomcat_install_dir}/webapps
+    #installing the thredds web app ("manually") //zoiks
+    echo "Installing thredds app..."
+    cp -v ${thredds_dist_file} ${tomcat_install_dir}/webapps
     pushd ${tomcat_install_dir}/webapps
     [ $? != 0 ] && echo " Error: could not go to ${tomcat_install_dir}/webapps directory be sure tomcat is installed!" && checked_done 1
 

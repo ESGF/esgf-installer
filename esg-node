@@ -262,6 +262,7 @@ init() {
     globus_global_certs_dir=/etc/grid-security/certificates
     #NOTE: java keystore style DN...
     dname=${dname:-"OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
+    config_file=${esg_root_dir}/config/esgf.properties
 
     mkdir -p ${scripts_dir}
     [ $? != 0 ] && echo "ERROR: could not create ${scripts_dir}... required for installation" && checked_done 1
@@ -3854,6 +3855,13 @@ dedup() {
     local infile=${1:-${envfile}}
     [ ! -w "${infile}" ] && echo "WARNING: dedup() - unable to write to ${infile}" && return 1
     local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($2 in a) {a[$2];print $0}' | sort -k2,2)
+    echo "$tmp" > ${infile}
+}
+
+dedup_properties() {
+    local infile=${1:-${config_file}}
+    [ ! -w "${infile}" ] && echo "WARNING: dedup_properties() - unable to write to ${infile}" && return 1
+    local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($1 in a) {a[$1];print $0}' | sort -k1,1)
     echo "$tmp" > ${infile}
 }
 

@@ -3831,6 +3831,58 @@ backup_db() {
     return 0
 }
 
+#configures the database i.e. sets up table schema
+#based on the the node type.
+config_db() {
+    init
+    local let mysel=${1:-${sel:-4}}
+        
+    ((DEBUG)) && echo "Database configuration... (selection = ${mysel})"
+    
+    #-------
+    #IMPORTANT! The SUM of all the handled types is the real max value
+    #here! (else can't decrement down to 0 and get into an infinite loop)
+    local myMAX_BIT=$((DATA_BIT+IDP_BIT)) 
+    ((mysel > myMAX_BIT)) && echo -n "Adjusting selection to bounds... " && ((mysel=myMAX_BIT)) && echo "(selection = ${mysel})"
+    #-------
+
+    echo
+    echo "*******************************"
+    echo -n "Configuring Postgres... " && show_type
+    echo "*******************************"
+    echo
+    
+    start_postgress
+
+    #------------------------------------------------------------------------
+    #Based on the node type selection we build the appropriate database tables
+    #------------------------------------------------------------------------
+    
+    while (( (mysel >= MIN_BIT) && (mysel <= myMAX_BIT) )); do
+        
+        ((DEBUG)) && echo " mysel = ${mysel} : "
+
+        if (( (mysel & DATA_BIT) != 0 )); then
+            echo "Setting up database for DATA node type"
+            source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
+            ((mysel-=DATA_BIT))
+        elif (( (mysel & IDP_BIT) != 0 )); then
+            echo "Setting up database for IDP node type"
+            source ${scripts_dir}/esg-security >& /dev/null && configure_postgress ${sel}
+            ((mysel-=IDP_BIT))
+        fi
+        echo
+    done
+    
+    ((DEBUG)) && echo "*mysel = ${mysel}"
+    
+    popd >& /dev/null
+    echo
+    echo
+    checked_done 0
+    
+}
+
 #Replace a pattern inside the target file with the contents of the input file
 insert_file_at_pattern() {
     local target_file=$1
@@ -4378,11 +4430,12 @@ main() {
                 setup_ant
                 setup_postgress
                 #TODO: no check for cdat yet :-(
-                setup_esgcet 1
 
-                #The arg "1" indicates an upgrade (see functions)
+                #The arg "1" indicates an upgrade (see function)
+                setup_esgcet 1
                 setup_tomcat 1
                 setup_tds 1
+                setup_subsystem node-manager esgf-node-manager 1
 
                 [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${IDP_BIT}]"  && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
@@ -4391,10 +4444,6 @@ main() {
                 [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1
                 [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
                 [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
-
-                #The arg "1" indicates an upgrade (see function)
-                setup_subsystem node-manager esgf-node-manager 1
-                #setup_node 1
 
                 #---
                 start ${sel}
@@ -4456,7 +4505,7 @@ main() {
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
                 read_sel
-                source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
+                config_db
                 exit $?
                 ;;
             --backup-db)

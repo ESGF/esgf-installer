@@ -1814,7 +1814,8 @@ setup_tds() {
     #installing the thredds web app ("manually") //zoiks
     echo "Installing thredds app..."
     mkdir -p ${tomcat_install_dir}/webapps
-    cp -v ${thredds_dist_file} ${tomcat_install_dir}/webapps/
+    pwd
+    cp -v $(readlink -f ${thredds_dist_file}) ${tomcat_install_dir}/webapps/
     pushd ${tomcat_install_dir}/webapps
     [ $? != 0 ] && echo " Error: could not go to ${tomcat_install_dir}/webapps directory be sure tomcat is installed!" && checked_done 1
 
@@ -3356,15 +3357,8 @@ uninstall() {
             fi
         fi
 
-        doit="N"
-        if [ -e ${node_manager_app_home} ]; then
-            read -p "remove ESG Node web service? (${tomcat_install_dir}/webapps/${node_manager_app_context_root}) [y/N]: " doit
-            if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-                echo "removing ${tomcat_install_dir}/webapps/${node_manager_app_context_root}"
-                rm -rf ${tomcat_install_dir}/webapps/${node_manager_app_context_root}
-                [ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/${node_manager_app_context_root}"
-            fi
-        fi 
+        source ${scripts_dir}/esg-node-manager && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
+        source ${scripts_dir}/esg-security && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
 
         doit="N"
         if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -3805,6 +3799,7 @@ backup() {
 
 backup_db() {
     local my_node_db_name=${1:-${node_db_name}}
+    local my_schema_name=${2}
     mkdir -p ${esg_backup_dir}
     pushd ${esg_backup_dir} >& /dev/null
     
@@ -3812,8 +3807,9 @@ backup_db() {
     pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
     [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
 
-    echo -n "Backing up esgf schema of ${my_node_db_name} -to-> ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql"
-    pg_dump -U ${postgress_user} --schema esgf ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
+    [ -n "${my_schema_name}" ] && my_schema_name=_${my_schema_name}
+    echo -n "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
+    pg_dump -U ${postgress_user} --schema esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
     [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
     
     #-------------

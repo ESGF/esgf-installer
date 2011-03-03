@@ -3357,10 +3357,10 @@ uninstall() {
             fi
         fi
 
-        source ${scripts_dir}/esg-node-manager && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
-        source ${scripts_dir}/esg-security && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
-        source ${scripts_dir}/esg-idp && clean_idp_webapp_subsystem
-        source ${scripts_dir}/esg-orp && clean_orp_webapp_subsystem
+        source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
+        source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
+        source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
+        source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
 
         doit="N"
         if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -4517,6 +4517,7 @@ main() {
                 exit $?
                 ;;
             --uninstall)
+                self_verify
                 check_prerequisites
                 [ $? != 0 ] && echo && exit 1
                 uninstall

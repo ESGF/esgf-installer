@@ -3359,6 +3359,8 @@ uninstall() {
 
         source ${scripts_dir}/esg-node-manager && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
         source ${scripts_dir}/esg-security && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
+        source ${scripts_dir}/esg-idp && clean_idp_webapp_subsystem
+        source ${scripts_dir}/esg-orp && clean_orp_webapp_subsystem
 
         doit="N"
         if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -4434,9 +4436,9 @@ main() {
                 setup_tomcat 1
                 setup_tds 1
                 setup_subsystem node-manager esgf-node-manager 1
-
-                [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
-                [ $((sel & IDP_BIT )) != 0 ] && (( ! no_globus )) && echo "calling my_setup_globus [${IDP_BIT}]"  && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
+                [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp orp 1
+                [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
+                [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
                 [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
                 [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
                 [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1

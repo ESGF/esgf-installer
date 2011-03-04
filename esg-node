@@ -4372,7 +4372,7 @@ main() {
                 set_sel ${sel}
                 exit 0
                 ;;
-            --get-type)
+            --get-type | --show-type)
                 read_sel
                 show_type
                 exit 0

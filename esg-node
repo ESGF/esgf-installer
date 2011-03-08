@@ -3809,10 +3809,13 @@ backup_db() {
     pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
     [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
 
-    [ -n "${my_schema_name}" ] && my_schema_name=_${my_schema_name}
-    echo -n "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
-    pg_dump -U ${postgress_user} --schema esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
-    [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
+    #back up the schema specifically, if one is provided
+    if [ -n "${my_schema_name}" ]; then 
+        my_schema_name=_${my_schema_name}
+        echo -n "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
+        pg_dump -U ${postgress_user} --schema esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
+        [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
+    fi
     
     #-------------
     #keep only the last num_backups_to_keep files

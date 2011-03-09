@@ -107,7 +107,7 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.4"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.0.2"}
+    esg_orp_version=${esg_orp_version:-"1.0.3"}
 
     #see esgf-security project:
     esgf_security_version=${esgf_security_version:-"1.2.0"}

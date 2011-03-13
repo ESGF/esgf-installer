@@ -107,7 +107,7 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.4"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.0.2"}
+    esg_orp_version=${esg_orp_version:-"1.0.3"}
 
     #see esgf-security project:
     esgf_security_version=${esgf_security_version:-"1.2.0"}
@@ -4440,7 +4440,7 @@ main() {
                 setup_tomcat 1
                 setup_tds 1
                 setup_subsystem node-manager esgf-node-manager 1
-                [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp orp 1
+                [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
                 [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
                 [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
@@ -4743,7 +4743,7 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && setup_subsystem security-token-filters filters $@
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && setup_subsystem security-tokenless-filters filters $@
     #---subsystems--- 
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp orp $@
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
    #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
 

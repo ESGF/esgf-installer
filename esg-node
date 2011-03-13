@@ -4440,6 +4440,7 @@ main() {
                 setup_tomcat 1
                 setup_tds 1
                 setup_subsystem node-manager esgf-node-manager 1
+                #setup_subsystem dashboard esgf-dashboard 1
                 [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
                 [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
                 [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}

@@ -83,7 +83,7 @@ install_logfile=${install_logfile:-"/etc/esg.install_log"}
 #--------------
 t=${0%.*}
 install_prefix=${install_prefix:-"/usr/local"}
-esg_root_dir=${esg_root_dir:-"/esg"}
+esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 esg_config_type_file=${esg_root_dir}/config/config_type
 pg_secret_file=${esg_root_dir}/config/.esg_pg_pass
 ks_secret_file=${esg_root_dir}/config/.esg_keystore_pass
@@ -279,6 +279,7 @@ init() {
 
 write_paths() {
     ((show_summary_latch++))
+    echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
     echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}

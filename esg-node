@@ -4048,7 +4048,10 @@ start() {
     [ $((sel & ALL_BIT)) == 0 ] && echo "Cannot Start: No Node Type Specified! (See --help for info on the --type|-t option)  :-|" && exit 1
     
     echo "starting services... ($sel)"
-    /etc/init.d/ntpd restart
+    /etc/init.d/ntpd status
+    if [ $? != 0 ]; then 
+        /etc/init.d/ntpd start        
+    fi
     
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat

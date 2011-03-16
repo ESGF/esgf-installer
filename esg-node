@@ -3232,6 +3232,9 @@ register() {
 
 #arg 1 - The truststore file to sync with Java's
 sync_with_java_truststore() {
+    if [ ! -e ${JAVA_HOME}/jre/lib/security/jssecacerts ] && [ -e ${JAVA_HOME}/jre/lib/security/cacerts ]; then
+        cp ${JAVA_HOME}/jre/lib/security/cacerts ${JAVA_HOME}/jre/lib/security/jssecacerts
+    fi
     local java_truststore=${JAVA_HOME}/jre/lib/security/jssecacerts
     local external_truststore=${1:-$(readlink -f ${truststore_file})}
     echo -n "Sync'ing ${external_truststore} with ${java_truststore} ... "

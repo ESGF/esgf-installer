@@ -1962,7 +1962,7 @@ setup_tds() {
                 [ -n "${input}" ] && gateway_name=$(echo ${input} | tr 'a-z' 'A-Z')
                 unset input
                 read -p "Please enter the Gateway Service Root [${ESG_GATEWAY_SVC_ROOT}] " input
-                [ -n "${input}" ] && gateway_service_root=$(echo ${input} | tr 'A-Z' 'a-z')
+                [ -n "${input}" ] && gateway_service_root=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
                 unset input
                 choice="(Manual Entry)"
                 ;;
@@ -1982,7 +1982,7 @@ setup_tds() {
         fi
     done
     
-    myproxy_endpoint=${gateway_service_root%%/*}
+    myproxy_endpoint=$(echo ${gateway_service_root} | sed -n 's{\(.*://\)*\([^/]*\)/.*{\2{p')
 
     echo
     echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${gateway_name}:${gateway_service_root}"

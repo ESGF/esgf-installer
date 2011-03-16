@@ -4218,7 +4218,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         Database Management
         -------------------------------
         --config-db    - provides database only configuration to support based on note type (see --get-type)
-        --backup-db    - creates a backup of node database to file
+        --backup-db    - creates a backup of node database to file <database name <schema name>>
 
         -------------------------------
         Node Life Cycle Flags:

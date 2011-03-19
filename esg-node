@@ -4111,15 +4111,20 @@ initial_setup_questions() {
     echo 'Welcome to the ESGF Node installation program! :-)'
     echo 'First a few initial questions...'
     echo 
+    mkdir -p ${esg_config_dir}
 
+    pushd ${esg_config_dir} >& /dev/null
 
     local input
     read -p "What is the name of this node [${esgf_host}] " input
     [ -n "${input}" ] && esgf_host=${input}
     unset input
+    cat >> ${config_file} <<EOF
+security.openid.host=${esgf_host}
+EOF
     
-
-    if [ -z $(cat ${config_file} | sed -n 's/security\.admin\.password=\(.*$\)/\1/p') ]; then 
+    security_admin_password=$(cat ${config_file} | sed -n 's/security\.admin\.password=\(.*$\)/\1/p')
+    if [ -z "${security_admin_password}" ]; then 
         while [ 1 ]; do
             unset input
             echo
@@ -4138,19 +4143,19 @@ initial_setup_questions() {
         done
         unset verify_password
         unset input
-    fi
-    
-    mkdir -p ${esg_config_dir}
-    pushd ${esg_config_dir} >& /dev/null
-    cat >> ${config_file} <<EOF
+
+        cat >> ${config_file} <<EOF
 security.openid.host=${esgf_host}
 security.admin.password=${security_admin_password}
 security.openid.port=443
 EOF
+    fi
+    
     dedup_properties ${config_file}
     echo "-------------------------------------------------------"
     echo 
     echo
+    popd >& /dev/null
     return 0
 }
 

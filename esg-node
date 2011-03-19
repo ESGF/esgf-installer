@@ -2346,12 +2346,10 @@ setup_subsystem() {
     echo
     echo
     echo "-------------------------------"
-    echo -n "LOADING installer for ${subsystem}... "
+    echo "LOADING installer for ${subsystem}... "
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
-    echo "-------------------------------"
-    echo 
 
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
@@ -2366,6 +2364,8 @@ setup_subsystem() {
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
     source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} $@
     checked_done $?
+    echo "-------------------------------"
+    echo 
 }
 
 #####

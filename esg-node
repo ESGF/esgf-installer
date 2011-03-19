@@ -1866,7 +1866,7 @@ setup_tds() {
     while [ 1 ]; do 
         #default credential values...
         local username="dnode_user"
-        local password="changeme"
+        local password=${security_admin_password:-"changeme"}
         unset input
         unset addanother
         read -p "Please enter username for tomcat [${username}]:  " input

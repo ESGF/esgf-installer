@@ -1206,8 +1206,8 @@ setup_esgcet() {
         ${cdat_home}/bin/esginitialize -c
         [ $? != 0 ] && popd && checked_done 1
     else
-        echo "$cdat_home/bin/esgsetup --db"
-        $cdat_home/bin/esgsetup --db
+        echo "$cdat_home/bin/esgsetup --db $([ -n "${security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******")"
+        $cdat_home/bin/esgsetup --db $([ -n "${security_admin_password}" ] && echo "--db-admin-password ${security_admin_password} --db-user-password ${security_admin_password}")
         [ $? != 0 ] && popd && checked_done 1
     fi
 
@@ -2026,8 +2026,8 @@ setup_tds() {
     start_postgress
 
     #set in cdms setup (prerequisite)
-    echo "$cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint}"
-    $cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint}
+    echo "$cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
+    $cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
 
     chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
 

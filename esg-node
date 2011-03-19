@@ -4115,6 +4115,8 @@ initial_setup_questions() {
 
     pushd ${esg_config_dir} >& /dev/null
 
+    local h=$(cat ${config_file} | sed -n 's/security\.openid\.host=\(.*$\)/\1/p')
+    esgf_host=${h:-${esgf_host}}
     local input
     read -p "What is the name of this node [${esgf_host}] " input
     [ -n "${input}" ] && esgf_host=${input}
@@ -4124,7 +4126,7 @@ security.openid.host=${esgf_host}
 EOF
     
     security_admin_password=$(cat ${config_file} | sed -n 's/security\.admin\.password=\(.*$\)/\1/p')
-    if [ -z "${security_admin_password}" ]; then 
+    if [ -z "${security_admin_password}" ] || ((force_install)); then 
         while [ 1 ]; do
             unset input
             echo

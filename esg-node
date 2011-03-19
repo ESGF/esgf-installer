@@ -84,9 +84,10 @@ install_logfile=${install_logfile:-"/etc/esg.install_log"}
 t=${0%.*}
 install_prefix=${install_prefix:-"/usr/local"}
 esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
-esg_config_type_file=${esg_root_dir}/config/config_type
-pg_secret_file=${esg_root_dir}/config/.esg_pg_pass
-ks_secret_file=${esg_root_dir}/config/.esg_keystore_pass
+esg_config_dir=${esg_root_dir}/config
+esg_config_type_file=${esg_config_dir}/config_type
+pg_secret_file=${esg_config_dir}/.esg_pg_pass
+ks_secret_file=${esg_config_dir}/.esg_keystore_pass
 logfile=${logfile:-"/var/tmp/${t##*/}.out"}
 #--------------
 
@@ -160,6 +161,7 @@ init() {
     gateway_service_root=${ESG_GATEWAY_SVC_ROOT}
     myproxy_endpoint=${myproxy_endpoint:-${gateway_service_root%%/*}}
     myproxy_port=${myproxy_port:-7512}
+    esgf_host=$(hostname --fqdn)
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
@@ -262,7 +264,7 @@ init() {
     globus_global_certs_dir=/etc/grid-security/certificates
     #NOTE: java keystore style DN...
     dname=${dname:-"OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
-    config_file=${esg_root_dir}/config/esgf.properties
+    config_file=${esg_config_dir}/esgf.properties
 
     mkdir -p ${scripts_dir}
     [ $? != 0 ] && echo "ERROR: could not create ${scripts_dir}... required for installation" && checked_done 1
@@ -2344,7 +2346,6 @@ setup_subsystem() {
     #fi
 
     echo
-    echo
     echo "-------------------------------"
     echo "LOADING installer for ${subsystem}... "
     mkdir -p ${workdir}
@@ -2366,6 +2367,7 @@ setup_subsystem() {
     checked_done $?
     echo "-------------------------------"
     echo 
+    echo
 }
 
 #####
@@ -4103,6 +4105,54 @@ status() {
     return ${ret}
 }
 
+initial_setup_questions() {
+    echo 
+    echo "-------------------------------------------------------"
+    echo 'Welcome to the ESGF Node installation program! :-)'
+    echo 'First a few initial questions...'
+    echo 
+
+
+    local input
+    read -p "What is the name of this node [${esgf_host}] " input
+    [ -n "${input}" ] && esgf_host=${input}
+    unset input
+    
+
+    if [ -z $(cat ${config_file} | sed -n 's/security\.admin\.password=\(.*$\)/\1/p') ]; then 
+        while [ 1 ]; do
+            unset input
+            echo
+            read -s -p "What is the admin password to use for this installation (alph-numeric only): " input
+            ( [ -z "${input}" ] || [ ! -z $(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p') ] ) && echo "Invalid password... " && continue
+            [ -n "${input}" ] && security_admin_password=${input}
+            echo
+            read -s -p "Please re-enter password: " verify_password
+            if [ "${security_admin_password}" = "${verify_password}" ] ; then
+                echo
+                break
+            else
+                echo "Sorry, values did not match"
+                echo
+            fi
+        done
+        unset verify_password
+        unset input
+    fi
+    
+    mkdir -p ${esg_config_dir}
+    pushd ${esg_config_dir} >& /dev/null
+    cat >> ${config_file} <<EOF
+security.openid.host=${esgf_host}
+security.admin.password=${security_admin_password}
+security.openid.port=443
+EOF
+    dedup_properties ${config_file}
+    echo "-------------------------------------------------------"
+    echo 
+    echo
+    return 0
+}
 
 ############################################
 # Main
@@ -4727,6 +4777,8 @@ main() {
     (( (sel & INDEX_BIT ) != 0))   && echo "(index node type selected)"
     (( (sel & IDP_BIT ) != 0))     && echo "(idp node type selected)"
     (( (sel & COMPUTE_BIT ) != 0)) && echo "(compute node type selected)"
+
+    initial_setup_questions
 
     #---------------------------------------
     #Installation of basic system components.

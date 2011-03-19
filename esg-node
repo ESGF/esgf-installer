@@ -2331,23 +2331,27 @@ setup_subsystem() {
     #if indeed you have we will assume you would like to proceed with setting up the latest...
     #Otherwise we just ask you first before you pull down new code to your machine...
     #---
-    local default="Y"
-    ((force_install)) && default="Y"
-    local dosetup
-    if [ ! -e ${subsystem_install_script} ] || ((force_install)) ; then
-        echo
-        read -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup
-        [ -z "${dosetup}" ] && dosetup=${default}
-        if [ "${dosetup}" = "N" ] || [ "${dosetup}" = "n" ] || [ "${dosetup}" = "no" ]; then
-            return 0
-        fi
-    fi
+    #local default="Y"
+    #((force_install)) && default="Y"
+    #local dosetup
+    #if [ ! -e ${subsystem_install_script} ] || ((force_install)) ; then
+    #    echo
+    #    read -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup
+    #    [ -z "${dosetup}" ] && dosetup=${default}
+    #    if [ "${dosetup}" = "N" ] || [ "${dosetup}" = "n" ] || [ "${dosetup}" = "no" ]; then
+    #        return 0
+    #    fi
+    #fi
 
     echo
-    echo -n "${subsystem} setup for ESGF Node... "
+    echo
+    echo "-------------------------------"
+    echo -n "LOADING installer for ${subsystem}... "
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
+    echo "-------------------------------"
+    echo 
 
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}

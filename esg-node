@@ -4167,7 +4167,7 @@ status() {
     return ${ret}
 }
 
-initial_setup_questions() {
+initial_setup_questionnaire() {
     echo 
     echo "-------------------------------------------------------"
     echo 'Welcome to the ESGF Node installation program! :-)'
@@ -4841,7 +4841,7 @@ main() {
     (( (sel & IDP_BIT ) != 0))     && echo "(idp node type selected)"
     (( (sel & COMPUTE_BIT ) != 0)) && echo "(compute node type selected)"
 
-    initial_setup_questions
+    initial_setup_questionnaire
 
     #---------------------------------------
     #Installation of basic system components.

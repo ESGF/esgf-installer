@@ -3978,7 +3978,7 @@ get_property() {
 remove_property() {
     ((DEBUG)) && echo "removing $1's property from ${config_file}"
     local key=$(echo $1 |sed -n 's/_/\./pg')
-    sed -i '' '/'${key}'/d' ${config_file}
+    sed -i '/'${key}'/d' ${config_file}
 }
 
 #Writes variable out to property file as java-stye property

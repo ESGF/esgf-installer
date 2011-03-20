@@ -3978,8 +3978,8 @@ get_property() {
 #I am replacing all bash-style "_"s with java-style "."s
 #arg 1 - The string of the variable you wish to write as property to property file
 #arg 2 - The value to set the variable to (default: the value of arg1)
-set_property() {
-    ((DEBUG)) && echo -n "set_property(): "
+write_as_property() {
+    ((DEBUG)) && echo -n "write_as_property(): "
     local key=$(echo $1 |sed -n 's/_/\./pg')
     local value=${2:-${!1}}
     ((DEBUG)) && echo -n "[${key}] -> "
@@ -4178,8 +4178,9 @@ initial_setup_questionnaire() {
     pushd ${esg_config_dir} >& /dev/null
 
     get_property security_openid_host ${esgf_host}
-    read -p "What is the name of this node [${security_openid_host}] " input
-    [ -n "${input}" ] && set_property security_openid_host ${input}
+    read -p "What is the name of this node? [${security_openid_host}]: " input
+    [ -z "${input}" ] && input=${security_openid_host}
+    [ -n "${input}" ] && security_openid_host=${input} && write_as_property security_openid_host
     unset input
     
     get_property security_admin_password
@@ -4187,7 +4188,7 @@ initial_setup_questionnaire() {
         while [ 1 ]; do
             unset input
             echo
-            read -s -p "What is the admin password to use for this installation (alph-numeric only): " input
+            read -s -p "What is the admin password to use for this installation? (alph-numeric only): " input
             ( [ -z "${input}" ] || [ ! -z $(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p') ] ) && echo "Invalid password... " && continue
             [ -n "${input}" ] && security_admin_password=${input}
             echo
@@ -4202,12 +4203,24 @@ initial_setup_questionnaire() {
         done
         unset verify_password
         unset input
-        set_property security_openid_port 443
-        set_property security_admin_password
+        write_as_property security_openid_port 443
+        write_as_property security_admin_password
 
         #Use the same password when creating the postgress account
         pg_sys_acct_passwd=${security_admin_password}
     fi
+
+    get_property esg_root_id ${esg_root_id}
+    read -p "What is the name of your organization? [${esg_root_id}]: " input
+    [ -z "${input}" ] && input=${esg_root_id}
+    [ -n "${input}" ] && esg_root_id=${input} && write_as_property esg_root_id
+    unset input
+    
+    get_property mail_admin_address ${mail_admin_address}
+    read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
+    [ -z "${input}" ] && input=${mail_admin_address}
+    [ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
+    unset input
     
     dedup_properties ${config_file}
     echo "-------------------------------------------------------"

@@ -3974,6 +3974,13 @@ get_property() {
     return 0
 }
 
+#Removes a given variable's property representation from the property file
+remove_property() {
+    ((DEBUG)) && echo "removing $1's property from ${config_file}"
+    local key=$(echo $1 |sed -n 's/_/\./pg')
+    sed -i '' '/'${key}'/d' ${config_file}
+}
+
 #Writes variable out to property file as java-stye property
 #I am replacing all bash-style "_"s with java-style "."s
 #arg 1 - The string of the variable you wish to write as property to property file

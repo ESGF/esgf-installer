@@ -849,12 +849,14 @@ setup_postgress() {
         /usr/sbin/groupadd -r -f ${pg_sys_acct_group}
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system group: ${pg_sys_acct_group}" && popd && checked_done 1
         
-        #set the password for the system user...
-        while [ 1 ]; do 
-            local input
-            read -s -p "Create password for postgress system account: " input
-            [ -n "${input}" ] && pg_sys_acct_passwd=${input}  && unset input && break
-        done
+        if [ -z "${pg_sys_acct_passwd}" ]; then
+            #set the password for the system user...
+            while [ 1 ]; do 
+                local input
+                read -s -p "Create password for postgress system account: " input
+                [ -n "${input}" ] && pg_sys_acct_passwd=${input}  && unset input && break
+            done
+        fi
         echo "Creating account..."
         /usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
@@ -4200,8 +4202,11 @@ initial_setup_questions() {
         done
         unset verify_password
         unset input
-        set_property security_admin_password
         set_property security_openid_port 443
+        set_property security_admin_password
+
+        #Use the same password when creating the postgress account
+        pg_sys_acct_passwd=${security_admin_password}
     fi
     
     dedup_properties ${config_file}

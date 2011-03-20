@@ -3930,6 +3930,66 @@ dedup_properties() {
     echo "$tmp" > ${infile}
 }
 
+DEBUG=${DEBUG:=1}
+config_file="esgf.properties"
+
+#Load properties from a java-style property file
+#providing them as script variables in this context
+#arg 1 - optional property file (default is ${config_file})
+load_properties() {
+    ((DEBUG)) && echo "load properties(): "
+    local property_file=${1:-${config_file}}
+    [ ! -r "${property_file}" ] && return 1
+    IFS="="
+    local count=0
+    while read key value; do
+        local key=$(echo $key |sed -n 's/\./_/pg')
+        [ -z "${key}" ] && continue
+        ((DEBUG)) && echo -n "loading... "
+        ((DEBUG)) && echo -n "[${key}] -> "
+        ((DEBUG)) && echo "[${value}]"
+        eval "${key}=${value}"
+        ((count++))
+    done < ${property_file}
+    echo "Loaded (imported) ${count} properties from ${property_file}"
+    unset IFS
+    return 0
+}
+
+#Gets a single property from a string arg and turns it into a shell var
+#arg 1 - the string that you wish to get the property of (and make a variable)
+#arg 2 - optional default value to set
+get_property() {
+    ((DEBUG)) && echo -n "get_property(): "
+    local in_key=$1
+    ((DEBUG)) && echo -n "[${in_key}] -> "
+    local default=$2
+    local prop_key=$(echo ${in_key} |sed -n 's/_/\./pg')
+    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
+    [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
+    ((DEBUG)) && echo "[${value##* }]"
+    eval "${in_key}=${value##* }"
+    return 0
+}
+
+#Writes variable out to property file as java-stye property
+#I am replacing all bash-style "_"s with java-style "."s
+#arg 1 - The string of the variable you wish to write as property to property file
+#arg 2 - The value to set the variable to (default: the value of arg1)
+set_property() {
+    ((DEBUG)) && echo -n "set_property(): "
+    local key=$(echo $1 |sed -n 's/_/\./pg')
+    local value=${2:-${!1}}
+    ((DEBUG)) && echo -n "[${key}] -> "
+    ((DEBUG)) && echo "[${value}]"
+    [ -z "${value}" ] && return 1
+    cat >> ${config_file} <<EOF
+${key}=${value}
+EOF
+    dedup_properties
+    return 0
+}
+
 #"private" function
 _verify() {
     echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
@@ -4115,18 +4175,13 @@ initial_setup_questions() {
 
     pushd ${esg_config_dir} >& /dev/null
 
-    local h=$(cat ${config_file} | sed -n 's/security\.openid\.host=\(.*$\)/\1/p')
-    esgf_host=${h:-${esgf_host}}
-    local input
-    read -p "What is the name of this node [${esgf_host}] " input
-    [ -n "${input}" ] && esgf_host=${input}
+    get_property security_openid_host ${esgf_host}
+    read -p "What is the name of this node [${security_openid_host}] " input
+    [ -n "${input}" ] && set_property security_openid_host ${input}
     unset input
-    cat >> ${config_file} <<EOF
-security.openid.host=${esgf_host}
-EOF
     
-    security_admin_password=$(cat ${config_file} | sed -n 's/security\.admin\.password=\(.*$\)/\1/p')
-    if [ -z "${security_admin_password}" ] || ((force_install)); then 
+    get_property security_admin_password
+    if [ -z "${security_admin_password}" ] || ((force_install)); then
         while [ 1 ]; do
             unset input
             echo
@@ -4145,12 +4200,8 @@ EOF
         done
         unset verify_password
         unset input
-
-        cat >> ${config_file} <<EOF
-security.openid.host=${esgf_host}
-security.admin.password=${security_admin_password}
-security.openid.port=443
-EOF
+        set_property security_admin_password
+        set_property security_openid_port 443
     fi
     
     dedup_properties ${config_file}

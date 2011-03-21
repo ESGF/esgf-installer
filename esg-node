@@ -76,19 +76,19 @@ VERBOSE=${VERBOSE:-0}
 progname="esg-node"
 version="v1.0.2 (Stuyvesant)"
 envfile="/etc/esg.env"
-install_logfile=${install_logfile:-"/etc/esg.install_log"}
 
 #--------------
 #User Defined / Settable (public)
 #--------------
-t=${0%.*}
+_t=${0%.*}
 install_prefix=${install_prefix:-"/usr/local"}
 esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type
 pg_secret_file=${esg_config_dir}/.esg_pg_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
-logfile=${logfile:-"/tmp/${t##*/}.out"}
+install_logfile=${install_logfile:-"/etc/esg.install_log"}
+logfile=${logfile:-"/tmp/${_t##*/}.out"}
 #--------------
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
@@ -4967,7 +4967,7 @@ esg_node_finally() {
 #Set system traps
 trap esg_node_finally INT TERM
 
-OUTPUT_PIPE=/tmp/${t##*/}.pipe
+OUTPUT_PIPE=/tmp/${_t##*/}.pipe
 [ ! -e $OUTPUT_PIPE ] && mkfifo $OUTPUT_PIPE
 [ -e $logfile ] && rm $logfile
  

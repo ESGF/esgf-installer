@@ -88,7 +88,7 @@ esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type
 pg_secret_file=${esg_config_dir}/.esg_pg_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
-logfile=${logfile:-"/var/tmp/${t##*/}.out"}
+logfile=${logfile:-"/tmp/${t##*/}.out"}
 #--------------
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
@@ -4951,20 +4951,34 @@ main() {
     done_remark
     echo "${version}" |tee ${esg_root_dir}/version
     echo 
+    esg_node_finally
 }
 
 esg_node_finally() {
     echo "(esg_datanode: cleaning up etc...)"
     chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
     chown -R ${installer_uid}:${installer_gid} ${HOME}/.globus >& /dev/null
+    exec 1>&3 3>&- 2>&4 4>&-
+    wait $tpid
+    rm $OUTPUT_PIPE
     exit 0
 }
 
 #Set system traps
 trap esg_node_finally INT TERM
 
-[ -w "${logfile}" ] && echo "start time: `date`" >> ${logfile}
+OUTPUT_PIPE=/tmp/${t##*/}.pipe
+[ ! -e $OUTPUT_PIPE ] && mkfifo $OUTPUT_PIPE
+[ -e $logfile ] && rm $logfile
+ 
+exec 3>&1 4>&2
+tee $logfile < $OUTPUT_PIPE >&3 &
+tpid=$!
+exec > $OUTPUT_PIPE 2>&1
+## initialization done!
+
 main $@
+
+#clear system traps
 trap - INT TERM
-esg_node_finally
-[ -w "${logfile}" ] && echo "end time: `date`" >> ${logfile}
+

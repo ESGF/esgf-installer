@@ -3769,7 +3769,7 @@ checked_get() {
         chmod 600 ${local_file}.bak
     fi
     echo "Fetching file from ${remote_file} -to-> ${local_file}"
-    wget --no-check-certificate -O ${local_file} ${remote_file}
+    wget --no-check-certificate --progress=bar:force -O ${local_file} ${remote_file}
     [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
     diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && echo " WARNING: Could not verify file! ${local_file}" && return 3

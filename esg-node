@@ -277,6 +277,9 @@ init() {
     [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
 
     [ -w "${envfile}" ] && write_paths
+
+    write_as_property tomcat_install_dir
+    return 0
 }
 
 write_paths() {
@@ -2076,6 +2079,8 @@ write_tds_env() {
 
 write_tds_install_log() {
     echo "$(date ${date_format}) webapp:thredds=${tds_version} ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}" >> ${install_logfile}
+    write_as_property thredds_endpoint "http://${esgf_host}/${thredds_dist_file%.*}"
+    write_as_property thredds_app_home ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}
     dedup ${install_logfile}
     return 0
 }
@@ -4184,10 +4189,10 @@ initial_setup_questionnaire() {
 
     pushd ${esg_config_dir} >& /dev/null
 
-    get_property security_openid_host ${esgf_host}
-    read -p "What is the name of this node? [${security_openid_host}]: " input
-    [ -z "${input}" ] && input=${security_openid_host}
-    [ -n "${input}" ] && security_openid_host=${input} && write_as_property security_openid_host
+    get_property esgf_host ${esgf_host}
+    read -p "What is the name of this node? [${esgf_host}]: " input
+    [ -z "${input}" ] && input=${esgf_host}
+    [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host
     unset input
     
     get_property security_admin_password
@@ -4210,7 +4215,8 @@ initial_setup_questionnaire() {
         done
         unset verify_password
         unset input
-        write_as_property security_openid_port 443
+        write_as_property esgf_http_port 80
+        write_as_property esgf_http_secure_port 443
         write_as_property security_admin_password
 
         #Use the same password when creating the postgress account

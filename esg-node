@@ -3979,6 +3979,26 @@ get_property() {
     return 0
 }
 
+#Gets a single property from the arg string and turns the alias into a
+#shell var assigned to the value fetched.
+#arg 1 - the string that you wish to get the property of (and make a variable)
+#arg 2 - the alias string value of the variable you wish to create and assign
+#arg 3 - the optional default value if no value is found for arg 1
+get_property_as() {
+    ((DEBUG)) && echo -n "get_property_as(): "
+    local in_key=$1
+    ((DEBUG)) && echo -n "[${in_key}] -> "
+    local alias=$2
+    ((DEBUG)) && echo -n "[${alias}] -> "
+    local default=$3
+    local prop_key=$(echo ${in_key} |sed -n 's/_/\./pg')
+    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
+    [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
+    ((DEBUG)) && echo "[${value##* }]"
+    eval "${alias}=${value##* }"
+    return 0
+}
+
 #Removes a given variable's property representation from the property file
 remove_property() {
     ((DEBUG)) && echo "removing $1's property from ${config_file}"

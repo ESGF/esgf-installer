@@ -4656,6 +4656,7 @@ main() {
                 ;;
             -v | --version)
                 echo "Version: $version"
+                echo "Release: $release"
                 echo "Earth Systems Grid Federation (http://esgf.org)"
                 echo "ESGF Node Installation Script"
                 echo ""

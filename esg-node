@@ -4236,7 +4236,7 @@ initial_setup_questionnaire() {
         unset verify_password
         unset input
         write_as_property esgf_http_port 80
-        write_as_property esgf_http_secure_port 443
+        write_as_property esgf_https_port 443
         write_as_property security_admin_password
 
         #Use the same password when creating the postgress account

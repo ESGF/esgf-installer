@@ -1606,8 +1606,12 @@ configure_tomcat() {
         local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
         sleep 1
         generate_ssl_key_and_csr ${tomcat_conf_dir}/hostkey.pem ${tomcat_conf_dir}/$(hostname --fqdn)-esg-node.csr ${dn}
-        [ $? != 0 ] && echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
-
+        if [ $? != 0 ]; then 
+            echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
+        else
+            write_as_property node_dn ${dn}
+        fi
+        
         chown -R ${installer_uid}:${installer_gid} $(hostname --fqdn)-esg-node.csr
     fi
     

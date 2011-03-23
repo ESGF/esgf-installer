@@ -74,7 +74,8 @@ DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
 progname="esg-node"
-version="v1.0.2 (Stuyvesant)"
+version="v1.0.2"
+release="Stuyvesant"
 envfile="/etc/esg.env"
 
 #--------------
@@ -96,6 +97,9 @@ logfile=${logfile:-"/tmp/${_t##*/}.out"}
 init() {
     debug_print "esg-node initilizing..."
 
+    write_as_property version
+    write_as_property release
+    
     #--------------------------------
     # Internal data-node code versions and supporting external libraries
     #--------------------------------

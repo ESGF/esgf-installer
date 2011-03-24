@@ -3980,6 +3980,7 @@ get_property() {
     ((DEBUG)) && echo -n "[${in_key}] -> "
     local default=$2
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
+    dedup_properties ${config_file}
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
     [ -z "${value}" ] && [ -n "${default}" ] && value="${default}"
     ((DEBUG)) && echo "[${value}]"
@@ -4000,6 +4001,7 @@ get_property_as() {
     ((DEBUG)) && echo -n "[${alias}] -> "
     local default=$3
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
+    dedup_properties ${config_file}
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
     [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
     ((DEBUG)) && echo "[${value}]"
@@ -4211,16 +4213,15 @@ initial_setup_questionnaire() {
     echo 
     echo "-------------------------------------------------------"
     echo 'Welcome to the ESGF Node installation program! :-)'
-    echo 'First a few initial questions...'
     echo 
     mkdir -p ${esg_config_dir}
 
     pushd ${esg_config_dir} >& /dev/null
     
+    get_property esgf_host ${esgf_host}
     if [ -z "${esgf_host}" ] || ((force_install)); then
         while [ 1 ]; do
             unset input
-            get_property esgf_host ${esgf_host}
             read -p "What is the name of this node? [${esgf_host}]: " input
             [ -z "${input}" ] && [ -n "${esgf_host}" ] && input=${esgf_host} && break
             [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
@@ -4257,11 +4258,11 @@ initial_setup_questionnaire() {
 
     unset input
     
+    get_property esg_root_id ${esg_root_id}
     if [ -z "${esg_root_id}" ] || ((force_install)); then
         while [ 1 ]; do
             unset input
-            get_property esg_root_id ${esg_root_id}
-            read -p "What is the name of your organization? [${esg_root_id}]: " input
+                read -p "What is the name of your organization? [${esg_root_id}]: " input
             [ -z "${input}" ] && [ -n "${esg_root_id}" ] && input=${esg_root_id} && break
             [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
         done
@@ -4269,10 +4270,10 @@ initial_setup_questionnaire() {
 
     unset input
     
+    get_property node_short_name ${node_short_name}
     if [ -z "${node_short_name}" ] || ((force_install)); then
         while [ 1 ]; do 
             unset input
-            get_property node_short_name ${node_short_name}
             read -p "What is the (short) name for this node? [${node_short_name}]: " input
             [ -z "${input}" ] && [ -n "${node_short_name}" ] && input=${node_short_name} && break
             [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
@@ -4281,28 +4282,30 @@ initial_setup_questionnaire() {
 
     unset input
 
+    get_property node_long_name ${node_long_name}
     if [ -z "${node_long_name}" ] || ((force_install)); then
         unset input
-        get_property node_long_name ${node_long_name}
         read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
-        [ -n "${input}" ] && node_long_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_long_name && break
+        [ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name && break
     fi
 
+    get_property node_namespace
     if [ -z "${node_namespace}" ] || ((force_install)); then
+        #local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
+        #default_ns=${default_ns%.*}
+        default_ns="org.esgf"
         while [ 1 ]; do
             unset input
-            local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
-            get_property node_namespace ${default_ns%.*}
-            read -p "What is the namespace to use for this node? (optional) [${node_namespace}]: " input
-            [ -z "${input}" ] && [ -n "${node_namespace}" ] && input=${node_name_space} && break
+            read -p "What is the namespace to use for this node? (optional) [${default_ns}]: " input
+            [ -z "${input}" ] && node_namespace=${default_ns} && input=${node_name_space} && break
             [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
         done
     fi
     
     unset input
 
+    get_property mail_admin_address ${mail_admin_address}
     if [ -z "${mail_admin_address}" ] || ((force_install)); then
-        get_property mail_admin_address ${mail_admin_address}
         read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
         [ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
         [ -z "${mail_admin_address}" ] && echo " (The notification system will not be enabled without an email address)"

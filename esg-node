@@ -97,9 +97,6 @@ logfile=${logfile:-"/tmp/${_t##*/}.out"}
 init() {
     debug_print "esg-node initilizing..."
 
-    write_as_property version
-    write_as_property release
-    
     #--------------------------------
     # Internal data-node code versions and supporting external libraries
     #--------------------------------
@@ -1514,6 +1511,8 @@ write_tomcat_env() {
 write_tomcat_install_log() {
     echo "$(date ${date_format}) tomcat=${tomcat_version} $(readlink -f ${tomcat_install_dir})" >> ${install_logfile}
     dedup ${install_logfile}
+    write_as_property esgf_http_port 80
+    write_as_property esgf_https_port 443
     return 0
 }
 
@@ -4217,14 +4216,18 @@ initial_setup_questionnaire() {
 
     pushd ${esg_config_dir} >& /dev/null
     
-    while [ -z "${esgf_host}" ]; do 
-        unset input
-        get_property esgf_host ${esgf_host}
-        read -p "What is the name of this node? [${esgf_host}]: " input
-        [ -z "${input}" ] && input=${esgf_host}
-        [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
-    done
+    if [ -z "${esgf_host}" ] || ((force_install)); then
+        while [ 1 ]; do
+            unset input
+            get_property esgf_host ${esgf_host}
+            read -p "What is the name of this node? [${esgf_host}]: " input
+            [ -z "${input}" ] && [ -n "${esgf_host}" ] && break
+            [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
+        done
+    fi
     
+    unset input
+
     get_property security_admin_password
     if [ -z "${security_admin_password}" ] || ((force_install)); then
         while [ 1 ]; do
@@ -4245,53 +4248,65 @@ initial_setup_questionnaire() {
         done
         unset verify_password
         unset input
-        write_as_property esgf_http_port 80
-        write_as_property esgf_https_port 443
         write_as_property security_admin_password
 
         #Use the same password when creating the postgress account
         pg_sys_acct_passwd=${security_admin_password}
     fi
 
+    unset input
     
-    while [ -z "${esg_root_id}" ]; do
-        unset input
-        get_property esg_root_id ${esg_root_id}
-        read -p "What is the name of your organization? [${esg_root_id}]: " input
-        [ -z "${input}" ] && input=${esg_root_id}
-        [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
-    done
-
-    while [ -z "${node_short_name}" ]; do 
-        unset input
-        get_property node_short_name ${node_short_name}
-        read -p "What is the (short) name for this node? [${node_short_name}]: " input
-        [ -z "${input}" ] && input=${node_short_name}
-        [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
-    done
-    
+    if [ -z "${esg_root_id}" ] || ((force_install)); then
+        while [ 1 ]; do
+            unset input
+            get_property esg_root_id ${esg_root_id}
+            read -p "What is the name of your organization? [${esg_root_id}]: " input
+            [ -z "${input}" ] && [ -n "${esg_root_id}" ] && break
+            [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
+        done
+    fi
 
     unset input
-    get_property node_long_name ${node_long_name}
-    read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
-    [ -z "${input}" ] && input=${node_long_name}
-    [ -n "${input}" ] && node_long_name=${input} && write_as_property node_long_name
-
-    while [ -z "${node_namespace}" ]; do
-        unset input
-        local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
-        get_property node_namespace $()
-        read -p "What is the namespace to use for this node? (optional) [${default_ns%.*}]: " input
-        [ -z "${input}" ] && input=${default_ns%.*}
-        [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
-    done
+    
+    if [ -z "${node_short_name}" ] || ((force_install)); then
+        while [ 1 ]; do 
+            unset input
+            get_property node_short_name ${node_short_name}
+            read -p "What is the (short) name for this node? [${node_short_name}]: " input
+            [ -z "${input}" ] && [ -n "${node_short_name}" ] && break
+            [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
+        done
+    fi
 
     unset input
-    get_property mail_admin_address ${mail_admin_address}
-    read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
-    [ -z "${input}" ] && input=${mail_admin_address}
-    [ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
-    [ -z "${mail_admin_address}" ] && echo " (The notification system will not be enabled without an email address)"
+
+    if [ -z "${node_long_name}" ] || ((force_install)); then
+        unset input
+        get_property node_long_name ${node_long_name}
+        read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
+        [ -n "${input}" ] && node_long_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_long_name && break
+    fi
+
+    if [ -z "${node_namespace}" ] || ((force_install)); then
+        while [ 1 ]; do
+            unset input
+            local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
+            get_property node_namespace ${default_ns%.*}
+            read -p "What is the namespace to use for this node? (optional) [${node_namespace}]: " input
+            [ -z "${input}" ] && [ -n "${node_namespace}" ] && break
+            [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
+        done
+    fi
+    
+    unset input
+
+    if [ -z "${mail_admin_address}" ] || ((force_install)); then
+        get_property mail_admin_address ${mail_admin_address}
+        read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
+        [ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
+        [ -z "${mail_admin_address}" ] && echo " (The notification system will not be enabled without an email address)"
+    fi
+
     unset input
     
     dedup_properties ${config_file}
@@ -5017,6 +5032,9 @@ main() {
     done_remark
     echo "${version}" |tee ${esg_root_dir}/version
     echo 
+    write_as_property version
+    write_as_property release
+    echo
     esg_node_finally
 }
 

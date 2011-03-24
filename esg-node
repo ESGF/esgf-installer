@@ -4276,7 +4276,16 @@ initial_setup_questionnaire() {
     read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
     [ -z "${input}" ] && input=${node_long_name}
     [ -n "${input}" ] && node_long_name=${input} && write_as_property node_long_name
-    
+
+    while [ -z "${node_namespace}" ]; do
+        unset input
+        local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
+        get_property node_namespace $()
+        read -p "What is the namespace to use for this node? (optional) [${default_ns%.*}]: " input
+        [ -z "${input}" ] && input=${default_ns%.*}
+        [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
+    done
+
     unset input
     get_property mail_admin_address ${mail_admin_address}
     read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input

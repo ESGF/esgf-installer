@@ -3981,7 +3981,7 @@ get_property() {
     local default=$2
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
-    [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
+    [ -z "${value}" ] && [ -n "${default}" ] && value="${default}"
     ((DEBUG)) && echo "[${value}]"
     eval "${in_key}=\"${value}\""
     return 0
@@ -4222,7 +4222,7 @@ initial_setup_questionnaire() {
             unset input
             get_property esgf_host ${esgf_host}
             read -p "What is the name of this node? [${esgf_host}]: " input
-            [ -z "${input}" ] && [ -n "${esgf_host}" ] && break
+            [ -z "${input}" ] && [ -n "${esgf_host}" ] && input=${esgf_host} && break
             [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
         done
     fi
@@ -4262,7 +4262,7 @@ initial_setup_questionnaire() {
             unset input
             get_property esg_root_id ${esg_root_id}
             read -p "What is the name of your organization? [${esg_root_id}]: " input
-            [ -z "${input}" ] && [ -n "${esg_root_id}" ] && break
+            [ -z "${input}" ] && [ -n "${esg_root_id}" ] && input=${esg_root_id} && break
             [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
         done
     fi
@@ -4274,7 +4274,7 @@ initial_setup_questionnaire() {
             unset input
             get_property node_short_name ${node_short_name}
             read -p "What is the (short) name for this node? [${node_short_name}]: " input
-            [ -z "${input}" ] && [ -n "${node_short_name}" ] && break
+            [ -z "${input}" ] && [ -n "${node_short_name}" ] && input=${node_short_name} && break
             [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
         done
     fi
@@ -4294,7 +4294,7 @@ initial_setup_questionnaire() {
             local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
             get_property node_namespace ${default_ns%.*}
             read -p "What is the namespace to use for this node? (optional) [${node_namespace}]: " input
-            [ -z "${input}" ] && [ -n "${node_namespace}" ] && break
+            [ -z "${input}" ] && [ -n "${node_namespace}" ] && input=${node_name_space} && break
             [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
         done
     fi
@@ -4321,7 +4321,7 @@ initial_setup_questionnaire() {
 ############################################
 # Main
 ############################################
-info() {
+esgf_node_info() {
 
     printf " 
 
@@ -4920,7 +4920,7 @@ main() {
     echo "-----------------------------------"
     echo 
 
-    info
+    esgf_node_info
 
     local doit="n"
     echo "     ----------------------------------------------------------"

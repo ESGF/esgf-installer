@@ -3954,6 +3954,7 @@ load_properties() {
     ((DEBUG)) && echo "load properties(): "
     local property_file=${1:-${config_file}}
     [ ! -r "${property_file}" ] && return 1
+    dedup_properties ${property_file}
     IFS="="
     local count=0
     while read key value; do
@@ -3979,10 +3980,11 @@ get_property() {
     ((DEBUG)) && echo -n "[${in_key}] -> "
     local default=$2
     local prop_key=$(echo ${in_key} |sed -n 's/_/\./pg')
-    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
+    dedup_properties ${config_file}
+    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p')
     [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
-    ((DEBUG)) && echo "[${value##* }]"
-    eval "${in_key}=${value##* }"
+    ((DEBUG)) && echo "[${value}]"
+    eval "${in_key}=${value}"
     return 0
 }
 
@@ -3999,10 +4001,11 @@ get_property_as() {
     ((DEBUG)) && echo -n "[${alias}] -> "
     local default=$3
     local prop_key=$(echo ${in_key} |sed -n 's/_/\./pg')
-    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
+    dedup_properties ${config_file}
+    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p')
     [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
-    ((DEBUG)) && echo "[${value##* }]"
-    eval "${alias}=${value##* }"
+    ((DEBUG)) && echo "[${value}]"
+    eval "${alias}=${value}"
     return 0
 }
 

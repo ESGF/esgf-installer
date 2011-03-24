@@ -4216,14 +4216,14 @@ initial_setup_questionnaire() {
     mkdir -p ${esg_config_dir}
 
     pushd ${esg_config_dir} >& /dev/null
-
-    do {
+    
+    while [ -z "${esgf_host}" ]; do 
         unset input
         get_property esgf_host ${esgf_host}
         read -p "What is the name of this node? [${esgf_host}]: " input
         [ -z "${input}" ] && input=${esgf_host}
-        [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host
-    } while [ -z "${esgf_host}" ];
+        [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
+    done
     
     get_property security_admin_password
     if [ -z "${security_admin_password}" ] || ((force_install)); then
@@ -4254,21 +4254,21 @@ initial_setup_questionnaire() {
     fi
 
     
-    do {
+    while [ -z "${esg_root_id}" ]; do
         unset input
         get_property esg_root_id ${esg_root_id}
         read -p "What is the name of your organization? [${esg_root_id}]: " input
         [ -z "${input}" ] && input=${esg_root_id}
-        [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id
-    } while [ -z "${esg_root_id}" ];
+        [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
+    done
 
-    do {
+    while [ -z "${node_short_name}" ]; do 
         unset input
         get_property node_short_name ${node_short_name}
         read -p "What is the (short) name for this node? [${node_short_name}]: " input
         [ -z "${input}" ] && input=${node_short_name}
-        [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name
-    } while [ -z "${node_short_name}" ];
+        [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
+    done
     
 
     unset input

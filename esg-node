@@ -4572,7 +4572,7 @@ main() {
                 #and then another bit for "data" node vs "index" node
                 local tvalue
                 shift
-                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ]; do
+                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
                     tvalue=$(echo "$1" | tr 'A-Z' 'a-z')
                     #turn on the proper bit when string is detected
                     [ "all"   = "${tvalue}" ]   && sel=$ALL_BIT && selection_string="all " && shift && break
@@ -4837,7 +4837,7 @@ main() {
             --prefix)
                 local pvalue
                 shift
-                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ]; do
+                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
                     pvalue="$1"
                     debug_print "prefix value is: $1"
                     shift
@@ -4849,7 +4849,7 @@ main() {
             --workdir)
                 local wvalue
                 shift
-                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ]  || [ "$1" = "update" ] || [ "$1" = "upgrade" ]; do
+                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ]  || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
                     wvalue="$1"
                     debug_print "workdir value is: $1"
                     shift
@@ -4872,7 +4872,7 @@ main() {
                 local tmpargs="" #array to store args for this switch.
                 local let index=0
                 shift
-                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ]; do
+                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
                     tmpargs[((index++))]=$1
                     debug_print "added $1 to args list: ${tmpargs[@]}"
                     shift
@@ -4891,7 +4891,7 @@ main() {
                 local tmpargs=""#array to store args for this switch.
                 local let index=0
                 shift
-                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ]; do
+                until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
                     tmpargs[((index++))]=$1
                     debug_print "added $1 to args list: ${tmpargs[@]}"
                     shift

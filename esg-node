@@ -102,7 +102,7 @@ init() {
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
     cdat_version=${cdat_version:-"6.0.alpha"}
-    esgcet_version=${esgcet_version:-"2.7.8"}
+    esgcet_version=${esgcet_version:-"2.7.9"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.4.3"}
@@ -3828,6 +3828,8 @@ backup_db() {
     local my_schema_name=${2}
     mkdir -p ${esg_backup_dir}
     pushd ${esg_backup_dir} >& /dev/null
+
+    start_postgress
     
     echo -n "Backing up database: ${my_node_db_name} -to->  ${my_node_db_name}_backup_$(date ${date_format}).sql"
     pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql

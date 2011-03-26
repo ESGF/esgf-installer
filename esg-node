@@ -854,7 +854,7 @@ setup_postgress() {
         
         if [ -z "${pg_sys_acct_passwd}" ]; then
             #set the password for the system user...
-            while [ 1 ]; do 
+            while [ 1 ]; do
                 local input
                 read -s -p "Create password for postgress system account: " input
                 [ -n "${input}" ] && pg_sys_acct_passwd=${input}  && unset input && break

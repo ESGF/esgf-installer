@@ -4228,6 +4228,8 @@ initial_setup_questionnaire() {
             [ -z "${input}" ] && [ -n "${esgf_host}" ] && input=${esgf_host} && break
             [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
         done
+    else
+        echo "esgf_host = [${esgf_host}]"
     fi
     
     unset input
@@ -4268,6 +4270,8 @@ initial_setup_questionnaire() {
             [ -z "${input}" ] && [ -n "${esg_root_id}" ] && input=${esg_root_id} && break
             [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
         done
+    else
+        echo "esg_root_id = [${esg_root_id}]"
     fi
 
     unset input
@@ -4280,6 +4284,8 @@ initial_setup_questionnaire() {
             [ -z "${input}" ] && [ -n "${node_short_name}" ] && input=${node_short_name} && break
             [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
         done
+    else
+        echo "node_short_name = [${node_short_name}]"
     fi
 
     unset input
@@ -4289,6 +4295,8 @@ initial_setup_questionnaire() {
         unset input
         read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
         [ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name && break
+    else
+        echo "node_long_name = [${node_long_name}]"
     fi
 
     get_property node_namespace
@@ -4302,6 +4310,8 @@ initial_setup_questionnaire() {
             [ -z "${input}" ] && node_namespace=${default_ns} && input=${node_name_space} && break
             [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
         done
+    else
+        echo "node_namespace = [${node_namespace}]"
     fi
     
     unset input
@@ -4311,6 +4321,8 @@ initial_setup_questionnaire() {
         read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
         [ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
         [ -z "${mail_admin_address}" ] && echo " (The notification system will not be enabled without an email address)"
+    else
+        echo "mail_admin_address = [${mail_admin_address}]"
     fi
 
     unset input

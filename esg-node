@@ -4268,7 +4268,7 @@ initial_setup_questionnaire() {
             unset input
                 read -p "What is the name of your organization? [${esg_root_id}]: " input
             [ -z "${input}" ] && [ -n "${esg_root_id}" ] && input=${esg_root_id} && break
-            [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property esg_root_id && break
+            [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed 's/ /_/g') && write_as_property esg_root_id && break
         done
     else
         echo "esg_root_id = [${esg_root_id}]"
@@ -4282,7 +4282,7 @@ initial_setup_questionnaire() {
             unset input
             read -p "What is the (short) name for this node? [${node_short_name}]: " input
             [ -z "${input}" ] && [ -n "${node_short_name}" ] && input=${node_short_name} && break
-            [ -n "${input}" ] && node_short_name=$(echo ${input} | sed -n 's/ /_/gp') && write_as_property node_short_name && break
+            [ -n "${input}" ] && node_short_name=$(echo ${input} | sed 's/ /_/g') && write_as_property node_short_name && break
         done
     else
         echo "node_short_name = [${node_short_name}]"

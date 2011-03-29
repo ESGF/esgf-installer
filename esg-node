@@ -4294,7 +4294,7 @@ initial_setup_questionnaire() {
     if [ -z "${node_long_name}" ] || ((force_install)); then
         unset input
         read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
-        [ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name && break
+        [ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name
     else
         echo "node_long_name = [${node_long_name}]"
     fi

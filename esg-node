@@ -274,7 +274,8 @@ init() {
         mkdir -p ${esg_tools_dir} && \
         mkdir -p ${esg_log_dir} && \
         mkdir -p ${esg_config_dir} && \
-        mkdir -p ${tomcat_conf_dir}
+        mkdir -p ${tomcat_conf_dir} && \
+        touch ${config_file}
     [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
 
     [ -w "${envfile}" ] && write_paths
@@ -3934,6 +3935,7 @@ insert_file_at_pattern() {
 # arg 1 - The environment file to dedup.
 dedup() {
     local infile=${1:-${envfile}}
+    [ ! -e "${infile}" ] && echo "WARNING: dedup_properties() - unable to locate ${infile} does it exist?" && return 1
     [ ! -w "${infile}" ] && echo "WARNING: dedup() - unable to write to ${infile}" && return 1
     local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($2 in a) {a[$2];print $0}' | sort -k2,2)
     echo "$tmp" > ${infile}
@@ -3941,6 +3943,7 @@ dedup() {
 
 dedup_properties() {
     local infile=${1:-${config_file}}
+    [ ! -e "${infile}" ] && echo "WARNING: dedup_properties() - unable to locate ${infile} does it exist?" && return 1
     [ ! -w "${infile}" ] && echo "WARNING: dedup_properties() - unable to write to ${infile}" && return 1
     local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($1 in a) {a[$1];print $0}' | sort -k1,1)
     echo "$tmp" > ${infile}

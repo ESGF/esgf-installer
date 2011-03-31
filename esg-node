@@ -112,7 +112,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"1.0.3"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.2.2"}
+    esgf_security_version=${esgf_security_version:-"1.2.3"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
     opensaml_version=${opensaml_version:-"2.3.2"}
     openws_version=${openws_version:-"1.3.1"}
@@ -1434,8 +1434,7 @@ setup_tomcat() {
 
         echo "upgrade migration complete"
     else
-        local store_password=${1}
-        configure_tomcat ${store_password}
+        configure_tomcat ${security_admin_password}
     fi
     #----------------------------------
         
@@ -2012,7 +2011,7 @@ setup_tds() {
 
     #--------
     #hack - prerequiset for esgsetup... should be done in esgsetup code :-\
-    mkdir -p ${thredds_content_dir}
+    mkdir -p ${thredds_content_dir}/public
     chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
     chmod -R 755 ${thredds_content_dir}
     #--------
@@ -4302,15 +4301,14 @@ initial_setup_questionnaire() {
         echo "node_long_name = [${node_long_name}]"
     fi
 
-    get_property node_namespace
+    get_property node_namespace "org.esgf"
     if [ -z "${node_namespace}" ] || ((force_install)); then
         #local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
         #default_ns=${default_ns%.*}
-        default_ns="org.esgf"
         while [ 1 ]; do
             unset input
-            read -p "What is the namespace to use for this node? (optional) [${default_ns}]: " input
-            [ -z "${input}" ] && node_namespace=${default_ns} && input=${node_name_space} && break
+            read -p "What is the namespace to use for this node? (optional) [${node_namespace}]: " input
+            [ -z "${input}" ] && [ -n "${node_namespace}" ] && input=${node_namespace} && break 
             [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
         done
     else
@@ -4978,7 +4976,7 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_cdat
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
-    [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${keystore_password}
+    [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat
     [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
@@ -4988,6 +4986,11 @@ main() {
     #---------------------------------------
     #Installation of "plugin" subsystems... & filters
     #---------------------------------------
+
+    #---subsystems--- 
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
+   #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
+
     #---filters------
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && setup_subsystem security-token-filters filters $@
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && setup_subsystem security-tokenless-filters filters $@
@@ -4995,10 +4998,6 @@ main() {
     #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem"  && setup_subsystem access-logging-filter filters $@
     #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
-
-    #---subsystems--- 
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
-   #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
 
     #---------------------------------------

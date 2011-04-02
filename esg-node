@@ -166,7 +166,7 @@ init() {
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
-    gridftp_config_args=${gridftp_config_args:-""}
+    gridftp_config_args=${gridftp_config_args:-$(get_property gridftp_config_args "with-bdm-config")}
     
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
@@ -5054,6 +5054,7 @@ main() {
     echo 
     write_as_property version
     write_as_property release
+    write_as_property gridftp_config_args
     echo
     esg_node_finally
 }

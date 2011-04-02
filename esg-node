@@ -166,7 +166,7 @@ init() {
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
-    gridftp_config_args=${gridftp_config_args:-$(get_property gridftp_config_args "with-bdm-config")}
+    gridftp_config=${gridftp_config:-$(get_property gridftp_config "with-bdm-config")}
     
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
@@ -4173,7 +4173,7 @@ start() {
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
 
-    (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config_args}
+    (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && source ${scripts_dir}/esg-search >& /dev/null && start_search_services
 
     sleep 3
@@ -4188,7 +4188,7 @@ stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
     read_sel
     source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
-    stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config_args}
+    stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
     stop_tomcat 
     stop_postgress 
     show_svc_list
@@ -4684,7 +4684,7 @@ main() {
                 setup_subsystem node-manager esgf-node-manager 1
                 #setup_subsystem dashboard esgf-dashboard 1
                 [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
-                [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
+                [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
                 [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
                 [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
                 [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
@@ -4892,8 +4892,8 @@ main() {
                 done
                 unshift=1
                 [ "${#tmpargs}" = 0 ] && printf "\n\n must follow --gridftp-config with proper flag! \n\t[\"with-bdm-config\" | \"bdm-config-only\"]\n" && usage
-                gridftp_config_args=${tmpargs[@]}
-                ((DEBUG))&& echo "parsed from commandline - gridftp_config_args is [${gridftp_config_args}]"
+                gridftp_config=${tmpargs[@]}
+                ((DEBUG))&& echo "parsed from commandline - gridftp_config is [${gridftp_config}]"
                 unset tmpargs
                 ;;
             --myproxy)
@@ -5004,8 +5004,8 @@ main() {
     # Globus Installation...
     #---------------------------------------
     #(gridftp)
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config_args}
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config_args}
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
     #(myproxy)
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
@@ -5054,7 +5054,7 @@ main() {
     echo 
     write_as_property version
     write_as_property release
-    write_as_property gridftp_config_args
+    write_as_property gridftp_config
     echo
     esg_node_finally
 }

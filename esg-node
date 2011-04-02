@@ -166,7 +166,7 @@ init() {
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
-    gridftp_config=${gridftp_config:-$(get_property gridftp_config "with-bdm-config")}
+    gridftp_config=${gridftp_config:-$(get_property gridftp_config "bdm end-user")}
     
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
@@ -2126,7 +2126,7 @@ test_tds() {
 #####
 # Takes arg <selection bit vector> 
 # The rest of the args are the following...
-# for data-node configuration (GridFTP stuff): ["with-bdm-config"|"bdm-config-only"] see esg-globus script
+# for data-node configuration (GridFTP stuff): ["bdm"|"end-user"] see esg-globus script
 # for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert] | ["install"|"update"])
 my_setup_globus() {
     local sel=${1:-${sel:-0}}
@@ -2218,7 +2218,7 @@ test_globus() {
 
 # Starts the globus services by delegating out to esg-globus script
 # arg1 selection bit vector ($sel)
-# args* (in the context of "data" node ->  ["with-bdm-config"|"bdm-config-only"])
+# args* (in the context of "data" node ->  ["bdm"|"end-user"])
 start_globus() {
     local sel=${1:-${sel:-0}}
     ((sel == 0)) && echo "start_globus: no selection set, returning (1)" && return 1
@@ -4432,7 +4432,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         Globus Tool Management
         -------------------------------
         --no-globus   - will not perform any operations affecting globus tools (for those with existing globus setups)
-        --gridftp-config - [ with-bdm-config | bdm-config-only ] without this arg uses default end-user config only
+        --gridftp-config - [ bdm &| end-user ] (defaults to both)
         --myproxy - [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
 
         -------------------------------
@@ -4488,9 +4488,9 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
          ${progname} --test-pub OR
          ${progname} --info OR
          ${progname} --register [gateway.host.address] ([truststore passwd])
-         ${progname} --gridftp-config [ with-bdm-config | bdm-config-only ]
+         ${progname} --gridftp-config [ bdm &| end-user ]
          ${progname} start OR
-         ${progname} --gridftp-config [ with-bdm-config | bdm-config-only ] start OR
+         ${progname} --gridftp-config [ bdm &| end-user ] start OR
          ${progname} stop  OR
          ${progname} status OR
     
@@ -4879,7 +4879,7 @@ main() {
                 ;;
             --gridftp-config)
                 (( (sel & DATA_BIT) == 0 )) && echo "Sorry, the --gridftp flag may only be used for \"data\" installation type" && exit 1
-                #acceptable args:  "with-bdm-config" | "bdm-config-only"
+                #acceptable args:  "bdm" | "end-user"
                 #Gather up tokens after this switch as long as the
                 #subsequent tokens do not start with "--"
                 local tmpargs="" #array to store args for this switch.
@@ -4891,7 +4891,7 @@ main() {
                     shift
                 done
                 unshift=1
-                [ "${#tmpargs}" = 0 ] && printf "\n\n must follow --gridftp-config with proper flag! \n\t[\"with-bdm-config\" | \"bdm-config-only\"]\n" && usage
+                [ "${#tmpargs}" = 0 ] && printf "\n\n must follow --gridftp-config with proper flag! \n\t[\"bdm\" &| \"end-user\"]\n" && usage
                 gridftp_config=${tmpargs[@]}
                 ((DEBUG))&& echo "parsed from commandline - gridftp_config is [${gridftp_config}]"
                 unset tmpargs

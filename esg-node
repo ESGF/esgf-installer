@@ -1189,6 +1189,53 @@ setup_esgcet() {
     #done
 
     if [ "${mode}" = "I" ]; then
+
+        local choice
+        while [ 1 ]; do
+            unset choice
+            printf "Would you like a \"system\" or \"user\" publisher configuration: \n"
+            printf "\t-------------------------------------------\n"
+            printf "\t*[1] : System\n"
+            printf "\t [2] : User\n"
+            printf "\t-------------------------------------------\n"
+            printf "\t [C] : (Custom)\n"
+            printf "\t-------------------------------------------\n"
+            read -p "select [1] > " choice
+
+            [ -z "${choice}" ] && choice=1 #default
+            case ${choice} in
+                2)  publisher_home=${esg_config_dir}/publisher
+                    ;;
+                1)  publisher_home=${esg_config_dir}/publisher
+                    ;;
+                c | C)
+                    local input
+                    publisher_home=${ESGINI:-$(get_property publisher_home "$HOME/.esgcet")}
+                    read -p "Please enter the desired publisher configuration location directory [${publisher_home}] " input
+                    [ -n "${input}" ] && publisher_home=${input}
+                    unset input
+                    choice="(Manual Entry)"
+                    ;;
+                *)  echo "Invalid selection [${choice}]"
+            esac
+            echo
+            echo "You have selected: ${choice}"
+            echo "Publisher configuration directory -> ${publisher_home}"
+            echo
+            local is_correct
+            read -p "Is this correct? [Y/n] " is_correct
+            is_correct=$(echo ${is_correct} | tr 'A-Z' 'a-z')
+            if [ "${is_correct}" = "n" ]; then
+                continue
+            else
+                break
+            fi
+        done
+        unset choice
+
+        ESGINI=${publisher_home}
+        echo "Your publisher configuration file will be: ${publisher_home}/esg.ini"
+
         local input=""
         read -p "What is your organization's id? [${esg_root_id}]: " input
         [ ! -z "${input}" ] && esg_root_id=${input}
@@ -1948,7 +1995,7 @@ setup_tds() {
     #@@gateway_name@@ -> @@gateway_service_root@@  #Tokens in file
     #ESG-PCMDI -> pcmdi3.llnl.gov/esgcet
     #ESC-NCAR  -> esg.prototype.ucar.edu
-    
+
     local choice
     while [ 1 ]; do
         unset choice
@@ -1960,7 +2007,7 @@ setup_tds() {
         printf "\t [C] : (Manual Entry)\n"
         printf "\t-------------------------------------------\n"
         read -p "select [1] > " choice
-        
+
         [ -z "${choice}" ] && choice=1 #default
         case ${choice} in
             2)  gateway_name="ESG-NCAR"

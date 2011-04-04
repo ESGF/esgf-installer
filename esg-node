@@ -167,6 +167,7 @@ init() {
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
     gridftp_config=${gridftp_config:-$(get_property gridftp_config "bdm end-user")}
+    publisher_home=${ESGINI:-$(get_property publisher_home "$HOME/.esgcet")}
     
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
@@ -1141,12 +1142,12 @@ setup_esgcet() {
     echo "*******************************"
     echo "Setting up ESGCET Package...(${esgcet_egg_file}) [${mode}]"
     echo "*******************************"
-    echo
+    echo "$([ "${publisher_home}" = "${HOME}/.esgcet" ] && echo "system" || echo "user") configuration: ${publisher_home}"
     
     local default="Y"
     ((force_install)) && default="N"
     local dosetup
-    if [ -e ${HOME}/.esgcet/esg.ini ]; then 
+    if [ -e ${publisher_home}/esg.ini ]; then 
         echo "Detected an existing esgcet installation..."
         read -p "Do you want to continue with esgcet installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
         [ -z ${dosetup} ] && dosetup=${default}
@@ -1197,13 +1198,13 @@ setup_esgcet() {
         [ $? != 0 ] && popd && checked_done 1
     fi
 
-    echo "chown -R ${installer_uid}:${installer_gid} $HOME/.esgcet"
-    chown -R ${installer_uid}:${installer_gid} $HOME/.esgcet 
+    echo "chown -R ${installer_uid}:${installer_gid} ${publisher_home}"
+    chown -R ${installer_uid}:${installer_gid} ${publisher_home} 
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     #Let's make sure the group is there before we attempt to assign a file to it....
     /usr/sbin/groupadd -r -f ${tomcat_group}
     [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
-    chgrp ${tomcat_group} ${HOME}/.esgcet/esg.ini && chmod 640 ${HOME}/.esgcet/esg.ini && chmod 755 ${HOME}
+    chgrp ${tomcat_group} ${publisher_home}/esg.ini && chmod 640 ${publisher_home}/esg.ini && chmod 755 ${HOME}
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
@@ -1234,6 +1235,7 @@ write_esgcet_env() {
 write_esgcet_install_log() {
     echo "$(date ${date_format}) python:esgcet=${esgcet_version}" >> ${install_logfile}
     dedup ${install_logfile}
+    write_as_property publisher_home
     return 0
 }
 
@@ -3372,12 +3374,12 @@ uninstall() {
         fi
 
         doit="N"
-        if [ -e ${HOME}/.esgcet ]; then
-            read -p "remove .esgcet files? (${HOME}/.esgcet) [y/N]: " doit
+        if [ -e ${publisher_home} ]; then
+            read -p "remove publisher configuration files? (${publisher_home}) [y/N]: " doit
             if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-                echo "removing ${HOME}/.esgcet"
-                rm -rf ${HOME}/.esgcet
-                [ $? != 0 ] && echo "ERROR: Unable to remove ${HOME}/.esgcet}"
+                echo "removing ${publisher_home}"
+                rm -rf ${publisher_home}
+                [ $? != 0 ] && echo "ERROR: Unable to remove ${publisher_home}}"
             fi
         fi
 

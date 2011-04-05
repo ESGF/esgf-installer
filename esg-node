@@ -102,7 +102,7 @@ init() {
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
     cdat_version=${cdat_version:-"6.0.alpha"}
-    esgcet_version=${esgcet_version:-"2.8.0"}
+    esgcet_version=${esgcet_version:-"2.8.1"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.4.3"}
@@ -166,9 +166,12 @@ init() {
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
-    gridftp_config=${gridftp_config:-$(get_property gridftp_config "bdm end-user")}
-    publisher_home=${ESGINI:-$(get_property publisher_home "$HOME/.esgcet")}
-    
+
+    if [ -n "${ESGINI}" ]; then
+        publisher_home=${ESGINI%/*}
+        publisher_config=${ESGINI##*/}
+    fi
+        
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
@@ -268,6 +271,10 @@ init() {
     dname=${dname:-"OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
     config_file=${esg_config_dir}/esgf.properties
 
+    #--------------
+    #Prepare necessary support filesystem structure and files
+    #--------------
+
     mkdir -p ${scripts_dir}
     [ $? != 0 ] && echo "ERROR: could not create ${scripts_dir}... required for installation" && checked_done 1
 
@@ -278,6 +285,17 @@ init() {
         mkdir -p ${tomcat_conf_dir} && \
         touch ${config_file}
     [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
+
+    #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
+    #this is actually an issue with dedup_properties that gets called in the get_property function
+
+    gridftp_config=${gridftp_config}
+    [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
+    
+    publisher_config=${publisher_config}
+    [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
+    publisher_home=${publisher_home}
+    [ -z "${publisher_home}" ] && get_property publisher_home "${HOME}/.esgcet"
 
     [ -w "${envfile}" ] && write_paths
 
@@ -1147,7 +1165,7 @@ setup_esgcet() {
     local default="Y"
     ((force_install)) && default="N"
     local dosetup
-    if [ -e ${publisher_home}/esg.ini ]; then 
+    if [ -e ${publisher_home}/${publisher_config} ]; then 
         echo "Detected an existing esgcet installation..."
         read -p "Do you want to continue with esgcet installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
         [ -z ${dosetup} ] && dosetup=${default}
@@ -1210,8 +1228,7 @@ setup_esgcet() {
                     ;;
                 c | C)
                     local input
-                    publisher_home=${ESGINI:-$(get_property publisher_home "$HOME/.esgcet")}
-                    read -p "Please enter the desired publisher configuration location directory [${publisher_home}] " input
+                    read -p "Please enter the desired publisher configuration file location [${publisher_home}/${publisher_config}] " input
                     [ -n "${input}" ] && publisher_home=${input}
                     unset input
                     choice="(Manual Entry)"
@@ -1220,7 +1237,7 @@ setup_esgcet() {
             esac
             echo
             echo "You have selected: ${choice}"
-            echo "Publisher configuration directory -> ${publisher_home}"
+            echo "Publisher configuration file -> [${publisher_home}/${publisher_config}]"
             echo
             local is_correct
             read -p "Is this correct? [Y/n] " is_correct
@@ -1233,7 +1250,7 @@ setup_esgcet() {
         done
         unset choice
 
-        ESGINI=${publisher_home}
+        ESGINI=${publisher_home}/${publisher_config}
         echo "Your publisher configuration file will be: ${publisher_home}/esg.ini"
 
         local input=""

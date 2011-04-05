@@ -3260,7 +3260,7 @@ export_keystore_as_globus_hostkeys() {
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
 register() {
-    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: $1)"
+    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: ${1:-${ESG_GATEWAY_SVC_ROOT%%/*}})"
     
     mkdir -p ${workdir} # >& /dev/null
     pushd ${workdir} # >& /dev/null

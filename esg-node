@@ -2045,7 +2045,7 @@ setup_tds() {
         fi
     done
     
-    myproxy_endpoint=$(echo ${gateway_service_root} | sed -n 's{\(.*://\)*\([^/]*\)/.*{\2{p')
+    myproxy_endpoint=$(echo ${gateway_service_root} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
 
     echo
     echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${gateway_name}:${gateway_service_root}"

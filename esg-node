@@ -1299,6 +1299,7 @@ write_esgcet_env() {
 write_esgcet_install_log() {
     echo "$(date ${date_format}) python:esgcet=${esgcet_version}" >> ${install_logfile}
     dedup ${install_logfile}
+    write_as_property publisher_config
     write_as_property publisher_home
     return 0
 }
@@ -3440,8 +3441,8 @@ uninstall() {
         fi
 
         doit="N"
-        if [ -e ${publisher_home} ]; then
-            read -p "remove publisher configuration files? (${publisher_home}) [y/N]: " doit
+        if [ -e ${publisher_home}/${publisher_config} ]; then
+            read -p "remove publisher configuration directory? (${publisher_home}) [y/N]: " doit
             if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
                 echo "removing ${publisher_home}"
                 rm -rf ${publisher_home}

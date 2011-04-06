@@ -3309,6 +3309,8 @@ register() {
     
     chmod 644 ${truststore_file}
     chown ${tomcat_user}:${tomcat_group} ${truststore_file}
+
+    write_as_property myproxy_endpoint
     
     sync_with_java_truststore ${truststore_file}
 

@@ -112,7 +112,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"1.0.3"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.2.3"}
+    esgf_security_version=${esgf_security_version:-"1.2.4"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
     opensaml_version=${opensaml_version:-"2.3.2"}
     openws_version=${openws_version:-"1.3.1"}
@@ -921,8 +921,15 @@ setup_postgress() {
         echo "${postgress_user} exists!! :-)";
     else
         echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
-        $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-        [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
+        if [ -z "${pg_sys_acct_passwd}" ]; then
+            $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
+            [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
+        else
+            $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user <<EOF
+${pg_sys_acct_passwd}
+EOF
+            [ $? != 0 ] && echo " ERROR: Unable to create user on the system*" && popd && checked_done 1
+        fi
     fi
     #stop_postgress && return 1 #See trap in 'main'... that is who calls this.
     
@@ -1224,14 +1231,17 @@ setup_esgcet() {
 
             [ -z "${choice}" ] && choice=1 #default
             case ${choice} in
-                2)  publisher_home=${esg_config_dir}/publisher
+                2)  publisher_home=${HOME}/.esgcet/esg.ini
                     ;;
                 1)  publisher_home=${esg_config_dir}/publisher
                     ;;
                 c | C)
                     local input
-                    read -p "Please enter the desired publisher configuration file location [${publisher_home}/${publisher_config}] " input
+                    read -p "Please enter the desired publisher configuration directory [${publisher_home}] " input
                     [ -n "${input}" ] && publisher_home=${input}
+                    unset input
+                    read -p "Please enter the desired publisher configuration filename [${publisher_config}] " input
+                    [ -n "${input}" ] && publisher_config=${input}
                     unset input
                     choice="(Manual Entry)"
                     ;;
@@ -1252,7 +1262,7 @@ setup_esgcet() {
         done
         unset choice
 
-        ESGINI=${publisher_home}/${publisher_config}
+        export ESGINI=${publisher_home}/${publisher_config}
         echo "Your publisher configuration file will be: ${publisher_home}/esg.ini"
 
         local input=""
@@ -1260,7 +1270,7 @@ setup_esgcet() {
         [ ! -z "${input}" ] && esg_root_id=${input}
         
         echo "$cdat_home/bin/esgsetup --config --rootid ${esg_root_id}" 
-        $cdat_home/bin/esgsetup --config --rootid ${esg_root_id}
+        ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config --rootid ${esg_root_id}
         [ $? != 0 ] && popd && checked_done 1
     fi
 

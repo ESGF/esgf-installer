@@ -2372,7 +2372,7 @@ test_publication() {
     mkdir -p ${personal_credential_repo}
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
-    [ "$(ls -A ${X509_CERT_DIR})" ] && echo "Detected existing content in \$X509_CERT_DIR" || rmdir ${X509_CERT_DIR}
+    [ "$(ls -A ${X509_CERT_DIR} 2> /dev/null)" ] && echo "Detected existing content in \$X509_CERT_DIR" || rmdir ${X509_CERT_DIR}
     
     echo "X509_CERT_DIR = ${X509_CERT_DIR}"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"

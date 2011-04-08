@@ -297,7 +297,7 @@ init() {
     publisher_config=${publisher_config}
     [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
     publisher_home=${publisher_home}
-    [ -z "${publisher_home}" ] && get_property publisher_home "${HOME}/.esgcet"
+    [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
 
     [ -w "${envfile}" ] && write_paths
 
@@ -1169,7 +1169,7 @@ setup_esgcet() {
     echo "*******************************"
     echo "Setting up ESGCET Package...(${esgcet_egg_file}) [${mode}]"
     echo "*******************************"
-    echo "$([ "${publisher_home}" = "${HOME}/.esgcet" ] && echo "system" || echo "user") configuration: ${publisher_home}"
+    [ "${mode}" = "U" ] && echo "$([ "${publisher_home}" = "${HOME}/.esgcet" ] && echo "user" || echo "system") configuration: ${publisher_home}"
     
     local default="Y"
     ((force_install)) && default="N"
@@ -1231,9 +1231,9 @@ setup_esgcet() {
 
             [ -z "${choice}" ] && choice=1 #default
             case ${choice} in
-                2)  publisher_home=${HOME}/.esgcet/esg.ini
+                2)  publisher_home=${HOME}/.esgcet
                     ;;
-                1)  publisher_home=${esg_config_dir}/publisher
+                1)  publisher_home=${esg_config_dir}/esgcet
                     ;;
                 c | C)
                     local input
@@ -1263,7 +1263,7 @@ setup_esgcet() {
         unset choice
 
         export ESGINI=${publisher_home}/${publisher_config}
-        echo "Your publisher configuration file will be: ${publisher_home}/esg.ini"
+        echo "Your publisher configuration file will be: ${publisher_home}/${publisher_config}"
 
         local input=""
         read -p "What is your organization's id? [${esg_root_id}]: " input
@@ -1280,7 +1280,7 @@ setup_esgcet() {
     #Let's make sure the group is there before we attempt to assign a file to it....
     /usr/sbin/groupadd -r -f ${tomcat_group}
     [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
-    chgrp ${tomcat_group} ${publisher_home}/esg.ini && chmod 640 ${publisher_home}/esg.ini && chmod 755 ${HOME}
+    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 640 ${publisher_home}/${publisher_config} && chmod 755 ${HOME}
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 

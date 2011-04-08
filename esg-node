@@ -1540,14 +1540,26 @@ setup_tomcat() {
 
     start_tomcat
 
+    tomcat_port_check && echo "Tomcat ports checkout [OK]" || (echo "[FAILED]" && popd && checked_done 1)
+
+    echo
+    popd >& /dev/null
+    echo
+    echo
+    write_tomcat_env
+    write_tomcat_install_log
+    return 0
+}
+
+#helper function to poke at tomcat ports...
+tomcat_port_check() {
     #---
     #port testing for http and https
     #---
     local ret_all=0
-    local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml)
-    echo "checking connection at all ports described in server.xml: "${ports}
-    for port in ${ports[@]}; do
-        echo -n "checking http://localhost:${port} "
+    echo "checking connection at all ports described in ${tomcat_install_dir}/conf/server.xml"
+    while read port key value; do
+        echo -n "checking localhost port [${port}]"
         local wait_time=5
         local ret=1
         while [[ $wait_time > 0 ]]; do
@@ -1562,21 +1574,14 @@ setup_tomcat() {
 
         #We only care about reporting a failure for ports below 1024 
         #specifically 80 (http) and 443 (https)
+
+	[ "${key}" = "protocol" ] && [ -n "$(echo ${value} | grep -i http)" ] && esgf_http_port=${port}
+	[ "${key}" = "SSLEnabled" ] && esgf_https_port=${port}
         (($port < 1024)) && ((ret_all+=ret))
 
-    done
-    
-    [ $ret_all != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact top level tomcat page on this server" && popd && checked_done 1
-    echo "[OK]"
+    done < <(echo "$(sed -n 's/.*Connector.*port="\([0-9]*\)"[ ]*\([^ ]*\)="\([^ ]*\)"/\1 \2 \3/p' ${tomcat_install_dir}/conf/server.xml)")
     #---
-
-    echo
-    popd >& /dev/null
-    echo
-    echo
-    write_tomcat_env
-    write_tomcat_install_log
-    return 0
+    return ${ret_all}
 }
 
 write_tomcat_env() {
@@ -1774,7 +1779,7 @@ start_tomcat() {
     #Don't wait forever, but give tomcat some time before it starts
     pcheck 10 2 1 -- check_tomcat_process
     [ $? != 0 ] && echo "Tomcat couldn't be started."
-
+    sleep 2
 }
 
 stop_tomcat() {
@@ -1816,33 +1821,8 @@ test_tomcat() {
     echo "----------------------------"
     echo
     start_tomcat
-    
-    echo "giving tomcat some time to wake up"
-    sleep 5
-
-    #check_tomcat_process 
-    #[ $? != 0 ] && echo "[FAILED] process not running..." && return 0
-    ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' $tomcat_install_dir/conf/server.xml)
-    echo "checking connection at ports "$ports
-    local running_port="$(
-            echo "$ports" | while read check_port; do
-                echo "checking $check_port" >&2
-                wget http://localhost:$check_port -O - -q >/dev/null
-                if [[ $? == "0" ]]; then
-                    echo $check_port
-                    break
-                fi
-            done
-            )"
-    
-    if [[ -n "$running_port" ]]; then
-        echo "Tomcat is running on port $running_port"
-        checked_done 0
-    else
-        echo "Tomcat is not listening to any listed port."
-        checked_done 1
-    fi
-
+    tomcat_port_check && echo "Tomcat ports checkout [OK]" || (echo "[FAILED]" && popd && checked_done 1)
+    checked_done 0
 }
 
 
@@ -2386,7 +2366,8 @@ test_publication() {
 
     rmdir ${X509_CERT_DIR} >& /dev/null
     
-    echo "X509_CERT_DIR = ${X509_CERT_DIR}"
+    unset X509_CERT_DIR
+    echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
     $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
     [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1

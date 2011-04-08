@@ -4303,25 +4303,28 @@ initial_setup_questionnaire() {
         while [ 1 ]; do
             unset input
             echo
-            read -s -p "What is the admin password to use for this installation? (alph-numeric only): " input
-            ( [ -z "${input}" ] || [ ! -z $(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p') ] ) && echo "Invalid password... " && continue
-            [ -n "${input}" ] && security_admin_password=${input}
+            read -s -p "What is the admin password to use for this installation? (alph-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
+            ((force_install)) && [ -z "${input}" ] && [ -n "${security_admin_password}" ] && changed=0 && echo && break
+            ( [ -z "${input}" ] || [ -n "$(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p')" ] ) && echo "Invalid password... " && continue
+            [ -n "${input}" ] && security_admin_password=${input} && changed=1
             echo
             read -s -p "Please re-enter password: " verify_password
             if [ "${security_admin_password}" = "${verify_password}" ] ; then
                 echo
+                changed=1
                 break
             else
                 echo "Sorry, values did not match"
                 echo
+                changed=0
             fi
         done
         unset verify_password
         unset input
-        write_as_property security_admin_password
+        ((changed==1)) && write_as_property security_admin_password
 
         #Use the same password when creating the postgress account
-        pg_sys_acct_passwd=${security_admin_password}
+        ((changed==1)) && pg_sys_acct_passwd=${security_admin_password}
     fi
 
     unset input

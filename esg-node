@@ -162,7 +162,7 @@ init() {
     gateway_service_root=${ESG_GATEWAY_SVC_ROOT}
     myproxy_endpoint=${myproxy_endpoint:-${gateway_service_root%%/*}}
     myproxy_port=${myproxy_port:-7512}
-    esgf_host=${esg_host:-$(hostname --fqdn)}
+    esgf_host=${esgf_host:-$(hostname --fqdn)}
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}

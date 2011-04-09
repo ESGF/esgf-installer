@@ -170,6 +170,8 @@ init() {
     if [ -n "${ESGINI}" ]; then
         publisher_home=${ESGINI%/*}
         publisher_config=${ESGINI##*/}
+    else
+        export ESGINI=${publisher_home}/${publisher_config}
     fi
         
     ############################################
@@ -1297,7 +1299,7 @@ setup_esgcet() {
         [ $? != 0 ] && popd && checked_done 1
     else
         echo "$cdat_home/bin/esgsetup --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******")"
-        $cdat_home/bin/esgsetup --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_sys_acct_passwd:-security_admin_password} --db-user-password ${pg_sys_acct_passwd:-security_admin_password}")
+        ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_sys_acct_passwd:-security_admin_password} --db-user-password ${pg_sys_acct_passwd:-security_admin_password}")
         [ $? != 0 ] && popd && checked_done 1
     fi
 
@@ -2110,7 +2112,7 @@ setup_tds() {
 
     #set in cdms setup (prerequisite)
     echo "$cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
-    $cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
+    ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
 
     chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
 

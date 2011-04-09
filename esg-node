@@ -1693,21 +1693,21 @@ configure_tomcat() {
         echo "Generating Certificate Signing Request..."
         #-------------------------------------------------
         #Previous way, when we were generating the request directly from the keystore via keytool
-        #${java_install_dir}/bin/keytool -certreq -alias ${keystore_alias} -keystore ${keystore_file} -file ${HOME}/$(hostname --fqdn)-esg-node.csr
+        #${java_install_dir}/bin/keytool -certreq -alias ${keystore_alias} -keystore ${keystore_file} -file ${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr
         #[ $? != 0 ] && echo " ERROR: keytool certreq command failed"
         #-------------------------------------------------
 
         #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
         local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
         sleep 1
-        generate_ssl_key_and_csr ${tomcat_conf_dir}/hostkey.pem ${tomcat_conf_dir}/$(hostname --fqdn)-esg-node.csr ${dn}
+        generate_ssl_key_and_csr ${tomcat_conf_dir}/hostkey.pem ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${dn}
         if [ $? != 0 ]; then 
             echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
         else
             write_as_property node_dn ${dn}
         fi
         
-        chown -R ${installer_uid}:${installer_gid} $(hostname --fqdn)-esg-node.csr
+        chown -R ${installer_uid}:${installer_gid} ${esgf_host:-$(hostname --fqdn)}-esg-node.csr
     fi
     
 
@@ -2658,7 +2658,7 @@ generate_ssl_key_and_csr() {
     #NOTE: To include DN at the command line
     #openssl req -new -nodes -subj '/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=esg-test1.llnl.gov' -key hostkey.pem -out esg-test1.llnl.gov-esg-node.csr
     echo "Generating Certificate Signing Request (csr)... "
-    local public_cert_req=${2:-${tomcat_conf_dir}/$(hostname --fqdn)-esg-node.csr}
+    local public_cert_req=${2:-${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr}
     local public_cert_dn=${3:-$(extract_keystore_dn ${keystore_file})}
 
     echo "Using DN = [${public_cert_dn}]"
@@ -2737,7 +2737,7 @@ as_javastyle_dn() {
 #arg 5 -> password (The value you want *set* for the keystore and internal private key)
 install_keypair() {
     local private_key=${1:-${tomcat_conf_dir}/"hostkey.pem"}
-    local public_cert=${2:-${tomcat_conf_dir}/"$(hostname --fqdn)-esg-node.pem"}
+    local public_cert=${2:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
     local keystore_name=${3:-${keystore_file}}
     local keystore_alias=${4:-${keystore_alias}}
     local store_password=${5}
@@ -2966,7 +2966,7 @@ make_fresh_keystore() {
     #-------------
     echo -n "creating keystore... "
     #create a keystore with a self-signed cert
-    local dname=${dname:-"CN=$(hostname --fqdn), OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
+    local dname=${dname:-"CN=${esgf_host:-$(hostname --fqdn)}, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
     [ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
     keytool -genkey -keyalg RSA -alias "${keystore_alias}" \
         -keystore "${keystore_name}" \
@@ -3060,7 +3060,7 @@ convert_keys() {
     [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
 
     echo -n "Converting public cert from PEM -> DER format... "
-    local public_cert=${2:-$(hostname --fqdn)-esg-node.pem}
+    local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
     [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
     openssl x509 -in ${public_cert} -inform PEM -out ${public_cert%.*}.der -outform DER
     [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
@@ -3089,7 +3089,7 @@ convert_keys() {
 #[*Have default values - non manditory]
 create_keystore() {
     local private_key=${1:-"hostkey.der"}
-    local public_cert=${2:-$(hostname --fqdn)-esg-node.der}
+    local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.der}
     local keystore_name=${3:-${keystore_file}}
     local key_alias=${4:-${keystore_alias}}
     local password=${5:-${keystore_password}}
@@ -3116,7 +3116,7 @@ create_keystore() {
 #signed certificate needs to be imported into the *existing* keystore. (and to trust store: for ORP)
 #arg 1 -> signed certificate file returned to you by your CA
 install_signed_certificate() {
-    local signed_cert_file=${1:-${HOME}/$(hostname --fqdn)-esg-node.pem}
+    local signed_cert_file=${1:-${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
 
     echo
     echo "Installing Signed Host Certificate: ${signed_cert_file} "
@@ -4538,6 +4538,12 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
 
         (deprecated) --install-signed-cert - installs signed host certificate into keystore and truststore <signed PEM file>
         (deprecated) --export-keys-to-globus  - exports keystore certificates to globus host{cert,key}.pem files.
+
+        --dname - specify the certificate distinguished name to be used when creating certificates
+                  (the DN value is of the form: \"OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
+        --keystore-password - sets the password to use for the java keystore - default is the node password.
+        --keystore-alias - the alias that is associated with the public cert in the keystore
+        --keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat
 
         -------------------------------
         Database Management

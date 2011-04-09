@@ -3919,16 +3919,16 @@ backup_db() {
 
     start_postgress
     
-    echo -n "Backing up database: ${my_node_db_name} -to->  ${my_node_db_name}_backup_$(date ${date_format}).sql"
+    echo "Backing up database: ${my_node_db_name} -to->  ${my_node_db_name}_backup_$(date ${date_format}).sql"
     pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
     [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
 
     #back up the schema specifically, if one is provided
     if [ -n "${my_schema_name}" ]; then 
         my_schema_name=_${my_schema_name}
-        echo -n "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
-        pg_dump -U ${postgress_user} --schema esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
-        [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
+        echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
+        pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
+        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     fi
     
     #-------------
@@ -3946,6 +3946,35 @@ backup_db() {
 
     popd >& /dev/null
     return 0
+}
+
+restore_last_db_backup() {
+    local my_node_db_name=${1:-${node_db_name}}
+    local my_schema_name=${2}
+
+    [ ! -d ${esg_backup_dir} ] && echo " ERROR: cannot locate backup directory [${esg_backup_dir}]" && return 1
+
+    local n_recent=1
+    local answer="Y" #always be safe.
+    read -p "Would you like to first make a back up of the existing database? [Y/n] " answer
+    [ -n ${answer} ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z')
+    [ "${answer}" = "Y" ] && backup_db ${my_node_name} ${my_schema_name} && ((n_recent++))
+    
+    local backup_file
+    #back up the schema specifically, if one is provided
+    if [ -n "${my_schema_name}" ]; then 
+        my_schema_name=_${my_schema_name}
+        backup_file=$(ls -rt | grep ${my_node_db_name}_esgf${my_schema_name}_backup_ | tail -n ${n_recent} | head -n 1)
+        echo "Restoring backup esgf schema esgf${my_schema_name} of ${my_node_db_name} <-from- ${backup_file}"
+        psql -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} < ${backup_file}
+        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
+    else
+        backup_file=$(ls -rt | grep ${my_node_db_name}_backup_ | tail -n ${n_recent} | head -n 1)
+        echo "Restoring backup ${my_node_db_name} <-from- ${backup_file}"
+        psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}
+        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
+    fi
+    
 }
 
 #configures the database i.e. sets up table schema
@@ -4552,6 +4581,7 @@ ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
         -------------------------------
         --config-db    - provides database only configuration to support based on note type (see --get-type)
         --backup-db    - creates a backup of node database to file <database name <schema name>>
+        --restore-last-db - restores from backup the last backup done <database name <schema name>>
 
         -------------------------------
         Node Life Cycle Flags:
@@ -4859,6 +4889,14 @@ main() {
                 [ $? != 0 ] && echo && exit 1
                 shift
                 backup_db $@
+                exit $?
+                ;;
+            --restore-last-db)
+                self_verify
+                check_prerequisites
+                [ $? != 0 ] && echo && exit 1
+                shift
+                restore_last_db_backup $@
                 exit $?
                 ;;
             --uninstall)

@@ -931,12 +931,10 @@ setup_postgress() {
     else
         echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
         if [ -z "${pg_sys_acct_passwd}" ]; then
-            $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
+            PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
             [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
         else
-            $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user <<EOF
-${pg_sys_acct_passwd}
-EOF
+            PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
             [ $? != 0 ] && echo " ERROR: Unable to create user on the system*" && popd && checked_done 1
         fi
     fi
@@ -3920,17 +3918,17 @@ backup_db() {
     start_postgress
     
     echo "Backing up database: ${my_node_db_name} -to->  ${my_node_db_name}_backup_$(date ${date_format}).sql"
-    pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
-    [ $? == 0 ] && echo " [OK] " || echo " [FAIL] "
+    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
+    [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
 
     #back up the schema specifically, if one is provided
     if [ -n "${my_schema_name}" ]; then 
         my_schema_name=_${my_schema_name}
         echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
-        pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
+        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf_backup_$(date ${date_format}).sql
         [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     fi
-    
+
     #-------------
     #keep only the last num_backups_to_keep files
     num_backups_to_keep=${num_backups_to_keep:-7}
@@ -3966,15 +3964,15 @@ restore_last_db_backup() {
         my_schema_name=_${my_schema_name}
         backup_file=$(ls -rt | grep ${my_node_db_name}_esgf${my_schema_name}_backup_ | tail -n ${n_recent} | head -n 1)
         echo "Restoring backup esgf schema esgf${my_schema_name} of ${my_node_db_name} <-from- ${backup_file}"
-        psql -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} < ${backup_file}
+        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} < ${backup_file}
         [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     else
         backup_file=$(ls -rt | grep ${my_node_db_name}_backup_ | tail -n ${n_recent} | head -n 1)
         echo "Restoring backup ${my_node_db_name} <-from- ${backup_file}"
-        psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}
+        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}
         [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     fi
-    
+    return 0
 }
 
 #configures the database i.e. sets up table schema

@@ -109,7 +109,7 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.4"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.0.3"}
+    esg_orp_version=${esg_orp_version:-"1.0.4"}
 
     #see esgf-security project:
     esgf_security_version=${esgf_security_version:-"1.2.4"}
@@ -170,8 +170,6 @@ init() {
     if [ -n "${ESGINI}" ]; then
         publisher_home=${ESGINI%/*}
         publisher_config=${ESGINI##*/}
-    else
-        export ESGINI=${publisher_home}/${publisher_config}
     fi
         
     ############################################
@@ -307,6 +305,9 @@ init() {
     [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
     publisher_home=${publisher_home}
     [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
+
+    export ESGINI=${publisher_home}/${publisher_config}
+    ((DEBUG)) && echo "ESGINI = ${ESGINI}"
 
     [ -w "${envfile}" ] && write_paths
 

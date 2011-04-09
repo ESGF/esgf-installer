@@ -266,11 +266,12 @@ init() {
     tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
     keystore_file=${tomcat_conf_dir}/keystore-tomcat
     keystore_alias=my_esgf_node
-    keystore_password=changeit
+    keystore_password=${keystore_password}
     truststore_file=${tomcat_conf_dir}/esg-truststore.ts
     globus_global_certs_dir=/etc/grid-security/certificates
     #NOTE: java keystore style DN...
-    dname=${dname:-"OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
+    default_dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid" #zoiks: allow this to be empty to allow prompting of user for fields!
+    dname=""
     config_file=${esg_config_dir}/esgf.properties
 
     #--------------
@@ -290,6 +291,12 @@ init() {
 
     #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
     #this is actually an issue with dedup_properties that gets called in the get_property function
+
+    #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
+    #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
+    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "as_javastyle_dn" function
+    dname=${dname}
+    [ -z "${dname}" ] && get_property node_dn && dname=$(as_javastyle_dn ${dname})
 
     gridftp_config=${gridftp_config}
     [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
@@ -1289,8 +1296,8 @@ setup_esgcet() {
         ${cdat_home}/bin/esginitialize -c
         [ $? != 0 ] && popd && checked_done 1
     else
-        echo "$cdat_home/bin/esgsetup --db $([ -n "${security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******")"
-        $cdat_home/bin/esgsetup --db $([ -n "${security_admin_password}" ] && echo "--db-admin-password ${security_admin_password} --db-user-password ${security_admin_password}")
+        echo "$cdat_home/bin/esgsetup --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******")"
+        $cdat_home/bin/esgsetup --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_sys_acct_passwd:-security_admin_password} --db-user-password ${pg_sys_acct_passwd:-security_admin_password}")
         [ $? != 0 ] && popd && checked_done 1
     fi
 
@@ -1513,7 +1520,7 @@ setup_tomcat() {
 
         echo "upgrade migration complete"
     else
-        configure_tomcat ${security_admin_password}
+        configure_tomcat ${keystore_password:-${security_admin_password}}
     fi
     #----------------------------------
         
@@ -1656,17 +1663,22 @@ configure_tomcat() {
         #According to that document, case does not matter but ORDER DOES!
         #See script scope declaration of this variable (dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid")
 
-        if [ -z "${dname}" ]; then
+        local input
+        local use_dn="Y"
+        read -p "Would you like to use the DN: (${dname:=${default_dname}}) ? [Y/n]: " input
+        [ -n "${input}" ] && use_dn=$(echo ${input} | tr 'a-z' 'A-Z')
+        unset input
+        
+        if [ -z "${dname}" ] || [ "${use_dn}"="N" ]; then
             $java_install_dir/bin/keytool -genkey -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password}
             [ $? != 0 ] && echo " ERROR: keytool genkey command failed" && popd && checked_done 1
         else
-            echo "${dname}" | grep -i 'cn='
-            [ $? != 0 ] && dname="CN=$(hostname --fqdn), ${dname}"
+            [ -z $(echo $dname | sed -n 's/.*CN=\([^,]*\),.*/\1/p') ] && dname="CN=${esgf_host:-$(hostname --fqdn)}, ${dname}"
             echo "Using keystore DN = ${dname}"
             $java_install_dir/bin/keytool -genkey -dname "${dname}" -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password}
             [ $? != 0 ] && echo " ERROR*: keytool genkey command failed" && popd && checked_done 1
         fi
-        
+        unset use_dn
         genreq="Y"
     else
         echo "Using existing keystore \"${keystore_file}\""
@@ -2703,6 +2715,18 @@ extract_keystore_dn() {
         dn=$(keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's#^Owner: ##' | sed -e s#", "#" "#g | tac -s " " | xargs | sed -e 's# #/#g')
     fi
     echo "/${dn}"
+}
+
+#Helper function:
+#Takes in a dn in the sytle:
+#/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=esg-test1.llnl.gov
+#and turns it into a java compatible dn...  "CN=esg-test1.llnl.gov,
+#OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"
+as_javastyle_dn() {
+    local input=$1
+    ans=$(echo ${input} | awk 'BEGIN { FS = "/" } { for (i = NF; i > 1; --i) print $i", " }'| xargs)
+    ans=${ans%,}
+    echo "${ans}"
 }
 
 #(Once you have submitted the CSR and have gotten it back *signed*; now install the keypair)
@@ -4890,6 +4914,22 @@ main() {
                 [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                 install_keypair $@
                 exit $?
+                ;;
+            --dname) #In Java Style (inner -> outter, [, ] separated values)
+                shift
+                dname=$1
+                ;;
+            --keystore-password)
+                shift
+                keystore_password=$1
+                ;;
+            --keystore-alias)
+                shift
+                keystore_alias=$1
+                ;;
+            --keystore-file)
+                shift
+                keystore_file=$1
                 ;;
             #*************
             #(deprecated)

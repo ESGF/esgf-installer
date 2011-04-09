@@ -2082,13 +2082,6 @@ setup_tds() {
     #See thredds_content_dir set in init() - default value is ${esg_root_dir}/content
 
     #--------
-    #hack - prerequiset for esgsetup... should be done in esgsetup code :-\
-    mkdir -p ${thredds_content_dir}/public
-    chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
-    chmod -R 755 ${thredds_content_dir}
-    #--------
-
-    #--------
     #EDIT the thredds property file: ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
     #replace the value for token "tds..content.root.path" with ${thredds_content_dir}
     local thredds_property_file=${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
@@ -2102,6 +2095,14 @@ setup_tds() {
     fi
     
     echo "Please set the thredds content directory to: ${thredds_content_dir} in the following setup"
+    #--------
+
+    #--------
+    #HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
+    #             So have to manually move over this directory to avert server not starting! WTF!? -gavin
+    cp -R ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public ${thredds_content_dir}/thredds
+    chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
+    chmod -R 755 ${thredds_content_dir}
     #--------
 
     #restart tomcat to put modifications in effect.

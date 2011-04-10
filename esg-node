@@ -1669,8 +1669,11 @@ configure_tomcat() {
         read -p "Would you like to use the DN: (${dname:=${default_dname}}) ? [Y/n]: " input
         [ -n "${input}" ] && use_dn=$(echo ${input} | tr 'a-z' 'A-Z')
         unset input
-        
-        if [ -z "${dname}" ] || [ "${use_dn}"="N" ]; then
+
+        ((DEBUG)) && echo "Your selection is ${use_dn}"
+        ((DEBUG)) && echo "dname = ${dname}"
+
+        if [ -z "${dname}" ] || [ "${use_dn}" = "N" ]; then
             $java_install_dir/bin/keytool -genkey -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password}
             [ $? != 0 ] && echo " ERROR: keytool genkey command failed" && popd && checked_done 1
         else

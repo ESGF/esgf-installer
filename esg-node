@@ -1759,7 +1759,6 @@ configure_tomcat() {
     popd #>& /dev/null
 }
 
-
 start_tomcat() {
     check_tomcat_process
     local ret=$? 
@@ -1767,6 +1766,7 @@ start_tomcat() {
     ((ret == 3)) && echo "Please resolve this issue before starting tomcat!" && checked_done $ret
 
     echo "Starting Tomcat (jsvc)..."
+
     pushd $tomcat_install_dir >& /dev/null
     [ $((sel & ALL_BIT)) != 0 ]  && java_opts+=' -Xmx2048m -Xms1024m -XX:MaxPermSize=128m'
     jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
@@ -4273,6 +4273,21 @@ show_svc_list() {
 # ESG Node Life Cycle Functions (start/stop/status)
 #-------------------------------
 
+#Run commands that need to be done to set the stage before any of the aparatus begins their launch sequence.
+#Here is a good place to; copy files, set configurations, etc... BEFORE you start running and need them!
+#In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
+run_startup_hooks() {
+    echo "Running startup hooks..."
+    #If we have the ORP installed make sure that it's configuration file contains the info it needs.
+    source ${scripts_dir}/esg-orp && orp_startup_hook
+}
+
+#Any last bits of cleanup for your module should be called here.
+#As with the startup hooks the function convention is <module>_shutdown_hook() (where module does not contain esg(f) prefix)
+run_shutdown_hooks() {
+    echo "Running shutdown hooks..."
+}
+
 #Starts the esg node
 start() {
     local let sel=${1:-${sel:-0}}
@@ -4282,6 +4297,8 @@ start() {
     [ $((sel & ALL_BIT)) == 0 ] && echo "Cannot Start: No Node Type Specified! (See --help for info on the --type|-t option)  :-|" && exit 1
     
     echo "starting services... ($sel)"
+    run_startup_hooks
+
     /etc/init.d/ntpd status
     if [ $? != 0 ]; then 
         /etc/init.d/ntpd start        
@@ -4309,6 +4326,8 @@ stop() {
     stop_tomcat 
     stop_postgress 
     show_svc_list
+
+    run_shutdown_hooks
 }
 
 #Displays the status of the node...

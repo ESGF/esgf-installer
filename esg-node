@@ -74,7 +74,7 @@ DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
 progname="esg-node"
-version="v1.0.2"
+version="v1.0.3"
 release="Stuyvesant"
 envfile="/etc/esg.env"
 

@@ -112,7 +112,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"1.0.4"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.2.4"}
+    esgf_security_version=${esgf_security_version:-"1.2.6"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
     opensaml_version=${opensaml_version:-"2.3.2"}
     openws_version=${openws_version:-"1.3.1"}

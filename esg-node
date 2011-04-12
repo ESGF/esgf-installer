@@ -265,7 +265,7 @@ init() {
     extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
     tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
     keystore_file=${tomcat_conf_dir}/keystore-tomcat
-    keystore_alias=my_esgf_node
+    keystore_alias=${keystore_alias:-my_esgf_node}
     keystore_password=${keystore_password}
     truststore_file=${tomcat_conf_dir}/esg-truststore.ts
     globus_global_certs_dir=/etc/grid-security/certificates
@@ -1743,6 +1743,8 @@ configure_tomcat() {
     eval "perl -p -i -e 's#\\@\\@keystore_file\\@\\@#${keystore_file}#g' server.xml"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@keystore_password\\@\\@#${store_password}#g' server.xml"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@keystore_alias\\@\\@#${keystore_alias}#g' server.xml"
     echo "*"
 
     #clean up the password immediately after it is done being used

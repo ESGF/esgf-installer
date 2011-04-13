@@ -74,8 +74,8 @@ DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
 progname="esg-node"
-version="v1.0.3"
-release="Stuyvesant"
+script_version="v1.0.3"
+script_release="Stuyvesant"
 envfile="/etc/esg.env"
 
 #--------------
@@ -4859,8 +4859,8 @@ main() {
                 echo
                 ;;
             -v | --version)
-                echo "Version: $version"
-                echo "Release: $release"
+                echo "Version: $script_version"
+                echo "Release: $script_release"
                 echo "Earth Systems Grid Federation (http://esgf.org)"
                 echo "ESGF Node Installation Script"
                 echo ""

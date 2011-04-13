@@ -294,9 +294,9 @@ init() {
 
     #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
     #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
-    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "as_javastyle_dn" function
+    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
     dname=${dname}
-    [ -z "${dname}" ] && get_property node_dn && dname=$(as_javastyle_dn ${dname})
+    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${dname})
 
     gridftp_config=${gridftp_config}
     [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
@@ -2724,12 +2724,16 @@ extract_keystore_dn() {
     echo "/${dn}"
 }
 
+java2standard_dn() {
+    echo "$*" | tr -s " " | awk 'BEGIN { FS = ", " } { for (i = NF; i >= 1; --i) print "/"$i}' | xargs | sed -n 's# ##gp'
+}
+
 #Helper function:
 #Takes in a dn in the sytle:
 #/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=esg-test1.llnl.gov
 #and turns it into a java compatible dn...  "CN=esg-test1.llnl.gov,
 #OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"
-as_javastyle_dn() {
+standard2java_dn() {
     local input=$1
     ans=$(echo ${input} | awk 'BEGIN { FS = "/" } { for (i = NF; i > 1; --i) print $i", " }'| xargs)
     ans=${ans%,}
@@ -3636,7 +3640,7 @@ check_version_helper() {
     debug_print "in check_version_helper $@"
     #only one parameter, probably a string, expand it
     [[ $# == 1 ]] && set -- $1
-    debug_print "\$1=$1, \$2=$2, \$3=$3"
+    #debug_print "\$1=$1, \$2=$2, \$3=$3"
     
     #check we have what we need
     if [[  -z $1 || -z $2  || -z $3 ]]; then 
@@ -5076,7 +5080,7 @@ main() {
                 #acceptable args:  [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
                 #Gather up tokens after this switch as long as the
                 #subsequent tokens do not start with "--"
-                local tmpargs=""#array to store args for this switch.
+                local tmpargs="" #array to store args for this switch.
                 local let index=0
                 shift
                 until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
@@ -5183,8 +5187,8 @@ main() {
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
     #(myproxy)
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus ${IDP_BIT}  ${myproxy_config_args}
-    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}]"  && test_globus  ${IDP_BIT}  ${myproxy_config_args}
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))  ${myproxy_config_args}
+    [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
 
     #---------------------------------------
     # Security Services Installation...

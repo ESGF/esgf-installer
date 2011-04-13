@@ -2203,7 +2203,7 @@ test_tds() {
 # Takes arg <selection bit vector> 
 # The rest of the args are the following...
 # for data-node configuration (GridFTP stuff): ["bdm"|"end-user"] see esg-globus script
-# for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert] | ["install"|"update"])
+# for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | <regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"]
 my_setup_globus() {
     local sel=${1:-${sel:-0}}
     echo "my_setup_globus for sel type ${sel}"
@@ -2241,7 +2241,9 @@ my_setup_globus() {
         echo -n "Globus Setup for Index-Node... (MyProxy server) "
         directive="gateway"
         pushd ${workdir} >& /dev/null
-        source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@
+        local setup_mode="update"
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_mode="install"
+        source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@ "${setup_mode}"
         ret=$?
         popd >& /dev/null
         [ ${ret} = 0 ] && write_globus_env || checked_done 1

@@ -65,7 +65,7 @@
 
 #uses: perl, awk, ifconfig, tar, wget, curl, su, useradd, groupadd,
 #      id, chmod, chown, chgrp, cut, svn, mkdir, killall, java, egrep,
-#      lsof, unlink, ln, pax, keytool, openssl
+#      lsof, unlink, ln, pax, keytool, openssl, getent
 
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
@@ -881,8 +881,10 @@ setup_postgress() {
     if [ $? != 0 ]; then
         echo " Hmmm...: There is no postgres system account user \"$pg_sys_acct\" present on system, making one..."
         #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        /usr/sbin/groupadd -r -f ${pg_sys_acct_group}
-        [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system group: ${pg_sys_acct_group}" && popd && checked_done 1
+        if [ ! $(getent group ${pg_sys_acct_group}) ]; then
+            /usr/sbin/groupadd -r ${pg_sys_acct_group}
+            [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system group: ${pg_sys_acct_group}" && popd && checked_done 1
+        fi
         
         if [ -z "${pg_sys_acct_passwd}" ]; then
             #set the password for the system user...
@@ -1286,8 +1288,10 @@ setup_esgcet() {
     chown -R ${installer_uid}:${installer_gid} ${publisher_home} 
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     #Let's make sure the group is there before we attempt to assign a file to it....
-    /usr/sbin/groupadd -r -f ${tomcat_group}
-    [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
+    if [ ! $(getent group ${pg_sys_acct_group}) ]; then
+        /usr/sbin/groupadd -r ${tomcat_group}
+        [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
+    fi
     chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 640 ${publisher_home}/${publisher_config} && chmod 755 ${HOME}
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
@@ -1455,8 +1459,10 @@ setup_tomcat() {
     if [ $? != 0 ]; then 
         echo " WARNING: There is no tomcat user \"$tomcat_user\" present on system"
         #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        /usr/sbin/groupadd -r -f ${tomcat_group}
-        [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
+        if [ ! $(getent group ${pg_sys_acct_group}) ]; then
+            /usr/sbin/groupadd -r ${tomcat_group}
+            [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
+        fi
         /usr/sbin/useradd -r -c"Tomcat Server Identity" -g $tomcat_group $tomcat_user
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system account user \"$tomcat_user\"" && popd && checked_done 1
     fi

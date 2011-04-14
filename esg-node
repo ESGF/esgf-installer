@@ -217,6 +217,7 @@ init() {
     esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
     esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
     esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
+    esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
     workdir=${workdir:-${installer_home}/workbench/esg}
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
@@ -306,9 +307,12 @@ init_structure() {
         mkdir -p ${esg_tools_dir} && \
         mkdir -p ${esg_log_dir} && \
         mkdir -p ${esg_config_dir} && \
+        mkdir -p ${esg_etc_dir} && \
         mkdir -p ${tomcat_conf_dir} && \
         touch ${config_file}
     [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
+
+    chmod 777 ${esg_etc_dir}
 
     [ -w "${envfile}" ] && write_paths
     return 0

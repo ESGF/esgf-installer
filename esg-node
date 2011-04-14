@@ -271,9 +271,16 @@ init() {
     globus_global_certs_dir=/etc/grid-security/certificates
     #NOTE: java keystore style DN...
     default_dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid" #zoiks: allow this to be empty to allow prompting of user for fields!
-    dname=""
     config_file=${esg_config_dir}/esgf.properties
 
+    dname=${dname}
+    gridftp_config=${gridftp_config}
+    publisher_config=${publisher_config}
+    publisher_home=${publisher_home}
+
+}
+
+init_structure() {
     #--------------
     #Prepare necessary support filesystem structure and files
     #--------------
@@ -295,15 +302,9 @@ init() {
     #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
     #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
     #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
-    dname=${dname}
     [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${dname})
-
-    gridftp_config=${gridftp_config}
     [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
-    
-    publisher_config=${publisher_config}
     [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
-    publisher_home=${publisher_home}
     [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
 
     export ESGINI=${publisher_home}/${publisher_config}
@@ -5125,6 +5126,7 @@ main() {
     echo "-----------------------------------"
     echo 
 
+    init_structure
     esgf_node_info
 
     local doit="n"

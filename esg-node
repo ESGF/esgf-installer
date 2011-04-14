@@ -4118,7 +4118,7 @@ get_property() {
     ((DEBUG)) && echo -n "[${in_key}] -> "
     local default=$2
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
-    dedup_properties ${config_file}
+    #dedup_properties ${config_file}
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
     [ -z "${value}" ] && [ -n "${default}" ] && value="${default}"
     ((DEBUG)) && echo "[${value}]"
@@ -4139,7 +4139,7 @@ get_property_as() {
     ((DEBUG)) && echo -n "[${alias}] -> "
     local default=$3
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
-    dedup_properties ${config_file}
+    #dedup_properties ${config_file}
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
     [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
     ((DEBUG)) && echo "[${value}]"

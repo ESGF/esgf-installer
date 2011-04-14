@@ -278,6 +278,9 @@ init() {
     publisher_config=${publisher_config}
     publisher_home=${publisher_home}
 
+    export ESGINI=${publisher_home}/${publisher_config}
+    ((DEBUG)) && echo "ESGINI = ${ESGINI}"
+
 }
 
 init_structure() {
@@ -306,10 +309,6 @@ init_structure() {
     [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
     [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
     [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
-
-    export ESGINI=${publisher_home}/${publisher_config}
-    ((DEBUG)) && echo "ESGINI = ${ESGINI}"
-
     [ -w "${envfile}" ] && write_paths
 
     return 0

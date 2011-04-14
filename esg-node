@@ -273,10 +273,21 @@ init() {
     default_dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
 
+
+    #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
+    #this is actually an issue with dedup_properties that gets called in the get_property function
+
+    #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
+    #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
+    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
     dname=${dname}
+    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${dname})
     gridftp_config=${gridftp_config}
+    [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
     publisher_config=${publisher_config}
+    [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
     publisher_home=${publisher_home}
+    [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
 
     export ESGINI=${publisher_home}/${publisher_config}
     ((DEBUG)) && echo "ESGINI = ${ESGINI}"
@@ -299,18 +310,7 @@ init_structure() {
         touch ${config_file}
     [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
 
-    #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
-    #this is actually an issue with dedup_properties that gets called in the get_property function
-
-    #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
-    #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
-    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
-    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${dname})
-    [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
-    [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
-    [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
     [ -w "${envfile}" ] && write_paths
-
     return 0
 }
 

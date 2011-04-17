@@ -162,7 +162,6 @@ init() {
     gateway_service_root=${ESG_GATEWAY_SVC_ROOT}
     myproxy_endpoint=${myproxy_endpoint:-${gateway_service_root%%/*}}
     myproxy_port=${myproxy_port:-7512}
-    esgf_host=${esgf_host:-$(hostname --fqdn)}
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
@@ -274,6 +273,9 @@ init() {
     default_dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
 
+
+    esgf_host=${esgf_host}
+    [ -z "${esgf_host}" ] && get_property esgf_node $(hostname --fqdn)
 
     #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
     #this is actually an issue with dedup_properties that gets called in the get_property function
@@ -2398,6 +2400,8 @@ test_publication() {
     X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
     rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
     
+    export ESG_INI=/esg/config/esgcet/esg.ini
+    echo "ESG_INI = [${ESG_INI}]"
     echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
     $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
@@ -4383,7 +4387,7 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_host}" ] || ((force_install)); then
         while [ 1 ]; do
             unset input
-            read -p "What is the name of this node? [${esgf_host}]: " input
+            read -p "What is the fully qualified domain name of this node? [${esgf_host}]: " input
             [ -z "${input}" ] && [ -n "${esgf_host}" ] && input=${esgf_host} && break
             [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
         done
@@ -5191,6 +5195,11 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem"  && setup_subsystem access-logging-filter filters $@
     #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
 
+    #---------------------------------------
+    # Security Services Installation...
+    #---------------------------------------
+    [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
+    [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
 
     #---------------------------------------
     # Globus Installation...
@@ -5199,15 +5208,10 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
-    #(myproxy)
+    #(myproxy - [depends on security backend in place])
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))  ${myproxy_config_args}
     [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
 
-    #---------------------------------------
-    # Security Services Installation...
-    #---------------------------------------
-    [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
-    [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
     
     #---------------------------------------
     # Index type install...

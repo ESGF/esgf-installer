@@ -102,10 +102,11 @@ while read file dest_dir; do
     #echo "[$file] >> [$dest_dir]"
     
     ((debug)) && echo -n "pushing $file ---> ${esg_dist_url}/${dest_dir} " || echo -n "*"
-    ((!noop))  && md5sum $file > ${file}.md5
+    sed 's#\(script_version=\)"\(.*\)".*$#\1"'$(git describe)'"#' ${file} > ${file}.tmp
+    ((!noop))  && md5sum ${file}.tmp > ${file}.md5
     ((!noop))  && rsync -c ${file}.md5 ${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
     echo -n "-"
-    ((!noop))  && rsync -c ${file} ${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
+    ((!noop))  && rsync -c ${file}.tmp ${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
     if [ $? != 0 ]; then
 	((debug)) && echo "[FAIL]"
 	((++fail))
@@ -114,6 +115,7 @@ while read file dest_dir; do
 	((++good))
     fi
     ((++total))
+    rm ${file}.tmp
 done < $manifest_file
 
 echo 

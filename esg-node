@@ -202,12 +202,17 @@ init() {
     #--------------
     # ID Setting
     #--------------
-
-    installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u)}}
-    installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g)}}
+    #fix: id will always return the root id no matter what flags we use if we start this via sudo
+    installer_user=${ESG_USER:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
+    installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $user)}}
+    installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $user)}}
     installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
-
-    verbose_print "${installer_uid}:${installer_gid}:${installer_home}"
+    
+    #deprecate SUDO_?ID so we only use one variable for all this
+    [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID && echo "SUDO_UID is deprecated, use ESG_USER_UID instead"
+    [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID && echo "SUDO_GID is deprecated, use ESG_USER_GID instead"
+     
+    verbose_print "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
 
     #--------------
     # Script vars (internal)
@@ -3557,9 +3562,8 @@ set_classpath() {
 
 #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
 check_postgress_process() {
-    local val=$(ps -elf | grep postgres | grep -v grep | awk ' END { print NR }')
-    [ $(($val > 0 )) == 1 ] && echo "Postgres process is running..." && return 0
-    return 1
+
+	su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data status"
 }
 
 #This function "succeeds" (is true; returns 0)  if there *are* running processes found running

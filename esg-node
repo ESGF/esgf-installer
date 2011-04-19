@@ -4451,7 +4451,7 @@ initial_setup_questionnaire() {
     if [ -z "${node_short_name}" ] || ((force_install)); then
         while [ 1 ]; do 
             unset input
-            read -p "What is the (short) name for this node? [${node_short_name}]: " input
+            read -p "Please give this node a \"short\" name: [${node_short_name}]: " input
             [ -z "${input}" ] && [ -n "${node_short_name}" ] && input=${node_short_name} && break
             [ -n "${input}" ] && node_short_name=$(echo ${input} | sed 's/ /_/g') && write_as_property node_short_name && break
         done
@@ -4464,7 +4464,7 @@ initial_setup_questionnaire() {
     get_property node_long_name ${node_long_name}
     if [ -z "${node_long_name}" ] || ((force_install)); then
         unset input
-        read -p "What is the long name for this node? (optional) [${node_long_name}]: " input
+        read -p "Please give this node a more descriptive \"long\" name: (optional) [${node_long_name}]: " input
         [ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name
     else
         echo "node_long_name = [${node_long_name}]"
@@ -4476,7 +4476,7 @@ initial_setup_questionnaire() {
         #default_ns=${default_ns%.*}
         while [ 1 ]; do
             unset input
-            read -p "What is the namespace to use for this node? (optional) [${node_namespace}]: " input
+            read -p "What is the namespace to use for this node? (optional - if not sure use default) [${node_namespace}]: " input
             [ -z "${input}" ] && [ -n "${node_namespace}" ] && input=${node_namespace} && break 
             [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
         done

@@ -209,8 +209,8 @@ init() {
     installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
     
     #deprecate SUDO_?ID so we only use one variable for all this
-    [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID && echo "SUDO_UID is deprecated, use ESG_USER_UID instead"
-    [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID && echo "SUDO_GID is deprecated, use ESG_USER_GID instead"
+    [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
+    [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
      
     verbose_print "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
 
@@ -4389,22 +4389,25 @@ initial_setup_questionnaire() {
     echo 'Welcome to the ESGF Node installation program! :-)'
     echo 
     mkdir -p ${esg_config_dir}
-
-    pushd ${esg_config_dir} >& /dev/null
     
+    pushd ${esg_config_dir} >& /dev/null
+
+    local input
+    local default
+
     get_property esgf_host ${esgf_host}
     if [ -z "${esgf_host}" ] || ((force_install)); then
-        while [ 1 ]; do
-            unset input
-            read -p "What is the fully qualified domain name of this node? [${esgf_host}]: " input
-            [ -z "${input}" ] && [ -n "${esgf_host}" ] && input=${esgf_host} && break
-            [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
-        done
+        unset input
+        default=${esgf_host:-$(hostname --fqdn)}
+        read -p "What is the fully qualified domain name of this node? [${default}]: " input
+        [ -z "${input}" ] && esgf_host=${default} && write_as_property esgf_host
+        [ -n "${input}" ] && esgf_host=${input}   && write_as_property esgf_host
     else
         echo "esgf_host = [${esgf_host}]"
     fi
     
     unset input
+    unset default
 
     get_property security_admin_password
     if [ -z "${security_admin_password}" ] || ((force_install)); then

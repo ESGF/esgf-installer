@@ -5145,9 +5145,10 @@ main() {
     echo "-----------------------------------"
     echo 
 
+    read_sel
 
     #If we are doing an install - make sure a type is selected
-    if [ $((sel & INSTALL_BIT)) != 0 ] && (( !(sel >= $MIN_BIT && sel <= $ALL_BIT) )); then
+    if [ $((sel & INSTALL_BIT)) != 0 ] && (( !(sel >= $MIN_BIT && sel <= $MAX_BIT) )); then
         printf "
 Sorry no suitable node type has been selected
 Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
@@ -5187,8 +5188,6 @@ Note: The type value is recorded upon successfully starting the node.
     if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
         exit 0
     fi    
-
-    read_sel
 
     (( force_install ))  && echo "(force install is ON)"
     (( (sel & DATA_BIT ) != 0))    && echo "(data node type selected)"

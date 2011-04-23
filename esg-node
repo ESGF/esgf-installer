@@ -290,10 +290,13 @@ init() {
     #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
     dname=${dname}
     [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${dname})
+
     gridftp_config=${gridftp_config}
     [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
+
     publisher_config=${publisher_config}
     [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
+
     publisher_home=${publisher_home}
     [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
 
@@ -1336,6 +1339,7 @@ write_esgcet_install_log() {
     dedup ${install_logfile}
     write_as_property publisher_config
     write_as_property publisher_home
+    write_as_property monitor.esg.ini ${publisher_home}/${publisher_config}
     return 0
 }
 

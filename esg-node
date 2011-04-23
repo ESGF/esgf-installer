@@ -158,8 +158,8 @@ init() {
     tomcat_user=${tomcat_user:-tomcat}
     tomcat_group=${tomcat_group:-$tomcat_user}
     globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
-    gateway_name=${ESG_GATEWAY_NAME}
-    gateway_service_root=${ESG_GATEWAY_SVC_ROOT}
+    gateway_name=${ESGF_PEER_NAME}
+    gateway_service_root=${ESGF_PEER_SVC_ROOT}
     myproxy_endpoint=${myproxy_endpoint:-${gateway_service_root%%/*}}
     myproxy_port=${myproxy_port:-7512}
     esg_root_id=${ESG_ROOT_ID:-$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')}
@@ -659,7 +659,7 @@ setup_java() {
     #semantics i.e. there is already a previous installation of java
     #an installation of tomcat with tomcat setup with a properly
     #generated/configured jssecacerts file and there is a valid
-    #ESG_GATEWAY_SVC_ROOT being pointed to.  We should copy over that
+    #ESGF_PEER_SVC_ROOT being pointed to.  We should copy over that
     #jssecacerts into this newly installed VM to satisfy SSL.
     if [ -e "${last_java_truststore_file}" ]; then
         cp -v ${last_java_truststore_file} ${java_install_dir}/conf
@@ -2066,12 +2066,12 @@ setup_tds() {
                 ;;
             c | C)
                 local input
-                gateway_name=${ESG_GATEWAY_NAME:-"ESG-PCMDI"}
-                gateway_service_root=${ESG_GATEWAY_SVC_ROOT:-"pcmdi3.llnl.gov/esgcet"}
-                read -p "Please enter the Gateway name [${ESG_GATEWAY_NAME}] " input
+                gateway_name=${ESGF_PEER_NAME:-"ESG-PCMDI"}
+                gateway_service_root=${ESGF_PEER_SVC_ROOT:-"pcmdi3.llnl.gov/esgcet"}
+                read -p "Please enter the Gateway name [${ESGF_PEER_NAME}] " input
                 [ -n "${input}" ] && gateway_name=$(echo ${input} | tr 'a-z' 'A-Z')
                 unset input
-                read -p "Please enter the Gateway Service Root [${ESG_GATEWAY_SVC_ROOT}] " input
+                read -p "Please enter the Gateway Service Root [${ESGF_PEER_SVC_ROOT}] " input
                 [ -n "${input}" ] && gateway_service_root=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
                 unset input
                 choice="(Manual Entry)"
@@ -2177,8 +2177,8 @@ setup_tds() {
 
 write_tds_env() {
     ((show_summary_latch++))
-    echo "export ESG_GATEWAY_NAME=${gateway_name}" >> ${envfile}
-    echo "export ESG_GATEWAY_SVC_ROOT=${gateway_service_root}" >> ${envfile}
+    echo "export ESGF_PEER_NAME=${gateway_name}" >> ${envfile}
+    echo "export ESGF_PEER_SVC_ROOT=${gateway_service_root}" >> ${envfile}
     echo "export myproxy_port=${myproxy_port}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
@@ -3332,7 +3332,7 @@ export_keystore_as_globus_hostkeys() {
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
 register() {
-    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: ${1:-${ESG_GATEWAY_SVC_ROOT%%/*}})"
+    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: ${1:-${ESGF_PEER_SVC_ROOT%%/*}})"
     
     mkdir -p ${workdir} # >& /dev/null
     pushd ${workdir} # >& /dev/null
@@ -3345,7 +3345,7 @@ register() {
 
     pushd ${tomcat_conf_dir} >& /dev/null
     
-    local input=${1:-${ESG_GATEWAY_SVC_ROOT%%/*}}
+    local input=${1:-${ESGF_PEER_SVC_ROOT%%/*}}
     [ -z "${input}" ] && popd && echo "Could not register: No endpoint specified" && return 1
 
     local ssl_endpoint=${input%%/*} #just need the hostname
@@ -4713,8 +4713,8 @@ done_remark() {
     echo "http://${my_ip_address}/thredds"
     echo "http://${my_ip_address}/OpenidRelyingParty"
     echo 
-    echo "To see the published test, go your specified gateway: [${ESG_GATEWAY_NAME}]"
-    echo "http://${ESG_GATEWAY_SVC_ROOT}"
+    echo "To see the published test, go your specified \"admin\" peer: [${ESGF_PEER_NAME}]"
+    echo "http://${ESGF_PEER_SVC_ROOT}"
     echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.test.mytest"
     echo ""
 }

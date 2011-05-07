@@ -105,7 +105,7 @@ init() {
     esgcet_version=${esgcet_version:-"2.8.2"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.4.8_rc1"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.0"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esg-orp project:
@@ -4134,6 +4134,7 @@ load_properties() {
 #arg 1 - the string that you wish to get the property of (and make a variable)
 #arg 2 - optional default value to set
 get_property() {
+    local ret=0
     ((DEBUG)) && echo -n "get_property(): "
     local in_key=$1
     ((DEBUG)) && echo -n "[${in_key}] -> "
@@ -4141,10 +4142,10 @@ get_property() {
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
     #dedup_properties ${config_file}
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
-    [ -z "${value}" ] && [ -n "${default}" ] && value="${default}"
+    [ -z "${value}" ] && ret=1 && [ -n "${default}" ] && value="${default}"
     ((DEBUG)) && echo "[${value}]"
     eval "${in_key}=\"${value}\""
-    return 0
+    return $ret
 }
 
 #Gets a single property from the arg string and turns the alias into a
@@ -4153,6 +4154,7 @@ get_property() {
 #arg 2 - the alias string value of the variable you wish to create and assign
 #arg 3 - the optional default value if no value is found for arg 1
 get_property_as() {
+    local ret=0
     ((DEBUG)) && echo -n "get_property_as(): "
     local in_key=$1
     ((DEBUG)) && echo -n "[${in_key}] -> "
@@ -4162,7 +4164,7 @@ get_property_as() {
     local prop_key=$(echo ${in_key} |sed 's/_/\./g')
     #dedup_properties ${config_file}
     local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
-    [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
+    [ -z "${value}" ] && ret=1 && [ -n "${default}" ] && value=${default}
     ((DEBUG)) && echo "[${value}]"
     eval "${alias}=\"${value}\""
     return 0
@@ -4394,18 +4396,13 @@ initial_setup_questionnaire() {
     echo 
     mkdir -p ${esg_config_dir}
     
-    pushd ${esg_config_dir} >& /dev/null
-
-    local input
-    local default
-
-    get_property esgf_host ${esgf_host}
-    if [ -z "${esgf_host}" ] || ((force_install)); then
-        unset input
-        default=${esgf_host:-$(hostname --fqdn)}
-        read -p "What is the fully qualified domain name of this node? [${default}]: " input
-        [ -z "${input}" ] && esgf_host=${default} && write_as_property esgf_host
-        [ -n "${input}" ] && esgf_host=${input}   && write_as_property esgf_host
+    if get_property esgf_host ${esgf_host} || ((force_install)); then
+        while [ 1 ]; do
+            unset input
+            read -p "What is the name of this node? [${esgf_host}]: " input
+            [ -z "${input}" ] && [ -n "${esgf_host}" ] && input=${esgf_host} && break
+            [ -n "${input}" ] && esgf_host=${input} && write_as_property esgf_host && break
+        done
     else
         echo "esgf_host = [${esgf_host}]"
     fi
@@ -4413,8 +4410,8 @@ initial_setup_questionnaire() {
     unset input
     unset default
 
-    get_property security_admin_password
-    if [ -z "${security_admin_password}" ] || ((force_install)); then
+    
+    if get_property security_admin_password || ((force_install)); then
         while [ 1 ]; do
             unset input
             echo
@@ -4444,8 +4441,7 @@ initial_setup_questionnaire() {
 
     unset input
     
-    get_property esg_root_id ${esg_root_id}
-    if [ -z "${esg_root_id}" ] || ((force_install)); then
+    if get_property esg_root_id ${esg_root_id} || ((force_install)); then
         while [ 1 ]; do
             unset input
                 read -p "What is the name of your organization? [${esg_root_id}]: " input
@@ -4458,8 +4454,8 @@ initial_setup_questionnaire() {
 
     unset input
     
-    get_property node_short_name ${node_short_name}
-    if [ -z "${node_short_name}" ] || ((force_install)); then
+    
+    if get_property node_short_name ${node_short_name} || ((force_install)); then
         while [ 1 ]; do 
             unset input
             read -p "Please give this node a \"short\" name: [${node_short_name}]: " input
@@ -4472,8 +4468,8 @@ initial_setup_questionnaire() {
 
     unset input
 
-    get_property node_long_name ${node_long_name}
-    if [ -z "${node_long_name}" ] || ((force_install)); then
+    
+    if get_property node_long_name ${node_long_name} || ((force_install)); then
         unset input
         read -p "Please give this node a more descriptive \"long\" name: (optional) [${node_long_name}]: " input
         [ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name
@@ -4481,8 +4477,7 @@ initial_setup_questionnaire() {
         echo "node_long_name = [${node_long_name}]"
     fi
 
-    get_property node_namespace "org.esgf"
-    if [ -z "${node_namespace}" ] || ((force_install)); then
+    if get_property node_namespace || ((force_install)); then
         #local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
         #default_ns=${default_ns%.*}
         while [ 1 ]; do
@@ -4497,8 +4492,8 @@ initial_setup_questionnaire() {
     
     unset input
 
-    get_property mail_admin_address ${mail_admin_address}
-    if [ -z "${mail_admin_address}" ] || ((force_install)); then
+    
+    if get_property mail_admin_address ${mail_admin_address} || ((force_install)); then
         read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
         [ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
         [ -z "${mail_admin_address}" ] && echo " (The notification system will not be enabled without an email address)"

@@ -2187,6 +2187,8 @@ write_tds_env() {
     echo "export ESGF_PEER_NAME=${gateway_name}" >> ${envfile}
     echo "export ESGF_PEER_SVC_ROOT=${gateway_service_root}" >> ${envfile}
     echo "export myproxy_port=${myproxy_port}" >> ${envfile}
+    local esgf_admin_peer=${myproxy_endpoint}
+    write_as_property esgf_admin_peer
     dedup ${envfile} && source ${envfile}
     return 0
 }

@@ -2187,8 +2187,6 @@ write_tds_env() {
     echo "export ESGF_PEER_NAME=${gateway_name}" >> ${envfile}
     echo "export ESGF_PEER_SVC_ROOT=${gateway_service_root}" >> ${envfile}
     echo "export myproxy_port=${myproxy_port}" >> ${envfile}
-    local esgf_admin_peer=${myproxy_endpoint}
-    write_as_property esgf_admin_peer
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -3374,7 +3372,7 @@ extract_keystore_dn() {
 	    chmod 644 ${truststore_file}
 	    chown ${tomcat_user}:${tomcat_group} ${truststore_file}
 
-	    write_as_property myproxy_endpoint
+	    write_as_property myproxy_endpoint ${input}
 	    
 	    sync_with_java_truststore ${truststore_file}
 

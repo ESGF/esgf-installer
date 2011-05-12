@@ -1475,7 +1475,7 @@ setup_tomcat() {
 	[ $? != 0 ] && \
 	    echo " ERROR: Could not create sym link ${tomcat_install_dir%/*}/${tomcat_dist_dir} -> ${tomcat_install_dir}" && popd && checked_done 1
     else
-	unlink ${tomcat_install_dir}
+	unlink ${tomcat_install_dir} >& /dev/null
 	[ $? != 0 ] && mv ${tomcat_install_dir} ${tomcat_install_dir}.$(date ${date_format}).bak
 
 	ln -s ${tomcat_install_dir%/*}/${tomcat_dist_dir} ${tomcat_install_dir}
@@ -1488,11 +1488,12 @@ setup_tomcat() {
     if [ $? != 0 ]; then 
 	echo " WARNING: There is no tomcat user \"$tomcat_user\" present on system"
 	#NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-	if [ ! $(getent group ${pg_sys_acct_group}) ]; then
+	if [ ! $(getent group ${tomcat_group}) ]; then
 	    /usr/sbin/groupadd -r ${tomcat_group}
 	    [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
 	fi
-	/usr/sbin/useradd -r -c"Tomcat Server Identity" -g $tomcat_group $tomcat_user
+	echo "/usr/sbin/useradd -r -c"Tomcat Server Identity" -g $tomcat_group $tomcat_user"
+        /usr/sbin/useradd -r -c"Tomcat Server Identity" -g $tomcat_group $tomcat_user
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add tomcat system account user \"$tomcat_user\"" && popd && checked_done 1
     fi
     
@@ -2140,6 +2141,7 @@ setup_tds() {
     #--------
     #HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
     #		  So have to manually move over this directory to avert server not starting! WTF!? -gavin
+    mkdir -p ${thredds_content_dir}/thredds
     cp -R ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public ${thredds_content_dir}/thredds
     chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
     chmod -R 755 ${thredds_content_dir}

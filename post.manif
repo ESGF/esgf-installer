@@ -15,3 +15,15 @@
 
 ./esg-node
 ./esg-bootstrap
+
+[esgf-product-server]
+./esgf-product-server/esg-product-server
+
+[externals/bootstrap]
+./globus/esg-globus
+
+[filters]
+./filters/esg-security-tokenless-filters
+./filters/esg-security-token-filters
+./filters/esg-access-logging-filter
+./filters/esg-drs-resolving-filter

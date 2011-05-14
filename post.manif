@@ -17,7 +17,7 @@
 ./esg-bootstrap
 
 [esgf-product-server]
-./esgf-product-server/esg-product-server
+./product-server/esg-product-server
 
 [externals/bootstrap]
 ./globus/esg-globus

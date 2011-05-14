@@ -74,7 +74,7 @@ while [ -n "$1" ]; do
         --verbose)
             verbose=1
             ;;
-        --noop)
+        --noop | --dry-run)
             noop=1
             ;;
         *)

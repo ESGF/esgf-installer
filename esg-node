@@ -73,6 +73,7 @@
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
+devel=${devel:-0}
 progname="esg-node"
 script_version="v1.0.3"
 script_release="Stuyvesant"
@@ -5219,6 +5220,8 @@ main() {
 	echo "	   Before continuing make sure they are ALL present on this system!!!!!!"
 	echo "	   ----------------------------------------------------------"
 	echo
+        (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
+
 	read -p "Are you ready to begin the installation? [Y/n] " doit
 	if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
 	    exit 0

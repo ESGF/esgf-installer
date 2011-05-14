@@ -62,14 +62,34 @@
 
 #uses: egrep, rsync (and thus ssh)
 
+devel=${devel:-0}
 debug=${debug:-0}
 noop=${noop:-0}
 
+while [ -n "$1" ]; do 
+    case $1 in
+        --devel)
+            devel=1
+            ;;
+        --debug)
+            debug=1
+            ;;
+        --noop)
+            noop=1
+            ;;
+        *)
+	    printf "\n ERROR: unknown switch \"$1\" \n\n" && exit 1
+	    ;;
+    esac
+    shift
+done
+
+((devel)) && echo "Pushing to development area..."
 ((debug)) && echo "Debug is ON"
-((noop)) && echo "Noop is ON"
+((noop)) &&  echo "Noop is ON"
 
 manifest_file=${manifest_file:-$0.manif}
-esg_dist_url="rainbow.llnl.gov:/pcmdi_web/dist"
+esg_dist_url="rainbow.llnl.gov:/pcmdi_web/dist$( ((devel == 1)) && echo "/devel" || echo "")"
 current_dir=${current_dir:="esg_node"}
 
 fail=0

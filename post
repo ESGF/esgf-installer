@@ -62,15 +62,35 @@
 
 #uses: egrep, rsync (and thus ssh)
 
-debug=${debug:-0}
+devel=${devel:-0}
+verbose=${verbose:-0}
 noop=${noop:-0}
 
-((debug)) && echo "Debug is ON"
-((noop)) && echo "Noop is ON"
+while [ -n "$1" ]; do 
+    case $1 in
+        --devel)
+            devel=1
+            ;;
+        --verbose)
+            verbose=1
+            ;;
+        --noop | --dry-run)
+            noop=1
+            ;;
+        *)
+	    printf "\n ERROR: unknown switch \"$1\" \n\n" && exit 1
+	    ;;
+    esac
+    shift
+done
+
+((devel)) && echo "Pushing to development area..."
+((verbose)) && echo "Verbose is ON"
+((noop)) &&  echo "Noop is ON"
 
 manifest_file=${manifest_file:-$0.manif}
-esg_dist_url="rainbow.llnl.gov:/pcmdi_web/dist"
-current_dir=${current_dir:="esg_node"}
+esg_dist_url="rainbow.llnl.gov:/pcmdi_web/dist$( ((devel == 1)) && echo "/devel" || echo "")"
+current_dir=${current_dir:="esgf-installer"}
 
 fail=0
 good=0
@@ -92,7 +112,7 @@ while read file dest_dir; do
 
     if [ ! -e $file ]; then
 	echo -n "x"
-	((debug)) && echo " [FAIL] No Such File $file"
+	((verbose)) && echo " [FAIL] No Such File $file"
 	((++total))
 	((++fail))
 	continue
@@ -101,17 +121,17 @@ while read file dest_dir; do
     dest_dir=${dest_dir:-"${current_dir}"}
     #echo "[$file] >> [$dest_dir]"
     
-    ((debug)) && echo -n "pushing $file ---> ${esg_dist_url}/${dest_dir} " || echo -n "*"
+    ((verbose)) && echo -n "pushing $file ---> ${esg_dist_url}/${dest_dir} " || echo -n "*"
     sed 's#\(script_version=\)"\(.*\)".*$#\1"'$(git describe)'"#' ${file} > ${file}.tmp
     ((!noop))  && md5sum ${file}.tmp > ${file}.md5
     ((!noop))  && rsync -c ${file}.md5 ${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
     echo -n "-"
     ((!noop))  && rsync -c ${file}.tmp ${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
     if [ $? != 0 ]; then
-	((debug)) && echo "[FAIL]"
+	((verbose)) && echo "[FAIL]"
 	((++fail))
     else
-	((debug)) && echo "[OK]" 
+	((verbose)) && echo "[OK]" 
 	((++good))
     fi
     ((++total))

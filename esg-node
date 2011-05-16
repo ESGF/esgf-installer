@@ -73,6 +73,7 @@
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
+devel=${devel:-0}
 progname="esg-node"
 script_version="v1.0.3"
 script_release="Stuyvesant"
@@ -226,7 +227,7 @@ init() {
     workdir=${workdir:-${installer_home}/workbench/esg}
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-    esg_dist_url=http://198.128.245.140/dist
+    esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
     date_format="+%Y_%m_%d_%H%M%S"
     num_backups_to_keep=${num_backups_to_keep:-7}
     compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
@@ -4925,6 +4926,9 @@ main() {
 		    echo ""
 		    exit 0
 		    ;;
+                --devel)
+                    devel=1
+                    ;;
 		--debug) 
 		    DEBUG=1
 		    ;;
@@ -5216,6 +5220,8 @@ main() {
 	echo "	   Before continuing make sure they are ALL present on this system!!!!!!"
 	echo "	   ----------------------------------------------------------"
 	echo
+        (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
+
 	read -p "Are you ready to begin the installation? [Y/n] " doit
 	if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
 	    exit 0

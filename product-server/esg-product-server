@@ -224,20 +224,9 @@ init_ferret() {
 
     ferret_install_dir=${FERRET_HOME:-/usr/local/ferret}
     ferret_data_dir=${FERRET_HOME:-/usr/local/ferret_data}
-
-    if [ "${word_size}" = "64" ] ; then
-    # 64-bit
-	ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_${word_size}-linux_nc4/fer_executables.tar.gz
-	ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_${word_size}-linux_nc4/fer_environment.tar.gz
-    elif [ "${word_size}" = "32" ] ; then
-    # 32-bit 
-        ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_${word_size}_nc4_clean/fer_executables.tar.gz
-	#ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_${word_size}_nc4/fer_executables.tar.gz
-	ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_${word_size}_nc4/fer_environment.tar.gz
-    else
-	echo "Cannot support a ${word} bit system!!!!"
-	checked_done 1
-    fi
+    
+    ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/semi_official_67_linux_${word_size}/fer_executables.tar.gz
+    ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/semi_official_67_linux_${word_size}/fer_environment.tar.gz
     
     # Ferret data files
     ferret_data_url=ftp://ftp.pmel.noaa.gov/ferret/pub/data/fer_dsets.tar.gz
@@ -255,7 +244,7 @@ get_ferret() {
     #fer_executables.tar.gz
     if [ ! -e ${ferret_exec_file} ] || ((force_install)); then
         [ ! -e ${ferret_exec_file} ] && echo "Don't see Ferret executables file ${ferret_exec_file}"
-	echo "Downloading Ferret from ${ferret_exec_url}"
+	echo "Downloading Ferret from ${ferret_exec_url} to ${ferret_exec_file}"
 	
 	wget -O ${ferret_exec_file} ${ferret_exec_url}
 	[ $? != 0 ] && echo " ERROR: Could not download Ferret:${ferret_exec_file}" && popd && checked_done 1
@@ -380,7 +369,7 @@ get_las() {
     #Download:
     if [ ! -e ${las_dist_file} ]; then
 	echo "Don't see LAS tar file ${las_dist_file}"
-	echo "Downloading LAS from ${las_dist_file}"
+	echo "Downloading LAS from ${las_dist_file} -to-> $(pwd)/${las_dist_file}"
 
 	wget -O ${las_dist_file} ${las_tar_url}
 	[ $? != 0 ] && echo " ERROR: Could not download LAS:${las_dist_file}" && popd && checked_done 1
@@ -391,13 +380,29 @@ get_las() {
 
 install_las() {
     echo "Installing Live Access Server (LAS)... using local product server file"
+
+    #Obliterate what is currently there (it would be prudent for them to have selected to do a backup)
+    if [ -d ${tomcat_install_dir}/webapps/las ]; then 
+        stop_tomcat
+        echo -n "removing current LAS installation ${tomcat_install_dir}/webapps/las "
+        rm -rf ${tomcat_install_dir}/webapps/las && echo "[OK]" || (echo "[FAILED]" && checked_done 1)
+    fi
+
+    #Remove the link, which at this point will be pointing out into nothing...
+    if [ -e ${tomcat_install_dir}/content/las ] && [ -h ${tomcat_install_dir}/content/las ]; then
+        echo -n "removing sym link in tomcat: ${tomcat_install_dir}/content/las "
+        unlink ${tomcat_install_dir}/content/las && echo "[OK]" || (echo "[FAILED]" && checked_done 1)
+    fi
+
+    #Now we can proceed with an install
     echo "untarring las distribution file..."
     echo "tar -zxf ${ferret_workdir}/${las_dist_file} -C ${las_install_dir}"
     tar -zxf ${ferret_workdir}/${las_dist_file} -C ${las_install_dir}
 
     pushd ${las_dir} >& /dev/null
     checked_get ${ferret_workdir}/${las_config_input_file_url##*/} ${las_config_input_file_url} $((force_install))
-    sed  '/^80$/,/^ESGF.*$/ { /^80$/b; /^ESGF.*$/b; s/^.*$/'${esg_host}'/}' ${ferret_workdir}/${las_config_input_file_url##*/}
+    sed -i '8  s/^.*$/'${esg_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
+    sed -i '12 s/^.*$/'${esg_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
     echo "$(pwd)/configure < ${ferret_workdir}/${las_config_input_file_url##*/}"
     ./configure < ${ferret_workdir}/${las_config_input_file_url##*/}
     popd >& /dev/null

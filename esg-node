@@ -99,7 +99,7 @@ init() {
     debug_print "esg-node initilizing..."
 
     #--------------------------------
-    # Internal data-node code versions
+    # Internal esgf node code versions
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
     cdat_version=${cdat_version:-"6.0.alpha"}
@@ -1315,7 +1315,7 @@ setup_esgcet() {
     chown -R ${installer_uid}:${installer_gid} ${publisher_home} 
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     #Let's make sure the group is there before we attempt to assign a file to it....
-    if [ ! $(getent group ${pg_sys_acct_group}) ]; then
+    if [ ! $(getent group ${tomcat_group}) ]; then
 	/usr/sbin/groupadd -r ${tomcat_group}
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
     fi
@@ -4116,9 +4116,6 @@ dedup_properties() {
     local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($1 in a) {a[$1];print $0}' | sort -k1,1)
     echo "$tmp" > ${infile}
 }
-
-DEBUG=${DEBUG:=1}
-config_file="esgf.properties"
 
 #Load properties from a java-style property file
 #providing them as script variables in this context

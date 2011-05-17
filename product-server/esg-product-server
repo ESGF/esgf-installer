@@ -72,8 +72,8 @@ tomcat_user=${tomcat_user:-"tomcat"}
 tomcat_group=${tomcat_group:-"tomcat_group"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
-ferret_version=${ferret_version:-"6.65"}
-las_version=${las_version:-"7.3"}
+ferret_version=${ferret_version:-"6.7"}
+las_version=${las_version:-"7.3.1"}
 
 thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
 las_config_file_template_url=${esg_dist_url}/esgf-product-server/las_tds.xml.tmpl
@@ -82,7 +82,7 @@ las_config_input_file_url=${esg_dist_url}/esgf-product-server/esg-las-config
 las_install_dir=${las_install_dir:-/usr/local}
 las_server_dir=${content_dir}/las #why did you decide to make it there and not /esg/content/las/[conf/server] ??
 esgcet_las_config_file="esgcet_las.xml"
-esgcet_las_sisters_file="las_sisters.xml"
+esgcet_las_sisters_file="las_servers.xml"
 
 setup_product_server() {
 

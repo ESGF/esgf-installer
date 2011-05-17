@@ -997,6 +997,7 @@ config_bdm_gridftp_server() {
     fi
 
     # generate /etc/grid-security/gsi-authz-bdm.conf
+    [ ! -d /etc/grid-security ] && echo "WARNING: Could not find directory /etc/grid-security, making it..." && mkdir -p /etc/grid-security
     echo "globus_mapping libglobus_authz_bdm_callout_gcc${globus_word_size}dbg.so globus_gsi_authz_bdm_gridmap_callout" > /etc/grid-security/gsi-authz-bdm.conf
     echo 
     echo "---------gsi-authz-bdm.conf---------"
@@ -1005,6 +1006,7 @@ config_bdm_gridftp_server() {
     echo 
 
     # generate /etc/grid-security/esg_gridmap_assist.conf
+    [ ! -d /etc/grid-security ] && mkdir -p /etc/grid-security
     echo "attribute=group_BDM_role_publisher" > /etc/grid-security/esg_gridmap_assist.conf
     echo "localAccount=${globus_sys_acct}" >> /etc/grid-security/esg_gridmap_assist.conf
     echo 

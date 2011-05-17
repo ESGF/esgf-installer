@@ -2764,26 +2764,26 @@ extract_keystore_dn() {
 	#this is a bit of defensive coding so we don't run into the problem of not having the password and running a broken arg sequence
 	[ -n "${storepass}" ] && storepass_switch="-storepass ${storepass}"
 	#Note: I apologize for this horribile hacking of regex (this should be more cleanly accomplished with sed or perl using a capture group or a simple look behind)
-	dn=$(keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's#^Owner: ##' | sed -e s#", "#" "#g | tac -s " " | xargs | sed -e 's# #/#g')
+	dn=$(keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
     fi
     echo "/${dn}"
-	}
+}
 
-	java2standard_dn() {
-	    echo "$*" | tr -s " " | awk 'BEGIN { FS = ", " } { for (i = NF; i >= 1; --i) print "/"$i}' | xargs | sed -n 's# ##gp'
-	}
+java2standard_dn() {
+    echo "$*" | tr -s " " | awk 'BEGIN { FS = ", " } { for (i = NF; i >= 1; --i) print "/"$i}' | xargs | sed -n 's# ##gp'
+}
 
 #Helper function:
 #Takes in a dn in the sytle:
 #/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=esg-test1.llnl.gov
 #and turns it into a java compatible dn...  "CN=esg-test1.llnl.gov,
 #OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"
-	standard2java_dn() {
-	    local input=$1
-	    ans=$(echo ${input} | awk 'BEGIN { FS = "/" } { for (i = NF; i > 1; --i) print $i", " }'| xargs)
-	    ans=${ans%,}
-	    echo "${ans}"
-	}
+standard2java_dn() {
+    local input=$1
+    ans=$(echo ${input} | awk 'BEGIN { FS = "/" } { for (i = NF; i > 1; --i) print $i", " }'| xargs)
+    ans=${ans%,}
+    echo "${ans}"
+}
 
 #(Once you have submitted the CSR and have gotten it back *signed*; now install the keypair)
 #arg 1 -> private key
@@ -2791,58 +2791,58 @@ extract_keystore_dn() {
 #arg 3 -> keystore name
 #arg 4 -> alias
 #arg 5 -> password (The value you want *set* for the keystore and internal private key)
-	install_keypair() {
-	    local private_key=${1:-${tomcat_conf_dir}/"hostkey.pem"}
-	    local public_cert=${2:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
-	    local keystore_name=${3:-${keystore_file}}
-	    local keystore_alias=${4:-${keystore_alias}}
-	    local store_password=${5}
+install_keypair() {
+    local private_key=${1:-${tomcat_conf_dir}/"hostkey.pem"}
+    local public_cert=${2:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
+    local keystore_name=${3:-${keystore_file}}
+    local keystore_alias=${4:-${keystore_alias}}
+    local store_password=${5}
+    
+    echo "private key = ${private_key}"
+    echo "public cert = ${public_cert}"
+    echo "keystore name	 = ${keystore_file}"
+    echo "keystore alias = ${keystore_alias}"
+    
+    local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
+    local default_passwd=${ks_secret:=changeit}
 
-	    echo "private key = ${private_key}"
-	    echo "public cert = ${public_cert}"
-	    echo "keystore name	 = ${keystore_file}"
-	    echo "keystore alias = ${keystore_alias}"
-
-	    local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
-	    local default_passwd=${ks_secret:=changeit}
-
-	    if [ -z "${store_password}" ]; then
-		local verify_password
-		while [ 1 ]; do
-		    echo
-		    read -s -p "Please enter the password for this keystore   : " store_password
-		    [ "${store_password}" = "${default_passwd}" ] && break
-		    [ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
-		    echo
-		    read -s -p "Please re-enter the password for this keystore: " verify_password
-		    if [ "${store_password}" = "${verify_password}" ] ; then
-			echo
-			break
-		    else
-			echo "Sorry, values did not match"
-			echo
-		    fi
-		done
-		unset verify_password
-		echo
-	    else 
-		echo "store_password = ******"
-	    fi
-
-	    local certfiles=()
-	    local certfile_entry
-	    echo "Please enter your Certificate Athority's certificate chain file(s): "
-	    echo " [enter each cert file/url press return, press return with blank entry when done]"
+    if [ -z "${store_password}" ]; then
+	local verify_password
+	while [ 1 ]; do
 	    echo
-	    while [ 1 ]; do
-		read -p "certfile> " certfile_entry
-		[ -z ${certfile_entry} ] && break
-		certfiles=("${certfiles[@]} ${certfile_entry}")
-	    done
-	    debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
-	    make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
-	    [ $? != 0 ] && echo "ERROR: Problem with key generation and/or keystore construction" && mv ${keystore_name}.bak ${keystore_name} && exit 5
-	    
+	    read -s -p "Please enter the password for this keystore   : " store_password
+	    [ "${store_password}" = "${default_passwd}" ] && break
+	    [ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
+	    echo
+	    read -s -p "Please re-enter the password for this keystore: " verify_password
+	    if [ "${store_password}" = "${verify_password}" ] ; then
+		echo
+		break
+	    else
+		echo "Sorry, values did not match"
+		echo
+	    fi
+	done
+	unset verify_password
+	echo
+    else 
+	echo "store_password = ******"
+    fi
+
+    local certfiles=()
+    local certfile_entry
+    echo "Please enter your Certificate Athority's certificate chain file(s): "
+    echo " [enter each cert file/url press return, press return with blank entry when done]"
+    echo
+    while [ 1 ]; do
+	read -p "certfile> " certfile_entry
+	[ -z ${certfile_entry} ] && break
+	certfiles=("${certfiles[@]} ${certfile_entry}")
+    done
+    debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
+    make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
+    [ $? != 0 ] && echo "ERROR: Problem with key generation and/or keystore construction" && mv ${keystore_name}.bak ${keystore_name} && exit 5
+    
     ##Transform the keypair into the DER format understood by Java's keystore
     ##And generate a new keystore from that pair.
     #[ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
@@ -2850,34 +2850,34 @@ extract_keystore_dn() {
     #	 create_keystore ${private_key%.*}.der ${public_cert%.*}.der ${keystore_name} ${keystore_alias} ${store_password} 
     #[ $? != 0 ] && echo "ERROR: Problem with key generation and/or keystore construction" && mv ${keystore_name}.bak ${keystore_name} && exit 5
 
-	    echo "${store_password}" > ${ks_secret_file}
-	    chmod 600 ${ks_secret_file}
-	    chown ${installer_uid}:${installer_gid} ${ks_secret_file}
-	    
+    echo "${store_password}" > ${ks_secret_file}
+    chmod 600 ${ks_secret_file}
+    chown ${installer_uid}:${installer_gid} ${ks_secret_file}
+    
     #(In order for ORP or any other local service to trust eachother put your own cert into the truststore)
-	    [ -e "${truststore_file}" ] && mv ${truststore_file} ${truststore_file}.bak
-	    rebuild_truststore && add_my_cert_to_truststore ${store_password}
-	    [ $? != 0 ] && echo "ERROR: Problem with truststore generation" && mv ${truststore_file}.bak ${truststore_file} && exit 6
-	    register
-	    
+    [ -e "${truststore_file}" ] && mv ${truststore_file} ${truststore_file}.bak
+    rebuild_truststore && add_my_cert_to_truststore ${store_password}
+    [ $? != 0 ] && echo "ERROR: Problem with truststore generation" && mv ${truststore_file}.bak ${truststore_file} && exit 6
+    register
+    
     #--------------------------------------------------
     #Copy the files to where they need to go for GLOBUS 
     #--------------------------------------------------
-	    local globus_grid_security_dir=${globus_global_certs_dir%/*}
-	    [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
+    local globus_grid_security_dir=${globus_global_certs_dir%/*}
+    [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
 
-	    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.old
-	    cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
-		chmod 600 ${globus_grid_security_dir}/hostkey.pem
+    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.old
+    cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
+	chmod 600 ${globus_grid_security_dir}/hostkey.pem
 
-	    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.old
-	    cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
-		chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-		openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.old
+    cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
+	chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
+	openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
 
-	    echo "Please restart this node for keys to take effect: \"$0 restart\""
-	    echo
-	}
+    echo "Please restart this node for keys to take effect: \"$0 restart\""
+    echo
+}
 
 #The following helper function creates a new keystore for your tomcat installation
 # arg 1 -> keystore name
@@ -2886,215 +2886,215 @@ extract_keystore_dn() {
 # arg 4 -> private key
 # arg 5 -> public cert
 # arg 6.. -> intermediate certificate(s)
-	make_fresh_keystore() {
-	    
+make_fresh_keystore() {
+    
     #-------------
     #Set default values such that env vars may be used
     #-------------
-	    local keystore_name
-	    local keystore_alias
-	    local store_password
-	    local private_key
-
-	    local provider="org.bouncycastle.jce.provider.BouncyCastleProvider"
-	    local install_dir=${esg_tools_dir}/idptools
-
+    local keystore_name
+    local keystore_alias
+    local store_password
+    local private_key
+    
+    local provider="org.bouncycastle.jce.provider.BouncyCastleProvider"
+    local install_dir=${esg_tools_dir}/idptools
+    
     #-------------
     #Collect args...
     #-------------
-	    local certfiles=()
-	    local arg_length=$#
-	    for ((i=1; i <= ${arg_length} ; i++)) ; do 
-		[ "$1" = "--" ] && shift && certfiles=($@) && break
-		((i==1)) && keystore_name=$1 && shift
-		((i==2)) && keystore_alias=$1 && shift
-		((i==3)) && store_password=$1 && shift
-		((i==4)) && private_key=$1 && shift
-	    done
-	    local size=${#certfiles[@]}
-	    debug_print "[certfiles = ${certfiles[@]}]"
-	    [ ! -e "${private_key}" ] && echo "file [${private_key}] does not exist" && return 1
-	    (( size == 0 )) && echo "no certificate files listed" && usage
-
-
+    local certfiles=()
+    local arg_length=$#
+    for ((i=1; i <= ${arg_length} ; i++)) ; do 
+	[ "$1" = "--" ] && shift && certfiles=($@) && break
+	((i==1)) && keystore_name=$1 && shift
+	((i==2)) && keystore_alias=$1 && shift
+	((i==3)) && store_password=$1 && shift
+	((i==4)) && private_key=$1 && shift
+    done
+    local size=${#certfiles[@]}
+    debug_print "[certfiles = ${certfiles[@]}]"
+    [ ! -e "${private_key}" ] && echo "file [${private_key}] does not exist" && return 1
+    (( size == 0 )) && echo "no certificate files listed" && usage
+    
+    
     #-------------
     #Display values
     #-------------
-	    echo
-	    echo "Keystore name : ${keystore_name}"
-	    echo "Keystore alias: ${keystore_alias}"
-	    echo "Store password: ${store_password}"
-	    echo "Private key	: ${private_key}"
-	    echo "Certificates..."
-
-	    mkdir -p ${install_dir}
-	    [ $? != 0 ] && echo "exiting..." && return 1
-	    PATH=${PATH}:${install_dir}/bin
-
-	    local certbundle="${install_dir}/cert.bundle"
-	    local ca_chain_bundle="${install_dir}/ca_chain.bundle"
-	    
-	    local content
-	    local skip_check=0
-	    local count=1
-	    for ((i=0; i<size; i++)) ; do 
-		if ((i == 0)) ; then
-		    echo "  Signed Cert -------> ${certfiles[i]}"
-		    echo "${certfiles[i]}" | egrep '^http' 
-		    if [ $? == 0 ]; then
-			curl -s -k ${certfiles[i]} > ${certbundle} && echo "[OK]"
-			skip_check=1
-		    else
-			cat ${certfiles[i]} > ${certbundle}
-		    fi
-		    cat /dev/null > ${ca_chain_bundle}
-		elif ((i == (size-1) )) ; then
-		    echo "  Root Cert	-------> ${certfiles[i]}"
-		    echo "${certfiles[i]}" | egrep '^http' 
-		    if [ $? == 0 ]; then
-			content=$(curl -s -k ${certfiles[i]})
-			[ $? != 0 ] && echo "Cannot connect to ${certfiles[i]}" && return 1
-
-			echo "${content}" | grep "Not Found" >& /dev/null
-			[ $? == 0 ] && echo "${content}" && return 1
-			
-			debug_print "** ${content}"
-
-			echo "$content" >> ${certbundle} && \
-			    echo "$content" >> ${ca_chain_bundle} && \
-			    echo "[OK]"
-			skip_check=1
-		    else
-			cat ${certfiles[i]} >> ${certbundle}
-			cat ${certfiles[i]} >> ${ca_chain_bundle}
-		    fi
-		else
-		    echo "  Intermediate [$((count++))] --> ${certfiles[i]}"
-		    echo "${certfiles[i]}" | egrep '^http' 
-		    if [ $? == 0 ]; then
-			content=$(curl -s -k ${certfiles[i]})
-			[ $? != 0 ] && echo "Cannot connect to ${certfiles[i]}" && return 1
-			
-			echo "${content}" | grep "Not Found" >& /dev/null
-			[ $? == 0 ] && echo "${content}" && return 1
-			
-			debug_print "* ${content}"
-			
-			echo "$content" >> ${certbundle} && \
-			    echo "$content" >> ${ca_chain_bundle} && \
-			    echo "[OK]"
-			skip_check=1
-		    else
-			cat ${certfiles[i]} >> ${certbundle}
-			cat ${certfiles[i]} >> ${ca_chain_bundle}
-		    fi
-		fi
-		((skip_check==0)) && [ ! -e "${certfiles[i]}" ] && echo "file [${certfiles[i]}] does not exist" && return 1
-		if ((skip_check==0)) ; then
-		    ((DEBUG)) && head ${certfiles[i]}
-		    ((DEBUG)) && openssl x509 -text -noout -in ${certfiles[i]}
-		fi
-		skip_check=0
-	    done
-	    unset count
-	    unset content
-
+    echo
+    echo "Keystore name : ${keystore_name}"
+    echo "Keystore alias: ${keystore_alias}"
+    echo "Store password: ${store_password}"
+    echo "Private key	: ${private_key}"
+    echo "Certificates..."
+    
+    mkdir -p ${install_dir}
+    [ $? != 0 ] && echo "exiting..." && return 1
+    PATH=${PATH}:${install_dir}/bin
+    
+    local certbundle="${install_dir}/cert.bundle"
+    local ca_chain_bundle="${install_dir}/ca_chain.bundle"
+    
+    local content
+    local skip_check=0
+    local count=1
+    for ((i=0; i<size; i++)) ; do 
+	if ((i == 0)) ; then
+	    echo "  Signed Cert -------> ${certfiles[i]}"
+	    echo "${certfiles[i]}" | egrep '^http' 
+	    if [ $? == 0 ]; then
+		curl -s -k ${certfiles[i]} > ${certbundle} && echo "[OK]"
+		skip_check=1
+	    else
+		cat ${certfiles[i]} > ${certbundle}
+	    fi
+	    cat /dev/null > ${ca_chain_bundle}
+	elif ((i == (size-1) )) ; then
+	    echo "  Root Cert	-------> ${certfiles[i]}"
+	    echo "${certfiles[i]}" | egrep '^http' 
+	    if [ $? == 0 ]; then
+		content=$(curl -s -k ${certfiles[i]})
+		[ $? != 0 ] && echo "Cannot connect to ${certfiles[i]}" && return 1
+                
+		echo "${content}" | grep "Not Found" >& /dev/null
+		[ $? == 0 ] && echo "${content}" && return 1
+		
+		debug_print "** ${content}"
+                
+		echo "$content" >> ${certbundle} && \
+		    echo "$content" >> ${ca_chain_bundle} && \
+		    echo "[OK]"
+		skip_check=1
+	    else
+		cat ${certfiles[i]} >> ${certbundle}
+		cat ${certfiles[i]} >> ${ca_chain_bundle}
+	    fi
+	else
+	    echo "  Intermediate [$((count++))] --> ${certfiles[i]}"
+	    echo "${certfiles[i]}" | egrep '^http' 
+	    if [ $? == 0 ]; then
+		content=$(curl -s -k ${certfiles[i]})
+		[ $? != 0 ] && echo "Cannot connect to ${certfiles[i]}" && return 1
+		
+		echo "${content}" | grep "Not Found" >& /dev/null
+		[ $? == 0 ] && echo "${content}" && return 1
+		
+		debug_print "* ${content}"
+		
+		echo "$content" >> ${certbundle} && \
+		    echo "$content" >> ${ca_chain_bundle} && \
+		    echo "[OK]"
+		skip_check=1
+	    else
+		cat ${certfiles[i]} >> ${certbundle}
+		cat ${certfiles[i]} >> ${ca_chain_bundle}
+	    fi
+	fi
+	((skip_check==0)) && [ ! -e "${certfiles[i]}" ] && echo "file [${certfiles[i]}] does not exist" && return 1
+	if ((skip_check==0)) ; then
+	    ((DEBUG)) && head ${certfiles[i]}
+	    ((DEBUG)) && openssl x509 -text -noout -in ${certfiles[i]}
+	fi
+	skip_check=0
+    done
+    unset count
+    unset content
+    
     #-------------
     # Structural integrity checks...
     #-------------    
-	    echo
-	    echo -n "checking that key pair is congruent... "
-	    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5) | uniq))
-	    (( 1 == ${#pair_hash[@]} )) && printf "[OK] ${pair_hash}\n\n" || (printf "[FAIL]\n\n" && return 1)
-
-
+    echo
+    echo -n "checking that key pair is congruent... "
+    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5) | uniq))
+    (( 1 == ${#pair_hash[@]} )) && printf "[OK] ${pair_hash}\n\n" || (printf "[FAIL]\n\n" && return 1)
+    
+    
     #-------------
     #Let's be a little interactive with users for a sanity check
     #-------------
-	    local answer="Y"
-	    read -p "Is the above information correct? [Y/n] " answer
-	    [ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]  && echo "exiting..." && return 1
-	    
-	    local derkey="${install_dir}/key.der"
-
+    local answer="Y"
+    read -p "Is the above information correct? [Y/n] " answer
+    [ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]  && echo "exiting..." && return 1
+    
+    local derkey="${install_dir}/key.der"
+    
     #-------------
     #Make empty keystore...
     #-------------
-	    echo -n "creating keystore... "
+    echo -n "creating keystore... "
     #create a keystore with a self-signed cert
-	    local dname=${dname:-"CN=${esgf_host:-$(hostname --fqdn)}, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
-	    [ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
-	    keytool -genkey -keyalg RSA -alias "${keystore_alias}" \
-		-keystore "${keystore_name}" \
-		-storepass "${store_password}" \
-		-keypass "${store_password}" \
-		-validity 360 \
-		-dname "${dname}" \
-		-noprompt
-	    [ $? != 0 ] && (echo "Problem with generating initial keystore... [FAIL]" && return 1) || echo "[OK] "
-
-	    echo -n "clearing keystore... "
+    local dname=${dname:-"CN=${esgf_host:-$(hostname --fqdn)}, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
+    [ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
+    keytool -genkey -keyalg RSA -alias "${keystore_alias}" \
+	-keystore "${keystore_name}" \
+	-storepass "${store_password}" \
+	-keypass "${store_password}" \
+	-validity 360 \
+	-dname "${dname}" \
+	-noprompt
+    [ $? != 0 ] && (echo "Problem with generating initial keystore... [FAIL]" && return 1) || echo "[OK] "
+    
+    echo -n "clearing keystore... "
     #delete the cert
-	    keytool -delete -alias "${keystore_alias}" -keystore "${keystore_name}" -storepass "${store_password}"
-	    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
-	    
+    keytool -delete -alias "${keystore_alias}" -keystore "${keystore_name}" -storepass "${store_password}"
+    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
+    
     #-------------
     #Convert your private key into from PEM to DER format that java likes
     #-------------
-	    echo -n "converting private key... "
-	    debug_print -n "openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} "
-	    openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} 
-	    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
-
+    echo -n "converting private key... "
+    debug_print -n "openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} "
+    openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} 
+    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
+    
     #-------------
     #Now we gather up all the other keys in the key chain...
     #-------------
-	    echo -n "checking that chain is valid... "
-	    debug_print -n "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} "
-	    local chain_check=$(openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} | grep -i error)
-	    if [ -z "${chain_check}" ]; then  printf "[OK]\n\n"; else  printf "[FAIL]\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"; return 1 ; fi
-
-	    
+    echo -n "checking that chain is valid... "
+    debug_print -n "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} "
+    local chain_check=$(openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} | grep -i error)
+    if [ -z "${chain_check}" ]; then  printf "[OK]\n\n"; else  printf "[FAIL]\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"; return 1 ; fi
+    
+    
     #-------------
     #Generating new keystore
     #-------------
-	    echo -n "Constructing new keystore content... "
-	    local command="extkeytool -importkey -keystore ${keystore_name} -alias ${keystore_alias} -storepass ${store_password} -keypass ${store_password} -keyfile ${derkey} -certfile ${certbundle} -provider ${provider}"
-	    debug_print && echo ${command}
-
-	    ${command} > /dev/null
-	    local ret=$?
-
+    echo -n "Constructing new keystore content... "
+    local command="extkeytool -importkey -keystore ${keystore_name} -alias ${keystore_alias} -storepass ${store_password} -keypass ${store_password} -keyfile ${derkey} -certfile ${certbundle} -provider ${provider}"
+    debug_print && echo ${command}
+    
+    ${command} > /dev/null
+    local ret=$?
+    
     #FYI: Code 127 is "command not found"
-	    if [ ${ret} == 127 ]; then
-		echo "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)	[one moment please...]"
-		curl -s -L --insecure ${extkeytool_download_url} |  (cd ${install_dir}; tar xvzf -)
-		${command}
-		local ret=$?
-	    fi
-
-	    [ ${ret} != 0 ] && echo "Problem with running extkeytool :-(" && return 1
-	    [ ${ret} == 0 ] && echo "[OK]"
-	    
-	    echo
-	    echo "How do things look?"
-	    keytool -v -list -keystore "${keystore_name}" -storepass ${store_password}
-	    if [ $? == 0 ]; then
-		echo 
-		echo "If Everything looks good... then replace your current tomcat keystore with ${keystore_name} if necessary."
-		echo "Don't forget to change your tomcat's server.xml entry accordingly :-)"
-		echo "Remember: Keep your private key ${private_key} and signed cert ${certfiles[0]} in a safe place!!!"
-		echo
-		answer="Y"
-		read -p "Is the above information correct? [Y/n] " answer
-		[ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]	 && echo "Eh... try again... ;-)" && return 1
-	    else
-		echo 
-		echo "Hmmm... something didn't quite go so right... double check things..."
-		return 1
-	    fi
-	    return 0
-	}
+    if [ ${ret} == 127 ]; then
+	echo "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)	[one moment please...]"
+	curl -s -L --insecure ${extkeytool_download_url} |  (cd ${install_dir}; tar xvzf -)
+	${command}
+	local ret=$?
+    fi
+    
+    [ ${ret} != 0 ] && echo "Problem with running extkeytool :-(" && return 1
+    [ ${ret} == 0 ] && echo "[OK]"
+    
+    echo
+    echo "How do things look?"
+    keytool -v -list -keystore "${keystore_name}" -storepass ${store_password}
+    if [ $? == 0 ]; then
+	echo 
+	echo "If Everything looks good... then replace your current tomcat keystore with ${keystore_name} if necessary."
+	echo "Don't forget to change your tomcat's server.xml entry accordingly :-)"
+	echo "Remember: Keep your private key ${private_key} and signed cert ${certfiles[0]} in a safe place!!!"
+	echo
+	answer="Y"
+	read -p "Is the above information correct? [Y/n] " answer
+	[ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]	 && echo "Eh... try again... ;-)" && return 1
+    else
+	echo 
+	echo "Hmmm... something didn't quite go so right... double check things..."
+	return 1
+    fi
+    return 0
+}
 
 #************
 #(DEPRECATED)
@@ -3108,25 +3108,25 @@ extract_keystore_dn() {
 #http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/JarSigningNotes
 #arg 1 -> private key
 #arg 2 -> public cert
-	convert_keys() {
-	    echo -n "Converting private key from PEM -> DER format... "
-	    local private_key=${1:-"hostkey.pem"}
-	    [ ! -e ${private_key} ] && echo "Sorry, cannot find ${private_key}" && return 2
-	    openssl pkcs8 -topk8 -nocrypt -in ${private_key} -inform PEM -out ${private_key%.*}.der -outform DER
-	    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
-
-	    echo -n "Converting public cert from PEM -> DER format... "
-	    local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
-	    [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
-	    openssl x509 -in ${public_cert} -inform PEM -out ${public_cert%.*}.der -outform DER
-	    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
-
-	    echo
-	    pwd
-	    ls -l ${private_key%.*}.der ${public_cert%.*}.der
-	    echo
-	    return 0
-	}
+convert_keys() {
+    echo -n "Converting private key from PEM -> DER format... "
+    local private_key=${1:-"hostkey.pem"}
+    [ ! -e ${private_key} ] && echo "Sorry, cannot find ${private_key}" && return 2
+    openssl pkcs8 -topk8 -nocrypt -in ${private_key} -inform PEM -out ${private_key%.*}.der -outform DER
+    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
+    
+    echo -n "Converting public cert from PEM -> DER format... "
+    local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
+    [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
+    openssl x509 -in ${public_cert} -inform PEM -out ${public_cert%.*}.der -outform DER
+    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
+    
+    echo
+    pwd
+    ls -l ${private_key%.*}.der ${public_cert%.*}.der
+    echo
+    return 0
+}
 
 #************
 #(DEPRECATED)
@@ -3143,25 +3143,25 @@ extract_keystore_dn() {
 #arg 4 -> alias*
 #arg 5 -> password* (for keystore and private key)
 #[*Have default values - non manditory]
-	create_keystore() {
-	    local private_key=${1:-"hostkey.der"}
-	    local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.der}
-	    local keystore_name=${3:-${keystore_file}}
-	    local key_alias=${4:-${keystore_alias}}
-	    local password=${5:-${keystore_password}}
-	    
-	    checked_get ./ImportKey.class ${utils_url}/ImportKey.class $((force_install))
-	    (( $? > 1 )) && echo "Could not fetch keystore generator" && return 1
+create_keystore() {
+    local private_key=${1:-"hostkey.der"}
+    local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.der}
+    local keystore_name=${3:-${keystore_file}}
+    local key_alias=${4:-${keystore_alias}}
+    local password=${5:-${keystore_password}}
+    
+    checked_get ./ImportKey.class ${utils_url}/ImportKey.class $((force_install))
+    (( $? > 1 )) && echo "Could not fetch keystore generator" && return 1
 
-	    [ ! -e ${private_key} ] && echo "Sorry, cannot find ${private_key}" && return 2
-	    [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
+    [ ! -e ${private_key} ] && echo "Sorry, cannot find ${private_key}" && return 2
+    [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
 
-	    CLASSPATH=. java -Dkeystore=${keystore_name} ImportKey ${private_key} ${public_cert} ${key_alias} ${password}
-	    [ $? != 0 ] && echo "[FAILED] Could not execute keystore generator" && return 1
-	    echo
-	    keytool -list -v -keystore ${keystore_name} -storepass ${password}
-	    return 0
-	}
+    CLASSPATH=. java -Dkeystore=${keystore_name} ImportKey ${private_key} ${public_cert} ${key_alias} ${password}
+    [ $? != 0 ] && echo "[FAILED] Could not execute keystore generator" && return 1
+    echo
+    keytool -list -v -keystore ${keystore_name} -storepass ${password}
+    return 0
+}
 
 #---
 
@@ -3171,132 +3171,132 @@ extract_keystore_dn() {
 #Once the generated CSR has been submitted to a CA and signed... the returned
 #signed certificate needs to be imported into the *existing* keystore. (and to trust store: for ORP)
 #arg 1 -> signed certificate file returned to you by your CA
-	install_signed_certificate() {
-	    local signed_cert_file=${1:-${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
+install_signed_certificate() {
+    local signed_cert_file=${1:-${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
 
+    echo
+    echo "Installing Signed Host Certificate: ${signed_cert_file} "
+    
+    [ ! -e ${signed_cert_file} ] && echo "ERROR: Could not find signed cert file: ${signed_cert_file}" && return 1
+    
+    local store_password=${keystore_password}
+    local verify_password
+    while [ 1 ]; do
+	echo
+	read -s -p "Please enter the password for this keystore	  : " store_password
+	[ "${store_password}" = "changeit" ] && break
+	[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
+	echo
+	read -s -p "Please re-enter the password for this keystore: " verify_password
+	if [ "${store_password}" = "${verify_password}" ] ; then
 	    echo
-	    echo "Installing Signed Host Certificate: ${signed_cert_file} "
-	    
-	    [ ! -e ${signed_cert_file} ] && echo "ERROR: Could not find signed cert file: ${signed_cert_file}" && return 1
-	    
-	    local store_password=${keystore_password}
-	    local verify_password
-	    while [ 1 ]; do
-		echo
-		read -s -p "Please enter the password for this keystore	  : " store_password
-		[ "${store_password}" = "changeit" ] && break
-		[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
-		echo
-		read -s -p "Please re-enter the password for this keystore: " verify_password
-		if [ "${store_password}" = "${verify_password}" ] ; then
-		    echo
-		    break
-		else
-		    echo "Sorry, values did not match"
-		    echo
-		fi
-	    done
-	    unset verify_password
+	    break
+	else
+	    echo "Sorry, values did not match"
 	    echo
+	fi
+    done
+    unset verify_password
+    echo
 
-	    
-	    if [ -z "$(echo ${signed_cert_file##*.} | egrep "($certificate_extensions)")" ]; then
+    
+    if [ -z "$(echo ${signed_cert_file##*.} | egrep "($certificate_extensions)")" ]; then
 	#--------------
 	#convert from PEM format to a DER format  - for ingeest into the keystores :-)
-		echo "converting certificate from PEM format to DER format..."
-		echo "openssl x509 -in ${signed_cert_file} -inform PEM -out ${signed_cert_file%.*}.der -outform DER"
-		openssl x509 -inform PEM -in ${signed_cert_file} -outform DER -out ${signed_cert_file%.*}.der 
-		[ $? == 0 ] && signed_cert_file=${signed_cert_file%.*}.der
+	echo "converting certificate from PEM format to DER format..."
+	echo "openssl x509 -in ${signed_cert_file} -inform PEM -out ${signed_cert_file%.*}.der -outform DER"
+	openssl x509 -inform PEM -in ${signed_cert_file} -outform DER -out ${signed_cert_file%.*}.der 
+	[ $? == 0 ] && signed_cert_file=${signed_cert_file%.*}.der
 	#--------------
-	    else
-		echo "Apparently (based on file extension) this file is already in DER format"
-	    fi
+    else
+	echo "Apparently (based on file extension) this file is already in DER format"
+    fi
 
-	    [ -e ${keystore_file} ] && echo "(making backup copy of keystore)" && cp -v ${keystore_file} ${keystore_file}.bak
+    [ -e ${keystore_file} ] && echo "(making backup copy of keystore)" && cp -v ${keystore_file} ${keystore_file}.bak
 
     #--------------
-	    keytool -v -list -keystore ${tomcat_conf_dir}/keystore-tomcat -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+root$'
-	    if [ $? == 0 ]; then
-		keytool -delete -alias root -keystore ${keystore_file} -storepass ${store_password}
-		[ $? != 0 ] && echo " ERROR: problem deleting root key from keystore!" && return 1
-	    fi
-	    
-	    echo "keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass *****"
-	    keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass ${store_password}
-	    local ret=$?
-	    if [ $ret == 0 ]; then 
-		echo "[OK]" 
-	    else
-		echo "[FAILED]"
-		echo "(Restoring original keystore)"
-		cp -v ${keystore_file}.bak ${keystore_file}
-		return $ret
-	    fi
-	    
-	    chown ${tomcat_user}:${tomcat_group} ${keystore_file}
+    keytool -v -list -keystore ${tomcat_conf_dir}/keystore-tomcat -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+root$'
+    if [ $? == 0 ]; then
+	keytool -delete -alias root -keystore ${keystore_file} -storepass ${store_password}
+	[ $? != 0 ] && echo " ERROR: problem deleting root key from keystore!" && return 1
+    fi
+    
+    echo "keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass *****"
+    keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass ${store_password}
+    local ret=$?
+    if [ $ret == 0 ]; then 
+	echo "[OK]" 
+    else
+	echo "[FAILED]"
+	echo "(Restoring original keystore)"
+	cp -v ${keystore_file}.bak ${keystore_file}
+	return $ret
+    fi
+    
+    chown ${tomcat_user}:${tomcat_group} ${keystore_file}
     #--------------
 
-	    add_my_cert_to_truststore ${store_password}
-	    
-	    unset store_password
-	    
-	}
+    add_my_cert_to_truststore ${store_password}
+    
+    unset store_password
+    
+}
 
 #************
 #(DEPRECATED)
 #************
 #This should only be run AFTER your signed certificate has been already installed into the keystore!
-	export_keystore_as_globus_hostkeys() {
-	    mkdir -p ${workdir}
-	    pushd ${workdir} >& /dev/null
-	    checked_get ./ExportPriv.class ${utils_url}/ExportPriv.class $((force_install))
-	    (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for exporting certificates" && popd && return 1
-	    checked_get ./Base64Coder.class ${utils_url}/Base64Coder.class $((force_install))
-	    (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for exporting certificates" && popd && return 1
-	    popd >& /dev/null
+export_keystore_as_globus_hostkeys() {
+    mkdir -p ${workdir}
+    pushd ${workdir} >& /dev/null
+    checked_get ./ExportPriv.class ${utils_url}/ExportPriv.class $((force_install))
+    (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for exporting certificates" && popd && return 1
+    checked_get ./Base64Coder.class ${utils_url}/Base64Coder.class $((force_install))
+    (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for exporting certificates" && popd && return 1
+    popd >& /dev/null
 
-	    local CP=".:${workdir}"
-	    
-	    [ ! -e ${keystore_file} ] && echo "Cannot locate keystore \"${keystore_file}\"" && return 2
-	    
-	    local store_password=${keystore_password}
-	    local verify_password
-	    while [ 1 ]; do
-		echo
-		read -s -p "Please enter the password for this keystore	  : " store_password
-		[ "${store_password}" = "changeit" ] && break
-		[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
-		echo
-		read -s -p "Please re-enter the password for this keystore: " verify_password
-		if [ "${store_password}" = "${verify_password}" ] ; then
-		    echo
-		    break
-		else
-		    echo "Sorry, values did not match"
-		    echo
-		fi
-	    done
-	    unset verify_password
+    local CP=".:${workdir}"
+    
+    [ ! -e ${keystore_file} ] && echo "Cannot locate keystore \"${keystore_file}\"" && return 2
+    
+    local store_password=${keystore_password}
+    local verify_password
+    while [ 1 ]; do
+	echo
+	read -s -p "Please enter the password for this keystore	  : " store_password
+	[ "${store_password}" = "changeit" ] && break
+	[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
+	echo
+	read -s -p "Please re-enter the password for this keystore: " verify_password
+	if [ "${store_password}" = "${verify_password}" ] ; then
 	    echo
-	    
+	    break
+	else
+	    echo "Sorry, values did not match"
+	    echo
+	fi
+    done
+    unset verify_password
+    echo
+    
     #--------------
     #NOTE: To extract the (private) key from the keystore we use a
     #Java program called ExportPriv.  The result is a PEM formatted
     #private key file that we can directly use.
     #see: http://www.conshell.net/wiki/index.php/Keytool_to_OpenSSL_Conversion_tips
 
-	    echo -n "Extracting keystore's key... (private) "
-	    [ -e ${globus_global_certs_dir%/*}/hostkey.pem ] && cp ${globus_global_certs_dir%/*}/hostkey.pem ${globus_global_certs_dir%/*}/hostkey.pem.last
-	    [ -e ${globus_global_certs_dir%/*} ] && mkdir -p ${globus_global_certs_dir%/*}
-	    ((DEBUG)) && \
-		printf "\n${JAVA_HOME}/bin/java -classpath ${CP} ExportPriv ${keystore_file} ${keystore_alias} ************* > ${globus_global_certs_dir%/*}/hostkey.pem\n"
-	    ${JAVA_HOME}/bin/java -classpath ${CP} ExportPriv ${keystore_file} ${keystore_alias} ${store_password} > ${globus_global_certs_dir%/*}/hostkey.pem
-	    local ret=$?
-	    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
-	    chmod 600 ${globus_global_certs_dir%/*}/hostkey.pem
+    echo -n "Extracting keystore's key... (private) "
+    [ -e ${globus_global_certs_dir%/*}/hostkey.pem ] && cp ${globus_global_certs_dir%/*}/hostkey.pem ${globus_global_certs_dir%/*}/hostkey.pem.last
+    [ -e ${globus_global_certs_dir%/*} ] && mkdir -p ${globus_global_certs_dir%/*}
+    ((DEBUG)) && \
+	printf "\n${JAVA_HOME}/bin/java -classpath ${CP} ExportPriv ${keystore_file} ${keystore_alias} ************* > ${globus_global_certs_dir%/*}/hostkey.pem\n"
+    ${JAVA_HOME}/bin/java -classpath ${CP} ExportPriv ${keystore_file} ${keystore_alias} ${store_password} > ${globus_global_certs_dir%/*}/hostkey.pem
+    local ret=$?
+    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
+    chmod 600 ${globus_global_certs_dir%/*}/hostkey.pem
     #--------------
 
-	    
+    
     #--------------
     #NOTE: To extract the (public) certificate we use the keytool.
     #Keytool extracts everything (except cert requests) in DER format
@@ -3306,40 +3306,40 @@ extract_keystore_dn() {
     #is *"root"* this is a special alias that was used when importing
     #the signed certificate (once it was converted from PEM to DER for
     #import)
-	    
-	    echo -n "Extracting keystore's certificate... (public) "
-	    [ -e ${globus_global_certs_dir%/*}/hostcert.pem ] && cp ${globus_global_certs_dir%/*}/hostcert.pem ${globus_global_certs_dir%/*}/hostcert.pem.last
-	    ((DEBUG)) && \
-		printf "\nkeytool -export -alias ${keystore_alias} -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass *************\n"
-	    keytool -export -alias root -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass ${store_password}
-	    ret=$?
-	    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
+    
+    echo -n "Extracting keystore's certificate... (public) "
+    [ -e ${globus_global_certs_dir%/*}/hostcert.pem ] && cp ${globus_global_certs_dir%/*}/hostcert.pem ${globus_global_certs_dir%/*}/hostcert.pem.last
+    ((DEBUG)) && \
+	printf "\nkeytool -export -alias ${keystore_alias} -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass *************\n"
+    keytool -export -alias root -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass ${store_password}
+    ret=$?
+    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
 
-	    echo -n "Converting DER cert ${globus_global_certs_dir%/*}/hostcert.der to PEM format "
-	    openssl x509 -in ${globus_global_certs_dir%/*}/hostcert.der -inform DER -out ${globus_global_certs_dir%/*}/hostcert.pem -outform PEM 
-	    ret=$?
-	    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
-	    
-	    openssl x509 -noout -text -in ${globus_global_certs_dir%/*}/hostcert.pem
+    echo -n "Converting DER cert ${globus_global_certs_dir%/*}/hostcert.der to PEM format "
+    openssl x509 -in ${globus_global_certs_dir%/*}/hostcert.der -inform DER -out ${globus_global_certs_dir%/*}/hostcert.pem -outform PEM 
+    ret=$?
+    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
+    
+    openssl x509 -noout -text -in ${globus_global_certs_dir%/*}/hostcert.pem
 
-	    chmod 644 ${globus_global_certs_dir%/*}/hostcert.pem
+    chmod 644 ${globus_global_certs_dir%/*}/hostcert.pem
     #--------------
-	    
-	    unset store_password
+    
+    unset store_password
 
     #for safe keeping post the truststore and keystore in /etc/grid-security/saved
-	    if [ -d ${globus_global_certs_dir%/*} ]; then
-		mkdir -p ${globus_global_certs_dir%/*}/saved
-		chmod 700 ${globus_global_certs_dir%/*}/saved 
-		rm ${globus_global_certs_dir%/*}/saved/* >& /dev/null
-		cp ${truststore_file} ${globus_global_certs_dir%/*}/saved/${truststore_file##*/}.$(date ${date_format}).bak
-		cp ${keystore_file} ${globus_global_certs_dir%/*}/saved/${keystore_file##*/}.$(date ${date_format}).bak
-	    fi
+    if [ -d ${globus_global_certs_dir%/*} ]; then
+	mkdir -p ${globus_global_certs_dir%/*}/saved
+	chmod 700 ${globus_global_certs_dir%/*}/saved 
+	rm ${globus_global_certs_dir%/*}/saved/* >& /dev/null
+	cp ${truststore_file} ${globus_global_certs_dir%/*}/saved/${truststore_file##*/}.$(date ${date_format}).bak
+	cp ${keystore_file} ${globus_global_certs_dir%/*}/saved/${keystore_file##*/}.$(date ${date_format}).bak
+    fi
 
-	    echo "(cleanup)"
-	    rm -v ${globus_global_certs_dir%/*}/hostcert.der
+    echo "(cleanup)"
+    rm -v ${globus_global_certs_dir%/*}/hostcert.der
 
-	}
+}
 
 
 #####
@@ -3350,86 +3350,86 @@ extract_keystore_dn() {
 #(called by setup_tds)
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
-	register() {
-	    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: ${1:-${ESGF_PEER_SVC_ROOT%%/*}})"
-	    
-	    mkdir -p ${workdir} # >& /dev/null
-	    pushd ${workdir} # >& /dev/null
+register() {
+    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: ${1:-${ESGF_PEER_SVC_ROOT%%/*}})"
+    
+    mkdir -p ${workdir} # >& /dev/null
+    pushd ${workdir} # >& /dev/null
     #Download the Java code used for certificate installation (into $workdir)
-	    checked_get './InstallCert.class' ${utils_url}/InstallCert.class $((force_install))
-	    (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for installing certificates" && popd && return 1
-	    checked_get './InstallCert$SavingTrustManager.class' ${utils_url}/'InstallCert$SavingTrustManager.class' $((force_install))
-	    (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for installing certificates" && popd && return 1
-	    popd # >& /dev/null
+    checked_get './InstallCert.class' ${utils_url}/InstallCert.class $((force_install))
+    (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for installing certificates" && popd && return 1
+    checked_get './InstallCert$SavingTrustManager.class' ${utils_url}/'InstallCert$SavingTrustManager.class' $((force_install))
+    (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for installing certificates" && popd && return 1
+    popd # >& /dev/null
 
-	    pushd ${tomcat_conf_dir} >& /dev/null
-	    
-	    local input=${1:-${ESGF_PEER_SVC_ROOT%%/*}}
-	    [ -z "${input}" ] && popd && echo "Could not register: No endpoint specified" && return 1
+    pushd ${tomcat_conf_dir} >& /dev/null
+    
+    local input=${1:-${ESGF_PEER_SVC_ROOT%%/*}}
+    [ -z "${input}" ] && popd && echo "Could not register: No endpoint specified" && return 1
 
-	    local ssl_endpoint=${input%%/*} #just need the hostname
-	    local ssl_port=${ssl_port:-443}
-	    local ssl_endpoint_passwd=${2:-changeit}
-	    
-	    local CP=".:${workdir}"
+    local ssl_endpoint=${input%%/*} #just need the hostname
+    local ssl_port=${ssl_port:-443}
+    local ssl_endpoint_passwd=${2:-changeit}
+    
+    local CP=".:${workdir}"
 
-	    echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
-	    ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
-	    local ret=$?
+    echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
+    ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
+    local ret=$?
 
     #NOTE: The InstallCert code fetches Java's jssecacerts file (if
     #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
     #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
-	    
-	    chmod 644 ${truststore_file}
-	    chown ${tomcat_user}:${tomcat_group} ${truststore_file}
+    
+    chmod 644 ${truststore_file}
+    chown ${tomcat_user}:${tomcat_group} ${truststore_file}
 
-	    write_as_property myproxy_endpoint ${input}
-	    
-	    sync_with_java_truststore ${truststore_file}
+    write_as_property myproxy_endpoint ${input}
+    
+    sync_with_java_truststore ${truststore_file}
 
-	    popd >& /dev/null
-	    return $ret
-	}
+    popd >& /dev/null
+    return $ret
+}
 
 #arg 1 - The truststore file to sync with Java's
-	sync_with_java_truststore() {
-	    if [ ! -e ${JAVA_HOME}/jre/lib/security/jssecacerts ] && [ -e ${JAVA_HOME}/jre/lib/security/cacerts ]; then
-		cp ${JAVA_HOME}/jre/lib/security/cacerts ${JAVA_HOME}/jre/lib/security/jssecacerts
-	    fi
-	    local java_truststore=${JAVA_HOME}/jre/lib/security/jssecacerts
-	    local external_truststore=${1:-$(readlink -f ${truststore_file})}
-	    echo -n "Sync'ing ${external_truststore} with ${java_truststore} ... "
-	    [ ! -e "${external_truststore}" ] && echo "[FAIL]: Cannot locate ${external_truststore}" && return 1
-	    [ -e "${java_truststore}" ] && cp ${java_truststore} ${java_truststore}.bak
-	    cp ${external_truststore} ${java_truststore}
-	    chmod 644 ${java_truststore}
-	    chown -R ${installer_uid}:${installer_gid} ${java_truststore}*
-	    echo "[OK]"
-	}
+sync_with_java_truststore() {
+    if [ ! -e ${JAVA_HOME}/jre/lib/security/jssecacerts ] && [ -e ${JAVA_HOME}/jre/lib/security/cacerts ]; then
+	cp ${JAVA_HOME}/jre/lib/security/cacerts ${JAVA_HOME}/jre/lib/security/jssecacerts
+    fi
+    local java_truststore=${JAVA_HOME}/jre/lib/security/jssecacerts
+    local external_truststore=${1:-$(readlink -f ${truststore_file})}
+    echo -n "Sync'ing ${external_truststore} with ${java_truststore} ... "
+    [ ! -e "${external_truststore}" ] && echo "[FAIL]: Cannot locate ${external_truststore}" && return 1
+    [ -e "${java_truststore}" ] && cp ${java_truststore} ${java_truststore}.bak
+    cp ${external_truststore} ${java_truststore}
+    chmod 644 ${java_truststore}
+    chown -R ${installer_uid}:${installer_gid} ${java_truststore}*
+    echo "[OK]"
+}
 
 ############################################
 # General - Utility Functions
 ############################################
 
 #Needed to reduce the number of commands when wanting to make a verbose conditional print
-	verbose_print() { ((VERBOSE)) && echo $@; return 0; }
-	debug_print() { ((DEBUG)) && echo $@; return 0; }
+verbose_print() { ((VERBOSE)) && echo $@; return 0; }
+debug_print() { ((DEBUG)) && echo $@; return 0; }
 
 #NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
 #arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
-	check_shmmax() {
-	    set_value_mb=${1:-40} #default is 32MB + headroom = 40MB
-	    let set_value_bytes=$((set_value_mb*1024*1024))
-	    cur_value_bytes=$(sysctl -q kernel.shmmax | tr -s "=" | cut -d= -f2)
-	    let cur_value_bytes=${cur_value_bytes## }
-	    
-	    if ((cur_value_bytes < set_value_bytes)); then
-		echo "Current system shared mem value too low [$cur_value_bytes bytes] changing to [$set_value_bytes bytes]"
-		sysctl -w kernel.shmmax=${set_value_bytes}
-		echo "kernel.shmmax = ${set_value_bytes}" >> /etc/sysctl.conf
-	    fi
-	}
+check_shmmax() {
+    set_value_mb=${1:-40} #default is 32MB + headroom = 40MB
+    let set_value_bytes=$((set_value_mb*1024*1024))
+    cur_value_bytes=$(sysctl -q kernel.shmmax | tr -s "=" | cut -d= -f2)
+    let cur_value_bytes=${cur_value_bytes## }
+    
+    if ((cur_value_bytes < set_value_bytes)); then
+	echo "Current system shared mem value too low [$cur_value_bytes bytes] changing to [$set_value_bytes bytes]"
+	sysctl -w kernel.shmmax=${set_value_bytes}
+	echo "kernel.shmmax = ${set_value_bytes}" >> /etc/sysctl.conf
+    fi
+}
 
 #This function is for repeatedly running a function until it returns
 #true and/or the number of iterations have been reached.  The format of
@@ -3449,162 +3449,162 @@ extract_keystore_dn() {
 # pcheck -- foo arg1 arg2
 #
 # Returns the value from the final execution of the function or command.
-	pcheck() {
-	    debug_print "pcheck $@"
+pcheck() {
+    debug_print "pcheck $@"
     #initial default values
-	    local iterations=5
-	    local wait_time=1
-	    local return_on_true=1
-	    local task_function=""
+    local iterations=5
+    local wait_time=1
+    local return_on_true=1
+    local task_function=""
 
-	    local_vars=(iterations wait_time return_on_true)
-	    local i=0
-	    while [[ -n "$1" ]]; do
-		if [ "$1" == "--" ] ; then
-		    shift
-		    task_function=$1
-		    shift
-		    break
-		fi
-		eval local ${local_vars[((i++))]}=$1
-		shift
-	    done
-	    debug_print "iterations = ${iterations}"
-	    debug_print "wait_time = ${wait_time}"
-	    debug_print "return_on_true = ${return_on_true}"
-	    debug_print "task_function = ${task_function}"
-	    debug_print "args = [$@]"
+    local_vars=(iterations wait_time return_on_true)
+    local i=0
+    while [[ -n "$1" ]]; do
+	if [ "$1" == "--" ] ; then
+	    shift
+	    task_function=$1
+	    shift
+	    break
+	fi
+	eval local ${local_vars[((i++))]}=$1
+	shift
+    done
+    debug_print "iterations = ${iterations}"
+    debug_print "wait_time = ${wait_time}"
+    debug_print "return_on_true = ${return_on_true}"
+    debug_print "task_function = ${task_function}"
+    debug_print "args = [$@]"
 
-	    local ret=1
-	    while [[ $iterations > 0 ]]; do
-		echo -n "."
-		eval ${task_function} $@
-		ret=$?
-		((return_on_true)) && [ $ret == 0 ] && break
-		((iterations != 1)) && sleep ${wait_time}
-		: $((iterations--))
-	    done
-	    [ $ret == 0 ] && printf "\n${task_function} [OK]\n" || printf "\n${task_function} [FAIL]\n"
-	    return $ret
-	}
+    local ret=1
+    while [[ $iterations > 0 ]]; do
+	echo -n "."
+	eval ${task_function} $@
+	ret=$?
+	((return_on_true)) && [ $ret == 0 ] && break
+	((iterations != 1)) && sleep ${wait_time}
+	: $((iterations--))
+    done
+    [ $ret == 0 ] && printf "\n${task_function} [OK]\n" || printf "\n${task_function} [FAIL]\n"
+    return $ret
+}
 
-	uninstall() {
-	    local doit="N"
-	    read -p "Are you sure you want to uninstall? [y/N]: " doit
-	    if [ "$doit" = "y" ] || [ "$doit" = "Y" ]; then
+uninstall() {
+    local doit="N"
+    read -p "Are you sure you want to uninstall? [y/N]: " doit
+    if [ "$doit" = "y" ] || [ "$doit" = "Y" ]; then
 
-		doit="N"
-		if [ -e $postgress_install_dir ]; then 
-		    read -p "remove postgress? ($postgress_install_dir) [y/N]: " doit
-		    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-			echo "removing $postgress_install_dir"
-			rm -rf ${postgress_install_dir}
-			[ $? != 0 ] && echo "ERROR: Unable to remove ${postgress_install_dir}"
-		    fi
-		fi
-		
-		doit="N"
-		if [ -e $cdat_home ]; then
-		    read -p "remove cdat? ($cdat_home) [y/N]: " doit
-		    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-			echo "removing $cdat_home"
-			rm -rf ${cdat_home}
-			[ $? != 0 ] && echo "ERROR: Unable to remove ${cdat_home}"
-		    fi
-		fi
-
-		doit="N"
-		if [ -e ${publisher_home}/${publisher_config} ]; then
-		    read -p "remove publisher configuration directory? (${publisher_home}) [y/N]: " doit
-		    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-			echo "removing ${publisher_home}"
-			rm -rf ${publisher_home}
-			[ $? != 0 ] && echo "ERROR: Unable to remove ${publisher_home}}"
-		    fi
-		fi
-
-		source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
-		source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
-		source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
-		source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
-
-		doit="N"
-		if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
-		    read -p "remove Thredds web service? (${tomcat_install_dir}/webapps/thredds) [y/N]: " doit
-		    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-			echo "removing ${tomcat_install_dir}/webapps/thredds"
-			rm -rf ${tomcat_install_dir}/webapps/thredds
-			[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/thredds"
-		    fi
-		fi 
-
-		doit="N"
-		if [ -e $tomcat_install_dir ]; then
-		    read -p "remove apache tomcat? ($tomcat_install_dir) [y/N]: " doit
-		    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-			echo "removing $tomcat_install_dir"
-			rm -ri $tomcat_install_dir
-			[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}"
-		    fi
-		fi
-		
-		doit="N"
-		if [ -e ${globus_location}/esg_${progname}_installed ] && (( ! no_globus )); then
-		    read -p "remove globus certs? ($globus_location) [y/N]: " doit
-		    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-			echo "removing $globus_location"
-			[ -n ${globus_location} ] && [ -e ${globus_location} ] && rm -rf ${globus_location}
-			[ $? != 0 ] && echo "ERROR: Unable to remove ${globus_location}"
-		    fi
-		fi
+	doit="N"
+	if [ -e $postgress_install_dir ]; then 
+	    read -p "remove postgress? ($postgress_install_dir) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing $postgress_install_dir"
+		rm -rf ${postgress_install_dir}
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${postgress_install_dir}"
 	    fi
-	    exit 0
-	}
+	fi
+	
+	doit="N"
+	if [ -e $cdat_home ]; then
+	    read -p "remove cdat? ($cdat_home) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing $cdat_home"
+		rm -rf ${cdat_home}
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${cdat_home}"
+	    fi
+	fi
 
-	set_classpath() {
-	    local CP="."
-	    CP=${CP}:${node_manager_app_home}/WEB-INF/classes
-	    
-	    for i in $( ls ${node_manager_app_home}/WEB-INF/lib ); do
-		CP=${CP}:${node_manager_app_home}/WEB-INF/lib/"$i"
-	    done
-	    
-	    CP=${CP}:${CATALINA_HOME}/lib/servlet-api.jar
-	    CLASSPATH=${CP}
-	    export CLASSPATH
-	    return 0;
-	}
+	doit="N"
+	if [ -e ${publisher_home}/${publisher_config} ]; then
+	    read -p "remove publisher configuration directory? (${publisher_home}) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing ${publisher_home}"
+		rm -rf ${publisher_home}
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${publisher_home}}"
+	    fi
+	fi
+
+	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
+	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
+	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
+	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
+
+	doit="N"
+	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
+	    read -p "remove Thredds web service? (${tomcat_install_dir}/webapps/thredds) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing ${tomcat_install_dir}/webapps/thredds"
+		rm -rf ${tomcat_install_dir}/webapps/thredds
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/thredds"
+	    fi
+	fi 
+
+	doit="N"
+	if [ -e $tomcat_install_dir ]; then
+	    read -p "remove apache tomcat? ($tomcat_install_dir) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing $tomcat_install_dir"
+		rm -ri $tomcat_install_dir
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}"
+	    fi
+	fi
+	
+	doit="N"
+	if [ -e ${globus_location}/esg_${progname}_installed ] && (( ! no_globus )); then
+	    read -p "remove globus certs? ($globus_location) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing $globus_location"
+		[ -n ${globus_location} ] && [ -e ${globus_location} ] && rm -rf ${globus_location}
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${globus_location}"
+	    fi
+	fi
+    fi
+    exit 0
+}
+
+set_classpath() {
+    local CP="."
+    CP=${CP}:${node_manager_app_home}/WEB-INF/classes
+    
+    for i in $( ls ${node_manager_app_home}/WEB-INF/lib ); do
+	CP=${CP}:${node_manager_app_home}/WEB-INF/lib/"$i"
+    done
+    
+    CP=${CP}:${CATALINA_HOME}/lib/servlet-api.jar
+    CLASSPATH=${CP}
+    export CLASSPATH
+    return 0;
+}
 
 #-------------------------------
 # Process checking utility functions
 #-------------------------------
 
 #This function "succeeds" (is true; returns 0)	if there *are* running processes found running
-	check_postgress_process() {
-	    su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data status"
-	}
+check_postgress_process() {
+    su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data status"
+}
 
 #This function "succeeds" (is true; returns 0)	if there *are* running processes found running
-	check_tomcat_process() {
-	    if [ -f ${tomcat_install_dir}/conf/server.xml ]; then
-		local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')
-		local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | awk '{print $1}' | sort -u | xargs)"
-		[ -z "${procs}" ] && return 1 #No process running on ports
-		if (( $(expr "$procs" : '.*jsvc.*') > 0)); then
-		    echo "Tomcat (jsvc) process is running... " && return 0
-		else
-		    echo " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [${procs}] ?? "
-		    return 3
-		fi
-	    else
-		echo " Warning Cannot find ${tomcat_install_dir}/conf/server.xml file!"
-		echo " Using alternative method for checking on tomcat process..."
-		local val=$(ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }')
-		[ $(($val > 0 )) == 1 ] && echo "Tomcat (jsvc) process is running..." && return 0
-		echo " No Tomcat (jsvc) processes detected"
-		return 2
-	    fi
-	}
+check_tomcat_process() {
+    if [ -f ${tomcat_install_dir}/conf/server.xml ]; then
+	local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')
+	local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | awk '{print $1}' | sort -u | xargs)"
+	[ -z "${procs}" ] && return 1 #No process running on ports
+	if (( $(expr "$procs" : '.*jsvc.*') > 0)); then
+	    echo "Tomcat (jsvc) process is running... " && return 0
+	else
+	    echo " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [${procs}] ?? "
+	    return 3
+	fi
+    else
+	echo " Warning Cannot find ${tomcat_install_dir}/conf/server.xml file!"
+	echo " Using alternative method for checking on tomcat process..."
+	local val=$(ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }')
+	[ $(($val > 0 )) == 1 ] && echo "Tomcat (jsvc) process is running..." && return 0
+	echo " No Tomcat (jsvc) processes detected"
+	return 2
+    fi
+}
 
 #-------------------------------
 # Version Checking Utility Functions
@@ -3614,61 +3614,61 @@ extract_keystore_dn() {
 # Donated function from Estanislao (thanks!)
 # To do a bit more robust version checking... See the "check_version" function 
 #-----
-	compare_versions_() {
-	    debug_print "Comparing versions: $@"
-	    OLDIFS=$IFS
-	    IFS=".-_/@+#"
-	    debug_print $@
-	    count1=0
-	    for v1 in $1; do
-		(($DEBUG2)) && echo v1=$v1
-		count2=0
-		for v2 in $3; do
-		    (($DEBUG2)) && echo "v2=$v2" && echo "[[ \$count2=$count2 == \$count1=$count1 ]]"
-		    if [[ $count2 == $count1 && $v1 != $v2 ]]; then
+compare_versions_() {
+    debug_print "Comparing versions: $@"
+    OLDIFS=$IFS
+    IFS=".-_/@+#"
+    debug_print $@
+    count1=0
+    for v1 in $1; do
+	(($DEBUG2)) && echo v1=$v1
+	count2=0
+	for v2 in $3; do
+	    (($DEBUG2)) && echo "v2=$v2" && echo "[[ \$count2=$count2 == \$count1=$count1 ]]"
+	    if [[ $count2 == $count1 && $v1 != $v2 ]]; then
 		#if same so keep going... so break inner for loop
-			(($DEBUG2)) && echo "[[ \$v1=$v1 == \$v2=$v2 ]]"
-			[[ $v1 == $v2 ]] && break
+		(($DEBUG2)) && echo "[[ \$v1=$v1 == \$v2=$v2 ]]"
+		[[ $v1 == $v2 ]] && break
 
 		#ok, no match here we resolve it: compare v1 and v2
-			(($DEBUG2)) && echo "[[ $v1 $2 $v2 ]]"
+		(($DEBUG2)) && echo "[[ $v1 $2 $v2 ]]"
 		#don't forget to set it back!
-			IFS=$OLDIFS
-			
-			eval "[[ $v1 $2 $v2 ]]"
-			return $?
-		    fi
-		    : $((++count2)) 
-		done
-	#remove last count (which doesn't count :-)
-		: $((--count2))
-		: $((++count1))
-	    done
-    #remove last count (which doesn't count :-)
-	    : $((--count1))
-	    
-    #don't mess with this...
-	    IFS=$OLDIFS
-	    
-	    debug_print "compare last one again in case we have two equal versions"
-	    eval "[[ $v1 $2 $v2 ]]"
-	    ret=$?
-	    
-	    debug_print "equality was allowed, check passed"
-	    [[ $ret == 0 ]] && return 0
-	    
-	    
-    #if here the strings were equal or $1 is longer than $2 (and therefore "greater")
-	    debug_print "[[ count1=$count1 > count2=$count2 ]]"
-	    if [[ $count1 = $count2 ]]; then
-		debug_print "they were equal, but equality wasn't expected (ret 1)"
-		return 1
-	    else
-		debug_print "the longest is the gretest. Compare length.i"
-		eval "[[ $count1 $2 $count2 ]]"
+		IFS=$OLDIFS
+		
+		eval "[[ $v1 $2 $v2 ]]"
 		return $?
 	    fi
-	}
+	    : $((++count2)) 
+	done
+	#remove last count (which doesn't count :-)
+	: $((--count2))
+	: $((++count1))
+    done
+    #remove last count (which doesn't count :-)
+    : $((--count1))
+    
+    #don't mess with this...
+    IFS=$OLDIFS
+    
+    debug_print "compare last one again in case we have two equal versions"
+    eval "[[ $v1 $2 $v2 ]]"
+    ret=$?
+    
+    debug_print "equality was allowed, check passed"
+    [[ $ret == 0 ]] && return 0
+    
+    
+    #if here the strings were equal or $1 is longer than $2 (and therefore "greater")
+    debug_print "[[ count1=$count1 > count2=$count2 ]]"
+    if [[ $count1 = $count2 ]]; then
+	debug_print "they were equal, but equality wasn't expected (ret 1)"
+	return 1
+    else
+	debug_print "the longest is the gretest. Compare length.i"
+	eval "[[ $count1 $2 $count2 ]]"
+	return $?
+    fi
+}
 
 #------
 # "Private Utility/Helper method for the check_version[^_] function to follow.
@@ -3679,27 +3679,27 @@ extract_keystore_dn() {
 # only numeric fields before non numeric ones are considered
 # so 1.1.a == 1.1.b and 1.1_B203 == 1.1_B204 and 1.b.1 == 1.c.4 (!!)
 # but and 1.2.a > 1.1.y and 1.1.a > 1.1 (!!)
-	check_version_helper() {
-	    debug_print "in check_version_helper $@"
+check_version_helper() {
+    debug_print "in check_version_helper $@"
     #only one parameter, probably a string, expand it
-	    [[ $# == 1 ]] && set -- $1
+    [[ $# == 1 ]] && set -- $1
     #debug_print "\$1=$1, \$2=$2, \$3=$3"
-	    
+    
     #check we have what we need
-	    if [[  -z $1 || -z $2  || -z $3 ]]; then 
-		[[ $verbose ]] && usage
-		return 255 
-	    fi
+    if [[  -z $1 || -z $2  || -z $3 ]]; then 
+	[[ $verbose ]] && usage
+	return 255 
+    fi
 
     #transform operators in arithmetic ones (if not already)
-	    case $2 in
-		'>') op="-gt" ;;
-		'>=') op="-ge" ;;
-		'<') op="-lt" ;;
-		'<=') op="-le" ;;
-		=|==) op="-eq" ;;
+    case $2 in
+	'>')     op="-gt" ;;
+	'>=')    op="-ge" ;;
+	'<')     op="-lt" ;;
+	'<=')    op="-le" ;;
+	=|==)    op="-eq" ;;
 !=|'<>') op="-ne" ;;
-*) op=$2
+*) op=$2 ;;
 esac
 
     #we only need three params for this function

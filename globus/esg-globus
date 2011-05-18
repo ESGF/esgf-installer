@@ -1437,7 +1437,16 @@ config_myproxy_server() {
     else
         echo "Do not regognize directive... return 1"
     fi
-    
+
+    local simpleCA_cert=${HOME}/.globus/simpleCA/cacert.pem
+    if [ -e "${simpleCA_cert}" ]; then
+        cp -v ${simpleCA_cert} /etc/grid-security/certificates/ && echo -n "." || echo -n "x"
+	chown -R ${installer_uid}:${installer_gid} /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
+	chown -R ${installer_uid}:${installer_gid} /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
+        echo
+        [ -e "/etc/grid-security/certificates/${simpleCA_cert##/*/}" ] && rebuild_truststore
+    fi
+
     #--------------------
     # Configure /etc/myproxy-server.config
     #--------------------

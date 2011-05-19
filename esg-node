@@ -2063,9 +2063,9 @@ setup_tds() {
     local choice
     while [ 1 ]; do
 	unset choice
-	printf "Please select the gateway for this node: \n"
+	printf "Please select the IDP Peer (or gateway) for this node: \n"
 	printf "\t-------------------------------------------\n"
-	printf "\t*[1] : ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet\n"
+	printf "\t*[1] : ESGF-PCMDI -> pcmdi3.llnl.gov\n"
 	printf "\t [2] : ESGF-JPL   -> esg-gateway.jpl.nasa.gov\n"
 	printf "\t [3] : ESGF-ORNL  -> esg2-gw.ccs.ornl.gov\n"
 	printf "\t [4] : ESGF-BADC  -> cmip-gw.badc.rl.ac.uk\n"
@@ -3423,6 +3423,49 @@ sync_with_java_truststore() {
     echo "[OK]"
 }
 
+#--------------------------------------
+# Setting the (index peer) node to which we will publish
+#--------------------------------------
+#This is how we make sure that the publisher is pointing to the correct publishing service.
+#We edit the esg.ini file with the information in the esgf.properties file, specifically the hessian_service_url value in esg.ini
+set_index_peer() {
+    #----------------------
+    ret=0
+    echo -n "Setting Index Peer... "
+    local input=${1:-${esgf_index_peer}}
+    
+    #note: config_file defined in esg-node:init()
+    local esgf_properties_file=${config_file:-${esg_config_dir}/esgf.properties}
+    [ ! -e "${esgf_properties_file}" ] && debug_print " WARNING: Could not locate [${esgf_properties_file}]" && return 1
+    
+    #selecting the approprate value for service url...
+    local publishing_service_url
+    
+    if [ "${input}" = "${esgf_host}" ] || [ "${input}" = "self" ] || [ "${input}" = "localhost" ]; then
+        publishing_service_url=$(sed -n 's@[ ]*publishing.service.endpoint[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "0" || (echo -n "x" && ((ret++)) )
+        [ -z "${publishing_service_url}" ] || (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
+    else
+        publishing_service_url="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
+    fi
+
+    #locate the publisher's configuration file - esg.ini
+    local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "0" || (echo -n "x" && ((ret++)) )
+    local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "0" || (echo -n "x" && ((ret++)) )
+
+    local target_file=${ESGINI:-${publisher_home}/${publisher_config}}
+    [ -z "${target_file}" ] && debug_print " WARNING: Could not discern publisher config file: [${target_file}]" && return 1
+    [ ! -e "${target_file}" ] && debug_print " WARNING: Could not locate publisher config file [${target_file}]" && return 1
+
+    (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
+
+    #edit in-place the esg.ini file...
+    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_url}'#' ${target_file} && echo -n ":" || echo -n "8-)"
+    echo
+    echo "${publishing_service_url}"
+    echo
+    #----------------------
+}
+
 ############################################
 # General - Utility Functions
 ############################################
@@ -4344,7 +4387,6 @@ run_startup_hooks() {
     echo "Running startup hooks..."
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     source ${scripts_dir}/esg-orp && orp_startup_hook
-    source ${scripts_dir}/esg-search && search_startup_hook
 }
 
 #Any last bits of cleanup for your module should be called here.
@@ -4363,6 +4405,7 @@ start() {
     
     echo "starting services... ($sel)"
     run_startup_hooks
+    set_index_peer
 
     /etc/init.d/ntpd status
     if [ $? != 0 ]; then 
@@ -4539,6 +4582,20 @@ initial_setup_questionnaire() {
     unset input
     unset default
 
+    get_property esgf_index_peer ${esgf_index_peer}
+    if [ -z "${esgf_index_peer}" ] || ((force_install)); then
+	unset input
+	default=${esgf_index_peer:-'pcmdi3.llnl.gov'}
+	read -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
+	[ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
+	[ -n "${input}" ] && esgf_index_peer=${input}	  && write_as_property esgf_index_peer
+    else
+	echo "esgf_index_peer = [${esgf_index_peer}]"
+    fi
+
+    unset input
+    unset default
+
     get_property mail_admin_address ${mail_admin_address}
     if [ -z "${mail_admin_address}" ] || ((force_install)); then
 	read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
@@ -4621,37 +4678,42 @@ usage() {
      (as root)
      ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
 	 --prefix      - specify the top level directory for this entire installation's \"external\" tools
-(default:/usr/local - currently:$install_prefix)
---workdir     - specify the directory used by the installation to download and build esg artifacts for installation
-(default:~/workbench/esg - currently:$workdir)
---install     - goes through the installation process
-will automatically start up node services
---verify      - runs the test code to verify installation
---write-env   - writes the necessary env vars to file ${envfile}
---version     - indicates the version of this script
---check	      - checks if this script is the most up-to-date posted <u|c|X> (Update|Continue|eXit)
---clear	      - removes the file holding the enironment state of last install
---test-pub    - performs the publication test directly (same publication called in last step of install)
---info	      - provides a brief explaination of the DataNode
---upgrade|--update|update - upgrades/updates the node manager
---force	      - Will allow execution of installation|update code to be executed beyond the up2date checks.
-Basically allowing an installation|update as if starting from scratch.
+        (default:/usr/local - currently:$install_prefix)
+        --workdir     - specify the directory used by the installation to download and build esg artifacts for installation
+        (default:~/workbench/esg - currently:$workdir)
+        --install     - goes through the installation process
+        will automatically start up node services
+        --verify      - runs the test code to verify installation
+        --write-env   - writes the necessary env vars to file ${envfile}
+        --version     - indicates the version of this script
+        --check	      - checks if this script is the most up-to-date posted <u|c|X> (Update|Continue|eXit)
+        --clear	      - removes the file holding the enironment state of last install
+        --test-pub    - performs the publication test directly (same publication called in last step of install)
+        --info	      - provides a brief explaination of the DataNode
+        --upgrade|--update|update - upgrades/updates the node manager
+        --force	      - Will allow execution of installation|update code to be executed beyond the up2date checks.
+        Basically allowing an installation|update as if starting from scratch.
 
--------------------------------
-Configuration Type Selection
--------------------------------
---type | -t <data &| index &| idp &| compute> - Select type of node: 
-\"data\" node, 
-\"index\" node, 
-\"idp\" (identity provider) node and/or 
-\"compute\" node 
-(note: there is no default one must be selected at least initially...
-    when in doubt use \"data\")
---set-type  <data &| index &| idp &| compute> - Sets the type value to be used at next start up
---get-type - returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)
-(note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
+        -------------------------------
+        Configuration Type Selection
+        -------------------------------
+        --type | -t <data &| index &| idp &| compute> - Select type of node: 
+        \"data\" node, 
+        \"index\" node, 
+        \"idp\" (identity provider) node and/or 
+        \"compute\" node 
+        (note: there is no default one must be selected at least initially...
+            when in doubt use \"data\")
+        --set-type  <data &| index &| idp &| compute> - Sets the type value to be used at next start up
+        --get-type - returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)
+        (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
 
+        -------------------------------
+	Publication Endpoint Setting (Index Peer)
 	-------------------------------
+        --set-publication-endpoint <hostname of the index peer you wish to publish to>
+
+        -------------------------------
 	Globus Tool Management
 	-------------------------------
 	--no-globus   - will not perform any operations affecting globus tools (for those with existing globus setups)
@@ -4734,19 +4796,19 @@ Configuration Type Selection
 	*can more simply become root using sudo's \"-s\" flag.	After a
 	*full install there will be a file created ($envfile) that has
 	*the basic environment vars that were used and set during the
-      *installation - this should be sourced by users of this
-      *application stack.
+        *installation - this should be sourced by users of this
+        *application stack.
 
-      --------------
-      Typical usage:
-      --------------
+        --------------
+        Typical usage:
+        --------------
 
-      Installation : esg-node --install --verify
-	  (submit csr and get back returned cert)
-      Credentials  : esg-node --install-keypair <key> <cert>
-      Test Publish : esg-node --test-pub
-      Update Certs : esg-node [--force] --rebuild-truststore
-      Life Cycle   : esg-node [start|stop|status|restart|update]
+        Installation : esg-node --install --verify
+            (submit csr and get back returned cert)
+        Credentials  : esg-node --install-keypair <key> <cert>
+        Test Publish : esg-node --test-pub
+        Update Certs : esg-node [--force] --rebuild-truststore
+        Life Cycle   : esg-node [start|stop|status|restart|update]
 
     " | more
     exit 0
@@ -5172,6 +5234,11 @@ main() {
 		    myproxy_config_args=${tmpargs[@]}
 		    unset tmpargs
 		    ;;
+                --set-publication-endpoint|--set-index-peer)
+                    shift
+                    set_index_peer $1
+                    exit $?
+                    ;;
 		-h | --help)
 		    usage
 		    ;;

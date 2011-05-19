@@ -91,6 +91,9 @@ done
 manifest_file=${manifest_file:-$0.manif}
 esg_dist_url="rainbow.llnl.gov:/pcmdi_web/dist$( ((devel == 1)) && echo "/devel" || echo "")"
 current_dir=${current_dir:="esgf-installer"}
+xfer_user=${xfer_user:-""}
+
+[ -n "${xfer_user}" ] && xfer_user+="@" && echo "[${xfer_user}${esg_dist_url}]"
 
 fail=0
 good=0
@@ -121,12 +124,12 @@ while read file dest_dir; do
     dest_dir=${dest_dir:-"${current_dir}"}
     #echo "[$file] >> [$dest_dir]"
     
-    ((verbose)) && echo -n "pushing $file ---> ${esg_dist_url}/${dest_dir} " || echo -n "*"
+    ((verbose)) && echo -n "pushing $file ---> ${xfer_user}${esg_dist_url}/${dest_dir} " || echo -n "*"
     sed 's#\(script_version=\)"\(.*\)".*$#\1"'$(git describe)'"#' ${file} > ${file}.tmp
     ((!noop))  && md5sum ${file}.tmp > ${file}.md5
-    ((!noop))  && rsync -c ${file}.md5 ${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
+    ((!noop))  && rsync -c ${file}.md5 ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
     echo -n "-"
-    ((!noop))  && rsync -c ${file}.tmp ${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
+    ((!noop))  && rsync -c ${file}.tmp ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
     if [ $? != 0 ]; then
 	((verbose)) && echo "[FAIL]"
 	((++fail))

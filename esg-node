@@ -2066,8 +2066,12 @@ setup_tds() {
 	unset choice
 	printf "Please select the gateway for this node: \n"
 	printf "\t-------------------------------------------\n"
-	printf "\t*[1] : ESG-PCMDI -> pcmdi3.llnl.gov/esgcet\n"
-	printf "\t [2] : ESG-NCAR  -> esg.ucar.edu\n"
+	printf "\t*[1] : ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet\n"
+	printf "\t [2] : ESGF-JPL   -> esg-gateway.jpl.nasa.gov\n"
+	printf "\t [3] : ESGF-ORNL  -> esg2-gw.ccs.ornl.gov\n"
+	printf "\t [4] : ESGF-BADC  -> cmip-gw.badc.rl.ac.uk\n"
+	printf "\t [5] : ESGF-DKRZ  -> ipcc-ar5.dkrz.de\n"
+	printf "\t [6] : ESG-NCAR   -> esg.ucar.edu\n"
 	printf "\t-------------------------------------------\n"
 	printf "\t [C] : (Manual Entry)\n"
 	printf "\t-------------------------------------------\n"
@@ -2075,10 +2079,22 @@ setup_tds() {
 
 	[ -z "${choice}" ] && choice=1 #default
 	case ${choice} in
-	    2)	gateway_name="ESG-NCAR"
+	    6)	gateway_name="ESG-NCAR"
 		gateway_service_root="esg.ucar.edu"
 		;;
-	    1)	gateway_name="ESG-PCMDI"
+	    5)	gateway_name="ESGF-DKRZ"
+		gateway_service_root="ipcc-ar5.dkrz.de"
+		;;
+	    4)	gateway_name="ESGF-BADC"
+		gateway_service_root="cmip-gw.badc.rl.ac.uk"
+		;;
+	    3)	gateway_name="ESG-ORNL"
+		gateway_service_root="esg2-gw.ccs.ornl.gov"
+		;;
+	    2)	gateway_name="ESGF-JPL"
+		gateway_service_root="esg-gateway.jpl.nasa.gov"
+		;;
+	    1)	gateway_name="ESGF-PCMDI"
 		gateway_service_root="pcmdi3.llnl.gov/esgcet"
 		myproxy_port=2119 #hack till we open the right port
 		;;

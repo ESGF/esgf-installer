@@ -161,9 +161,9 @@ init() {
     tomcat_user=${tomcat_user:-tomcat}
     tomcat_group=${tomcat_group:-$tomcat_user}
     globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
-    gateway_name=${ESGF_PEER_NAME}
-    gateway_service_root=${ESGF_PEER_SVC_ROOT}
-    myproxy_endpoint=${myproxy_endpoint:-${gateway_service_root%%/*}}
+    esgf_idp_peer_name=${ESGF_IDP_PEER_NAME}
+    esgf_idp_peer=${ESGF_IDP_PEER}
+    myproxy_endpoint=${myproxy_endpoint:-${esgf_idp_peer%%/*}}
     myproxy_port=${myproxy_port:-7512}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
@@ -675,7 +675,7 @@ setup_java() {
     #semantics i.e. there is already a previous installation of java
     #an installation of tomcat with tomcat setup with a properly
     #generated/configured jssecacerts file and there is a valid
-    #ESGF_PEER_SVC_ROOT being pointed to.  We should copy over that
+    #ESGF_IDP_PEER being pointed to.  We should copy over that
     #jssecacerts into this newly installed VM to satisfy SSL.
     if [ -e "${last_java_truststore_file}" ]; then
 	cp -v ${last_java_truststore_file} ${java_install_dir}/conf
@@ -2057,9 +2057,8 @@ setup_tds() {
     printf "\nUsing IP: ${node_host_ip_address}\n"
     unset input
 
-    #@@gateway_name@@ -> @@gateway_service_root@@  #Tokens in file
-    #ESG-PCMDI -> pcmdi3.llnl.gov/esgcet
-    #ESC-NCAR  -> esg.prototype.ucar.edu
+    #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
+    #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
 
     local choice
     while [ 1 ]; do
@@ -2079,34 +2078,34 @@ setup_tds() {
 
 	[ -z "${choice}" ] && choice=1 #default
 	case ${choice} in
-	    6)	gateway_name="ESG-NCAR"
-		gateway_service_root="esg.ucar.edu"
+	    6)	esgf_idp_peer_name="ESG-NCAR"
+		esgf_idp_peer="esg.ucar.edu"
 		;;
-	    5)	gateway_name="ESGF-DKRZ"
-		gateway_service_root="ipcc-ar5.dkrz.de"
+	    5)	esgf_idp_peer_name="ESGF-DKRZ"
+		esgf_idp_peer="ipcc-ar5.dkrz.de"
 		;;
-	    4)	gateway_name="ESGF-BADC"
-		gateway_service_root="cmip-gw.badc.rl.ac.uk"
+	    4)	esgf_idp_peer_name="ESGF-BADC"
+		esgf_idp_peer="cmip-gw.badc.rl.ac.uk"
 		;;
-	    3)	gateway_name="ESG-ORNL"
-		gateway_service_root="esg2-gw.ccs.ornl.gov"
+	    3)	esgf_idp_peer_name="ESG-ORNL"
+		esgf_idp_peer="esg2-gw.ccs.ornl.gov"
 		;;
-	    2)	gateway_name="ESGF-JPL"
-		gateway_service_root="esg-gateway.jpl.nasa.gov"
+	    2)	esgf_idp_peer_name="ESGF-JPL"
+		esgf_idp_peer="esg-gateway.jpl.nasa.gov"
 		;;
-	    1)	gateway_name="ESGF-PCMDI"
-		gateway_service_root="pcmdi3.llnl.gov/esgcet"
+	    1)	esgf_idp_peer_name="ESGF-PCMDI"
+		esgf_idp_peer="pcmdi3.llnl.gov/esgcet"
 		myproxy_port=2119 #hack till we open the right port
 		;;
 	    c | C)
 		local input
-		gateway_name=${ESGF_PEER_NAME:-"ESG-PCMDI"}
-		gateway_service_root=${ESGF_PEER_SVC_ROOT:-"pcmdi3.llnl.gov/esgcet"}
-		read -p "Please enter the Gateway name [${ESGF_PEER_NAME}] " input
-		[ -n "${input}" ] && gateway_name=$(echo ${input} | tr 'a-z' 'A-Z')
+		esgf_idp_peer_name=${ESGF_IDP_PEER_NAME:-"ESG-PCMDI"}
+		esgf_idp_peer=${ESGF_IDP_PEER:-"pcmdi3.llnl.gov"}
+		read -p "Please enter the IDP Peer's name [${ESGF_IDP_PEER_NAME}] " input
+		[ -n "${input}" ] && esgf_idp_peer_name=$(echo ${input} | tr 'a-z' 'A-Z')
 		unset input
-		read -p "Please enter the Gateway Service Root [${ESGF_PEER_SVC_ROOT}] " input
-		[ -n "${input}" ] && gateway_service_root=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
+		read -p "Please enter the IDP Peer's hostname [${ESGF_IDP_PEER}] " input
+		[ -n "${input}" ] && esgf_idp_peer=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
 		unset input
 		choice="(Manual Entry)"
 		;;
@@ -2114,7 +2113,7 @@ setup_tds() {
 	esac
 	echo
 	echo "You have selected: ${choice}"
-	echo "${gateway_name} -> ${gateway_service_root}"
+	echo "${esgf_idp_peer_name} -> ${esgf_idp_peer}"
 	echo 
 	local is_correct
 	read -p "Is this correct? [Y/n] " is_correct
@@ -2126,10 +2125,10 @@ setup_tds() {
 	fi
     done
     
-    myproxy_endpoint=$(echo ${gateway_service_root} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
+    myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
 
     echo
-    echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${gateway_name}:${gateway_service_root}"
+    echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
     #----------------------
     #Fetch and Insert the Certificate for parent gateway
@@ -2212,8 +2211,8 @@ setup_tds() {
 
 write_tds_env() {
     ((show_summary_latch++))
-    echo "export ESGF_PEER_NAME=${gateway_name}" >> ${envfile}
-    echo "export ESGF_PEER_SVC_ROOT=${gateway_service_root}" >> ${envfile}
+    echo "export ESGF_IDP_PEER_NAME=${esgf_idp_peer_name}" >> ${envfile}
+    echo "export ESGF_IDP_PEER=${esgf_idp_peer}" >> ${envfile}
     echo "export myproxy_port=${myproxy_port}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
@@ -3367,7 +3366,7 @@ export_keystore_as_globus_hostkeys() {
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
 register() {
-    echo "Installing Public Certificate of Target Gateway Node...( -> MyProxy endpoint: ${1:-${ESGF_PEER_SVC_ROOT%%/*}})"
+    echo "Installing Public Certificate of Target IDP Peer Node...( -> MyProxy endpoint: ${1:-${ESGF_IDP_PEER%%/*}})"
     
     mkdir -p ${workdir} # >& /dev/null
     pushd ${workdir} # >& /dev/null
@@ -3380,7 +3379,7 @@ register() {
 
     pushd ${tomcat_conf_dir} >& /dev/null
     
-    local input=${1:-${ESGF_PEER_SVC_ROOT%%/*}}
+    local input=${1:-${ESGF_IDP_PEER%%/*}}
     [ -z "${input}" ] && popd && echo "Could not register: No endpoint specified" && return 1
 
     local ssl_endpoint=${input%%/*} #just need the hostname
@@ -4582,10 +4581,11 @@ esgf_node_info() {
      stack depends on other factors to be addressed by your
      organization.
 
-     Please be sure that you have gotten your Gateway (IdP)
-     credentials from your configured Gateway.
+     Please be sure that you have gotten your credentials from your
+     ESGF IDP Peer (or ESG Gateway)
 
-     The primary/central Gateway for ESGF is:
+     The primary IDP Peer for ESGF is pcmdi3.llnl.gov
+     You may register for an account at PCMDI3 at the following URL:
      http://pcmdi3.llnl.gov/esgcet/home.htm -> \"create account\"
 
      This is required for publication.
@@ -4760,8 +4760,8 @@ done_remark() {
     echo "http://${my_ip_address}/thredds"
     echo "http://${my_ip_address}/OpenidRelyingParty"
     echo 
-    echo "To see the published test, go your specified \"admin\" peer: [${ESGF_PEER_NAME}]"
-    echo "http://${ESGF_PEER_SVC_ROOT}"
+    echo "To see the published test, go your specified \"admin\" peer: [${ESGF_IDP_PEER_NAME}]"
+    echo "http://${ESGF_IDP_PEER}"
     echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.test.mytest"
     echo ""
 }

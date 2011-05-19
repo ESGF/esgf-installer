@@ -3463,6 +3463,7 @@ set_index_peer() {
     echo
     echo "${publishing_service_url}"
     echo
+    write_as_property ${esgf_index_peer}
     #----------------------
 }
 
@@ -4405,7 +4406,6 @@ start() {
     
     echo "starting services... ($sel)"
     run_startup_hooks
-    set_index_peer
 
     /etc/init.d/ntpd status
     if [ $? != 0 ]; then 
@@ -4711,7 +4711,7 @@ usage() {
         -------------------------------
 	Publication Endpoint Setting (Index Peer)
 	-------------------------------
-        --set-publication-endpoint <hostname of the index peer you wish to publish to>
+        --set-publication-target <hostname of the index peer you wish to publish to>
 
         -------------------------------
 	Globus Tool Management
@@ -5234,7 +5234,7 @@ main() {
 		    myproxy_config_args=${tmpargs[@]}
 		    unset tmpargs
 		    ;;
-                --set-publication-endpoint|--set-index-peer)
+                --set-publication-target|--set-index-peer)
                     shift
                     set_index_peer $1
                     exit $?

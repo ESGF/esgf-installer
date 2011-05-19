@@ -4822,8 +4822,8 @@ done_remark() {
     echo "http://${my_ip_address}/thredds"
     echo "http://${my_ip_address}/OpenidRelyingParty"
     echo 
-    echo "To see the published test, go your specified \"admin\" peer: [${ESGF_IDP_PEER_NAME}]"
-    echo "http://${ESGF_IDP_PEER}"
+    echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
+    echo "http://${esgf_index_peer}/"
     echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.test.mytest"
     echo ""
 }

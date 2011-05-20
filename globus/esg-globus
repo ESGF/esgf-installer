@@ -69,8 +69,22 @@ DEBUG=${DEBUG:-1}
 force_install=${force_install:-0}
 workdir=${workdir:-~/workbench/esg}
 install_logfile=${ESG_INSTALL_LOGFILE:-"/etc/esg.install_log"}
-installer_uid=${installer_uid:-$(id ${HOME##*/} | sed 's/.*uid=\([0-9]*\).*/\1/')}
-installer_gid=${installer_gid:-$(id ${HOME##*/} | sed 's/.*gid=\([0-9]*\).*/\1/')}
+
+#--------------
+# ID Setting
+#--------------
+# this should get exported from caller preferably
+if [[ -z "$installer_uid" || -z "$installer_gid" ]]; then 
+    installer_user=${ESG_USER:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
+    installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
+    installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
+    installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
+    
+    #deprecate SUDO_?ID so we only use one variable for all this
+    [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID && echo "SUDO_UID is deprecated, use ESG_USER_UID instead"
+    [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID && echo "SUDO_GID is deprecated, use ESG_USER_GID instead"
+fi   
+ 
 esg_root_dir=${esg_root_dir:-"/esg"}
 esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
 esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
@@ -732,11 +746,43 @@ start_gridftp_usage_parsing() {
         
         local username=$(/usr/bin/getent passwd ${installer_uid} | awk -F: {'print $1'})
         if [ -n "${username}" ] ; then
-            echo -n "Installing crontab entry... for ${username} running ${cronscript} via ${esg_crontab} "
-            local buff=$(awk '!($0 in a){a[$0];print}' ${esg_crontab})
-            echo "${buff}" > ${esg_crontab}
-            crontab -u ${username} ${esg_crontab}
-            local ret=$?
+
+                    echo -n "Installing crontab entry... for ${username} running ${cronscript} via ${esg_crontab} "
+            
+            local backup_cron="$esg_backup_dir/oldcron_${username}_$(date +%y%m%d_%k%M%S)"
+            local start_mark="# ESGF cronjob BEGIN ###"
+            local end_mark="# ESGF cronjob END ###"
+            local current_cron=$(crontab -u $username -l)
+            local simple_update
+            echo "$current_cron" | grep -q "$start_mark" && simple_update=1
+            if ((simple_update)); then
+                #we know what we are doing. Replace the content within the markings
+                new_cron=$(sed '/'^"$start_mark"'$/,/'^"$end_mark"'$/ { 
+                /'"$start_mark"'/ {
+                    p
+                    r '"$cronscript"'
+                }
+                /'"$end_mark"'/ p
+                d}' <(echo "$current_cron"))
+            else
+                # try to figure out if we have alread touched this or it's the very first time.
+                cleaned_cron=$(echo "$current_cron" | sed -e '/esg_usage_parser/ d')
+                new_cron=$(echo "$cleaned_cron"; echo $start_mark; cat cron_tab; echo $end_mark)
+                
+                #after this always ask the user if it's ok.
+            fi
+            
+            #ok. Compare what we did to that what we have
+             if [[ "$new_cron" != "$current_cron" ]]; then
+                echo "Current crontab for user ($installer_user):"; echo "$current_cron"
+                echo "will be updated to:"; echo "$new_cron"
+                echo "Is this ok (should be)? [Y/n]"; read answ
+                if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
+                    echo "$current_cron" > $backup_cron
+                    crontab -u $installer_user <(echo "$new_cron")
+                     local ret=$?
+                fi
+            fi
             [ $ret == 0 ] && echo "[OK]" || "[FAILED]"
             return $ret
         else

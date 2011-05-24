@@ -106,10 +106,9 @@ hostname -s, hostname --domain and hostname --fqdn.
         [y/N] means "N" is the default, you may just hit return
         Default values appear in "[]" brackets, hitting return uses them.
 
-   There is no default type, so it *must* be specified (if in doubt use "data")
-   % esg-node --set-type data
+   There is NO default type, so it *must* be specified (if in doubt use "data")
 
-   % esg-node --install --verify
+   % esg-node --type data --install --verify
 
    With the --verify flag verification tests are run throughout the
    installation procedure.  Also, the last verification step of the

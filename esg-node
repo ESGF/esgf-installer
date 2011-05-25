@@ -3431,8 +3431,8 @@ sync_with_java_truststore() {
 set_index_peer() {
     #----------------------
     ret=0
-    echo -n "Setting Index Peer... "
     local input=${1:-${esgf_index_peer}}
+    echo -n "Setting Index Peer... [${input}] "
     
     #note: config_file defined in esg-node:init()
     local esgf_properties_file=${config_file:-${esg_config_dir}/esgf.properties}
@@ -4393,6 +4393,7 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo "Running startup hooks..."
+    set_index_peer
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     source ${scripts_dir}/esg-orp && orp_startup_hook
 }

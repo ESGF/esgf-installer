@@ -40,13 +40,27 @@ Instructions:
 - Before you do any installation REGISTER (get an account) at the
 gateway you intend to connect to:
         (ESG-PCMDI) http://pcmdi3.llnl.gov/esgcet/
+
 - Be sure the machine you are installing on is a CentOS/Redhat linux
 family distribution.
+
 - Be sure the machine has a fully qualified hostname and responds to
 hostname -s, hostname --domain and hostname --fqdn.
-- The machine must have all development headers installed.
+
+- Install all the prerequisites!!!!
+  http://esgf.org/wiki/Cmip5DataNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F
+
+- The machine should have all development headers installed.
+
 - The installation user must have root (or sudo) privileges.
 
+- Make sure there is NO WEB CACHING for this node either
+  locally or from your institution!!!
+
+- If you intend to publish from your node ("data" configuration type)
+  http://esgf.org/wiki/Cmip5DataNode/FAQ#PREREQUISITES  
+  * Be sure that your node or institution is NOT performing web caching for this node!!!
+  * Be sure that your node is visible from the outside, i.e. can accept inbound external connections!!!
 
 0) We HIGHLY recommend creating a separate installation user account (Ex:
    esg-user) and give that user the ability to use sudo (i.e. create
@@ -167,8 +181,11 @@ As mentioned the script is in bash, so if you are so inclined, feel
 free to read it. However, do NOT modify the script, that would void
 the support contract ;-).
 
-If you have any questions... contact me - Gavin (gavin@llnl.gov), or Bob
-or Dean. My number is +1-925-422-7436.
+If you have any questions... 
+1) Read the FAQ - http://esgf.org/wiki/Cmip5DataNode/FAQ
+2) Post to the mailing list
+3) Contact me - Gavin (gavin@llnl.gov), or Bob or Dean. 
+   My number is +1-925-422-7436.
 
 Enjoy!
 

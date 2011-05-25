@@ -145,7 +145,7 @@ while read file dest_dir; do
     #echo "[$file] >> [$dest_dir]"
     
     ((verbose)) && echo -n "pushing $file ---> ${xfer_user}${esg_dist_url}/${dest_dir} " || echo -n "*"
-    sed 's#\(script_version=\)"\(.*\)".*$#\1"'$(git describe)'"#' ${file} > ${file}.tmp
+    sed 's#\(script_version=\)"\(.*\)".*$#\1"'$(git describe)-${my_current_branch}'"#' ${file} > ${file}.tmp
     ((!noop))  && md5sum ${file}.tmp > ${file}.md5
     ((!noop))  && rsync -c ${file}.md5 ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
     echo -n "-"

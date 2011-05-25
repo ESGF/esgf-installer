@@ -84,6 +84,26 @@ while [ -n "$1" ]; do
     shift
 done
 
+#-----
+# double check
+my_current_branch=$(git status | sed -n '1 s/.*On branch[ ]*\(.*$\)/\1/p')
+if echo $my_current_branch | grep devel >& /dev/null; then
+    #I am on a devel branch...
+    #Make sure that devel is turned on
+    if ((devel != 1)); then
+        read -t 5 -p "You are on branch [${my_current_branch}] and attempting to post to main distribution location, okay? [y/N]: " answer
+        [ -z "${answer}" ] && answer="n"
+        answer=$(echo ${answer} | tr 'A-Z' 'a-z')
+        if [ "$answer" != "y" ]; then
+            echo
+            echo "NOTE: use the \"--devel\" flag or export devel=1 in order to post to development area."
+            echo
+            exit 1
+        fi
+    fi
+fi
+#-----
+
 ((devel)) && echo "Pushing to development area..."
 ((verbose)) && echo "Verbose is ON"
 ((noop)) &&  echo "Noop is ON"

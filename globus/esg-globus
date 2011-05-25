@@ -608,13 +608,12 @@ setup_libglobus_adq() {
         #remove the version value to get down to libglobus_adq.  Yes,
         #since I know the ultimate name I could just use it, but that
         #ain't flexible or sexy... right? ;-)
-        local tmp=$(echo ${libglobus_adq_file} | awk 'gsub(/('$compress_extensions')/,"")')
-        local libglobus_adq_dir=${tmp%%-*}
-        ((DEBUG)) && echo "libglobus_adq_dir = $(readlink -f ${libglobus_adq_dir})"
-        unset tmp
+        local libglobus_adq_dir=$(echo ${libglobus_adq_file} | awk 'gsub(/('$compress_extensions')/,"")')
+        local libglobus_adq_dir=$(readlink -f ${libglobus_adq_dir})
+        ((DEBUG)) && echo "libglobus_adq_dir = ${libglobus_adq_dir}"
         #-----
 
-        cd $(echo ${libglobus_adq_dist_url##*/} | awk '{print substr($1,1,length($1)-18)}')
+        cd ${libglobus_adq_dir}
         sh build.sh 
         cp -v libglobus_adq.so* $GLOBUS_LOCATION/lib 
         #----------

@@ -5306,6 +5306,10 @@ main() {
 	echo "	   Please read the prerequisite list here:"
 	echo "	   http://esgf.org/wiki/Cmip5DataNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
 	echo "	   Before continuing make sure they are ALL present on this system!!!!!!"
+        if [ $((sel & DATA_BIT)) != 0 ]; then
+	    echo "	   If you intend on publishing from this node please check the publishing network prerequisites"
+	    echo "	   http://esgf.org/wiki/Cmip5DataNode/FAQ#PREREQUISITES"
+        fi
 	echo "	   ----------------------------------------------------------"
 	echo
         (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""

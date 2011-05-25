@@ -1621,7 +1621,7 @@ config_myproxy_server() {
     echo -n "*"
     eval "perl -p -i -e 's/\\@\\@gateway_db_name\\@\\@/${gateway_db_name}/g' ${tfile}"
     echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@openid_dirname\\@\\@/${openid_dirname}/g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
     echo -n "*"
     echo " [OK]"
     chmod 755 ${tfile}

@@ -4512,7 +4512,7 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
 	unset input
-	default=${esgf_default_peer:-'pcmdi3.llnl.gov'}
+	default=${esgf_default_peer:-'esgf-node1.llnl.gov'}
 	read -p "What is the default peer to this node? [${default}]: " input
 	[ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
 	[ -n "${input}" ] && esgf_default_peer=${input}	  && write_as_property esgf_default_peer

@@ -151,7 +151,7 @@ done
 
 if id_check 
 then
-    (( devel == 1 )) && echo "(Setup to pull from DEVELOPMENT tree...)"
+    (( devel == 1 )) && echo "(Setup to pull from DEVELOPMENT tree...)" && esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
     self_verify
     (( $? > 0 )) && printf "WARNING: $0 could not be verified!! \n(This file, $(readlink -f ${0}), may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" && exit 1
     echo "checking for updates for the ESGF Node"

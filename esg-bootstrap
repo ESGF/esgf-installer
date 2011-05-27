@@ -7,7 +7,7 @@
 #####
 
 #uses: wget
-
+devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
 esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
@@ -20,6 +20,7 @@ id_check() {
 }
 
 get_latest() {
+    esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
     script_install_dir=${install_prefix}/bin
     mkdir -p ${script_install_dir}
     #NOTE: boot script location is a RedHat/CentOS thing... to make this cross distro compatible clean this up.
@@ -136,6 +137,9 @@ while [ -n "$1" ]; do
             ;;
         --debug)
             DEBUG=1;
+            ;;
+        --devel)
+            devel=1;
             ;;
         *)
             echo "unknown switch [$1]"

@@ -4280,7 +4280,7 @@ _verify() {
 }
 
 self_verify() {
-    _verify 'http://198.128.245.140/dist' >& /dev/null 
+    _verify http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "") >& /dev/null 
     local ret=$?
     if (( ${ret} == 3 )); then 
 	printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"

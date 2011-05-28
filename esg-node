@@ -288,6 +288,9 @@ init_structure() {
     #Prepare necessary support filesystem structure and files
     #--------------
 
+    #reset esg_dist_url if necessary...
+    esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
+
     mkdir -p ${scripts_dir}
     [ $? != 0 ] && echo "ERROR: could not create ${scripts_dir}... required for installation" && checked_done 1
 

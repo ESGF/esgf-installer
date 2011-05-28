@@ -58,6 +58,10 @@
 # file5 will go to ${esg_dist_url}/another_path/foo
 # 
 #
+#Misc:
+# the sed pattern for how we write our version with git and branch is...
+# sed 's/script_version="v[0-9]\+\.[0-9]\+\.[0-9]\+\(-[0-9]\+-g[0-9a-z]\+\)\?\(-[a-zA-Z].*\)\?"$//'
+# (may come in handy and this took me too long to get right to just dash it weh so, to raahtid!
 #*****************************************************************
 
 #uses: egrep, rsync (and thus ssh)

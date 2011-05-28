@@ -11,8 +11,6 @@ devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
 esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
-script_version="v0.0.0"
-
 id_check() {
     id | grep root >& /dev/null
     [ $? != 0 ] && printf "[FAIL] \n\tMust run this program with root's effective UID\n\n" && return 1
@@ -126,7 +124,6 @@ DEBUG=0
 while [ -n "$1" ]; do 
     case $1 in 
 	-v | --version)
-	    echo "Version: $script_version"
 	    echo "Earth Systems Grid Federation (http://esgf.org)"
 	    echo "ESGF Node Bootstrap Script"
 	    echo ""

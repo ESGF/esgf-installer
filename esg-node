@@ -2279,6 +2279,7 @@ my_setup_globus() {
     
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-globus
+    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
     checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
@@ -2512,6 +2513,7 @@ setup_subsystem() {
 
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
+    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     local ret=$?
     (( $ret > 1 )) && popd && return 1
@@ -3445,15 +3447,15 @@ set_index_peer() {
     local publishing_service_url
     
     if [ "${input}" = "${esgf_host}" ] || [ "${input}" = "self" ] || [ "${input}" = "localhost" ]; then
-        publishing_service_url=$(sed -n 's@[ ]*publishing.service.endpoint[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "0" || (echo -n "x" && ((ret++)) )
+        publishing_service_url=$(sed -n 's@[ ]*publishing.service.endpoint[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
         [ -z "${publishing_service_url}" ] || (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
     else
         publishing_service_url="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
     fi
 
     #locate the publisher's configuration file - esg.ini
-    local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "0" || (echo -n "x" && ((ret++)) )
-    local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "0" || (echo -n "x" && ((ret++)) )
+    local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
+    local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ")" || (echo -n "x" && ((ret++)) )
 
     local target_file=${ESGINI:-${publisher_home}/${publisher_config}}
     [ -z "${target_file}" ] && debug_print " WARNING: Could not discern publisher config file: [${target_file}]" && return 1
@@ -3462,7 +3464,7 @@ set_index_peer() {
     (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
 
     #edit in-place the esg.ini file...
-    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_url}'#' ${target_file} && echo -n ":" || echo -n "8-)"
+    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_url}'#' ${target_file} && echo -n ":" || echo -n " 8-D"
     echo
     echo "${publishing_service_url}"
     echo
@@ -4396,7 +4398,6 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo "Running startup hooks..."
-    set_index_peer
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     source ${scripts_dir}/esg-orp && orp_startup_hook
 }
@@ -5086,6 +5087,11 @@ main() {
 		    uninstall
 		    exit
 		    ;;
+                --set-publication-target|--set-index-peer)
+                    shift
+                    set_index_peer $1
+                    exit $?
+                    ;;
 		--register)
 		    self_verify
 		#First arg is the server
@@ -5245,11 +5251,6 @@ main() {
 		    myproxy_config_args=${tmpargs[@]}
 		    unset tmpargs
 		    ;;
-                --set-publication-target|--set-index-peer)
-                    shift
-                    set_index_peer $1
-                    exit $?
-                    ;;
 		-h | --help)
 		    usage
 		    ;;

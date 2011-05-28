@@ -65,7 +65,14 @@ word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-b
 workdir=${workdir:-~/workbench/esg}
 envfile=${envfile:-"/etc/esg.env"}
 install_logfile=${install_logfile:-"/etc/esg.install_log"}
+
 esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
+
+#maybe I am paranoid but I want to make sure someone can't just set
+#the environment to any place and have us just accept it and pull from
+#it -gavin
+if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); then echo "*"; else (echo "illegal distribution url: ${esg_dist_url}" && checked_done 1); fi
+
 esg_root_dir=${esg_root_dir:-"/esg"}
 content_dir=${content_dir:-${esg_root_dir}/content}
 tomcat_user=${tomcat_user:-"tomcat"}

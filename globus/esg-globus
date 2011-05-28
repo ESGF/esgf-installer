@@ -90,7 +90,14 @@ esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
 esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
 esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
 esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
+
 esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
+
+#maybe I am paranoid but I want to make sure someone can't just set
+#the environment to any place and have us just accept it and pull from
+#it -gavin
+if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); then echo "*"; else (echo "illegal distribution url: ${esg_dist_url}" && checked_done 1); fi
+
 compress_extensions=${compress_extensions:-".tar.gz|.tar.bz2|.tgz|.bz2"}
 cdat_home=${cdat_home:-${install_prefix}/cdat}
 

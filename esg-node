@@ -5088,6 +5088,8 @@ main() {
 		    exit
 		    ;;
                 --set-publication-target|--set-index-peer)
+                    self_verify
+                    check_prerequisites
                     shift
                     set_index_peer $1
                     exit $?

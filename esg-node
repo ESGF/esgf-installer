@@ -4690,11 +4690,11 @@ usage() {
      (as root)
      ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
 	 --prefix      - specify the top level directory for this entire installation's \"external\" tools
-        (default:/usr/local - currently:$install_prefix)
+                         (default:/usr/local - currently:$install_prefix)
         --workdir     - specify the directory used by the installation to download and build esg artifacts for installation
-        (default:~/workbench/esg - currently:$workdir)
+                        (default:~/workbench/esg - currently:$workdir)
         --install     - goes through the installation process
-        will automatically start up node services
+                        will automatically start up node services
         --verify      - runs the test code to verify installation
         --write-env   - writes the necessary env vars to file ${envfile}
         --version     - indicates the version of this script
@@ -4703,19 +4703,19 @@ usage() {
         --test-pub    - performs the publication test directly (same publication called in last step of install)
         --info	      - provides a brief explaination of the DataNode
         --upgrade|--update|update - upgrades/updates the node manager
-        --force	      - Will allow execution of installation|update code to be executed beyond the up2date checks.
-        Basically allowing an installation|update as if starting from scratch.
+        --force	      - will allow execution of installation|update code to be executed beyond the up2date checks.
+                        Basically allowing an installation|update as if starting from scratch.
 
         -------------------------------
         Configuration Type Selection
         -------------------------------
         --type | -t <data &| index &| idp &| compute> - Select type of node: 
-        \"data\" node, 
-        \"index\" node, 
-        \"idp\" (identity provider) node and/or 
-        \"compute\" node 
-        (note: there is no default one must be selected at least initially...
-            when in doubt use \"data\")
+            \"data\" node, 
+            \"index\" node, 
+            \"idp\" (identity provider) node and/or 
+            \"compute\" node 
+            (note: there is no default one must be selected at least initially...
+                when in doubt use \"data\")
         --set-type  <data &| index &| idp &| compute> - Sets the type value to be used at next start up
         --get-type - returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)
         (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
@@ -4723,7 +4723,7 @@ usage() {
         -------------------------------
 	Publication Endpoint Setting (Index Peer)
 	-------------------------------
-        --set-publication-target <hostname of the index peer you wish to publish to>
+        --set-publication-target | --set-index-peer  <hostname of the index peer you wish to publish to>
 
         -------------------------------
 	Globus Tool Management

@@ -3458,8 +3458,8 @@ set_index_peer() {
     fi
 
     #locate the publisher's configuration file - esg.ini
-    local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
-    local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ")" || (echo -n "x" && ((ret++)) )
+    local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
+    local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
 
     local target_file=${ESGINI:-${publisher_home_dir}/${publisher_config_file}}
     [ -z "${target_file}" ] && debug_print " WARNING: Could not discern publisher config file: [${target_file}]" && return 1
@@ -3468,7 +3468,7 @@ set_index_peer() {
     (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
 
     #edit in-place the esg.ini file...
-    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_url}'#' ${target_file} && echo -n ":" || echo -n " 8-D"
+    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_url}'#' ${target_file} && echo -n ")" || echo -n " 8-("
     echo
     echo "${publishing_service_url}"
     echo

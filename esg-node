@@ -313,7 +313,7 @@ init_structure() {
     #--------------
 
     esgf_host=${esgf_host}
-    [ -z "${esgf_host}" ] && get_property esgf_node $(hostname --fqdn)
+    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn)
 
     esgf_default_peer=${esgf_default_peer:-${ESGF_DEFAULT_PEER}}
     [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
@@ -3437,7 +3437,10 @@ sync_with_java_truststore() {
 set_index_peer() {
     #----------------------
     ret=0
+    [ -z "${esgf_index_peer}" ] && get_property esgf_index_peer
+    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn)
     local input=${1:-${esgf_index_peer}}
+    [ "$1" = "self" ] && input=${esgf_host}
     echo -n "Setting Index Peer... [${input}] "
     
     #note: config_file defined in esg-node:init()
@@ -3458,7 +3461,7 @@ set_index_peer() {
     local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
     local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ")" || (echo -n "x" && ((ret++)) )
 
-    local target_file=${ESGINI:-${publisher_home}/${publisher_config}}
+    local target_file=${ESGINI:-${publisher_home_dir}/${publisher_config_dir}}
     [ -z "${target_file}" ] && debug_print " WARNING: Could not discern publisher config file: [${target_file}]" && return 1
     [ ! -e "${target_file}" ] && debug_print " WARNING: Could not locate publisher config file [${target_file}]" && return 1
 
@@ -3474,7 +3477,7 @@ set_index_peer() {
 
     #----------------------
     #Fetch and Insert the Certificate for Index Peer (to let in index peer's publishingService callback)
-    register ${esgf_index_peer}
+    register ${input}
     [ $? != 0 ] && echo " Error: could not import Index Peer's [${esgf_index_peer}] certificate!" && checked_done 1
     #----------------------
 

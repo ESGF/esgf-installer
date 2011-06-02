@@ -3461,7 +3461,7 @@ set_index_peer() {
     local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
     local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ")" || (echo -n "x" && ((ret++)) )
 
-    local target_file=${ESGINI:-${publisher_home_dir}/${publisher_config_dir}}
+    local target_file=${ESGINI:-${publisher_home_dir}/${publisher_config_file}}
     [ -z "${target_file}" ] && debug_print " WARNING: Could not discern publisher config file: [${target_file}]" && return 1
     [ ! -e "${target_file}" ] && debug_print " WARNING: Could not locate publisher config file [${target_file}]" && return 1
 

@@ -2139,7 +2139,8 @@ setup_tds() {
     register ${myproxy_endpoint}
     [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
     write_as_property myproxy_endpoint #this is used to set the registration.xml's adminPeer value (revisit this.. I should be more consistent with naming)
-    write_as_property esgf_idp_peer
+    write_as_property myproxy_port
+    write_as_property esgf_idp_peer 
     #----------------------
 
     #See thredds_content_dir set in init() - default value is ${esg_root_dir}/content
@@ -2451,8 +2452,8 @@ test_publication() {
     X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
     rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
     
-    export ESG_INI=/esg/config/esgcet/esg.ini
-    echo "ESG_INI = [${ESG_INI}]"
+    export ESGINI=/esg/config/esgcet/esg.ini
+    echo "ESGINI = [${ESGINI}]"
     echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
     $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T

@@ -5048,6 +5048,7 @@ main() {
 		    exit 0
 		    ;;
 		--test-pub)
+                    init_structure
 		    shift
 		    echo "test_publication" && test_publication $@
 		    exit
@@ -5073,6 +5074,7 @@ main() {
 		    self_verify
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
+                    init_structure
 		    shift
 		    backup_db $@
 		    exit $?
@@ -5081,6 +5083,7 @@ main() {
 		    self_verify
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
+                    init_structure
 		    shift
 		    restore_last_db_backup $@
 		    exit $?

@@ -163,8 +163,6 @@ init() {
     globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
     esgf_idp_peer_name=${ESGF_IDP_PEER_NAME}
     esgf_idp_peer=${ESGF_IDP_PEER}
-    myproxy_endpoint=${myproxy_endpoint:-${esgf_idp_peer%%/*}}
-    myproxy_port=${myproxy_port:-7512}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
 
@@ -317,6 +315,13 @@ init_structure() {
 
     esgf_default_peer=${esgf_default_peer:-${ESGF_DEFAULT_PEER}}
     [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
+
+    esgf_idp_peer=${esgf_idp_peer:-${ESGF_IDP_PEER}}
+    [ -z "${esgf_idp_peer}" ] && get_property esgf_idp_peer
+    myproxy_endpoint=${esgf_idp_peer%%/*}
+
+    [ -z "${myproxy_port}" ] && get_property myproxy_port
+    myproxy_port=${myproxy_port:-7512}
 
     esg_root_id=${esg_root_id:-${ESGF_ROOT_ID}}
     [ -z "${esg_root_id}" ] && get_property esg_root_id
@@ -1884,6 +1889,108 @@ test_tomcat() {
     checked_done 0
 }
 
+#called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags
+select_idp_peer() {
+
+    #----
+    #(Making this assignment for the sake of readability for the code below)
+    #@@node_host_ip_address@@ #Token in file
+    node_host_ip_address=${my_ip_address}
+    
+    #just to be sure it's clear (though it should be)
+    unset input 
+    read -p "Please Enter the IP address of this host [${node_host_ip_address}]:> " input
+    [ ! -z "${input}" ] && node_host_ip_address=${input}
+    printf "\nUsing IP: ${node_host_ip_address}\n"
+    unset input
+
+    local default_myproxy_port=7512
+    local custom_myproxy_port=""
+
+    #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
+    #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
+
+    local choice
+    while [ 1 ]; do
+	unset choice
+	printf "Please select the IDP Peer (or gateway) for this node: \n"
+	printf "\t-------------------------------------------\n"
+	printf "\t*[1] : ESGF-PCMDI -> pcmdi3.llnl.gov\n"
+	printf "\t [2] : ESGF-JPL   -> esg-gateway.jpl.nasa.gov\n"
+	printf "\t [3] : ESGF-ORNL  -> esg2-gw.ccs.ornl.gov\n"
+	printf "\t [4] : ESGF-BADC  -> cmip-gw.badc.rl.ac.uk\n"
+	printf "\t [5] : ESGF-DKRZ  -> ipcc-ar5.dkrz.de\n"
+	printf "\t [6] : ESG-NCAR   -> esg.ucar.edu\n"
+	printf "\t-------------------------------------------\n"
+	printf "\t [C] : (Manual Entry)\n"
+	printf "\t-------------------------------------------\n"
+	read -p "select [1] > " choice
+
+	[ -z "${choice}" ] && choice=1 #default
+	case ${choice} in
+	    6)	esgf_idp_peer_name="ESG-NCAR"
+		esgf_idp_peer="esg.ucar.edu"
+		;;
+	    5)	esgf_idp_peer_name="ESGF-DKRZ"
+		esgf_idp_peer="ipcc-ar5.dkrz.de"
+		;;
+	    4)	esgf_idp_peer_name="ESGF-BADC"
+		esgf_idp_peer="cmip-gw.badc.rl.ac.uk"
+		;;
+	    3)	esgf_idp_peer_name="ESG-ORNL"
+		esgf_idp_peer="esg2-gw.ccs.ornl.gov"
+		;;
+	    2)	esgf_idp_peer_name="ESGF-JPL"
+		esgf_idp_peer="esg-gateway.jpl.nasa.gov"
+		;;
+	    1)	esgf_idp_peer_name="ESGF-PCMDI"
+		esgf_idp_peer="pcmdi3.llnl.gov/esgcet"
+		custom_myproxy_port=2119 #hack till we open the right port
+		;;
+	    c | C)
+		local input
+		esgf_idp_peer_name=${ESGF_IDP_PEER_NAME:-"ESG-PCMDI"}
+		esgf_idp_peer=${ESGF_IDP_PEER:-"pcmdi3.llnl.gov"}
+		read -p "Please enter the IDP Peer's name [${ESGF_IDP_PEER_NAME}] " input
+		[ -n "${input}" ] && esgf_idp_peer_name=$(echo ${input} | tr 'a-z' 'A-Z')
+		unset input
+		read -p "Please enter the IDP Peer's hostname [${ESGF_IDP_PEER}] " input
+		[ -n "${input}" ] && esgf_idp_peer=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
+		unset input
+		choice="(Manual Entry)"
+		;;
+	    *)	echo "Invalid selection [${choice}]"
+	esac
+	echo
+	echo "You have selected: ${choice}"
+	echo "${esgf_idp_peer_name} -> ${esgf_idp_peer}"
+	echo 
+	local is_correct
+	read -p "Is this correct? [Y/n] " is_correct
+	is_correct=$(echo ${is_correct} | tr 'A-Z' 'a-z')
+	if [ "${is_correct}" = "n" ]; then
+	    continue
+	else
+	    break
+	fi
+    done
+    
+    myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
+
+    echo
+    echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
+
+    #----------------------
+    #Fetch and Insert the Certificate of IDP Peer (which is always co-located with myproxy - at least at present)
+    register ${myproxy_endpoint}
+    [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
+    write_as_property esgf_idp_peer 
+    write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
+    write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
+    #----------------------
+
+}
+
 
 #####
 # THREDDS Data Server
@@ -2049,99 +2156,7 @@ setup_tds() {
     #DEBUGGING
     ((DEBUG)) && cat ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
 
-
-    #(Making this assignment for the sake of readability for the code below)
-    #@@node_host_ip_address@@ #Token in file
-    node_host_ip_address=${my_ip_address}    
-
-    #just to be sure it's clear (though it should be)
-    unset input 
-    read -p "Please Enter the IP address of this host [${node_host_ip_address}]:> " input
-    [ ! -z "${input}" ] && node_host_ip_address=${input}
-    printf "\nUsing IP: ${node_host_ip_address}\n"
-    unset input
-
-    #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
-    #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
-
-    local choice
-    while [ 1 ]; do
-	unset choice
-	printf "Please select the IDP Peer (or gateway) for this node: \n"
-	printf "\t-------------------------------------------\n"
-	printf "\t*[1] : ESGF-PCMDI -> pcmdi3.llnl.gov\n"
-	printf "\t [2] : ESGF-JPL   -> esg-gateway.jpl.nasa.gov\n"
-	printf "\t [3] : ESGF-ORNL  -> esg2-gw.ccs.ornl.gov\n"
-	printf "\t [4] : ESGF-BADC  -> cmip-gw.badc.rl.ac.uk\n"
-	printf "\t [5] : ESGF-DKRZ  -> ipcc-ar5.dkrz.de\n"
-	printf "\t [6] : ESG-NCAR   -> esg.ucar.edu\n"
-	printf "\t-------------------------------------------\n"
-	printf "\t [C] : (Manual Entry)\n"
-	printf "\t-------------------------------------------\n"
-	read -p "select [1] > " choice
-
-	[ -z "${choice}" ] && choice=1 #default
-	case ${choice} in
-	    6)	esgf_idp_peer_name="ESG-NCAR"
-		esgf_idp_peer="esg.ucar.edu"
-		;;
-	    5)	esgf_idp_peer_name="ESGF-DKRZ"
-		esgf_idp_peer="ipcc-ar5.dkrz.de"
-		;;
-	    4)	esgf_idp_peer_name="ESGF-BADC"
-		esgf_idp_peer="cmip-gw.badc.rl.ac.uk"
-		;;
-	    3)	esgf_idp_peer_name="ESG-ORNL"
-		esgf_idp_peer="esg2-gw.ccs.ornl.gov"
-		;;
-	    2)	esgf_idp_peer_name="ESGF-JPL"
-		esgf_idp_peer="esg-gateway.jpl.nasa.gov"
-		;;
-	    1)	esgf_idp_peer_name="ESGF-PCMDI"
-		esgf_idp_peer="pcmdi3.llnl.gov/esgcet"
-		myproxy_port=2119 #hack till we open the right port
-		;;
-	    c | C)
-		local input
-		esgf_idp_peer_name=${ESGF_IDP_PEER_NAME:-"ESG-PCMDI"}
-		esgf_idp_peer=${ESGF_IDP_PEER:-"pcmdi3.llnl.gov"}
-		read -p "Please enter the IDP Peer's name [${ESGF_IDP_PEER_NAME}] " input
-		[ -n "${input}" ] && esgf_idp_peer_name=$(echo ${input} | tr 'a-z' 'A-Z')
-		unset input
-		read -p "Please enter the IDP Peer's hostname [${ESGF_IDP_PEER}] " input
-		[ -n "${input}" ] && esgf_idp_peer=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
-		unset input
-		choice="(Manual Entry)"
-		;;
-	    *)	echo "Invalid selection [${choice}]"
-	esac
-	echo
-	echo "You have selected: ${choice}"
-	echo "${esgf_idp_peer_name} -> ${esgf_idp_peer}"
-	echo 
-	local is_correct
-	read -p "Is this correct? [Y/n] " is_correct
-	is_correct=$(echo ${is_correct} | tr 'A-Z' 'a-z')
-	if [ "${is_correct}" = "n" ]; then
-	    continue
-	else
-	    break
-	fi
-    done
-    
-    myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
-
-    echo
-    echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
-
-    #----------------------
-    #Fetch and Insert the Certificate of IDP Peer (which is always co-located with myproxy - at least at present)
-    register ${myproxy_endpoint}
-    [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
-    write_as_property myproxy_endpoint #this is used to set the registration.xml's adminPeer value (revisit this.. I should be more consistent with naming)
-    write_as_property myproxy_port
-    write_as_property esgf_idp_peer 
-    #----------------------
+    select_idp_peer
 
     #See thredds_content_dir set in init() - default value is ${esg_root_dir}/content
 
@@ -2220,8 +2235,7 @@ write_tds_env() {
     ((show_summary_latch++))
     echo "export ESGF_IDP_PEER_NAME=${esgf_idp_peer_name}" >> ${envfile}
     echo "export ESGF_IDP_PEER=${esgf_idp_peer}" >> ${envfile}
-    echo "export myproxy_port=${myproxy_port}" >> ${envfile}
-    dedup ${envfile} && source ${envfile}
+     dedup ${envfile} && source ${envfile}
     return 0
 }
 
@@ -3473,7 +3487,7 @@ set_index_peer() {
     echo
     echo "${publishing_service_url}"
     echo
-    write_as_property esgf_index_peer
+    write_as_property esgf_index_peer ${input}
     #----------------------
 
     #----------------------
@@ -3481,7 +3495,7 @@ set_index_peer() {
     register ${input}
     [ $? != 0 ] && echo " Error: could not import Index Peer's [${esgf_index_peer}] certificate!" && checked_done 1
     #----------------------
-
+    
 }
 
 ############################################
@@ -4728,7 +4742,12 @@ usage() {
         -------------------------------
 	Publication Endpoint Setting (Index Peer)
 	-------------------------------
-        --set-publication-target | --set-index-peer  <hostname of the index peer you wish to publish to>
+        --set-index-peer | --set-publication-target  <hostname of the index peer you wish to publish to>
+
+        -------------------------------
+	IDP Endpoint Setting (IDP Peer)
+	-------------------------------
+        --set-idp-peer | --set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
 
         -------------------------------
 	Globus Tool Management
@@ -5093,12 +5112,20 @@ main() {
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
 		    uninstall
-		    exit
+		    exit $?
 		    ;;
-                --set-publication-target|--set-index-peer)
+                --set-idp-peer|--set-admin-peer)
+                    self_verify
+                    check_prerequisites
+                    init_structure
+                    select_idp_peer
+                    exit $?
+                    ;;
+                --set-index-peer|--set-publication-target)
                     self_verify
                     check_prerequisites
                     shift
+                    init_structure
                     set_index_peer $1
                     exit $?
                     ;;
@@ -5108,7 +5135,7 @@ main() {
 		#Second arg is the password (not required)
 		    shift
 		    register $1 $2
-		    exit
+		    exit $?
 		    ;;
 		--fetch-esg-certs)
 		    self_verify

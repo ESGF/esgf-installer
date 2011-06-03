@@ -87,6 +87,7 @@ install_prefix=${install_prefix:-"/usr/local"}
 esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type
+esgf_secret_file=${esg_config_dir}/.esgf_pass
 pg_secret_file=${esg_config_dir}/.esg_pg_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
 install_logfile=${install_logfile:-"/etc/esg.install_log"}
@@ -305,7 +306,7 @@ init_structure() {
     ((config_check != 0 )) && echo "ERROR: checklist incomplete [FAIL]" && checked_done 1 || verbose_print "checklist [OK]"
     #--------------
 
-    chmod 777 ${esg_etc_dir}
+    chmod 777 ${esg_etc_dir} 2> /dev/null
 
     [ -w "${envfile}" ] && write_paths
 
@@ -4517,7 +4518,7 @@ initial_setup_questionnaire() {
     unset input
     unset default
 
-    get_property security_admin_password
+    security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null)
     if [ -z "${security_admin_password}" ] || ((force_install)); then
 	while [ 1 ]; do
 	    unset input
@@ -4540,7 +4541,9 @@ initial_setup_questionnaire() {
 	done
 	unset verify_password
 	unset input
-	((changed==1)) && write_as_property security_admin_password
+	((changed==1)) && echo ${security_admin_password} > ${esgf_secret_file}
+	chmod 600 ${esgf_secret_file}
+	chown ${installer_uid}:${installer_gid} ${esgf_secret_file}
 
 	#Use the same password when creating the postgress account
 	((changed==1)) && pg_sys_acct_passwd=${security_admin_password}

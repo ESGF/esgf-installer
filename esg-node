@@ -293,16 +293,16 @@ init_structure() {
     #--------------
     #Let's go down the line and make sure that we have what we need structurally on the filesystem
     local config_check=8
-    if [ ! -e ${scripts_dir} ]; then mkdir ${scripts_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${esg_backup_dir} ]; then mkdir ${esg_backup_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${esg_tools_dir} ]; then mkdir ${esg_tools_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${esg_log_dir} ]; then mkdir ${esg_log_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${esg_config_dir} ]; then mkdir ${esg_config_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${esg_etc_dir} ]; then mkdir ${esg_etc_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${tomcat_conf_dir} ]; then mkdir ${tomcat_conf_dir} && ((check_config--)); else ((config_check--)); fi
-    if [ ! -e ${config_file} ]; then touch ${config_file} && ((check_config--)); else ((config_check--)); fi
-    echo ${config_check}
-    ((config_check != 0 )) && echo "ERROR: checklist incomplete [FAIL]" && checked_done 1 || echo "checklist [OK]"
+    if [ ! -e ${scripts_dir} ]; then mkdir ${scripts_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_backup_dir} ]; then mkdir ${esg_backup_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_tools_dir} ]; then mkdir ${esg_tools_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_log_dir} ]; then mkdir ${esg_log_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_config_dir} ]; then mkdir ${esg_config_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_etc_dir} ]; then mkdir ${esg_etc_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${tomcat_conf_dir} ]; then mkdir ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${config_file} ]; then touch ${config_file} && ((config_check--)); else ((config_check--)); fi
+    debug_print ${config_check}
+    ((config_check != 0 )) && echo "ERROR: checklist incomplete [FAIL]" && checked_done 1 || verbose_print "checklist [OK]"
     #--------------
 
     chmod 777 ${esg_etc_dir}
@@ -4329,7 +4329,7 @@ self_verify() {
 	    return $ret
 	elif [ "$choice" = "U" ] || [ "$choice" = "u" ]; then
 	    echo "Updating local script with script from distribution server..."
-	    /usr/local/bin/esg-bootstrap
+	    /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
 	    local update_ret=$?
 	    echo "Please re-run this updated script $0"
 	    echo

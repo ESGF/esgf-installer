@@ -2650,13 +2650,13 @@ rebuild_truststore() {
 	#--------------
 
 	if [ -f ${truststore_file} ]; then
-	    keytool -delete -alias ${cert_hash} -keystore ${truststore_file} \
+	    $java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file} \
 		-storepass changeit 2>&1 > /dev/null ;
 	    [ $? == 0 ] && echo -n "- " || echo -n "  "
 	fi
 
 	[ $? == 0 ] && echo -n "+ " || echo -n "  "
-	keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file} \
+	$java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file} \
 	    -storepass changeit -noprompt ;
 	[ $? != 0 ] && echo " [FAILED]"
 
@@ -2703,7 +2703,7 @@ add_my_cert_to_truststore() {
     fi
 
     #only making this call to test password
-    keytool -v -list -keystore ${keystore_file} -storepass ${store_password} >& /dev/null
+    $java_install_dir/bin/keytool -v -list -keystore ${keystore_file} -storepass ${store_password} >& /dev/null
     [ $? != 0 ] && echo "Could not access private keystore ${keystore_file}" && return 1;
 
     #----------------------------------------------------------------
@@ -2712,19 +2712,19 @@ add_my_cert_to_truststore() {
     if [ -e ${truststore_file} ]; then
 	echo "Re-Integrating keystore's certificate into truststore.... "
 	echo "Extracting keystore's certificate... "
-	keytool -export -alias ${keystore_alias} -file ${keystore_file}.cer -keystore ${keystore_file} -storepass ${store_password}
+	$java_install_dir/bin/keytool -export -alias ${keystore_alias} -file ${keystore_file}.cer -keystore ${keystore_file} -storepass ${store_password}
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 
 	echo "keytool -v -list -keystore ${truststore_file} -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+my_esgf_node$'"
-	keytool -v -list -keystore ${truststore_file} -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+my_esgf_node$' #TODO howdo I put the var ${keystore_alias} here!!!
+	$java_install_dir/bin/keytool -v -list -keystore ${truststore_file} -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+my_esgf_node$' #TODO howdo I put the var ${keystore_alias} here!!!
 	if [ $? == 0 ]; then
 	    echo "Detected Alias \"${keystore_alias}\" Present... Removing... Making space for certificate... "
-	    keytool -delete -alias ${keystore_alias} -keystore ${truststore_file}  -storepass changeit 2>&1 > /dev/null #for ORP
+	    $java_install_dir/bin/keytool -delete -alias ${keystore_alias} -keystore ${truststore_file}  -storepass changeit 2>&1 > /dev/null #for ORP
 	    [ $? != 0 ] && echo " ERROR: problem deleting ${keystore_alias} key from keystore!" && return 1
 	fi
 
 	echo "Importing keystore's certificate into truststore... "
-	keytool -import -v -trustcacerts -alias ${keystore_alias} -keypass ${store_password} -file ${keystore_file}.cer -keystore ${truststore_file} -storepass changeit -noprompt
+	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias} -keypass ${store_password} -file ${keystore_file}.cer -keystore ${truststore_file} -storepass changeit -noprompt
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 	sync_with_java_truststore ${truststore_file}
 	echo -n "cleaning up after ourselves... "
@@ -2806,7 +2806,7 @@ extract_keystore_dn() {
 	#this is a bit of defensive coding so we don't run into the problem of not having the password and running a broken arg sequence
 	[ -n "${storepass}" ] && storepass_switch="-storepass ${storepass}"
 	#Note: I apologize for this horribile hacking of regex (this should be more cleanly accomplished with sed or perl using a capture group or a simple look behind)
-	dn=$(keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
+	dn=$($java_install_dir/bin/keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
     fi
     echo "/${dn}"
 }
@@ -3066,7 +3066,7 @@ make_fresh_keystore() {
     #create a keystore with a self-signed cert
     local dname=${dname:-"CN=${esgf_host:-$(hostname --fqdn)}, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
     [ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
-    keytool -genkey -keyalg RSA -alias "${keystore_alias}" \
+    $java_install_dir/bin/keytool -genkey -keyalg RSA -alias "${keystore_alias}" \
 	-keystore "${keystore_name}" \
 	-storepass "${store_password}" \
 	-keypass "${store_password}" \
@@ -3077,7 +3077,7 @@ make_fresh_keystore() {
     
     echo -n "clearing keystore... "
     #delete the cert
-    keytool -delete -alias "${keystore_alias}" -keystore "${keystore_name}" -storepass "${store_password}"
+    $java_install_dir/bin/keytool -delete -alias "${keystore_alias}" -keystore "${keystore_name}" -storepass "${store_password}"
     [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
     
     #-------------
@@ -3120,7 +3120,7 @@ make_fresh_keystore() {
     
     echo
     echo "How do things look?"
-    keytool -v -list -keystore "${keystore_name}" -storepass ${store_password}
+    $java_install_dir/bin/keytool -v -list -keystore "${keystore_name}" -storepass ${store_password}
     if [ $? == 0 ]; then
 	echo 
 	echo "If Everything looks good... then replace your current tomcat keystore with ${keystore_name} if necessary."
@@ -3201,7 +3201,7 @@ create_keystore() {
     CLASSPATH=. java -Dkeystore=${keystore_name} ImportKey ${private_key} ${public_cert} ${key_alias} ${password}
     [ $? != 0 ] && echo "[FAILED] Could not execute keystore generator" && return 1
     echo
-    keytool -list -v -keystore ${keystore_name} -storepass ${password}
+    $java_install_dir/bin/keytool -list -v -keystore ${keystore_name} -storepass ${password}
     return 0
 }
 
@@ -3257,14 +3257,14 @@ install_signed_certificate() {
     [ -e ${keystore_file} ] && echo "(making backup copy of keystore)" && cp -v ${keystore_file} ${keystore_file}.bak
 
     #--------------
-    keytool -v -list -keystore ${tomcat_conf_dir}/keystore-tomcat -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+root$'
+    $java_install_dir/bin/keytool -v -list -keystore ${tomcat_conf_dir}/keystore-tomcat -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+root$'
     if [ $? == 0 ]; then
-	keytool -delete -alias root -keystore ${keystore_file} -storepass ${store_password}
+	$java_install_dir/bin/keytool -delete -alias root -keystore ${keystore_file} -storepass ${store_password}
 	[ $? != 0 ] && echo " ERROR: problem deleting root key from keystore!" && return 1
     fi
     
     echo "keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass *****"
-    keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass ${store_password}
+    $java_install_dir/bin/keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass ${store_password}
     local ret=$?
     if [ $ret == 0 ]; then 
 	echo "[OK]" 
@@ -3353,7 +3353,7 @@ export_keystore_as_globus_hostkeys() {
     [ -e ${globus_global_certs_dir%/*}/hostcert.pem ] && cp ${globus_global_certs_dir%/*}/hostcert.pem ${globus_global_certs_dir%/*}/hostcert.pem.last
     ((DEBUG)) && \
 	printf "\nkeytool -export -alias ${keystore_alias} -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass *************\n"
-    keytool -export -alias root -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass ${store_password}
+    $java_install_dir/bin/keytool -export -alias root -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass ${store_password}
     ret=$?
     [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
 

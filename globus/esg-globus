@@ -897,8 +897,8 @@ config_gridftp_server() {
     setup_libglobus_adq
     
     pushd ${gridftp_authz_esgsaml_dist_dir}/source >& /dev/null
-    if [ -e ${globus_workdir}/libglobus_adq ]; then 
-        ln -v -s ${globus_workdir}/libglobus_adq
+    if [ -e ${globus_workdir}/libglobus_adq-${adq_version} ]; then 
+        ln -v -s ${globus_workdir}/libglobus_adq-${adq_version}
     else
         echo "To properly configure this gridftp server libglobus_adq must first be setup and configured!" && checked_done 1
     fi

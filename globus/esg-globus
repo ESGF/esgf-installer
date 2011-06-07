@@ -817,8 +817,8 @@ setup_gridftp_jail() {
     echo "Creating chroot jail @ ${gridftp_chroot_jail}"
     ${globus_location}/sbin/globus-gridftp-server-setup-chroot -r ${gridftp_chroot_jail}
 
-    [ ! -e ${ESGINI} ] && echo "Cannot find ${ESGINI} file that describes data dir location" && return 1
-    echo "Reading ${ESGINI} for thredds_dataset_roots to mount..."
+    [ ! -e ${ESGINI} ] && echo "Cannot find ESGINI=[${ESGINI}] file that describes data dir location" && return 1
+    echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
 
     while read mount_name mount_dir; do
         echo "mounting ${mount_dir} into chroot jail [${gridftp_chroot_jail}/] as ${mount_name##*/}"

@@ -250,7 +250,8 @@ init() {
     cdat_repo_http=http://uv-cdat.llnl.gov/git/cdat.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
-    tomcat_dist_url=http://mirror.atlanticmetro.net/apache/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    #tomcat_dist_url=http://mirror.atlanticmetro.net/apache/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     #tomcat_dist_url=http://download.filehat.com/apache/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     #tomcat_dist_url=${esg_dist_url}/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
@@ -2470,7 +2471,6 @@ test_publication() {
     X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
     rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
     
-    export ESGINI=/esg/config/esgcet/esg.ini
     echo "ESGINI = [${ESGINI}]"
     echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"

@@ -5298,6 +5298,7 @@ main() {
 		    force_install=1
 		    ;;
 		--gridftp-config)
+                    read_sel
 		    (( (sel & DATA_BIT) == 0 )) && echo "Sorry, the --gridftp flag may only be used for \"data\" installation type" && exit 1
 		#acceptable args:  "bdm" | "end-user"
 		#Gather up tokens after this switch as long as the

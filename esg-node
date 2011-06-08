@@ -75,7 +75,7 @@ VERBOSE=${VERBOSE:-0}
 
 devel=${devel:-0}
 progname="esg-node"
-script_version="v1.0.3"
+script_version="v1.0.4-62-g9972cf3-devel"
 script_release="Stuyvesant"
 envfile="/etc/esg.env"
 
@@ -5004,6 +5004,7 @@ main() {
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
 		    debug_print "START SERVICES: ${sel}"
+                    init_structure
 		    start ${sel}
 		    exit 0
 		    ;;
@@ -5013,6 +5014,7 @@ main() {
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
 		    debug_print "STOP SERVICES"
+                    init_structure
 		    stop ${sel}
 		    exit 0
 		    ;;
@@ -5180,6 +5182,7 @@ main() {
 		#First arg is the server
 		#Second arg is the password (not required)
 		    shift
+                    init_structure
 		    register $1 $2
 		    exit $?
 		    ;;

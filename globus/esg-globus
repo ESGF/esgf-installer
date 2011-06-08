@@ -817,7 +817,7 @@ setup_gridftp_jail() {
     echo "Creating chroot jail @ ${gridftp_chroot_jail}"
     ${globus_location}/sbin/globus-gridftp-server-setup-chroot -r ${gridftp_chroot_jail}
 
-    [ ! -e $"{ESGINI}" ] && echo "Cannot find ESGINI=[${ESGINI}] file that describes data dir location" && return 1
+    [ ! -e "${ESGINI}" ] && echo "Cannot find ESGINI=[${ESGINI}] file that describes data dir location" && return 1
     echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
 
     while read mount_name mount_dir; do
@@ -828,7 +828,7 @@ setup_gridftp_jail() {
             ((DEBUG)) && echo "mount --bind ${mount_dir} ${gridftp_chroot_jail}/${mount_name##*/}"
             mount --bind $(readlink -f ${mount_dir}) ${gridftp_chroot_jail}/${mount_name##*/}
         else
-            echo "There is already a mount point for [${mount_dir}] -> [${chroot_mount}]on this host, not re-mounting"
+            echo "There is already a mount for [${mount_dir}] -> [${chroot_mount}] on this host, NOT re-mounting"
         fi
     done < <(echo "$(python <(curl -s ${esg_dist_url}/utils/pull_key.py) -k thredds_dataset_roots -f ${ESGINI} | awk ' BEGIN {FS="|"} { if ($0 !~ /^[[:space:]]*#/) {print $1" "$2}}')")
     return $?

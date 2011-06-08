@@ -1076,8 +1076,10 @@ config_bdm_gridftp_server() {
 }
 
 test_gridftp_server() {
-    echo "GridFTP - Test... (faux)"
-    #TODO: Sanity check code...
+    echo "GridFTP - BDM Test..."
+    $GLOBUS_LOCATION/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_bdm_server_port}/esg_dataroot/test/sftlf.nc file:///tmp/junk.nc
+    [ $? != 0 ] && echo "ERROR: Problem testing gridftp bdm configuration" && return 1
+    [ -e /tmp/junk.nc ] && echo "[OK]" | (echo "[FAIL]" && return 2)
     return 0
 }
 

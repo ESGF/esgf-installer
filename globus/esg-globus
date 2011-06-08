@@ -822,9 +822,13 @@ setup_gridftp_jail() {
 
     while read mount_name mount_dir; do
         echo "mounting ${mount_dir} into chroot jail [${gridftp_chroot_jail}/] as ${mount_name##*/}"
-        [ ! -e ${gridftp_chroot_jail}/${mount_name##*/} ] && mkdir -p ${gridftp_chroot_jail}/${mount_name##*/}
-        ((DEBUG)) && echo "mount --bind ${mount_dir} ${gridftp_chroot_jail}/${mount_name##*/}"
-        mount --bind $(readlink -f ${mount_dir}) ${gridftp_chroot_jail}/${mount_name##*/}
+        if (( $(mount -l | grep ${mount_dir} | wc -l) == 0 )); then 
+            [ ! -e ${gridftp_chroot_jail}/${mount_name##*/} ] && mkdir -p ${gridftp_chroot_jail}/${mount_name##*/}
+            ((DEBUG)) && echo "mount --bind ${mount_dir} ${gridftp_chroot_jail}/${mount_name##*/}"
+            mount --bind $(readlink -f ${mount_dir}) ${gridftp_chroot_jail}/${mount_name##*/}
+        else
+            echo "There is already a mount point for [${mount_dir}] on this host, not re-mounting"
+        fi
     done < <(echo "$(python <(curl -s ${esg_dist_url}/utils/pull_key.py) -k thredds_dataset_roots -f ${ESGINI} | awk ' BEGIN {FS="|"} { if ($0 !~ /^[[:space:]]*#/) {print $1" "$2}}')")
     return $?
 }

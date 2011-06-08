@@ -338,7 +338,7 @@ init_structure() {
     #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
     #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
     dname=${dname}
-    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${dname})
+    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${node_dn})
 
     gridftp_config=${gridftp_config}
     [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
@@ -2771,6 +2771,12 @@ generate_ssl_key_and_csr() {
 	[ $? == 0 ] && echo "[OK]*" || (echo "[FAILED]*" && return 2)
     fi
     chmod 644 ${public_cert_req} >& /dev/null
+
+    echo "Generating 30 day temporary self-signed certificate... "
+    openssl x509 -req -days 30 -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
+    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 3)
+    openssl x509 -noout -text -in ${public_cert_req%.*}.pem
+
     echo
     echo "--------------------------------------------------------"
     echo "In Directory: $(pwd)"
@@ -2780,18 +2786,28 @@ generate_ssl_key_and_csr() {
     echo "Then run %> esg-node --install-keypair <private key> <signed cert> (use --help for details)"
     echo "--------------------------------------------------------"
     echo
-    #echo "Generating temporary self-signed certificate... "
-    #openssl x509 -req -days 30 -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
-    #[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 3)
-    #openssl x509 -noout -text -in ${public_cert_req%.*}.pem
-
 }
+
+###########################
+# A Note on DNs (order is important)
+# What we assert in this script as standard is:
+# standard  ------> /O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=pcmdi7.llnl.gov   [outer-to-inner]
+# java-style -----> CN=pcmdi7.llnl.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid [inner-to-outer]
+# (openssl x509) -> O=Grid, OU=GlobusTest, OU=simpleCA-pcmdi3.llnl.gov, CN=pcmdi7.llnl.gov [outer-to-inner]
+#
+# openssl will take a -subj dn string in standard format
+# what has been chosen as our standard is the most unix friendly 
+# (spaces suck as delims and it is often good to be able to tack on the most specific attribute [...CN=?] at the end and great for regex's)
+# -gavin
+###########################
 
 #------
 #HELPER / UTILITY FUNCTION (aka private)
 #------
 #arg 1 -> the location of the java keystore file
 #arg 2 -> the password to the java keystore file
+#The output of this function is the DN pulled from the keystore and transformed to "standard" format
+#Ex: /O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=pcmdi7.llnl.gov
 extract_keystore_dn() {
     #TODO: check to see if there is a java keystore present... If so
     #read the store and pull out the "Owner:" DN and use it as the DN
@@ -2811,6 +2827,17 @@ extract_keystore_dn() {
     echo "/${dn}"
 }
 
+
+#Regex's the output from openssl's x509 output in "openssl" format:
+#Subject: O=Grid, OU=GlobusTest, OU=simpleCA-pcmdi3.llnl.gov, CN=pcmdi7.llnl.gov
+#and transforms it to our "standard" format
+#/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=pcmdi7.llnl.gov
+#arg 1 -> the location of the x509 pem file
+extract_openssl_dn() {
+    local public_cert=${1:-"/etc/grid-security/hostcert.pem"}
+    echo /$(openssl x509 -text -noout -in ${public_cert} | sed -n 's/[ ]*Subject:[ ]*\(.*\)$/\1/p' | sed -n 's#, #/#pg')
+}
+
 java2standard_dn() {
     echo "$*" | tr -s " " | awk 'BEGIN { FS = ", " } { for (i = NF; i >= 1; --i) print "/"$i}' | xargs | sed -n 's# ##gp'
 }
@@ -2818,8 +2845,8 @@ java2standard_dn() {
 #Helper function:
 #Takes in a dn in the sytle:
 #/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=esg-test1.llnl.gov
-#and turns it into a java compatible dn...  "CN=esg-test1.llnl.gov,
-#OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"
+#and turns it into a java compatible dn...  
+#"CN=esg-test1.llnl.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"
 standard2java_dn() {
     local input=$1
     ans=$(echo ${input} | awk 'BEGIN { FS = "/" } { for (i = NF; i > 1; --i) print $i", " }'| xargs)
@@ -2905,6 +2932,7 @@ install_keypair() {
     #--------------------------------------------------
     #Copy the files to where they need to go for GLOBUS 
     #--------------------------------------------------
+    local out=""
     local globus_grid_security_dir=${globus_global_certs_dir%/*}
     [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
 
@@ -2915,9 +2943,12 @@ install_keypair() {
     [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.old
     cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
 	chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-	openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+        openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+    
 
     echo "Please restart this node for keys to take effect: \"$0 restart\""
+    [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
+        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "property updated [OK]"
     echo
 }
 
@@ -3064,7 +3095,7 @@ make_fresh_keystore() {
     #-------------
     echo -n "creating keystore... "
     #create a keystore with a self-signed cert
-    local dname=${dname:-"CN=${esgf_host:-$(hostname --fqdn)}, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid"}
+    local dname=${dname:-"CN=${esgf_host:-$(hostname --fqdn)}, ${default_dname}"}
     [ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
     $java_install_dir/bin/keytool -genkey -keyalg RSA -alias "${keystore_alias}" \
 	-keystore "${keystore_name}" \
@@ -3092,10 +3123,18 @@ make_fresh_keystore() {
     #Now we gather up all the other keys in the key chain...
     #-------------
     echo -n "checking that chain is valid... "
-    debug_print -n "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} "
-    local chain_check=$(openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} | grep -i error)
-    if [ -z "${chain_check}" ]; then  printf "[OK]\n\n"; else  printf "[FAIL]\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"; return 1 ; fi
-    
+    if [ -n "${ca_chain_bundle}" ]; then
+        debug_print -n "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} "
+        local chain_check=$(openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} | grep -i error)
+        if [ -z "${chain_check}" ]; then
+            printf "[OK]\n\n"
+        else
+            printf "[FAIL]\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"
+            return 1
+        fi
+    else
+        echo "Hmmm... no chain provided [${ca_chain_bundle}], skipping this check..."
+    fi
     
     #-------------
     #Generating new keystore
@@ -3111,6 +3150,7 @@ make_fresh_keystore() {
     if [ ${ret} == 127 ]; then
 	echo "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)	[one moment please...]"
 	curl -s -L --insecure ${extkeytool_download_url} |  (cd ${install_dir}; tar xvzf -)
+        echo "NOW... let's retry building your new keystore...."
 	${command}
 	local ret=$?
     fi
@@ -4778,7 +4818,7 @@ usage() {
 	(deprecated) --export-keys-to-globus  - exports keystore certificates to globus host{cert,key}.pem files.
 
 	--dname - specify the certificate distinguished name to be used when creating certificates
-		  (the DN value is of the form: \"OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
+		  (the DN value is of the form: \"CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
 	--keystore-password - sets the password to use for the java keystore - default is the node password.
 	--keystore-alias - the alias that is associated with the public cert in the keystore
 	--keystore-file	 - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat

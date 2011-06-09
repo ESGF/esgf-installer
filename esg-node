@@ -278,7 +278,7 @@ init() {
     truststore_file=${tomcat_conf_dir}/esg-truststore.ts
     globus_global_certs_dir=/etc/grid-security/certificates
     #NOTE: java keystore style DN...
-    default_dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid" #zoiks: allow this to be empty to allow prompting of user for fields!
+    default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
 
 }
@@ -1713,7 +1713,7 @@ configure_tomcat() {
 	#As Reference on Distingueshed Names (DNs)
 	#http://download.oracle.com/javase/1.4.2/docs/tooldocs/windows/keytool.html
 	#According to that document, case does not matter but ORDER DOES!
-	#See script scope declaration of this variable (dname="OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid")
+	#See script scope declaration of this variable (default_dname [suffix] = "OU=ESGF.ORG, O=ESGF")
 
 	local input
 	local use_dn="Y"
@@ -2750,7 +2750,7 @@ generate_ssl_key_and_csr() {
     chmod 400 ${private_key}
 
     #NOTE: To include DN at the command line
-    #openssl req -new -nodes -subj '/O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=esg-test1.llnl.gov' -key hostkey.pem -out esg-test1.llnl.gov-esg-node.csr
+    #openssl req -new -nodes -subj '/O=ESGF/OU=ESGF.ORG/CN=esg-test1.llnl.gov' -key hostkey.pem -out esg-test1.llnl.gov-esg-node.csr
     echo "Generating Certificate Signing Request (csr)... "
     local public_cert_req=${2:-${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr}
     local public_cert_dn=${3:-$(extract_keystore_dn ${keystore_file})}

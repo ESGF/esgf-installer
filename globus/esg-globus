@@ -834,6 +834,41 @@ setup_gridftp_jail() {
     return $?
 }
 
+post_gridftp_jail_setup() {
+    #Write our trimmed version of /etc/password in the chroot location 
+    [ ! -e ${gridftp_chroot_jail} ] && return 1
+
+    if $(echo "${gridftp_chroot_jail}" | grep "${esg_root_dir}" >& /dev/null); then echo "*"; else (echo "illegal chroot location: ${gridftp_chroot_jail}" && return 1); fi
+
+
+    echo -n "writing sanitized passwd file to [${gridftp_chroot_jail}/etc/passwd]"
+    if [ -e ${gridftp_chroot_jail}/etc/passwd ]; then
+        cat > ${gridftp_chroot_jail}/etc/passwd <<EOF
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/dev/null
+ftp:x:14:50:FTP User:/var/ftp:/dev/null
+globus:x:101:156:Globus System User:/home/globus:/bin/bash
+EOF
+        echo " [OK]"
+    else
+        echo " [FAILED]"
+    fi
+
+    #Write our trimmed version of /etc/group in the chroot location
+    echo -n "writing sanitized group file to [${gridftp_chroot_jail}/etc/group]"
+    if [ -e ${gridftp_chroot_jail}/etc/group ]; then
+        cat > ${gridftp_chroot_jail}/etc/group <<EOF
+root:x:0:root
+bin:x:1:root,bin,daemon
+ftp:x:50:
+globus:x:156:
+EOF
+        echo " [OK]"
+    else
+        echo " [FAILED]"
+    fi
+}
+
 # (OLD WAY) http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/GridFTPServerWithTokenAuthorizationModuleConfig
 # http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/EnhancedEndUserDownloadGridFTPModule
 config_gridftp_server() {
@@ -1101,6 +1136,8 @@ start_gridftp_server() {
     #      xfrs file as?
 
     setup_gridftp_jail
+    post_gridftp_jail_setup
+
     echo -n " syncing local certificates into chroot jail... "
     [ -n "${gridftp_chroot_jail}" ] && [ "${gridftp_chroot_jail}" != "/" ] && [ -e "${gridftp_chroot_jail}/etc/grid-security/certificates" ] && \
         rm -rf ${gridftp_chroot_jail}/etc/grid-security/certificates && \

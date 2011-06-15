@@ -2782,7 +2782,7 @@ generate_ssl_key_and_csr() {
     echo "In Directory: $(pwd)"
     echo "Generated private key: $(ls ${private_key})"
     echo "Generated certificate: $(ls ${public_cert_req})"
-    echo "Please submit the certificate request to your Certificate Authority:"
+    echo "Please submit the certificate request to your Certificate Authority: (esgf-ca@lists.llnl.gov)"
     echo "Then run %> esg-node --install-keypair <private key> <signed cert> (use --help for details)"
     echo "--------------------------------------------------------"
     echo

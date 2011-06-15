@@ -295,13 +295,13 @@ init_structure() {
     #--------------
     #Let's go down the line and make sure that we have what we need structurally on the filesystem
     local config_check=8
-    if [ ! -e ${scripts_dir} ]; then mkdir ${scripts_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_backup_dir} ]; then mkdir ${esg_backup_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_tools_dir} ]; then mkdir ${esg_tools_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_log_dir} ]; then mkdir ${esg_log_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_config_dir} ]; then mkdir ${esg_config_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_etc_dir} ]; then mkdir ${esg_etc_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${tomcat_conf_dir} ]; then mkdir ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${scripts_dir} ]; then mkdir -p ${scripts_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_backup_dir} ]; then mkdir -p ${esg_backup_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_tools_dir} ]; then mkdir -p ${esg_tools_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_log_dir} ]; then mkdir -p ${esg_log_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_config_dir} ]; then mkdir -p ${esg_config_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_etc_dir} ]; then mkdir -p ${esg_etc_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${tomcat_conf_dir} ]; then mkdir -p ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
     if [ ! -e ${config_file} ]; then touch ${config_file} && ((config_check--)); else ((config_check--)); fi
     debug_print ${config_check}
     ((config_check != 0 )) && echo "ERROR: checklist incomplete [FAIL]" && checked_done 1 || verbose_print "checklist [OK]"

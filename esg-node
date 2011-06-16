@@ -3436,7 +3436,7 @@ register() {
     echo "Installing Public Certificate of Target Peer Node...[$1]"
     
     mkdir -p ${workdir} # >& /dev/null
-    pushd ${workdir} # >& /dev/null
+    pushd ${workdir} >& /dev/null
     #Download the Java code used for certificate installation (into $workdir)
     checked_get './InstallCert.class' ${utils_url}/InstallCert.class $((force_install))
     (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for installing certificates" && popd && return 1
@@ -3500,12 +3500,18 @@ set_index_peer() {
     [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn)
     local input=${1:-${esgf_index_peer}}
     [ "$1" = "self" ] && input=${esgf_host}
-    echo -n "Setting Index Peer... [${input}] "
+    echo "Setting Index Peer... to => [${input}] "
     
     #note: config_file defined in esg-node:init()
     local esgf_properties_file=${config_file:-${esg_config_dir}/esgf.properties}
     [ ! -e "${esgf_properties_file}" ] && debug_print " WARNING: Could not locate [${esgf_properties_file}]" && return 1
     
+    #----------------------
+    #Fetch and Insert the Certificate for Index Peer (to let in index peer's publishingService callback)
+    register ${input}
+    [ $? != 0 ] && echo " Error: could not import Index Peer's [${esgf_index_peer}] certificate!" && checked_done 1
+    #----------------------
+
     #selecting the approprate value for service url...
     local publishing_service_url
     
@@ -3532,12 +3538,6 @@ set_index_peer() {
     echo "${publishing_service_url}"
     echo
     write_as_property esgf_index_peer ${input}
-    #----------------------
-
-    #----------------------
-    #Fetch and Insert the Certificate for Index Peer (to let in index peer's publishingService callback)
-    register ${input}
-    [ $? != 0 ] && echo " Error: could not import Index Peer's [${esgf_index_peer}] certificate!" && checked_done 1
     #----------------------
     
 }

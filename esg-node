@@ -939,8 +939,8 @@ setup_postgress() {
 	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
-	chmod 600 ${pg_secret_file}
-	chown ${installer_uid}:${installer_gid} ${pg_secret_file}
+	chmod 640 ${pg_secret_file}
+	chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
     fi
 
     ########
@@ -2920,8 +2920,8 @@ install_keypair() {
     #[ $? != 0 ] && echo "ERROR: Problem with key generation and/or keystore construction" && mv ${keystore_name}.bak ${keystore_name} && exit 5
 
     echo "${store_password}" > ${ks_secret_file}
-    chmod 600 ${ks_secret_file}
-    chown ${installer_uid}:${installer_gid} ${ks_secret_file}
+    chmod 640 ${ks_secret_file}
+    chown ${installer_uid}:${tomcat_group} ${ks_secret_file}
     
     #(In order for ORP or any other local service to trust eachother put your own cert into the truststore)
     [ -e "${truststore_file}" ] && mv ${truststore_file} ${truststore_file}.bak
@@ -4582,8 +4582,8 @@ initial_setup_questionnaire() {
 	unset verify_password
 	unset input
 	((changed==1)) && echo ${security_admin_password} > ${esgf_secret_file}
-	chmod 600 ${esgf_secret_file}
-	chown ${installer_uid}:${installer_gid} ${esgf_secret_file}
+	chmod 640 ${esgf_secret_file}
+	chown ${installer_uid}:${tomcat_group} ${esgf_secret_file}
 
 	#Use the same password when creating the postgress account
 	((changed==1)) && pg_sys_acct_passwd=${security_admin_password}

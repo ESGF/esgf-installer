@@ -4237,7 +4237,7 @@ insert_file_at_pattern() {
 # arg 1 - The environment file to dedup.
 dedup() {
     local infile=${1:-${envfile}}
-    [ ! -e "${infile}" ] && echo "WARNING: dedup_properties() - unable to locate ${infile} does it exist?" && return 1
+    [ ! -e "${infile}" ] && echo "WARNING: dedup() - unable to locate ${infile} does it exist?" && return 1
     [ ! -w "${infile}" ] && echo "WARNING: dedup() - unable to write to ${infile}" && return 1
     local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($2 in a) {a[$2];print $0}' | sort -k2,2)
     echo "$tmp" > ${infile}

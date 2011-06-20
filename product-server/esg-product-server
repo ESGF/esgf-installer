@@ -231,9 +231,20 @@ init_ferret() {
 
     ferret_install_dir=${FERRET_HOME:-/usr/local/ferret}
     ferret_data_dir=${FERRET_HOME:-/usr/local/ferret_data}
-    
-    ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/semi_official_67_linux_${word_size}/fer_executables.tar.gz
-    ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/semi_official_67_linux_${word_size}/fer_environment.tar.gz
+
+    if ((word_size == 32)); then
+        ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_32_nc4/fer_executables.tar.gz
+        ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_32_nc4/fer_environment.tar.gz
+    elif ((word_size == 64)); then
+        ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_64-linux_nc4/fer_executables.tar.gz
+        ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_64-linux_nc4/fer_environment.tar.gz
+    else
+        echo "invalid word size: ${word_size}"
+        checked_done 1
+    fi
+
+    #ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/semi_official_67_linux_${word_size}/fer_executables.tar.gz
+    #ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/semi_official_67_linux_${word_size}/fer_environment.tar.gz
     
     # Ferret data files
     ferret_data_url=ftp://ftp.pmel.noaa.gov/ferret/pub/data/fer_dsets.tar.gz

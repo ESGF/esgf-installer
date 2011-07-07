@@ -107,7 +107,7 @@ init() {
     esgcet_version=${esgcet_version:-"2.8.2"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.1"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.2"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esg-orp project:
@@ -291,6 +291,8 @@ init_structure() {
 
     #reset esg_dist_url if necessary...
     esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
+
+    (($DEBUG)) && echo "init_structure: esg_dist_url = ${esg_dist_url}"
 
     #--------------
     #Let's go down the line and make sure that we have what we need structurally on the filesystem
@@ -2543,6 +2545,7 @@ setup_subsystem() {
     #source subsystem file and go!
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
+    debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} $@"
     source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} $@
     checked_done $?
     echo "-------------------------------"
@@ -3749,10 +3752,10 @@ check_tomcat_process() {
 # To do a bit more robust version checking... See the "check_version" function 
 #-----
 compare_versions_() {
-    debug_print "Comparing versions: $@"
+    (($DEBUG2)) && echo "Comparing versions: $@"
     OLDIFS=$IFS
     IFS=".-_/@+#"
-    debug_print $@
+    (($DEBUG2)) && echo $@
     count1=0
     for v1 in $1; do
 	(($DEBUG2)) && echo v1=$v1
@@ -3784,7 +3787,7 @@ compare_versions_() {
     #don't mess with this...
     IFS=$OLDIFS
     
-    debug_print "compare last one again in case we have two equal versions"
+    (($DEBUG2)) && echo "compare last one again in case we have two equal versions"
     eval "[[ $v1 $2 $v2 ]]"
     ret=$?
     
@@ -3814,7 +3817,7 @@ compare_versions_() {
 # so 1.1.a == 1.1.b and 1.1_B203 == 1.1_B204 and 1.b.1 == 1.c.4 (!!)
 # but and 1.2.a > 1.1.y and 1.1.a > 1.1 (!!)
 check_version_helper() {
-    debug_print "in check_version_helper $@"
+    (($DEBUG2)) && echo "in check_version_helper $@"
     #only one parameter, probably a string, expand it
     [[ $# == 1 ]] && set -- $1
     #debug_print "\$1=$1, \$2=$2, \$3=$3"
@@ -3839,7 +3842,7 @@ esac
     #we only need three params for this function
 compare_versions_ "${1}" "$op" "${3}"
 local ret=$?
-debug_print "compare_versions from check_version_ returns $ret"
+(($DEBUG2)) && echo "compare_versions from check_version_ returns $ret"
 return $ret
 }
 
@@ -3863,7 +3866,7 @@ check_version() {
     debug_print "Calling helper, check_version_helper ${current_version} >= ${target_version}"
     check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
     local ret=$?
-    debug_print "The return value from the call to helper function check_version_ is $ret"
+    (($DEBUG2)) && echo "The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
 
     printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [$2] \n"

@@ -208,8 +208,8 @@ init() {
     installer_user=${ESG_USER:-${SUDO_USER}:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
     installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
     installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
-    installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
-    
+    installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
+
     #deprecate SUDO_?ID so we only use one variable for all this
     [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
     [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID

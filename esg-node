@@ -4447,11 +4447,19 @@ _verify() {
 }
 
 self_verify() {
-    _verify http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "") >& /dev/null 
+    # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
+    ESGNODEFILE=`_readlinkf $0`
+    ESGNODEDIR=`dirname $ESGNODEFILE`
+    if [ -d "$ESGNODEDIR/.git" ] ; then
+        echo "Git repository detected; not checking checksum of esg-node"
+        return 0
+    fi
+
+    _verify http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "") >& /dev/null
     local ret=$?
-    if (( ${ret} == 3 )); then 
+    if (( ${ret} == 3 )); then
 	printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
-	
+
 	local choice="x"
 	if [ "$#" == 1 ]; then
 	    debug_print "Operation $1 was chosen"

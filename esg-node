@@ -3531,7 +3531,9 @@ verify_thredds_credentials() {
     read -p "Would you like to reset the credentials? [y/N]: " doreset
     [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
 
-    local security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null)
+    local security_admin_password=""
+    [ -e "${esgf_secret_file}" ] && security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null) || (echo "error: cannot find passwd file" && return 1)
+    [ -z "${security_admin_password}" ] && echo "node admin password not found" && return 1
 
     if [ "${answer}" = "Y" ]; then
         echo -n "Editing files accordingly... "
@@ -5213,6 +5215,8 @@ main() {
 		    exit $?
 		    ;;
                 --verify-thredds-credentials)
+		    shift
+		    (( $# != 0 ))  && echo "error: \"--verify-thredds-credentials\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
 		    self_verify
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1

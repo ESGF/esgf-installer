@@ -90,7 +90,7 @@ esg_config_type_file=${esg_config_dir}/config_type
 esgf_secret_file=${esg_config_dir}/.esgf_pass
 pg_secret_file=${esg_config_dir}/.esg_pg_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
-install_logfile=${install_logfile:-"/etc/esg.install_log"}
+install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 logfile=${logfile:-"/tmp/${_t##*/}.out"}
 #--------------
 
@@ -494,8 +494,8 @@ write_curl_env() {
 }
 
 write_curl_install_log() {
-    echo "$(date ${date_format}) curl=${curl_version} ${curl_install_dir}" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) curl=${curl_version} ${curl_install_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -597,8 +597,8 @@ write_git_env() {
 }
 
 write_git_install_log() {
-    echo "$(date ${date_format}) git=${git_version} ${git_install_dir}" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) git=${git_version} ${git_install_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -711,8 +711,8 @@ write_java_env() {
 }
 
 write_java_install_log() {
-    echo "$(date ${date_format}) java=${java_version} ${java_install_dir%/*}/${java_dist_dir}" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) java=${java_version} ${java_install_dir%/*}/${java_dist_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -812,8 +812,8 @@ write_ant_env() {
 }
 
 write_ant_install_log() {
-    echo "$(date ${date_format}) ant=${ant_version} $(readlink -f ${ant_install_dir})" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) ant=${ant_version} $(readlink -f ${ant_install_dir})" >> ${install_manifest}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -1056,8 +1056,8 @@ write_postgress_env() {
 }
 
 write_postgress_install_log() {
-    echo "$(date ${date_format}) postgres=${postgress_version} ${postgress_install_dir}" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) postgres=${postgress_version} ${postgress_install_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -1190,16 +1190,16 @@ write_cdat_env() {
 }
 
 write_cdat_install_log() {
-    echo "$(date ${date_format}) cdat=${cdat_version} ${cdat_home}" >> ${install_logfile}
+    echo "$(date ${date_format}) cdat=${cdat_version} ${cdat_home}" >> ${install_manifest}
 
     #Parse the cdat installation config.log file and entries to the install log
     if [ -e ${workdir}/cdat/config.log ]; then
-	awk '/building/ {print "'"$(date ${date_format})"' cdat->"$(NF-1)":"$2"="$NF" '"${cdat_home}"'"}' ${workdir}/cdat/config.log >> ${install_logfile}
+	awk '/building/ {print "'"$(date ${date_format})"' cdat->"$(NF-1)":"$2"="$NF" '"${cdat_home}"'"}' ${workdir}/cdat/config.log >> ${install_manifest}
     else
 	echo " WARNING: Could not find cdat config.log file [${workdir}/cdat/config.log] installation log entries could not be generated!"
     fi
 
-    dedup ${install_logfile}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -1365,8 +1365,8 @@ write_esgcet_env() {
 }
 
 write_esgcet_install_log() {
-    echo "$(date ${date_format}) python:esgcet=${esgcet_version}" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) python:esgcet=${esgcet_version}" >> ${install_manifest}
+    dedup ${install_manifest}
     write_as_property publisher_config
     write_as_property publisher_home
     write_as_property monitor.esg.ini ${publisher_home}/${publisher_config}
@@ -1654,8 +1654,8 @@ write_tomcat_env() {
 }
 
 write_tomcat_install_log() {
-    echo "$(date ${date_format}) tomcat=${tomcat_version} $(readlink -f ${tomcat_install_dir})" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) tomcat=${tomcat_version} $(readlink -f ${tomcat_install_dir})" >> ${install_manifest}
+    dedup ${install_manifest}
     write_as_property tomcat_install_dir
     write_as_property esgf_http_port 80
     write_as_property esgf_https_port 443
@@ -2248,10 +2248,10 @@ write_tds_env() {
 }
 
 write_tds_install_log() {
-    echo "$(date ${date_format}) webapp:thredds=${tds_version} ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}" >> ${install_logfile}
+    echo "$(date ${date_format}) webapp:thredds=${tds_version} ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}" >> ${install_manifest}
     write_as_property thredds_endpoint "http://${esgf_host}/${thredds_dist_file%.*}"
     write_as_property thredds_app_home ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}
-    dedup ${install_logfile}
+    dedup ${install_manifest}
     return 0
 }
 
@@ -2574,7 +2574,7 @@ show_summary() {
     echo "-------------------"
     echo "Installation Log:"
     echo
-    cat ${install_logfile}
+    cat ${install_manifest}
     echo "-------------------"
     echo
     return 0

@@ -205,7 +205,7 @@ init() {
     # ID Setting
     #--------------
     #fix: id will always return the root id no matter what flags we use if we start this via sudo
-    installer_user=${ESG_USER:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
+    installer_user=${ESG_USER:-${SUDO_USER}:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
     installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
     installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
     installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}

@@ -4401,7 +4401,43 @@ EOF
     return 0
 }
 
-#"private" function
+### "private" functions ###
+
+_readlinkf() {
+    # This is a portable implementation of GNU's "readlink -f" in
+    # bash/zsh, following symlinks recursively until they end in a
+    # file, and will print the full dereferenced path of the specified
+    # file even if the file isn't a symlink.
+    #
+    # Loop detection exists, but only as an abort after passing a
+    # maximum length.
+
+    START_DIR=`pwd`
+    FILE=$1
+    cd `dirname $FILE`
+    FILE=`basename $FILE`
+
+    # Iterate down symlinks.  If we exceed a maximum number symlinks, assume that
+    # we're looped and die horribly.
+    MAXLINKS=20
+    COUNT=0
+    while [ -L "$FILE" ] ; do
+        FILE=`readlink $FILE`
+        cd `dirname $FILE`
+        FILE=`basename $FILE`
+        let "COUNT += 1"
+        if [ $COUNT -gt $MAXLINKS ] ; then
+            CURRENT_DIR=`pwd -P`
+            echo "CRITICAL FAILURE: symlink loop detected on ${CURRENT_DIR}/${FILE}"
+            cd $START_DIR
+            exit $COUNT
+        fi
+    done
+    CURRENT_DIR=`pwd -P`
+    echo "${CURRENT_DIR}/${FILE}"
+    cd $START_DIR
+}
+
 _verify() {
     echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
     diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null

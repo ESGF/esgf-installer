@@ -3491,6 +3491,60 @@ sync_with_java_truststore() {
     echo "[OK]"
 }
 
+verify_thredds_credentials() {
+    local ret=0
+    local thredds_esg_ini_file=${ESGINI:-${publisher_home_dir}/${publisher_config_file}}
+    local tomcat_username
+    local tomcat_password_hash
+
+    echo "Inspecting tomcat... "
+    read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9]*\)\".*/\1 \2/p' ${tomcat_users_file}))
+        
+    echo -n "Inspecting publisher... "
+    local thredds_username=$(sed -n 's@[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
+    local thredds_password=$(sed -n 's@[ ]*thredds_password[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
+    local thredds_password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${thredds_password} | cut -d ":" -f 2) && echo ")" || (echo -n "x" && ((ret++)) )
+
+    echo -n "Checking username... "
+    echo -n "${tomcat_username} = ${thredds_username} "
+    if [ "${tomcat_username}" = "${thredds_username}" ]; then
+        echo "[OK]"
+    else
+        echo "[FAIL]"
+        ((ret++))
+    fi
+
+    echo -n "Checking password... "
+    echo -n "${tomcat_password_hash} = ${thredds_password_hash} "
+    if [ "${tomcat_password_hash}" = "${thredds_password_hash}" ]; then
+        echo "[OK]"
+    else
+        echo "[FAIL]"
+        ((ret++))
+    fi
+    ((ret == 0)) && echo "Verified" && return 0
+
+    echo
+    echo "Sorry, your credentials are not valid..."
+
+    local answer="N"
+    read -p "Would you like to reset the credentials? [y/N]: " doreset
+    [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
+
+    local security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null)
+
+    if [ "${answer}" = "Y" ]; then
+        echo -n "Editing files accordingly... "
+        #edit publisher
+        sed -i 's#^[ ]*\(thredds_username[ ]*=[ ]*\).*$#\1'${tomcat_username}'#' ${thredds_esg_ini_file} && echo -n ":" || echo -n "x"
+        sed -i 's#^[ ]*\(thredds_password[ ]*=[ ]*\).*$#\1'${security_admin_password}'#' ${thredds_esg_ini_file} && echo -n "-" || echo -n "x"
+        #edit tomcat-users.xml
+        sed -i 's#'${tomcat_password_hash}'#'$($tomcat_install_dir/bin/digest.sh -a SHA ${security_admin_password} | cut -d ":" -f 2)'#' ${tomcat_users_file} && echo ")" || echo "x"
+    fi
+    echo
+    return 1
+}
+
 #--------------------------------------
 # Setting the (index peer) node to which we will publish
 #--------------------------------------
@@ -5158,6 +5212,14 @@ main() {
 		    restore_last_db_backup $@
 		    exit $?
 		    ;;
+                --verify-thredds-credentials)
+		    self_verify
+		    check_prerequisites
+		    [ $? != 0 ] && echo && exit 1
+                    init_structure
+                    verify_thredds_credentials
+                    exit $?
+                    ;;
 		--uninstall)
 		    self_verify
 		    check_prerequisites

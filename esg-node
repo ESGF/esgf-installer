@@ -3534,17 +3534,18 @@ verify_thredds_credentials() {
     local security_admin_password=""
     [ -e "${esgf_secret_file}" ] && security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null) || (echo "error: cannot find passwd file" && return 1)
     [ -z "${security_admin_password}" ] && echo "node admin password not found" && return 1
-
+    
+    ret=0
     if [ "${answer}" = "Y" ]; then
         echo -n "Editing files accordingly... "
         #edit publisher
-        sed -i 's#^[ ]*\(thredds_username[ ]*=[ ]*\).*$#\1'${tomcat_username}'#' ${thredds_esg_ini_file} && echo -n ":" || echo -n "x"
-        sed -i 's#^[ ]*\(thredds_password[ ]*=[ ]*\).*$#\1'${security_admin_password}'#' ${thredds_esg_ini_file} && echo -n "-" || echo -n "x"
+        sed -i 's#^[ ]*\(thredds_username[ ]*=[ ]*\).*$#\1'${tomcat_username}'#' ${thredds_esg_ini_file} && echo -n ":" || (echo -n "x" && ((ret++)) )
+        sed -i 's#^[ ]*\(thredds_password[ ]*=[ ]*\).*$#\1'${security_admin_password}'#' ${thredds_esg_ini_file} && echo -n "-" || (echo -n "x" && ((ret++)) )
         #edit tomcat-users.xml
-        sed -i 's#'${tomcat_password_hash}'#'$($tomcat_install_dir/bin/digest.sh -a SHA ${security_admin_password} | cut -d ":" -f 2)'#' ${tomcat_users_file} && echo ")" || echo "x"
+        sed -i 's#'${tomcat_password_hash}'#'$($tomcat_install_dir/bin/digest.sh -a SHA ${security_admin_password} | cut -d ":" -f 2)'#' ${tomcat_users_file} && echo ")" || (echo "x" && ((ret++)) )
     fi
     echo
-    return 1
+    return $ret
 }
 
 #--------------------------------------

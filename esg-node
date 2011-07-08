@@ -4893,6 +4893,11 @@ usage() {
 	--restore-last-db - restores from backup the last backup done <database name <schema name>>
 
 	-------------------------------
+	Trouble Shooting
+	-------------------------------
+	--verify-thredds-credentials - if there is a thredds/publisher \"re-init\" issue this will fix it
+
+	-------------------------------
 	Node Life Cycle Flags:
 	-------------------------------
 	start	- start the node's services

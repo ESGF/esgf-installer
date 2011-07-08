@@ -2264,6 +2264,9 @@ test_tds() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
 
+    verify_thredds_credentials
+    [ $? != 0 ] && echo "(restarting tomcat to accept modified credential values...)" && stop_tomcat
+
     start_tomcat
     start_postgress
 
@@ -3535,7 +3538,6 @@ verify_thredds_credentials() {
     [ -e "${esgf_secret_file}" ] && security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null) || (echo "error: cannot find passwd file" && return 1)
     [ -z "${security_admin_password}" ] && echo "node admin password not found" && return 1
     
-    ret=0
     if [ "${answer}" = "Y" ]; then
         echo -n "Editing files accordingly... "
         #edit publisher
@@ -5521,7 +5523,7 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
 	[ $((sel & TEST_BIT))	 != 0 ] && test_postgress
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_cdat
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT+IDP_BIT)) != 0 ] && setup_cdat
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat

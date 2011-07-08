@@ -4738,7 +4738,7 @@ esgf_node_info() {
      |---------|
      |Postgres |
      |---------|
-     | MyProxy |  <===(HTTPS)===> [Gateway(s)]*
+     | MyProxy |  <===(HTTPS)===> [ESGF Peer Node(s)]*
      |---------|
      | GridFTP |  <=============> [End User(s)]*
      >---------<

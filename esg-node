@@ -264,7 +264,7 @@ init() {
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-    my_ip_address=$(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
+    my_ip_address=$(ifconfig | grep "inet[^6]" | head -1 | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
     show_summary_latch=0
     source_latch=0
     node_host_ip_address=${my_ip_address}

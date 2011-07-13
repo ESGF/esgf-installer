@@ -973,7 +973,10 @@ setup_postgress() {
     start_postgress
 
     #Check to see if there is a ${postgress_user} already on the system if not, make one
-    if [ -x ${postgress_install_dir}/bin/psql ] && (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
+    if [ ! -x ${postgress_install_dir}/bin/psql ] ; then
+        echo "CRITICAL FAILURE: psql not found after install!" && exit 1
+    fi
+    if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
 	echo "${postgress_user} exists!! :-)";
     else
 	echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"

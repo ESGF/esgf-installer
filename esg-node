@@ -4673,7 +4673,7 @@ initial_setup_questionnaire() {
 	while [ 1 ]; do
 	    unset input
 	    echo
-	    read -s -p "What is the admin password to use for this installation? (alph-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
+	    read -s -p "What is the admin password to use for this installation? (alpha-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
 	    ((force_install)) && [ -z "${input}" ] && [ -n "${security_admin_password}" ] && changed=0 && echo && break
 	    ( [ -z "${input}" ] || [ -n "$(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p')" ] ) && echo "Invalid password... " && continue
 	    [ -n "${input}" ] && security_admin_password=${input} && changed=1

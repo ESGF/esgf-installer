@@ -75,7 +75,7 @@ install_logfile=${ESG_INSTALL_LOGFILE:-"/etc/esg.install_log"}
 #--------------
 # this should get exported from caller preferably
 if [[ -z "$installer_uid" || -z "$installer_gid" ]]; then 
-    installer_user=${ESG_USER:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
+    installer_user=${ESG_USER:-$(echo "$HOME" | sed 's#.*/\([^/]\+\)/\?$#\1#')}
     installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
     installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
     installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
@@ -785,7 +785,7 @@ start_gridftp_usage_parsing() {
                 echo "Is this ok (should be)? [Y/n]"; read answ
                 if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
                     echo "$current_cron" > $backup_cron
-                    crontab -u $installer_user <(echo "$new_cron")
+                    crontab -u $username <(echo "$new_cron")
                      local ret=$?
                 fi
             fi

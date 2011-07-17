@@ -205,7 +205,7 @@ init() {
     # ID Setting
     #--------------
     #fix: id will always return the root id no matter what flags we use if we start this via sudo
-    installer_user=${ESG_USER:-${SUDO_USER}:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}
+    installer_user=${ESG_USER:-${SUDO_USER:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}}
     installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
     installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
     installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
@@ -974,19 +974,14 @@ setup_postgress() {
 
     #Check to see if there is a ${postgress_user} already on the system if not, make one
     if [ ! -x ${postgress_install_dir}/bin/psql ] ; then
-        echo "CRITICAL FAILURE: psql not found after install!" && exit 1
+        echo " ERROR: psql not found after install!" && checked_done 1
     fi
     if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
 	echo "${postgress_user} exists!! :-)";
     else
 	echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
-	if [ -z "${pg_sys_acct_passwd}" ]; then
-	    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-	    [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
-	else
-	    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-	    [ $? != 0 ] && echo " ERROR: Unable to create user on the system*" && popd && checked_done 1
-	fi
+	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
+	[ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
     fi
     #stop_postgress && return 1 #See trap in 'main'... that is who calls this.
 

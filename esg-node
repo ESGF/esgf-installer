@@ -3723,6 +3723,8 @@ uninstall() {
 	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
 	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
 	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
+        source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
+	source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem
 
 	doit="N"
 	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then

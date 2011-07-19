@@ -100,6 +100,11 @@ logfile=${logfile:-"/tmp/${_t##*/}.out"}
 init() {
     debug_print "esg-node initilizing..."
 
+    if [ -e /etc/esg.install_log ] && [ ! -e "${install_manifest}" ]; then
+        echo "migrating install manifest to new location"
+        mv -v /etc/esg.install_log  ${install_manifest}
+    fi
+
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------

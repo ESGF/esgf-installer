@@ -165,7 +165,7 @@ install_security_tokenless_filters() {
     insert_file_at_pattern $(readlink -f ${target_file}) ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
 
     local openidrelyingparty_host=${openidrelyingparty_host:-$(hostname --fqdn)} #default assumes local install
-    local authorization_service_root=${authorization_service_root:-${gateway_service_root}} #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+    local authorization_service_root=${authorization_service_root:-${esgf_idp_peer}} #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
     local truststore_file=${truststore_file:-"${tomcat_install_dir}/conf/jssecacerts"}
     local truststore_password=${truststore_password:-"changeit"}
     

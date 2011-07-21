@@ -163,14 +163,14 @@ install_security_token_filter() {
     target_file=$(readlink -f ${target_file})
     insert_file_at_pattern ${target_file} ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
 
-    local gateway_name=${gateway_name:-"ESG-PCMDI"}
-    local gateway_service_root=${gateway_service_root:-"pcmdi3.llnl.gov/esgcet"}
+    local esgf_idp_peer_name=${esgf_idp_peer_name:-"ESG-PCMDI"}
+    local esgf_idp_peer=${esgf_idp_peer:-"pcmdi3.llnl.gov/esgcet"}
 
     #Edit the web.xml file for the web app to include these token replacement values
     echo -n "Replacing tokens... "
     eval "perl -p -i -e 's/\\@node_host_ip_address\\@/${node_host_ip_address}/g' web.xml"; echo -n "*"
-    eval "perl -p -i -e 's/\\@gateway_name\\@/${gateway_name}/g' web.xml"; echo -n "*"
-    eval "perl -p -i -e 's#\\@gateway_service_root\\@#${gateway_service_root}#g' web.xml"; echo -n "*"
+    eval "perl -p -i -e 's/\\@esgf_idp_peer_name\\@/${esgf_idp_peer_name}/g' web.xml"; echo -n "*"
+    eval "perl -p -i -e 's#\\@esgf_idp_peer\\@#${esgf_idp_peer}#g' web.xml"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null
     #----------------------

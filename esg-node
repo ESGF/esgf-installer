@@ -943,9 +943,8 @@ setup_postgress() {
 	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
-	chmod 640 ${pg_secret_file}
-	chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
     fi
+    [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
     ########
     sleep 3
@@ -4700,6 +4699,7 @@ initial_setup_questionnaire() {
 	#Use the same password when creating the postgress account
 	((changed==1)) && pg_sys_acct_passwd=${security_admin_password}
     fi
+    [ -e "${esgf_secret_file}" ] && chmod 640 ${esgf_secret_file} && chown ${installer_uid}:${tomcat_group} ${esgf_secret_file}
 
     unset input
 

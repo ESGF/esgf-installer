@@ -270,10 +270,8 @@ init() {
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-    my_ip_address=$(ifconfig | grep "inet[^6]" | head -1 | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
     show_summary_latch=0
     source_latch=0
-    node_host_ip_address=${my_ip_address}
     scripts_dir=${install_prefix}/bin
     no_globus=${no_globus:-0}
     force_install=${force_install:-0}
@@ -288,6 +286,9 @@ init() {
     default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
     index_config="master slave"
+    check_for_my_ip
+    node_host_ip_address=${my_ip_address}
+
 }
 
 init_structure() {

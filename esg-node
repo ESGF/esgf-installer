@@ -3831,7 +3831,7 @@ check_tomcat_process() {
     if [ -f ${tomcat_install_dir}/conf/server.xml ]; then
         [ -z "${esgf_host_ip}" ] && get_property esgf_host_ip
 	local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')
-	local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed 's/\(\*\|'${esgf_host_ip}'\)/\0/p  | awk '{print $1}' | sort -u | xargs)"
+	local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed 's/\(\*\|'${esgf_host_ip}'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)"
 	[ -z "${procs}" ] && return 1 #No process running on ports
 	if (( $(expr "$procs" : '.*jsvc.*') > 0)); then
 	    echo "Tomcat (jsvc) process is running... " && return 0

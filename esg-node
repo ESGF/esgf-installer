@@ -1906,7 +1906,8 @@ select_idp_peer() {
     #----
     #(Making this assignment for the sake of readability for the code below)
     #@@node_host_ip_address@@ #Token in file
-    node_host_ip_address=${my_ip_address}
+    [ -z "${esgf_host_ip}" ] && get_property esgf_host_ip
+    node_host_ip_address=${esgf_host_ip}
 
     #just to be sure it's clear (though it should be)
     unset input
@@ -3612,6 +3613,45 @@ set_index_peer() {
 # General - Utility Functions
 ############################################
 
+check_for_my_ip() {
+    local my_ip_address
+    local my_ip_addresses=($(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}'))
+
+    get_property esgf_host_ip
+    local matched=0
+
+    #We want to make sure that the IP address we have in our config
+    #matches one of the IPs that are associated with this host
+    for (( i=0; i < ${#my_ip_addresses[@]}; i++ )); do
+        [ -n "${esgf_host_ip}" ] && [ "${esgf_host_ip}" = "${my_ip_addresses[$i]}" ] && ((matched++))
+    done
+    ((matched == 0)) && echo "Configured host IP address does not match available IPs..."
+
+    if [ -z "${esgf_host_ip}" ] || ((force_install)) || ((matched == 0)); then
+        if (( ${#my_ip_addresses[@]} > 1 )); then
+        #ask the user to choose...
+            while [ 1 ]; do
+                printf "Detected multiple IP addresses bound to this host...\n"
+                printf "Please select the IP address to use for this installation\n"
+	        printf "\t-------------------------------------------\n"
+                for (( i=0; i < ${#my_ip_addresses[@]}; i++ )); do
+                    printf "\t[$i] : ${my_ip_addresses[$i]}\n"
+                done
+	        printf "\t-------------------------------------------\n"
+                local default=0
+                read -p "select [] > " choice
+                [ -z "${choice}" ] && continue
+                my_ip_address=${my_ip_addresses[${choice}]}
+                echo "selected address -> ${my_ip_addresses[${choice}]}"
+                [ -n "${my_ip_address}" ] && break
+            done
+        else
+            my_ip_address=${my_ip_addresses[0]}
+        fi
+    fi
+    write_as_property esgf_host_ip ${my_ip_address}
+}
+
 #Needed to reduce the number of commands when wanting to make a verbose conditional print
 verbose_print() { ((VERBOSE)) && echo $@; return 0; }
 debug_print() { ((DEBUG)) && echo $@; return 0; }
@@ -4667,6 +4707,8 @@ initial_setup_questionnaire() {
 	echo "esgf_host = [${esgf_host}]"
     fi
 
+    check_for_my_ip
+
     unset input
     unset default
 
@@ -5022,9 +5064,9 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${my_ip_address}/${node_manager_app_context_root}"
-    echo "http://${my_ip_address}/thredds"
-    echo "http://${my_ip_address}/OpenidRelyingParty"
+    echo "http://${esgf_host_ip}/${node_manager_app_context_root}"
+    echo "http://${esgf_host_ip}/thredds"
+    echo "http://${esgf_host_ip}/OpenidRelyingParty"
     echo
     echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
     echo "http://${esgf_index_peer}/"

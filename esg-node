@@ -286,9 +286,7 @@ init() {
     default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
     index_config="master slave"
-    check_for_my_ip
-    node_host_ip_address=${my_ip_address}
-
+    check_for_my_ip #(sets the ${node_host_ip_address} value)
 }
 
 init_structure() {
@@ -3651,6 +3649,8 @@ check_for_my_ip() {
         fi
     fi
     write_as_property esgf_host_ip ${my_ip_address}
+    #Set local arrived at value to variable in global scope
+    node_host_ip_address=${my_ip_address}
 }
 
 #Needed to reduce the number of commands when wanting to make a verbose conditional print

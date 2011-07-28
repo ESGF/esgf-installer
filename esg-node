@@ -4502,6 +4502,8 @@ self_verify() {
         return 0
     fi
 
+    [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+
     _verify http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "") >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then

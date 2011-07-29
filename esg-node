@@ -118,10 +118,10 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.1.3"}
+    esg_orp_version=${esg_orp_version:-"1.1.4"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.3.0"}
+    esgf_security_version=${esgf_security_version:-"1.3.1"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
 
     #see esgf-idp project:
@@ -5648,6 +5648,7 @@ main() {
    #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"	&& setup_subsystem drslib esgf-drslib $@
 
     #---filters------
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && setup_subsystem security-las-ip-filter filters $@
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && setup_subsystem security-token-filters filters $@
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"	 && setup_subsystem security-tokenless-filters filters $@
 

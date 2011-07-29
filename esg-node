@@ -2000,6 +2000,7 @@ select_idp_peer() {
     write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
     #----------------------
 
+    write_tds_env
 }
 
 

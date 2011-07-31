@@ -286,7 +286,7 @@ init() {
     default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
     index_config="master slave"
-    check_for_my_ip #(sets the ${node_host_ip_address} value)
+    check_for_my_ip
 }
 
 init_structure() {
@@ -1906,13 +1906,12 @@ select_idp_peer() {
     #(Making this assignment for the sake of readability for the code below)
     #@@node_host_ip_address@@ #Token in file
     [ -z "${esgf_host_ip}" ] && get_property esgf_host_ip
-    node_host_ip_address=${esgf_host_ip}
 
     #just to be sure it's clear (though it should be)
     unset input
-    read -p "Please Enter the IP address of this host [${node_host_ip_address}]:> " input
-    [ ! -z "${input}" ] && node_host_ip_address=${input}
-    printf "\nUsing IP: ${node_host_ip_address}\n"
+    read -p "Please Enter the IP address of this host [${esgf_host_ip}]:> " input
+    [ ! -z "${input}" ] && esgf_host_ip=${input}
+    printf "\nUsing IP: ${esgf_host_ip}\n"
     unset input
 
     local default_myproxy_port=7512
@@ -1989,7 +1988,7 @@ select_idp_peer() {
     myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
 
     echo
-    echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
+    echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
     #----------------------
     #Fetch and Insert the Certificate of IDP Peer (which is always co-located with myproxy - at least at present)
@@ -2225,11 +2224,11 @@ setup_tds() {
     chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet
     [ $? != 0 ] && echo "WARNING: Could not change owner successfully - this will lead to unability to create new catalogs via the publisher!"
 
-    echo "curl http://${node_host_ip_address}/thredds"
+    echo "curl http://${esgf_host_ip}/thredds"
     local wait_time=5
     local ret=1
     while [[ $wait_time > 0 ]]; do
-	curl http://${node_host_ip_address}/thredds >& /dev/null
+	curl http://${esgf_host_ip}/thredds >& /dev/null
 	ret=$?
 	[ $ret == 0 ] && break
 	sleep 1
@@ -2279,8 +2278,8 @@ test_tds() {
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --thredds
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
-    echo "curl http://${node_host_ip_address}/thredds"
-    curl http://${node_host_ip_address}/thredds
+    echo "curl http://${esgf_host_ip}/thredds"
+    curl http://${esgf_host_ip}/thredds
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && popd && checked_done 1
 
     echo "[OK]"
@@ -3466,13 +3465,15 @@ register() {
 
     local CP=".:${workdir}"
 
-    echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
-    ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
-    local ret=$?
+    [ "${ssl_endpoint}" = "${esgf_host}" ] && start_tomcat
 
     #NOTE: The InstallCert code fetches Java's jssecacerts file (if
     #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
     #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
+
+    echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
+    ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
+    local ret=$?
 
     chmod 644 ${truststore_file}
     chown ${tomcat_user}:${tomcat_group} ${truststore_file}
@@ -3651,7 +3652,7 @@ check_for_my_ip() {
     fi
     write_as_property esgf_host_ip ${my_ip_address}
     #Set local arrived at value to variable in global scope
-    node_host_ip_address=${my_ip_address}
+    get_property esgf_host_ip
 }
 
 #Needed to reduce the number of commands when wanting to make a verbose conditional print

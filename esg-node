@@ -2479,9 +2479,11 @@ test_publication() {
 
     X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
     rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
+    unset X509_USER_KEY
 
     echo "ESGINI = [${ESGINI}]"
     echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
+    echo "X509_USER_KEY = [${X509_KEY_DIR}] (supposed to be blank)"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
     $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
     [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1

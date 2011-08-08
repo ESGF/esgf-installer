@@ -2413,7 +2413,7 @@ start_globus() {
 
     local idp_node_ret=1
     if [ $((sel & IDP_BIT)) != 0 ]; then
-	echo "Starting Globus Services for Index-Node... (MyProxy server)"
+	echo "Starting Globus Services for IDP-Node... (MyProxy server)"
 	directive="gateway"
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1

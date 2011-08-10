@@ -3616,6 +3616,25 @@ set_index_peer() {
 # General - Utility Functions
 ############################################
 
+set_redirect() {
+    local web_app_tld=${1:-esgf-node-manager}
+    local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
+    [ ! -e ${index_file} ] && echo "Sorry, No \"ROOT\" application found!" && return 1
+    [ ! -e ${tomcat_install_dir}/webapps/${web_app_tld} ] && echo "Sorry, No target appliaction directory found for ${web_app_tld}" && return 2
+    local redirect_content="<head><meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=/${web_app_tld}\"></head>"
+    [ "${redirect_content}" = "$(cat ${index_file})" ] && echo "Redirect already setup" && return 0
+    local doit="Y"
+    read -p "Do you wish to setup the redirect to the ${web_app_tld}'s page? [Y/n]: " doit
+    [ "n" = "${doit}" ] || [ "N" = "${doit}" ] && return 0
+    mv ${index_file} ${index_file}.last
+    echo "${redirect_content}" > ${index_file}
+    chmod 644 ${index_file}
+    chown -R ${tomcat_user}  ${index_file}
+    chgrp -R ${tomcat_group} ${index_file}
+    echo "Redirect setup to /${web_app_tld}"
+    return 0
+}
+
 check_for_my_ip() {
     local my_ip_address
     local my_ip_addresses=($(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}'))

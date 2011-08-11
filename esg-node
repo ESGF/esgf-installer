@@ -1089,8 +1089,8 @@ stop_postgress() {
     [ $? != 0 ] && return 1
 
     echo
-    echo "stop postgress: su $pg_sys_acct -c \"pg_ctl -D $postgress_install_dir/data -m i stop\""
-    su $pg_sys_acct -c "pg_ctl -D $postgress_install_dir/data -m i stop" #(stop server immediately)
+    echo "stop postgress: su $pg_sys_acct -c \"pg_ctl -D $postgress_install_dir/data -m f stop\""
+    su $pg_sys_acct -c "pg_ctl -D $postgress_install_dir/data -m f stop" #(stop server immediately)
     if [ $? != 0 ]; then
 	echo " WARNING: Unable to stop the database (nicely)"
 	echo " Hmmm...	okay no more mr nice guy... issuing \"killall postgres\""

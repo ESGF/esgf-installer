@@ -4810,6 +4810,20 @@ initial_setup_questionnaire() {
 	echo "node_namespace = [${node_namespace}]"
     fi
 
+    get_property node_peer_group "org.esgf"
+    if [ -z "${node_peer_group}" ] || ((force_install)); then
+	#local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
+	#default_ns=${default_ns%.*}
+	while [ 1 ]; do
+	    unset input
+	    read -p "What peer group(s) will this node participate in? (optional - if not sure use default) [${node_peer_group}]: " input
+	    [ -z "${input}" ] && [ -n "${node_peer_group}" ] && input=${node_peer_group} && break
+	    [ -n "${input}" ] && node_peer_group=${input} && write_as_property node_peer_group && break
+	done
+    else
+	echo "node_peer_group = [${node_peer_group}]"
+    fi
+
     unset input
 
     get_property esgf_default_peer ${esgf_default_peer}

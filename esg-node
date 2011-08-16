@@ -4815,10 +4815,11 @@ initial_setup_questionnaire() {
 	echo "node_long_name = [${node_long_name}]"
     fi
 
-    get_property node_namespace "org.esgf"
+    get_property node_namespace
     if [ -z "${node_namespace}" ] || ((force_install)); then
 	#local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
 	#default_ns=${default_ns%.*}
+        node_namespace="org.esgf"
 	while [ 1 ]; do
 	    unset input
 	    read -p "What is the namespace to use for this node? (optional - if not sure use default) [${node_namespace}]: " input
@@ -4829,10 +4830,11 @@ initial_setup_questionnaire() {
 	echo "node_namespace = [${node_namespace}]"
     fi
 
-    get_property node_peer_group "org.esgf"
+    get_property node_peer_group
     if [ -z "${node_peer_group}" ] || ((force_install)); then
 	#local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
 	#default_ns=${default_ns%.*}
+        node_peer_group="org.esgf"
 	while [ 1 ]; do
 	    unset input
 	    read -p "What peer group(s) will this node participate in? (optional - if not sure use default) [${node_peer_group}]: " input

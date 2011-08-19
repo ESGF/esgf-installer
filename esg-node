@@ -4809,7 +4809,7 @@ initial_setup_questionnaire() {
     get_property node_long_name ${node_long_name}
     if [ -z "${node_long_name}" ] || ((force_install)); then
 	unset input
-	read -p "Please give this node a more descriptive \"long\" name: (optional) [${node_long_name}]: " input
+	read -p "Please give this node a more descriptive \"long\" name [${node_long_name}]: " input
 	[ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name
     else
 	echo "node_long_name = [${node_long_name}]"
@@ -4817,13 +4817,11 @@ initial_setup_questionnaire() {
 
     get_property node_namespace
     if [ -z "${node_namespace}" ] || ((force_install)); then
-	#local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
-	#default_ns=${default_ns%.*}
-        node_namespace="org.esgf"
+        local node_namespace_=${node_namespace:-$(hostname --fqdn | sed -n 's/[^.]*\(.*\)/\1/p' | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')}
 	while [ 1 ]; do
 	    unset input
-	    read -p "What is the namespace to use for this node? (optional - if not sure use default) [${node_namespace}]: " input
-	    [ -z "${input}" ] && [ -n "${node_namespace}" ] && input=${node_namespace} && break
+	    read -p "What is the namespace to use for this node? (if not sure, use default) [${node_namespace_}]: " input
+	    [ -z "${input}" ] && [ -n "${node_namespace_}" ] && write_as_property node_namespace ${node_namespace_} && break
 	    [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
 	done
     else
@@ -4832,13 +4830,11 @@ initial_setup_questionnaire() {
 
     get_property node_peer_group
     if [ -z "${node_peer_group}" ] || ((force_install)); then
-	#local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
-	#default_ns=${default_ns%.*}
-        node_peer_group="org.esgf"
+        local node_peer_group_=${node_peer_group:-"org.esgf"}
 	while [ 1 ]; do
 	    unset input
-	    read -p "What peer group(s) will this node participate in? (optional - if not sure use default) [${node_peer_group}]: " input
-	    [ -z "${input}" ] && [ -n "${node_peer_group}" ] && input=${node_peer_group} && break
+	    read -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input
+	    [ -z "${input}" ] && [ -n "${node_peer_group_}" ] && write_as_property node_peer_group ${node_peer_group_} && break
 	    [ -n "${input}" ] && node_peer_group=${input} && write_as_property node_peer_group && break
 	done
     else

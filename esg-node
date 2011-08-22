@@ -4830,7 +4830,7 @@ initial_setup_questionnaire() {
 
     get_property node_peer_group
     if [ -z "${node_peer_group}" ] || ((force_install)); then
-        local node_peer_group_=${node_peer_group:-"org.esgf"}
+        local node_peer_group_=${node_peer_group:-"esgf"}
 	while [ 1 ]; do
 	    unset input
 	    read -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input

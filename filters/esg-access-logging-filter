@@ -69,6 +69,7 @@
 #              stop_tomcat(), start_tomcat(), $workdir,
 
 workdir=${workdir:-${installer_home}/workbench/esg}
+postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 
@@ -142,6 +143,9 @@ install_access_logging_filter() {
     cp -v esgf-node-manager-common-*.jar ${dest_dir}/WEB-INF/lib
     cp -v esgf-node-manager-filters-*.jar ${dest_dir}/WEB-INF/lib
     
+    if [ ! -e ${dest_dir}/WEB-INF/lib/${postgress_jar} ]; then
+        checked_get ${dest_dir}/WEB-INF/lib/${postgress_jar} ${esg_dist_url}/globus/myproxy/${postgress_jar} $((force_install))
+    fi
     popd >& /dev/null
     #----------------------
 

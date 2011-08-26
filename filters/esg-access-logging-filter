@@ -90,7 +90,7 @@ setup_access_logging_filter() {
 # First  - The top level directory of the webapp where filter is to be installed.
 # Second - The file containing the filter entry xml snippet (optional: defaulted)
 install_access_logging_filter() {
-    local dest_dir=${tomcat_install_dir}/webapps/${1:-:${service_name}}
+    local dest_dir=${tomcat_install_dir}/webapps/${1:-${service_name}}
     local esg_filter_entry_file=${2:-esg-access-logging-filter-web.xml}
     local esg_filter_entry_pattern="<!--@@esg_access_logging_filter_entry@@-->"
 

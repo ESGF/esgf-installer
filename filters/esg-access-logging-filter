@@ -98,7 +98,7 @@ install_access_logging_filter() {
 
     echo
     echo "*******************************"
-    echo "Installing Tomcat Filters to support ESGF Data Node Manager hooks and functionality..."
+    echo "Installing ESGF Node's Access Logging Filters To: [${service_name}]"
     echo "*******************************"
     echo
     echo "Filter installation destination dir = ${dest_dir}"

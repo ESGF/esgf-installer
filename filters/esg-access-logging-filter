@@ -69,7 +69,7 @@
 #              stop_tomcat(), start_tomcat(), $workdir,
 
 workdir=${workdir:-${installer_home}/workbench/esg}
-postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
+service_name=${service_name:-"thredds"}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 
@@ -90,7 +90,7 @@ setup_access_logging_filter() {
 # First  - The top level directory of the webapp where filter is to be installed.
 # Second - The file containing the filter entry xml snippet (optional: defaulted)
 install_access_logging_filter() {
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/thredds}
+    local dest_dir=${tomcat_install_dir}/webapps/${1:-:${service_name}}
     local esg_filter_entry_file=${2:-esg-access-logging-filter-web.xml}
     local esg_filter_entry_pattern="<!--@@esg_access_logging_filter_entry@@-->"
 
@@ -105,22 +105,20 @@ install_access_logging_filter() {
     echo "Filter entry file = ${esg_filter_entry_file}"
     echo "Filter entry pattern = ${esg_filter_entry_pattern}"
 
-    #Installs esg filter into Thredds' web.xml file, directly after
+    #Installs esg filter into ${service_name}'s web.xml file, directly after
     #the AuthorizationTokenValidationFilter's mapping, by replacing a
     #place holder token with the contents of the filter snippet file
-    #"esg-filter-web.xml".  Copies the filter jar file to the thredds'
+    #"esg-filter-web.xml".  Copies the filter jar file to the ${service_name}'s
     #lib dir
 
 
     local node_dist_dir=${node_dist_dir:-esgf-node-manager-${esgf_node_manager_version}}
     
-    #pre-checking... make sure the files we need in thredds are there....
-    [ ! -e ${dest_dir}/WEB-INF ] && echo " ERROR: Could not find THREDDS installation dir" && checked_done 1
+    #pre-checking... make sure the files we need in ${service_name}'s dir are there....
+    [ ! -e ${dest_dir}/WEB-INF ] && echo " ERROR: Could not find ${service_name}'s installation dir" && checked_done 1
     [ ! -e ${dest_dir}/WEB-INF/lib ] && echo " ERROR: Could not find WEB-INF/lib installation dir!!" && return 1
     [ ! -e ${dest_dir}/WEB-INF/web.xml ] && echo " ERROR no web.xml file found!!" && checked_done 1
     [ ! -e ${workdir}/${node_dist_dir} ] && echo " ERROR: Could not locate node distribution dir ${workdir}/${node_dist_dir}" && return 1
-
-    ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && echo "No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - exiting this filter setup" && return 1
 
     stop_tomcat
 
@@ -143,32 +141,24 @@ install_access_logging_filter() {
     cp -v esgf-node-manager-common-*.jar ${dest_dir}/WEB-INF/lib
     cp -v esgf-node-manager-filters-*.jar ${dest_dir}/WEB-INF/lib
     
-    if [ ! -e ${dest_dir}/WEB-INF/lib/${postgress_jar} ]; then
-        checked_get ${dest_dir}/WEB-INF/lib/${postgress_jar} ${esg_dist_url}/globus/myproxy/${postgress_jar} $((force_install))
-    fi
     popd >& /dev/null
     #----------------------
 
     
     #----------------------
-    #Thredds configuration...
+    #${service_name}'s configuration...
     pushd ${dest_dir}/WEB-INF >& /dev/null
-    [ $? != 0 ] && echo " ERROR: Could not find thredds web application (${tomcat_install_dir}/webapps/thredds/)" && return 0
+    [ $? != 0 ] && echo " ERROR: Could not find the ${service_name} web application (${tomcat_install_dir}/webapps/${service_name}/)" && return 0
     local target_file=web.xml
 
-    #Replace the filter's place holder token in thredds' web.xml file with the filter entry.
+    #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
     #Use utility function...
     insert_file_at_pattern $(readlink -f ${target_file}) ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
 
-    #Edit the web.xml file for Thredds to include these token replacement values
+    #Edit the web.xml file for ${service_name} to include these token replacement values
     echo -n "Replacing tokens... "
-    eval "perl -p -i -e 's/\\@db.driver\\@/${postgress_driver}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@db.protocol\\@/${postgress_protocol}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@db.host\\@/${postgress_host}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@db.port\\@/${postgress_port}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@db.database\\@/${node_db_name}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@db.user\\@/${postgress_user}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@db.password\\@/${pg_sys_acct_passwd}/g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's/\\@service.name\\@/${service_name}/g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's/\\@extensions\\@/${extensions}/g' ${target_file}"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null
     #----------------------
@@ -182,7 +172,7 @@ get_mgr_libs() {
 
     node_manager_app_home=${node_manager_app_home:-"${CATALINA_HOME}/webapps/esgf-node-manager"}
    
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/thredds/WEB-INF/lib}
+    local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
     local src_dir=${node_manager_app_home}/WEB-INF/lib
 
     #Jar versions...
@@ -196,15 +186,18 @@ get_mgr_libs() {
     dbcp_jar=commons-dbcp-${commons_dbcp_version}.jar
     dbutils_jar=commons-dbutils-${commons_dbutils_version}.jar
     pool_jar=commons-pool-${commons_pool_version}.jar
+    postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
+
     #-----
 
     if [ -d ${dest_dir} ]; then
         #move over SAML libraries...
         echo "getting (copying) libary jars from the Node Manager to ${dest_dir}"
 
-        [ ! -e ${dest_dir}/${dbcp_jar} ]    && cp -v ${src_dir}/${dbcp_jar}    ${dest_dir}
-        [ ! -e ${dest_dir}/${dbutils_jar} ] && cp -v ${src_dir}/${dbutils_jar} ${dest_dir}
-        [ ! -e ${dest_dir}/${pool_jar} ]    && cp -v ${src_dir}/${pool_jar}    ${dest_dir}
+        [ ! -e ${dest_dir}/${dbcp_jar} ]      && cp -v ${src_dir}/${dbcp_jar}      ${dest_dir}
+        [ ! -e ${dest_dir}/${dbutils_jar} ]   && cp -v ${src_dir}/${dbutils_jar}   ${dest_dir}
+        [ ! -e ${dest_dir}/${pool_jar} ]      && cp -v ${src_dir}/${pool_jar}      ${dest_dir}
+        [ ! -e ${dest_dir}/${postgress_jar} ] && cp -v ${src_dir}/${postgress_jar} ${dest_dir}
 
         chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}
     fi

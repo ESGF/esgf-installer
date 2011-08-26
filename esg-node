@@ -1600,7 +1600,8 @@ setup_tomcat() {
 	fi
     fi
 
-    checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt ${esg_dist_url}/robots.txt $((force_install))
+    checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt  ${esg_dist_url}/robots.txt  $((force_install))
+    checked_get ${tomcat_install_dir}/webapps/ROOT/favicon.ico ${esg_dist_url}/favicon.ico $((force_install))
 
     start_tomcat
 
@@ -5226,7 +5227,7 @@ main() {
 		    (( $# != 0 )) && echo "error: \"restart\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
-            debug_print "RESTARTING SERVICES"
+                    debug_print "RESTARTING SERVICES"
                     init_structure
 		    stop ${sel}
 		    sleep 2

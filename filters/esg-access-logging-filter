@@ -70,6 +70,7 @@
 
 workdir=${workdir:-${installer_home}/workbench/esg}
 service_name=${service_name:-"thredds"}
+extensions=${extensions:-".nc"}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 

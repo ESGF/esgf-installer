@@ -80,13 +80,7 @@ setup_access_logging_filter() {
     [ $? != 0 ] && return 1
     pushd $workdir >& /dev/null
     
-    if (($1 == 0)); then
-        #install
-        install_access_logging_filter
-    else
-        #upgrade
-        get_mgr_libs ${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib
-    fi
+    install_access_logging_filter
     
     popd >& /dev/null
     start_tomcat
@@ -100,8 +94,6 @@ install_access_logging_filter() {
     local dest_dir=${tomcat_install_dir}/webapps/${1:-${service_name}}
     local esg_filter_entry_file=${2:-esg-access-logging-filter-web.xml}
     local esg_filter_entry_pattern="<!--@@esg_access_logging_filter_entry@@-->"
-
-    ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && printf " No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - skipping this filter setup\n" && return 1
 
     echo
     echo "*******************************"
@@ -130,6 +122,8 @@ install_access_logging_filter() {
     stop_tomcat
 
     get_mgr_libs ${dest_dir}/WEB-INF/lib
+
+    ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && printf " No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - skipping this filter setup\n" && return 1
 
     #----------------------
     #NOTE:

@@ -80,7 +80,13 @@ setup_access_logging_filter() {
     [ $? != 0 ] && return 1
     pushd $workdir >& /dev/null
     
-    install_access_logging_filter
+    if (($1 == 0)); then
+        #install
+        install_access_logging_filter
+    else
+        #upgrade
+        get_mgr_libs ${tomcat_install_dir}/webapps/${service_name}
+    fi
     
     popd >& /dev/null
     start_tomcat
@@ -176,7 +182,7 @@ get_mgr_libs() {
     local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
     local src_dir=${node_manager_app_home}/WEB-INF/lib
 
-    ([ ! -d ${dest_dir} ] || [ ! -d ${src_dir} ]) && echo "WARNING: source and/or destination dirs not present!!!" && return 1
+    ([ ! -d ${dest_dir} ] || [ ! -d ${src_dir} ]) && echo "WARNING: source and/or destination dir(s) not present!!! (punting)" && return 1
 
     #Jar versions...
     local commons_dbcp_version=${commons_dbcp_version:-1.4}
@@ -192,7 +198,7 @@ get_mgr_libs() {
     local postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
         
     #move over libraries...
-    echo "getting (copying) libary jars from the Node Manager App to ${dest_dir}"
+    echo "getting (copying) libary jars from the Node Manager App to ${dest_dir} ..."
     
     [ ! -e ${dest_dir}/${dbcp_jar} ]      && cp -v ${src_dir}/${dbcp_jar}      ${dest_dir}
     [ ! -e ${dest_dir}/${dbutils_jar} ]   && cp -v ${src_dir}/${dbutils_jar}   ${dest_dir}
@@ -208,15 +214,15 @@ get_mgr_libs() {
     local node_manager_commons_jar=esgf-node-manager-common-${esgf_node_manager_version}.jar
     local node_manager_filters_jar=esgf-node-manager-filters-${esgf_node_manager_version}.jar
     
-    echo "fetching node manager commons and filter jars..."
+    echo "getting (downloading) library jars from Node Manager Distribution Server to ${dest_dir} ..."
     checked_get ${dest_dir}/${node_manager_commons_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_commons_jar}
     checked_get ${dest_dir}/${node_manager_filters_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_filters_jar}
 
     
     #remove all other node manager jars that are not what we want
-    echo "cleaning up other (unnecessary) node manager project jars..."
-    rm -vf $(/bin/ls $(/bin/pwd)/${node_manager_commons_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
-    rm -vf $(/bin/ls $(/bin/pwd)/${node_manager_filters_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
+    echo "cleaning up (removing) other, unnecessary, Node Manager project jars from ${dest_dir} ..."
+    rm -vf $(/bin/ls ${dest_dir}/${node_manager_commons_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
+    rm -vf $(/bin/ls ${dest_dir}/${node_manager_filters_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
     #---
     
     chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}

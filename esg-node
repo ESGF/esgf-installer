@@ -4167,6 +4167,7 @@ check_for_update() {
 #
 checked_get() {
     local force_get=${3:-0}
+    local make_backup_file=${4:-1} #default to make backup *.bak files if necessary
 
     if ((force_get == 0)); then
 	check_for_update $@
@@ -4187,7 +4188,7 @@ checked_get() {
 	exit 1
     fi
 
-    if [ -e ${local_file} ]; then
+    if [ -e ${local_file} ] && ((make_backup_file)) ; then
 	cp -v ${local_file} ${local_file}.bak
 	chmod 600 ${local_file}.bak
     fi

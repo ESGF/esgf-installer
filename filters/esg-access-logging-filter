@@ -85,7 +85,7 @@ setup_access_logging_filter() {
         install_access_logging_filter
     else
         #upgrade
-        get_mgr_libs ${tomcat_install_dir}/webapps/${service_name}
+        get_mgr_libs ${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib
     fi
     
     popd >& /dev/null
@@ -215,8 +215,9 @@ get_mgr_libs() {
     local node_manager_filters_jar=esgf-node-manager-filters-${esgf_node_manager_version}.jar
     
     echo "getting (downloading) library jars from Node Manager Distribution Server to ${dest_dir} ..."
-    checked_get ${dest_dir}/${node_manager_commons_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_commons_jar}
-    checked_get ${dest_dir}/${node_manager_filters_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_filters_jar}
+    local make_backup_file=0 #Do NOT make backup file
+    checked_get ${dest_dir}/${node_manager_commons_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_commons_jar} $((force_install)) $((make_backup_file))
+    checked_get ${dest_dir}/${node_manager_filters_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_filters_jar} $((force_install)) $((make_backup_file))
 
     
     #remove all other node manager jars that are not what we want

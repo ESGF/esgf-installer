@@ -4041,7 +4041,7 @@ check_webapp_version() {
 
     [ ! -d "${tomcat_install_dir}/webapps/${webapp_name}" ] && echo " Web Application \"${webapp_name}\" is not present or cannot be detected!" && return 2
 
-    local current_version=$(get_current_webapp_version ${webapp_name})
+    local current_version=$(get_current_webapp_version ${webapp_name} ${version_property})
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${webapp_name}" && return 3
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${webapp_name}" && return 4
 

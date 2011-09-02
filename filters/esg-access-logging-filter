@@ -123,7 +123,6 @@ install_access_logging_filter() {
 
     stop_tomcat
 
-    echo "Checking for / Installing required jars..."
     get_mgr_libs ${dest_dir}/WEB-INF/lib
 
     #----------------------
@@ -170,38 +169,56 @@ install_access_logging_filter() {
 }
 
 get_mgr_libs() {
+    echo "Checking for / Installing required jars..."
 
     node_manager_app_home=${node_manager_app_home:-"${CATALINA_HOME}/webapps/esgf-node-manager"}
    
     local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
     local src_dir=${node_manager_app_home}/WEB-INF/lib
 
+    ([ ! -d ${dest_dir} ] || [ ! -d ${src_dir} ]) && echo "WARNING: source and/or destination dirs not present!!!" && return 1
+
     #Jar versions...
-    commons_dbcp_version=${commons_dbcp_version:-1.4}
-    commons_dbutils_version=${commons_dbutils_version:-1.3}
-    commons_pool_version=${commons_pool_version:-1.5.4}
+    local commons_dbcp_version=${commons_dbcp_version:-1.4}
+    local commons_dbutils_version=${commons_dbutils_version:-1.3}
+    local commons_pool_version=${commons_pool_version:-1.5.4}
     
     #----------------------------
     #Jar Libraries Needed To Be Present For Node Manager (AccessLogging) Filter Support
     #----------------------------
-    dbcp_jar=commons-dbcp-${commons_dbcp_version}.jar
-    dbutils_jar=commons-dbutils-${commons_dbutils_version}.jar
-    pool_jar=commons-pool-${commons_pool_version}.jar
-    postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
-
-    #-----
-
-    if [ -d ${dest_dir} ]; then
-        #move over SAML libraries...
-        echo "getting (copying) libary jars from the Node Manager to ${dest_dir}"
-
-        [ ! -e ${dest_dir}/${dbcp_jar} ]      && cp -v ${src_dir}/${dbcp_jar}      ${dest_dir}
-        [ ! -e ${dest_dir}/${dbutils_jar} ]   && cp -v ${src_dir}/${dbutils_jar}   ${dest_dir}
-        [ ! -e ${dest_dir}/${pool_jar} ]      && cp -v ${src_dir}/${pool_jar}      ${dest_dir}
-        [ ! -e ${dest_dir}/${postgress_jar} ] && cp -v ${src_dir}/${postgress_jar} ${dest_dir}
-
-        chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}
-    fi
+    local dbcp_jar=commons-dbcp-${commons_dbcp_version}.jar
+    local dbutils_jar=commons-dbutils-${commons_dbutils_version}.jar
+    local pool_jar=commons-pool-${commons_pool_version}.jar
+    local postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
+        
+    #move over libraries...
+    echo "getting (copying) libary jars from the Node Manager App to ${dest_dir}"
+    
+    [ ! -e ${dest_dir}/${dbcp_jar} ]      && cp -v ${src_dir}/${dbcp_jar}      ${dest_dir}
+    [ ! -e ${dest_dir}/${dbutils_jar} ]   && cp -v ${src_dir}/${dbutils_jar}   ${dest_dir}
+    [ ! -e ${dest_dir}/${pool_jar} ]      && cp -v ${src_dir}/${pool_jar}      ${dest_dir}
+    [ ! -e ${dest_dir}/${postgress_jar} ] && cp -v ${src_dir}/${postgress_jar} ${dest_dir}
 
 
+    #----------------------------
+    #Fetching Node Manager Jars from Distribution Site...
+    #----------------------------
+    
+    #values inherited from esg-node calling script
+    local node_manager_commons_jar=esgf-node-manager-common-${esgf_node_manager_version}.jar
+    local node_manager_filters_jar=esgf-node-manager-filters-${esgf_node_manager_version}.jar
+    
+    echo "fetching node manager commons and filter jars..."
+    checked_get ${dest_dir}/${node_manager_commons_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_commons_jar}
+    checked_get ${dest_dir}/${node_manager_filters_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_filters_jar}
+
+    
+    #remove all other node manager jars that are not what we want
+    echo "cleaning up other (unnecessary) node manager project jars..."
+    rm -vf $(/bin/ls $(/bin/pwd)/${node_manager_commons_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
+    rm -vf $(/bin/ls $(/bin/pwd)/${node_manager_filters_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
+    #---
+    
+    chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}
+    
 }

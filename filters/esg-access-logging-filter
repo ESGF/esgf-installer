@@ -114,10 +114,10 @@ install_access_logging_filter() {
     local node_dist_dir=${node_dist_dir:-esgf-node-manager-${esgf_node_manager_version}}
     
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
-    [ ! -e ${dest_dir}/WEB-INF ] && echo " ERROR: Could not find ${service_name}'s installation dir" && checked_done 1
-    [ ! -e ${dest_dir}/WEB-INF/lib ] && echo " ERROR: Could not find WEB-INF/lib installation dir!!" && return 1
-    [ ! -e ${dest_dir}/WEB-INF/web.xml ] && echo " ERROR no web.xml file found!!" && checked_done 1
-    [ ! -e ${workdir}/${node_dist_dir} ] && echo " ERROR: Could not locate node distribution dir ${workdir}/${node_dist_dir}" && return 1
+    [ ! -e ${dest_dir}/WEB-INF ] && echo " WARNING: Could not find ${service_name}'s installation dir - Filter Not Applied" && return 1
+    [ ! -e ${dest_dir}/WEB-INF/lib ] && echo " WARNING: Could not find WEB-INF/lib installation dir!! - Filter Not Applied" && return 1
+    [ ! -e ${dest_dir}/WEB-INF/web.xml ] && echo " WARNING no web.xml file found!! - Filter Not Applied" && return 1
+    [ ! -e ${workdir}/${node_dist_dir} ] && echo " WARNING: Could not locate node distribution dir ${workdir}/${node_dist_dir} - Filter Not Applied" && return 1
 
     stop_tomcat
 
@@ -148,7 +148,7 @@ install_access_logging_filter() {
     #----------------------
     #${service_name}'s configuration...
     pushd ${dest_dir}/WEB-INF >& /dev/null
-    [ $? != 0 ] && echo " ERROR: Could not find the ${service_name} web application (${tomcat_install_dir}/webapps/${service_name}/)" && return 0
+    [ $? != 0 ] && echo " WARNING: Could not find the ${service_name} web application (${tomcat_install_dir}/webapps/${service_name}/)" && return 0
     local target_file=web.xml
 
     #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.

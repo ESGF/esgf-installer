@@ -2649,8 +2649,15 @@ rebuild_truststore() {
     mkdir -p ${tmp_dir}
 
     local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
-    [ -n "${simpleCA_cert}" ] && echo "Integrating in local simpleCA_cert" && cp -v ${simpleCA_cert} ${globus_global_certs_dir}/simpleCA_${simpleCA_cert##*/}.0 && echo "[OK]"
-
+    if [ -n "${simpleCA_cert}" ]; then 
+        echo "Integrating in local simpleCA_cert... "
+        (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/simpleCA_${simpleCA_cert##*/}.0 && \
+            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
+            chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            echo "[OK]") || echo "[FAIL]"
+    fi
+    
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
     for cert_file in $cert_files; do
 	echo -n "$cert_file -> "

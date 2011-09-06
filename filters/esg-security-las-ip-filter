@@ -68,6 +68,7 @@
 #              scripts that has the definition of checked_get(),
 #              stop_tomcat(), start_tomcat(), $workdir,
 
+service_name=${service_name:-"thredds"}
 esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
 
 #maybe I am paranoid but I want to make sure someone can't just set
@@ -102,15 +103,14 @@ setup_security_las_ip_filter() {
 # Second - The file containing the filter entry xml snippet (optional: defaulted)
 install_security_las_ip_filter() {
     
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/thredds}
+    local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}}
     local esg_filter_entry_file=${2:-esg-security-las-ip-filter.xml}
     local esg_filter_entry_pattern="<!--@@esg_security_las_ip_filter_entry@@-->"
 
-    ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && printf " No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - skipping this filter setup\n\n" && return 1
     
     echo
     echo "*******************************"
-    echo "Installing Tomcat ESG LAS (IP) Security Filters..."
+    echo "Installing Tomcat ESG LAS (IP) Security Filters... for ${service_name}"
     echo "-------------------------------"
     echo "ESG ORP Filter: v${esg_orp_version}"
     echo "ESGF Security (SAML): v${esgf_security_version}"
@@ -119,12 +119,6 @@ install_security_las_ip_filter() {
     echo "Filter installation destination dir = ${dest_dir}"
     echo "Filter entry file = ${esg_filter_entry_file}"
     echo "Filter entry pattern = ${esg_filter_entry_pattern}"
-
-    #-----
-    #project generated jarfiles...
-    esg_orp_jar=esg-orp-${esg_orp_version}.jar
-    esgf_security_jar=esgf-security-${esgf_security_version}.jar
-    #-----
 
     #Installs esg filter into web application's web.xml file, by replacing a
     #place holder token with the contents of the filter snippet file
@@ -138,14 +132,9 @@ install_security_las_ip_filter() {
 
     stop_tomcat
 
-    pushd ${dest_dir}/WEB-INF/lib >& /dev/null
-    echo "Checking for / Installing required jars..."
-    [ ! -e ${esg_orp_jar} ]  && echo "no esg-orp jar found locally" && checked_get ${esg_dist_url}/esg-orp/${esg_orp_jar}; (( $? > 1 )) && popd && checked_done 1
-    [ ! -e ${esgf_security_jar} ]  && echo "no esgf-security jar found locally" && checked_get ${esg_dist_url}/esgf-security/${esgf_security_jar}; (( $? > 1 )) && popd && checked_done 1
-
     get_las_filter_support_libs ${dest_dir}/WEB-INF/lib
 
-    popd >& /dev/null
+    ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && printf " No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - skipping this filter setup\n\n" && return 1
 
     mkdir -p $workdir
     [ $? != 0 ] && return 1
@@ -180,7 +169,7 @@ get_las_filter_support_libs() {
 
     openid_relying_party_app_home=${openid_relying_party_app_home:-"${CATALINA_HOME}/webapps/OpenidRelyingParty"}
 
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/thredds/WEB-INF/lib}
+    local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
     local src_dir=${openid_relying_party_app_home}/WEB-INF/lib
 
     #Jar versions...
@@ -232,6 +221,29 @@ get_las_filter_support_libs() {
         [ ! -e ${dest_dir}/${xercesImpl_jar} ] && cp -v ${src_dir}/${xercesImpl_jar} ${dest_dir}
         [ ! -e ${dest_dir}/${xml_apis_jar} ]   && cp -v ${src_dir}/${xml_apis_jar}   ${dest_dir}
         [ ! -e ${dest_dir}/${xmlsec_jar} ]     && cp -v ${src_dir}/${xmlsec_jar}     ${dest_dir}
+
+        #----------------------------
+        #Fetching ORP / Security Jars from Distribution Site...
+        #----------------------------
+
+        #values inherited from esg-node calling script
+        #-----
+        #project generated jarfiles...
+        local esg_orp_jar=esg-orp-${esg_orp_version}.jar
+        local esgf_security_jar=esgf-security-${esgf_security_version}.jar
+        #-----
+
+        echo "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to ${dest_dir} ..."
+        local make_backup_file=0 #Do NOT make backup file
+        checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
+        checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
+
+
+        #remove all other node manager jars that are not what we want
+        echo "cleaning up (removing) other, unnecessary, orp/security project jars from ${dest_dir} ..."
+        rm -vf $(/bin/ls ${dest_dir}/${esg_orp_jar%-*}-*.jar | grep -v ${esg_orp_version})
+        rm -vf $(/bin/ls ${dest_dir}/${esgf_security_jar%-*}-*.jar | grep -v ${esgf_security_version})
+        #---
 
         chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}
     fi

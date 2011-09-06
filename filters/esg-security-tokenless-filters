@@ -114,7 +114,7 @@ install_security_tokenless_filters() {
     
     echo
     echo "*******************************"
-    echo "Installing Tomcat ESG SAML/ORP (Tokenless) Security Filters..."
+    echo "Installing Tomcat ESG SAML/ORP (Tokenless) Security Filters... for ${service_name}"
     echo "-------------------------------"
     echo "ESG ORP Filter: v${esg_orp_version}"
     echo "ESGF Security (SAML): v${esgf_security_version}"

@@ -175,6 +175,7 @@ install_security_tokenless_filters() {
     eval "perl -p -i -e 's#\\@authorization_service_root\\@#${authorization_service_root}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_file\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_password\\@#${truststore_password}#g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's#\\@esgf_host\\@#${esgf_host}#g' ${target_file}"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null
     #----------------------

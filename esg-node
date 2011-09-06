@@ -2162,8 +2162,9 @@ setup_tds() {
     fetch_file=web.xml
     checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
-    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
-    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
+    cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
 
     #DEBUGGING
     ((DEBUG)) && cat ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
@@ -5697,15 +5698,16 @@ main() {
     #Installation of "plugin" subsystems... & filters
     #---------------------------------------
 
-    #---subsystems---
+    #---subsystems-----
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
    #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"	&& setup_subsystem drslib esgf-drslib $@
 
-    #---filters------
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && setup_subsystem security-las-ip-filter filters $@
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && setup_subsystem security-token-filters filters $@
+    #---filters (TDS)--
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"	 && setup_subsystem security-tokenless-filters filters $@
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && setup_subsystem security-token-filters filters $@
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && setup_subsystem security-las-ip-filter filters $@
 
+    #---filters--------        
     #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem (DATA)"  && service_name="thredds" extensions=".nc" setup_subsystem access-logging-filter filters $@
     #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@

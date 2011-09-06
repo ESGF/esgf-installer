@@ -106,6 +106,10 @@ install_security_tokenless_filters() {
     local esg_filter_entry_file=${2:-esg-security-tokenless-filters.xml}
     local esg_filter_entry_pattern="<!--@@esg_security_tokenless_filter_entry@@-->"
 
+    #((force_install)) && [ -e "${dest_dir}/web.xml.tmpl" ] \
+    #    && mv -v "${dest_dir}/web.xml" "${dest_dir}/web.xml.bak" \
+    #    && mv -v "${dest_dir}/web.xml.tmpl" "${dest_dir/}web.xml"
+
     ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && printf " No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - skipping this filter setup\n\n" && return 1
     
     echo

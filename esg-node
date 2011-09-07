@@ -125,7 +125,7 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"1.1.5"}
+    esgf_idp_version=${esgf_idp_version:-"1.1.6"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"1.4.0"}

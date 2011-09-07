@@ -4792,6 +4792,8 @@ initial_setup_questionnaire() {
 	((changed==1)) && pg_sys_acct_passwd=${security_admin_password}
     fi
     [ -e "${esgf_secret_file}" ] && chmod 640 ${esgf_secret_file} && chown ${installer_uid}:${tomcat_group} ${esgf_secret_file}
+    [ ! -e "${pg_secret_file}" ] && echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
+    [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
     unset input
 

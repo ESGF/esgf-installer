@@ -121,7 +121,8 @@ globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(3
 globus_install_dir=$globus_location
 globus_workdir=${workdir}/extra/globus
 globus_sys_acct=${globus_sys_acct:-globus}
-globus_sys_acct_passwd=${globus_sys_acct_passwd:-changeme}
+globus_sys_acct_group=${globus_sys_acct_group:-globus}
+globus_sys_acct_passwd=${globus_sys_acct_passwd:-$(cat ${esgf_secret_file} 2> /dev/null)}
 globus_dist_url=${esg_dist_url}/globus/gt${globus_version}-all-source-installer.tar.bz2
 #-----------
 gridftp_config=${gridftp_config:-""}
@@ -209,6 +210,7 @@ setup_globus_services() {
     local config_type="$1"
     echo "setup_globus_services for ${config_type} - ${globus_word_size}bit arch : [$*]"
     if [ "${config_type}" = "datanode" ]; then
+        create_globus_account
         setup_globus datanode
         upgrade_gridftp_server
         setup_gridftp_metrics_logging
@@ -243,6 +245,7 @@ setup_globus_services() {
         setup_gridftp_jail
 
     elif [ "${config_type}" = "gateway" ]; then
+        create_globus_account
         shift
         local ret=1
         if [ "$1" = "gen-self-cert" ]; then
@@ -973,13 +976,7 @@ config_gridftp_server() {
     # generate ESG SAML Auth config file
     write_esgsaml_auth_conf
 
-    id ${globus_sys_acct}
-    if [ $? != 0 ]; then
-        echo " WARNING: There is no globus system account \"$globus_sys_acct\" present on system: Creating one..."
-        #NOTE: "useradd" is a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        /usr/sbin/useradd -r -c"Globus System User" -p ${globus_sys_acct_passwd} ${globus_sys_acct}
-        [ $? != 0 ] && echo "ERROR: Could not add globus system account" && popd && checked_done 1
-    fi
+    create_globus_account
 
     #TODO: find out how to set this "dn" appropriately...
     # sample wildcard dn (an entry from the pcmdi server)
@@ -990,7 +987,7 @@ config_gridftp_server() {
     ${globus_location}/sbin/grid-mapfile-add-entry -dn ${dnode_root_dn_wildcard} -ln ${globus_sys_acct}
 
     chown -R ${globus_sys_acct} ${globus_location}
-    chgrp -R ${globus_sys_acct} ${globus_location}
+    chgrp -R ${globus_sys_acct_group} ${globus_location}
 
     popd >& /dev/null
     checked_done 0
@@ -1109,7 +1106,7 @@ config_bdm_gridftp_server() {
     echo 
 
     chown -R ${globus_sys_acct} ${globus_location}
-    chgrp -R ${globus_sys_acct} ${globus_location}
+    chgrp -R ${globus_sys_acct_group} ${globus_location}
 
     popd >& /dev/null
     checked_done 0
@@ -1885,4 +1882,42 @@ check_myproxy_process() {
     val=$(ps -elf | grep myproxy-server* | grep -v grep | awk ' END { print NR }')
     [ $(($val > 0 )) == 1 ] && echo "myproxy-server process is running..." && return 0
     return 1
+}
+
+############################################
+# Utility Functions
+############################################
+
+create_globus_account() {
+    ########
+    #Create the system account for globus to run as.
+    ########
+    [ -z "${globus_sys_acct}" ] && echo "no globus account specfied, must be specified to continue!" && checked_done
+    echo -n "checking globus account \"${globus_sys_acct}\"... "
+    
+    id ${globus_sys_acct}
+    if [ $? != 0 ]; then
+        echo
+	echo " Hmmm...: There is no globus system account user \"$globus_sys_acct\" present on system, making one... "
+	#NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
+	if [ ! $(getent group ${globus_sys_acct_group}) ]; then
+	    /usr/sbin/groupadd -r ${globus_sys_acct_group}
+	    [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add globus system group: ${globus_sys_acct_group}" && checked_done 1
+	fi
+
+	if [ -z "${globus_sys_acct_passwd}" ]; then
+	    #set the password for the system user...
+	    while [ 1 ]; do
+		local input
+		read -s -p "Create password for globus system account: \"${globus_sys_acct}\" " input
+		[ -n "${input}" ] && globus_sys_acct_passwd=${input}  && unset input && break
+	    done
+	fi
+	echo -n "Creating account... "
+	/usr/sbin/useradd -r -c"Globus System User" -g ${globus_sys_acct_group} -p ${globus_sys_acct_passwd} -s /bin/bash ${globus_sys_acct}
+	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add globus system account user" && popd && checked_done 1
+        echo "[OK]"
+    else
+        echo "[OK]"
+    fi
 }

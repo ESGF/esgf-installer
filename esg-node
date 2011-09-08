@@ -4840,7 +4840,7 @@ initial_setup_questionnaire() {
         local node_namespace_=${node_namespace:-$(hostname --fqdn | sed -n 's/[^.]*\(.*\)/\1/p' | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')}
 	while [ 1 ]; do
 	    unset input
-	    read -p "What is the namespace to use for this node? (if not sure, use default) [${node_namespace_}]: " input
+	    read -p "What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [${node_namespace_}]: " input
 	    [ -z "${input}" ] && [ -n "${node_namespace_}" ] && write_as_property node_namespace ${node_namespace_} && break
 	    [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
 	done

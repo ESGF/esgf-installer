@@ -125,7 +125,7 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"1.1.5"}
+    esgf_idp_version=${esgf_idp_version:-"1.1.6"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"1.4.0"}
@@ -4792,6 +4792,8 @@ initial_setup_questionnaire() {
 	((changed==1)) && pg_sys_acct_passwd=${security_admin_password}
     fi
     [ -e "${esgf_secret_file}" ] && chmod 640 ${esgf_secret_file} && chown ${installer_uid}:${tomcat_group} ${esgf_secret_file}
+    [ ! -e "${pg_secret_file}" ] && echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
+    [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
     unset input
 

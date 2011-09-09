@@ -4607,6 +4607,103 @@ _verify() {
     return 0
 }
 
+_version_cmp() {
+    # Takes two strings, splits them into epoch (before the last ':'),
+    # version (between the last ':' and the first '-'), and release
+    # (after the first '-'), and then calls version_segment_cmp on
+    # each part until a difference is found.
+    #
+    # Empty segments are replaced with "-1" so that an empty segment
+    # can precede a non-empty segment when being passed to
+    # _version_segment_cmp.  As with _version_segment_cmp, leading
+    # zeroes will likely confuse comparison as this is still
+    # fundamentally a string sort to allow strings like "3.0alpha1".
+    #
+    # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
+    # Usage example:
+    #   if [ "$(_version_cmp $MYVERSION 1:2.3.4-5)" -lt 0 ] ; then ...
+
+    EPOCHA=(`echo $1 | perl -ne 'my ($part)=/(.*):.*/;print "$part\n"'`)
+    EPOCHB=(`echo $2 | perl -ne 'my ($part)=/(.*):.*/;print "$part\n"'`)
+    EPOCHA=${EPOCHA:-"-1"}
+    EPOCHB=${EPOCHB:-"-1"}
+
+    NONEPOCHA=(`echo $1 | perl -ne 'my ($part)=/(?:.*:)?(.*)/;print "$part\n"'`)
+    NONEPOCHB=(`echo $2 | perl -ne 'my ($part)=/(?:.*:)?(.*)/;print "$part\n"'`)
+
+    VERSIONA=(`echo $NONEPOCHA | perl -ne 'my ($part)=/([^-]*)/;print "$part\n"'`)
+    VERSIONB=(`echo $NONEPOCHB | perl -ne 'my ($part)=/([^-]*)/;print "$part\n"'`)
+    VERSIONA=${VERSIONA:-"-1"}
+    VERSIONB=${VERSIONB:-"-1"}
+
+    RELEASEA=(`echo $NONEPOCHA | perl -ne 'my ($part)=/[^-]*-(.*)/;print "$part\n"'`)
+    RELEASEB=(`echo $NONEPOCHB | perl -ne 'my ($part)=/[^-]*-(.*)/;print "$part\n"'`)
+    RELEASEA=${RELEASEA:-"-1"}
+    RELEASEB=${RELEASEB:-"-1"}
+
+    EPOCHCMP=$(_version_segment_cmp ${EPOCHA} ${EPOCHB})
+    if [ ${EPOCHCMP} -ne 0 ] ; then
+        echo ${EPOCHCMP}
+    else
+        VERSIONCMP=$(_version_segment_cmp ${VERSIONA} ${VERSIONB})
+        if [ ${VERSIONCMP} -ne 0 ] ; then
+            echo ${VERSIONCMP}
+        else
+            RELEASECMP=$(_version_segment_cmp ${RELEASEA} ${RELEASEB})
+            if [ ${RELEASECMP} -ne 0 ] ; then
+                echo ${RELEASECMP}
+            else
+                echo "0"
+            fi
+        fi
+    fi
+}
+
+_version_segment_cmp() {
+    # Takes two strings, splits them on each '.' into arrays, compares
+    # array elements until a difference is found.
+    #
+    # If a third argument is specified, it will override the separator
+    # '.' with whatever characters were specified.
+    #
+    # This doesn't take into account epoch or release strings (":" or
+    # "-" segments).  If you want to compare versions in the format of
+    # "1:2.3-4", use _version_cmp(), which calls this function.
+    #
+    # Note that the individual section comparisons are string
+    # comparisons, so this is not guaranteed to produce sane results
+    # where leading zeroes or nonstandard formats are present.  Null
+    # values are considered less than zero.
+    #
+    # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
+    #
+    # Usage example:
+    #   if [ "$(_version_segment_cmp $MYVERSION 1.2.3)" -lt 0 ] ; then ...
+
+    SEP=${3:-"."}
+
+    VERSIONA=(`echo $1 | perl -pe "s/[$SEP]/ /g"`)
+    VERSIONB=(`echo $2 | perl -pe "s/[$SEP]/ /g"`)
+
+    if [ ${#VERSIONA[*]} -gt ${#VERSIONB[*]} ] ; then
+        VERSIONLENGTH=${#VERSIONA[*]}
+    else
+        VERSIONLENGTH=${#VERSIONB[*]}
+    fi
+
+    for index in `seq 1 $VERSIONLENGTH` ; do
+        if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
+            echo "1"
+            return
+        elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
+            echo "-1"
+            return
+        fi
+    done
+    echo "0"
+}
+
+
 self_verify() {
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
     ESGNODEFILE=`_readlinkf $0`

@@ -4165,13 +4165,17 @@ check_for_update() {
 #  1 = do not check for update, directly go and fetch the file regardless
 #  0 = first check for update availability. (default)
 #
+#  The 4th token is for indicated whether a backup file should be made flag value 1|0.
+#  1 = yes, create a .bak file if the file is already there before fetching new
+#  0 = no, do NOT make a .bak file even if the file is already there, overwrite it
+#
 #  (When using the force flag you MUST specify the first two args!!)
 #
 # NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
 #	A return value of 1 only means that the file is up-to-date and there
 #	Is no reason to fetch it.
 #
-# USAGE: checked_get [file] http://www.foo.com/file [<1|0>]
+# USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
 #
 checked_get() {
     local force_get=${3:-0}

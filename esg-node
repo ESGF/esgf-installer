@@ -1073,7 +1073,7 @@ start_postgress() {
     [ $? != 0 ] && echo " ERROR: Could not start database!" && popd && return 1
 
     #NOTE: How long does it take for the database to come up? Set sleep appropriately
-    echo -n "Giving database time to startup... 3 seconds "
+    echo "Giving database time to startup... (3 seconds) "
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
     checked_done 0

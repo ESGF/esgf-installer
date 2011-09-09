@@ -1993,8 +1993,13 @@ select_idp_peer() {
 
     #----------------------
     #Fetch and Insert the Certificate of IDP Peer (which is always co-located with myproxy - at least at present)
-    register ${myproxy_endpoint}
-    [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
+
+    #If you want to register to yourself... you already have your own certs trusted, no need to register
+    #(this is what the call to add_my_cert_to_truststore does, called previously in configure_tomcat)
+    if [ "${esgf_host}" != "${myproxy_endpoint}" ]; then
+        register ${myproxy_endpoint}
+        [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
+    fi
     write_as_property esgf_idp_peer
     write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
     write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
@@ -3450,7 +3455,7 @@ export_keystore_as_globus_hostkeys() {
 # communicate with over an encrypted ssl connection.  This function
 # must be run after tomcat is set up since it references server.xml.
 #####
-#(called by setup_tds)
+#(called by setup_idp_peer)
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
 register() {

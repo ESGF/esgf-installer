@@ -4677,6 +4677,8 @@ start() {
     [ $((sel & ALL_BIT)) == 0 ] && echo "Cannot Start: No Node Type Specified! (See --help for info on the --type|-t option)  :-|" && exit 1
 
     echo "starting services... ($sel)"
+    [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost && verbose_print "Cleared tomcat cache... "
+
     run_startup_hooks
 
     /etc/init.d/ntpd status

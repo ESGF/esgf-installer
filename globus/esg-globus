@@ -1129,7 +1129,7 @@ test_gridftp_server() {
 #returns true  (0) if this function actively started the process
 #returns false (1) if this function did not have to start the process since already running
 start_gridftp_server() {
-    unset X509_CERT_DIR
+    #unset X509_CERT_DIR
     local ret=0
     echo " GridFTP - Starting server... $*"
     #TODO: Does it matter if root starts the server vs the globus_sys_acct ??? Neill?

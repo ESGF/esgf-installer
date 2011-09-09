@@ -121,7 +121,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"1.2.0"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.4.0"}
+    esgf_security_version=${esgf_security_version:-"1.4.1"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
 
     #see esgf-idp project:
@@ -1073,7 +1073,7 @@ start_postgress() {
     [ $? != 0 ] && echo " ERROR: Could not start database!" && popd && return 1
 
     #NOTE: How long does it take for the database to come up? Set sleep appropriately
-    echo -n "Giving database time to startup... 3 seconds "
+    echo "Giving database time to startup... (3 seconds) "
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
     checked_done 0
@@ -4681,6 +4681,8 @@ start() {
     [ $((sel & ALL_BIT)) == 0 ] && echo "Cannot Start: No Node Type Specified! (See --help for info on the --type|-t option)  :-|" && exit 1
 
     echo "starting services... ($sel)"
+    [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost && verbose_print "Cleared tomcat cache... "
+
     run_startup_hooks
 
     /etc/init.d/ntpd status

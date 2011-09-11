@@ -2695,7 +2695,7 @@ rebuild_truststore() {
     mkdir -p ${tmp_dir}
 
     local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
-    if [ -n "${simpleCA_cert}" ]; then 
+    if [ -n "${simpleCA_cert}" ]; then
         echo "Integrating in local simpleCA_cert... "
         (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/simpleCA_${simpleCA_cert##*/}.0 && \
             [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
@@ -2703,7 +2703,7 @@ rebuild_truststore() {
             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
             echo "[OK]") || echo "[FAIL]"
     fi
-    
+
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
     for cert_file in $cert_files; do
 	echo -n "$cert_file -> "
@@ -5764,7 +5764,7 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
 
-    #---filters--------        
+    #---filters--------
     #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem (DATA)"  && service_name="thredds" extensions=".nc" setup_subsystem access-logging-filter filters $@
     #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@

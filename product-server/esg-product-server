@@ -419,11 +419,12 @@ install_las() {
 
     pushd ${las_dir} >& /dev/null
     checked_get ${ferret_workdir}/${las_config_input_file_url##*/} ${las_config_input_file_url} $((force_install))
-    sed -i '8  s/^.*$/'${esg_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
-    sed -i '12 s/^.*$/'${esg_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
+    sed -i '8  s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
+    sed -i '12 s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
     echo "$(pwd)/configure < ${ferret_workdir}/${las_config_input_file_url##*/}"
     ./configure < ${ferret_workdir}/${las_config_input_file_url##*/}
     popd >& /dev/null
+    chown -R ${tomcat_user}:${tomcat_group} ${tomcat_install_dir}/webapps/las
     write_las_install_log && return ${ret}
     return 0
 }

@@ -5215,7 +5215,7 @@ show_type() {
 }
 
 main() {
-
+    [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 	init
 	let sel=0
 	local selection_string
@@ -5370,6 +5370,8 @@ main() {
                 --devel)
                     devel=1
                     ;;
+                --prod)
+                    devel=0
 		--debug)
 		    DEBUG=1
 		    ;;

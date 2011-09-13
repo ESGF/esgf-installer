@@ -4114,13 +4114,14 @@ check_webapp_version() {
     [ ! -d "${tomcat_install_dir}/webapps/${webapp_name}" ] && echo " Web Application \"${webapp_name}\" is not present or cannot be detected!" && return 2
 
     local current_version=$(get_current_webapp_version ${webapp_name} ${version_property})
+    local current_version=$(_trimline ${current_version})
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${webapp_name}" && return 3
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${webapp_name}" && return 4
 
     debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
     check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
     local ret=$?
-    debug_print " The return value from the call to helper function check_version_ is $ret"
+    debug_print " The return value from the call to check_version_helper is $ret"
     [ $ret == 0 ] && return 0
 
     printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [${target_version}] \n"

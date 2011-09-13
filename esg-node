@@ -3756,7 +3756,7 @@ check_for_my_ip() {
 
 #Needed to reduce the number of commands when wanting to make a verbose conditional print
 verbose_print() { ((VERBOSE)) && echo $@; return 0; }
-debug_print() { ((DEBUG)) && echo $@; return 0; }
+debug_print() { ((DEBUG)) && echo $@ >&2; return 0; }
 
 #NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
 #arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)

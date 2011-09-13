@@ -4594,6 +4594,16 @@ _readlinkf() {
     cd $START_DIR
 }
 
+_trimline() {
+    # Strips leading and trailing whitespace even if IFS is set, also
+    # removing the final newline on every line of input (i.e. the
+    # result of using this on a multi-line string will be a
+    # single-line string with no space between the last word on one
+    # line and the first word on the next, with no leading or trailing
+    # whitespace)
+    echo "$@" | perl -p -e 's/^\s+|\s+$//g';
+}
+
 _verify() {
     echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
     diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null

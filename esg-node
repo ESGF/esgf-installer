@@ -1071,7 +1071,7 @@ start_postgress() {
 
     echo "Starting Postgress..."
     echo "su $pg_sys_acct -c \"$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start\""
-    su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
+    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
     [ $? != 0 ] && echo " ERROR: Could not start database!" && popd && return 1
 
     #NOTE: How long does it take for the database to come up? Set sleep appropriately

@@ -1126,7 +1126,7 @@ test_gridftp_server() {
 #returns true  (0) if this function actively started the process
 #returns false (1) if this function did not have to start the process since already running
 start_gridftp_server() {
-    #unset X509_CERT_DIR
+    local global_x509_cert_dir=${global_x509_cert_dir:-"/etc/grid-security/certificates"}
     local ret=0
     echo " GridFTP - Starting server... $*"
     #TODO: Does it matter if root starts the server vs the globus_sys_acct ??? Neill?
@@ -1154,13 +1154,15 @@ start_gridftp_server() {
             bdm)
                 if ! check_gridftp_process ${gridftp_bdm_server_port} && ret=0 ; then
                     echo " *Launching BDM configured GridFTP server on port: ${gridftp_bdm_server_port} : pr ${gridftp_bdm_server_port_range} : sr ${gridftp_bdm_server_source_range}"
-                    ((DEBUG)) && echo "GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
+                    ((DEBUG)) && echo "X509_CERT_DIR=${global_x509_cert_dir} \
+                GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
                 GLOBUS_TCP_SOURCE_RANGE=${gridftp_bdm_server_source_range} \
                 GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz-bdm.conf \
                 GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_bdm_server_usage_log} \
                 ${globus_location}/sbin/globus-gridftp-server ${disable_command_list} -p ${gridftp_bdm_server_port} -chroot-path ${gridftp_chroot_jail} -usage-stats-id ${gridftp_bdm_server_port} -usage-stats-target localhost:0\!all -acl customgsiauthzinterface -no-cas &"
 
-                    GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
+                    X509_CERT_DIR=${global_x509_cert_dir} \
+                        GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
                         GLOBUS_TCP_SOURCE_RANGE=${gridftp_bdm_server_source_range} \
                         GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz-bdm.conf \
                         GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_bdm_server_usage_log} \
@@ -1173,13 +1175,15 @@ start_gridftp_server() {
             end-user)
                 if ! check_gridftp_process ${gridftp_server_port} && ret=0 ; then
                     echo " *Launching end-user configured GridFTP server on port: ${gridftp_server_port} : pr ${gridftp_server_port_range} : sr ${gridftp_server_source_range}"
-                    ((DEBUG)) && echo "GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
+                    ((DEBUG)) && echo "X509_CERT_DIR=${global_x509_cert_dir} \
+                GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
                 GLOBUS_TCP_SOURCE_RANGE=${gridftp_server_source_range} \
                 GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz.conf \
                 GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_server_usage_log} \
                 ${globus_location}/sbin/globus-gridftp-server ${disable_command_list} -p ${gridftp_server_port} -chroot-path ${gridftp_chroot_jail} -usage-stats-id ${gridftp_server_port} -usage-stats-target localhost:0\!all -acl customgsiauthzinterface -no-cas &"
 
-                    GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
+                    X509_CERT_DIR=${global_x509_cert_dir} \
+                        GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
                         GLOBUS_TCP_SOURCE_RANGE=${gridftp_server_source_range} \
                         GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz.conf \
                         GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_server_usage_log} \

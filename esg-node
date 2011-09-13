@@ -3955,66 +3955,6 @@ check_tomcat_process() {
 # Version Checking Utility Functions
 #-------------------------------
 
-#--------------------------------------------------------------------------
-# Donated function from Estanislao (thanks!)
-# To do a bit more robust version checking... See the "check_version" function
-#-----
-compare_versions_() {
-    (($DEBUG2)) && echo "Comparing versions: $@"
-    OLDIFS=$IFS
-    IFS=".-_/@+#"
-    (($DEBUG2)) && echo $@
-    count1=0
-    for v1 in $1; do
-	(($DEBUG2)) && echo v1=$v1
-	count2=0
-	for v2 in $3; do
-	    (($DEBUG2)) && echo "v2=$v2" && echo "[[ \$count2=$count2 == \$count1=$count1 ]]"
-	    if [[ $count2 == $count1 && $v1 != $v2 ]]; then
-		#if same so keep going... so break inner for loop
-		(($DEBUG2)) && echo "[[ \$v1=$v1 == \$v2=$v2 ]]"
-		[[ $v1 == $v2 ]] && break
-
-		#ok, no match here we resolve it: compare v1 and v2
-		(($DEBUG2)) && echo "[[ $v1 $2 $v2 ]]"
-		#don't forget to set it back!
-		IFS=$OLDIFS
-
-		eval "[[ $v1 $2 $v2 ]]"
-		return $?
-	    fi
-	    : $((++count2))
-	done
-	#remove last count (which doesn't count :-)
-	: $((--count2))
-	: $((++count1))
-    done
-    #remove last count (which doesn't count :-)
-    : $((--count1))
-
-    #don't mess with this...
-    IFS=$OLDIFS
-
-    (($DEBUG2)) && echo "compare last one again in case we have two equal versions"
-    eval "[[ $v1 $2 $v2 ]]"
-    ret=$?
-
-    debug_print "equality was allowed, check passed"
-    [[ $ret == 0 ]] && return 0
-
-
-    #if here the strings were equal or $1 is longer than $2 (and therefore "greater")
-    debug_print "[[ count1=$count1 > count2=$count2 ]]"
-    if [[ $count1 = $count2 ]]; then
-	debug_print "they were equal, but equality wasn't expected (ret 1)"
-	return 1
-    else
-	debug_print "the longest is the gretest. Compare length.i"
-	eval "[[ $count1 $2 $count2 ]]"
-	return $?
-    fi
-}
-
 #------
 # Public helper method for verifying version constraints.  This allows
 # arithmetic comparisons to be used and scrubs the arguments.

@@ -5371,7 +5371,8 @@ main() {
                     devel=1
                     ;;
                 --prod)
-                    devel=0
+                    devel=0 #hence... production
+                    ;;
 		--debug)
 		    DEBUG=1
 		    ;;

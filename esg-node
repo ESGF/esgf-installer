@@ -243,7 +243,8 @@ init() {
     curl_workdir=${workdir}/curl
     curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
     git_workdir=${workdir}/git
-    git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+    #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+    git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
     node_db_name=esgcet
     postgress_workdir=${workdir}/postgress
     postgress_jar=postgresql-8.3-603.jdbc3.jar

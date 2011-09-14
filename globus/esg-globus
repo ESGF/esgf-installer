@@ -767,17 +767,17 @@ start_gridftp_usage_parsing() {
             echo "$current_cron" | grep -q "$start_mark" && simple_update=1
             if ((simple_update)); then
                 #we know what we are doing. Replace the content within the markings
-                new_cron=$(sed '/'^"$start_mark"'$/,/'^"$end_mark"'$/ { 
-                /'"$start_mark"'/ {
-                    p
-                    r '"$cronscript"'
-                }
-                /'"$end_mark"'/ p
-                d}' <(echo "$current_cron"))
+                new_cron=$(echo "$current_cron" |  sed "/^$start_mark\$/,/^$end_mark\$/ {
+                    /^$start_mark\$/ {
+                        r $esg_crontab
+                        ba}
+                 /^$end_mark\$/ba
+                 d
+                 :a}")
             else
                 # try to figure out if we have alread touched this or it's the very first time.
                 cleaned_cron=$(echo "$current_cron" | sed -e '/esg_usage_parser/ d')
-                new_cron=$(echo "$cleaned_cron"; echo $start_mark; cat cron_tab; echo $end_mark)
+                new_cron=$(echo "$cleaned_cron"; echo $start_mark; cat $esg_crontab; echo $end_mark)
                 
                 #after this always ask the user if it's ok.
             fi

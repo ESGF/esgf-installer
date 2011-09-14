@@ -136,14 +136,15 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_version:="7.20.1"}
+    curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.2"} ; ant_min_version=${ant_min_version:-"1.8.2"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"6.0.32"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
-    tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_version:-"4.2.20100908.2246"}
-
+    tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
+    las_version=${las_version:-"7.3.4"}; las_min_version=${las_min_version:-"7.3.4"}
+    
     python_version=${python_version:-"2.6"}
 
     #--------------------------------
@@ -197,7 +198,6 @@ init() {
     export CATALINA_BASE=${CATALINA_HOME}
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
-    export X509_CERT_DIR=${X509_CERT_DIR:-${HOME}/.globus/certificates}
     export ESG_ROOT_ID=${esg_root_id}
 
     myPATH=${install_prefix}/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
@@ -2397,7 +2397,6 @@ my_setup_globus() {
 write_globus_env() {
     ((show_summary_latch++))
     echo "export GLOBUS_LOCATION=$GLOBUS_LOCATION" >> ${envfile}
-    echo "export X509_CERT_DIR=$X509_CERT_DIR" >>  ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -2526,14 +2525,22 @@ test_publication() {
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
     rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
-    X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
-    X509_USER_KEY=${personal_credential_repo}/esgf_credentials
+    local _X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_KEY=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_CERT=${personal_credential_repo}/esgf_credentials
 
     echo "ESGINI = [${ESGINI}]"
-    echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
-    echo "X509_USER_KEY = [${X509_USER_KEY}]"
+    echo "----------"
+    echo "(env set locally for this test publication call only! [call to myproxy])"
+    echo "X509_CERT_DIR  = [${X509_CERT_DIR}]"
+    echo "X509_USER_KEY  = [${X509_USER_KEY}]"
+    echo "X509_USER_CERT = [${X509_USER_CERT}]"
+    echo "----------"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
-    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
+    X509_CERT_DIR=${_X509_CERT_DIR} \
+        X509_USER_KEY=${_X509_USER_KEY} \
+        X509_USER_CERT=${_X509_USER_CERT} \
+        $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
     [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}

@@ -1407,42 +1407,46 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    #TODO: ZOIKS... this does not work... Next thing to try is to do a
-    #while read on the output of setup-simple-ca, and then regexp each
-    #line and set if there is a hit and echo lines back out to user.
-    #I have to leave this now to do other things (10/22/2009).  this
-    #is where I should pick up from.  Everything else works! (at least
-    #should!)  Throw in a command block and direct the output onf
-    #setup-simple-ca to it. Throw the while read into the command
-    #block.
-    
-    # #########################################
-    # #Grab the "CA Subject" by scraping the output of setup-simple-ca output
-    # local grab
+    read -p "So you wish to install a simple CA? [y/N] " answer
+    [ -z "${answer}" ] && answer="Y"
+    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
-    [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
-    ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
-    [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
-
-    # 
-    # #(NOTE: The `hostname` calls are CentOS/RedHat flavored)
-    # #Ex: /O=Grid/OU=GlobusTest/OU=simpleCA-$(echo `hostname -s`.`hostname --domain`)/CN=
-    # grab=$(echo ${output} | egrep -i '^/O=.+CN=')
-    # ca_subject=${grab%=*}=
-    # echo "Grabbed ca_subject: [${ca_subject}]"
-    # 
-    # #Ex: ecdb249f
-    # grab=($(cat ${output} | egrep '^.+globus_simple_ca_(.+)_setup.*$' | cut -d "_" -f 4))
-    # ca_hash=${grab}
-    # echo "Grabbed ca_hash: [${ca_hash}]"
-    # unset grab
-    # rm -v output
-    # #########################################
-
-    ca_hash=$(sed -n -e 's/$.*globus_simple_ca_\([a-f0-9]*\).*/\1/p' /tmp/globus_simpleca.log)
-    ca_subject=$(sed -n -e 's#^/.*=.*$#&#p' /tmp/globus_simpleca.log | sed -n 's#/CN=[^/]*#/CN=#gp')
-
-    printf "
+        #TODO: ZOIKS... this does not work... Next thing to try is to do a
+        #while read on the output of setup-simple-ca, and then regexp each
+        #line and set if there is a hit and echo lines back out to user.
+        #I have to leave this now to do other things (10/22/2009).  this
+        #is where I should pick up from.  Everything else works! (at least
+        #should!)  Throw in a command block and direct the output onf
+        #setup-simple-ca to it. Throw the while read into the command
+        #block.
+            
+        # #########################################
+        # #Grab the "CA Subject" by scraping the output of setup-simple-ca output
+        # local grab
+        
+        [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
+        ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
+        [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
+        
+        # 
+        # #(NOTE: The `hostname` calls are CentOS/RedHat flavored)
+        # #Ex: /O=Grid/OU=GlobusTest/OU=simpleCA-$(echo `hostname -s`.`hostname --domain`)/CN=
+        # grab=$(echo ${output} | egrep -i '^/O=.+CN=')
+        # ca_subject=${grab%=*}=
+        # echo "Grabbed ca_subject: [${ca_subject}]"
+        # 
+        # #Ex: ecdb249f
+        # grab=($(cat ${output} | egrep '^.+globus_simple_ca_(.+)_setup.*$' | cut -d "_" -f 4))
+        # ca_hash=${grab}
+        # echo "Grabbed ca_hash: [${ca_hash}]"
+        # unset grab
+        # rm -v output
+        # #########################################
+        
+        ca_hash=$(sed -n -e 's/$.*globus_simple_ca_\([a-f0-9]*\).*/\1/p' /tmp/globus_simpleca.log)
+        ca_subject=$(sed -n -e 's#^/.*=.*$#&#p' /tmp/globus_simpleca.log | sed -n 's#/CN=[^/]*#/CN=#gp')
+        
+        printf "
 
     Please inspect the output on the last command
     'setup-simple-ca'. Locate the CA subject that should look like
@@ -1453,52 +1457,55 @@ config_myproxy_server() {
     \"${ca_hash}\". You will need them for the next two prompts.
 
     "
-
-    local answer
-    echo "What is the CA subject string [${ca_subject}] ? "
-    while [ 1 ]; do
-        read -p "> " answer
-        [ -n "${answer}" ] &&  ca_subject=${answer} 
-        unset answer
-        read -p "ca_subject = [${ca_subject}] : [Y/n]?" answer
-        if [ "${answer}" = "n" ]; then
+        
+        local answer
+        echo "What is the CA subject string [${ca_subject}] ? "
+        while [ 1 ]; do
+            read -p "> " answer
+            [ -n "${answer}" ] &&  ca_subject=${answer} 
             unset answer
-            continue
-        else
-            break
-        fi
-    done
+            read -p "ca_subject = [${ca_subject}] : [Y/n]?" answer
+            if [ "${answer}" = "n" ]; then
+                unset answer
+                continue
+            else
+                break
+            fi
+        done
+        unset answer
+        echo
+        
+        echo "What is the CA hash value [${ca_hash}] ?"
+        while [ 1 ]; do
+            read -p "> " answer
+            [ -n "${answer}" ] && ca_hash=${answer}
+            unset answer
+            echo -p "ca_hash = [${ca_hash}] : [Y/n]? " answer
+            if [ "${answer}" = "n" ]; then
+                unset answer
+                continue
+            else
+                break
+            fi
+        done
+        unset answer
+        echo
+        
+        # #########################################
+        
+        
+        echo "command: ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default"
+        
+        #move the old files outta the way!
+        [ -e ~/.globus/host/hostcert_request.pem ] && cp -v  ~/.globus/host/hostcert_request.pem ~/.globus/host/hostcert_request.pem.$(date ${date_format}).bak
+        [ -e ~/.globus/host/hostcert.pem ] && cp -v  ~/.globus/host/hostcert.pem ~/.globus/host/hostcert.pem.$(date ${date_format}).bak
+        [ -e ~/.globus/host/hostkey.pem ] && cp -v  ~/.globus/host/hostkey.pem ~/.globus/host/hostkey.pem.$(date ${date_format}).bak
+        
+        ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
+        
+    fi
     unset answer
     echo
-    
-    echo "What is the CA hash value [${ca_hash}] ?"
-    while [ 1 ]; do
-        read -p "> " answer
-        [ -n "${answer}" ] && ca_hash=${answer}
-        unset answer
-        echo -p "ca_hash = [${ca_hash}] : [Y/n]? " answer
-        if [ "${answer}" = "n" ]; then
-            unset answer
-            continue
-        else
-            break
-        fi
-    done
-    unset answer
-    echo
-
-    # #########################################
-
-    
-    echo "command: ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default"
-    
-    #move the old files outta the way!
-    [ -e ~/.globus/host/hostcert_request.pem ] && cp -v  ~/.globus/host/hostcert_request.pem ~/.globus/host/hostcert_request.pem.$(date ${date_format}).bak
-    [ -e ~/.globus/host/hostcert.pem ] && cp -v  ~/.globus/host/hostcert.pem ~/.globus/host/hostcert.pem.$(date ${date_format}).bak
-    [ -e ~/.globus/host/hostkey.pem ] && cp -v  ~/.globus/host/hostkey.pem ~/.globus/host/hostkey.pem.$(date ${date_format}).bak
-    
-    ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
-
     
     if ((fetch_certs)); then
         echo "Downloading cert and key..."

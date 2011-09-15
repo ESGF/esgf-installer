@@ -2546,6 +2546,7 @@ test_publication() {
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
+    echo "(target index node => ${esgf_index_peer})"
     #Publish the dataset from the THREDDS catalog created above...
     echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --publish"
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --publish

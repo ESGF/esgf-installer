@@ -2532,9 +2532,9 @@ test_publication() {
     echo "ESGINI = [${ESGINI}]"
     echo "----------"
     echo "(env set locally for this test publication call only! [call to myproxy])"
-    echo "X509_CERT_DIR  = [${X509_CERT_DIR}]"
-    echo "X509_USER_KEY  = [${X509_USER_KEY}]"
-    echo "X509_USER_CERT = [${X509_USER_CERT}]"
+    echo "X509_CERT_DIR  = [${_X509_CERT_DIR}]"
+    echo "X509_USER_KEY  = [${_X509_USER_KEY}]"
+    echo "X509_USER_CERT = [${_X509_USER_CERT}]"
     echo "----------"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
     X509_CERT_DIR=${_X509_CERT_DIR} \

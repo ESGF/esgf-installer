@@ -773,7 +773,7 @@ start_gridftp_usage_parsing() {
                         ba}
                  /^$end_mark\$/ba
                  d
-                 :a}")
+                 :a}" | awk '!x[$0]++')
             else
                 # try to figure out if we have alread touched this or it's the very first time.
                 cleaned_cron=$(echo "$current_cron" | sed -e '/esg_usage_parser/ d')
@@ -786,7 +786,7 @@ start_gridftp_usage_parsing() {
              if [[ "$new_cron" != "$current_cron" ]]; then
                 echo "Current crontab for user ($installer_user):"; echo "$current_cron"
                 echo "will be updated to:"; echo "$new_cron"
-                echo "Is this ok (should be)? [Y/n]"; read answ
+                read -p "Is this ok ? [Y/n]" answ
                 if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
                     echo "$current_cron" > $backup_cron
                     crontab -u $username <(echo "$new_cron" | awk '!x[$0]++')
@@ -1354,8 +1354,8 @@ config_myproxy_server() {
         local answer="Y"
         echo "NOTICE:"
         echo "   Detected that the myproxy-server is already present!"
-        read -p "   Do you still wish to INSTALL myproxy (and usurp what is present)? [Y/n] " answer
-        [ -z "${answer}" ] && answer="Y"
+        read -p "   Do you still wish to INSTALL myproxy (and usurp what is present)? [y/N] " answer
+        [ -z "${answer}" ] && answer="N"
         if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             install_mode=1
             echo "(${answer})"
@@ -1379,8 +1379,8 @@ config_myproxy_server() {
         local answer="Y"
         echo "NOTICE:"
         echo "   Detected a keypair already in place "
-        read -p "   Do you still wish to (re)GENERATE self signed certs (and usurp what is present)? [Y/n] " answer
-        [ -z "${answer}" ] && answer="Y"
+        read -p "   Do you still wish to (re)GENERATE self signed certs (and usurp what is present)? [y/N] " answer
+        [ -z "${answer}" ] && answer="N"
         if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             keep_certs=0
             gen_self_certs=1
@@ -1508,31 +1508,12 @@ config_myproxy_server() {
     echo
     
     if ((fetch_certs)); then
-        echo "Downloading cert and key..."
+        #totally superfluous, vestigial decision path.
         local certfile=hostcert.pem
         pushd /etc/grid-security/ >& /dev/null
-
-        wget -O ${certfile}.new ${myproxy_dist_url_base}/keys/$(hostname)/${certfile}
-        if [ $? == 0 ]; then
-            [ -e ${certfile} ] && mv -v ${certfile} ${certfile}.$(date ${date_format}).bak
-            mv -v ${certfile}.new ${certfile}
-        else
-            [ -e ${certfile}.new ] && rm -v ${certfile}.new
-        fi
-        chmod 644 ${certfile}
-
-        #-------
-        
+        [ -e "${certfile}" ] && chmod 644 ${certfile}
         local keyfile=hostkey.pem
-        wget -O ${keyfile}.new  ${myproxy_dist_url_base}/keys/${keyfile}
-        if [ $? == 0 ]; then
-            [ -e ${keyfile} ] && mv -v ${keyfile} ${keyfile}.$(date ${date_format}).bak
-            mv -v ${keyfile}.new ${keyfile}
-        else
-            [ -e ${keyfile}.new ] && rm -v ${keyfile}.new
-        fi
-        chmod 600 ${keyfile}
-
+        [ -e "${keyfile}" ] && chmod 600 ${keyfile}
         popd >& /dev/null
     elif ((gen_self_certs)); then
         echo "Generating cert and key...(pwd = $(pwd))"
@@ -1559,16 +1540,23 @@ config_myproxy_server() {
     pushd /etc >& /dev/null
     local tfile=myproxy-server.config
     echo "Download and Modifying myproxy server configuration file: `pwd`/${tfile}"
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     wget -O ${tfile} ${myproxy_dist_url_base}/${tfile}
-    #This is the password of the CA's certs created via the simple ca (setup-gsi)
-    read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
-    eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
+    if [ $? == 0 ]; then 
+        #This is the password of the CA's certs created via the simple ca (setup-gsi)
+        read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
+        eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
+        echo -n "*"
+        eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+        echo -n "*"
+        eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
+        echo -n "*"
+        echo " [OK]"
+    else
+        echo " [FAILED]"
+        echo "Download not successful... "
+        [ -e "${tfile}.bak" ] && mv -v ${tfile}{.bak,}
+    fi
     chmod 600 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
@@ -1870,7 +1858,7 @@ test_myproxy_server() {
 start_myproxy_server() {
     check_myproxy_process && return 0
     echo " MyProxy - Starting server..."
-    [ -x /etc/init.d/myproxy ] && /etc/init.d/myproxy start && return 0
+    [ -x /etc/init.d/myproxy ] && X509_CERT_DIR=${globus_global_certs_dir} /etc/init.d/myproxy start && return 0
     return 1
 }
 

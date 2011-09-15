@@ -4813,6 +4813,7 @@ initial_setup_questionnaire() {
 	[ -n "${input}" ] && esgf_host=${input}	  && write_as_property esgf_host
     else
 	echo "esgf_host = [${esgf_host}]"
+        write_as_property esgf_host
     fi
 
     check_for_my_ip

@@ -1408,8 +1408,8 @@ test_esgcet() {
     #Run test...
     echo "$cdat_home/bin/esginitialize -c "
     $cdat_home/bin/esginitialize -c
-    echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
-    $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.test.mytest --project test ${esgcet_testdir} > mytest.txt
+    echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
+    $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
     [ $? != 0 ] && echo " ERROR: ESG directory scan failed" && popd && checked_done 1
 
     echo "$cdat_home/bin/esgpublish --map mytest.txt --project test --model test"
@@ -2323,8 +2323,8 @@ test_tds() {
     start_tomcat
     start_postgress
 
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --thredds"
-    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --thredds
+    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --thredds"
+    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --thredds
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
     echo "curl http://${esgf_host_ip}/thredds"
@@ -2548,14 +2548,14 @@ test_publication() {
 
     echo "(target index node => ${esgf_index_peer})"
     #Publish the dataset from the THREDDS catalog created above...
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --publish"
-    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --publish
+    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --publish"
+    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --publish
     [ $? != 0 ] && echo " ERROR: unable to successfully execute esgpublish" && return 1
     sleep 3
 
     [ "$1" = "no-unpublish" ] && echo "Leaving test publication file published" && return 1
-    echo "$cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.test.mytest"
-    $cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.test.mytest
+    echo "$cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest"
+    $cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest
     [ $? != 0 ] && echo " ERROR: unable to successfully execute esgunpublish" && return 1
 
     return 0
@@ -5195,7 +5195,7 @@ done_remark() {
     echo
     echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
     echo "http://${esgf_index_peer}/"
-    echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.test.mytest"
+    echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest"
     echo ""
 }
 

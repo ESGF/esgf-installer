@@ -326,7 +326,7 @@ init_structure() {
     #--------------
 
     esgf_host=${esgf_host}
-    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn)
+    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn) && write_as_property esgf_host
 
     esgf_default_peer=${esgf_default_peer:-${ESGF_DEFAULT_PEER}}
     [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
@@ -4813,6 +4813,7 @@ initial_setup_questionnaire() {
 	[ -n "${input}" ] && esgf_host=${input}	  && write_as_property esgf_host
     else
 	echo "esgf_host = [${esgf_host}]"
+        write_as_property esgf_host
     fi
 
     check_for_my_ip

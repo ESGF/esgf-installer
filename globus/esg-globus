@@ -1407,8 +1407,8 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    read -p "So you wish to install a simple CA? [y/N] " answer
-    [ -z "${answer}" ] && answer="Y"
+    read -p "Do you wish to install a simple CA? [y/N] " answer
+    [ -z "${answer}" ] && answer="N"
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
         #TODO: ZOIKS... this does not work... Next thing to try is to do a

@@ -745,7 +745,7 @@ start_gridftp_usage_parsing() {
     local cronscript=$1
     local config_type=${2:-"<unknown type>"}
     
-    [ -z ${cronscript} ] && "No cronscript [${cronscript}] specified" && return 1
+    [ -z "${cronscript}" ] && "No cronscript [${cronscript}] specified" && return 1
 
     # setup crontab here
     if [ -e ${cronscript} ]; then
@@ -789,7 +789,7 @@ start_gridftp_usage_parsing() {
                 echo "Is this ok (should be)? [Y/n]"; read answ
                 if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
                     echo "$current_cron" > $backup_cron
-                    crontab -u $username <(echo "$new_cron")
+                    crontab -u $username <(echo "$new_cron" | awk '!x[$0]++')
                      local ret=$?
                 fi
             fi

@@ -117,12 +117,12 @@ init() {
     esgf_node_manager_version=${esgf_node_manager_version:-"0.5.6"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
-    #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.2.2"}
-
     #see esgf-security project:
     esgf_security_version=${esgf_security_version:-"1.4.1"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
+
+    #see esg-orp project:
+    esg_orp_version=${esg_orp_version:-"1.2.2"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"1.1.6"}
@@ -341,6 +341,11 @@ init_structure() {
 
     esg_root_id=${esg_root_id:-${ESGF_ROOT_ID}}
     [ -z "${esg_root_id}" ] && get_property esg_root_id
+
+    node_peer_group=${node_peer_group}
+    [ -z "${node_peer_group}" ] && get_property node_peer_group
+
+    [ -z "${node_short_name}" ] && get_property node_short_name
 
     #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
     #this is actually an issue with dedup_properties that gets called in the get_property function

@@ -114,21 +114,21 @@ init() {
     esgcet_version=${esgcet_version:-"2.8.2"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.2"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.6"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
-    #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.1.3"}
-
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.3.0"}
+    esgf_security_version=${esgf_security_version:-"1.4.1"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
 
+    #see esg-orp project:
+    esg_orp_version=${esg_orp_version:-"1.2.2"}
+
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"1.1.4"}
+    esgf_idp_version=${esgf_idp_version:-"1.1.6"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"1.3.0"}
+    esg_search_version=${esg_search_version:-"1.4.0"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"1.2.1"}
@@ -136,14 +136,15 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_version:="7.20.1"}
+    curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.2"} ; ant_min_version=${ant_min_version:-"1.8.2"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"6.0.32"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
-    tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_version:-"4.2.20100908.2246"}
-
+    tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
+    las_version=${las_version:-"7.3.4"}; las_min_version=${las_min_version:-"7.3.4"}
+    
     python_version=${python_version:-"2.6"}
 
     #--------------------------------
@@ -197,7 +198,6 @@ init() {
     export CATALINA_BASE=${CATALINA_HOME}
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
-    export X509_CERT_DIR=${X509_CERT_DIR:-${HOME}/.globus/certificates}
     export ESG_ROOT_ID=${esg_root_id}
 
     myPATH=${install_prefix}/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
@@ -233,7 +233,8 @@ init() {
     workdir=${workdir:-${installer_home}/workbench/esg}
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-    esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
+    esg_dist_url_root=http://198.128.245.140/dist
+    esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
     date_format="+%Y_%m_%d_%H%M%S"
     num_backups_to_keep=${num_backups_to_keep:-7}
     compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
@@ -243,7 +244,8 @@ init() {
     curl_workdir=${workdir}/curl
     curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
     git_workdir=${workdir}/git
-    git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+    #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+    git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
     node_db_name=esgcet
     postgress_workdir=${workdir}/postgress
     postgress_jar=postgresql-8.3-603.jdbc3.jar
@@ -270,10 +272,8 @@ init() {
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-    my_ip_address=$(ifconfig | grep "inet[^6]" | head -1 | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}')
     show_summary_latch=0
     source_latch=0
-    node_host_ip_address=${my_ip_address}
     scripts_dir=${install_prefix}/bin
     no_globus=${no_globus:-0}
     force_install=${force_install:-0}
@@ -283,11 +283,13 @@ init() {
     keystore_alias=${keystore_alias:-my_esgf_node}
     keystore_password=${keystore_password}
     truststore_file=${tomcat_conf_dir}/esg-truststore.ts
+    truststore_password=${truststore_password:-changeit}
     globus_global_certs_dir=/etc/grid-security/certificates
     #NOTE: java keystore style DN...
     default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
     index_config="master slave"
+    check_for_my_ip
 }
 
 init_structure() {
@@ -325,7 +327,7 @@ init_structure() {
     #--------------
 
     esgf_host=${esgf_host}
-    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn)
+    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn) && write_as_property esgf_host
 
     esgf_default_peer=${esgf_default_peer:-${ESGF_DEFAULT_PEER}}
     [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
@@ -339,6 +341,11 @@ init_structure() {
 
     esg_root_id=${esg_root_id:-${ESGF_ROOT_ID}}
     [ -z "${esg_root_id}" ] && get_property esg_root_id
+
+    node_peer_group=${node_peer_group}
+    [ -z "${node_peer_group}" ] && get_property node_peer_group
+
+    [ -z "${node_short_name}" ] && get_property node_short_name
 
     #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
     #this is actually an issue with dedup_properties that gets called in the get_property function
@@ -948,9 +955,8 @@ setup_postgress() {
 	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
-	chmod 640 ${pg_secret_file}
-	chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
     fi
+    [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
     ########
     sleep 3
@@ -1071,11 +1077,11 @@ start_postgress() {
 
     echo "Starting Postgress..."
     echo "su $pg_sys_acct -c \"$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start\""
-    su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
+    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
     [ $? != 0 ] && echo " ERROR: Could not start database!" && popd && return 1
 
     #NOTE: How long does it take for the database to come up? Set sleep appropriately
-    echo -n "Giving database time to startup... 3 seconds "
+    echo "Giving database time to startup... (3 seconds) "
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
     checked_done 0
@@ -1091,8 +1097,8 @@ stop_postgress() {
     [ $? != 0 ] && return 1
 
     echo
-    echo "stop postgress: su $pg_sys_acct -c \"pg_ctl -D $postgress_install_dir/data -m i stop\""
-    su $pg_sys_acct -c "pg_ctl -D $postgress_install_dir/data -m i stop" #(stop server immediately)
+    echo "stop postgress: su $pg_sys_acct -c \"pg_ctl -D $postgress_install_dir/data -m f stop\""
+    su $pg_sys_acct -c "pg_ctl -D $postgress_install_dir/data -m f stop" #(stop server immediately)
     if [ $? != 0 ]; then
 	echo " WARNING: Unable to stop the database (nicely)"
 	echo " Hmmm...	okay no more mr nice guy... issuing \"killall postgres\""
@@ -1407,8 +1413,8 @@ test_esgcet() {
     #Run test...
     echo "$cdat_home/bin/esginitialize -c "
     $cdat_home/bin/esginitialize -c
-    echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
-    $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.test.mytest --project test ${esgcet_testdir} > mytest.txt
+    echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
+    $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
     [ $? != 0 ] && echo " ERROR: ESG directory scan failed" && popd && checked_done 1
 
     echo "$cdat_home/bin/esgpublish --map mytest.txt --project test --model test"
@@ -1602,7 +1608,8 @@ setup_tomcat() {
 	fi
     fi
 
-    checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt ${esg_dist_url}/robots.txt $((force_install))
+    checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt  ${esg_dist_url}/robots.txt  $((force_install))
+    checked_get ${tomcat_install_dir}/webapps/ROOT/favicon.ico ${esg_dist_url}/favicon.ico $((force_install))
 
     start_tomcat
 
@@ -1786,8 +1793,6 @@ configure_tomcat() {
 		fi
 	    fi
 
-	    add_my_cert_to_truststore ${store_password}
-
 
     #NOTE: The truststore uses the java default password: "changeit"
 
@@ -1796,7 +1801,7 @@ configure_tomcat() {
 	    echo -n "*"
 	    eval "perl -p -i -e 's#\\@\\@truststore_file\\@\\@#${truststore_file}#g' server.xml"
 	    echo -n "*"
-	    eval "perl -p -i -e 's#\\@\\@truststore_password\\@\\@#changeit#g' server.xml"
+	    eval "perl -p -i -e 's#\\@\\@truststore_password\\@\\@#${truststore_password}#g' server.xml"
 	    echo -n "*"
 	    eval "perl -p -i -e 's#\\@\\@keystore_file\\@\\@#${keystore_file}#g' server.xml"
 	    echo -n "*"
@@ -1804,6 +1809,8 @@ configure_tomcat() {
 	    echo -n "*"
 	    eval "perl -p -i -e 's#\\@\\@keystore_alias\\@\\@#${keystore_alias}#g' server.xml"
 	    echo "*"
+
+	    add_my_cert_to_truststore ${store_password}
 
     #clean up the password immediately after it is done being used
 	    keystore_password=${store_password} #don't want to do this but it is used by the esg-security script that installs the ORP
@@ -1820,6 +1827,39 @@ configure_tomcat() {
 	    [ $? != 0 ] && " ERROR: Could not change group of esg's tomcat config dir to \"$tomcat_user\" user" && popd && checked_done 1
 
 	    popd #>& /dev/null
+}
+
+#Util "private" function for use **AFTER** tomcat has been configured!!!!
+#Reads tomcat's server.xml file at sets the appropriate vars based on contained values
+#Will *only* set global vars if it was successfully gleaned from server.xml.
+_glean_keystore_info() {
+    if [ -r "${tomcat_install_dir}/conf/server.xml" ]; then
+        echo "inspecting tomcat config file "
+        echo -n "O"
+        local value=""
+        value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "o" || echo -n "x"
+        [ $? == 0 ] && [ -n "${value}" ] && keystore_file=${value}
+        unset value
+
+        value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
+        [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
+        unset value
+
+        value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ":" || echo -n "x"
+        [ $? == 0 ] && [ -n "${value}" ] && keystore_alias=${value}
+        unset value
+
+        value=$(sed -n 's#.*truststoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "-" || echo -n "x"
+        [ $? == 0 ] && [ -n "${value}" ] && truststore_file=${value}
+        unset value
+
+        value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ")" || echo -n "x"
+        [ $? == 0 ] && [ -n "${value}" ] && truststore_password=${value}
+        unset value
+        echo
+    else
+        echo "Could not glean values store... :-("
+    fi
 }
 
 start_tomcat() {
@@ -1907,13 +1947,13 @@ select_idp_peer() {
     #----
     #(Making this assignment for the sake of readability for the code below)
     #@@node_host_ip_address@@ #Token in file
-    node_host_ip_address=${my_ip_address}
+    [ -z "${esgf_host_ip}" ] && get_property esgf_host_ip
 
     #just to be sure it's clear (though it should be)
     unset input
-    read -p "Please Enter the IP address of this host [${node_host_ip_address}]:> " input
-    [ ! -z "${input}" ] && node_host_ip_address=${input}
-    printf "\nUsing IP: ${node_host_ip_address}\n"
+    read -p "Please Enter the IP address of this host [${esgf_host_ip}]:> " input
+    [ ! -z "${input}" ] && esgf_host_ip=${input}
+    printf "\nUsing IP: ${esgf_host_ip}\n"
     unset input
 
     local default_myproxy_port=7512
@@ -1990,17 +2030,29 @@ select_idp_peer() {
     myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
 
     echo
-    echo "Selection: [${choice}] source: ${node_host_ip_address}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
+    echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
     #----------------------
     #Fetch and Insert the Certificate of IDP Peer (which is always co-located with myproxy - at least at present)
-    register ${myproxy_endpoint}
-    [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
+
+    #If you want to register to yourself... you already have your own certs trusted, no need to register
+    #(this is what the call to add_my_cert_to_truststore does, called previously in configure_tomcat)
+    if [ "${esgf_host}" != "${myproxy_endpoint}" ]; then
+        register ${myproxy_endpoint}
+        [ $? != 0 ] && echo " Error: could not import IDP Peer's certificate!" && checked_done 1
+    else
+        #Unless you are going to force it, there is an assumption here that your truststore already has your cert installed, from when you configured tomcat
+        if ((force_install)) ; then
+            local keystore_pass=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml) && echo -n "found it" || echo -n "cannot ascertain keystore password"
+            [ -n "${keystore_pass}" ] && add_my_cert_to_truststore ${keystore_pass} && echo ":-)" || echo ":-("
+        fi
+    fi
     write_as_property esgf_idp_peer
     write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
     write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
     #----------------------
 
+    write_tds_env
 }
 
 
@@ -2162,8 +2214,9 @@ setup_tds() {
     fetch_file=web.xml
     checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
-    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
-    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
+    cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
 
     #DEBUGGING
     ((DEBUG)) && cat ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
@@ -2225,11 +2278,11 @@ setup_tds() {
     chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet
     [ $? != 0 ] && echo "WARNING: Could not change owner successfully - this will lead to unability to create new catalogs via the publisher!"
 
-    echo "curl http://${node_host_ip_address}/thredds"
+    echo "curl http://${esgf_host_ip}/thredds"
     local wait_time=5
     local ret=1
     while [[ $wait_time > 0 ]]; do
-	curl http://${node_host_ip_address}/thredds >& /dev/null
+	curl http://${esgf_host_ip}/thredds >& /dev/null
 	ret=$?
 	[ $ret == 0 ] && break
 	sleep 1
@@ -2275,12 +2328,12 @@ test_tds() {
     start_tomcat
     start_postgress
 
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --thredds"
-    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --thredds
+    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --thredds"
+    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --thredds
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
-    echo "curl http://${node_host_ip_address}/thredds"
-    curl http://${node_host_ip_address}/thredds
+    echo "curl http://${esgf_host_ip}/thredds"
+    curl http://${esgf_host_ip}/thredds
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && popd && checked_done 1
 
     echo "[OK]"
@@ -2350,7 +2403,6 @@ my_setup_globus() {
 write_globus_env() {
     ((show_summary_latch++))
     echo "export GLOBUS_LOCATION=$GLOBUS_LOCATION" >> ${envfile}
-    echo "export X509_CERT_DIR=$X509_CERT_DIR" >>  ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -2414,7 +2466,7 @@ start_globus() {
 
     local idp_node_ret=1
     if [ $((sel & IDP_BIT)) != 0 ]; then
-	echo "Starting Globus Services for Index-Node... (MyProxy server)"
+	echo "Starting Globus Services for IDP-Node... (MyProxy server)"
 	directive="gateway"
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
@@ -2478,26 +2530,37 @@ test_publication() {
     mkdir -p ${personal_credential_repo}
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
-    X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
     rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
+    local _X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_KEY=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_CERT=${personal_credential_repo}/esgf_credentials
 
     echo "ESGINI = [${ESGINI}]"
-    echo "X509_CERT_DIR = [${X509_CERT_DIR}]"
+    echo "----------"
+    echo "(env set locally for this test publication call only! [call to myproxy])"
+    echo "X509_CERT_DIR  = [${_X509_CERT_DIR}]"
+    echo "X509_USER_KEY  = [${_X509_USER_KEY}]"
+    echo "X509_USER_CERT = [${_X509_USER_CERT}]"
+    echo "----------"
     echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
-    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
+    X509_CERT_DIR=${_X509_CERT_DIR} \
+        X509_USER_KEY=${_X509_USER_KEY} \
+        X509_USER_CERT=${_X509_USER_CERT} \
+        $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
     [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
+    echo "(target index node => ${esgf_index_peer})"
     #Publish the dataset from the THREDDS catalog created above...
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --publish"
-    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.test.mytest --noscan --publish
+    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --publish"
+    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --publish
     [ $? != 0 ] && echo " ERROR: unable to successfully execute esgpublish" && return 1
     sleep 3
 
     [ "$1" = "no-unpublish" ] && echo "Leaving test publication file published" && return 1
-    echo "$cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.test.mytest"
-    $cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.test.mytest
+    echo "$cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest"
+    $cdat_home/bin/esgunpublish --skip-thredds pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest
     [ $? != 0 ] && echo " ERROR: unable to successfully execute esgunpublish" && return 1
 
     return 0
@@ -2617,8 +2680,8 @@ fetch_esg_certificates() {
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -2647,7 +2710,14 @@ rebuild_truststore() {
     mkdir -p ${tmp_dir}
 
     local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
-    [ -n "${simpleCA_cert}" ] && echo "Integrating in local simpleCA_cert" && cp -v ${simpleCA_cert} ${globus_global_certs_dir}/simpleCA_${simpleCA_cert##*/}.0 && echo "[OK]"
+    if [ -n "${simpleCA_cert}" ]; then
+        echo "Integrating in local simpleCA_cert... "
+        (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/simpleCA_${simpleCA_cert##*/}.0 && \
+            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
+            chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            echo "[OK]") || echo "[FAIL]"
+    fi
 
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
     for cert_file in $cert_files; do
@@ -2662,13 +2732,13 @@ rebuild_truststore() {
 
 	if [ -f ${truststore_file} ]; then
 	    $java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file} \
-		-storepass changeit 2>&1 > /dev/null ;
+		-storepass ${truststore_password} 2>&1 > /dev/null ;
 	    [ $? == 0 ] && echo -n "- " || echo -n "  "
 	fi
 
 	[ $? == 0 ] && echo -n "+ " || echo -n "  "
 	$java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file} \
-	    -storepass changeit -noprompt ;
+	    -storepass ${truststore_password} -noprompt ;
 	[ $? != 0 ] && echo " [FAILED]"
 
 	rm -f ${der_file} ;
@@ -2713,6 +2783,10 @@ add_my_cert_to_truststore() {
 	echo "store_password = ******"
     fi
 
+    _glean_keystore_info
+
+    [ "${store_password}" != "${keystore_password}" ] && echo "WARNING: password is not valid match for keystore"
+
     #only making this call to test password
     $java_install_dir/bin/keytool -v -list -keystore ${keystore_file} -storepass ${store_password} >& /dev/null
     [ $? != 0 ] && echo "Could not access private keystore ${keystore_file}" && return 1;
@@ -2726,16 +2800,16 @@ add_my_cert_to_truststore() {
 	$java_install_dir/bin/keytool -export -alias ${keystore_alias} -file ${keystore_file}.cer -keystore ${keystore_file} -storepass ${store_password}
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 
-	echo "keytool -v -list -keystore ${truststore_file} -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+my_esgf_node$'"
-	$java_install_dir/bin/keytool -v -list -keystore ${truststore_file} -storepass changeit | egrep -i '^Alias[ ]+name:[ ]+my_esgf_node$' #TODO howdo I put the var ${keystore_alias} here!!!
+	echo "keytool -v -list -keystore ${truststore_file} -storepass ${truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'"
+	$java_install_dir/bin/keytool -v -list -keystore ${truststore_file} -storepass ${truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'
 	if [ $? == 0 ]; then
 	    echo "Detected Alias \"${keystore_alias}\" Present... Removing... Making space for certificate... "
-	    $java_install_dir/bin/keytool -delete -alias ${keystore_alias} -keystore ${truststore_file}  -storepass changeit 2>&1 > /dev/null #for ORP
+	    $java_install_dir/bin/keytool -delete -alias ${keystore_alias} -keystore ${truststore_file}  -storepass ${truststore_password} 2>&1 > /dev/null #for ORP
 	    [ $? != 0 ] && echo " ERROR: problem deleting ${keystore_alias} key from keystore!" && return 1
 	fi
 
 	echo "Importing keystore's certificate into truststore... "
-	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias} -keypass ${store_password} -file ${keystore_file}.cer -keystore ${truststore_file} -storepass changeit -noprompt
+	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias} -keypass ${store_password} -file ${keystore_file}.cer -keystore ${truststore_file} -storepass ${truststore_password} -noprompt
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 	sync_with_java_truststore ${truststore_file}
 	echo -n "cleaning up after ourselves... "
@@ -2947,11 +3021,11 @@ install_keypair() {
     local globus_grid_security_dir=${globus_global_certs_dir%/*}
     [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
 
-    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.old
+    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.bak
     cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
 	chmod 600 ${globus_grid_security_dir}/hostkey.pem
 
-    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.old
+    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.bak
     cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
 	chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
         openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
@@ -3440,7 +3514,7 @@ export_keystore_as_globus_hostkeys() {
 # communicate with over an encrypted ssl connection.  This function
 # must be run after tomcat is set up since it references server.xml.
 #####
-#(called by setup_tds)
+#(called by setup_idp_peer)
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
 register() {
@@ -3462,17 +3536,24 @@ register() {
 
     local ssl_endpoint=${input%%/*} #just need the hostname
     local ssl_port=${ssl_port:-443}
-    local ssl_endpoint_passwd=${2:-changeit}
+    local ssl_endpoint_passwd=${2:-$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
+    [ -z "${ssl_endpoint_passwd}" ] && ssl_endpoint_passwd="changeit" #Tomcat's default
 
-    local CP=".:${workdir}"
+    if [ "${ssl_endpoint}" = "${esgf_host}" ]; then
+        add_my_cert_to_truststore ${ssl_endpoint_passwd} && echo ":-)" || (echo ":-(" && return 1)
+    else
+        local CP=".:${workdir}"
 
-    echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
-    ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
-    local ret=$?
+        #[ "${ssl_endpoint}" = "${esgf_host}" ] && start_tomcat
 
-    #NOTE: The InstallCert code fetches Java's jssecacerts file (if
-    #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
-    #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
+        #NOTE: The InstallCert code fetches Java's jssecacerts file (if
+        #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
+        #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
+
+        echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
+        ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
+        local ret=$?
+    fi
 
     chmod 644 ${truststore_file}
     chown ${tomcat_user}:${tomcat_group} ${truststore_file}
@@ -3612,6 +3693,66 @@ set_index_peer() {
 ############################################
 # General - Utility Functions
 ############################################
+
+set_redirect() {
+    local web_app_tld=${1:-esgf-node-manager}
+    local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
+    [ ! -e ${index_file} ] && echo "Sorry, No \"ROOT\" application found!" && return 1
+    [ ! -e ${tomcat_install_dir}/webapps/${web_app_tld} ] && echo "Sorry, No target appliaction directory found for ${web_app_tld}" && return 2
+    local redirect_content="<head><meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=/${web_app_tld}\"></head>"
+    [ "${redirect_content}" = "$(cat ${index_file})" ] && echo "Redirect already setup" && return 0
+    local doit="Y"
+    read -p "Do you wish to setup the redirect to the ${web_app_tld}'s page? [Y/n]: " doit
+    [ "n" = "${doit}" ] || [ "N" = "${doit}" ] && return 0
+    mv ${index_file} ${index_file}.last
+    echo "${redirect_content}" > ${index_file}
+    chmod 644 ${index_file}
+    chown -R ${tomcat_user}  ${index_file}
+    chgrp -R ${tomcat_group} ${index_file}
+    echo "Redirect setup to /${web_app_tld}"
+    return 0
+}
+
+check_for_my_ip() {
+    local my_ip_address
+    local my_ip_addresses=($(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}'))
+
+    get_property esgf_host_ip
+    local matched=0
+
+    #We want to make sure that the IP address we have in our config
+    #matches one of the IPs that are associated with this host
+    for (( i=0; i < ${#my_ip_addresses[@]}; i++ )); do
+        [ -n "${esgf_host_ip}" ] && [ "${esgf_host_ip}" = "${my_ip_addresses[$i]}" ] && ((matched++))
+    done
+    ((matched == 0)) && echo "Configured host IP address does not match available IPs..."
+
+    if [ -z "${esgf_host_ip}" ] || ((force_install)) || ((matched == 0)); then
+        if (( ${#my_ip_addresses[@]} > 1 )); then
+        #ask the user to choose...
+            while [ 1 ]; do
+                printf "Detected multiple IP addresses bound to this host...\n"
+                printf "Please select the IP address to use for this installation\n"
+	        printf "\t-------------------------------------------\n"
+                for (( i=0; i < ${#my_ip_addresses[@]}; i++ )); do
+                    printf "\t[$i] : ${my_ip_addresses[$i]}\n"
+                done
+	        printf "\t-------------------------------------------\n"
+                local default=0
+                read -p "select [] > " choice
+                [ -z "${choice}" ] && continue
+                my_ip_address=${my_ip_addresses[${choice}]}
+                echo "selected address -> ${my_ip_addresses[${choice}]}"
+                [ -n "${my_ip_address}" ] && break
+            done
+        else
+            my_ip_address=${my_ip_addresses[0]}
+        fi
+    fi
+    write_as_property esgf_host_ip ${my_ip_address}
+    #Set local arrived at value to variable in global scope
+    get_property esgf_host_ip
+}
 
 #Needed to reduce the number of commands when wanting to make a verbose conditional print
 verbose_print() { ((VERBOSE)) && echo $@; return 0; }
@@ -3790,8 +3931,9 @@ check_postgress_process() {
 #This function "succeeds" (is true; returns 0)	if there *are* running processes found running
 check_tomcat_process() {
     if [ -f ${tomcat_install_dir}/conf/server.xml ]; then
+        [ -z "${esgf_host_ip}" ] && get_property esgf_host_ip
 	local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')
-	local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | awk '{print $1}' | sort -u | xargs)"
+	local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed 's/\(\*\|'${esgf_host_ip}'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)"
 	[ -z "${procs}" ] && return 1 #No process running on ports
 	if (( $(expr "$procs" : '.*jsvc.*') > 0)); then
 	    echo "Tomcat (jsvc) process is running... " && return 0
@@ -3961,6 +4103,14 @@ check_module_version() {
     return 1
 }
 
+get_current_webapp_version() {
+    local webapp_name=$1
+    local version_property=${2:-"Version"}
+    local v=$(echo $(sed -n '/^'${version_property}':[ ]*\(.*\)/p' ${tomcat_install_dir}/webapps/${webapp_name}/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))
+    echo $v
+    [ -n "${v}" ] && return 0 || return 1
+}
+
 check_webapp_version() {
     local webapp_name=$1
     local target_version=$2
@@ -3968,7 +4118,7 @@ check_webapp_version() {
 
     [ ! -d "${tomcat_install_dir}/webapps/${webapp_name}" ] && echo " Web Application \"${webapp_name}\" is not present or cannot be detected!" && return 2
 
-    local current_version=$(sed -n '/^'${version_property}':[ ]*\(.*\)/p' ${tomcat_install_dir}/webapps/${webapp_name}/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null)
+    local current_version=$(get_current_webapp_version ${webapp_name} ${version_property})
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${webapp_name}" && return 3
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${webapp_name}" && return 4
 
@@ -4084,16 +4234,21 @@ check_for_update() {
 #  1 = do not check for update, directly go and fetch the file regardless
 #  0 = first check for update availability. (default)
 #
+#  The 4th token is for indicated whether a backup file should be made flag value 1|0.
+#  1 = yes, create a .bak file if the file is already there before fetching new
+#  0 = no, do NOT make a .bak file even if the file is already there, overwrite it
+#
 #  (When using the force flag you MUST specify the first two args!!)
 #
 # NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
 #	A return value of 1 only means that the file is up-to-date and there
 #	Is no reason to fetch it.
 #
-# USAGE: checked_get [file] http://www.foo.com/file [<1|0>]
+# USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
 #
 checked_get() {
     local force_get=${3:-0}
+    local make_backup_file=${4:-1} #default to make backup *.bak files if necessary
 
     if ((force_get == 0)); then
 	check_for_update $@
@@ -4114,7 +4269,7 @@ checked_get() {
 	exit 1
     fi
 
-    if [ -e ${local_file} ]; then
+    if [ -e ${local_file} ] && ((make_backup_file)) ; then
 	cp -v ${local_file} ${local_file}.bak
 	chmod 600 ${local_file}.bak
     fi
@@ -4461,6 +4616,8 @@ self_verify() {
         return 0
     fi
 
+    [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+
     _verify http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "") >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
@@ -4593,6 +4750,8 @@ start() {
     [ $((sel & ALL_BIT)) == 0 ] && echo "Cannot Start: No Node Type Specified! (See --help for info on the --type|-t option)  :-|" && exit 1
 
     echo "starting services... ($sel)"
+    [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost && verbose_print "Cleared tomcat cache... "
+
     run_startup_hooks
 
     /etc/init.d/ntpd status
@@ -4666,7 +4825,10 @@ initial_setup_questionnaire() {
 	[ -n "${input}" ] && esgf_host=${input}	  && write_as_property esgf_host
     else
 	echo "esgf_host = [${esgf_host}]"
+        write_as_property esgf_host
     fi
+
+    check_for_my_ip
 
     unset input
     unset default
@@ -4705,6 +4867,9 @@ initial_setup_questionnaire() {
 	#Use the same password when creating the postgress account
 	((changed==1)) && pg_sys_acct_passwd=${security_admin_password}
     fi
+    [ -e "${esgf_secret_file}" ] && chmod 640 ${esgf_secret_file} && chown ${installer_uid}:${tomcat_group} ${esgf_secret_file}
+    [ ! -e "${pg_secret_file}" ] && echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
+    [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
     unset input
 
@@ -4740,24 +4905,36 @@ initial_setup_questionnaire() {
     get_property node_long_name ${node_long_name}
     if [ -z "${node_long_name}" ] || ((force_install)); then
 	unset input
-	read -p "Please give this node a more descriptive \"long\" name: (optional) [${node_long_name}]: " input
+	read -p "Please give this node a more descriptive \"long\" name [${node_long_name}]: " input
 	[ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name
     else
 	echo "node_long_name = [${node_long_name}]"
     fi
 
-    get_property node_namespace "org.esgf"
+    get_property node_namespace
     if [ -z "${node_namespace}" ] || ((force_install)); then
-	#local default_ns=$(hostname --fqdn | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')
-	#default_ns=${default_ns%.*}
+        local node_namespace_=${node_namespace:-$(hostname --fqdn | sed -n 's/[^.]*\(.*\)/\1/p' | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')}
 	while [ 1 ]; do
 	    unset input
-	    read -p "What is the namespace to use for this node? (optional - if not sure use default) [${node_namespace}]: " input
-	    [ -z "${input}" ] && [ -n "${node_namespace}" ] && input=${node_namespace} && break
+	    read -p "What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [${node_namespace_}]: " input
+	    [ -z "${input}" ] && [ -n "${node_namespace_}" ] && write_as_property node_namespace ${node_namespace_} && break
 	    [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
 	done
     else
 	echo "node_namespace = [${node_namespace}]"
+    fi
+
+    get_property node_peer_group
+    if [ -z "${node_peer_group}" ] || ((force_install)); then
+        local node_peer_group_=${node_peer_group:-"esgf"}
+	while [ 1 ]; do
+	    unset input
+	    read -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input
+	    [ -z "${input}" ] && [ -n "${node_peer_group_}" ] && write_as_property node_peer_group ${node_peer_group_} && break
+	    [ -n "${input}" ] && node_peer_group=${input} && write_as_property node_peer_group && break
+	done
+    else
+	echo "node_peer_group = [${node_peer_group}]"
     fi
 
     unset input
@@ -5022,13 +5199,13 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${my_ip_address}/${node_manager_app_context_root}"
-    echo "http://${my_ip_address}/thredds"
-    echo "http://${my_ip_address}/OpenidRelyingParty"
+    echo "http://${esgf_host_ip}/${node_manager_app_context_root}"
+    echo "http://${esgf_host_ip}/thredds"
+    echo "http://${esgf_host_ip}/OpenidRelyingParty"
     echo
     echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
     echo "http://${esgf_index_peer}/"
-    echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.test.mytest"
+    echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest"
     echo ""
 }
 
@@ -5058,7 +5235,7 @@ show_type() {
 }
 
 main() {
-
+    [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 	init
 	let sel=0
 	local selection_string
@@ -5145,7 +5322,7 @@ main() {
 		    (( $# != 0 )) && echo "error: \"restart\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
-            debug_print "RESTARTING SERVICES"
+                    debug_print "RESTARTING SERVICES"
                     init_structure
 		    stop ${sel}
 		    sleep 2
@@ -5212,6 +5389,9 @@ main() {
 		    ;;
                 --devel)
                     devel=1
+                    ;;
+                --prod)
+                    devel=0 #hence... production
                     ;;
 		--debug)
 		    DEBUG=1
@@ -5599,16 +5779,18 @@ main() {
     #Installation of "plugin" subsystems... & filters
     #---------------------------------------
 
-    #---subsystems---
+    #---subsystems-----
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
    #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"	&& setup_subsystem drslib esgf-drslib $@
 
-    #---filters------
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && setup_subsystem security-token-filters filters $@
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"	 && setup_subsystem security-tokenless-filters filters $@
+    #---filters (TDS)--
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"	 && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
 
+    #---filters--------
     #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem"  && setup_subsystem access-logging-filter filters $@
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem (DATA)"  && service_name="thredds" extensions=".nc" setup_subsystem access-logging-filter filters $@
     #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
 
     #---------------------------------------
@@ -5642,6 +5824,7 @@ main() {
     # Compute type install...
     #---------------------------------------
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server $@
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "access logging filter subsystem (COMPUTE)"  && service_name="las" extensions="ProductServer.do" setup_subsystem access-logging-filter filters $@
 
 
     #---------------------------------------

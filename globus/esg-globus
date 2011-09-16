@@ -121,7 +121,8 @@ globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(3
 globus_install_dir=$globus_location
 globus_workdir=${workdir}/extra/globus
 globus_sys_acct=${globus_sys_acct:-globus}
-globus_sys_acct_passwd=${globus_sys_acct_passwd:-changeme}
+globus_sys_acct_group=${globus_sys_acct_group:-globus}
+globus_sys_acct_passwd=${globus_sys_acct_passwd:-$(cat ${esgf_secret_file} 2> /dev/null)}
 globus_dist_url=${esg_dist_url}/globus/gt${globus_version}-all-source-installer.tar.bz2
 #-----------
 gridftp_config=${gridftp_config:-""}
@@ -209,6 +210,7 @@ setup_globus_services() {
     local config_type="$1"
     echo "setup_globus_services for ${config_type} - ${globus_word_size}bit arch : [$*]"
     if [ "${config_type}" = "datanode" ]; then
+        create_globus_account
         setup_globus datanode
         upgrade_gridftp_server
         setup_gridftp_metrics_logging
@@ -243,6 +245,7 @@ setup_globus_services() {
         setup_gridftp_jail
 
     elif [ "${config_type}" = "gateway" ]; then
+        create_globus_account
         shift
         local ret=1
         if [ "$1" = "gen-self-cert" ]; then
@@ -742,7 +745,7 @@ start_gridftp_usage_parsing() {
     local cronscript=$1
     local config_type=${2:-"<unknown type>"}
     
-    [ -z ${cronscript} ] && "No cronscript [${cronscript}] specified" && return 1
+    [ -z "${cronscript}" ] && "No cronscript [${cronscript}] specified" && return 1
 
     # setup crontab here
     if [ -e ${cronscript} ]; then
@@ -770,7 +773,7 @@ start_gridftp_usage_parsing() {
                         ba}
                  /^$end_mark\$/ba
                  d
-                 :a}")
+                 :a}" | awk '!x[$0]++')
             else
                 # try to figure out if we have alread touched this or it's the very first time.
                 cleaned_cron=$(echo "$current_cron" | sed -e '/esg_usage_parser/ d')
@@ -783,10 +786,10 @@ start_gridftp_usage_parsing() {
              if [[ "$new_cron" != "$current_cron" ]]; then
                 echo "Current crontab for user ($installer_user):"; echo "$current_cron"
                 echo "will be updated to:"; echo "$new_cron"
-                echo "Is this ok (should be)? [Y/n]"; read answ
+                read -p "Is this ok ? [Y/n]" answ
                 if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
                     echo "$current_cron" > $backup_cron
-                    crontab -u $username <(echo "$new_cron")
+                    crontab -u $username <(echo "$new_cron" | awk '!x[$0]++')
                      local ret=$?
                 fi
             fi
@@ -973,13 +976,7 @@ config_gridftp_server() {
     # generate ESG SAML Auth config file
     write_esgsaml_auth_conf
 
-    id ${globus_sys_acct}
-    if [ $? != 0 ]; then
-        echo " WARNING: There is no globus system account \"$globus_sys_acct\" present on system: Creating one..."
-        #NOTE: "useradd" is a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        /usr/sbin/useradd -r -c"Globus System User" -p ${globus_sys_acct_passwd} ${globus_sys_acct}
-        [ $? != 0 ] && echo "ERROR: Could not add globus system account" && popd && checked_done 1
-    fi
+    create_globus_account
 
     #TODO: find out how to set this "dn" appropriately...
     # sample wildcard dn (an entry from the pcmdi server)
@@ -990,7 +987,7 @@ config_gridftp_server() {
     ${globus_location}/sbin/grid-mapfile-add-entry -dn ${dnode_root_dn_wildcard} -ln ${globus_sys_acct}
 
     chown -R ${globus_sys_acct} ${globus_location}
-    chgrp -R ${globus_sys_acct} ${globus_location}
+    chgrp -R ${globus_sys_acct_group} ${globus_location}
 
     popd >& /dev/null
     checked_done 0
@@ -1109,7 +1106,7 @@ config_bdm_gridftp_server() {
     echo 
 
     chown -R ${globus_sys_acct} ${globus_location}
-    chgrp -R ${globus_sys_acct} ${globus_location}
+    chgrp -R ${globus_sys_acct_group} ${globus_location}
 
     popd >& /dev/null
     checked_done 0
@@ -1129,7 +1126,7 @@ test_gridftp_server() {
 #returns true  (0) if this function actively started the process
 #returns false (1) if this function did not have to start the process since already running
 start_gridftp_server() {
-    #unset X509_CERT_DIR
+    local global_x509_cert_dir=${global_x509_cert_dir:-${X509_CERT_DIR:-"/etc/grid-security/certificates"}}
     local ret=0
     echo " GridFTP - Starting server... $*"
     #TODO: Does it matter if root starts the server vs the globus_sys_acct ??? Neill?
@@ -1157,13 +1154,15 @@ start_gridftp_server() {
             bdm)
                 if ! check_gridftp_process ${gridftp_bdm_server_port} && ret=0 ; then
                     echo " *Launching BDM configured GridFTP server on port: ${gridftp_bdm_server_port} : pr ${gridftp_bdm_server_port_range} : sr ${gridftp_bdm_server_source_range}"
-                    ((DEBUG)) && echo "GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
+                    ((DEBUG)) && echo "X509_CERT_DIR=${global_x509_cert_dir} \
+                GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
                 GLOBUS_TCP_SOURCE_RANGE=${gridftp_bdm_server_source_range} \
                 GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz-bdm.conf \
                 GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_bdm_server_usage_log} \
                 ${globus_location}/sbin/globus-gridftp-server ${disable_command_list} -p ${gridftp_bdm_server_port} -chroot-path ${gridftp_chroot_jail} -usage-stats-id ${gridftp_bdm_server_port} -usage-stats-target localhost:0\!all -acl customgsiauthzinterface -no-cas &"
 
-                    GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
+                    X509_CERT_DIR=${global_x509_cert_dir} \
+                        GLOBUS_TCP_PORT_RANGE=${gridftp_bdm_server_port_range} \
                         GLOBUS_TCP_SOURCE_RANGE=${gridftp_bdm_server_source_range} \
                         GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz-bdm.conf \
                         GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_bdm_server_usage_log} \
@@ -1176,13 +1175,15 @@ start_gridftp_server() {
             end-user)
                 if ! check_gridftp_process ${gridftp_server_port} && ret=0 ; then
                     echo " *Launching end-user configured GridFTP server on port: ${gridftp_server_port} : pr ${gridftp_server_port_range} : sr ${gridftp_server_source_range}"
-                    ((DEBUG)) && echo "GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
+                    ((DEBUG)) && echo "X509_CERT_DIR=${global_x509_cert_dir} \
+                GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
                 GLOBUS_TCP_SOURCE_RANGE=${gridftp_server_source_range} \
                 GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz.conf \
                 GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_server_usage_log} \
                 ${globus_location}/sbin/globus-gridftp-server ${disable_command_list} -p ${gridftp_server_port} -chroot-path ${gridftp_chroot_jail} -usage-stats-id ${gridftp_server_port} -usage-stats-target localhost:0\!all -acl customgsiauthzinterface -no-cas &"
 
-                    GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
+                    X509_CERT_DIR=${global_x509_cert_dir} \
+                        GLOBUS_TCP_PORT_RANGE=${gridftp_server_port_range} \
                         GLOBUS_TCP_SOURCE_RANGE=${gridftp_server_source_range} \
                         GSI_AUTHZ_CONF=/etc/grid-security/gsi-authz.conf \
                         GLOBUS_USAGE_DEBUG=MESSAGES,${gridftp_server_usage_log} \
@@ -1353,8 +1354,8 @@ config_myproxy_server() {
         local answer="Y"
         echo "NOTICE:"
         echo "   Detected that the myproxy-server is already present!"
-        read -p "   Do you still wish to INSTALL myproxy (and usurp what is present)? [Y/n] " answer
-        [ -z "${answer}" ] && answer="Y"
+        read -p "   Do you still wish to INSTALL myproxy (and usurp what is present)? [y/N] " answer
+        [ -z "${answer}" ] && answer="N"
         if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             install_mode=1
             echo "(${answer})"
@@ -1378,8 +1379,8 @@ config_myproxy_server() {
         local answer="Y"
         echo "NOTICE:"
         echo "   Detected a keypair already in place "
-        read -p "   Do you still wish to (re)GENERATE self signed certs (and usurp what is present)? [Y/n] " answer
-        [ -z "${answer}" ] && answer="Y"
+        read -p "   Do you still wish to (re)GENERATE self signed certs (and usurp what is present)? [y/N] " answer
+        [ -z "${answer}" ] && answer="N"
         if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
             keep_certs=0
             gen_self_certs=1
@@ -1406,42 +1407,46 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    #TODO: ZOIKS... this does not work... Next thing to try is to do a
-    #while read on the output of setup-simple-ca, and then regexp each
-    #line and set if there is a hit and echo lines back out to user.
-    #I have to leave this now to do other things (10/22/2009).  this
-    #is where I should pick up from.  Everything else works! (at least
-    #should!)  Throw in a command block and direct the output onf
-    #setup-simple-ca to it. Throw the while read into the command
-    #block.
-    
-    # #########################################
-    # #Grab the "CA Subject" by scraping the output of setup-simple-ca output
-    # local grab
+    read -p "Do you wish to install a simple CA? [y/N] " answer
+    [ -z "${answer}" ] && answer="N"
+    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
 
-    [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
-    ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
-    [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
-
-    # 
-    # #(NOTE: The `hostname` calls are CentOS/RedHat flavored)
-    # #Ex: /O=Grid/OU=GlobusTest/OU=simpleCA-$(echo `hostname -s`.`hostname --domain`)/CN=
-    # grab=$(echo ${output} | egrep -i '^/O=.+CN=')
-    # ca_subject=${grab%=*}=
-    # echo "Grabbed ca_subject: [${ca_subject}]"
-    # 
-    # #Ex: ecdb249f
-    # grab=($(cat ${output} | egrep '^.+globus_simple_ca_(.+)_setup.*$' | cut -d "_" -f 4))
-    # ca_hash=${grab}
-    # echo "Grabbed ca_hash: [${ca_hash}]"
-    # unset grab
-    # rm -v output
-    # #########################################
-
-    ca_hash=$(sed -n -e 's/$.*globus_simple_ca_\([a-f0-9]*\).*/\1/p' /tmp/globus_simpleca.log)
-    ca_subject=$(sed -n -e 's#^/.*=.*$#&#p' /tmp/globus_simpleca.log | sed -n 's#/CN=[^/]*#/CN=#gp')
-
-    printf "
+        #TODO: ZOIKS... this does not work... Next thing to try is to do a
+        #while read on the output of setup-simple-ca, and then regexp each
+        #line and set if there is a hit and echo lines back out to user.
+        #I have to leave this now to do other things (10/22/2009).  this
+        #is where I should pick up from.  Everything else works! (at least
+        #should!)  Throw in a command block and direct the output onf
+        #setup-simple-ca to it. Throw the while read into the command
+        #block.
+            
+        # #########################################
+        # #Grab the "CA Subject" by scraping the output of setup-simple-ca output
+        # local grab
+        
+        [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
+        ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
+        [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
+        
+        # 
+        # #(NOTE: The `hostname` calls are CentOS/RedHat flavored)
+        # #Ex: /O=Grid/OU=GlobusTest/OU=simpleCA-$(echo `hostname -s`.`hostname --domain`)/CN=
+        # grab=$(echo ${output} | egrep -i '^/O=.+CN=')
+        # ca_subject=${grab%=*}=
+        # echo "Grabbed ca_subject: [${ca_subject}]"
+        # 
+        # #Ex: ecdb249f
+        # grab=($(cat ${output} | egrep '^.+globus_simple_ca_(.+)_setup.*$' | cut -d "_" -f 4))
+        # ca_hash=${grab}
+        # echo "Grabbed ca_hash: [${ca_hash}]"
+        # unset grab
+        # rm -v output
+        # #########################################
+        
+        ca_hash=$(sed -n -e 's/$.*globus_simple_ca_\([a-f0-9]*\).*/\1/p' /tmp/globus_simpleca.log)
+        ca_subject=$(sed -n -e 's#^/.*=.*$#&#p' /tmp/globus_simpleca.log | sed -n 's#/CN=[^/]*#/CN=#gp')
+        
+        printf "
 
     Please inspect the output on the last command
     'setup-simple-ca'. Locate the CA subject that should look like
@@ -1452,79 +1457,63 @@ config_myproxy_server() {
     \"${ca_hash}\". You will need them for the next two prompts.
 
     "
-
-    local answer
-    echo "What is the CA subject string [${ca_subject}] ? "
-    while [ 1 ]; do
-        read -p "> " answer
-        [ -n "${answer}" ] &&  ca_subject=${answer} 
-        unset answer
-        read -p "ca_subject = [${ca_subject}] : [Y/n]?" answer
-        if [ "${answer}" = "n" ]; then
+        
+        local answer
+        echo "What is the CA subject string [${ca_subject}] ? "
+        while [ 1 ]; do
+            read -p "> " answer
+            [ -n "${answer}" ] &&  ca_subject=${answer} 
             unset answer
-            continue
-        else
-            break
-        fi
-    done
+            read -p "ca_subject = [${ca_subject}] : [Y/n]?" answer
+            if [ "${answer}" = "n" ]; then
+                unset answer
+                continue
+            else
+                break
+            fi
+        done
+        unset answer
+        echo
+        
+        echo "What is the CA hash value [${ca_hash}] ?"
+        while [ 1 ]; do
+            read -p "> " answer
+            [ -n "${answer}" ] && ca_hash=${answer}
+            unset answer
+            echo -p "ca_hash = [${ca_hash}] : [Y/n]? " answer
+            if [ "${answer}" = "n" ]; then
+                unset answer
+                continue
+            else
+                break
+            fi
+        done
+        unset answer
+        echo
+        
+        # #########################################
+        
+        
+        echo "command: ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default"
+        
+        #move the old files outta the way!
+        [ -e ~/.globus/host/hostcert_request.pem ] && cp -v  ~/.globus/host/hostcert_request.pem ~/.globus/host/hostcert_request.pem.$(date ${date_format}).bak
+        [ -e ~/.globus/host/hostcert.pem ] && cp -v  ~/.globus/host/hostcert.pem ~/.globus/host/hostcert.pem.$(date ${date_format}).bak
+        [ -e ~/.globus/host/hostkey.pem ] && cp -v  ~/.globus/host/hostkey.pem ~/.globus/host/hostkey.pem.$(date ${date_format}).bak
+        
+        ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
+        
+    fi
     unset answer
     echo
-    
-    echo "What is the CA hash value [${ca_hash}] ?"
-    while [ 1 ]; do
-        read -p "> " answer
-        [ -n "${answer}" ] && ca_hash=${answer}
-        unset answer
-        echo -p "ca_hash = [${ca_hash}] : [Y/n]? " answer
-        if [ "${answer}" = "n" ]; then
-            unset answer
-            continue
-        else
-            break
-        fi
-    done
-    unset answer
-    echo
-
-    # #########################################
-
-    
-    echo "command: ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default"
-    
-    #move the old files outta the way!
-    [ -e ~/.globus/host/hostcert_request.pem ] && cp -v  ~/.globus/host/hostcert_request.pem ~/.globus/host/hostcert_request.pem.$(date ${date_format}).bak
-    [ -e ~/.globus/host/hostcert.pem ] && cp -v  ~/.globus/host/hostcert.pem ~/.globus/host/hostcert.pem.$(date ${date_format}).bak
-    [ -e ~/.globus/host/hostkey.pem ] && cp -v  ~/.globus/host/hostkey.pem ~/.globus/host/hostkey.pem.$(date ${date_format}).bak
-    
-    ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
-
     
     if ((fetch_certs)); then
-        echo "Downloading cert and key..."
+        #totally superfluous, vestigial decision path.
         local certfile=hostcert.pem
         pushd /etc/grid-security/ >& /dev/null
-
-        wget -O ${certfile}.new ${myproxy_dist_url_base}/keys/$(hostname)/${certfile}
-        if [ $? == 0 ]; then
-            [ -e ${certfile} ] && mv -v ${certfile} ${certfile}.$(date ${date_format}).bak
-            mv -v ${certfile}.new ${certfile}
-        else
-            [ -e ${certfile}.new ] && rm -v ${certfile}.new
-        fi
-        chmod 644 ${certfile}
-
-        #-------
-        
+        [ -e "${certfile}" ] && chmod 644 ${certfile}
         local keyfile=hostkey.pem
-        wget -O ${keyfile}.new  ${myproxy_dist_url_base}/keys/${keyfile}
-        if [ $? == 0 ]; then
-            [ -e ${keyfile} ] && mv -v ${keyfile} ${keyfile}.$(date ${date_format}).bak
-            mv -v ${keyfile}.new ${keyfile}
-        else
-            [ -e ${keyfile}.new ] && rm -v ${keyfile}.new
-        fi
-        chmod 600 ${keyfile}
-
+        [ -e "${keyfile}" ] && chmod 600 ${keyfile}
         popd >& /dev/null
     elif ((gen_self_certs)); then
         echo "Generating cert and key...(pwd = $(pwd))"
@@ -1551,16 +1540,23 @@ config_myproxy_server() {
     pushd /etc >& /dev/null
     local tfile=myproxy-server.config
     echo "Download and Modifying myproxy server configuration file: `pwd`/${tfile}"
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     wget -O ${tfile} ${myproxy_dist_url_base}/${tfile}
-    #This is the password of the CA's certs created via the simple ca (setup-gsi)
-    read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
-    eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
+    if [ $? == 0 ]; then 
+        #This is the password of the CA's certs created via the simple ca (setup-gsi)
+        read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
+        eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
+        echo -n "*"
+        eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+        echo -n "*"
+        eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
+        echo -n "*"
+        echo " [OK]"
+    else
+        echo " [FAILED]"
+        echo "Download not successful... "
+        [ -e "${tfile}.bak" ] && mv -v ${tfile}{.bak,}
+    fi
     chmod 600 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
@@ -1862,7 +1858,7 @@ test_myproxy_server() {
 start_myproxy_server() {
     check_myproxy_process && return 0
     echo " MyProxy - Starting server..."
-    [ -x /etc/init.d/myproxy ] && /etc/init.d/myproxy start && return 0
+    [ -x /etc/init.d/myproxy ] && X509_CERT_DIR=${globus_global_certs_dir} /etc/init.d/myproxy start && return 0
     return 1
 }
 
@@ -1885,4 +1881,42 @@ check_myproxy_process() {
     val=$(ps -elf | grep myproxy-server* | grep -v grep | awk ' END { print NR }')
     [ $(($val > 0 )) == 1 ] && echo "myproxy-server process is running..." && return 0
     return 1
+}
+
+############################################
+# Utility Functions
+############################################
+
+create_globus_account() {
+    ########
+    #Create the system account for globus to run as.
+    ########
+    [ -z "${globus_sys_acct}" ] && echo "no globus account specfied, must be specified to continue!" && checked_done
+    echo -n "checking globus account \"${globus_sys_acct}\"... "
+    
+    id ${globus_sys_acct}
+    if [ $? != 0 ]; then
+        echo
+	echo " Hmmm...: There is no globus system account user \"$globus_sys_acct\" present on system, making one... "
+	#NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
+	if [ ! $(getent group ${globus_sys_acct_group}) ]; then
+	    /usr/sbin/groupadd -r ${globus_sys_acct_group}
+	    [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add globus system group: ${globus_sys_acct_group}" && checked_done 1
+	fi
+
+	if [ -z "${globus_sys_acct_passwd}" ]; then
+	    #set the password for the system user...
+	    while [ 1 ]; do
+		local input
+		read -s -p "Create password for globus system account: \"${globus_sys_acct}\" " input
+		[ -n "${input}" ] && globus_sys_acct_passwd=${input}  && unset input && break
+	    done
+	fi
+	echo -n "Creating account... "
+	/usr/sbin/useradd -r -c"Globus System User" -g ${globus_sys_acct_group} -p ${globus_sys_acct_passwd} -s /bin/bash ${globus_sys_acct}
+	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add globus system account user" && popd && checked_done 1
+        echo "[OK]"
+    else
+        echo "[OK]"
+    fi
 }

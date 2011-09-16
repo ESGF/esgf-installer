@@ -23,6 +23,7 @@
 ./globus/esg-globus
 
 [filters]
+./filters/esg-security-las-ip-filter
 ./filters/esg-security-tokenless-filters
 ./filters/esg-security-token-filters
 ./filters/esg-access-logging-filter

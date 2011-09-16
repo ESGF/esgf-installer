@@ -80,7 +80,7 @@ tomcat_group=${tomcat_group:-"tomcat_group"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
 ferret_version=${ferret_version:-"6.7"}
-las_version=${las_version:-"7.3.1"}
+las_version=${las_version:-"7.3.4"}
 
 thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
 las_config_file_template_url=${esg_dist_url}/esgf-product-server/las_tds.xml.tmpl
@@ -419,11 +419,12 @@ install_las() {
 
     pushd ${las_dir} >& /dev/null
     checked_get ${ferret_workdir}/${las_config_input_file_url##*/} ${las_config_input_file_url} $((force_install))
-    sed -i '8  s/^.*$/'${esg_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
-    sed -i '12 s/^.*$/'${esg_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
+    sed -i '8  s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
+    sed -i '12 s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
     echo "$(pwd)/configure < ${ferret_workdir}/${las_config_input_file_url##*/}"
     ./configure < ${ferret_workdir}/${las_config_input_file_url##*/}
     popd >& /dev/null
+    chown -R ${tomcat_user}:${tomcat_group} ${tomcat_install_dir}/webapps/las
     write_las_install_log && return ${ret}
     return 0
 }

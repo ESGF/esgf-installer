@@ -4,7 +4,7 @@
 #*****************************************************************#
 
 # This is a manifest, listing all the files to be posted to the
-# distribution server.
+# distribution server. http://<distib_host>/dist/[devel]
 
 [esgf-installer]
 

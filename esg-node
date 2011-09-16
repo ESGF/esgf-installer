@@ -3536,19 +3536,24 @@ register() {
 
     local ssl_endpoint=${input%%/*} #just need the hostname
     local ssl_port=${ssl_port:-443}
-    local ssl_endpoint_passwd=${2:-changeit}
+    local ssl_endpoint_passwd=${2:-$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
+    [ -z "${ssl_endpoint_passwd}" ] && ssl_endpoint_passwd="changeit" #Tomcat's default
 
-    local CP=".:${workdir}"
+    if [ "${ssl_endpoint}" = "${esgf_host}" ]; then
+        add_my_cert_to_truststore ${ssl_endpoint_passwd} && echo ":-)" || (echo ":-(" && return 1)
+    else
+        local CP=".:${workdir}"
 
-    [ "${ssl_endpoint}" = "${esgf_host}" ] && start_tomcat
+        #[ "${ssl_endpoint}" = "${esgf_host}" ] && start_tomcat
 
-    #NOTE: The InstallCert code fetches Java's jssecacerts file (if
-    #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
-    #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
+        #NOTE: The InstallCert code fetches Java's jssecacerts file (if
+        #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
+        #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
 
-    echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
-    ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
-    local ret=$?
+        echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
+        ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
+        local ret=$?
+    fi
 
     chmod 644 ${truststore_file}
     chown ${tomcat_user}:${tomcat_group} ${truststore_file}

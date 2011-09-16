@@ -76,7 +76,7 @@ VERBOSE=${VERBOSE:-0}
 devel=${devel:-0}
 progname="esg-node"
 script_version="v0.0.0"
-script_release="Stuyvesant"
+script_release="Brownsville"
 envfile="/etc/esg.env"
 
 #--------------

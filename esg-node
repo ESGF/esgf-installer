@@ -131,7 +131,7 @@ init() {
     esg_search_version=${esg_search_version:-"1.4.0"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"1.2.1"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"1.2.2"}
 
     #--------------------------------
     # External programs' versions

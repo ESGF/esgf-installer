@@ -64,7 +64,6 @@
 
 #Should have been "INHERITED" from calling esg-node or esg-gway scripts
 install_prefix=${install_prefix:-"/usr/local"}
-gateway_service_root=${gateway_service_root:-"pcmdi3.llnl.gov/esgcet"}
 DEBUG=${DEBUG:-1}
 force_install=${force_install:-0}
 workdir=${workdir:-~/workbench/esg}
@@ -153,7 +152,7 @@ esg_crontab=${esg_config_dir}/esg_crontab
 myproxy_config_args=${myproxy_config_args:-""}
 myproxy_dist_url_base=${esg_dist_url}/globus/myproxy
 myproxy_dist_url=http://www.globus.org/ftppub/myproxy/myproxy-${myproxy_version}.tar.gz
-myproxy_endpoint=${myproxy_endpoint:-${gateway_service_root%%/*}}
+myproxy_endpoint=${myproxy_endpoint}
 myproxy_location=${globus_location}/bin/
 #-----------
 #esg_usage_parser_dist_url=http://www.mcs.anl.gov/~neillm/esg/esg_usage_parser-0.1.0.tar.gz
@@ -996,7 +995,7 @@ config_gridftp_server() {
 #By making this a separate function it may be called directly in the
 #event that the gateway_service_root needs to be repointed. (another Estani gem :-))
 write_esgsaml_auth_conf() {
-    echo "AUTHSERVICE=https://${gateway_service_root}/saml/soap/secure/authorizationService.htm" > /etc/grid-security/esgsaml_auth.conf
+    echo "AUTHSERVICE=https://${myproxy_endpoint:-${esgf_idp_peer}}/esgf-security/saml/soap/secure/authorizationService.htm" > /etc/grid-security/esgsaml_auth.conf
     echo 
     echo "---------esgsaml_auth.conf---------"
     cat /etc/grid-security/esgsaml_auth.conf
@@ -1132,7 +1131,7 @@ start_gridftp_server() {
     #TODO: Does it matter if root starts the server vs the globus_sys_acct ??? Neill?
     #      Is there a difference between who starts the server and who the server
     #      xfrs file as?
-
+    write_esgsaml_auth_conf
     setup_gridftp_jail
     post_gridftp_jail_setup
 

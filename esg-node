@@ -289,10 +289,10 @@ init() {
     default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
     config_file=${esg_config_dir}/esgf.properties
     index_config="master slave"
-    check_for_my_ip
 }
 
 init_structure() {
+    check_for_my_ip
 
     #--------------
     #Prepare necessary support filesystem structure and files
@@ -5362,6 +5362,7 @@ main() {
 		    shift
 		    (( $# != 0 )) && echo "error: \"status\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
 		    check_prerequisites
+		    [ $? != 0 ] && echo && exit 1
 		    status
 		    exit $?
 		    ;;

@@ -154,10 +154,19 @@ setup_ferret() {
     setup_data_files
     set_ferret_environment
     pushd ${ferret_install_dir}/bin >& /dev/null
-    echo "Opening up ferret's executables file: $(readlink -f ${ferret_exec_file})"
-    tar -xzf ${ferret_exec_file}
-    mkdir -vp ${ferret_install_dir}/ext_func/libs
-    mv *.so ${ferret_install_dir}/ext_func/libs
+    ## Install the executable files by running Finstall.
+
+echo This is the install dir: ${ferret_install_dir}
+echo This is the exec dir: ${ferret_workdir}
+./Finstall<<FER_END
+1
+
+${ferret_install_dir}
+
+${ferret_workdir}
+
+3
+FER_END
     write_ferret_env && write_ferret_install_log && echo "Ferret Installed :-)"
     popd >& /dev/null
     return 0

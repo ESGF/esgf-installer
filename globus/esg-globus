@@ -175,7 +175,7 @@ libglobus_adq_dist_url=${gridftp_dist_url_base}/libglobus_adq-${adq_version}.tar
 #"PRIVATE" variables that are expected to be set and overridden by calling script!!
 #-----------
 openid_dirname=${openid_dirname:-"https://${esgf_host}/esgf-idp/openid/"}
-gateway_db_name=${GATEWAY_DB_NAME:-esgcet} #(originating instance of this var)
+esgf_db_name=${ESGF_DB_NAME:-${GATEWAY_DB_NAME:-esgcet}} #(originating instance of this var)
 postgress_install_dir=${postgress_install_dir:-${install_prefix}/pgsql}
 postgress_user=${postgress_user:-dbsuper}
 postgress_host=${postgress_host:-localhost}
@@ -1535,32 +1535,7 @@ config_myproxy_server() {
     #--------------------
     # Configure /etc/myproxy-server.config
     #--------------------
-    local cert_password
-    pushd /etc >& /dev/null
-    local tfile=myproxy-server.config
-    echo "Download and Modifying myproxy server configuration file: `pwd`/${tfile}"
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
-    wget -O ${tfile} ${myproxy_dist_url_base}/${tfile}
-    if [ $? == 0 ]; then 
-        #This is the password of the CA's certs created via the simple ca (setup-gsi)
-        read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
-        eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
-        echo -n "*"
-        eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-        echo -n "*"
-        eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
-        echo -n "*"
-        echo " [OK]"
-    else
-        echo " [FAILED]"
-        echo "Download not successful... "
-        [ -e "${tfile}.bak" ] && mv -v ${tfile}{.bak,}
-    fi
-    chmod 600 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-    unset cert_password
+    edit_myproxy_server_config
     #--------------------
 
     [ $((install_mode)) == 0 ] && return 0
@@ -1704,31 +1679,7 @@ config_myproxy_server() {
     #--------------------
     # Configure myproxy-certificate-mapapp
     #--------------------
-    pushd ${globus_location}/share/myproxy/ >& /dev/null
-    local tfile=myproxy-certificate-mapapp
-    echo "Download and Modifying configuration template file: `pwd`/${tfile}"
-    wget -O ${tfile} ${myproxy_dist_url_base}/${tfile}
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@ca_subject\\@\\@#${ca_subject}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@gateway_db_name\\@\\@/${gateway_db_name}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod 755 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
+    edit_myproxy_certificate_mapapp
     #--------------------
 
 
@@ -1736,24 +1687,7 @@ config_myproxy_server() {
     #--------------------
     # Configure pam_sql.conf
     #--------------------
-    pushd /etc >& /dev/null
-    local tfile=pam_pgsql.conf
-    echo "Download and Modifying pam pgsql configuration file: `pwd`/${tfile}"
-    wget -O ${tfile} ${myproxy_dist_url_base}/etc_${tfile}
-    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@gateway_db_name\\@\\@/${gateway_db_name}/g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
+    edit_pam_pgsql_conf
     #--------------------
 
 
@@ -1764,44 +1698,14 @@ config_myproxy_server() {
     #--------------------
     # Fetch -> pam resource file used for myproxy
     #--------------------
-    pushd /etc/pam.d >& /dev/null
-    local tfile=myproxy
-    echo "Fetching pam's myproxy resource file: `pwd`/${tfile}"
-    wget -O ${tfile} ${myproxy_dist_url_base}/etc_pam.d_${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
+    fetch_etc_pam_d_myproxy
     #--------------------
-
 
     
     #--------------------
     # Configure esg_attribute_callout_app
     #--------------------
-    #Configure External Attribute Callout with MyProxy
-    pushd ${globus_location}/bin >& /dev/null
-    local tfile=esg_attribute_callout_app
-    echo "Download and Modifying configuration template file: `pwd`/${tfile}"
-    wget -O ${tfile} ${myproxy_dist_url_base}/${tfile}
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@gateway_db_name\\@\\@/${gateway_db_name}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod 755 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
+    edit_esg_attribute_callout_app    
     #--------------------
 
     write_db_name_env
@@ -1809,17 +1713,7 @@ config_myproxy_server() {
     #--------------------
     # Configure myproxy startup/shutdown script
     #--------------------
-    pushd /etc/init.d/ >& /dev/null
-    local tfile=myproxy
-    echo "Download and Modifying rc script: `pwd`/${tfile}"
-    wget -O ${tfile} ${myproxy_dist_url_base}/init.d_${tfile}
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod 755 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
+    edit_init_d_myproxy
     #--------------------
 
     popd >& /dev/null
@@ -1842,7 +1736,7 @@ write_myproxy_install_log() {
 
 write_db_name_env() {
     ((show_summary_latch++))
-    echo "export GATEWAY_DB_NAME=${gateway_db_name}" >> ${envfile}
+    echo "export ESGF_DB_NAME=${esgf_db_name}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -1880,6 +1774,152 @@ check_myproxy_process() {
     val=$(ps -elf | grep myproxy-server* | grep -v grep | awk ' END { print NR }')
     [ $(($val > 0 )) == 1 ] && echo "myproxy-server process is running..." && return 0
     return 1
+}
+
+############################################
+# Configuration File Editing Functions
+############################################
+
+edit_myproxy_server_config() {
+    local cert_password
+    pushd /etc >& /dev/null
+    local tfile=myproxy-server.config
+    echo "Download and Modifying myproxy server configuration file: `pwd`/${tfile}"
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    cp -vf ${tfile}{.tmpl,}
+    [ $? != 0 ] && return 1
+    #This is the password of the CA's certs created via the simple ca (setup-gsi)
+    read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
+    eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
+    echo -n "*"
+    echo " [OK]"
+    
+    chmod 600 ${tfile}
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+    unset cert_password
+    #--------------------
+    return 0
+}
+
+edit_myproxy_certificate_mapapp() {
+    pushd ${globus_location}/share/myproxy/ >& /dev/null
+    local tfile=myproxy-certificate-mapapp
+    echo "Download and Modifying configuration template file: `pwd`/${tfile}"
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    cp -vf ${tfile}{.tmpl,}
+    [ $? != 0 ] && return 1
+    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@ca_subject\\@\\@#${ca_subject}#g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
+    echo -n "*"
+    echo " [OK]"
+    chmod 755 ${tfile}
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+    return 0
+}
+
+edit_pam_pgsql_conf() {
+    pushd /etc >& /dev/null
+    local tfile=pam_pgsql.conf
+    echo "Download and Modifying pam pgsql configuration file: `pwd`/${tfile}"
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/etc_${tfile} $((force_install))
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    cp -vf ${tfile}{.tmpl,}
+    [ $? != 0 ] && return 1
+    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
+    echo -n "*"
+    echo " [OK]"
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+    return 0
+}
+
+fetch_etc_pam_d_myproxy() {
+    pushd /etc/pam.d >& /dev/null
+    local tfile=myproxy
+    echo "Fetching pam's myproxy resource file: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/etc_pam.d_${tfile}
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+}
+
+edit_esg_attribute_callout_app() {
+   #Configure External Attribute Callout with MyProxy
+    pushd ${globus_location}/bin >& /dev/null
+    local tfile=esg_attribute_callout_app
+    echo "Download and Modifying configuration template file: `pwd`/${tfile}"
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    cp -vf ${tfile}{.tmpl,}
+    [ $? != 0 ] && return 1
+    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
+    echo -n "*"
+    echo " [OK]"
+    chmod 755 ${tfile}
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+}
+
+edit_init_d_myproxy() {
+    pushd /etc/init.d/ >& /dev/null
+    local tfile=myproxy
+    echo "Download and Modifying rc script: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/init.d_${tfile}
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    cp -vf ${tfile}{.tmpl,}
+    [ $? != 0 ] && return 1
+    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    echo -n "*"
+    echo " [OK]"
+    chmod 755 ${tfile}
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
 }
 
 ############################################

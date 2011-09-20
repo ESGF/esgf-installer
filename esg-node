@@ -327,7 +327,7 @@ init_structure() {
     #--------------
 
     esgf_host=${esgf_host}
-    [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn) && write_as_property esgf_host
+    [ -z "${esgf_host}" ] && get_property esgf_host
 
     esgf_default_peer=${esgf_default_peer:-${ESGF_DEFAULT_PEER}}
     [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
@@ -3746,7 +3746,7 @@ check_for_my_ip() {
     local my_ip_address
     local my_ip_addresses=($(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}'))
 
-    get_property esgf_host_ip
+    get_property esgf_host_ip 2> /dev/null
     local matched=0
 
     #We want to make sure that the IP address we have in our config

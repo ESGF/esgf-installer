@@ -292,7 +292,6 @@ init() {
 }
 
 init_structure() {
-    check_for_my_ip
 
     #--------------
     #Prepare necessary support filesystem structure and files
@@ -325,6 +324,8 @@ init_structure() {
     #--------------
     #Setup variables....
     #--------------
+
+    check_for_my_ip
 
     esgf_host=${esgf_host}
     [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn) && write_as_property esgf_host
@@ -3565,11 +3566,11 @@ register() {
 
     local ssl_endpoint=${input%%/*} #just need the hostname
     local ssl_port=${ssl_port:-443}
-    local ssl_endpoint_passwd=${2:-$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
-    [ -z "${ssl_endpoint_passwd}" ] && ssl_endpoint_passwd="changeit" #Tomcat's default
+    local my_truststore_password=${2:-$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
+    [ -z "${my_truststore_password}" ] && my_truststore_password="changeit" #Tomcat's default
 
     if [ "${ssl_endpoint}" = "${esgf_host}" ]; then
-        add_my_cert_to_truststore ${ssl_endpoint_passwd} && echo ":-)" || (echo ":-(" && return 1)
+        add_my_cert_to_truststore ${my_truststore_password} && echo ":-)" || (echo ":-(" && return 1)
     else
         local CP=".:${workdir}"
 
@@ -3579,8 +3580,8 @@ register() {
         #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
         #The output of the program is a new file named jssecacerts!	 So here we get the output and rename it.
 
-        echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}"
-        ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${ssl_endpoint_passwd} ${truststore_file}
+        echo "${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${my_truststore_password} ${truststore_file}"
+        ${JAVA_HOME}/bin/java -classpath ${CP} InstallCert ${ssl_endpoint}:${ssl_port} ${my_truststore_password} ${truststore_file}
         local ret=$?
     fi
 
@@ -3743,6 +3744,7 @@ set_redirect() {
 }
 
 check_for_my_ip() {
+    debug_print "Checking for IP address(es)..."
     local my_ip_address
     local my_ip_addresses=($(ifconfig | grep "inet[^6]" | awk '$0 !~ /127.0.0.1/ { gsub (" *inet [^:]*:",""); print $1}'))
 
@@ -3864,13 +3866,30 @@ uninstall() {
     read -p "Are you sure you want to uninstall? [y/N]: " doit
     if [ "$doit" = "y" ] || [ "$doit" = "Y" ]; then
 
+	source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem
+	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
+	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
+        source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
+	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
+	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
+
 	doit="N"
-	if [ -e $postgress_install_dir ]; then
-	    read -p "remove postgress? ($postgress_install_dir) [y/N]: " doit
+	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
+	    read -p "remove Thredds web service? (${tomcat_install_dir}/webapps/thredds) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-		echo "removing $postgress_install_dir"
-		rm -rf ${postgress_install_dir}
-		[ $? != 0 ] && echo "ERROR: Unable to remove ${postgress_install_dir}"
+		echo "removing ${tomcat_install_dir}/webapps/thredds"
+		rm -rf ${tomcat_install_dir}/webapps/thredds
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/thredds"
+	    fi
+	fi
+
+	doit="N"
+	if [ -e $tomcat_install_dir ]; then
+	    read -p "remove apache tomcat? ($tomcat_install_dir) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing $tomcat_install_dir"
+		rm -ri $tomcat_install_dir
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}"
 	    fi
 	fi
 
@@ -3894,30 +3913,13 @@ uninstall() {
 	    fi
 	fi
 
-	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
-	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
-	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
-	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
-        source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
-	source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem
-
 	doit="N"
-	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
-	    read -p "remove Thredds web service? (${tomcat_install_dir}/webapps/thredds) [y/N]: " doit
+	if [ -e $postgress_install_dir ]; then
+	    read -p "remove postgress? ($postgress_install_dir) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-		echo "removing ${tomcat_install_dir}/webapps/thredds"
-		rm -rf ${tomcat_install_dir}/webapps/thredds
-		[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}/webapps/thredds"
-	    fi
-	fi
-
-	doit="N"
-	if [ -e $tomcat_install_dir ]; then
-	    read -p "remove apache tomcat? ($tomcat_install_dir) [y/N]: " doit
-	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-		echo "removing $tomcat_install_dir"
-		rm -ri $tomcat_install_dir
-		[ $? != 0 ] && echo "ERROR: Unable to remove ${tomcat_install_dir}"
+		echo "removing $postgress_install_dir"
+		rm -rf ${postgress_install_dir}
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${postgress_install_dir}"
 	    fi
 	fi
 
@@ -5068,7 +5070,7 @@ esgf_node_info() {
      |---------|
       ---------
 
-     -ESG \n\n" | more
+     -ESGF.org \n\n" | more
 
 }
 

@@ -3751,6 +3751,8 @@ check_for_my_ip() {
     get_property esgf_host_ip 2> /dev/null
     local matched=0
 
+    [ -n "${esgf_host_ip}" ] && (( ! force_install )) && echo "Using IP: ${esgf_host_ip}" && return 0
+
     #We want to make sure that the IP address we have in our config
     #matches one of the IPs that are associated with this host
     for (( i=0; i < ${#my_ip_addresses[@]}; i++ )); do
@@ -4859,8 +4861,6 @@ initial_setup_questionnaire() {
         write_as_property esgf_host
     fi
 
-    check_for_my_ip
-
     unset input
     unset default
 
@@ -4973,7 +4973,7 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
 	unset input
-	default=${esgf_default_peer:-'esgf-node1.llnl.gov'}
+	default=${esgf_default_peer:-'esgf-node3.llnl.gov'}
 	read -p "What is the default peer to this node? [${default}]: " input
 	[ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
 	[ -n "${input}" ] && esgf_default_peer=${input}	  && write_as_property esgf_default_peer

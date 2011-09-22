@@ -136,6 +136,7 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
+    openssl_version=${openssl_version:="0.9.8e"} ; openssl_min_version=${openssl_min_version:="0.9.8"}
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
@@ -150,6 +151,7 @@ init() {
     #--------------------------------
     # Script vars (~external)
     #--------------------------------
+    openssl_install_dir=${OPENSSL_HOME:-${install_prefix}/openssl}
     curl_install_dir=${CURL_HOME:-${install_prefix}/curl}
     git_install_dir=${GIT_HOME:-${install_prefix}/git}
     postgress_install_dir=${PGHOME:-${install_prefix}/pgsql}
@@ -184,6 +186,7 @@ init() {
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
 
+    export OPENSSL_HOME=${openssl_install_dir}
     export CURL_HOME=${curl_install_dir}
     export GIT_HOME=${git_install_dir}
     export PGHOME=${postgress_install_dir}
@@ -204,8 +207,8 @@ init() {
     myLD_LIBRARY_PATH=$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib
     export PATH=$myPATH:$PATH
     export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:$LD_LIBRARY_PATH
-    export CFLAGS="-I$CURL_HOME/include $CFLAGS"
-    export LDFLAGS="-L$CURL_HOME/lib"
+    export CFLAGS="-I${CURL_HOME}/include ${CFLAGS} -fPIC"
+    export LDFLAGS="-L${OPENSSL_HOME}/lib -L${CURL_HOME}/lib -Wl,--rpath,${OPENSSL_HOME}/lib -Wl,--rpath,${CURL_HOME}/lib"
 
     #--------------
     # ID Setting
@@ -239,8 +242,11 @@ init() {
     num_backups_to_keep=${num_backups_to_keep:-7}
     compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
     certificate_extensions="pem|crt|cert|key"
+    
+    openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
     java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://www.trieuvan.com/apache/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
+    openssl_workdir=${workdir}/openssl
     curl_workdir=${workdir}/curl
     curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
     git_workdir=${workdir}/git
@@ -409,6 +415,110 @@ check_prerequisites() {
     return 0
 }
 
+#####
+# Openssl (support library - needed to support Curl and Globus tools, etc...)
+#####
+setup_openssl() {
+
+    echo -n "Checking for openssl >= ${openssl_min_version} "
+    check_version_with openssl ${openssl_min_version} 'openssl version'
+    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+
+    echo
+    echo "*******************************"
+    echo "Setting up Openssl ${openssl_version}"
+    echo "*******************************"
+    echo
+
+    local default="Y"
+    ((force_install)) && default="N"
+    local dosetup
+    if [ -x ${openssl_install_dir}/bin/openssl ]; then
+	echo "Detected an existing OpenSSL installation..."
+	read -p "Do you want to continue with OpenSSL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	[ -z ${dosetup} ] && dosetup=${default}
+	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+	    echo "Skipping OpenSSL installation and setup - will assume OpenSSL is setup properly"
+	    return 0
+	fi
+	echo
+    fi
+
+    mkdir -p ${openssl_workdir}
+    [ $? != 0 ] && checked_done 1
+    chmod a+rw ${openssl_workdir}
+    pushd ${openssl_workdir} >& /dev/null
+
+    local openssl_dist_file=${openssl_dist_url##*/}
+    #strip off .tar.gz at the end
+    local openssl_dist_dir=$(echo ${openssl_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+
+    #There is this pesky case of having a zero sized dist file... WTF!?
+    if [ -e ${openssl_dist_file} ]; then
+	ls -l ${openssl_dist_file}
+	local size=$(stat -c%s ${openssl_dist_file})
+	(( size == 0 )) && rm -v ${openssl_dist_file}
+    fi
+
+    #Check to see if we have postgres distribution directory
+    if [ ! -e ${openssl_dist_dir} ]; then
+	echo "Don't see OpenSSL distribution dir ${openssl_dist_dir}"
+	if [ ! -e ${openssl_dist_file} ]; then
+	    echo "Don't see OpenSSL distribution file ${openssl_dist_file} either"
+	    echo "Downloading OpenSSL from ${openssl_dist_url}"
+	    wget -O ${openssl_dist_file} ${openssl_dist_url}
+	    [ $? != 0 ] && echo " ERROR: Could not download OpenSSL:${openssl_dist_file}" && popd && checked_done 1
+	    echo "unpacking ${openssl_dist_file}..."
+	    tar xzf ${openssl_dist_file}
+	    [ $? != 0 ] && echo " ERROR: Could not extract OpenSSL: ${openssl_dist_file}" && popd && checked_done 1
+	fi
+    fi
+
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it and go from there....
+    if [ -e ${openssl_dist_file} ] && [ ! -e ${openssl_dist_dir} ]; then
+	echo "unpacking ${openssl_dist_file}..."
+	tar xzf ${openssl_dist_file}
+    fi
+
+    pushd ${openssl_dist_dir}
+    ((force_install)) && make clean
+    echo "./Configure --prefix=${openssl_install_dir} linux-generic${word_size}"
+    if ./Configure --prefix=${openssl_install_dir} shared linux-generic${word_size} \
+	&& gmake all \
+	&& gmake install
+    then
+	echo "Successfully Configured and Built OpenSSL in: ${openssl_install_dir}"
+	#this is the "test"
+	${openssl_install_dir}/bin/openssl version
+	[ $? != 0 ] &&	echo" ERROR: Could NOT successfully build OpenSSL!!" && popd >& /dev/null && checked_done 1
+    else
+	echo" ERROR: Could NOT successfully build OpenSSL!!"
+	popd >& /dev/null
+	checked_done 1
+    fi
+
+    popd >& /dev/null
+    popd >& /dev/null
+
+    write_openssl_env
+    write_openssl_install_log
+    checked_done 0
+}
+
+write_openssl_env() {
+    ((show_summary_latch++))
+    echo "export OPENSSL_HOME=${openssl_install_dir}" >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
+}
+
+write_openssl_install_log() {
+    echo "$(date ${date_format}) openssl=${openssl_version} ${openssl_install_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
+    return 0
+}
+
 
 #####
 # Curl/libcurl (support library - needed to support HTTP protocol in GIT)
@@ -477,6 +587,7 @@ setup_curl() {
     fi
 
     pushd ${curl_dist_dir}
+    ((force_install)) && make clean
     echo "./configure --prefix=${curl_install_dir}"
     if ./configure --prefix=${curl_install_dir} \
 	&& gmake all \
@@ -580,6 +691,7 @@ setup_git() {
     fi
 
     pushd ${git_dist_dir}
+    ((force_install)) && make clean
     echo "./configure --prefix=${git_install_dir}"
     if ./configure --prefix=${git_install_dir} \
 	&& gmake all \
@@ -704,11 +816,12 @@ setup_java() {
     #-----------------------------
     #In the situation where this function is called under update
     #semantics i.e. there is already a previous installation of java
-    #an installation of tomcat with tomcat setup with a properly
+    #and installation of tomcat with tomcat setup with a properly
     #generated/configured jssecacerts file and there is a valid
     #ESGF_IDP_PEER being pointed to.  We should copy over that
     #jssecacerts into this newly installed VM to satisfy SSL.
-    if [ -e "${last_java_truststore_file}" ]; then
+    if [ -n "${last_java_truststore_file}" ] && [ -e "${last_java_truststore_file}" ]; then
+        mkdir -p ${java_install_dir}/conf
 	cp -v ${last_java_truststore_file} ${java_install_dir}/conf
 	chmod 644 ${java_install_dir}/conf/${last_java_truststore_file##*/}
     fi
@@ -902,6 +1015,7 @@ setup_postgress() {
     fi
 
     pushd ${postgress_dist_dir}
+    ((force_install)) && make clean
     echo "./configure --prefix=${postgress_install_dir} --enable-thread-safety"
     if ./configure --prefix=${postgress_install_dir} --enable-thread-safety \
 	&& gmake \
@@ -4028,14 +4142,15 @@ check_version_helper() {
 # Returns 1 if the current version is older than the required version
 # Returns 2 if could not find executible at all on the system
 check_version() {
-    debug_print "check_version $@"
-    [ -z $2 ] && return 0
-    debug_print $2
+    debug_print "check_version [$@]"
+    [ -z "$2" ] && return 0
+    debug_print "[$2]"
     local target_version=$(echo $2 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
     debug_print "target_version = [$target_version]"
 
-    $1 --version >& /tmp/f || $1 -version >& /tmp/f
+    $1 --version 2> /dev/null 1> /tmp/f || $1 -version 2> /dev/null 1> /tmp/f || $1 version 2> /dev/null 1> /tmp/f
     [ $? != 0 ] && echo && echo "Oops, $1 command not found" && return 2
+    cat /tmp/f
     current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\""	| cut -d " " -f1,1)
     debug_print "current_version = [$current_version]"
 
@@ -4047,7 +4162,7 @@ check_version() {
 
     printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [$2] \n"
     cat /tmp/f
-    rm /tmp/f >& /dev/null
+    #rm /tmp/f >& /dev/null
     return 1
 }
 
@@ -4123,12 +4238,16 @@ check_app_version() {
 
 #Provide your own command for fetching current version
 check_version_with() {
+    debug_print "check_vesion_with"
     local app_name=$1
     local target_version=$2
     local version_command=${3:-"${app_name} --version"}
+    local ret=$?
 
-    local current_version=$(eval ${version_command})
-    [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
+    local current_version=$(eval ${version_command}|  perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
+    ret=$?
+    debug_print "current_version = [${current_version}]"
+    [ ${ret} != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
 
     debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
     check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
@@ -5845,6 +5964,7 @@ main() {
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
+	[ $((sel & INSTALL_BIT)) != 0 ] && setup_openssl
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_curl
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_git
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_java

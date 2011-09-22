@@ -396,7 +396,7 @@ setup_globus() {
     pushd ${globus_dist_dir} >& /dev/null
     
     echo "./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg"
-    if ./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg \
+    if env CFLAGS=${CFLAGS} ./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg \
         && gmake ${config_type} \
         && gmake install
     then

@@ -5788,26 +5788,25 @@ main() {
     #If we are doing an install - make sure a type is selected
 	if [ $((sel & INSTALL_BIT)) != 0 ] && (( !(sel >= $MIN_BIT && sel <= $MAX_BIT) )); then
 	    printf "
-					Sorry no suitable node type has been selected
-					Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
-					(no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
+    Sorry no suitable node type has been selected
+    Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
+    (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
+    
+    Ex:  esg-node --set-type data
+    esg-node install
+    
+    or do so as a single command line:
+    
+    Ex:  esg-node --type data install
+    
+    Use the --help | -h option for more information
+    
+    Note: The type value is recorded upon successfully starting the node.
+    the value is used for subsequent launches so the type value does not have to be
+    always specified.  A simple \"esg-node start\" will launch with the last type used
+    that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
+    (more documentation available at http://esgf.org/esgf-installer-site/)\n\n"
 
-					Ex:  esg-node --set-type data
-					esg-node install
-
-					or do so as a single command line:
-
-					Ex:  esg-node --type data install
-
-					Use the --help | -h option for more information
-
-					Note: The type value is recorded upon successfully starting the node.
-					the value is used for subsequent launches so the type value does not have to be
-					always specified.  A simple \"esg-node start\" will launch with the last type used
-					that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-					(more documentation available at http://esgf.org/esgf-installer-site/)
-
-					"
 	    exit 1
 	fi
 
@@ -5943,8 +5942,8 @@ main() {
 
     esg_node_finally() {
 	echo "(esg_datanode: cleaning up etc...)"
-	chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
-	chown -R ${installer_uid}:${installer_gid} ${HOME}/.globus >& /dev/null
+	((installer_uid != 0 )) && [ -e "${X509_CERT_DIR}" ] && chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
+	((installer_uid != 0 )) && [ -e "${HOME}/.globus" ]  && chown -R ${installer_uid}:${installer_gid} ${HOME}/.globus >& /dev/null
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid
     #rm $OUTPUT_PIPE

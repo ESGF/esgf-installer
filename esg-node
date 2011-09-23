@@ -4143,12 +4143,12 @@ check_version_helper() {
 # Returns 2 if could not find executible at all on the system
 check_version() {
     debug_print "check_version [$@]"
-    [ -z "$2" ] && return 0
+    [ -z $2 ] && return 0
     debug_print "[$2]"
     local target_version=$(echo $2 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
     debug_print "target_version = [$target_version]"
 
-    $1 --version 2> /dev/null 1> /tmp/f || $1 -version 2> /dev/null 1> /tmp/f || $1 version 2> /dev/null 1> /tmp/f
+    $1 --version >& /tmp/f || $1 -version >& /tmp/f
     [ $? != 0 ] && echo && echo "Oops, $1 command not found" && return 2
     cat /tmp/f
     current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\""	| cut -d " " -f1,1)
@@ -4162,7 +4162,7 @@ check_version() {
 
     printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [$2] \n"
     cat /tmp/f
-    #rm /tmp/f >& /dev/null
+    rm /tmp/f >& /dev/null
     return 1
 }
 

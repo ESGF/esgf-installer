@@ -188,7 +188,7 @@ export OPENSSL_CFLAGS="-fPIC"
 export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
 export OPENSSL_LIBS="-lssl -lcrypto"
 
-globus_flavor=gcc${globus_word_size}dbg
+globus_flavor=gcc${globus_word_size}
 debug_print "(globus_flavor = ${globus_flavor})"
 
 date_format=${date_format:-"+%Y_%m_%d_%H%M%S"}
@@ -444,8 +444,8 @@ upgrade_gridftp_server() {
             checked_get ${gridftp_update_dist_file} ${gridftp_update_dist_url} $((force_install))
             (( $? > 1 )) && popd && checked_done 1
         fi
-        echo "${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} gcc${globus_word_size}dbg"
-        ${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} gcc${globus_word_size}dbg
+        echo "${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}"
+        ${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}
         [ $? != 0 ] && echo " ERROR: unable to build from ${gridftp_update_dist_file}" || (echo " [OK] " && ((performed_upgrade=1)) )
     fi
 
@@ -489,7 +489,7 @@ upgrade_gridftp_server() {
         (( $? > 1 )) && popd && checked_done 1
     fi
 
-    ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} gcc${globus_word_size}dbg gcc${globus_word_size}dbg
+    ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
     [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
 
     echo "${globus_location}/sbin/gpt-postinstall"
@@ -972,13 +972,13 @@ config_gridftp_server() {
     mkdir -p /etc/grid-security
     
     # generate the /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_AUTHZ_SYSTEM_INIT libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so authz_esgsaml_system_init_callout" > /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_AUTHZ_SYSTEM_DESTROY libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so authz_esgsaml_system_destroy" >> /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_AUTHZ_HANDLE_INIT libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so authz_esgsaml_handle_init_callout" >> /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_AUTHORIZE_ASYNC libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so authz_esgsaml_authorize_async_callout" >> /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_AUTHZ_CANCEL libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so authz_esgsaml_cancel_callout" >> /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_AUTHZ_HANDLE_DESTROY libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so authz_esgsaml_handle_destroy_callout" >> /etc/grid-security/gsi-authz.conf
-    echo "GLOBUS_GSI_GET_AUTHORIZATION_IDENTITY libglobus_authz_esgsaml_callout_gcc${globus_word_size}dbg.so globus_gsi_authz_esgsaml_get_authorization_identity_callout" >> /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_AUTHZ_SYSTEM_INIT libglobus_authz_esgsaml_callout_${globus_flavor}.so authz_esgsaml_system_init_callout" > /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_AUTHZ_SYSTEM_DESTROY libglobus_authz_esgsaml_callout_${globus_flavor}.so authz_esgsaml_system_destroy" >> /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_AUTHZ_HANDLE_INIT libglobus_authz_esgsaml_callout_${globus_flavor}.so authz_esgsaml_handle_init_callout" >> /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_AUTHORIZE_ASYNC libglobus_authz_esgsaml_callout_${globus_flavor}.so authz_esgsaml_authorize_async_callout" >> /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_AUTHZ_CANCEL libglobus_authz_esgsaml_callout_${globus_flavor}.so authz_esgsaml_cancel_callout" >> /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_AUTHZ_HANDLE_DESTROY libglobus_authz_esgsaml_callout_${globus_flavor}.so authz_esgsaml_handle_destroy_callout" >> /etc/grid-security/gsi-authz.conf
+    echo "GLOBUS_GSI_GET_AUTHORIZATION_IDENTITY libglobus_authz_esgsaml_callout_${globus_flavor}.so globus_gsi_authz_esgsaml_get_authorization_identity_callout" >> /etc/grid-security/gsi-authz.conf
     
     # generate ESG SAML Auth config file
     write_esgsaml_auth_conf
@@ -1095,7 +1095,7 @@ config_bdm_gridftp_server() {
 
     # generate /etc/grid-security/gsi-authz-bdm.conf
     [ ! -d /etc/grid-security ] && echo "WARNING: Could not find directory /etc/grid-security, making it..." && mkdir -p /etc/grid-security
-    echo "globus_mapping libglobus_authz_bdm_callout_gcc${globus_word_size}dbg.so globus_gsi_authz_bdm_gridmap_callout" > /etc/grid-security/gsi-authz-bdm.conf
+    echo "globus_mapping libglobus_authz_bdm_callout_${globus_flavor}.so globus_gsi_authz_bdm_gridmap_callout" > /etc/grid-security/gsi-authz-bdm.conf
     echo 
     echo "---------gsi-authz-bdm.conf---------"
     cat /etc/grid-security/gsi-authz-bdm.conf
@@ -1262,7 +1262,7 @@ upgrade_myproxy_server() {
     fi
 
     /etc/init.d/myproxy stop
-    ${globus_location}/sbin/gpt-build -force -verbose ${myproxy_dist_file} gcc${globus_word_size}dbg
+    ${globus_location}/sbin/gpt-build -force -verbose ${myproxy_dist_file} ${globus_flavor}
     ${globus_location}/sbin/gpt-postinstall
     ${globus_location}/sbin/myproxy-server --version
     echo "--------"

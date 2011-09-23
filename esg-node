@@ -4237,7 +4237,7 @@ check_app_version() {
 
 #Provide your own command for fetching current version
 check_version_with() {
-    debug_print "check_vesion_with"
+    debug_print "check_version_with"
     local app_name=$1
     local target_version=$2
     local version_command=${3:-"${app_name} --version"}

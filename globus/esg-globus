@@ -189,6 +189,7 @@ export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
 export OPENSSL_LIBS="-lssl -lcrypto"
 
 globus_flavor=gcc${globus_word_size}dbg
+debug_print "(globus_flavor = ${globus_flavor})"
 
 date_format=${date_format:-"+%Y_%m_%d_%H%M%S"}
 
@@ -350,7 +351,7 @@ setup_globus() {
     
     echo
     echo "*******************************"
-    echo "Setting up Globus... ($1: $config_type)"
+    echo "Setting up Globus... ($1: $config_type) - (flavor: ${globus_flavor})"
     echo "*******************************"
     echo
 

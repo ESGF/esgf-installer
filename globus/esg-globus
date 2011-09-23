@@ -188,7 +188,7 @@ export OPENSSL_CFLAGS="-fPIC"
 export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
 export OPENSSL_LIBS="-lssl -lcrypto"
 
-globus_flavor=gcc${globus_word_size}
+globus_flavor=gcc${globus_word_size}dbg
 debug_print "(globus_flavor = ${globus_flavor})"
 
 date_format=${date_format:-"+%Y_%m_%d_%H%M%S"}
@@ -402,7 +402,7 @@ setup_globus() {
     fi
     
     pushd ${globus_dist_dir} >& /dev/null
-    
+    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor}"
     if  ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} \
         && gmake ${config_type} \
@@ -577,6 +577,7 @@ setup_gsoap() {
         pwd
 
         pushd ${gsoap_dist_dir} >& /dev/null
+        ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
         echo "./configure --prefix=${gsoap_install_dir}"
         if ./configure --prefix=${gsoap_install_dir} \
             && gmake \
@@ -957,6 +958,7 @@ config_gridftp_server() {
     ./bootstrap 
     [ $? != 0 ] && echo " ERROR: could not perform bootstrap" && checked_done 1
     
+    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_server_port_range}"
     if ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_server_port_range}\
         && gmake \
@@ -1081,6 +1083,7 @@ config_bdm_gridftp_server() {
     ./bootstrap 
     [ $? != 0 ] && echo " ERROR: could not perform bootstrap" && checked_done 1
 
+    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_bdm_server_port_range}"
     if ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_bdm_server_port_range}\
         && gmake \
@@ -1666,6 +1669,7 @@ config_myproxy_server() {
     fi
 
     cd ${pam_pgsql_dist_dir}
+    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./configure --prefix=${pam_pgsql_install_dir}"
     if CFLAGS=-I${postgress_install_dir}/include LDFLAGS=-L${postgress_install_dir}/lib ./configure --prefix=${pam_pgsql_install_dir} \
         && gmake \

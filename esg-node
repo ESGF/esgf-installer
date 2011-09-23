@@ -4910,7 +4910,7 @@ show_svc_list() {
     echo "---------------------------"
     echo "Running Node Services... "; ((sel != 0)) && show_type || echo ""
     echo "---------------------------"
-    lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy'
+    lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' | more
     echo "---------------------------"
     echo
     return 0

@@ -183,6 +183,13 @@ postgress_port=${postgress_port:-5432}
 pg_sys_acct=${pg_sys_acct:-postgres}
 #-----------
 
+export OPENSSL_INCLUDES="-I${OPENSSL_HOME}/include"
+export OPENSSL_CFLAGS="-fPIC"
+export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
+export OPENSSL_LIBS="-lssl -lcrypto"
+
+globus_flavor=gcc${globus_word_size}dbg
+
 date_format=${date_format:-"+%Y_%m_%d_%H%M%S"}
 
 export X509_CERT_DIR=${X509_CERT_DIR:-/etc/grid-security/certificates/}
@@ -395,8 +402,8 @@ setup_globus() {
     
     pushd ${globus_dist_dir} >& /dev/null
     
-    echo "./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg"
-    if env CFLAGS=${CFLAGS} ./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg \
+    echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor}"
+    if  ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} \
         && gmake ${config_type} \
         && gmake install
     then
@@ -468,7 +475,7 @@ upgrade_gridftp_server() {
     tar -xzf ${customgsiauthz_dist_url##*/}
     pushd $(echo ${customgsiauthz_dist_url##*/} | awk 'gsub(/('$compress_extensions')/,"")') >& /dev/null
     ./bootstrap
-    ./configure --prefix=${globus_location} --with-flavor=gcc${globus_word_size}dbg
+    ./configure --prefix=${globus_location} --with-flavor=${globus_flavor}
     make && make install
     [ $? != 0 ] && (echo " ERROR: unable to build from ${gridftp_update_dist_file}" && popd && popd && checked_done 1) || echo " [OK] "
     popd >& /dev/null
@@ -949,8 +956,8 @@ config_gridftp_server() {
     ./bootstrap 
     [ $? != 0 ] && echo " ERROR: could not perform bootstrap" && checked_done 1
     
-    echo "./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg --with-globus-tcp-port-range=${gridftp_server_port_range}"
-    if ./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg --with-globus-tcp-port-range=${gridftp_server_port_range}\
+    echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_server_port_range}"
+    if ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_server_port_range}\
         && gmake \
         && gmake install
     then
@@ -1073,8 +1080,8 @@ config_bdm_gridftp_server() {
     ./bootstrap 
     [ $? != 0 ] && echo " ERROR: could not perform bootstrap" && checked_done 1
 
-    echo "./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg --with-globus-tcp-port-range=${gridftp_bdm_server_port_range}"
-    if ./configure --prefix=${globus_install_dir} --with-flavor=gcc${globus_word_size}dbg --with-globus-tcp-port-range=${gridftp_bdm_server_port_range}\
+    echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_bdm_server_port_range}"
+    if ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} --with-globus-tcp-port-range=${gridftp_bdm_server_port_range}\
         && gmake \
         && gmake install
     then

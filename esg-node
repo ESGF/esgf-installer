@@ -207,8 +207,8 @@ init() {
     myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib
     export PATH=$myPATH:$PATH
     export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:$LD_LIBRARY_PATH
-    export CFLAGS='"-I'${OPENSSL_HOME}'/include -I'${CURL_HOME}'/include '${CFLAGS}' -fPIC"'
-    export LDFLAGS='"-L'${OPENSSL_HOME}'/lib -L'${CURL_HOME}'/lib -Wl,--rpath,'${OPENSSL_HOME}'/lib -Wl,--rpath,'${CURL_HOME}'/lib"'
+    export CFLAGS="-I${OPENSSL_HOME}/include -I${CURL_HOME}/include ${CFLAGS} -fPIC"
+    export LDFLAGS="-L${OPENSSL_HOME}/lib -L${CURL_HOME}/lib -Wl,--rpath,${OPENSSL_HOME}/lib -Wl,--rpath,${CURL_HOME}/lib"
 
     #--------------
     # ID Setting

@@ -136,7 +136,7 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    openssl_version=${openssl_version:="0.9.8e"} ; openssl_min_version=${openssl_min_version:="0.9.8e"}
+    openssl_version=${openssl_version:="0.9.8e"} ; openssl_min_version=${openssl_min_version:="0.9.8"} #zoiks(fix me after revert zed changes)
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
@@ -203,12 +203,12 @@ init() {
     export GLOBUS_LOCATION=${globus_location}
     export ESG_ROOT_ID=${esg_root_id}
 
-    myPATH=${install_prefix}/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
-    myLD_LIBRARY_PATH=$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib
+    myPATH=${install_prefix}/bin:$OPENSSL_HOME/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
+    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib
     export PATH=$myPATH:$PATH
     export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:$LD_LIBRARY_PATH
-    export CFLAGS="-I${CURL_HOME}/include ${CFLAGS} -fPIC"
-    export LDFLAGS="-L${OPENSSL_HOME}/lib -L${CURL_HOME}/lib -Wl,--rpath,${OPENSSL_HOME}/lib -Wl,--rpath,${CURL_HOME}/lib"
+    export CFLAGS='"-I'${OPENSSL_HOME}'/include -I'${CURL_HOME}'/include '${CFLAGS}' -fPIC"'
+    export LDFLAGS='"-L'${OPENSSL_HOME}'/lib -L'${CURL_HOME}'/lib -Wl,--rpath,'${OPENSSL_HOME}'/lib -Wl,--rpath,'${CURL_HOME}'/lib"'
 
     #--------------
     # ID Setting

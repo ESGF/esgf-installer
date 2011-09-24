@@ -608,7 +608,7 @@ setup_libglobus_adq() {
     
     echo "setup_libglobus_adq..."
     
-    if [ ! -e ${GLOBUS_LOCATION}/lib/libglobus_adq.so ]; then
+    if [ ! -e ${GLOBUS_LOCATION}/lib/libglobus_adq.so ] || ((force_install)); then
         #go back to workbench dir...
         pushd ${globus_workdir} #>& /dev/null
         #----------
@@ -634,7 +634,12 @@ setup_libglobus_adq() {
 
         cd ${libglobus_adq_dir}
         sh build.sh 
-        cp -v libglobus_adq.so* $GLOBUS_LOCATION/lib 
+        [ -n "${GLOBUS_LOCATION}" ] && rm -rvf ${GLOBUS_LOCATION}/lib/libglobus_adq.so*
+        cp -v libglobus_adq.so.0.0.0 $GLOBUS_LOCATION/lib
+        pushd $GLOBUS_LOCATION/lib
+        ln -s libglobus_adq.so.0.0.0 libglobus_adq.so.0
+        ln -s libglobus_adq.so.0.0.0 libglobus_adq.so
+        popd >& /dev/null
         #----------
         popd >& /dev/null
     else

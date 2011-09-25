@@ -406,7 +406,7 @@ setup_globus() {
     ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor}"
     if  ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} \
-        && gmake -j=${num_cpus} ${config_type} \
+        && gmake ${config_type} \
         && gmake install
     then
         echo "Successfully Configured and Built Globus in: ${globus_install_dir}"
@@ -1441,6 +1441,7 @@ config_myproxy_server() {
         # local grab
         
         [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
+        #[ -d ${HOME}/.globus/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${HOME}/.globus/simpleCA
         ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         

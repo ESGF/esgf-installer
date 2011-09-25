@@ -142,7 +142,7 @@ init() {
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.2"} ; ant_min_version=${ant_min_version:-"1.8.2"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"6.0.32"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
+    tomcat_version=${tomcat_version:-"6.0.33"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
     las_version=${las_version:-"7.3.5"}; las_min_version=${las_min_version:-"7.3.5"}
     
@@ -480,7 +480,7 @@ setup_openssl() {
     fi
 
     pushd ${openssl_dist_dir}
-    ((force_install)) && make clean
+    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./Configure --prefix=${openssl_install_dir} linux-generic${word_size}"
     if ./Configure --prefix=${openssl_install_dir} shared linux-generic${word_size} \
 	&& gmake all \
@@ -588,7 +588,7 @@ setup_curl() {
     ((force_install)) && make clean
     echo "./configure --prefix=${curl_install_dir}"
     if ./configure --prefix=${curl_install_dir} \
-	&& gmake all \
+	&& gmake -j ${num_cpus} all \
 	&& gmake install
     then
 	echo "Successfully Configured and Built CURL in: ${curl_install_dir}"
@@ -692,7 +692,7 @@ setup_git() {
     ((force_install)) && make clean
     echo "./configure --prefix=${git_install_dir}"
     if ./configure --prefix=${git_install_dir} \
-	&& gmake all \
+	&& gmake -j ${num_cpus} all \
 	&& gmake install
     then
 	echo "Successfully Configured and Built GIT in: ${git_install_dir}"
@@ -1016,7 +1016,7 @@ setup_postgress() {
     ((force_install)) && make clean
     echo "./configure --prefix=${postgress_install_dir} --enable-thread-safety"
     if ./configure --prefix=${postgress_install_dir} --enable-thread-safety \
-	&& gmake \
+	&& gmake -j ${num_cpus} \
 	&& gmake install \
 	&& cd contrib/tablefunc/ \
 	&& gmake
@@ -1671,7 +1671,7 @@ setup_tomcat() {
 
 	chmod 755 ./configure
 	./configure --with-java=${java_install_dir}
-	make
+	make -j ${num_cpus}
 	[ -x ./jsvc ] && cp ./jsvc ${tomcat_install_dir}/bin
     fi
     popd >& /dev/null

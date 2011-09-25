@@ -236,7 +236,7 @@ init() {
     workdir=${workdir:-${installer_home}/workbench/esg}
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-    num_cpus=$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
+    let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
     esg_dist_url_root=http://198.128.245.140/dist
     esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
     date_format="+%Y_%m_%d_%H%M%S"

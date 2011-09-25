@@ -117,6 +117,7 @@ gsoap_version=${gsoap_version:-"2.7.15"}
 globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
 #NOTE-RedHat/CentOS specific...
 globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
+num_cpus=${num_cpus:-1}
 globus_install_dir=$globus_location
 globus_workdir=${workdir}/extra/globus
 globus_sys_acct=${globus_sys_acct:-globus}
@@ -405,7 +406,7 @@ setup_globus() {
     ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
     echo "./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor}"
     if  ./configure --prefix=${globus_install_dir} --with-flavor=${globus_flavor} \
-        && gmake ${config_type} \
+        && gmake -j=${num_cpus} ${config_type} \
         && gmake install
     then
         echo "Successfully Configured and Built Globus in: ${globus_install_dir}"

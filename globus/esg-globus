@@ -184,10 +184,16 @@ postgress_port=${postgress_port:-5432}
 pg_sys_acct=${pg_sys_acct:-postgres}
 #-----------
 
-export OPENSSL_INCLUDES="-I${OPENSSL_HOME}/include"
-export OPENSSL_CFLAGS="-fPIC"
-export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
-export OPENSSL_LIBS="-lssl -lcrypto"
+#-----------
+#NOTE: These should have been written by the install of openssl,
+#      if it was deamed necessary to do so. see esg-node:setup_openssl()
+#      Values needed for globus compilation to include SSL support when 
+#      not in default location - i.e. we installed our own.
+#export OPENSSL_INCLUDES="-I${OPENSSL_HOME}/include"
+#export OPENSSL_CFLAGS="-fPIC"
+#export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
+#export OPENSSL_LIBS="-lssl -lcrypto"
+#-----------
 
 globus_flavor=gcc${globus_word_size}dbg
 debug_print "(globus_flavor = ${globus_flavor})"

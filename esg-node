@@ -402,9 +402,6 @@ check_prerequisites() {
     verbose_print -n "Checking for gmake... "
     gmake --version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
 
-    verbose_print -n "Checking for openssl... "
-    openssl version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
-
     verbose_print -n "Checking for X11 libs... "
     Xorg -version >& /dev/null && verbose_print "[OK]" || verbose_print "[WARNING] X11 is needed for publisher UI..."
     #----------------------------------------
@@ -507,7 +504,20 @@ setup_openssl() {
 write_openssl_env() {
     ((show_summary_latch++))
     echo "export OPENSSL_HOME=${openssl_install_dir}" >> ${envfile}
+    echo "export OPENSSL_INCLUDES=-I${OPENSSL_HOME}/include" >> ${envfile}
+    echo "export OPENSSL_CFLAGS=-fPIC" >> ${envfile}
+    echo "export OPENSSL_LDFLAGS=-L${OPENSSL_HOME}/lib" >> ${envfile}
+    echo "export OPENSSL_LIBS=-lssl -lcrypto" >> ${envfile}
     dedup ${envfile} && source ${envfile}
+    return 0
+}
+
+remove_openssl_env() {
+    remove_env OPENSSL_HOME
+    remove_env OPENSSL_INCLUDES
+    remove_env OPENSSL_CFLAGS
+    remove_env OPENSSL_LDFLAGS
+    remove_env OPENSSL_LIBS
     return 0
 }
 
@@ -515,6 +525,11 @@ write_openssl_install_log() {
     echo "$(date ${date_format}) openssl=${openssl_version} ${openssl_install_dir}" >> ${install_manifest}
     dedup ${install_manifest}
     return 0
+}
+
+remove_openssl_install_log() {
+    remove_install_log_entry openssl
+    return $?
 }
 
 
@@ -3975,6 +3990,18 @@ pcheck() {
     return $ret
 }
 
+remove_install_log_entry() {
+    ((DEBUG)) && echo "removing $1's install log entry from ${install_manifest}"
+    sed -i '/:'${key}'=/d' ${install_manifest}
+    return $?
+}
+
+remove_env() {
+    ((DEBUG)) && echo "removing $1's environment from ${env_file}"
+    sed -i '/'${key}'/d' ${env_file}
+    return $?
+}
+
 uninstall() {
     local doit="N"
     read -p "Are you sure you want to uninstall? [y/N]: " doit
@@ -4046,6 +4073,19 @@ uninstall() {
 		[ $? != 0 ] && echo "ERROR: Unable to remove ${globus_location}"
 	    fi
 	fi
+
+	doit="N"
+	if [ -e $openssl_install_dir ]; then
+	    read -p "remove openssl? ($openssl_install_dir) [y/N]: " doit
+	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+		echo "removing $openssl_install_dir"
+		rm -rf ${openssl_install_dir}
+		[ $? != 0 ] && echo "ERROR: Unable to remove ${openssl_install_dir}"
+                remove_openssl_env
+                remove_openssl_install_log
+	    fi
+	fi
+
     fi
     exit 0
 }

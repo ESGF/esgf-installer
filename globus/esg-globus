@@ -1858,7 +1858,7 @@ edit_myproxy_certificate_mapapp() {
     eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
     echo -n "*"
     echo " [OK]"
-    chmod 755 ${tfile}
+    chmod -v 755 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile

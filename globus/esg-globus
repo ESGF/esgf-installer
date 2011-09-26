@@ -1934,7 +1934,7 @@ edit_init_d_myproxy() {
     pushd /etc/init.d/ >& /dev/null
     local tfile=myproxy
     echo "Download and Modifying rc script: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/init.d_${tfile}
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/init.d_${tfile} $((force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1

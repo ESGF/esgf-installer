@@ -136,7 +136,7 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    openssl_version=${openssl_version:="0.9.8e"} ; openssl_min_version=${openssl_min_version:="0.9.8"} #zoiks(fix me after revert zed changes)
+    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8"} #zoiks(fix me after revert zed changes)
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
@@ -507,7 +507,7 @@ write_openssl_env() {
     echo "export OPENSSL_INCLUDES=-I${OPENSSL_HOME}/include" >> ${envfile}
     echo "export OPENSSL_CFLAGS=-fPIC" >> ${envfile}
     echo "export OPENSSL_LDFLAGS=-L${OPENSSL_HOME}/lib" >> ${envfile}
-    echo "export OPENSSL_LIBS=-lssl -lcrypto" >> ${envfile}
+    echo "export OPENSSL_LIBS=\"-lssl -lcrypto\"" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -1305,7 +1305,7 @@ setup_cdat() {
     #to the executable PATH by the 'setup_postgress' function.
 
     echo "./configure --prefix=$cdat_home --enable-esg"
-    ./configure --prefix=${cdat_home} --enable-esg
+    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus}
     [ $? != 0 ] && echo " ERROR: Configure did not complete successfully" && popd && checked_done 1
     make
     [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1

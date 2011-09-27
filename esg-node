@@ -2681,7 +2681,7 @@ test_publication() {
 
     echo "(target index node => ${esgf_index_peer})"
     #Publish the dataset from the THREDDS catalog created above...
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_peer_group}.${node_short_name}.test.mytest --noscan --publish"
+    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish
     [ $? != 0 ] && echo " ERROR: unable to successfully execute esgpublish" && return 1
     sleep 3

@@ -136,7 +136,7 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8"} #zoiks(fix me after revert zed changes)
+    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8r"} #zoiks(fix me after revert zed changes)
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
@@ -3674,17 +3674,11 @@ export_keystore_as_globus_hostkeys() {
 #(called by setup_idp_peer)
 #arg1 - hostname of the machine with the cert you want to get
 #(arg2 - password to truststore where cert will be inserted)
+#(arg3 - password to keystore - only applicable in "local" registration scenario)
 register() {
     echo "Installing Public Certificate of Target Peer Node...[$1]"
 
     mkdir -p ${workdir} # >& /dev/null
-    pushd ${workdir} >& /dev/null
-    #Download the Java code used for certificate installation (into $workdir)
-    checked_get './InstallCert.class' ${utils_url}/InstallCert.class $((force_install))
-    (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for installing certificates" && popd && return 1
-    checked_get './InstallCert$SavingTrustManager.class' ${utils_url}/'InstallCert$SavingTrustManager.class' $((force_install))
-    (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for installing certificates" && popd && return 1
-    popd # >& /dev/null
 
     pushd ${tomcat_conf_dir} >& /dev/null
 
@@ -3697,8 +3691,21 @@ register() {
     [ -z "${my_truststore_password}" ] && my_truststore_password="changeit" #Tomcat's default
 
     if [ "${ssl_endpoint}" = "${esgf_host}" ]; then
-        add_my_cert_to_truststore ${my_truststore_password} && echo ":-)" || (echo ":-(" && return 1)
+        #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
+        local my_keystore_password=${3:-$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
+        add_my_cert_to_truststore ${my_keystore_password} && echo ":-)" || (echo ":-(" && return 1)
     else
+
+        mkdir -p ${workdir} # >& /dev/null
+
+        pushd ${workdir} >& /dev/null
+        #Download the Java code used for certificate installation (into $workdir)
+        checked_get './InstallCert.class' ${utils_url}/InstallCert.class $((force_install))
+        (( $? > 1 )) && echo " ERROR: Could not download utility class(1) for installing certificates" && popd && return 1
+        checked_get './InstallCert$SavingTrustManager.class' ${utils_url}/'InstallCert$SavingTrustManager.class' $((force_install))
+        (( $? > 1 )) && echo " ERROR: Could not download utility class(2) for installing certificates" && popd && return 1
+        popd # >& /dev/null
+
         local CP=".:${workdir}"
 
         #[ "${ssl_endpoint}" = "${esgf_host}" ] && start_tomcat
@@ -3821,7 +3828,7 @@ set_index_peer() {
     local publishing_service_url
 
     if [ "${input}" = "${esgf_host}" ] || [ "${input}" = "self" ] || [ "${input}" = "localhost" ]; then
-        publishing_service_url=$(sed -n 's@[ ]*publishing.service.endpoint[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
+        publishing_service_url=$(sed -n 's@[ ]*publishing.service.endpoint[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n '>' || (echo -n "x" && ((ret++)) )
         [ -z "${publishing_service_url}" ] || (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
     else
         publishing_service_url="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
@@ -4279,12 +4286,9 @@ check_version_with() {
     local app_name=$1
     local target_version=$2
     local version_command=${3:-"${app_name} --version"}
-    local ret=$?
 
-    local current_version=$(eval ${version_command}|  perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
-    ret=$?
-    debug_print "current_version = [${current_version}]"
-    [ ${ret} != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
+    local current_version=$(eval ${version_command})
+    [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
 
     debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
     check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")

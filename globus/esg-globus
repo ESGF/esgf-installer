@@ -1822,7 +1822,7 @@ edit_myproxy_server_config() {
 	    #set the password for the system user...
 	while [ 1 ]; do
 	    local input
-            read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]")" input
+            read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]") " input
 	    [ -n "${input}" ] && cert_password=${input}  && unset input && break
 	done
     fi

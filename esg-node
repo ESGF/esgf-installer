@@ -980,14 +980,26 @@ setup_postgress() {
     ((force_install)) && default="N"
     local dosetup
     if [ -x ${postgress_install_dir}/bin/psql ]; then
-	echo "Detected an existing postgress installation..."
-	read -p "Do you want to continue with Postgres installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	echo "Detected an existing postgress installation... (will not re-install)"
+        echo "To force a re-install you must manually remove the database completely - remove ${postgress_install_dir}/bin/psql"
+        echo 'Only if you know what you are doing!!!!!'
+        echo
+	#read -p "Do you want to continue with Postgres installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	#[ -z ${dosetup} ] && dosetup=${default}
+	#if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+	#    echo "Skipping postgres installation and setup - will assume postgres is setup properly"
+	#    return 0
+	#fi
+	#echo
+
+	read -p "Do you want to backup the curent database? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-	    echo "Skipping postgres installation and setup - will assume postgres is setup properly"
+            backup_db
 	    return 0
 	fi
 	echo
+        return 0
     fi
 
     mkdir -p ${postgress_workdir}

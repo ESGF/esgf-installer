@@ -67,7 +67,7 @@ install_prefix=${install_prefix:-"/usr/local"}
 DEBUG=${DEBUG:-1}
 force_install=${force_install:-0}
 workdir=${workdir:-~/workbench/esg}
-install_logfile=${ESG_INSTALL_LOGFILE:-"/etc/esg.install_log"}
+install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 
 #--------------
 # ID Setting
@@ -591,8 +591,8 @@ setup_gsoap() {
             && gmake install
         then
             echo "Successfully Configured and Built gSOAP in: ${gsoap_install_dir}"
-            echo "$(date ${date_format}) gsoap=${gsoap_version} ${gsoap_install_dir}" >> ${install_logfile}
-            dedup ${install_logfile}
+            echo "$(date ${date_format}) gsoap=${gsoap_version} ${gsoap_install_dir}" >> ${install_manifest}
+            dedup ${install_manifest}
 
         else
             echo " ERROR: Could NOT successfully build gSOAP!"
@@ -1640,8 +1640,8 @@ config_myproxy_server() {
         && gmake install
     then
         echo "Successfully Configured and Built mhash"
-        echo "$(date ${date_format}) mhash=${mhash_version}" >> ${install_logfile}
-        dedup ${install_logfile}
+        echo "$(date ${date_format}) mhash=${mhash_version}" >> ${install_manifest}
+        dedup ${install_manifest}
 
     else
         echo " ERROR: Could NOT successfully build mhash!"
@@ -1689,8 +1689,8 @@ config_myproxy_server() {
         && gmake install
     then
         echo "Successfully Configured and Built PAM PGSQL in: ${pam_pgsql_install_dir}"
-        echo "$(date ${date_format}) pam-pgsql=${pam_pgsql_version} ${pam_pgsql_install_dir}" >> ${install_logfile}
-        dedup ${install_logfile}
+        echo "$(date ${date_format}) pam-pgsql=${pam_pgsql_version} ${pam_pgsql_install_dir}" >> ${install_manifest}
+        dedup ${install_manifest}
     else
         echo " ERROR: Could NOT successfully build PAM PGSQL!"
         popd >& /dev/null
@@ -1753,8 +1753,8 @@ write_myproxy_install_log() {
     write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}:${myproxy_port:-7512}"
     write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /etc/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
     
-    echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_logfile}
-    dedup ${install_logfile}
+    echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_manifest}
+    dedup ${install_manifest}
     return 0
 
 }
@@ -1814,8 +1814,20 @@ edit_myproxy_server_config() {
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
+
+    local cert_password=$(sed -n 's/^[ ]*certificate_issuer_key_passphrase[ ]*\(.*\)$/\1/p' ${tfile}.bak | grep -v '@@PASSWORD@@')
     #This is the password of the CA's certs created via the simple ca (setup-gsi)
-    read -s -p "Enter certificate password - (use same password used in setup-gsi): " cert_password
+
+    if [ -z "${cert_password}" ] || ((force_install)); then
+	    #set the password for the system user...
+	while [ 1 ]; do
+	    local input
+            read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]")" input
+	    [ -n "${input}" ] && cert_password=${input}  && unset input && break
+	done
+    fi
+    echo -n "editing myproxy certificate information "
+    
     eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"

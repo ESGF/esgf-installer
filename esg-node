@@ -4159,6 +4159,55 @@ check_tomcat_process() {
 # Version Checking Utility Functions
 #-------------------------------
 
+check_version_atleast() {
+    # Takes the following arguments:
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #
+    # Returns 0 if the first argument is greater than or equal to the
+    # second and 1 otherwise.
+    #
+    # Returns 255 if called with less than two arguments.
+
+    debug_print "DEBUG: check_version_atleast \$1='$1'  \$2='$2'"
+
+    if [[ -z $1 || -z $2 ]] ; then
+        echo "CRITICAL FAILURE: check_version_atleast called with insufficient arguments" >&2
+        echo "  (\$1='$1'  \$2='$2')" >&2
+        return 255
+    fi
+
+    if [ "$(_version_cmp ${1} ${2})" -ge 0 ] ; then return 0 ; fi
+    return 1;
+}
+
+check_version_between() {
+    # Takes the following arguments:
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #   $3: the maximum acceptable version
+    #
+    # Returns 0 if the version is in the acceptable range (greater
+    # than or equal to the second argument, and less than or equal to
+    # the third), and 1 otherwise.
+    #
+    # Returns 255 if called with less than two arguments.
+
+    debug_print "DEBUG: check_version_between \$1='$1'  \$2='$2'  \$3='$3'"
+
+    if [[ -z $1 || -z $2 || -z $3 ]] ; then
+        echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
+        echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
+        return 255
+    fi
+
+    if [ "$(_version_cmp ${1} ${2})" -ge 0 ] \
+        && [ "$(_version_cmp ${1} ${3})" -le 0 ] ; then
+        return 0 ;
+    fi
+    return 1;
+}
+
 #------
 # Public helper method for verifying version constraints.  This allows
 # arithmetic comparisons to be used and scrubs the arguments.

@@ -4260,15 +4260,15 @@ check_version() {
     debug_print "check_version [$@]"
     [ -z $2 ] && return 0
     debug_print "[$2]"
-    local target_version=$(echo $2 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
-    debug_print "target_version = [$target_version]"
+    local min_version=$(echo $2 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
+    debug_print "min_version = [$min_version]"
 
     $1 --version >& /tmp/f || $1 -version >& /tmp/f
     [ $? != 0 ] && echo && echo "Oops, $1 command not found" && return 2
     current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\""	| cut -d " " -f1,1)
     debug_print "current_version = [$current_version]"
 
-    check_version_helper "${current_version}" "${target_version}"
+    check_version_helper "${current_version}" "${min_version}"
     local ret=$?
     (($DEBUG2)) && echo "The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
@@ -4283,18 +4283,18 @@ check_version() {
 #Looking for __version__ var
 check_module_version() {
     local module_name=$1
-    local target_version=$2
+    local min_version=$2
 
     local current_version=$(${cdat_home}/bin/python -c "import ${module_name}; print ${module_name}.__version__" 2> /dev/null)
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${module_name}" && return 2
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${module_name}" && return 3
 
-    check_version_helper "${current_version}" "${target_version}"
+    check_version_helper "${current_version}" "${min_version}"
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
 
-    printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [${target_version}] \n"
+    printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
 
@@ -4308,7 +4308,7 @@ get_current_webapp_version() {
 
 check_webapp_version() {
     local webapp_name=$1
-    local target_version=$2
+    local min_version=$2
     local version_property=${3:-"Version"}
 
     [ ! -d "${tomcat_install_dir}/webapps/${webapp_name}" ] && echo " Web Application \"${webapp_name}\" is not present or cannot be detected!" && return 2
@@ -4318,12 +4318,12 @@ check_webapp_version() {
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${webapp_name}" && return 3
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${webapp_name}" && return 4
 
-    check_version_helper "${current_version}" "${target_version}"
+    check_version_helper "${current_version}" "${min_version}"
     local ret=$?
     debug_print " The return value from the call to check_version_helper is $ret"
     [ $ret == 0 ] && return 0
 
-    printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [${target_version}] \n"
+    printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
 
@@ -4331,18 +4331,18 @@ check_webapp_version() {
 #of the form "app_dir-<version_num>"
 check_app_version() {
     local app_dir=$1
-    local target_version=$2
+    local min_version=$2
 
     local current_version=$(readlink -f ${tomcat_install_dir} | sed -ne 's/.*-\(.*\)$/\1/p')
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_dir##*/}" && return 2
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${app_dir##*/}" && return 3
 
-    check_version_helper "${current_version}" "${target_version}"
+    check_version_helper "${current_version}" "${min_version}"
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
 
-    printf "\nSorry, the detected version of ${app_dir##*/} [${current_version}] is older than required minimum version [${target_version}] \n"
+    printf "\nSorry, the detected version of ${app_dir##*/} [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
 
@@ -4350,18 +4350,18 @@ check_app_version() {
 check_version_with() {
     debug_print "check_version_with"
     local app_name=$1
-    local target_version=$2
+    local min_version=$2
     local version_command=${3:-"${app_name} --version"}
 
     local current_version=$(eval ${version_command})
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
 
-    check_version_helper "${current_version}" "${target_version}"
+    check_version_helper "${current_version}" "${min_version}"
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
 
-    printf "\nSorry, the detected version of ${app_name##*/} [${current_version}] is older than required minimum version [${target_version}] \n"
+    printf "\nSorry, the detected version of ${app_name##*/} [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
 

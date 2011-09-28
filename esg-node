@@ -5553,7 +5553,7 @@ main() {
 		    start ${sel}
 		    exit 0
 		    ;;
-		stop | --stop)
+		stop | --stop | shutdown | --shutdown)
 		    shift
 		    (( $# != 0 )) && echo "error: \"stop\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
 		    check_prerequisites

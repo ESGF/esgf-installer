@@ -363,7 +363,7 @@ setup_globus() {
     echo
 
     local dosetup
-    local default_val="Y"
+    local default_val="N"
     if [ -e ${globus_install_dir} ]; then
         echo "Detected an existing Globus installation... at ${globus_install_dir}"
         echo "Current globus version: $(${globus_install_dir}/bin/globus-version)"

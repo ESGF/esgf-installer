@@ -4161,8 +4161,8 @@ check_tomcat_process() {
 
 check_version_atleast() {
     # Takes the following arguments:
-    #   $1: the minimum acceptable version
-    #   $2: a string containing the version to test
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
     #
     # Returns 0 if the first argument is greater than or equal to the
     # second and 1 otherwise.
@@ -4177,19 +4177,19 @@ check_version_atleast() {
         return 255
     fi
 
-    if [ "$(_version_cmp ${2} ${1})" -ge 0 ] ; then return 0 ; fi
+    if [ "$(_version_cmp ${1} ${2})" -ge 0 ] ; then return 0 ; fi
     return 1;
 }
 
 check_version_between() {
     # Takes the following arguments:
-    #   $1: the minimum acceptable version
-    #   $2: the maximum acceptable version
-    #   $3: a string containing the version to test
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #   $3: the maximum acceptable version
     #
     # Returns 0 if the tested version is in the acceptable range
-    # (greater than or equal to the first argument, and less than or
-    # equal to the second), and 1 otherwise.
+    # (greater than or equal to the second argument, and less than or
+    # equal to the third), and 1 otherwise.
     #
     # Returns 255 if called with less than three arguments.
 
@@ -4201,45 +4201,54 @@ check_version_between() {
         return 255
     fi
 
-    if [ "$(_version_cmp ${3} ${1})" -ge 0 ] \
-        && [ "$(_version_cmp ${3} ${2})" -le 0 ] ; then
+    if [ "$(_version_cmp ${1} ${2})" -ge 0 ] \
+        && [ "$(_version_cmp ${1} ${3})" -le 0 ] ; then
         return 0 ;
     fi
     return 1;
 }
 
-#------
-# Public helper method for verifying version constraints.  This allows
-# arithmetic comparisons to be used and scrubs the arguments.
-#
-# Returns 0 if the constraint is met.  Returns 1 otherwise
-#------
 check_version_helper() {
-    (($DEBUG2)) && echo "in check_version_helper $@"
+    # Primary helper method for verifying version constraints,
+    # automatically detecting by argument count whether to check for a
+    # minimum version or a range.
+    #
+    # Takes the following arguments:
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #   $3 (optional): the maximum acceptable version
+    #
+    # If called with only one argument, the function will attempt to
+    # split it on spaces into multiple arguments automatically, and
+    # then follow the above argument logic.
+    #
+    # Returns 0 if the tested version is in the acceptable range
+    #
+    # Returns 255 if less than two arguments are detected after
+    # automatic argument splitting.
+
     debug_print "DEBUG: check_version_helper \$1='$1'  \$2='$2'  \$3='$3'"
 
-    #only one parameter, probably a string, expand it
+    # Split a lone argument
     [[ $# == 1 ]] && set -- $1
 
-    #check we have what we need
-    if [[  -z $1 || -z $2  || -z $3 ]]; then
-	[[ $verbose ]] && usage
-	return 255
+    # Spit out a nasty error message and return with 255 if there are
+    # insufficient arguments (this causes the version check to fail,
+    # but does NOT abort the script -- watch for the CRITICAL FAILURE
+    # string in your output)
+    if [[  -z $1 || -z $2  ]]; then
+        echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
+        echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
+        return 255
     fi
 
-    #transform operators in arithmetic ones (if not already)
-    case $2 in
-        '>')        op="-gt" ;;
-        '>=')       op="-ge" ;;
-        '<')        op="-lt" ;;
-        '<=')       op="-le" ;;
-        '='|'==')   op="-eq" ;;
-        '!='|'<>')  op="-ne" ;;
-        *)          op=$2 ;;
-    esac
-
-    if [ "$(_version_cmp ${1} ${3})" ${op} 0 ] ; then return 0 ; fi
-    return 1;
+    if [ -z $3 ] ; then
+        # Only two arguments, check for a minimum version
+        check_version_atleast ${1} ${2}
+        return $?
+    fi
+    check_version_between ${1} ${2} ${3}
+    return $?
 }
 
 #The "Public" function that should be called.  Delegates to the helper functions (the two above)
@@ -4259,8 +4268,7 @@ check_version() {
     current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\""	| cut -d " " -f1,1)
     debug_print "current_version = [$current_version]"
 
-    debug_print "Calling helper, check_version_helper ${current_version} >= ${target_version}"
-    check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
+    check_version_helper "${current_version}" "${target_version}"
     local ret=$?
     (($DEBUG2)) && echo "The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
@@ -4281,8 +4289,7 @@ check_module_version() {
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${module_name}" && return 2
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${module_name}" && return 3
 
-    debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
-    check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
+    check_version_helper "${current_version}" "${target_version}"
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
@@ -4311,8 +4318,7 @@ check_webapp_version() {
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${webapp_name}" && return 3
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${webapp_name}" && return 4
 
-    debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
-    check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
+    check_version_helper "${current_version}" "${target_version}"
     local ret=$?
     debug_print " The return value from the call to check_version_helper is $ret"
     [ $ret == 0 ] && return 0
@@ -4331,8 +4337,7 @@ check_app_version() {
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_dir##*/}" && return 2
     [ -z "${current_version}" ] && echo " WARNING:(1) Could not detect version of ${app_dir##*/}" && return 3
 
-    debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
-    check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
+    check_version_helper "${current_version}" "${target_version}"
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
@@ -4351,8 +4356,7 @@ check_version_with() {
     local current_version=$(eval ${version_command})
     [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
 
-    debug_print " calling helper, check_version_helper ${current_version} >= ${target_version}"
-    check_version_helper "${current_version}" ">=" "${target_version}" # note: bug found (needed to quote the operation ">=")
+    check_version_helper "${current_version}" "${target_version}"
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0

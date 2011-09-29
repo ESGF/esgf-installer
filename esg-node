@@ -4171,7 +4171,7 @@ check_version_atleast() {
 
     debug_print "DEBUG: check_version_atleast \$1='$1'  \$2='$2'"
 
-    if [[ -z $1 || -z $2 ]] ; then
+    if [[ -z "${1}" || -z "${2}" ]] ; then
         echo "CRITICAL FAILURE: check_version_atleast called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2')" >&2
         return 255
@@ -4195,7 +4195,7 @@ check_version_between() {
 
     debug_print "DEBUG: check_version_between \$1='$1'  \$2='$2'  \$3='$3'"
 
-    if [[ -z $1 || -z $2 || -z $3 ]] ; then
+    if [[ -z "${1}" || -z "${2}" || -z "${3}" ]] ; then
         echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
@@ -4236,13 +4236,13 @@ check_version_helper() {
     # insufficient arguments (this causes the version check to fail,
     # but does NOT abort the script -- watch for the CRITICAL FAILURE
     # string in your output)
-    if [[  -z $1 || -z $2  ]]; then
+    if [[  -z "${1}" || -z "${2}"  ]]; then
         echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
     fi
 
-    if [ -z $3 ] ; then
+    if [ -z "${3}" ] ; then
         # Only two arguments, check for a minimum version
         check_version_atleast ${1} ${2}
         return $?
@@ -4274,13 +4274,13 @@ check_version() {
     # "--version" nor "-version" is a valid argument)
 
     debug_print "\nDEBUG: check_version [$@]"
-    [ -z $2 ] && return 0
+    [ -z "${2}" ] && return 0
     local min_version=${2}
     local max_version=${3}
     debug_print "min_version = [$min_version]"
     debug_print "max_version = [$max_version]"
 
-    version_tempfile=$(mktemp)
+    local version_tempfile=$(mktemp)
     $1 --version >& ${version_tempfile} || $1 -version >& ${version_tempfile}
     [ $? != 0 ] && echo && echo " WARNING: could not find a version from '$1'" && return 2
 
@@ -4332,7 +4332,7 @@ check_version_with() {
     debug_print "min_version = [$min_version]"
     debug_print "max_version = [$max_version]"
 
-    [ -z ${3} ] && return 0
+    [ -z "${3}" ] && return 0
 
     local current_version=$(eval ${version_command})
     if [ $? != 0 ] ; then

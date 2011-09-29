@@ -2107,8 +2107,8 @@ select_idp_peer() {
 	unset choice
 	printf "Please select the IDP Peer (or gateway) for this node: \n"
 	printf "\t-------------------------------------------\n"
-	printf "\t*[1] : ESGF-PCMDI   -> pcmdi3.llnl.gov\n"
-	printf "\t [2] : ESGF-PCMDI-9 -> pcmdi9.llnl.gov\n"
+	printf "\t*[1] : ESGF-PCMDI-9 -> pcmdi9.llnl.gov\n"
+	printf "\t [2] : ESGF-PCMDI   -> pcmdi3.llnl.gov\n"
 	printf "\t [3] : ESGF-JPL     -> esg-gateway.jpl.nasa.gov\n"
 	printf "\t [4] : ESGF-ORNL    -> esg2-gw.ccs.ornl.gov\n"
 	printf "\t [5] : ESGF-BADC    -> cmip-gw.badc.rl.ac.uk\n"
@@ -2132,12 +2132,12 @@ select_idp_peer() {
 	    3)	esgf_idp_peer_name="ESGF-JPL"
 		esgf_idp_peer="esg-gateway.jpl.nasa.gov"
 		;;
-	    2)	esgf_idp_peer_name="ESGF-PCMDI-9"
-		esgf_idp_peer="pcmdi9.llnl.gov"
-		;;
-	    1)	esgf_idp_peer_name="ESGF-PCMDI"
+	    2)	esgf_idp_peer_name="ESGF-PCMDI"
 		esgf_idp_peer="pcmdi3.llnl.gov/esgcet"
 		custom_myproxy_port=2119 #hack till we open the right port
+		;;
+	    1)	esgf_idp_peer_name="ESGF-PCMDI-9"
+		esgf_idp_peer="pcmdi9.llnl.gov"
 		;;
 	    c | C)
 		local input
@@ -5311,7 +5311,7 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
 	unset input
-	default=${esgf_index_peer:-'pcmdi3.llnl.gov'}
+	default=${esgf_index_peer:-'pcmdi9.llnl.gov'}
 	read -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
 	[ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
 	[ -n "${input}" ] && esgf_index_peer=${input}	  && write_as_property esgf_index_peer

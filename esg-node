@@ -136,7 +136,7 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8h"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
+    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}

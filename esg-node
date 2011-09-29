@@ -4280,22 +4280,25 @@ check_version() {
     debug_print "min_version = [$min_version]"
     debug_print "max_version = [$max_version]"
 
-    # FIXME! CRITICAL SECURITY BUG! THIS CAN BE USED IN A SYMLINK ATTACK!
-    $1 --version >& /tmp/f || $1 -version >& /tmp/f
+    version_tempfile=$(mktemp)
+    $1 --version >& ${version_tempfile} || $1 -version >& ${version_tempfile}
     [ $? != 0 ] && echo && echo " WARNING: could not find a version from '$1'" && return 2
 
-    local current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
+    local current_version=$(cat ${version_tempfile} 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
     local current_version=$(_trimline ${current_version})
     debug_print "current_version = [$current_version]"
 
     check_version_helper "${current_version}" "${min_version}" "${max_version}"
     local ret=$?
     (($DEBUG2)) && echo "The return value from the call to helper function check_version_ is $ret"
-    [ $ret == 0 ] && return 0
+    if [ $ret == 0 ] ; then
+        rm -f ${version_tempfile}
+        return 0
+    fi
 
     printf "\nThe detected version of ${1} [${current_version}] is not between [${min_version}] and [${max_version}] \n"
-    cat /tmp/f
-    rm /tmp/f >& /dev/null
+    cat ${version_tempfile}
+    rm -f ${version_tempfile}
     return 1
 }
 

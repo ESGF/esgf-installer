@@ -4554,9 +4554,9 @@ backup() {
 
     #-------------
     #keep only the last num_backups_to_keep files
-    num_backups_to_keep=${num_backups_to_keep:-7}
+    local num_backups_to_keep=${num_backups_to_keep:-7}
     pushd ${esg_backup_dir} >& /dev/null
-    files=(`ls -t | grep ${source##*/}.\*.tgz | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
+    local files=(`ls -t | grep ${source##*/}.\*.tgz | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
     if (( ${#files[@]} > 0 )); then
 	echo "Tidying up a bit..."
 	echo "${#files[@]} old backup files to remove: ${files[@]}"
@@ -4593,9 +4593,9 @@ backup_db() {
 
     #-------------
     #keep only the last num_backups_to_keep files
-    num_backups_to_keep=${num_backups_to_keep:-7}
+    local num_backups_to_keep=${num_backups_to_keep:-7}
     pushd ${esg_backup_dir} >& /dev/null
-    files=(`ls -t | grep ${my_node_db_name##*/}.\*.sql | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
+    local files=(`ls -t | grep ${my_node_db_name##*/}.\*.sql | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
     if (( ${#files[@]} > 0 )); then
 	echo "Tidying up a bit..."
 	echo "${#files[@]} old backup files to remove: ${files[@]}"

@@ -4273,7 +4273,7 @@ check_version() {
     # (i.e. because the command could not be found, or because neither
     # "--version" nor "-version" is a valid argument)
 
-    debug_print "DEBUG: check_version [$@]"
+    debug_print "\nDEBUG: check_version [$@]"
     [ -z $2 ] && return 0
     local min_version=${2}
     local max_version=${3}
@@ -4324,7 +4324,7 @@ check_version_with() {
     #
     # Returns 2 if running the specified command results in an error
 
-    debug_print "DEBUG: check_version_with  \$1='$1'"
+    debug_print "\nDEBUG: check_version_with  \$1='$1'"
     local app_name=${1}
     local version_command=${2:-"${app_name} --version"}
     local min_version=${3}
@@ -4353,6 +4353,7 @@ check_version_with() {
 #For python module version checking
 #Looking for __version__ var
 check_module_version() {
+    debug_print "\nDEBUG: check_module_version  \$1='$1'  \$2='$2'"
     local module_name=$1
     local min_version=$2
 
@@ -4378,6 +4379,7 @@ get_current_webapp_version() {
 }
 
 check_webapp_version() {
+    debug_print "\nDEBUG: check_webapp_version  \$1='$1'  \$2='$2'  \$3='$3'"
     local webapp_name=$1
     local min_version=$2
     local version_property=${3:-"Version"}
@@ -4401,6 +4403,8 @@ check_webapp_version() {
 #0ne-off version checking mechanism for applications where version number is in the name of the directory
 #of the form "app_dir-<version_num>"
 check_app_version() {
+    debug_print "\nDEBUG: check_app_version  \$1='$1'  \$2='$2'"
+
     local app_dir=$1
     local min_version=$2
 

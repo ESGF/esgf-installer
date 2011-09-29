@@ -136,7 +136,7 @@ init() {
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8r"} #zoiks(fix me after revert zed changes)
+    openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8h"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
@@ -415,8 +415,8 @@ check_prerequisites() {
 #####
 setup_openssl() {
 
-    echo -n "Checking for openssl >= ${openssl_min_version} "
-    check_version_with openssl ${openssl_min_version} "openssl version | sed 's/OpenSSL[ ]*\([0-9]*\?.[0-9]*\?.[0-9]*\?[a-z]\)\(.*\)/\1/p'"
+    echo "Checking for openssl between ${openssl_min_version} and ${openssl_max_version}"
+    check_version_with openssl "openssl version | perl -p -e 's/OpenSSL ?(\d+\.\d+\.\d+[a-z]?).*/\1/'" ${openssl_min_version} ${openssl_max_version}
     [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 
     echo
@@ -1271,7 +1271,7 @@ test_postgress() {
 #####
 setup_cdat() {
     echo -n "Checking for CDAT (Python+CDMS) ${cdat_version}"
-    check_version_with "cdat" ${cdat_version} '${cdat_home}/bin/python -c "import cdat_info; print cdat_info.Version"'
+    check_version_with "cdat" '${cdat_home}/bin/python -c "import cdat_info; print cdat_info.Version"' ${cdat_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -4251,31 +4251,99 @@ check_version_helper() {
     return $?
 }
 
-#The "Public" function that should be called.  Delegates to the helper functions (the two above)
-#Makes the calls to fetch the version information about the passed in executable
-# Returns 0 if everything is up to date (version-wise)
-# Returns 1 if the current version is older than the required version
-# Returns 2 if could not find executible at all on the system
 check_version() {
-    debug_print "check_version [$@]"
-    [ -z $2 ] && return 0
-    debug_print "[$2]"
-    local min_version=$(echo $2 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
-    debug_print "min_version = [$min_version]"
+    # This is the most commonly used "public" version checking
+    # routine.  It delegates to check_version_helper() for the actual
+    # comparison, which in turn delegates to other functions in a chain.
+    #
+    # Arguments:
+    #   $1: a string containing executable to call with the argument
+    #       "--version" or "-version" to find the version to check against
+    #   $2: the minimum acceptable version string
+    #   $3 (optional): the maximum acceptable version string
+    #
+    # Returns 0 if the detected version is within the specified
+    # bounds, or if there were not even two arguments passed.
+    #
+    # Returns 1 if the detected version is not within the specified
+    # bounds.
+    #
+    # Returns 2 if running the specified command with "--version" or
+    # "-version" as an argument results in an error for both
+    # (i.e. because the command could not be found, or because neither
+    # "--version" nor "-version" is a valid argument)
 
+    debug_print "DEBUG: check_version [$@]"
+    [ -z $2 ] && return 0
+    local min_version=${2}
+    local max_version=${3}
+    debug_print "min_version = [$min_version]"
+    debug_print "max_version = [$max_version]"
+
+    # FIXME! CRITICAL SECURITY BUG! THIS CAN BE USED IN A SYMLINK ATTACK!
     $1 --version >& /tmp/f || $1 -version >& /tmp/f
-    [ $? != 0 ] && echo && echo "Oops, $1 command not found" && return 2
-    current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\""	| cut -d " " -f1,1)
+    [ $? != 0 ] && echo && echo " WARNING: could not find a version from '$1'" && return 2
+
+    local current_version=$(cat /tmp/f 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
+    local current_version=$(_trimline ${current_version})
     debug_print "current_version = [$current_version]"
 
-    check_version_helper "${current_version}" "${min_version}"
+    check_version_helper "${current_version}" "${min_version}" "${max_version}"
     local ret=$?
     (($DEBUG2)) && echo "The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
 
-    printf "\nSorry, the detected version of $1 [${current_version}] is older than required minimum version [$2] \n"
+    printf "\nThe detected version of ${1} [${current_version}] is not between [${min_version}] and [${max_version}] \n"
     cat /tmp/f
     rm /tmp/f >& /dev/null
+    return 1
+}
+
+check_version_with() {
+    # This is an alternate version of check_version() (see above)
+    # where the second argument specifies the entire command string with
+    # all arguments, pipes, etc. needed to result in a version number
+    # to compare.
+    #
+    # Arguments:
+    #   $1: a string containing the name of the program version to
+    #       check (this is only used in debugging output)
+    #   $2: the complete command to be passed to eval to produce the
+    #       version string to test
+    #   $3: the minimum acceptable version string
+    #   $4 (optional): the maximum acceptable version string
+    #
+    # Returns 0 if the detected version is within the specified
+    # bounds, or if at least three arguments were not passed
+    #
+    # Returns 1 if the detected version is not within the specified
+    # bounds.
+    #
+    # Returns 2 if running the specified command results in an error
+
+    debug_print "DEBUG: check_version_with  \$1='$1'"
+    local app_name=${1}
+    local version_command=${2:-"${app_name} --version"}
+    local min_version=${3}
+    local max_version=${4}
+    debug_print "min_version = [$min_version]"
+    debug_print "max_version = [$max_version]"
+
+    [ -z ${3} ] && return 0
+
+    local current_version=$(eval ${version_command})
+    if [ $? != 0 ] ; then
+        echo " WARNING: Could not detect version of ${app_name##*/}"
+        return 2
+    fi
+    local current_version=$(_trimline ${current_version})
+
+    check_version_helper "${current_version}" "${min_version}" "${max_version}"
+    local ret=$?
+    debug_print " The return value from the call to helper function check_version_helper is $ret"
+    [ $ret == 0 ] && return 0
+
+    printf "\nThe detected version of ${app_name##*/} [${current_version}] is not between [${min_version}] and [${max_version}] \n"
     return 1
 }
 
@@ -4343,25 +4411,6 @@ check_app_version() {
     [ $ret == 0 ] && return 0
 
     printf "\nSorry, the detected version of ${app_dir##*/} [${current_version}] is older than required minimum version [${min_version}] \n"
-    return 1
-}
-
-#Provide your own command for fetching current version
-check_version_with() {
-    debug_print "check_version_with"
-    local app_name=$1
-    local min_version=$2
-    local version_command=${3:-"${app_name} --version"}
-
-    local current_version=$(eval ${version_command})
-    [ $? != 0 ] && echo " WARNING:(2) Could not detect version of ${app_name##*/}" && return 3
-
-    check_version_helper "${current_version}" "${min_version}"
-    local ret=$?
-    debug_print " The return value from the call to helper function check_version_ is $ret"
-    [ $ret == 0 ] && return 0
-
-    printf "\nSorry, the detected version of ${app_name##*/} [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
 

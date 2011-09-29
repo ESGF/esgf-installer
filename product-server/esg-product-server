@@ -113,7 +113,7 @@ setup_product_server() {
 setup_ferret() {
 
     echo -n "Checking for Ferret v${ferret_version} of [${ferret_install_dir}/bin/ferret]"
-    check_version_with "ferret" ${ferret_version} '${ferret_install_dir}/bin/ferret -version'
+    check_version_with "ferret" '${ferret_install_dir}/bin/ferret -version' ${ferret_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 

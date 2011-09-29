@@ -415,7 +415,7 @@ check_prerequisites() {
 #####
 setup_openssl() {
 
-    echo "Checking for openssl between ${openssl_min_version} and ${openssl_max_version}"
+    echo -n "Checking for openssl between ${openssl_min_version} and ${openssl_max_version}"
     check_version_with openssl "openssl version | perl -p -e 's/OpenSSL ?(\d+\.\d+\.\d+[a-z]?).*/\1/'" ${openssl_min_version} ${openssl_max_version}
     [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 

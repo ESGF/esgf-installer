@@ -411,7 +411,7 @@ get_las() {
     echo "Getting LAS..."
     pushd ${ferret_workdir} >& /dev/null
     #Download:
-    if [ ! -e ${las_dist_file} ]; then
+    if [ ! -e ${las_dist_file} ] || ((force_install)) ; then
 	echo "Don't see LAS tar file ${las_dist_file}"
 	echo "Downloading LAS from ${las_dist_file} -to-> $(pwd)/${las_dist_file}"
 

@@ -3698,6 +3698,7 @@ register() {
     [ -z "${input}" ] && popd && echo "Could not register: No endpoint specified" && return 1
 
     local ssl_endpoint=${input%%/*} #just need the hostname
+    [ "${ssl_endpoint}" = "self" ] && ssl_endpoint=${esgf_host}
     local ssl_port=${ssl_port:-443}
     local my_truststore_password=${2:-$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
     [ -z "${my_truststore_password}" ] && my_truststore_password="changeit" #Tomcat's default

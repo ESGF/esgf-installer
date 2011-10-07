@@ -3823,9 +3823,13 @@ set_index_peer() {
     ret=0
     [ -z "${esgf_index_peer}" ] && get_property esgf_index_peer
     [ -z "${esgf_host}" ] && get_property esgf_host $(hostname --fqdn)
+    [ "$1" = "nohost" ] && echo "please provide host value" && return 1
+
     local input=${1:-${esgf_index_peer}}
     [ "$1" = "self" ] && input=${esgf_host}
-    echo "Setting Index Peer... to => [${input}] "
+    [ "$1" = "localhost" ] && input=${esgf_host}
+    local index_type=${2:-"p2p"}
+    echo "Setting Index Peer... to => [${input}] (endpoint type = ${index_type})"
 
     #note: config_file defined in esg-node:init()
     local esgf_properties_file=${config_file:-${esg_config_dir}/esgf.properties}
@@ -3836,17 +3840,18 @@ set_index_peer() {
     register ${input}
     [ $? != 0 ] && echo " Error: could not import Index Peer's [${esgf_index_peer}] certificate!" && checked_done 1
     #----------------------
+    local publishing_service_endpoint
+    get_property publishing_service_endpoint
 
     #selecting the approprate value for service url...
-    local publishing_service_url
 
-    if [ "${input}" = "${esgf_host}" ] || [ "${input}" = "self" ] || [ "${input}" = "localhost" ]; then
-        publishing_service_url=$(sed -n 's@[ ]*publishing.service.endpoint[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n '>' || (echo -n "x" && ((ret++)) )
-        [ -z "${publishing_service_url}" ] || (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
+    if [ "${index_type}" = "gateway" ]; then
+        publishing_service_endpoint="https://${input}/remote/secure/client-cert/hessian/publishingService"
     else
-        publishing_service_url="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
+        [ "${input}" = "${esgf_host}" ] && [ -z "${publishing_service_endpoint}" ] && return 1
+        publishing_service_endpoint="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
     fi
-
+    
     #locate the publisher's configuration file - esg.ini
     local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
     local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
@@ -3858,11 +3863,12 @@ set_index_peer() {
     (( ret > 0 )) && echo && debug_print " WARNING: Will not edit ${target_file}, could not successfully glean needed information" && return ${ret}
 
     #edit in-place the esg.ini file...
-    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_url}'#' ${target_file} && echo -n ")" || echo -n " 8-("
+    sed -i 's#^[ ]*\(hessian_service_url[ ]*=[ ]*\).*$#\1'${publishing_service_endpoint}'#' ${target_file} && echo -n ")" || echo -n " 8-("
     echo
-    echo "${publishing_service_url}"
+    echo "${publishing_service_endpoint}"
     echo
-    write_as_property esgf_index_peer ${input}
+    write_as_property esgf_index_peer ${input%%/*}
+    write_as_property publishing_service_endpoint
     #----------------------
 
 }
@@ -5436,9 +5442,10 @@ usage() {
         (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
 
         -------------------------------
-	Publication Endpoint Setting (Index Peer)
+	Publication Endpoint Setting (Index Peer/Gateway)
 	-------------------------------
-        --set-index-peer | --set-publication-target  <hostname of the index peer you wish to publish to>
+        --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
+        --set-publication-target <hostname (and rootdir) of \"gateway\" you wish to publish to> Ex pcmdi3.llnl.gov/esgcet
 
         -------------------------------
 	IDP Endpoint Setting (IDP Peer)
@@ -5852,12 +5859,20 @@ main() {
                     select_idp_peer
                     exit $?
                     ;;
-                --set-index-peer|--set-publication-target)
+                --set-index-peer)
                     self_verify
                     check_prerequisites
                     shift
                     init_structure
-                    set_index_peer $1
+                    set_index_peer ${1:-"self"} "p2p"
+                    exit $?
+                    ;;
+                --set-publication-target)
+                    self_verify
+                    check_prerequisites
+                    shift
+                    init_structure
+                    set_index_peer ${1:-"nohost"} "gateway"
                     exit $?
                     ;;
 		--register)

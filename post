@@ -68,6 +68,7 @@
 
 devel=${devel:-0}
 verbose=${verbose:-0}
+debug=${debug:-0}
 noop=${noop:-0}
 
 while [ -n "$1" ]; do 
@@ -77,6 +78,9 @@ while [ -n "$1" ]; do
             ;;
         --verbose)
             verbose=1
+            ;;
+        --debug)
+            debug=1
             ;;
         --noop | --dry-run)
             noop=1
@@ -123,6 +127,10 @@ fail=0
 good=0
 total=0
 
+script_version=$(git describe)-${my_current_branch}
+script_release=$(git tag | sed -ne 's/\(v[0-9]*\.[0-9]*\.[0-9]*\)-\([a-zA-Z0-9_-]*\)-release.*$/\2/p' | sort -k1,1 | tail -n 1)
+
+
 while read file dest_dir; do
     
     #skip comment lines (#) and blank lines...
@@ -147,13 +155,18 @@ while read file dest_dir; do
 
     dest_dir=${dest_dir:-"${current_dir}"}
     #echo "[$file] >> [$dest_dir]"
-    
+    tmp_file=${file}_${RANDOM}
     ((verbose)) && echo -n "pushing $file ---> ${xfer_user}${esg_dist_url}/${dest_dir} " || echo -n "*"
-    sed 's#\(script_version=\)"\(.*\)".*$#\1"'$(git describe)-${my_current_branch}'"#' ${file} > ${file}.tmp
-    ((!noop))  && md5sum ${file}.tmp > ${file}.md5
+    #NOTE: I am sure there is a cleaner way to do this two step replacement that does not require two tmp files!!!
+    #      In a cross platform way (unix will take "-i" alone, apple wants "-i ''")  :-(
+    ((debug)) && echo "sed 's#\(script_version=\)"\(.*\)".*$#\1"'${script_version}'"#' ${file} > ${tmp_file}_"
+    sed 's#\(script_version=\)"\(.*\)".*$#\1"'${script_version}'"#' ${file} > ${tmp_file}_
+    ((debug)) && echo "sed 's#\(script_release=\)"\(.*\)".*$#\1"'${script_release}'"#' ${tmp_file}_ > ${tmp_file}"
+    sed 's#\(script_release=\)"\(.*\)".*$#\1"'${script_release}'"#' ${tmp_file}_ > ${tmp_file}
+    ((!noop))  && md5sum ${tmp_file} > ${file}.md5
     ((!noop))  && rsync -c ${file}.md5 ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
     echo -n "-"
-    ((!noop))  && rsync -c ${file}.tmp ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
+    ((!noop))  && rsync -c ${tmp_file} ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
     if [ $? != 0 ]; then
 	((verbose)) && echo "[FAIL]"
 	((++fail))
@@ -162,7 +175,7 @@ while read file dest_dir; do
 	((++good))
     fi
     ((++total))
-    rm ${file}.tmp
+    rm ${tmp_file}{,_}
 done < $manifest_file
 
 echo 

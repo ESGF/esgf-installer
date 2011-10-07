@@ -676,6 +676,7 @@ setup_gridftp_metrics_logging() {
     [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
 
     yum -y install perl-DBD-Pg
+    [ $? == 0 ] && echo "Successfully intalled perl DBD" || echo "ERROR: Was not able to install perl DBD"
 
     local esg_usage_parser_dist_file=${esg_usage_parser_dist_url##*/}
     #strip off "-##-##-####.tar.bz2 at the end

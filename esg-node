@@ -2856,6 +2856,36 @@ fetch_esgf_certificates() {
     if [ $ret == 0 ]; then
 	[ -e ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ] && rm ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz
     fi
+
+    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    if [ -n "${simpleCA_cert}" ]; then
+        local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
+        echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
+        [ -e "${globus_global_certs_dir}/${simpleCA_cert_hash}.0" ] && ((!force_install)) && echo "Local CA cert file detected.... [OK]" && return 0
+        echo "Integrating in local simpleCA_cert... "
+        (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 && \
+            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
+            chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+                echo "[OK]") || echo "[FAIL]"
+
+        printf "
+    ----------------------------------------------------------------------
+    If you have not done so, please attach the file ${simpleCA_cert} to an
+    email addressed to esgf-ca@lists.llnl.gov
+    
+    Include your name, organization, contact information and the context in which you are\n
+    joining the ESGF federation.
+    
+    If you are able, please cryptographically sign the email with your
+    personal signature, preferably endorsed by your organization
+
+    Thank you
+    ----------------------------------------------------------------------\n
+"
+
+    fi
+
     chmod 755 ${globus_global_certs_dir}
     chmod 644 ${globus_global_certs_dir}/*
 }
@@ -2877,16 +2907,6 @@ rebuild_truststore() {
 
     local tmp_dir=/tmp/esg_scratch
     mkdir -p ${tmp_dir}
-
-    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
-    if [ -n "${simpleCA_cert}" ]; then
-        echo "Integrating in local simpleCA_cert... "
-        (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/simpleCA_${simpleCA_cert##*/}.0 && \
-            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
-            echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
-            chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
-            echo "[OK]") || echo "[FAIL]"
-    fi
 
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
     for cert_file in $cert_files; do

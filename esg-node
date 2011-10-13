@@ -2863,7 +2863,12 @@ fetch_esgf_certificates() {
         echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
         [ -e "${globus_global_certs_dir}/${simpleCA_cert_hash}.0" ] && ((!force_install)) && echo "Local CA cert file detected.... [OK]" && return 0
         echo "Integrating in local simpleCA_cert... "
+
+        debug_print "Local SimpleCA Root Cert: ${simpleCA_cert}"
+        debug_print "Extracting Signing policy command: tar xvzfO ${simpleCA_cert%/*}/globus_simple_ca_${simpleCA_cert_hash}_setup*.tar.gz globus_simple_ca_${simpleCA_cert_hash}_setup-*/${simpleCA_cert_hash}.signing_policy > ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy"
+
         (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 && \
+            tar xvzfO ${simpleCA_cert%/*}/globus_simple_ca_${simpleCA_cert_hash}_setup*.tar.gz globus_simple_ca_${simpleCA_cert_hash}_setup-*/${simpleCA_cert_hash}.signing_policy > ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy && \
             [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
             echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
@@ -2871,16 +2876,19 @@ fetch_esgf_certificates() {
 
         printf "
     ----------------------------------------------------------------------
-    If you have not done so, please attach the file ${simpleCA_cert} to an
-    email addressed to esgf-ca@lists.llnl.gov
+    If you have not done so, please attach the files:
+    ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
+    ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy
+
+    to an email addressed to esgf-ca@lists.llnl.gov
     
-    Include your name, organization, contact information and the context in which you are\n
+    Include your name, organization, contact information and the context in which you are
     joining the ESGF federation.
     
     If you are able, please cryptographically sign the email with your
     personal signature, preferably endorsed by your organization
 
-    Thank you
+    Thank you :-)
     ----------------------------------------------------------------------\n
 "
 

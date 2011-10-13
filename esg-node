@@ -2879,6 +2879,7 @@ fetch_esgf_certificates() {
     If you have not done so, please attach the files:
     ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
     ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy
+    ${globus_global_certs_dir}/hostcert.pem
 
     to an email addressed to esgf-ca@lists.llnl.gov
     

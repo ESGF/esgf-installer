@@ -122,7 +122,7 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.4"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.2.2"}
+    esg_orp_version=${esg_orp_version:-"1.2.4"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"1.1.6"}

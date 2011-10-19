@@ -993,10 +993,10 @@ setup_postgress() {
 	#echo
 
 	read -p "Do you want to backup the curent database? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+        dosetup=$(echo "${dosetup}" | tr [a-z] [A-Z])
 	[ -z ${dosetup} ] && dosetup=${default}
-	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+	if [ "${dosetup}" = "Y" ] || [ "${dosetup}" = "YES" ]; then
             backup_db
-	    return 0
 	fi
 	echo
         return 0
@@ -2360,7 +2360,7 @@ setup_tds() {
 
     #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
     fetch_file=web.xml
-    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file} ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
     chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}

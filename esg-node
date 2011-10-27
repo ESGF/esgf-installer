@@ -2361,8 +2361,13 @@ setup_tds() {
     #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
     fetch_file=web.xml
     checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
-    (( $? > 1 )) && popd && checked_done 1
-    cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    local ret=$?
+    (( ret > 1 )) && popd && checked_done 1
+    if (( ret == 0 )); then
+        debug_print "new template file detected: swapping files..."
+        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.bak}
+        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{.tmpl,}
+    fi
     chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
     chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
 

@@ -133,6 +133,10 @@ init() {
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"1.2.2"}
 
+    #see esgf-dashboard project:
+    esgf_dashboard_version=${esgf_dashboard_version:-"0.0.1"}
+    esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.0.1"}
+
     #--------------------------------
     # External programs' versions
     #--------------------------------
@@ -248,6 +252,7 @@ init() {
     java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://www.trieuvan.com/apache/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
     openssl_workdir=${workdir}/openssl
+    esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
     curl_workdir=${workdir}/curl
     curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
     git_workdir=${workdir}/git
@@ -4080,6 +4085,7 @@ uninstall() {
 	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
         source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
 	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
+	source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation
 	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
 
 	doit="N"
@@ -5167,6 +5173,7 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
+    [ $((sel & ALL_BIT)) != 0 ] && source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config}
@@ -5183,6 +5190,7 @@ stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
     read_sel
     source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
+    source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
     stop_tomcat
     stop_postgress
@@ -5769,7 +5777,7 @@ main() {
 		    setup_tomcat 1
 		    setup_tds 1
 		    setup_subsystem node-manager esgf-node-manager 1
-		#setup_subsystem dashboard esgf-dashboard 1
+		    setup_subsystem dashboard esgf-dashboard 1
 		    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
 		    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
 		    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
@@ -6200,7 +6208,7 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
-   #[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
 
     #---------------------------------------
     #Installation of "plugin" subsystems... & filters

@@ -2891,13 +2891,15 @@ fetch_esgf_certificates() {
             echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
                 echo "[OK]") || echo "[FAIL]"
+        #zoiks
+        #write_as_property node_dn $(extract_openssl_dn ${simpleCA_cert}) && echo "property updated [OK]"
 
         printf "
     ----------------------------------------------------------------------
     If you have not done so, please attach the files:
     ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
     ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy
-    ${globus_global_certs_dir}/hostcert.pem
+    ${globus_global_certs_dir%/*}/hostcert.pem
 
     to an email addressed to esgf-ca@lists.llnl.gov
     
@@ -3234,18 +3236,19 @@ install_keypair() {
     #Copy the files to where they need to go for GLOBUS
     #--------------------------------------------------
     local out=""
-    local globus_grid_security_dir=${globus_global_certs_dir%/*}
-    [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
+    if (( ! no_globus )); then
+        local globus_grid_security_dir=${globus_global_certs_dir%/*}
+        [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
 
-    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.bak
-    cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
-	chmod 600 ${globus_grid_security_dir}/hostkey.pem
+        [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.bak
+        cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
+	    chmod 600 ${globus_grid_security_dir}/hostkey.pem
 
-    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.bak
-    cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
-	chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-        openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
-
+        [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.bak
+        cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
+	    chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
+            openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+    fi
 
     echo "Please restart this node for keys to take effect: \"$0 restart\""
     [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \

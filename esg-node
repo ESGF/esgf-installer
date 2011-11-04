@@ -76,10 +76,11 @@ VERBOSE=${VERBOSE:-0}
 devel=${devel:-0}
 recommended=1
 custom=0
+use_local_files=0
 
 progname="esg-node"
 script_version="v0.0.0"
-script_release="Brownsville"
+script_release="Flatbush"
 envfile="/etc/esg.env"
 
 #--------------
@@ -4561,11 +4562,6 @@ checked_get() {
     local force_get=${3:-0}
     local make_backup_file=${4:-1} #default to make backup *.bak files if necessary
 
-    if ((force_get == 0)); then
-	check_for_update $@
-	[ $? != 0 ] && return 1
-    fi
-
     local local_file
     local remote_file
     if (( $# == 1 )); then
@@ -4576,8 +4572,25 @@ checked_get() {
 	remote_file=${2}
     else
 	echo "function \"checked_get\":	 Called with incorrect number of args! (fatal) args[$@]"
-	echo " usage: checked_get [<local dest>] <remote source> [force_get (0|1)]"
+	echo " usage: checked_get [<local dest>] <remote source> [force_get (0*|1)] [make_backup_file(0|1*)]"
 	exit 1
+    fi
+    
+    if ((use_local_files)) && [ -e "${local_file}" ]; then
+        printf"
+    ***************************************************************************
+    ALERT....
+    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE 
+    (file: ${local_file})
+    ***************************************************************************
+
+"
+        return 0
+    fi
+    
+    if ((force_get == 0)); then
+	check_for_update $@
+	[ $? != 0 ] && return 1
     fi
 
     if [ -e ${local_file} ] && ((make_backup_file)) ; then
@@ -5827,6 +5840,9 @@ main() {
                 --custom)
                     recommended=0
                     custom=1
+                    ;;
+                --use-local-files)
+                    use_local_files=1
                     ;;
                 --devel)
                     devel=1

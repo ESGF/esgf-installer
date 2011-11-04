@@ -5631,9 +5631,9 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${esgf_host_ip}/${node_manager_app_context_root}"
-    echo "http://${esgf_host_ip}/thredds"
-    echo "http://${esgf_host_ip}/OpenidRelyingParty"
+    echo "http://${esgf_host}/${node_manager_app_context_root}"
+    echo "http://${esgf_host}/thredds"
+    echo "http://${esgf_host}/OpenidRelyingParty"
     echo
     echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
     echo "http://${esgf_index_peer}/"

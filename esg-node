@@ -4577,14 +4577,12 @@ checked_get() {
     fi
     
     if ((use_local_files)) && [ -e "${local_file}" ]; then
-        printf"
+        printf "
     ***************************************************************************
     ALERT....
     NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE 
-    (file: ${local_file})
-    ***************************************************************************
-
-"
+    file: $(readlink -f ${local_file})
+    ***************************************************************************\n\n"
         return 0
     fi
     

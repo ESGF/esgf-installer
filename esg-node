@@ -2967,6 +2967,10 @@ rebuild_truststore() {
     done
     rmdir ${tmp_dir}
 
+    #make sure that MY cert is in the trustore (it should be).
+    #As a side effect there is sync'ing the truststore with what is in the JVM
+    add_my_cert_to_truststore ${truststore_file}
+
     chown ${tomcat_user}:${tomcat_group} ${truststore_file}
     echo "...done"
     return 0

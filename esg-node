@@ -4580,6 +4580,11 @@ checked_get() {
 	exit 1
     fi
     
+    if (_is_in_git "${local_file}") ; then
+        printf "${local_file} is controlled by Git, not updating"
+        return 0
+    fi
+
     if ((use_local_files)) && [ -e "${local_file}" ]; then
         printf "
     ***************************************************************************
@@ -5088,9 +5093,7 @@ _version_segment_cmp() {
 
 self_verify() {
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
-    ESGNODEFILE=`_readlinkf $0`
-    ESGNODEDIR=`dirname $ESGNODEFILE`
-    if [ -d "$ESGNODEDIR/.git" ] ; then
+    if (_is_in_git ${0}) ; then
         echo "Git repository detected; not checking checksum of esg-node"
         return 0
     fi

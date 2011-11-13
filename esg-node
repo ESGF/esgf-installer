@@ -4884,7 +4884,60 @@ EOF
     return 0
 }
 
+# For "path" environment variables we want to easily add to them.
+# These utility functions allow for easy manipulations of these vars.
+# usage: append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+append_to_path() {
+    _add_to_path postfix $@
+}
+prefix_to_path() {
+    _add_to_path prefix $@
+}
+
 ### "private" functions ###
+
+_add_to_path() {
+    local side=$1
+    shift
+    local sep=":"
+
+    local var=$1
+    #echo ${!var}
+    shift
+    env | egrep '^'${var}'=' >& /dev/null
+    [ $? != 0 ] && return 1
+
+    new_entries=($@)
+    #echo "new entries: [${new_entries[@]}]"
+    local toadd; unset toadd;
+
+    for((i=0; i < ${#new_entries[@]}; i++)); do
+        #echo "checking for ${new_entries[i]}... "
+        (echo ${!var} | grep ${new_entries[i]} >& /dev/null)
+        if [ $? == 0 ]; then
+            #echo "have it (${new_entries[i]}) already"
+            continue
+        else
+            (echo ${toadd[@]} | grep ${new_entries[i]} >& /dev/null)
+            if [ $? != 0 ]; then
+                #echo "good new entry: (${new_entries[i]})"
+                toadd+=( "${new_entries[i]}" )
+            #else
+            #    echo "already added ${new_entries[i]} - skipping"
+            fi
+        fi
+    done
+    #echo "[${#toadd[@]}] - [${toadd[*]}]"
+    if (( ${#toadd[@]} > 0 )); then
+        if [ "${side}" = "prefix" ]; then
+            echo "export ${var}=$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')${sep}${!var}"
+        else
+            echo "export ${var}=${!var}${sep}$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')"
+        fi
+    #else
+    #    echo "nothing to add" >2
+    fi
+}
 
 _readlinkf() {
     # This is a portable implementation of GNU's "readlink -f" in

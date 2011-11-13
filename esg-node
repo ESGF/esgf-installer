@@ -1959,7 +1959,7 @@ configure_tomcat() {
 	    eval "perl -p -i -e 's#\\@\\@keystore_alias\\@\\@#${keystore_alias}#g' server.xml"
 	    echo "*"
 
-	    add_my_cert_to_truststore ${store_password}
+	    add_my_cert_to_truststore --keystore-pass ${store_password}
 
     #clean up the password immediately after it is done being used
 	    keystore_password=${store_password} #don't want to do this but it is used by the esg-security script that installs the ORP
@@ -1988,27 +1988,34 @@ _glean_keystore_info() {
         local value=""
         value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "o" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_file=${value}
+        debug_print "keystore_file=${value}"
         unset value
 
         value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
+        debug_print "keystore_password=${value}"
         unset value
 
         value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ":" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_alias=${value}
+        debug_print "keystore_alias=${value}"
         unset value
 
         value=$(sed -n 's#.*truststoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "-" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_file=${value}
+        debug_print "truststore_file=${value}"
         unset value
 
         value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ")" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_password=${value}
+        debug_print "truststore_password=${value}"
         unset value
         echo
     else
         echo "Could not glean values store... :-("
+        return 1
     fi
+    return 0
 }
 
 start_tomcat() {
@@ -2201,7 +2208,7 @@ select_idp_peer() {
         #Unless you are going to force it, there is an assumption here that your truststore already has your cert installed, from when you configured tomcat
         if ((force_install)) ; then
             local keystore_pass=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml) && echo -n "found it" || echo -n "cannot ascertain keystore password"
-            [ -n "${keystore_pass}" ] && add_my_cert_to_truststore ${keystore_pass} && echo ":-)" || echo ":-("
+            [ -n "${keystore_pass}" ] && add_my_cert_to_truststore --keystore-pass ${keystore_pass} && echo ":-)" || echo ":-("
         fi
     fi
     write_as_property esgf_idp_peer
@@ -2926,8 +2933,11 @@ fetch_esgf_certificates() {
 #Converts ESG certificates (that can be fetch by above function) into a truststore
 #(adapted from original rendition by Philip Kershaw)
 rebuild_truststore() {
+    debug_print "rebuild_truststore() $@"
+    local truststore_file_=${1:-${truststore_file}}
+    [ -z "${truststore_file_}" ] && echo "Sorry, cannot rebuild truststore [${truststore_file_}], value not set"
     echo
-    echo "Rebuilding truststore from esg certificates..."
+    echo "(Re)building truststore from esg certificates... [${truststore_file_}]"
     if [ ! -d ${globus_global_certs_dir} ] || (( force_install )) ; then
 	[ ! -d ${globus_global_certs_dir} ] && echo "Sorry, No esg certificates found... in ${globus_global_certs_dir}" || echo "(forcing fresh rebuild)"
 	echo "So fetching fresh esg certificates :-)"
@@ -2936,7 +2946,7 @@ rebuild_truststore() {
 
     #If you don't already have a truststore to build on....
     #Start building from a solid foundation i.e. Java's set of ca certs...
-    [ ! -e ${truststore_file} ] && cp -v ${java_install_dir}/jre/lib/security/cacerts ${truststore_file}
+    [ ! -e ${truststore_file_} ] && cp -v ${java_install_dir}/jre/lib/security/cacerts ${truststore_file_}
 
     local tmp_dir=/tmp/esg_scratch
     mkdir -p ${tmp_dir}
@@ -2952,14 +2962,14 @@ rebuild_truststore() {
 	openssl x509 -inform pem -in ${cert_file} -outform der -out ${der_file}
 	#--------------
 
-	if [ -f ${truststore_file} ]; then
-	    $java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file} \
+	if [ -f ${truststore_file_} ]; then
+	    $java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file_} \
 		-storepass ${truststore_password} 2>&1 > /dev/null ;
 	    [ $? == 0 ] && echo -n "- " || echo -n "  "
 	fi
 
 	[ $? == 0 ] && echo -n "+ " || echo -n "  "
-	$java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file} \
+	$java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file_} \
 	    -storepass ${truststore_password} -noprompt ;
 	[ $? != 0 ] && echo " [FAILED]"
 
@@ -2967,7 +2977,11 @@ rebuild_truststore() {
     done
     rmdir ${tmp_dir}
 
-    chown ${tomcat_user}:${tomcat_group} ${truststore_file}
+    #make sure that MY cert is in the trustore (it should be).
+    #As a side effect there is sync'ing the truststore with what is in the JVM
+    add_my_cert_to_truststore --truststore ${truststore_file_}
+
+    chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     echo "...done"
     return 0
 }
@@ -2979,10 +2993,64 @@ rebuild_truststore() {
 #The param here is the password of the *keystore*
 add_my_cert_to_truststore() {
     echo
-    debug_print "add_my_cert_to_truststore... "
-    local store_password=${1}
+    debug_print "add_my_cert_to_truststore() [$@]"
 
-    if [ -z "${store_password}" ]; then
+    _glean_keystore_info
+
+    local keystore_file_=${keystore_file}
+    local keystore_password_=${keystore_password}
+    local keystore_alias_=${keystore_alias}
+    local truststore_file_=${truststore_file}
+    local truststore_password_=${truststore_password}
+    local do_checks=1
+
+    while [ -n "${1}" ]; do
+        case $1 in
+            --keystore | -ks)
+                shift
+                keystore_file_=$1
+                debug_print "keystore_password = [${keystore_password_}]"
+                ;;
+            --keystore-pass | -kpass)
+                shift
+                keystore_password_=$1
+                debug_print "keystore_password = [${keystore_password_}]"
+                ;;
+            --alias | -a)
+                shift
+                keystore_alias_=$1
+                debug_print "alias = [${alias_}]"
+                ;;
+            --truststore | -ts)
+                shift
+                truststore_file_=$1
+                debug_print "truststore_file = [${truststore_file_}]"
+                ;;
+            --trusstore-pass | -tpass)
+                shift
+                truststore_password_=$1
+                debug_print "truststore_password = [${truststore_password_}]"
+                ;;
+            --no-check)
+                do_checks=0;
+                ;;
+            *)
+                printf "\n ERROR: unknown switch \"$1\" \n\n" && return 3
+                ;;
+        esac
+        shift
+    done
+
+    debug_print "keystore_file_=${keystore_file_}"
+    debug_print "keystore_password_=${keystore_password_}"
+    debug_print "keystore_alias_=${keystore_alias_}"
+    debug_print "truststore_file_=${truststore_file_}"
+    debug_print "truststore_password_=${truststore_password_}"
+    debug_print "do_checks=${do_checks}"
+        
+
+    local store_password
+    if [ -z "${keystore_password_}" ] || [ "${keystore_password}" != "${keystore_password_}" ]; then
 	local verify_password
 	while [ 1 ]; do
 	    echo
@@ -3002,43 +3070,47 @@ add_my_cert_to_truststore() {
 	unset verify_password
 	echo
     else
-	echo "store_password = ******"
+	echo "keystore_password_ = ******"
     fi
 
-    _glean_keystore_info
+    if ((do_checks == 1)); then
+        debug_print "Peforming checks against configured values..."
+        debug_print "[${store_password}] == [${keystore_password_}]"
+        [ "${store_password}" != "${keystore_password_}" ] && echo "WARNING: password is not valid match for keystore"
 
-    [ "${store_password}" != "${keystore_password}" ] && echo "WARNING: password is not valid match for keystore"
+        #only making this call to test password
+        $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${store_password_} >& /dev/null
+        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file}" && return 1;
+        echo "[OK]"
+    fi
 
-    #only making this call to test password
-    $java_install_dir/bin/keytool -v -list -keystore ${keystore_file} -storepass ${store_password} >& /dev/null
-    [ $? != 0 ] && echo "Could not access private keystore ${keystore_file}" && return 1;
-
+    unset store_password
     #----------------------------------------------------------------
     #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
     #----------------------------------------------------------------
-    if [ -e ${truststore_file} ]; then
+    if [ -e ${truststore_file_} ]; then
 	echo "Re-Integrating keystore's certificate into truststore.... "
 	echo "Extracting keystore's certificate... "
-	$java_install_dir/bin/keytool -export -alias ${keystore_alias} -file ${keystore_file}.cer -keystore ${keystore_file} -storepass ${store_password}
+	$java_install_dir/bin/keytool -export -alias ${keystore_alias_} -file ${keystore_file_}.cer -keystore ${keystore_file_} -storepass ${keystore_password_}
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 
-	echo "keytool -v -list -keystore ${truststore_file} -storepass ${truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'"
-	$java_install_dir/bin/keytool -v -list -keystore ${truststore_file} -storepass ${truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'
+	echo "keytool -v -list -keystore ${truststore_file_} -storepass ${truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'"
+	$java_install_dir/bin/keytool -v -list -keystore ${truststore_file_} -storepass ${truststore_password_} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias_}'$'
 	if [ $? == 0 ]; then
 	    echo "Detected Alias \"${keystore_alias}\" Present... Removing... Making space for certificate... "
-	    $java_install_dir/bin/keytool -delete -alias ${keystore_alias} -keystore ${truststore_file}  -storepass ${truststore_password} 2>&1 > /dev/null #for ORP
+	    $java_install_dir/bin/keytool -delete -alias ${keystore_alias_} -keystore ${truststore_file_}  -storepass ${truststore_password_} 2>&1 > /dev/null #for ORP
 	    [ $? != 0 ] && echo " ERROR: problem deleting ${keystore_alias} key from keystore!" && return 1
 	fi
 
 	echo "Importing keystore's certificate into truststore... "
-	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias} -keypass ${store_password} -file ${keystore_file}.cer -keystore ${truststore_file} -storepass ${truststore_password} -noprompt
+	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias_} -keypass ${store_password_} -file ${keystore_file_}.cer -keystore ${truststore_file_} -storepass ${truststore_password_} -noprompt
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
-	sync_with_java_truststore ${truststore_file}
+	sync_with_java_truststore ${truststore_file_}
 	echo -n "cleaning up after ourselves... "
-	rm -v ${keystore_file}.cer
+	rm -v ${keystore_file_}.cer
 	[ $? == 0 ] && echo "[OK]" || echo "[FAILED]"
     fi
-    chown ${tomcat_user}:${tomcat_group} ${truststore_file}
+    chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     #----------------------------------------------------------------
     return 0
 }
@@ -3173,10 +3245,11 @@ install_keypair() {
     local keystore_name=${3:-${keystore_file}}
     local keystore_alias=${4:-${keystore_alias}}
     local store_password=${5}
+    local truststore_name=${6:-${truststore_file}}
 
     echo "private key = ${private_key}"
     echo "public cert = ${public_cert}"
-    echo "keystore name	 = ${keystore_file}"
+    echo "keystore name	 = ${keystore_name}"
     echo "keystore alias = ${keystore_alias}"
 
     local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
@@ -3205,6 +3278,8 @@ install_keypair() {
 	echo "store_password = ******"
     fi
 
+    echo "truststore_name = ${truststore_name}"
+
     local certfiles=()
     local certfile_entry
     echo "Please enter your Certificate Athority's certificate chain file(s): "
@@ -3231,9 +3306,9 @@ install_keypair() {
     chown ${installer_uid}:${tomcat_group} ${ks_secret_file}
 
     #(In order for ORP or any other local service to trust eachother put your own cert into the truststore)
-    [ -e "${truststore_file}" ] && mv ${truststore_file} ${truststore_file}.bak
-    rebuild_truststore && add_my_cert_to_truststore ${store_password}
-    [ $? != 0 ] && echo "ERROR: Problem with truststore generation" && mv ${truststore_file}.bak ${truststore_file} && exit 6
+    [ -e "${truststore_name}" ] && mv -v ${truststore_name}{,.bak}
+    rebuild_truststore ${truststore_name} && add_my_cert_to_truststore --keystore-pass ${store_password}
+    [ $? != 0 ] && echo "ERROR: Problem with truststore generation" && mv ${truststore_name}.bak ${truststore_name} && exit 6
     #register ${esgf_idp_peer}
 
     #--------------------------------------------------
@@ -3268,7 +3343,7 @@ install_keypair() {
 # arg 5 -> public cert
 # arg 6.. -> intermediate certificate(s)
 make_fresh_keystore() {
-
+    debug_print "make_fresh_keystore() [$@]"
     #-------------
     #Set default values such that env vars may be used
     #-------------
@@ -3626,7 +3701,7 @@ install_signed_certificate() {
     chown ${tomcat_user}:${tomcat_group} ${keystore_file}
     #--------------
 
-    add_my_cert_to_truststore ${store_password}
+    add_my_cert_to_truststore --keystore-pass ${store_password}
 
     unset store_password
 
@@ -3760,7 +3835,7 @@ register() {
     if [ "${ssl_endpoint}" = "${esgf_host}" ]; then
         #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
         local my_keystore_password=${3:-$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml)}
-        add_my_cert_to_truststore ${my_keystore_password} && echo ":-)" || (echo ":-(" && return 1)
+        add_my_cert_to_truststore --keystore-pass ${my_keystore_password} && echo ":-)" || (echo ":-(" && return 1)
     else
 
         mkdir -p ${workdir} # >& /dev/null
@@ -4092,7 +4167,7 @@ uninstall() {
 	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
         source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
 	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
-	source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation
+	#source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation
 	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
 
 	doit="N"
@@ -5244,7 +5319,7 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    [ $((sel & ALL_BIT)) != 0 ] && source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services
+    #[ $((sel & ALL_BIT)) != 0 ] && source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config}
@@ -5261,7 +5336,7 @@ stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
     read_sel
     source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
-    source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
+    #source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
     stop_tomcat
     stop_postgress
@@ -5848,7 +5923,7 @@ main() {
 		    setup_tomcat 1
 		    setup_tds 1
 		    setup_subsystem node-manager esgf-node-manager 1
-		    setup_subsystem dashboard esgf-dashboard 1
+		    #setup_subsystem dashboard esgf-dashboard 1
 		    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
 		    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
 		    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
@@ -6290,7 +6365,7 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+        #[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
 
     #---------------------------------------
     #Installation of "plugin" subsystems... & filters

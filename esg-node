@@ -4937,6 +4937,7 @@ _add_to_path() {
     #else
     #    echo "nothing to add" >2
     fi
+    return 0
 }
 
 _readlinkf() {

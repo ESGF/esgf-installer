@@ -5575,26 +5575,26 @@ esgf_node_info() {
 
      This is required for publication.
 
-     ESGF Node:
-      ---------
-     |Tomcat   |
-     |-Node Mgr|
-     |-Thredds |
-     |-ORP     |
-     |---------|
-     |CDAT/CDMS|
-     |---------|
-     |Postgres |
-     |---------|
-     | MyProxy |  <===(HTTPS)===> [ESGF Peer Node(s)]*
-     |---------|
-     | GridFTP |  <=============> [End User(s)]*
-     >---------<
-     | CentOS  |
-     |(Virtual)|
-     | Machine |
-     |---------|
-      ---------
+     ESGF P2P Node:                                             ESGF P2P Node:
+      ---------                                                   ---------
+     |Tomcat   |                                                 |Tomcat   |
+     |-Node Mgr|   <================= P2P =================>     |-Node Mgr|
+     |-Thredds |                                                 |-Thredds |
+     |-ORP     |                                                 |-ORP     |
+     |---------|                                                 |---------|
+     |CDAT/CDMS|                                                 |CDAT/CDMS|
+     |---------|                                                 |---------|
+     |Postgres |                                                 |Postgres |
+     |---------|                                                 |---------|
+     | MyProxy |  <===(HTTPS)===> [ESGF Peer Node(s)]*           | MyProxy |
+     |---------|                                                 |---------|
+     | GridFTP |  <=============> [End User(s)]*                 | GridFTP |
+     >---------<                                                 >---------<
+     | CentOS  |                                                 | CentOS  |
+     |(Virtual)|                                                 |(Virtual)|
+     | Machine |                                                 | Machine |
+     |---------|                                                 |---------|
+      ---------                                                   ---------
 
      -ESGF.org \n\n" | more
 

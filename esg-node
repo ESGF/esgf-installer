@@ -4972,7 +4972,7 @@ prefix_to_path() {
 ### "private" functions ###
 
 _add_to_path() {
-    local side=$1
+    local side=${1:?"Must provide a value here"}
     shift
     local sep=":"
 
@@ -5012,7 +5012,6 @@ _add_to_path() {
     #else
     #    echo "nothing to add" >2
     fi
-    return 0
 }
 
 _readlinkf() {

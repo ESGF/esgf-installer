@@ -6430,6 +6430,12 @@ main() {
 	[ $((sel & INSTALL_BIT))   != 0 ] && echo "show_summary" && show_summary
 	[ $((sel & WRITE_ENV_BIT)) != 0 ] && echo "write_env" && write_env && exit 0
 
+        #---
+        #For the sake of the node manager registry, let's just make sure that the derivative whitelist files
+        #exits and have the appropriate ownership and permissions
+        #This function is defined in the esg-node-manager script, which at this point should have been already sourced!
+        touch_whitelist_files
+        #---
 
     #---------------------------------------
     #System Launch...

@@ -1983,7 +1983,7 @@ configure_tomcat() {
 #Will *only* set global vars if it was successfully gleaned from server.xml.
 _glean_keystore_info() {
     if [ -r "${tomcat_install_dir}/conf/server.xml" ]; then
-        echo "inspecting tomcat config file "
+        debug_print "inspecting tomcat config file "
         echo -n "O"
         local value=""
         value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "o" || echo -n "x"
@@ -1993,7 +1993,7 @@ _glean_keystore_info() {
 
         value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
-        debug_print "keystore_password=${value}"
+        debug_print "keystore_password=$(md5sum <(echo "${value}") | awk '{print $1}')"
         unset value
 
         value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ":" || echo -n "x"
@@ -2008,7 +2008,7 @@ _glean_keystore_info() {
 
         value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ")" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_password=${value}
-        debug_print "truststore_password=${value}"
+        debug_print "truststore_password=$(md5sum <(echo "${value}") | awk '{print $1}')"
         unset value
         echo
     else
@@ -2207,8 +2207,7 @@ select_idp_peer() {
     else
         #Unless you are going to force it, there is an assumption here that your truststore already has your cert installed, from when you configured tomcat
         if ((force_install)) ; then
-            local keystore_pass=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml) && echo -n "found it" || echo -n "cannot ascertain keystore password"
-            [ -n "${keystore_pass}" ] && add_my_cert_to_truststore --keystore-pass ${keystore_pass} && echo ":-)" || echo ":-("
+            add_my_cert_to_truststore && echo ":-)" || echo ":-("
         fi
     fi
     write_as_property esgf_idp_peer
@@ -2934,6 +2933,7 @@ fetch_esgf_certificates() {
 #(adapted from original rendition by Philip Kershaw)
 rebuild_truststore() {
     debug_print "rebuild_truststore() $@"
+
     local truststore_file_=${1:-${truststore_file}}
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot rebuild truststore [${truststore_file_}], value not set"
     echo
@@ -2979,7 +2979,7 @@ rebuild_truststore() {
 
     #make sure that MY cert is in the trustore (it should be).
     #As a side effect there is sync'ing the truststore with what is in the JVM
-    add_my_cert_to_truststore --truststore ${truststore_file_}
+    (( force_install )) && add_my_cert_to_truststore
 
     chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     echo "...done"
@@ -3026,7 +3026,7 @@ add_my_cert_to_truststore() {
                 truststore_file_=$1
                 debug_print "truststore_file = [${truststore_file_}]"
                 ;;
-            --trusstore-pass | -tpass)
+            --truststore-pass | -tpass)
                 shift
                 truststore_password_=$1
                 debug_print "truststore_password = [${truststore_password_}]"
@@ -3050,7 +3050,7 @@ add_my_cert_to_truststore() {
         
 
     local store_password
-    if [ -z "${keystore_password_}" ] || [ "${keystore_password}" != "${keystore_password_}" ]; then
+    if [ "${keystore_password}" != "${keystore_password_}" ]; then
 	local verify_password
 	while [ 1 ]; do
 	    echo
@@ -3060,6 +3060,7 @@ add_my_cert_to_truststore() {
 	    echo
 	    read -e -s -p "Please re-enter the password for this keystore: " verify_password
 	    if [ "${store_password}" = "${verify_password}" ] ; then
+                keystore_password_=${store_password}
 		echo
 		break
 	    else
@@ -3070,31 +3071,32 @@ add_my_cert_to_truststore() {
 	unset verify_password
 	echo
     else
-	echo "keystore_password_ = ******"
+	debug_print "keystore password = ******"
     fi
+    unset store_password
+
 
     if ((do_checks == 1)); then
         debug_print "Peforming checks against configured values..."
-        debug_print "[${store_password}] == [${keystore_password_}]"
-        [ "${store_password}" != "${keystore_password_}" ] && echo "WARNING: password is not valid match for keystore"
+        debug_print "[$(md5sum <(echo "${keystore_password}") | awk '{print $1}')] == [$(md5sum <(echo "${keystore_password_}") | awk '{print $1}')]"
+        [ "${keystore_password}" != "${keystore_password_}" ] && echo "WARNING: password entered does not match what's in the configuration file"
 
         #only making this call to test password
-        $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${store_password_} >& /dev/null
-        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file}" && return 1;
+        $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${keystore_password_} >& /dev/null
+        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_}" && return 1;
         echo "[OK]"
     fi
 
-    unset store_password
     #----------------------------------------------------------------
     #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
     #----------------------------------------------------------------
     if [ -e ${truststore_file_} ]; then
 	echo "Re-Integrating keystore's certificate into truststore.... "
-	echo "Extracting keystore's certificate... "
+	echo -n "Extracting keystore's certificate... "
 	$java_install_dir/bin/keytool -export -alias ${keystore_alias_} -file ${keystore_file_}.cer -keystore ${keystore_file_} -storepass ${keystore_password_}
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 
-	echo "keytool -v -list -keystore ${truststore_file_} -storepass ${truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'"
+	debug_print "keytool -v -list -keystore ${truststore_file_} -storepass $(md5sum <(echo "${truststore_password_}") | awk '{print $1}') | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'"
 	$java_install_dir/bin/keytool -v -list -keystore ${truststore_file_} -storepass ${truststore_password_} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias_}'$'
 	if [ $? == 0 ]; then
 	    echo "Detected Alias \"${keystore_alias}\" Present... Removing... Making space for certificate... "
@@ -3103,7 +3105,7 @@ add_my_cert_to_truststore() {
 	fi
 
 	echo "Importing keystore's certificate into truststore... "
-	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias_} -keypass ${store_password_} -file ${keystore_file_}.cer -keystore ${truststore_file_} -storepass ${truststore_password_} -noprompt
+	$java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias_} -keypass ${keystore_password_} -file ${keystore_file_}.cer -keystore ${truststore_file_} -storepass ${truststore_password_} -noprompt
 	[ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
 	sync_with_java_truststore ${truststore_file_}
 	echo -n "cleaning up after ourselves... "
@@ -3259,7 +3261,7 @@ install_keypair() {
 	local verify_password
 	while [ 1 ]; do
 	    echo
-	    read -e -s -p "Please enter the password for this keystore   : " store_password
+	    read -e -s -p "Please set the password for this keystore   : " store_password
 	    [ "${store_password}" = "${default_passwd}" ] && break
 	    [ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
 	    echo
@@ -3292,7 +3294,11 @@ install_keypair() {
     done
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
-    [ $? != 0 ] && echo "ERROR: Problem with key generation and/or keystore construction" && mv ${keystore_name}.bak ${keystore_name} && exit 5
+    if [ $? != 0 ]; then 
+        echo "ERROR: Problem with key generation and/or keystore construction" 
+        mv ${keystore_name}.bak ${keystore_name}
+        exit 5
+    fi
 
     ##Transform the keypair into the DER format understood by Java's keystore
     ##And generate a new keystore from that pair.
@@ -3543,10 +3549,11 @@ make_fresh_keystore() {
 
     echo
     echo "How do things look?"
-    $java_install_dir/bin/keytool -v -list -keystore "${keystore_name}" -storepass ${store_password}
+    $java_install_dir/bin/keytool -v -list -keystore "${keystore_name}" -storepass ${store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'
     if [ $? == 0 ]; then
 	echo
-	echo "If Everything looks good... then replace your current tomcat keystore with ${keystore_name} if necessary."
+        echo "Mmmm, freshly baked keystore!"
+	echo "If Everything looks good... then replace your current tomcat keystore with ${keystore_name}, if necessary."
 	echo "Don't forget to change your tomcat's server.xml entry accordingly :-)"
 	echo "Remember: Keep your private key ${private_key} and signed cert ${certfiles[0]} in a safe place!!!"
 	echo

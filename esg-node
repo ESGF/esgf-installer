@@ -439,7 +439,7 @@ setup_openssl() {
     local dosetup
     if [ -x ${openssl_install_dir}/bin/openssl ]; then
 	echo "Detected an existing OpenSSL installation..."
-	read -p "Do you want to continue with OpenSSL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with OpenSSL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping OpenSSL installation and setup - will assume OpenSSL is setup properly"
@@ -562,7 +562,7 @@ setup_curl() {
     local dosetup
     if [ -x ${curl_install_dir}/bin/curl ]; then
 	echo "Detected an existing CURL installation..."
-	read -p "Do you want to continue with CURL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with CURL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping CURL installation and setup - will assume CURL is setup properly"
@@ -666,7 +666,7 @@ setup_git() {
     local dosetup
     if [ -x ${git_install_dir}/bin/git ]; then
 	echo "Detected an existing GIT installation..."
-	read -p "Do you want to continue with GIT installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with GIT installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping GIT installation and setup - will assume GIT is setup properly"
@@ -772,7 +772,7 @@ setup_java() {
     local dosetup
     if [ -x ${java_install_dir}/bin/java ]; then
 	echo "Detected an existing java installation..."
-	read -p "Do you want to continue with Java installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with Java installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping Java installation and setup - will assume Java is setup properly"
@@ -886,7 +886,7 @@ setup_ant() {
     local dosetup
     if [ -x ${ant_install_dir}/bin/ant ]; then
 	echo "Detected an existing ant installation..."
-	read -p "Do you want to continue with Ant installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with Ant installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping Ant installation and setup - will assume ant is setup properly"
@@ -993,7 +993,7 @@ setup_postgress() {
         echo "To force a re-install you must manually remove the database completely - remove ${postgress_install_dir}/bin/psql"
         echo 'Only if you know what you are doing!!!!!'
         echo
-	#read -p "Do you want to continue with Postgres installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	#read -e -p "Do you want to continue with Postgres installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	#[ -z ${dosetup} ] && dosetup=${default}
 	#if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	#    echo "Skipping postgres installation and setup - will assume postgres is setup properly"
@@ -1001,7 +1001,7 @@ setup_postgress() {
 	#fi
 	#echo
 
-	read -p "Do you want to backup the curent database? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to backup the curent database? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
         dosetup=$(echo "${dosetup}" | tr [a-z] [A-Z])
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" = "Y" ] || [ "${dosetup}" = "YES" ]; then
@@ -1096,7 +1096,7 @@ setup_postgress() {
 	    #set the password for the system user...
 	    while [ 1 ]; do
 		local input
-		read -s -p "Create password for postgress system account: " input
+		read -e -s -p "Create password for postgress system account: " input
 		[ -n "${input}" ] && pg_sys_acct_passwd=${input}  && unset input && break
 	    done
 	fi
@@ -1173,7 +1173,7 @@ setup_postgress() {
     #@@postgress_host@@ #Token in file...
 
     #local input
-    #read -p "Please Enter the IP address or name of this host [${postgress_host}]:> " input
+    #read -e -p "Please Enter the IP address or name of this host [${postgress_host}]:> " input
     #[ ! -z "${input}" ] && postgress_host=${input}
     #printf "\nUsing IP: ${postgress_host}\n"
     #eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${fetch_file}"
@@ -1182,7 +1182,7 @@ setup_postgress() {
     #@@postgress_port@@ #Token in file...
 
     unset input
-    read -p "Please Enter PostgreSQL port number [${postgress_port}]:> " input
+    read -e -p "Please Enter PostgreSQL port number [${postgress_port}]:> " input
     [ ! -z "${input}" ] && postgress_port=${input}
     printf "\nSetting Postgress Port: ${postgress_port} "
     eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${fetch_file}"
@@ -1293,7 +1293,7 @@ setup_cdat() {
     local dosetup
     if [ -x ${cdat_home}/bin/cdat ]; then
 	echo "Detected an existing CDAT installation..."
-	read -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
+	read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping CDAT installation and setup - will assume CDAT is setup properly"
 	    return 0
@@ -1389,7 +1389,7 @@ setup_esgcet() {
     local dosetup
     if [ -e ${publisher_home}/${publisher_config} ]; then
 	echo "Detected an existing esgcet installation..."
-	read -p "Do you want to continue with esgcet installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with esgcet installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z ${dosetup} ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping esgcet installation and setup - will assume esgcet is setup properly"
@@ -1405,7 +1405,7 @@ setup_esgcet() {
     #Gives you 30 seconds to make a choice or will choose "I" by default
     #local choice
     #while [ 1 ]; do
-    #	 read -t $((1*60)) -p "Is this an install or update of the esgcet module? $([ "${mode}" = "I" ] && echo "[I/u]" || echo "[i/U]"): " choice
+    #	 read -e -t $((1*60)) -p "Is this an install or update of the esgcet module? $([ "${mode}" = "I" ] && echo "[I/u]" || echo "[i/U]"): " choice
     #	 [ -z "${choice}" ] && choice=$(echo "${mode}" | tr [a-z] [A-Z])
     #	 if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
     #	     #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
@@ -1440,7 +1440,7 @@ setup_esgcet() {
 	    printf "\t-------------------------------------------\n"
 	    printf "\t [C] : (Custom)\n"
 	    printf "\t-------------------------------------------\n"
-	    read -p "select [1] > " choice
+	    read -e -p "select [1] > " choice
 
 	    [ -z "${choice}" ] && choice=1 #default
 	    case ${choice} in
@@ -1450,10 +1450,10 @@ setup_esgcet() {
 		    ;;
 		c | C)
 		    local input
-		    read -p "Please enter the desired publisher configuration directory [${publisher_home}] " input
+		    read -e -p "Please enter the desired publisher configuration directory [${publisher_home}] " input
 		    [ -n "${input}" ] && publisher_home=${input}
 		    unset input
-		    read -p "Please enter the desired publisher configuration filename [${publisher_config}] " input
+		    read -e -p "Please enter the desired publisher configuration filename [${publisher_config}] " input
 		    [ -n "${input}" ] && publisher_config=${input}
 		    unset input
 		    choice="(Manual Entry)"
@@ -1465,7 +1465,7 @@ setup_esgcet() {
 	    echo "Publisher configuration file -> [${publisher_home}/${publisher_config}]"
 	    echo
 	    local is_correct
-	    read -p "Is this correct? [Y/n] " is_correct
+	    read -e -p "Is this correct? [Y/n] " is_correct
 	    is_correct=$(echo ${is_correct} | tr 'A-Z' 'a-z')
 	    if [ "${is_correct}" = "n" ]; then
 		continue
@@ -1479,7 +1479,7 @@ setup_esgcet() {
 	echo "Your publisher configuration file will be: ${publisher_home}/${publisher_config}"
 
 	local input=""
-	read -p "What is your organization's id? [${esg_root_id}]: " input
+	read -e -p "What is your organization's id? [${esg_root_id}]: " input
 	[ ! -z "${input}" ] && esg_root_id=${input}
 
 	echo "$cdat_home/bin/esgsetup --config --rootid ${esg_root_id}"
@@ -1601,7 +1601,7 @@ setup_tomcat() {
     local dosetup
     if [ -x ${tomcat_install_dir}/bin/jsvc ]; then
 	echo "Detected an existing tomcat installation..."
-	read -p "Do you want to continue with Tomcat installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+	read -e -p "Do you want to continue with Tomcat installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
 	[ -z "${dosetup}" ] && dosetup=${default}
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping tomcat installation and setup - will assume tomcat is setup properly"
@@ -1751,7 +1751,7 @@ setup_tomcat() {
 	local dodel="Y"
 	echo "For security reasons we recommend removing the examples web app [$(readlink -f ${tomcat_install_dir}/webapps/examples)]"
 	readlink -f ${tomcat_install_dir}/webapps/examples
-	((VERBOSE)) && read -p "Is the directory shown above correct? [Y/n] " dodel
+	((VERBOSE)) && read -e -p "Is the directory shown above correct? [Y/n] " dodel
 	if [ "${dodel}" = "Y" ] || [ "${dodel}" = "y" ] || [ -z "${dodel}" ]; then
 	    rm -rf ${tomcat_install_dir}/webapps/examples && echo "removed the examples webapp..."
 	fi
@@ -1853,11 +1853,11 @@ configure_tomcat() {
 	    local verify_password
 	    while [ 1 ]; do
 		echo
-		read -s -p "Please enter the password for this keystore	  : " store_password
+		read -e -s -p "Please enter the password for this keystore	  : " store_password
 		[ "${store_password}" = "changeit" ] && break
 		[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
 		echo
-		read -s -p "Please re-enter the password for this keystore: " verify_password
+		read -e -s -p "Please re-enter the password for this keystore: " verify_password
 		if [ "${store_password}" = "${verify_password}" ] ; then
 		    echo
 		    break
@@ -1880,7 +1880,7 @@ configure_tomcat() {
 
 	local input
 	local use_dn="Y"
-	read -p "Would you like to use the DN: (${dname:=${default_dname}}) ? [Y/n]: " input
+	read -e -p "Would you like to use the DN: (${dname:=${default_dname}}) ? [Y/n]: " input
 	[ -n "${input}" ] && use_dn=$(echo ${input} | tr 'a-z' 'A-Z')
 	unset input
 
@@ -1903,7 +1903,7 @@ configure_tomcat() {
     fi
 
     local answer
-    read -p "Do you wish to generate a Certificate Signing Request at this time? $([ $genreq = "Y" ] && echo "[Y/n]" || echo "[y/N]") " answer
+    read -e -p "Do you wish to generate a Certificate Signing Request at this time? $([ $genreq = "Y" ] && echo "[Y/n]" || echo "[y/N]") " answer
 	    [ -n "${answer}" ] && genreq=${answer}
 	    unset answer
 	    echo " -> [${genreq}]"
@@ -2107,7 +2107,7 @@ select_idp_peer() {
 
     #just to be sure it's clear (though it should be)
     unset input
-    read -p "Please Enter the IP address of this host [${esgf_host_ip}]:> " input
+    read -e -p "Please Enter the IP address of this host [${esgf_host_ip}]:> " input
     [ ! -z "${input}" ] && esgf_host_ip=${input}
     printf "\nUsing IP: ${esgf_host_ip}\n"
     unset input
@@ -2134,7 +2134,7 @@ select_idp_peer() {
 	printf "\t-------------------------------------------\n"
 	printf "\t [C] : (Manual Entry)\n"
 	printf "\t-------------------------------------------\n"
-	read -p "select [1] > " choice
+	read -e -p "select [1] > " choice
 
 	[ -z "${choice}" ] && choice=1 #default
 	case ${choice} in
@@ -2167,10 +2167,10 @@ select_idp_peer() {
 		local input
 		esgf_idp_peer_name=${ESGF_IDP_PEER_NAME:-"ESG-PCMDI"}
 		esgf_idp_peer=${ESGF_IDP_PEER:-"pcmdi3.llnl.gov"}
-		read -p "Please enter the IDP Peer's name [${ESGF_IDP_PEER_NAME}] " input
+		read -e -p "Please enter the IDP Peer's name [${ESGF_IDP_PEER_NAME}] " input
 		[ -n "${input}" ] && esgf_idp_peer_name=$(echo ${input} | tr 'a-z' 'A-Z')
 		unset input
-		read -p "Please enter the IDP Peer's hostname [${ESGF_IDP_PEER}] " input
+		read -e -p "Please enter the IDP Peer's hostname [${ESGF_IDP_PEER}] " input
 		[ -n "${input}" ] && esgf_idp_peer=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
 		unset input
 		choice="(Manual Entry)"
@@ -2182,7 +2182,7 @@ select_idp_peer() {
 	echo "${esgf_idp_peer_name} -> ${esgf_idp_peer}"
 	echo
 	local is_correct
-	read -p "Is this correct? [Y/n] " is_correct
+	read -e -p "Is this correct? [Y/n] " is_correct
 	is_correct=$(echo ${is_correct} | tr 'A-Z' 'a-z')
 	if [ "${is_correct}" = "n" ]; then
 	    continue
@@ -2240,7 +2240,7 @@ setup_tds() {
     local dosetup
     if [ -d ${tomcat_install_dir}/webapps/thredds ]; then
 	echo "Detected an existing thredds installation..."
-	read -p "Do you want to continue with thredds installation and setup? [y/N] " dosetup
+	read -e -p "Do you want to continue with thredds installation and setup? [y/N] " dosetup
 	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
 	    echo "Skipping thredds installation and setup - will assume thredds is setup properly"
 	    return 0
@@ -2334,11 +2334,11 @@ setup_tds() {
 	local password=${security_admin_password:-"changeme"}
 	unset input
 	unset addanother
-	read -p "Please enter username for tomcat [${username}]:  " input
+	read -e -p "Please enter username for tomcat [${username}]:  " input
 	[ ! -z "${input}" ] && username=${input}
 	echo ${username}
 	unset input
-	read -s -t60 -p "Please enter password for user, \"${username}\" [********]:   " input
+	read -e -s -t60 -p "Please enter password for user, \"${username}\" [********]:   " input
 	[ ! -z "${input}" ] && password=${input}
 	password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${password} | cut -d ":" -f 2)
 	echo ${password_hash}
@@ -2352,7 +2352,7 @@ setup_tds() {
 	#Command Line:% perl -p -i -e 's/<!--\@\@user_entry\@\@-->/<test>\n  <!--\@\@user_entry\@\@-->/g' tomcat-users.xml
 	eval "perl -p -i -e 's/<!--\\@\\@user_entry\\@\\@-->/${user_entry}\n  <!--\\@\\@user_entry\\@\\@-->/g' tomcat-users.xml"
 
-	read -p "Would you like to add another user? [y/N]: " addanother
+	read -e -p "Would you like to add another user? [y/N]: " addanother
 	if [ "${addanother}" = "y" ] || [ "${addanother}" = "Y" ]; then
 	    echo
 	    continue
@@ -2692,7 +2692,7 @@ test_publication() {
     echo "Publication test... $@"
     echo "----------------------------"
     echo
-    [ -z "${myproxy_user}" ] && read -p "Enter your myproxy username: " myproxy_user
+    [ -z "${myproxy_user}" ] && read -e -p "Enter your myproxy username: " myproxy_user
 
     local personal_credential_repo="$HOME/.globus"
 
@@ -2788,7 +2788,7 @@ setup_subsystem() {
     #local dosetup
     #if [ ! -e ${subsystem_install_script} ] || ((force_install)) ; then
     #	 echo
-    #	 read -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup
+    #	 read -e -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup
     #	 [ -z "${dosetup}" ] && dosetup=${default}
     #	 if [ "${dosetup}" = "N" ] || [ "${dosetup}" = "n" ] || [ "${dosetup}" = "no" ]; then
     #	     return 0
@@ -3054,11 +3054,11 @@ add_my_cert_to_truststore() {
 	local verify_password
 	while [ 1 ]; do
 	    echo
-	    read -s -p "Please enter the password for this keystore   : " store_password
+	    read -e -s -p "Please enter the password for this keystore   : " store_password
 	    [ "${store_password}" = "changeit" ] && break
 	    [ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
 	    echo
-	    read -s -p "Please re-enter the password for this keystore: " verify_password
+	    read -e -s -p "Please re-enter the password for this keystore: " verify_password
 	    if [ "${store_password}" = "${verify_password}" ] ; then
 		echo
 		break
@@ -3259,11 +3259,11 @@ install_keypair() {
 	local verify_password
 	while [ 1 ]; do
 	    echo
-	    read -s -p "Please enter the password for this keystore   : " store_password
+	    read -e -s -p "Please enter the password for this keystore   : " store_password
 	    [ "${store_password}" = "${default_passwd}" ] && break
 	    [ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
 	    echo
-	    read -s -p "Please re-enter the password for this keystore: " verify_password
+	    read -e -s -p "Please re-enter the password for this keystore: " verify_password
 	    if [ "${store_password}" = "${verify_password}" ] ; then
 		echo
 		break
@@ -3286,7 +3286,7 @@ install_keypair() {
     echo " [enter each cert file/url press return, press return with blank entry when done]"
     echo
     while [ 1 ]; do
-	read -p "certfile> " certfile_entry
+	read -e -p "certfile> " certfile_entry
 	[ -z ${certfile_entry} ] && break
 	certfiles=("${certfiles[@]} ${certfile_entry}")
     done
@@ -3468,7 +3468,7 @@ make_fresh_keystore() {
     #Let's be a little interactive with users for a sanity check
     #-------------
     local answer="Y"
-    read -p "Is the above information correct? [Y/n] " answer
+    read -e -p "Is the above information correct? [Y/n] " answer
     [ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]  && echo "exiting..." && return 1
 
     local derkey="${install_dir}/key.der"
@@ -3551,7 +3551,7 @@ make_fresh_keystore() {
 	echo "Remember: Keep your private key ${private_key} and signed cert ${certfiles[0]} in a safe place!!!"
 	echo
 	answer="Y"
-	read -p "Is the above information correct? [Y/n] " answer
+	read -e -p "Is the above information correct? [Y/n] " answer
 	[ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]	 && echo "Eh... try again... ;-)" && return 1
     else
 	echo
@@ -3648,11 +3648,11 @@ install_signed_certificate() {
     local verify_password
     while [ 1 ]; do
 	echo
-	read -s -p "Please enter the password for this keystore	  : " store_password
+	read -e -s -p "Please enter the password for this keystore	  : " store_password
 	[ "${store_password}" = "changeit" ] && break
 	[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
 	echo
-	read -s -p "Please re-enter the password for this keystore: " verify_password
+	read -e -s -p "Please re-enter the password for this keystore: " verify_password
 	if [ "${store_password}" = "${verify_password}" ] ; then
 	    echo
 	    break
@@ -3728,11 +3728,11 @@ export_keystore_as_globus_hostkeys() {
     local verify_password
     while [ 1 ]; do
 	echo
-	read -s -p "Please enter the password for this keystore	  : " store_password
+	read -e -s -p "Please enter the password for this keystore	  : " store_password
 	[ "${store_password}" = "changeit" ] && break
 	[ -z "${store_password}" ] && echo "Invalid password [${store_password}]" && continue
 	echo
-	read -s -p "Please re-enter the password for this keystore: " verify_password
+	read -e -s -p "Please re-enter the password for this keystore: " verify_password
 	if [ "${store_password}" = "${verify_password}" ] ; then
 	    echo
 	    break
@@ -3923,7 +3923,7 @@ verify_thredds_credentials() {
     echo "Sorry, your credentials are not valid..."
 
     local answer="N"
-    read -p "Would you like to reset the credentials? [y/N]: " doreset
+    read -e -p "Would you like to reset the credentials? [y/N]: " doreset
     [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
 
     local security_admin_password=""
@@ -4014,7 +4014,7 @@ set_redirect() {
     local redirect_content="<head><meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=/${web_app_tld}\"></head>"
     [ "${redirect_content}" = "$(cat ${index_file})" ] && echo "Redirect already setup" && return 0
     local doit="Y"
-    read -p "Do you wish to setup the redirect to the ${web_app_tld}'s page? [Y/n]: " doit
+    read -e -p "Do you wish to setup the redirect to the ${web_app_tld}'s page? [Y/n]: " doit
     [ "n" = "${doit}" ] || [ "N" = "${doit}" ] && return 0
     mv ${index_file} ${index_file}.last
     echo "${redirect_content}" > ${index_file}
@@ -4054,7 +4054,7 @@ check_for_my_ip() {
                 done
 	        printf "\t-------------------------------------------\n"
                 local default=0
-                read -p "select [] > " choice
+                read -e -p "select [] > " choice
                 [ -z "${choice}" ] && continue
                 my_ip_address=${my_ip_addresses[${choice}]}
                 echo "selected address -> ${my_ip_addresses[${choice}]}"
@@ -4159,7 +4159,7 @@ remove_env() {
 
 uninstall() {
     local doit="N"
-    read -p "Are you sure you want to uninstall? [y/N]: " doit
+    read -e -p "Are you sure you want to uninstall? [y/N]: " doit
     if [ "$doit" = "y" ] || [ "$doit" = "Y" ]; then
 
 	source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem
@@ -4172,7 +4172,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
-	    read -p "remove Thredds web service? (${tomcat_install_dir}/webapps/thredds) [y/N]: " doit
+	    read -e -p "remove Thredds web service? (${tomcat_install_dir}/webapps/thredds) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing ${tomcat_install_dir}/webapps/thredds"
 		rm -rf ${tomcat_install_dir}/webapps/thredds
@@ -4182,7 +4182,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e $tomcat_install_dir ]; then
-	    read -p "remove apache tomcat? ($tomcat_install_dir) [y/N]: " doit
+	    read -e -p "remove apache tomcat? ($tomcat_install_dir) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing $tomcat_install_dir"
 		rm -ri $tomcat_install_dir
@@ -4192,7 +4192,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e $cdat_home ]; then
-	    read -p "remove cdat? ($cdat_home) [y/N]: " doit
+	    read -e -p "remove cdat? ($cdat_home) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing $cdat_home"
 		rm -rf ${cdat_home}
@@ -4202,7 +4202,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e ${publisher_home}/${publisher_config} ]; then
-	    read -p "remove publisher configuration directory? (${publisher_home}) [y/N]: " doit
+	    read -e -p "remove publisher configuration directory? (${publisher_home}) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing ${publisher_home}"
 		rm -rf ${publisher_home}
@@ -4212,7 +4212,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e $postgress_install_dir ]; then
-	    read -p "remove postgress? ($postgress_install_dir) [y/N]: " doit
+	    read -e -p "remove postgress? ($postgress_install_dir) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing $postgress_install_dir"
 		rm -rf ${postgress_install_dir}
@@ -4222,7 +4222,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e ${globus_location}/esg_${progname}_installed ] && (( ! no_globus )); then
-	    read -p "remove globus certs? ($globus_location) [y/N]: " doit
+	    read -e -p "remove globus certs? ($globus_location) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing $globus_location"
 		[ -n ${globus_location} ] && [ -e ${globus_location} ] && rm -rf ${globus_location}
@@ -4232,7 +4232,7 @@ uninstall() {
 
 	doit="N"
 	if [ -e $openssl_install_dir ]; then
-	    read -p "remove openssl? ($openssl_install_dir) [y/N]: " doit
+	    read -e -p "remove openssl? ($openssl_install_dir) [y/N]: " doit
 	    if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
 		echo "removing $openssl_install_dir"
 		rm -rf ${openssl_install_dir}
@@ -4763,7 +4763,7 @@ restore_last_db_backup() {
 
     local n_recent=1
     local answer="Y" #always be safe.
-    read -p "Would you like to first make a back up of the existing database? [Y/n] " answer
+    read -e -p "Would you like to first make a back up of the existing database? [Y/n] " answer
     [ -n ${answer} ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z')
     [ "${answer}" = "Y" ] && backup_db ${my_node_name} ${my_schema_name} && ((n_recent++))
 
@@ -5186,7 +5186,7 @@ self_verify() {
 	    choice=$1
 	else
 	    local input=""
-	    read -t $((1*60)) -p "Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: " input
+	    read -e -t $((1*60)) -p "Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: " input
 	    [ -n "${input}" ] && choice=${input}
 	    unset input
 	fi
@@ -5379,7 +5379,7 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_host}" ] || ((force_install)); then
 	unset input
 	default=${esgf_host:-$(hostname --fqdn)}
-	read -p "What is the fully qualified domain name of this node? [${default}]: " input
+	read -e -p "What is the fully qualified domain name of this node? [${default}]: " input
 	[ -z "${input}" ] && esgf_host=${default} && write_as_property esgf_host
 	[ -n "${input}" ] && esgf_host=${input}	  && write_as_property esgf_host
     else
@@ -5395,12 +5395,12 @@ initial_setup_questionnaire() {
 	while [ 1 ]; do
 	    unset input
 	    echo
-	    read -s -p "What is the admin password to use for this installation? (alpha-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
+	    read -e -s -p "What is the admin password to use for this installation? (alpha-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
 	    ((force_install)) && [ -z "${input}" ] && [ -n "${security_admin_password}" ] && changed=0 && echo && break
 	    ( [ -z "${input}" ] || [ -n "$(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p')" ] ) && echo "Invalid password... " && continue
 	    [ -n "${input}" ] && security_admin_password=${input} && changed=1
 	    echo
-	    read -s -p "Please re-enter password: " verify_password
+	    read -e -s -p "Please re-enter password: " verify_password
 	    if [ "${security_admin_password}" = "${verify_password}" ] ; then
 		echo
 		changed=1
@@ -5435,7 +5435,7 @@ initial_setup_questionnaire() {
 	while [ 1 ]; do
 	    unset input
             default=$(echo `hostname -s`.`hostname --domain` | awk -F. ' {print $(NF-1)} ')
-	    read -p "What is the name of your organization? [${default}]: " input
+	    read -e -p "What is the name of your organization? [${default}]: " input
 	    [ -z "${input}" ] && esg_root_id=${default} && write_as_property esg_root_id && break
 	    [ -n "${input}" ] && esg_root_id=$(echo ${input} | sed 's/ /_/g') && write_as_property esg_root_id && break
 	done
@@ -5449,7 +5449,7 @@ initial_setup_questionnaire() {
     if [ -z "${node_short_name}" ] || ((force_install)); then
 	while [ 1 ]; do
 	    unset input
-	    read -p "Please give this node a \"short\" name: [${node_short_name}]: " input
+	    read -e -p "Please give this node a \"short\" name: [${node_short_name}]: " input
 	    [ -z "${input}" ] && [ -n "${node_short_name}" ] && input=${node_short_name} && break
 	    [ -n "${input}" ] && node_short_name=$(echo ${input} | sed 's/ /_/g') && write_as_property node_short_name && break
 	done
@@ -5462,7 +5462,7 @@ initial_setup_questionnaire() {
     get_property node_long_name ${node_long_name}
     if [ -z "${node_long_name}" ] || ((force_install)); then
 	unset input
-	read -p "Please give this node a more descriptive \"long\" name [${node_long_name}]: " input
+	read -e -p "Please give this node a more descriptive \"long\" name [${node_long_name}]: " input
 	[ -n "${input}" ] && node_long_name="${input}" && write_as_property node_long_name
     else
 	echo "node_long_name = [${node_long_name}]"
@@ -5473,7 +5473,7 @@ initial_setup_questionnaire() {
         local node_namespace_=${node_namespace:-$(hostname --fqdn | sed -n 's/[^.]*\(.*\)/\1/p' | tac -s "." | xargs | sed -e 's# #.#g' | sed 's/\(.*\)[^ ]./\1/')}
 	while [ 1 ]; do
 	    unset input
-	    read -p "What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [${node_namespace_}]: " input
+	    read -e -p "What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [${node_namespace_}]: " input
 	    [ -z "${input}" ] && [ -n "${node_namespace_}" ] && write_as_property node_namespace ${node_namespace_} && break
 	    [ -n "${input}" ] && node_namespace=${input} && write_as_property node_namespace && break
 	done
@@ -5486,7 +5486,7 @@ initial_setup_questionnaire() {
         local node_peer_group_=${node_peer_group:-"esgf"}
 	while [ 1 ]; do
 	    unset input
-	    read -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input
+	    read -e -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input
 	    [ -z "${input}" ] && [ -n "${node_peer_group_}" ] && write_as_property node_peer_group ${node_peer_group_} && break
 	    [ -n "${input}" ] && node_peer_group=${input} && write_as_property node_peer_group && break
 	done
@@ -5500,7 +5500,7 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
 	unset input
 	default=${esgf_default_peer:-'esgf-node3.llnl.gov'}
-	read -p "What is the default peer to this node? [${default}]: " input
+	read -e -p "What is the default peer to this node? [${default}]: " input
 	[ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
 	[ -n "${input}" ] && esgf_default_peer=${input}	  && write_as_property esgf_default_peer
     else
@@ -5514,7 +5514,7 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
 	unset input
 	default=${esgf_index_peer:-'pcmdi9.llnl.gov'}
-	read -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
+	read -e -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
 	[ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
 	[ -n "${input}" ] && esgf_index_peer=${input}	  && write_as_property esgf_index_peer
     else
@@ -5526,7 +5526,7 @@ initial_setup_questionnaire() {
 
     get_property mail_admin_address ${mail_admin_address}
     if [ -z "${mail_admin_address}" ] || ((force_install)); then
-	read -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
+	read -e -p "What email address should notifications be sent as? [${mail_admin_address}]: " input
 	[ -n "${input}" ] && mail_admin_address=${input} && write_as_property mail_admin_address
 	[ -z "${mail_admin_address}" ] && echo " (The notification system will not be enabled without an email address)"
     else
@@ -6330,7 +6330,7 @@ main() {
 	echo
         (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
 
-	read -p "Are you ready to begin the installation? [Y/n] " doit
+	read -e -p "Are you ready to begin the installation? [Y/n] " doit
 	if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
 	    exit 0
 	fi

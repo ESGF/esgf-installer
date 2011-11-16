@@ -4987,7 +4987,7 @@ _add_to_path() {
     #echo ${!var}
     shift
     env | egrep '^'${var}'=' >& /dev/null
-    [ $? != 0 ] && return 1
+    [ $? != 0 ] && new_var=1
 
     new_entries=($@)
     #echo "new entries: [${new_entries[@]}]"
@@ -5012,12 +5012,12 @@ _add_to_path() {
     #echo "[${#toadd[@]}] - [${toadd[*]}]"
     if (( ${#toadd[@]} > 0 )); then
         if [ "${side}" = "prefix" ]; then
-            echo "export ${var}=$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')${sep}${!var}"
+            echo "export ${var}=$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')$( ((!new_var)) && echo "${sep}")${!var}"
         else
-            echo "export ${var}=${!var}${sep}$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')"
+            echo "export ${var}=${!var}$( ((!new_var)) && echo "${sep}")$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')"
         fi
-    #else
-    #    echo "nothing to add" >2
+    else
+        echo "export ${var}=${!var}"
     fi
 }
 

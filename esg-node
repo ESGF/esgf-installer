@@ -114,7 +114,7 @@ init() {
     #--------------------------------
     #cdat_version=${cdat_version:-"eb8b668"}
     #cdat_version=${cdat_version:-"b8bf128"}
-    cdat_version=${cdat_version:-"6.0.alpha"}
+    cdat_version=${cdat_version:-"esgf-v0.0.1"}
     esgcet_version=${esgcet_version:-"2.9.0"}
 
     #see esgf-node-manager project:
@@ -1325,8 +1325,8 @@ setup_cdat() {
     #$postgress_install_dir/bin.  This location is created and added
     #to the executable PATH by the 'setup_postgress' function.
 
-    echo "./configure --prefix=$cdat_home --enable-esg"
-    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus}
+    echo "./configure --prefix=$cdat_home --enable-esg --with-cpus=${num_cpus} --with-openssl=${openssl_install_dir}"
+    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus} --with-openssl=${openssl_install_dir}
     [ $? != 0 ] && echo " ERROR: Configure did not complete successfully" && popd && checked_done 1
     make
     [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1

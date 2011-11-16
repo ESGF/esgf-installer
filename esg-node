@@ -3530,7 +3530,7 @@ make_fresh_keystore() {
     #-------------
     echo -n "Constructing new keystore content... "
     local command="extkeytool -importkey -keystore ${keystore_name} -alias ${keystore_alias} -storepass ${store_password} -keypass ${store_password} -keyfile ${derkey} -certfile ${certbundle} -provider ${provider}"
-    debug_print && echo ${command}
+    debug_print ${command}
 
     ${command} > /dev/null
     local ret=$?

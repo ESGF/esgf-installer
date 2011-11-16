@@ -1325,8 +1325,8 @@ setup_cdat() {
     #$postgress_install_dir/bin.  This location is created and added
     #to the executable PATH by the 'setup_postgress' function.
 
-    echo "./configure --prefix=$cdat_home --enable-esg --with-cpus=${num_cpus} --with-openssl=${openssl_install_dir}"
-    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus} --with-openssl=${openssl_install_dir}
+    echo "./configure --prefix=$cdat_home --enable-esg --with-cpus=${num_cpus} $([ -d "${openssl_install_dir}" ] && echo "--with-openssl=${openssl_install_dir}")"
+    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus} $([ -d "${openssl_install_dir}" ] && echo "--with-openssl=${openssl_install_dir}")
     [ $? != 0 ] && echo " ERROR: Configure did not complete successfully" && popd && checked_done 1
     make
     [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1

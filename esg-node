@@ -4990,6 +4990,8 @@ _add_to_path() {
     [ $? != 0 ] && new_var=1
 
     new_entries=($@)
+    #scrub out ":"s and create a single array
+    new_entries=($(echo ${new_entries[@]} | sed 's/:/ /g'))
     #echo "new entries: [${new_entries[@]}]"
     local toadd; unset toadd;
 

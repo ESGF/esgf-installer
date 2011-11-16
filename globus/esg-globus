@@ -208,8 +208,10 @@ export GLOBUS_SYS_ACCT=${globus_sys_acct}  #TODO: why is this an exported var?
 #      pull test_publication into separate test publication script?
 #      Hmmmm.... No harm in doubling up, but come back and make crispy
 #      and clean later
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GLOBUS_LOCATION/lib
-export LD_LIBRARY_PATH
+append_to_path LD_LIBRARY_PATH $GLOBUS_LOCATION/lib >> ${envfile}
+append_to_path PATH $GLOBUS_LOCATION/bin >> ${envfile}
+dedup ${envfile} && source ${envfile}
+
 
 #NTP is so important to distributed systems that it should be started on G.P.
 /etc/init.d/ntpd start >& /dev/null

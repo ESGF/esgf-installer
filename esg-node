@@ -388,9 +388,9 @@ init_structure() {
 write_paths() {
     ((show_summary_latch++))
     echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
+    echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
-    echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
 }
 
@@ -517,6 +517,8 @@ write_openssl_env() {
     echo "export OPENSSL_CFLAGS=-fPIC" >> ${envfile}
     echo "export OPENSSL_LDFLAGS=-L${OPENSSL_HOME}/lib" >> ${envfile}
     echo "export OPENSSL_LIBS=\"-lssl -lcrypto\"" >> ${envfile}
+    append_to_path PATH ${openssl_install_dir}/bin >> ${envfile}
+    append_to_path LD_LIBRARY_PATH ${openssl_install_dir}/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -636,6 +638,8 @@ setup_curl() {
 write_curl_env() {
     ((show_summary_latch++))
     echo "export CURL_HOME=${curl_install_dir}" >> ${envfile}
+    append_to_path PATH ${curl_install_dir}/bin >> ${envfile}
+    append_to_path LD_LIBRARY_PATH ${curl_install_dir}/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -740,6 +744,7 @@ setup_git() {
 write_git_env() {
     ((show_summary_latch++))
     echo "export GIT_HOME=${git_install_dir}" >> ${envfile}
+    append_to_path PATH ${git_install_dir}/bin >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -855,6 +860,7 @@ setup_java() {
 write_java_env() {
     ((show_summary_latch++))
     echo "export JAVA_HOME=${java_install_dir}" >> ${envfile}
+    append_to_path PATH ${java_install_dir}/bin >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -956,6 +962,7 @@ setup_ant() {
 write_ant_env() {
     ((show_summary_latch++))
     echo "export ANT_HOME=${ant_install_dir}" >> ${envfile}
+    append_to_path PATH ${ant_install_dir}/bin >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -1210,6 +1217,8 @@ write_postgress_env() {
     echo "export PGUSER=$PGUSER" >> ${envfile}
     echo "export PGHOST=$PGHOST" >> ${envfile}
     echo "export PGPORT=$PGPORT" >> ${envfile}
+    append_to_path PATH ${postgress_install_dir}/bin >> ${envfile}
+    append_to_path LD_LIBRARY_PATH ${postgress_install_dir}/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -1344,6 +1353,9 @@ setup_cdat() {
 write_cdat_env() {
     ((show_summary_latch++))
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
+    append_to_path PATH ${cdat_home}/bin >> ${envfile}
+    append_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
+    append_to_path LD_LIBRARY_PATH ${cdat_home}Externals/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -1809,6 +1821,7 @@ tomcat_port_check() {
 write_tomcat_env() {
     ((show_summary_latch++))
     echo "export CATALINA_HOME=${CATALINA_HOME}" >> ${envfile}
+    append_to_path PATH ${tomcat_install_dir}/bin >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }

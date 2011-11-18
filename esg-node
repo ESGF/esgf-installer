@@ -212,7 +212,7 @@ init() {
     export ESG_ROOT_ID=${esg_root_id}
 
     myPATH=${install_prefix}/bin:$OPENSSL_HOME/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
-    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib
+    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
     export PATH=$myPATH:$PATH
     export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:$LD_LIBRARY_PATH
     export CFLAGS="-I${OPENSSL_HOME}/include -I${CURL_HOME}/include ${CFLAGS} -fPIC"
@@ -5212,25 +5212,31 @@ self_verify() {
 	    [ -n "${input}" ] && choice=${input}
 	    unset input
 	fi
-
-	if [ "$choice" = "C" ] || [ "$choice" = "c" ] || [ -z "$choice" ]; then
-	    echo "Continuing..."
-	    echo
-	    return $ret
-	elif [ "$choice" = "U" ] || [ "$choice" = "u" ]; then
-	    echo "Updating local script with script from distribution server..."
-	    /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
-	    local update_ret=$?
-	    echo "Please re-run this updated script $0"
-	    echo
-	    exit $update_ret
-	else
-	    echo "Exiting..."
-	    echo
-	    exit 1
-	fi
-    else
-	return 0
+        
+        case ${choice} in 
+            c | C)
+	        echo "Continuing..."
+	        echo
+	        return $ret
+                ;;
+            u | U | --update | update)
+	        echo "Updating local script with script from distribution server..."
+	        /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
+	        local update_ret=$?
+	        echo "Please re-run this updated script $0"
+	        echo
+	        exit $update_ret
+                ;;
+            x | X)
+	        echo "Exiting..."
+	        echo
+	        exit 1
+                ;;
+            *)
+                echo "Unknown option: [$choice] - Exiting"
+                exit 1
+                ;;
+        esac
     fi
     return 0
 }

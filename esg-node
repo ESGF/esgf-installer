@@ -5296,6 +5296,8 @@ show_svc_list() {
     echo "Running Node Services... "; ((sel != 0)) && show_type || echo ""
     echo "---------------------------"
     lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' | more
+    local dashboard_pid=$(pgrep dashboard)
+    [ -n "${dashboard_pid}" ] && echo "esgf-dashboard ${dashboard_pid}"
     echo "---------------------------"
     echo
     return 0
@@ -5357,8 +5359,8 @@ stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
     read_sel
     source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
-    #source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
+    #source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
     stop_tomcat
     stop_postgress
     show_svc_list

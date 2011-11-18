@@ -112,8 +112,6 @@ init() {
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------
-    #cdat_version=${cdat_version:-"eb8b668"}
-    #cdat_version=${cdat_version:-"b8bf128"}
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
     esgcet_version=${esgcet_version:-"2.9.0"}
 

@@ -5301,7 +5301,7 @@ show_svc_list() {
     echo "---------------------------"
     lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' | more
     local dashboard_pid=$(pgrep dashboard)
-    [ -n "${dashboard_pid}" ] && echo "esgf-dashboard ${dashboard_pid}"
+    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
     echo "---------------------------"
     echo
     return 0

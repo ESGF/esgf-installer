@@ -255,7 +255,10 @@ init_ferret() {
             ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_32_rhel6/fer_executables.tar.gz
             ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_32_rhel6/fer_environment.tar.gz
         else
-            echo "WARNING: Unsupported Operating System or Operating System version [${redhat_ver}]. (Could not initialize ferret setup...)" && return 1
+            echo "WARNING: Unsupported Operating System or Operating System version [${redhat_ver}]."
+            echo "  Attempting to use the Redhat 6 binaries, but success is not guaranteed..."
+            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_32_rhel6/fer_executables.tar.gz
+            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/linux_32_rhel6/fer_environment.tar.gz
         fi
     elif ((word_size == 64)); then
         if ((redhat_ver == 5)); then
@@ -265,7 +268,10 @@ init_ferret() {
             ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_64-linux_rhel6/fer_executables.tar.gz
             ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_64-linux_rhel6/fer_environment.tar.gz
         else
-            echo "WARNING: Unsupported Operating System or Operating System version [${redhat_ver}]. (Could not initialize ferret setup...)" && return 1
+            echo "WARNING: Unsupported Operating System or Operating System version [${redhat_ver}]."
+            echo "  Attempting to use the Redhat 6 binaries, but success is not guaranteed..."
+            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_64-linux_rhel6/fer_executables.tar.gz
+            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/x86_64-linux_rhel6/fer_environment.tar.gz
         fi
     else
         echo "invalid word size: ${word_size}"

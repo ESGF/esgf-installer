@@ -4669,6 +4669,11 @@ checked_get() {
 	exit 1
     fi
     
+    if (_is_in_git "${local_file}") ; then
+        printf "${local_file} is controlled by Git, not updating"
+        return 0
+    fi
+
     if ((use_local_files)) && [ -e "${local_file}" ]; then
         printf "
     ***************************************************************************
@@ -5034,6 +5039,51 @@ _add_to_path() {
     fi
 }
 
+_is_in_git() {
+    # This determines if a specified file is in a git repository.
+    # This function will resolve symlinks and check for a .git
+    # directory in the directory of the actual file as well as its
+    # parent to avoid attempting to call git unless absolutely needed,
+    # so as to be able to detect some common cases on a system without
+    # git actually installed and in the path.
+    #
+    # Accepts as an argument the file to be checked
+    #
+    # Returns 0 if the specified file is in a git repository
+    #
+    # Returns 2 if it could not detect a git repository purely by file
+    # position and git was not available to complete a rev-parse test
+    #
+    # Returns 1 otherwise
+
+    debug_print "DEBUG: Checking to see if ${1} is in a git repository..."
+
+    REALDIR=$(dirname $(_readlinkf ${1}))
+    GITEXEC=`which git`
+
+    if [ -d "${REALDIR}/.git" ] ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+
+    if [ -d "${REALDIR}/../.git" ] ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+
+    if [ -z ${GITEXEC} ] ; then
+        debug_print "DEBUG: git is not available to finish checking for a repository -- assuming there isn't one!"
+        return 2
+    fi
+
+    if $(cd ${REALDIR} && git rev-parse 2>/dev/null) ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+
+    return 1
+}
+
 _readlinkf() {
     # This is a portable implementation of GNU's "readlink -f" in
     # bash/zsh, following symlinks recursively until they end in a
@@ -5186,9 +5236,7 @@ _version_segment_cmp() {
 
 self_verify() {
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
-    ESGNODEFILE=`_readlinkf $0`
-    ESGNODEDIR=`dirname $ESGNODEFILE`
-    if [ -d "$ESGNODEDIR/.git" ] ; then
+    if (_is_in_git ${0}) ; then
         echo "Git repository detected; not checking checksum of esg-node"
         return 0
     fi

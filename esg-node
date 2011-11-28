@@ -112,22 +112,25 @@ init() {
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------
+    
+    #NOTE: esg-dist = v1.0.5
+
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
     esgcet_version=${esgcet_version:-"2.9.0"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.6"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.5.7"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.4.6"}
+    esgf_security_version=${esgf_security_version:-"1.4.8"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
     esg_orp_version=${esg_orp_version:-"1.2.5"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"1.1.6"}
+    esgf_idp_version=${esgf_idp_version:-"1.1.8"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"1.6.0"}

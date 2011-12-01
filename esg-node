@@ -112,7 +112,7 @@ init() {
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------
-    
+
     #NOTE: esg-dist = v1.0.5
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
@@ -154,7 +154,7 @@ init() {
     tomcat_version=${tomcat_version:-"6.0.33"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
     las_version=${las_version:-"7.3.6"}; las_min_version=${las_min_version:-"7.3.6"}
-    
+
     python_version=${python_version:-"2.6"}
 
     #--------------------------------
@@ -252,7 +252,7 @@ init() {
     num_backups_to_keep=${num_backups_to_keep:-7}
     compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
     certificate_extensions="pem|crt|cert|key"
-    
+
     openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
     java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://www.trieuvan.com/apache/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
@@ -2748,7 +2748,7 @@ test_publication() {
     return 0
 }
 
-#NOTE: I am in the midst of refactoring some of the update/download code... it may very well be the case that I 
+#NOTE: I am in the midst of refactoring some of the update/download code... it may very well be the case that I
 # call update_script inside of setup_subsystem... it remains to be seen how much of the semantics of update I want
 # to enforce and how that informs what can be done in setup. -gavin
 
@@ -2926,10 +2926,10 @@ fetch_esgf_certificates() {
     ${globus_global_certs_dir%/*}/hostcert.pem
 
     to an email addressed to esgf-ca@lists.llnl.gov
-    
+
     Include your name, organization, contact information and the context in which you are
     joining the ESGF federation.
-    
+
     If you are able, please cryptographically sign the email with your
     personal signature, preferably endorsed by your organization
 
@@ -3061,7 +3061,7 @@ add_my_cert_to_truststore() {
     debug_print "truststore_file_=${truststore_file_}"
     debug_print "truststore_password_=${truststore_password_}"
     debug_print "do_checks=${do_checks}"
-        
+
 
     local store_password
     if [ "${keystore_password}" != "${keystore_password_}" ]; then
@@ -3308,8 +3308,8 @@ install_keypair() {
     done
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
-    if [ $? != 0 ]; then 
-        echo "ERROR: Problem with key generation and/or keystore construction" 
+    if [ $? != 0 ]; then
+        echo "ERROR: Problem with key generation and/or keystore construction"
         mv ${keystore_name}.bak ${keystore_name}
         exit 5
     fi
@@ -4001,7 +4001,7 @@ set_index_peer() {
         [ "${input}" = "${esgf_host}" ] && [ -z "${publishing_service_endpoint}" ] && return 1
         publishing_service_endpoint="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
     fi
-    
+
     #locate the publisher's configuration file - esg.ini
     local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
     local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
@@ -4671,7 +4671,7 @@ checked_get() {
 	echo " usage: checked_get [<local dest>] <remote source> [force_get (0*|1)] [make_backup_file(0|1*)]"
 	exit 1
     fi
-    
+
     if (_is_in_git "${local_file}") ; then
         printf "${local_file} is controlled by Git, not updating"
         return 0
@@ -4681,12 +4681,12 @@ checked_get() {
         printf "
     ***************************************************************************
     ALERT....
-    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE 
+    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
     file: $(readlink -f ${local_file})
     ***************************************************************************\n\n"
         return 0
     fi
-    
+
     if ((force_get == 0)); then
 	check_for_update $@
 	[ $? != 0 ] && return 1
@@ -5289,8 +5289,8 @@ self_verify() {
 	    [ -n "${input}" ] && choice=${input}
 	    unset input
 	fi
-        
-        case ${choice} in 
+
+        case ${choice} in
             c | C)
 	        echo "Continuing..."
 	        echo
@@ -6409,16 +6409,16 @@ main() {
     Sorry no suitable node type has been selected
     Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
     (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
-    
+
     Ex:  esg-node --set-type data
     esg-node install
-    
+
     or do so as a single command line:
-    
+
     Ex:  esg-node --type data install
-    
+
     Use the --help | -h option for more information
-    
+
     Note: The type value is recorded upon successfully starting the node.
     the value is used for subsequent launches so the type value does not have to be
     always specified.  A simple \"esg-node start\" will launch with the last type used

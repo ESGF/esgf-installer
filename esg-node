@@ -4985,62 +4985,71 @@ EOF
     return 0
 }
 
-# For "path" environment variables we want to easily add to them.
-# These utility functions allow for easy manipulations of these vars.
-# usage: append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
 append_to_path() {
-    _add_to_path postfix $@
+    # Appends path components to a variable, deduplicates the list,
+    # then prints to stdout the export command required to append that
+    # list to that variable
+    #
+    # Takes as arguments first a variable containing a colon-separated
+    # path to append to, then a space-separated collection of paths to
+    # append -- these path components MUST NOT contain spaces.
+    #
+    # If insufficient arguments are present, a warning message is
+    # printed to stderr and nothing is printed to stdout.
+    #
+    # Example:
+    #   append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    local sep=':'
+    local var=${1}
+    shift
+    local appendage=$(echo "$@" | tr ' ' "${sep}")
+
+    if [ -z ${var} ] ; then
+        echo "WARNING: append_to_path() called with no arguments!" >&2
+        return
+    fi
+    if [ -z ${appendage} ] ; then
+        echo "WARNING: append_to_path() called with no path to append!" >&2
+        return
+    fi
+    export ${var}=$(_path_unique \$${var}:${!var}:${appendage})
+    echo "export ${var}=${!var}"
 }
+
 prefix_to_path() {
-    _add_to_path prefix $@
+    # Prepends path components to a variable, deduplicates the list,
+    # then prints to stdout the export command required to prepend
+    # that list to that variable.
+    #
+    # Takes as arguments first a variable containing a colon-separated
+    # path to prepend to, then a space-separated collection of paths to
+    # prepend -- these path components MUST NOT contain spaces.
+    #
+    # If insufficient arguments are present, a warning message is
+    # printed to stderr and nothing is printed to stdout.
+    #
+    # Example:
+    #   prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    local sep=':'
+    local var=${1}
+    shift
+    local appendage=$(echo "$@" | tr ' ' "${sep}")
+
+    if [ -z ${var} ] ; then
+        echo "WARNING: append_to_path() called with no arguments!" >&2
+        return
+    fi
+    if [ -z ${appendage} ] ; then
+        echo "WARNING: append_to_path() called with no path to append!" >&2
+        return
+    fi
+    export ${var}=$(_path_unique ${appendage}:${!var}:\$${var})
+    echo "export ${var}=${!var}"
 }
 
 ### "private" functions ###
-
-_add_to_path() {
-    local side=${1:?"Must provide a value here"}
-    shift
-    local sep=":"
-
-    local var=$1
-    #echo ${!var}
-    shift
-    env | egrep '^'${var}'=' >& /dev/null
-    [ $? != 0 ] && new_var=1
-
-    new_entries=($@)
-    #scrub out ":"s and create a single array
-    new_entries=($(echo ${new_entries[@]} | sed 's/:/ /g'))
-    #echo "new entries: [${new_entries[@]}]"
-    local toadd; unset toadd;
-
-    for((i=0; i < ${#new_entries[@]}; i++)); do
-        #echo "checking for ${new_entries[i]}... "
-        (echo ${!var} | grep ${new_entries[i]} >& /dev/null)
-        if [ $? == 0 ]; then
-            #echo "have it (${new_entries[i]}) already"
-            continue
-        else
-            (echo ${toadd[@]} | grep ${new_entries[i]} >& /dev/null)
-            if [ $? != 0 ]; then
-                #echo "good new entry: (${new_entries[i]})"
-                toadd+=( "${new_entries[i]}" )
-            #else
-            #    echo "already added ${new_entries[i]} - skipping"
-            fi
-        fi
-    done
-    #echo "[${#toadd[@]}] - [${toadd[*]}]"
-    if (( ${#toadd[@]} > 0 )); then
-        if [ "${side}" = "prefix" ]; then
-            echo "export ${var}=$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')$( ((!new_var)) && echo "${sep}")${!var}"
-        else
-            echo "export ${var}=${!var}$( ((!new_var)) && echo "${sep}")$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')"
-        fi
-    else
-        echo "export ${var}=${!var}"
-    fi
-}
 
 _is_in_git() {
     # This determines if a specified file is in a git repository.

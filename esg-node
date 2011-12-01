@@ -5458,6 +5458,13 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_host}" ] || ((force_install)); then
 	unset input
 	default=${esgf_host:-$(hostname --fqdn)}
+        defaultdomain=$(echo ${default} | cut -f 2- -d '.' -s)
+        if [ X"${default}" = "X" ] ; then
+            default="localhost.localdomain"
+        elif [ X"${defaultdomain}" = "X" ] ;  then
+            default="${default}.localdomain"
+        fi
+
 	read -e -p "What is the fully qualified domain name of this node? [${default}]: " input
 	[ -z "${input}" ] && esgf_host=${default} && write_as_property esgf_host
 	[ -n "${input}" ] && esgf_host=${input}	  && write_as_property esgf_host

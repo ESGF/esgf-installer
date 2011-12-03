@@ -166,7 +166,8 @@ pam_pgsql_install_dir=${install_prefix}/pam
 postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
 bison_dist_url=http://ftp.gnu.org/gnu/bison/bison-${bison_version}.tar.gz
 flex_dist_url=http://downloads.sourceforge.net/project/flex/flex/flex-${flex_version}/flex-${flex_version}.tar.gz
-gsoap_dist_url=http://downloads.sourceforge.net/project/gsoap2/gSOAP/gSOAP%20${gsoap_version}%20stable/gsoap_${gsoap_version}.tar.gz
+gsoap_dist_url=${esg_dist_url_root}/thirdparty/gsoap_${gsoap_version}.tar.gz
+#gsoap_dist_url=http://downloads.sourceforge.net/project/gsoap2/gSOAP/gSOAP%20${gsoap_version}%20stable/gsoap_${gsoap_version}.tar.gz
 #gsoap_dist_url=http://sourceforge.net/projects/gsoap2/files/gSOAP/gsoap_2.7.17.zip/download
 gsoap_install_dir=${install_prefix}/gsoap
 gsoap_workdir=${workdir}/extra/gsoap
@@ -570,8 +571,8 @@ setup_gsoap() {
             if [ ! -e ${gsoap_dist_file} ]; then
                 echo "Don't see gSOAP distribution file ${gsoap_dist_file} either"
                 echo "Downloading gSOAP from ${gsoap_dist_url}"
-                wget -O ${gsoap_dist_file} ${gsoap_dist_url}
-                [ $? != 0 ] && echo " ERROR: Could not download gSOAP:${gsoap_dist_file}" && popd && checked_done 1
+                checked_get ${gsoap_dist_file} ${gsoap_dist_url} $((force_install))
+                (( $? > 1 )) && echo " ERROR: Could not download gSOAP:${gsoap_dist_file}" && popd && checked_done 1
                 [ "${gsoap_dist_file##*.}" = "zip" ] && unzip ${gsoap_dist_file} || tar xvf ${gsoap_dist_file}
                 [ $? != 0 ] && echo " ERROR: Could not extract gSOAP: ${gsoap_dist_file}" && popd && checked_done 1
             fi

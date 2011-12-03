@@ -39,7 +39,7 @@ Instructions:
 *************
 - Before you do any installation REGISTER (get an account) at the
 gateway you intend to connect to:
-        (ESG-PCMDI) http://pcmdi3.llnl.gov/esgcet/
+        Ex: (ESG-PCMDI-9) http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
 
 - Be sure the machine you are installing on is a CentOS/Redhat linux
 family distribution.
@@ -58,16 +58,15 @@ hostname -s, hostname --domain and hostname --fqdn.
   locally or from your institution!!!
 
 - If you intend to publish from your node ("data" configuration type)
-  http://esgf.org/wiki/Cmip5DataNode/FAQ#PREREQUISITES  
   * Be sure that your node or institution is NOT performing web caching for this node!!!
   * Be sure that your node is visible from the outside, i.e. can accept inbound external connections!!!
 
-0) We HIGHLY recommend creating a separate installation user account (Ex:
-   esg-user) and give that user the ability to use sudo (i.e. create
-   an appropriate entry in /etc/sudoers). If not there maybe
-   undesirable results.  Ex: All of root's cronjobs getting nuked.  In
-   general it is a good idea to use the operating system mechanisms to
-   help sequester an installation such as this.
+0) We HIGHLY recommend creating a separate installation user account
+   (Ex: esg-user) and give that user the ability to use sudo
+   (i.e. create an appropriate entry in /etc/sudoers). If not there
+   maybe undesirable results.  In general it is a good idea to use the
+   operating system mechanisms to help sequester an installation such
+   as this.
 
 
 1) LOGIN as the installation user
@@ -182,7 +181,7 @@ free to read it. However, do NOT modify the script, that would void
 the support contract ;-).
 
 If you have any questions... 
-1) Read the FAQ - http://esgf.org/wiki/Cmip5DataNode/FAQ
+1) Read the FAQ - http://esgf.org/wiki/ESGFNode/FAQ
 2) Post to the mailing list
 3) Contact me - Gavin (gavin@llnl.gov), or Bob or Dean. 
    My number is +1-925-422-7436.

@@ -48,7 +48,7 @@ family distribution.
 hostname -s, hostname --domain and hostname --fqdn.
 
 - Install all the prerequisites!!!!
-  http://esgf.org/wiki/Cmip5DataNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F
+  http://esgf.org/wiki/ESGFNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F
 
 - The machine should have all development headers installed.
 

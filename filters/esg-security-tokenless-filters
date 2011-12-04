@@ -203,6 +203,9 @@ get_orp_libs() {
     xercesImpl_version=${xercesImpl_version:-"2.9.1"}
     xml_apis_version=${xml_apis_version:-"1.3.04"}
     xmlsec_version=${xmlsec_version:-"1.4.2"}
+    joda_version=${joda_version:-"1.6"}
+
+    spring_version=${spring_version:-"2.5"}
 
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
@@ -220,6 +223,10 @@ get_orp_libs() {
     xercesImpl_jar=xercesImpl-${xercesImpl_version}.jar
     xml_apis_jar=xml-apis-${xml_apis_version}.jar
     xmlsec_jar=xmlsec-${xmlsec_version}.jar
+    joda_time_jar=joda-time-${joda_version}.jar
+
+    spring_jar=spring-${spring_version}.jar
+    spring_webmvc_jar=spring-webmvc-${spring_version}.jar
 
     if [ -d ${dest_dir} ]; then
         #move over SAML libraries...
@@ -238,6 +245,7 @@ get_orp_libs() {
         [ ! -e ${dest_dir}/${xercesImpl_jar} ] && cp -v ${src_dir}/${xercesImpl_jar} ${dest_dir}
         [ ! -e ${dest_dir}/${xml_apis_jar} ]   && cp -v ${src_dir}/${xml_apis_jar}   ${dest_dir}
         [ ! -e ${dest_dir}/${xmlsec_jar} ]     && cp -v ${src_dir}/${xmlsec_jar}     ${dest_dir}
+        [ ! -e ${dest_dir}/${joda_time_jar} ]  && cp -v ${src_dir}/${joda_time_jar}  ${dest_dir}
 
         #----------------------------
         #Fetching ORP / Security Jars from Distribution Site...
@@ -252,6 +260,9 @@ get_orp_libs() {
 
         echo "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to ${dest_dir} ..."
         local make_backup_file=0 #Do NOT make backup file
+        checked_get ${dest_dir}/${spring_jar} ${esg_dist_url}/filters/${spring_jar} $((force_install)) $((make_backup_file))
+        checked_get ${dest_dir}/${spring_webmvc_jar} ${esg_dist_url}/filters/${spring_webmvc_jar} $((force_install)) $((make_backup_file))
+
         checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
         checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
 

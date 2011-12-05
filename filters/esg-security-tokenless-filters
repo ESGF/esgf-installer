@@ -78,8 +78,8 @@ if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); 
 
 esg_security_filters_dist_url=${esg_dist_url}/filters
 
-esg_orp_version=${esg_orp_version:-"1.1.4"}
-esgf_security_version=${esgf_security_version:-"1.3.1"}
+esg_orp_version=${esg_orp_version:-"1.2.6"}
+esgf_security_version=${esgf_security_version:-"1.5.1"}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 
@@ -104,7 +104,7 @@ setup_security_tokenless_filters() {
 install_security_tokenless_filters() {
     
     local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}}
-    local esg_filter_entry_file=${2:-esg-security-tokenless-filters.xml}
+    local esg_filter_entry_file=${2:-esg-security-tokenless-$([ "${service_name}" = "thredds" ] && echo "${service_name}" || echo "generic")-filters.xml}
     local esg_filter_entry_pattern="<!--@@esg_security_tokenless_filter_entry@@-->"
 
     #((force_install)) && [ -e "${dest_dir}/web.xml.tmpl" ] \

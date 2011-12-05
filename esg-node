@@ -112,7 +112,7 @@ init() {
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------
-    
+
     #NOTE: esg-dist = v1.0.5
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
@@ -154,7 +154,7 @@ init() {
     tomcat_version=${tomcat_version:-"6.0.33"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
     las_version=${las_version:-"7.3.6"}; las_min_version=${las_min_version:-"7.3.6"}
-    
+
     python_version=${python_version:-"2.6"}
 
     #--------------------------------
@@ -214,8 +214,8 @@ init() {
 
     myPATH=${install_prefix}/bin:$OPENSSL_HOME/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
     myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
-    export PATH=$myPATH:$PATH
-    export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:$LD_LIBRARY_PATH
+    export PATH=$(_path_unique $myPATH:$PATH)
+    export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
     export CFLAGS="-I${OPENSSL_HOME}/include -I${CURL_HOME}/include ${CFLAGS} -fPIC"
     export LDFLAGS="-L${OPENSSL_HOME}/lib -L${CURL_HOME}/lib -Wl,--rpath,${OPENSSL_HOME}/lib -Wl,--rpath,${CURL_HOME}/lib"
 
@@ -252,7 +252,7 @@ init() {
     num_backups_to_keep=${num_backups_to_keep:-7}
     compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
     certificate_extensions="pem|crt|cert|key"
-    
+
     openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
     java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://www.trieuvan.com/apache/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
@@ -2748,7 +2748,7 @@ test_publication() {
     return 0
 }
 
-#NOTE: I am in the midst of refactoring some of the update/download code... it may very well be the case that I 
+#NOTE: I am in the midst of refactoring some of the update/download code... it may very well be the case that I
 # call update_script inside of setup_subsystem... it remains to be seen how much of the semantics of update I want
 # to enforce and how that informs what can be done in setup. -gavin
 
@@ -2926,10 +2926,10 @@ fetch_esgf_certificates() {
     ${globus_global_certs_dir%/*}/hostcert.pem
 
     to an email addressed to esgf-ca@lists.llnl.gov
-    
+
     Include your name, organization, contact information and the context in which you are
     joining the ESGF federation.
-    
+
     If you are able, please cryptographically sign the email with your
     personal signature, preferably endorsed by your organization
 
@@ -3061,7 +3061,7 @@ add_my_cert_to_truststore() {
     debug_print "truststore_file_=${truststore_file_}"
     debug_print "truststore_password_=${truststore_password_}"
     debug_print "do_checks=${do_checks}"
-        
+
 
     local store_password
     if [ "${keystore_password}" != "${keystore_password_}" ]; then
@@ -3308,8 +3308,8 @@ install_keypair() {
     done
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
-    if [ $? != 0 ]; then 
-        echo "ERROR: Problem with key generation and/or keystore construction" 
+    if [ $? != 0 ]; then
+        echo "ERROR: Problem with key generation and/or keystore construction"
         mv ${keystore_name}.bak ${keystore_name}
         exit 5
     fi
@@ -4001,7 +4001,7 @@ set_index_peer() {
         [ "${input}" = "${esgf_host}" ] && [ -z "${publishing_service_endpoint}" ] && return 1
         publishing_service_endpoint="https://${input}/esg-search/remote/secure/client-cert/hessian/publishingService"
     fi
-    
+
     #locate the publisher's configuration file - esg.ini
     local publisher_home_dir=$(sed -n 's@[ ]*publisher.home[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
     local publisher_config_file=$(sed -n 's@[ ]*publisher.config[ ]*=[ ]*\(.*\)$@\1@p' ${esgf_properties_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
@@ -4671,7 +4671,7 @@ checked_get() {
 	echo " usage: checked_get [<local dest>] <remote source> [force_get (0*|1)] [make_backup_file(0|1*)]"
 	exit 1
     fi
-    
+
     if (_is_in_git "${local_file}") ; then
         printf "${local_file} is controlled by Git, not updating"
         return 0
@@ -4681,12 +4681,12 @@ checked_get() {
         printf "
     ***************************************************************************
     ALERT....
-    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE 
+    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
     file: $(readlink -f ${local_file})
     ***************************************************************************\n\n"
         return 0
     fi
-    
+
     if ((force_get == 0)); then
 	check_for_update $@
 	[ $? != 0 ] && return 1
@@ -4985,62 +4985,71 @@ EOF
     return 0
 }
 
-# For "path" environment variables we want to easily add to them.
-# These utility functions allow for easy manipulations of these vars.
-# usage: append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
 append_to_path() {
-    _add_to_path postfix $@
+    # Appends path components to a variable, deduplicates the list,
+    # then prints to stdout the export command required to append that
+    # list to that variable
+    #
+    # Takes as arguments first a variable containing a colon-separated
+    # path to append to, then a space-separated collection of paths to
+    # append -- these path components MUST NOT contain spaces.
+    #
+    # If insufficient arguments are present, a warning message is
+    # printed to stderr and nothing is printed to stdout.
+    #
+    # Example:
+    #   append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    local sep=':'
+    local var=${1}
+    shift
+    local appendage=$(echo "$@" | tr ' ' "${sep}")
+
+    if [ -z ${var} ] ; then
+        echo "WARNING: append_to_path() called with no arguments!" >&2
+        return
+    fi
+    if [ -z ${appendage} ] ; then
+        echo "WARNING: append_to_path() called with no path to append!" >&2
+        return
+    fi
+    export ${var}=$(_path_unique \$${var}:${!var}:${appendage})
+    echo "export ${var}=${!var}"
 }
+
 prefix_to_path() {
-    _add_to_path prefix $@
+    # Prepends path components to a variable, deduplicates the list,
+    # then prints to stdout the export command required to prepend
+    # that list to that variable.
+    #
+    # Takes as arguments first a variable containing a colon-separated
+    # path to prepend to, then a space-separated collection of paths to
+    # prepend -- these path components MUST NOT contain spaces.
+    #
+    # If insufficient arguments are present, a warning message is
+    # printed to stderr and nothing is printed to stdout.
+    #
+    # Example:
+    #   prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    local sep=':'
+    local var=${1}
+    shift
+    local appendage=$(echo "$@" | tr ' ' "${sep}")
+
+    if [ -z ${var} ] ; then
+        echo "WARNING: append_to_path() called with no arguments!" >&2
+        return
+    fi
+    if [ -z ${appendage} ] ; then
+        echo "WARNING: append_to_path() called with no path to append!" >&2
+        return
+    fi
+    export ${var}=$(_path_unique ${appendage}:${!var}:\$${var})
+    echo "export ${var}=${!var}"
 }
 
 ### "private" functions ###
-
-_add_to_path() {
-    local side=${1:?"Must provide a value here"}
-    shift
-    local sep=":"
-
-    local var=$1
-    #echo ${!var}
-    shift
-    env | egrep '^'${var}'=' >& /dev/null
-    [ $? != 0 ] && new_var=1
-
-    new_entries=($@)
-    #scrub out ":"s and create a single array
-    new_entries=($(echo ${new_entries[@]} | sed 's/:/ /g'))
-    #echo "new entries: [${new_entries[@]}]"
-    local toadd; unset toadd;
-
-    for((i=0; i < ${#new_entries[@]}; i++)); do
-        #echo "checking for ${new_entries[i]}... "
-        (echo ${!var} | grep ${new_entries[i]} >& /dev/null)
-        if [ $? == 0 ]; then
-            #echo "have it (${new_entries[i]}) already"
-            continue
-        else
-            (echo ${toadd[@]} | grep ${new_entries[i]} >& /dev/null)
-            if [ $? != 0 ]; then
-                #echo "good new entry: (${new_entries[i]})"
-                toadd+=( "${new_entries[i]}" )
-            #else
-            #    echo "already added ${new_entries[i]} - skipping"
-            fi
-        fi
-    done
-    #echo "[${#toadd[@]}] - [${toadd[*]}]"
-    if (( ${#toadd[@]} > 0 )); then
-        if [ "${side}" = "prefix" ]; then
-            echo "export ${var}=$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')$( ((!new_var)) && echo "${sep}")${!var}"
-        else
-            echo "export ${var}=${!var}$( ((!new_var)) && echo "${sep}")$(echo -n ${toadd[@]} | sed -e 's/ /'$sep'/g')"
-        fi
-    else
-        echo "export ${var}=${!var}"
-    fi
-}
 
 _is_in_git() {
     # This determines if a specified file is in a git repository.
@@ -5085,6 +5094,34 @@ _is_in_git() {
     fi
 
     return 1
+}
+
+_path_unique() {
+# Prints a unique path string
+#
+# The first (leftmost) instance of a path entry will be the one that
+# is preserved.
+#
+# If $1 is specified, it will be taken as the string to deduplicate,
+# otherwise $PATH is used.
+#
+# If $2 is specified, it will be taken as the path separator, which
+# otherwise defaults to ':'
+#
+    if [ X"$1" = "X" ] ; then
+        PATHSTRING=${PATH}
+    else
+        PATHSTRING=${1}
+    fi
+    if [ X"$2" = "X" ] ; then
+        PATHSEP=':'
+    else
+        PATHSEP=${2}
+    fi
+
+    echo -n ${PATHSTRING} | tr "${PATHSEP}" '\n' \
+        | perl -e 'while (<>) { print $_ unless $s{$_}++; }' \
+        | tr '\n' "${PATHSEP}"
 }
 
 _readlinkf() {
@@ -5261,8 +5298,8 @@ self_verify() {
 	    [ -n "${input}" ] && choice=${input}
 	    unset input
 	fi
-        
-        case ${choice} in 
+
+        case ${choice} in
             c | C)
 	        echo "Continuing..."
 	        echo
@@ -5458,6 +5495,13 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_host}" ] || ((force_install)); then
 	unset input
 	default=${esgf_host:-$(hostname --fqdn)}
+        defaultdomain=$(echo ${default} | cut -f 2- -d '.' -s)
+        if [ X"${default}" = "X" ] ; then
+            default="localhost.localdomain"
+        elif [ X"${defaultdomain}" = "X" ] ;  then
+            default="${default}.localdomain"
+        fi
+
 	read -e -p "What is the fully qualified domain name of this node? [${default}]: " input
 	[ -z "${input}" ] && esgf_host=${default} && write_as_property esgf_host
 	[ -n "${input}" ] && esgf_host=${input}	  && write_as_property esgf_host
@@ -6374,16 +6418,16 @@ main() {
     Sorry no suitable node type has been selected
     Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
     (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
-    
+
     Ex:  esg-node --set-type data
     esg-node install
-    
+
     or do so as a single command line:
-    
+
     Ex:  esg-node --type data install
-    
+
     Use the --help | -h option for more information
-    
+
     Note: The type value is recorded upon successfully starting the node.
     the value is used for subsequent launches so the type value does not have to be
     always specified.  A simple \"esg-node start\" will launch with the last type used

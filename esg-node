@@ -5001,15 +5001,15 @@ append_to_path() {
     #   append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
     #
     local sep=':'
-    local var=${1}
+    local var="${1}"
     shift
     local appendage=$(echo "$@" | tr ' ' "${sep}")
 
-    if [ -z ${var} ] ; then
+    if [ -z "${var}" ] ; then
         echo "WARNING: append_to_path() called with no arguments!" >&2
         return
     fi
-    if [ -z ${appendage} ] ; then
+    if [ -z "${appendage}" ] ; then
         echo "WARNING: append_to_path() called with no path to append!" >&2
         return
     fi
@@ -5033,15 +5033,15 @@ prefix_to_path() {
     #   prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
     #
     local sep=':'
-    local var=${1}
+    local var="${1}"
     shift
     local appendage=$(echo "$@" | tr ' ' "${sep}")
 
-    if [ -z ${var} ] ; then
+    if [ -z "${var}" ] ; then
         echo "WARNING: append_to_path() called with no arguments!" >&2
         return
     fi
-    if [ -z ${appendage} ] ; then
+    if [ -z "${appendage}" ] ; then
         echo "WARNING: append_to_path() called with no path to append!" >&2
         return
     fi
@@ -5108,20 +5108,12 @@ _path_unique() {
 # If $2 is specified, it will be taken as the path separator, which
 # otherwise defaults to ':'
 #
-    if [ X"$1" = "X" ] ; then
-        PATHSTRING=${PATH}
-    else
-        PATHSTRING=${1}
-    fi
-    if [ X"$2" = "X" ] ; then
-        PATHSEP=':'
-    else
-        PATHSEP=${2}
-    fi
+    local path_string=${1:-${PATH}}
+    local pathsep=${2:-":"}
 
-    echo -n ${PATHSTRING} | tr "${PATHSEP}" '\n' \
+    echo -n ${path_string} | tr "${pathsep}" '\n' \
         | perl -e 'while (<>) { print $_ unless $s{$_}++; }' \
-        | tr '\n' "${PATHSEP}"
+        | tr '\n' "${pathsep}"
 }
 
 _readlinkf() {

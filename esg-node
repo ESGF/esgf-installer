@@ -270,7 +270,8 @@ init() {
     postgress_protocol=jdbc:postgresql:
     pg_sys_acct=${pg_sys_acct:-postgres}
     pg_sys_acct_group=${pg_sys_acct_group:-$pg_sys_acct}
-    postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
+    postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
+    #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     cdat_repo=git://uv-cdat.llnl.gov/cdat.git
     cdat_repo_http=http://uv-cdat.llnl.gov/git/cdat.git

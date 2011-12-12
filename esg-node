@@ -1518,8 +1518,8 @@ setup_esgcet() {
 	${cdat_home}/bin/esginitialize -c
 	[ $? != 0 ] && popd && checked_done 1
     else
-	echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******")"
-	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_sys_acct_passwd:-security_admin_password} --db-user-password ${pg_sys_acct_passwd:-security_admin_password}")
+	echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******") $( [-n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [-n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_sys_acct_passwd:-security_admin_password} --db-user-password ${pg_sys_acct_passwd:-security_admin_password}") $( [-n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [-n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
 

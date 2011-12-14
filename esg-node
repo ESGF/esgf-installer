@@ -116,7 +116,7 @@ init() {
     #NOTE: esg-dist = v1.0.5
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.9.0"}
+    esgcet_version=${esgcet_version:-"2.9.1"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.5.9"}
@@ -1513,13 +1513,17 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
+    local postgress_low_user="esgcet"
+    local pg_user_acct_passwd=${pg_sys_acct_passwd}
+    local security_user_password=${pg_user_acct_passwd:-${security_admin_password}}
+
     if [ "${mode}" = "U" ]; then
 	echo "${cdat_home}/bin/esginitialize -c"
 	${cdat_home}/bin/esginitialize -c
 	[ $? != 0 ] && popd && checked_done 1
     else
-	echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** --db-user-password ******")"
-	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_sys_acct_passwd:-security_admin_password} --db-user-password ${pg_sys_acct_passwd:-security_admin_password}")
+        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** ") $( [ -n "${postgress_low_user}" ] && echo "--db-user ${postgress_low_user}" ) $([ -n "${pg_user_acct_passwd:-security_user_password}" ] && echo "--db-user-password ****** ") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_user_acct_passwd}") $( [ -n "${postgress_low_user}" ] && echo "--db-user ${postgress_low_user}" ) $([ -n "${pg_user_acct_passwd:-security_user_password}" ] && echo "--db-user-password ${security_user_password}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
 

@@ -113,7 +113,7 @@ init() {
     # Internal esgf node code versions
     #--------------------------------
 
-    #NOTE: esg-dist = v1.0.5
+    #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
     esgcet_version=${esgcet_version:-"2.9.1"}

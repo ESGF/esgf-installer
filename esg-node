@@ -119,7 +119,7 @@ init() {
     esgcet_version=${esgcet_version:-"2.9.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.0"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.1"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:

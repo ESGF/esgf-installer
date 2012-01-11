@@ -138,14 +138,14 @@ gss_assist_patch_dist_url=${gridftp_dist_url_base}/globus_gss_assist-5.5.tar.gz
 gridftp_chroot_jail=${esg_root_dir}/gridftp_root
 #ports end-user configured:
 gridftp_server_port=2811
-gridftp_server_port_range=${gridftp_server_port_range:-60000,64000}
-gridftp_server_source_range=${gridftp_server_source_range:-60000,64000}
+gridftp_server_port_range=${gridftp_server_port_range:-6001,6500}
+gridftp_server_source_range=${gridftp_server_source_range:-6001,6500}
 gridftp_server_usage_log=${esg_log_dir}/esg-server-usage-gridftp.log
 gridftp_server_usage_config=${esg_config_dir}/gridftp/esg-server-usage-gridftp.conf
 #ports bdm-configured:
 gridftp_bdm_server_port=2812
-gridftp_bdm_server_port_range=${gridftp_bdm_server_port_range:-60000,61000}
-gridftp_bdm_server_source_range=${gridftp_bdm_server_source_range:-60000,61000}
+gridftp_bdm_server_port_range=${gridftp_bdm_server_port_range:-6001,6500}
+gridftp_bdm_server_source_range=${gridftp_bdm_server_source_range:-6100,6500}
 gridftp_bdm_server_usage_log=${esg_log_dir}/esg-bdm-usage-gridftp.log
 gridftp_bdm_server_usage_config=${esg_config_dir}/gridftp/esg-bdm-usage-gridftp.conf
 esg_crontab=${esg_config_dir}/esg_crontab

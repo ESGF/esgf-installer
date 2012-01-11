@@ -1860,7 +1860,7 @@ edit_myproxy_certificate_mapapp() {
     local tfile=myproxy-certificate-mapapp
     echo "Download and Modifying configuration template file: `pwd`/${tfile}"
     checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak} && chmod 640 ${tfile}.bak
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
     eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
@@ -1931,7 +1931,7 @@ edit_esg_attribute_callout_app() {
     local tfile=esg_attribute_callout_app
     echo "Download and Modifying configuration template file: `pwd`/${tfile}"
     checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak} && chmod 640 ${tfile}.bak
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
     eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"

@@ -1830,11 +1830,14 @@ edit_myproxy_server_config() {
 	    [ -n "${input}" ] && cert_password=${input}  && unset input && break
 	done
     fi
+    
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+
     echo -n "editing myproxy certificate information "
     
     eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
     echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
     echo -n "*"
@@ -1860,7 +1863,7 @@ edit_myproxy_certificate_mapapp() {
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@ca_subject\\@\\@#${ca_subject}#g' ${tfile}"
     echo -n "*"
@@ -1931,7 +1934,7 @@ edit_esg_attribute_callout_app() {
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
     echo -n "*"

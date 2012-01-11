@@ -1767,11 +1767,13 @@ setup_tomcat() {
 
     if [ -d ${tomcat_install_dir}/webapps/examples ]; then
 	local dodel="Y"
-	echo "For security reasons we recommend removing the examples web app [$(readlink -f ${tomcat_install_dir}/webapps/examples)]"
+	echo "For security reasons we recommend removing the examples web app [$(readlink -f ${tomcat_install_dir}/webapps/examples)] and docs"
 	readlink -f ${tomcat_install_dir}/webapps/examples
-	((VERBOSE)) && read -e -p "Is the directory shown above correct? [Y/n] " dodel
+	readlink -f ${tomcat_install_dir}/webapps/docs
+	((VERBOSE)) && read -e -p "Are the directories shown above correct? [Y/n] " dodel
 	if [ "${dodel}" = "Y" ] || [ "${dodel}" = "y" ] || [ -z "${dodel}" ]; then
-	    rm -rf ${tomcat_install_dir}/webapps/examples && echo "removed the examples webapp..."
+	    rm -rf ${tomcat_install_dir}/webapps/examples && echo "removed the examples..."
+            rm -rf ${tomcat_install_dir}/webapps/docs && echo "removed the docs..."
 	fi
     fi
 

@@ -1850,14 +1850,17 @@ edit_myproxy_server_config() {
 }
 
 edit_myproxy_certificate_mapapp() {
-    pushd ${globus_location}/share/myproxy/ >& /dev/null
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+    mkdir -p ${myproxy_config_dir}
+    pushd ${myproxy_config_dir} >& /dev/null
+
     local tfile=myproxy-certificate-mapapp
     echo "Download and Modifying configuration template file: `pwd`/${tfile}"
     checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@ca_subject\\@\\@#${ca_subject}#g' ${tfile}"
     echo -n "*"
@@ -1874,7 +1877,7 @@ edit_myproxy_certificate_mapapp() {
     eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
     echo -n "*"
     echo " [OK]"
-    chmod -v 755 ${tfile}
+    chmod -v 751 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
@@ -1918,14 +1921,17 @@ fetch_etc_pam_d_myproxy() {
 
 edit_esg_attribute_callout_app() {
    #Configure External Attribute Callout with MyProxy
-    pushd ${globus_location}/bin >& /dev/null
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+    mkdir -p ${myproxy_config_dir}
+    pushd ${myproxy_config_dir} >& /dev/null
+
     local tfile=esg_attribute_callout_app
     echo "Download and Modifying configuration template file: `pwd`/${tfile}"
     checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
     echo -n "*"
@@ -1940,7 +1946,7 @@ edit_esg_attribute_callout_app() {
     eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
     echo -n "*"
     echo " [OK]"
-    chmod 755 ${tfile}
+    chmod 751 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile

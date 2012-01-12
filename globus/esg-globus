@@ -166,7 +166,7 @@ pam_pgsql_install_dir=${install_prefix}/pam
 postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
 bison_dist_url=http://ftp.gnu.org/gnu/bison/bison-${bison_version}.tar.gz
 flex_dist_url=http://downloads.sourceforge.net/project/flex/flex/flex-${flex_version}/flex-${flex_version}.tar.gz
-gsoap_dist_url=${esg_dist_url}/thirdparty/gsoap_${gsoap_version}.tar.gz
+gsoap_dist_url=${esg_dist_url}/thirdparty/gsoap_${gsoap_version}-nm-patched.tar.gz
 #gsoap_dist_url=http://downloads.sourceforge.net/project/gsoap2/gSOAP/gSOAP%20${gsoap_version}%20stable/gsoap_${gsoap_version}.tar.gz
 #gsoap_dist_url=http://sourceforge.net/projects/gsoap2/files/gSOAP/gsoap_2.7.17.zip/download
 gsoap_install_dir=${install_prefix}/gsoap
@@ -256,6 +256,15 @@ setup_globus_services() {
             shift
         done
         
+        #----------------------------------------------------------------------
+        #NOTE: this is done in upgrade_gridftp_server... but for some reason it does not "stick"
+        #The working notion is that the BDM setup is interfering somehow.  When run afterward
+        #it seemed to rememdy this issue.  So this is why this is here, in addition to being
+        #In the upgrade_gridftp_server function (above).
+        ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
+        [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
+        #----------------------------------------------------------------------
+
         [ -e ${globus_location}/sbin/globus-gridftp-server ] && \
             write_as_property gridftp_app_home ${globus_location}/sbin/globus-gridftp-server || \
             echo "WARNING: Cannot find executable ${globus_location}/sbin/globus-gridftp-server"

@@ -229,7 +229,6 @@ setup_globus_services() {
     if [ "${config_type}" = "datanode" ]; then
         create_globus_account
         setup_globus datanode
-        upgrade_gridftp_server
         setup_gridftp_metrics_logging
 
         #now for configuration of the portions we just "setup" (installed)
@@ -255,16 +254,9 @@ setup_globus_services() {
             esac
             shift
         done
-        
-        #----------------------------------------------------------------------
-        #NOTE: this is done in upgrade_gridftp_server... but for some reason it does not "stick"
-        #The working notion is that the BDM setup is interfering somehow.  When run afterward
-        #it seemed to rememdy this issue.  So this is why this is here, in addition to being
-        #In the upgrade_gridftp_server function (above).
-        ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
-        [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
-        #----------------------------------------------------------------------
 
+        upgrade_gridftp_server
+        
         [ -e ${globus_location}/sbin/globus-gridftp-server ] && \
             write_as_property gridftp_app_home ${globus_location}/sbin/globus-gridftp-server || \
             echo "WARNING: Cannot find executable ${globus_location}/sbin/globus-gridftp-server"
@@ -294,7 +286,15 @@ setup_globus_services() {
         echo "You must provide a configuration type arg [datanode | gateway]"
         return 1
     fi
-    
+
+    #----------------------------------------------------------------------
+    #NOTE: this is done in upgrade_gridftp_server... but it does not "stick" after myproxy
+    # install.  to remedy this, we apply the update again here
+    checked_get ${gss_assist_patch_dist_file} ${gss_assist_patch_dist_url} $((force_install))
+    ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
+    [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
+    #----------------------------------------------------------------------
+
     return 0
 }
 
@@ -451,24 +451,24 @@ upgrade_gridftp_server() {
     check_version ${globus_location}/bin/globus-version ${globus_version}
     [ $? == 0 ] && echo "Globus version is sufficiently current, upgrade not required"
 
-    local performed_upgrade=0
-    echo "Checking for gridftp-server ${gridftp_server_version}"
-    check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
-    if [ $? == 0 ]; then
-        echo "Globus version is sufficiently current, upgrade not required"
-    else
-        echo "GridFTP - Upgrading..."
-        pushd ${globus_workdir} >& /dev/null
+#     local performed_upgrade=0
+#     echo "Checking for gridftp-server ${gridftp_server_version}"
+#     check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
+#     if [ $? == 0 ]; then
+#         echo "Globus version is sufficiently current, upgrade not required"
+#     else
+#         echo "GridFTP - Upgrading..."
+#         pushd ${globus_workdir} >& /dev/null
 
-        gridftp_update_dist_file=${gridftp_update_dist_url##*/}
-        if [ ! -e ${gridftp_update_dist_file} ]; then
-            checked_get ${gridftp_update_dist_file} ${gridftp_update_dist_url} $((force_install))
-            (( $? > 1 )) && popd && checked_done 1
-        fi
-        echo "${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}"
-        ${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}
-        [ $? != 0 ] && echo " ERROR: unable to build from ${gridftp_update_dist_file}" || (echo " [OK] " && ((performed_upgrade=1)) )
-    fi
+#         gridftp_update_dist_file=${gridftp_update_dist_url##*/}
+#         if [ ! -e ${gridftp_update_dist_file} ]; then
+#             checked_get ${gridftp_update_dist_file} ${gridftp_update_dist_url} $((force_install))
+#             (( $? > 1 )) && popd && checked_done 1
+#         fi
+#         echo "${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}"
+#         ${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}
+#         [ $? != 0 ] && echo " ERROR: unable to build from ${gridftp_update_dist_file}" || (echo " [OK] " && ((performed_upgrade=1)) )
+#     fi
 
     #Only jump to asking the user about installing patches if it is
     #determined that there is already an up-to-date gridftp install
@@ -598,6 +598,7 @@ setup_gsoap() {
         pwd
 
         pushd ${gsoap_dist_dir} >& /dev/null
+        cd gsoap-2.7
         ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
         echo "./configure --prefix=${gsoap_install_dir}"
         if ./configure --prefix=${gsoap_install_dir} \
@@ -613,6 +614,7 @@ setup_gsoap() {
             popd >& /dev/null
             checked_done 1
         fi
+        cd ../
         popd >& /dev/null
         popd >& /dev/null
     else

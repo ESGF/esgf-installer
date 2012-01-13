@@ -338,12 +338,14 @@ stop_globus_services() {
 #arg1 - config_type ("datanode" | "gateway")
 test_globus_services() {
     local config_type="$1"
-    echo "test_globus_services for ${config_type}"
+    echo "test_globus_services for ${config_type} -> [$@]"
     if [ "${config_type}" = "datanode" ]; then
-        test_gridftp_server
+        shift
+        test_gridftp_server $@
         return $?
     elif [ "${config_type}" = "gateway" ]; then
-        test_myproxy_server
+        shift
+        test_myproxy_server $@
         return $?
     else
         echo "You must provide a configuration type arg [datanode | gateway]"
@@ -1149,11 +1151,34 @@ config_bdm_gridftp_server() {
 }
 
 test_gridftp_server() {
-    echo "GridFTP - BDM Test..."
-    $GLOBUS_LOCATION/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_bdm_server_port}/esg_dataroot/test/sftlf.nc file:///tmp/junk.nc
-    [ $? != 0 ] && echo "ERROR: Problem testing gridftp bdm configuration" && return 1
-    [ -e /tmp/junk.nc ] && echo "[OK]" | (echo "[FAIL]" && return 2)
-    return 0
+    local ret=0
+    local tmpdestfile
+    debug_print "test_gridftp_server: [$@]"
+
+    while [ -n "$1" ]; do
+        case $1 in
+            end-user)
+                echo -n "GridFTP - End-User Test... [$1]"
+                tmpdestfile=$(mktemp)
+                ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+                    diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
+                    rm -f ${tmpdestfile} && echo "[OK]" || ( echo "[FAIL]" && ((ret++)) )
+                ;;
+            bdm)
+                echo -n "GridFTP - BDM Test... [$1]"
+                tmpdestfile=$(mktemp)
+                ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_bdm_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+                    diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
+                    rm -f ${tmpdestfile} && echo "[OK]" || ( echo "[FAIL]" && ((ret++)) )
+                ;;
+            *)
+                [ -n "$1" ] && echo "unknown parameter [$1]"
+                break
+                ;;
+        esac
+        shift
+    done
+    return ${ret}
 }
 
 #Could takes the arg(s): "bdm" | "end-user"
@@ -1781,7 +1806,7 @@ write_db_name_env() {
 
 
 test_myproxy_server() {
-    echo "MyProxy - Test... (faux)"
+    echo "MyProxy - Test... (faux) [$@]"
     #TODO: Sanity check code...
     return 0
 }

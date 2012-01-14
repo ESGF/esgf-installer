@@ -224,9 +224,22 @@ dedup ${envfile} && source ${envfile}
 #arg1 - config_type ("datanode" ["bdm"|"end-user"] | 
 #                    "gateway"  [gen-self-cert] <dir> | (<regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"])
 setup_globus_services() {
+
+    echo -n "Checking for globus services ${globus_version}"
+    check_version_with globus "${globus_location}/bin/globus-version" "${globus_version}"
+    local ret=$?
+    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+
     local config_type="$1"
     echo "setup_globus_services for ${config_type} - ${globus_word_size}bit arch : [$*]"
     if [ "${config_type}" = "datanode" ]; then
+
+        echo
+        echo "*******************************"
+        echo "Setting up ESGF Globus GridFTP Service(s)"
+        echo "*******************************"
+        echo
+
         create_globus_account
         setup_globus datanode
         setup_gridftp_metrics_logging
@@ -263,6 +276,13 @@ setup_globus_services() {
         setup_gridftp_jail
 
     elif [ "${config_type}" = "gateway" ]; then
+
+        echo
+        echo "*******************************"
+        echo "Setting up The ESGF Globus MyProxy Services"
+        echo "*******************************"
+        echo
+
         create_globus_account
         shift
         local ret=1

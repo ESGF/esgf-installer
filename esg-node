@@ -2542,7 +2542,7 @@ test_tds() {
 # for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | <regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"]
 my_setup_globus() {
     local sel=${1:-${sel:-0}}
-    echo "my_setup_globus for sel type ${sel}"
+    debug_print "my_setup_globus for sel type ${sel}"
     ((sel == 0)) && echo "my_setup_globus: no selection set, returning (1)" && return 1
     shift
 
@@ -6518,12 +6518,12 @@ main() {
     # Globus Installation...
     #---------------------------------------
     #(gridftp)
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && echo "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
     #(myproxy - [depends on security backend in place])
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))	 != 0 ] && (( ! no_globus )) && echo "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))	 ${myproxy_config_args}
-	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & IDP_BIT)) != 0 ]	&& (( ! no_globus )) && echo "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))	 != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))	 ${myproxy_config_args}
+	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & IDP_BIT)) != 0 ]	&& (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
 
 
     #---------------------------------------
@@ -6558,7 +6558,7 @@ main() {
         #For the sake of the node manager registry, let's just make sure that the derivative whitelist files
         #exits and have the appropriate ownership and permissions
         #This function is defined in the esg-node-manager script, which at this point should have been already sourced!
-        touch_whitelist_files
+        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_whitelist_files)
         #---
 
     #---------------------------------------

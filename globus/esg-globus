@@ -358,7 +358,7 @@ stop_globus_services() {
 #arg1 - config_type ("datanode" | "gateway")
 test_globus_services() {
     local config_type="$1"
-    echo "test_globus_services for ${config_type} -> [$@]"
+    debug_print "test_globus_services for ${config_type} -> [$@]"
     if [ "${config_type}" = "datanode" ]; then
         shift
         test_gridftp_server $@
@@ -1300,7 +1300,7 @@ stop_gridftp_server() {
 check_gridftp_process() {
     local port="$1"
     val=$(ps -elf | grep globus-gridftp-server | grep -v grep | grep "${port}" | awk ' END { print NR }')
-    [ $(($val > 0 )) == 1 ] && echo " gridftp-server process is running..." && return 0
+    [ $(($val > 0 )) == 1 ] && echo " gridftp-server process is running on port [${port}]..." && return 0
     return 1
 }
 

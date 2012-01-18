@@ -284,11 +284,13 @@ setup_globus_services() {
         echo "*******************************"
         echo
 
-        echo -n "Checking for MyProxy server version ${myproxy_version}"
-        local m_ver="(${globus_location}/sbin/myproxy-server -V | cut -b 36-39)"
-        check_version_with myproxy-server "$m_ver" "${myproxy_version}"
-        local ret=$?
-        ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+        if [ -e "/root/.globus/simpleCA" ]; then
+            echo -n "Checking for MyProxy server version ${myproxy_version}"
+            local m_ver="(${globus_location}/sbin/myproxy-server -V | cut -b 36-39)"
+            check_version_with myproxy-server "$m_ver" "${myproxy_version}"
+            local ret=$?
+            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+        fi
 
         create_globus_account
         shift

@@ -321,8 +321,8 @@ setup_globus_services() {
     # install.  to remedy this, we apply the update again here
     globus_assist_dist_file=${globus_workdir}/${gss_assist_patch_dist_url##*/}
     checked_get ${globus_assist_dist_file} ${gss_assist_patch_dist_url} $((force_install))
-    ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor}
-    [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
+    ${globus_location}/sbin/gpt-build -force -update ${globus_assist_dist_file} ${globus_flavor}
+    [ $? != 0 ] && echo " ERROR: unable to build from ${globus_assist_dist_file}" || echo " [OK] "
     #----------------------------------------------------------------------
 
     return 0

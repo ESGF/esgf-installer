@@ -225,6 +225,11 @@ dedup ${envfile} && source ${envfile}
 #                    "gateway"  [gen-self-cert] <dir> | (<regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"])
 setup_globus_services() {
 
+    echo -n "Checking for globus services ${globus_version}"
+    check_version_with globus "${globus_location}/bin/globus-version" "${globus_version}"
+    local ret=$?
+    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+
     local config_type="$1"
     echo "setup_globus_services for ${config_type} - ${globus_word_size}bit arch : [$*]"
     if [ "${config_type}" = "datanode" ]; then
@@ -234,12 +239,6 @@ setup_globus_services() {
         echo "Setting up ESGF Globus GridFTP Service(s)"
         echo "*******************************"
         echo
-
-        echo -n "Checking for GridFTP server version ${gridftp_server_version}"
-        local g_ver="(${globus_location}/sbin/globus-gridftp-server -v 2>&1 | cut -b 24-27)"
-        check_version_with globus-gridftp-server "$g_ver" "${gridftp_server_version}"
-        local ret=$?
-        ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
         create_globus_account
         setup_globus datanode
@@ -284,14 +283,6 @@ setup_globus_services() {
         echo "*******************************"
         echo
 
-        if [ -e "/root/.globus/simpleCA" ]; then
-            echo -n "Checking for MyProxy server version ${myproxy_version}"
-            local m_ver="(${globus_location}/sbin/myproxy-server -V | cut -b 36-39)"
-            check_version_with myproxy-server "$m_ver" "${myproxy_version}"
-            local ret=$?
-            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
-        fi
-
         create_globus_account
         shift
         local ret=1
@@ -319,7 +310,8 @@ setup_globus_services() {
     #----------------------------------------------------------------------
     #NOTE: this is done in upgrade_gridftp_server... but it does not "stick" after myproxy
     # install.  to remedy this, we apply the update again here
-    checked_get ${gss_assist_patch_dist_file} ${gss_assist_patch_dist_url} $((force_install))
+    globus_assist_dist_file=${globus_workdir}/${globus_assist_patch_dist_url##*/}/
+    checked_get ${globus_assist_dist_file} ${gss_assist_patch_dist_url} $((force_install))
     ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
     [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
     #----------------------------------------------------------------------

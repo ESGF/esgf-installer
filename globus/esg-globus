@@ -310,7 +310,7 @@ setup_globus_services() {
     #----------------------------------------------------------------------
     #NOTE: this is done in upgrade_gridftp_server... but it does not "stick" after myproxy
     # install.  to remedy this, we apply the update again here
-    globus_assist_dist_file=${globus_workdir}/${globus_assist_patch_dist_url##*/}/
+    globus_assist_dist_file=${globus_workdir}/${globus_assist_patch_dist_url##*/}
     checked_get ${globus_assist_dist_file} ${gss_assist_patch_dist_url} $((force_install))
     ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
     [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "

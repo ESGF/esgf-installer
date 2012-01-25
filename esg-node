@@ -6570,6 +6570,7 @@ main() {
     #---------------------------------------
     # Publishing Test...
     #---------------------------------------
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ -n "${esgf_index_peer}" ] && set_index_peer "${esgf_index_peer}"
 	[ $((sel & TEST_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "test_publication" && test_publication
 
 

@@ -2232,6 +2232,31 @@ select_idp_peer() {
         fi
     fi
     write_as_property esgf_idp_peer
+
+    local authorization_service_root
+    get_property authorization_service_root
+
+    #----
+    #Editing web.xml files for projects who use the authorizationService
+    #----
+    echo "updating webapps' web.xml files accordingly..."
+    local web_xml_files=($(find . | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
+    sed -i.bak 's@\(https://\)[^/]*\(.*/saml/soap/secure/authorizationService.htm[,]*\)@\1'${authorization_service_root:-${esgf_idp_peer}}'\2@g' ${web_xml_files[@]}
+    local instruct_to_reboot=0
+    for((i=0;i<${#web_xml_files[@]};i++)); do
+        diff ${web_xml_files[${i}]}{,.bak} >& /dev/null
+        ((instruct_to_reboot+=$?))
+    done
+    ((instruct_to_reboot)) && \
+        printf "
+
+	-------------------------------------------------------------------------------------------------
+	webapp web.xml files have been modified - you must restart node stack for changes to be in effect
+        (esg-node restart)
+	-------------------------------------------------------------------------------------------------
+
+"
+    #----
     write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
     write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
     #----------------------

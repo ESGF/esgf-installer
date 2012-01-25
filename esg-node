@@ -2240,7 +2240,7 @@ select_idp_peer() {
     #Editing web.xml files for projects who use the authorizationService
     #----
     echo "updating webapps' web.xml files accordingly..."
-    local web_xml_files=($(find . | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
+    local web_xml_files=($(find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
     sed -i.bak 's@\(https://\)[^/]*\(.*/saml/soap/secure/authorizationService.htm[,]*\)@\1'${authorization_service_root:-${esgf_idp_peer}}'\2@g' ${web_xml_files[@]}
     local instruct_to_reboot=0
     for((i=0;i<${#web_xml_files[@]};i++)); do

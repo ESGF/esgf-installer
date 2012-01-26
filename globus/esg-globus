@@ -152,7 +152,7 @@ esg_crontab=${esg_config_dir}/esg_crontab
 #-----------
 myproxy_config_args=${myproxy_config_args:-""}
 myproxy_dist_url_base=${esg_dist_url}/globus/myproxy
-myproxy_dist_url=http://www.globus.org/ftppub/myproxy/myproxy-${myproxy_version}.tar.gz
+myproxy_dist_url=http://downloads.sourceforge.net/project/cilogon/myproxy/myproxy-${myproxy_version}.tar.gz
 myproxy_endpoint=${myproxy_endpoint}
 myproxy_location=${globus_location}/bin/
 #-----------

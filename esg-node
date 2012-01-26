@@ -70,6 +70,8 @@
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
 
+export LANG=POSIX
+
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 

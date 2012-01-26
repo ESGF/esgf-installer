@@ -2765,7 +2765,8 @@ test_publication() {
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
-    echo "(target index node => ${esgf_index_peer})"
+    local index_peer=$(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' /esg/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
+    echo "(target index node => ${index_peer}  $(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' /esg/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
     #Publish the dataset from the THREDDS catalog created above...
     echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish

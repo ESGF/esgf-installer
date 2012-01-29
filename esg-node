@@ -982,6 +982,11 @@ write_ant_install_log() {
 #####
 setup_postgress() {
 
+    if [ "${db_host}" != "${esgf_host}" ] && [ "${db_host}" != "localhost" ] ; then
+        echo "Set to use external database on host: ${db_host}"
+        return 0
+    fi
+
     echo -n "Checking for postgresql >= ${postgress_min_version}"
     check_version psql ${postgress_min_version}
     local ret=$?
@@ -1515,17 +1520,17 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
-    local postgress_low_user="esgcet"
+    local publisher_db_user="esgcet"
     local pg_user_acct_passwd=${pg_sys_acct_passwd}
-    local security_user_password=${pg_user_acct_passwd:-${security_admin_password}}
+    local publisher_db_user_passwd=${pg_user_acct_passwd:-${security_admin_password}}
 
     if [ "${mode}" = "U" ]; then
 	echo "${cdat_home}/bin/esginitialize -c"
 	${cdat_home}/bin/esginitialize -c
 	[ $? != 0 ] && popd && checked_done 1
     else
-        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** ") $( [ -n "${postgress_low_user}" ] && echo "--db-user ${postgress_low_user}" ) $([ -n "${pg_user_acct_passwd:-security_user_password}" ] && echo "--db-user-password ****** ") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
-	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_user_acct_passwd}") $( [ -n "${postgress_low_user}" ] && echo "--db-user ${postgress_low_user}" ) $([ -n "${pg_user_acct_passwd:-security_user_password}" ] && echo "--db-user-password ${security_user_password}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
+        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** ") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${pg_user_acct_passwd:-publisher_db_user_passwd}" ] && echo "--db-user-password ****** ") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_user_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${pg_user_acct_passwd:-publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
 
@@ -5686,12 +5691,56 @@ initial_setup_questionnaire() {
 
     unset input
 
+    get_property db_user ${db_user}
+    get_property db_host ${db_host}
+    get_property db_port ${db_port}
+    get_property db_database ${db_database}
+    if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || ((force_install)); then
+        _get_db_conn_str
+    else
+        echo "db connection string = [postgresql://${db_user}@${db_host}:${db_port}/${db_database}]"
+    fi
+
+
     dedup_properties ${config_file}
     echo "-------------------------------------------------------"
     echo
     echo
     popd >& /dev/null
     return 0
+}
+
+_get_db_conn_str() {
+    #postgresql://esgcet@localhost:5432/esgcet
+    local ret=1
+    local user_ host_ port_ dbname_ connstring_
+    echo "Please enter the database connection string..."
+    echo " (form: postgresql://[username]@[host]:[port]/[database])"
+    read -e -p "Enter the database connection string: postgresql://" connstring_
+    echo "entered: postgresql://$connstring_"
+    eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${connstring_}"))
+    if [ -z "${user_}" ] || \
+        [ -z "${host_}" ] || \
+        [ -z "${port_}" ] || \
+        [ -z "${dbname_}" ]; then
+        echo "ERROR: Incorrect connection string syntax or values"
+        ret=1
+    else
+        ret=0
+    fi
+
+    echo "user = $user_"
+    echo "host = $host_"
+    echo "port = $port_"
+    echo "database = $dbname_"
+
+    db_user=${user_}
+    db_host=${host_}
+    db_port=${port_}
+    db_database=${dbname_}
+
+    echo "ret = $ret"
+    return $ret
 }
 
 ############################################

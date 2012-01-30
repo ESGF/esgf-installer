@@ -5779,7 +5779,7 @@ _get_db_conn_str_questionnaire() {
 
     #set vars...
     db_user=${user_}
-    db_host=$([ -n "${host_}" ] && ([ "${host_}" = "${esgf_host}" ] || [ "${host_}" = "localhost" ]) && echo "localhost")
+    db_host=$([ -n "${host_}" ] && ([ "${host_}" = "${esgf_host}" ] || [ "${host_}" = "localhost" ]) && echo "localhost" || echo "${host_}")
     db_port=${port_}
     db_database=${dbname_}
 

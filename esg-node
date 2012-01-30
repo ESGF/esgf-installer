@@ -95,6 +95,7 @@ esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type
 esgf_secret_file=${esg_config_dir}/.esgf_pass
 pg_secret_file=${esg_config_dir}/.esg_pg_pass
+pub_secret_file=${esg_config_dir}/.esg_pg_publisher_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 install_logfile=${install_manifest}
@@ -170,6 +171,9 @@ init() {
     local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
     pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
     unset pg_secret #only here to hold the tertiary ephemeral value from file, unset asap
+    local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
+    publisher_db_user_passwd=${publisher_db_user_passwd:=${pub_secret:-${pg_sys_acct_passwd}}}
+    unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
     cdat_home=${CDAT_HOME:-${install_prefix}/cdat}
@@ -985,6 +989,8 @@ setup_postgress() {
     if [ "${db_host}" != "${esgf_host}" ] && [ "${db_host}" != "localhost" ] ; then
         echo "Set to use external database on host: ${db_host}"
         return 0
+    else
+        db_host="localhost"
     fi
 
     echo -n "Checking for postgresql >= ${postgress_min_version}"
@@ -1392,6 +1398,14 @@ setup_esgcet() {
     echo -n "Checking for esgcet (publisher) ${esgcet_version}"
     check_module_version esgcet ${esgcet_version}
     local ret=$?
+
+    #-------
+    local esgini_dburl=$(sed -n 's@[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI})
+    local db_connect_str="postgresql://${publisher_db_user}:${publisher_db_user_passwd}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
+    debug_print "${esgini_dburl} =? ${db_connect_str}"
+    [ "${esgini_dburl}" = "${db_connect_str}" ] || printf '\n [WARNING: publisher database connection string mis-match! (see $ESGINI "dburl")] '
+    #-------
+
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
     local upgrade=${1:-${ret}}
@@ -1520,17 +1534,13 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
-    local publisher_db_user="esgcet"
-    local pg_user_acct_passwd=${pg_sys_acct_passwd}
-    local publisher_db_user_passwd=${pg_user_acct_passwd:-${security_admin_password}}
-
     if [ "${mode}" = "U" ]; then
 	echo "${cdat_home}/bin/esginitialize -c"
 	${cdat_home}/bin/esginitialize -c
 	[ $? != 0 ] && popd && checked_done 1
     else
-        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** ") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${pg_user_acct_passwd:-publisher_db_user_passwd}" ] && echo "--db-user-password ****** ") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
-	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_user_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${pg_user_acct_passwd:-publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
+        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
 
@@ -5696,10 +5706,41 @@ initial_setup_questionnaire() {
     get_property db_port ${db_port}
     get_property db_database ${db_database}
     if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || ((force_install)); then
-        _get_db_conn_str
+        _get_db_conn_str_questionnaire
     else
-        echo "db connection string = [postgresql://${db_user}@${db_host}:${db_port}/${db_database}]"
+        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}]"
     fi
+
+    #--------------------------------
+
+    local input
+    local default
+
+    get_property publisher_db_user ${publisher_db_user}
+    if [ -z "${publisher_db_user}" ] || ((force_install)); then
+	unset input
+	default=${publisher_db_user:-'esgcet'}
+        read -e -p "What is the (low priv) db account for publisher? [${default}]: " input
+	[ -z "${input}" ] && publisher_db_user=${default} && write_as_property publisher_db_user
+	[ -n "${input}" ] && publisher_db_user=${input}	  && write_as_property publisher_db_user
+    else
+	echo "publisher_db_user = [${publisher_db_user}]"
+    fi
+    unset input
+    unset default
+
+    if [ -z "${publisher_db_user_passwd}" ]; then
+        read -e -p "What is the db password for publisher user (${publisher_db_user})? : " input
+	if [ -n "${input}" ]; then
+            publisher_db_user_passwd=${input}
+        fi
+    fi
+    [ ! -e "${pub_secret_file}" ] && echo "${publisher_db_user_passwd}" > ${pub_secret_file}
+    [ -e "${pub_secret_file}" ] && chmod 640 ${pub_secret_file} && chown ${installer_uid}:${tomcat_group} ${pub_secret_file}
+
+    echo "db publisher connection string = [postgresql://${publisher_db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}]"
+
+    #--------------------------------
 
 
     dedup_properties ${config_file}
@@ -5710,10 +5751,11 @@ initial_setup_questionnaire() {
     return 0
 }
 
-_get_db_conn_str() {
+_get_db_conn_str_questionnaire() {
     #postgresql://esgcet@localhost:5432/esgcet
     local ret=1
     local user_ host_ port_ dbname_ connstring_
+    while [1]; do
     echo "Please enter the database connection string..."
     echo " (form: postgresql://[username]@[host]:[port]/[database])"
     read -e -p "Enter the database connection string: postgresql://" connstring_
@@ -5727,17 +5769,24 @@ _get_db_conn_str() {
         ret=1
     else
         ret=0
+        break
     fi
-
+    done
     echo "user = $user_"
     echo "host = $host_"
     echo "port = $port_"
     echo "database = $dbname_"
 
+    #set vars...
     db_user=${user_}
-    db_host=${host_}
+    db_host=$([ -n "${host_}" ] && ([ "${host_}" = "${esgf_host}" ] || [ "${host_}" = "localhost" ]) && echo "localhost")
     db_port=${port_}
     db_database=${dbname_}
+
+    write_as_property db_user
+    write_as_property db_host
+    write_as_property db_port
+    write_as_property db_database
 
     echo "ret = $ret"
     return $ret

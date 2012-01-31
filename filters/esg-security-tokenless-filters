@@ -70,6 +70,7 @@
 
 service_name=${service_name:-"thredds"}
 esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
+esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 
 #maybe I am paranoid but I want to make sure someone can't just set
 #the environment to any place and have us just accept it and pull from
@@ -169,6 +170,7 @@ install_security_tokenless_filters() {
     eval "perl -p -i -e 's#\\@truststore_file\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_password\\@#${truststore_password}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@esgf_host\\@#${esgf_host}#g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's#\\@esg_root_dir\\@#${esgf_root_dir}#g' ${target_file}"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null
     #----------------------

@@ -986,12 +986,7 @@ write_ant_install_log() {
 #####
 setup_postgress() {
 
-    if [ "${db_host}" != "${esgf_host}" ] && [ "${db_host}" != "localhost" ] ; then
-        echo "Set to use external database on host: ${db_host}"
-        return 0
-    else
-        db_host="localhost"
-    fi
+    _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version}"
     check_version psql ${postgress_min_version}
@@ -1246,6 +1241,8 @@ write_postgress_install_log() {
 
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 start_postgress() {
+    _is_managed_db && echo "Please be sure externally managed database is running at this point..." && return 0
+
     check_postgress_process && return 1
 
     echo "Starting Postgress..."
@@ -1261,6 +1258,9 @@ start_postgress() {
 }
 
 stop_postgress() {
+
+    _is_managed_db && echo "Please be sure externally managed database is NOT running at this point..." && return 0
+
     sleep 1
     #Stop the database
     #su postgres -c "pg_ctl -D /usr/local/pgsql/data stop" #(gently stop server)
@@ -3015,7 +3015,7 @@ rebuild_truststore() {
     local tmp_dir=/tmp/esg_scratch
     mkdir -p ${tmp_dir}
 
-    local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
+    local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*\.0$')
     for cert_file in $cert_files; do
 	echo -n "$cert_file -> "
 	local cert_hash=$(echo ${cert_file##*/} | awk -F'.' '{print $1}') ;
@@ -4076,6 +4076,16 @@ set_index_peer() {
 ############################################
 # General - Utility Functions
 ############################################
+
+_is_managed_db() {
+    if [ "${db_host}" != "${esgf_host}" ] && [ "${db_host}" != "localhost" ] ; then
+        echo "Set to use externally \"managed\" database on host: ${db_host}"
+        return 0
+    else
+        db_host="localhost"
+        return 1
+    fi
+}
 
 set_redirect() {
     local web_app_tld=${1:-esgf-node-manager}

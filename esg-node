@@ -269,7 +269,7 @@ init() {
     git_workdir=${workdir}/git
     #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
     git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
-    node_db_name=${ESGF_DB_NAME:-esgcet}
+    db_database=${ESGF_DB_NAME:-esgcet}
     postgress_workdir=${workdir}/postgress
     postgress_jar=postgresql-8.3-603.jdbc3.jar
     postgress_driver=org.postgresql.Driver
@@ -1543,6 +1543,9 @@ setup_esgcet() {
 	${cdat_home}/bin/esginitialize -c
 	[ $? != 0 ] && popd && checked_done 1
     else
+
+        #TODO: When Bob adds the --db-name option to esgsetup then use ${db_database} var
+
         echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
 	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
@@ -4850,7 +4853,7 @@ backup() {
 }
 
 backup_db() {
-    local my_node_db_name=${1:-${node_db_name}}
+    local my_node_db_name=${1:-${db_database}}
     local my_schema_name=${2}
     mkdir -p ${esg_backup_dir}
     pushd ${esg_backup_dir} >& /dev/null
@@ -4887,7 +4890,7 @@ backup_db() {
 }
 
 restore_last_db_backup() {
-    local my_node_db_name=${1:-${node_db_name}}
+    local my_node_db_name=${1:-${db_database}}
     local my_schema_name=${2}
 
     [ ! -d ${esg_backup_dir} ] && echo " ERROR: cannot locate backup directory [${esg_backup_dir}]" && return 1

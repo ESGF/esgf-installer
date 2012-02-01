@@ -1403,7 +1403,11 @@ setup_esgcet() {
     local esgini_dburl=$(sed -n 's@[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI})
     local db_connect_str="postgresql://${publisher_db_user}:${publisher_db_user_passwd}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
     debug_print "${esgini_dburl} =? ${db_connect_str}"
-    [ "${esgini_dburl}" = "${db_connect_str}" ] || printf '\n [WARNING: publisher database connection string mis-match! (see $ESGINI "dburl")] '
+    if [ "${esgini_dburl}" != "${db_connect_str}" ]; then
+        printf "\n\n [ERROR: publisher database connection string mis-match... (see ${ESGINI}'s dburl value)] \n\n"
+        trap - INT TERM
+        exit 1
+    fi
     #-------
 
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
@@ -2782,8 +2786,8 @@ test_publication() {
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
-    local index_peer=$(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' /esg/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
-    echo "(target index node => ${index_peer}  $(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' /esg/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
+    local index_peer=$(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
+    echo "(target index node => ${index_peer}  $(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
     #Publish the dataset from the THREDDS catalog created above...
     echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish
@@ -4077,11 +4081,51 @@ set_index_peer() {
 # General - Utility Functions
 ############################################
 
+#responds true (returns 0) if this IS intended to be a managed database
+#is expecting the vars:
+# ---- "db_host"
+# ---- "esgf_host"
+# to be set
+# Define: managed - (true|0) this means NOT manipulated by this script but done by external means
+#(hint prepend "externally" before managed to get the meaning - yes I find it confusing but Stephen likes this term :-))
 _is_managed_db() {
-    if [ "${db_host}" != "${esgf_host}" ] && [ "${db_host}" != "localhost" ] ; then
+
+    local input
+    local default
+
+    get_property db_managed
+    if((! force_install)); then
+        [ "${db_managed}" != "yes" ] && [ -n "${db_managed}" ] && db_managed="no" && return 1 #Has to be "no" or some other value non-yes value
+        [ "${db_managed}" = "yes" ] && return 0 #Has to be explicitly yes
+    fi
+
+    if [ -z "${db_managed}" ] || ((force_install)); then
+	unset input
+
+        debug_print "esgf_host = $esgf_host"
+        debug_print "db_host = $db_host"
+        #Try to come up with some "sensible" default value for the user...
+        if [ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ] ; then
+	    default=${db_managed:-'no'}
+        else
+            default=${db_managed:-'yes'}
+        fi
+
+        read -e -p "Is this database intended to be an externally managed database? [${default}]: " input
+	[ -z "${input}" ] && db_managed=${default} && write_as_property db_managed
+	[ -n "${input}" ] && db_managed=${input} && write_as_property db_managed
+    else
+	echo "db_managed = [${db_managed}]"
+    fi
+    unset input
+    unset default
+
+    if [ "${db_managed}" = "yes" ] && [ -n "${db_managed}" ]; then
         echo "Set to use externally \"managed\" database on host: ${db_host}"
         return 0
     else
+        debug_print "(hmm... setting db_host to localhost)"
+        #Note: if not managed and on the local machine... always use "localhost"
         db_host="localhost"
         return 1
     fi
@@ -5715,10 +5759,11 @@ initial_setup_questionnaire() {
     get_property db_host ${db_host}
     get_property db_port ${db_port}
     get_property db_database ${db_database}
-    if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || ((force_install)); then
-        _get_db_conn_str_questionnaire
+    get_property db_managed ${db_managed}
+    if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || [ -z "${db_managed}" ] || ((force_install)); then
+        _get_db_conn_str_questionnaire && _is_managed_db
     else
-        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}]"
+        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [externally managed = ${db_managed}]"
     fi
 
     #--------------------------------
@@ -5765,27 +5810,27 @@ _get_db_conn_str_questionnaire() {
     #postgresql://esgcet@localhost:5432/esgcet
     local ret=1
     local user_ host_ port_ dbname_ connstring_
-    while [1]; do
-    echo "Please enter the database connection string..."
-    echo " (form: postgresql://[username]@[host]:[port]/[database])"
-    read -e -p "Enter the database connection string: postgresql://" connstring_
-    echo "entered: postgresql://$connstring_"
-    eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${connstring_}"))
-    if [ -z "${user_}" ] || \
-        [ -z "${host_}" ] || \
-        [ -z "${port_}" ] || \
-        [ -z "${dbname_}" ]; then
-        echo "ERROR: Incorrect connection string syntax or values"
-        ret=1
-    else
-        ret=0
-        break
-    fi
+    while [ 1 ]; do
+        echo "Please enter the database connection string..."
+        echo " (form: postgresql://[username]@[host]:[port]/[database])"
+        read -e -p "Enter the database connection string: postgresql://" connstring_
+        echo "entered: postgresql://$connstring_"
+        eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${connstring_}"))
+        if [ -z "${user_}" ] || \
+            [ -z "${host_}" ] || \
+            [ -z "${port_}" ] || \
+            [ -z "${dbname_}" ]; then
+            echo "ERROR: Incorrect connection string syntax or values"
+            ret=1
+        else
+            ret=0
+            break
+        fi
     done
-    echo "user = $user_"
-    echo "host = $host_"
-    echo "port = $port_"
-    echo "database = $dbname_"
+    debug_print "user = $user_"
+    debug_print "host = $host_"
+    debug_print "port = $port_"
+    debug_print "database = $dbname_"
 
     #set vars...
     db_user=${user_}
@@ -5793,12 +5838,13 @@ _get_db_conn_str_questionnaire() {
     db_port=${port_}
     db_database=${dbname_}
 
+    #write vars to property file
     write_as_property db_user
     write_as_property db_host
     write_as_property db_port
     write_as_property db_database
 
-    echo "ret = $ret"
+    debug_print "ret = $ret"
     return $ret
 }
 

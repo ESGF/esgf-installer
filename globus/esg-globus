@@ -656,6 +656,8 @@ setup_libglobus_adq() {
     if [ ! -e ${GLOBUS_LOCATION}/lib/libglobus_adq.so ] || ((force_install)); then
         #go back to workbench dir...
         pushd ${globus_workdir} #>& /dev/null
+	local lastdir=`pwd`
+	cd ${globus_workdir}
         #----------
         #Our globus stuff for callouts
         #----------
@@ -677,6 +679,7 @@ setup_libglobus_adq() {
         ((DEBUG)) && echo "libglobus_adq_dir = ${libglobus_adq_dir}"
         #-----
 
+	local lastdir2=`pwd`
         cd ${libglobus_adq_dir}
         sh build.sh 
         [ -n "${GLOBUS_LOCATION}" ] && rm -rvf ${GLOBUS_LOCATION}/lib/libglobus_adq.so*
@@ -685,8 +688,10 @@ setup_libglobus_adq() {
         ln -s libglobus_adq.so.0.0.0 libglobus_adq.so.0
         ln -s libglobus_adq.so.0.0.0 libglobus_adq.so
         popd >& /dev/null
+	cd ${lastdir2}
         #----------
         popd >& /dev/null
+	cd ${lastdir}
     else
         echo "Detected a libglobus_adq installation... will not re-install libglobus_adq"       
     fi

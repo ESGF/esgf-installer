@@ -1012,6 +1012,7 @@ config_gridftp_server() {
     setup_libglobus_adq
     
     pushd ${gridftp_authz_esgsaml_dist_dir}/source >& /dev/null
+    cd ${gridftp_authz_esgsaml_dist_dir}/source
     if [ -e ${globus_workdir}/libglobus_adq-${adq_version} ]; then 
         ln -v -s ${globus_workdir}/libglobus_adq-${adq_version} libglobus_adq
     else
@@ -1033,6 +1034,7 @@ config_gridftp_server() {
         popd >& /dev/null
         checked_done 1
     fi
+    cd ..
 
     mkdir -p /etc/grid-security
     

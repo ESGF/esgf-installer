@@ -119,24 +119,24 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.9.1"}
+    esgcet_version=${esgcet_version:-"2.10.0"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.6.1"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.5.2"}
+    esgf_security_version=${esgf_security_version:-"1.5.4"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.2.7"}
+    esg_orp_version=${esg_orp_version:-"1.2.9"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"1.1.8"}
+    esgf_idp_version=${esgf_idp_version:-"1.1.9"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"1.9.7"}
+    esg_search_version=${esg_search_version:-"1.9.8"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"1.4.1"}

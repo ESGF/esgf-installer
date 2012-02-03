@@ -6633,7 +6633,7 @@ main() {
 	echo "	   Before continuing make sure they are ALL present on this system!!!!!!"
         if [ $((sel & DATA_BIT)) != 0 ]; then
 	    echo "	   If you intend on publishing from this node please check the publishing network prerequisites"
-	    echo "	   http://esgf.org/wiki/Cmip5DataNode/FAQ#PREREQUISITES"
+	    echo "	   http://esgf.org/wiki/ESGFNode/FAQ#PREREQUISITES"
         fi
 	echo "	   ----------------------------------------------------------"
 	echo

@@ -6086,7 +6086,7 @@ INDEX_BIT=8
 IDP_BIT=16
 COMPUTE_BIT=32
 WRITE_ENV_BIT=64
-
+#PRIVATE_BIT=128
 #NOTE: remember to adjust (below) when adding new bits!!
 MIN_BIT=4
 MAX_BIT=64

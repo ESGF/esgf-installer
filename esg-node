@@ -5788,7 +5788,7 @@ initial_setup_questionnaire() {
     unset input
     unset default
 
-    if [ -z "${publisher_db_user_passwd}" ]; then
+    if [ -z "${publisher_db_user_passwd}" ] || ((force_install)); then
         read -e -p "What is the db password for publisher user (${publisher_db_user})? : " input
 	if [ -n "${input}" ]; then
             publisher_db_user_passwd=${input}

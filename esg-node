@@ -1402,7 +1402,7 @@ setup_esgcet() {
 
     #-------
     if [ -e "${ESGINI}" ]; then
-        local esgini_dburl=$(sed -n 's@[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI})
+        local esgini_dburl=$(sed -n 's@^[^#]*[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI} | head -n1)
         local db_connect_str="postgresql://${publisher_db_user}:${publisher_db_user_passwd}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
         debug_print "${esgini_dburl} =? ${db_connect_str}"
         if [ "${esgini_dburl}" != "${db_connect_str}" ]; then

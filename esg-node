@@ -172,7 +172,7 @@ init() {
     pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
     unset pg_secret #only here to hold the tertiary ephemeral value from file, unset asap
     local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
-    publisher_db_user_passwd=${publisher_db_user_passwd:=${pub_secret:-${pg_sys_acct_passwd}}}
+    publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
     unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}

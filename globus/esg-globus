@@ -1813,9 +1813,9 @@ config_myproxy_server() {
     write_db_name_env
 
     #--------------------
-    # Configure myproxy startup/shutdown script
+    # Get myproxy startup/shutdown script (/etc/init.d/myproxy)
     #--------------------
-    edit_init_d_myproxy
+    fetch_init_d_myproxy
     #--------------------
 
     popd >& /dev/null
@@ -1990,18 +1990,12 @@ fetch_esg_attribute_callout_app() {
     unset tfile
 }
 
-edit_init_d_myproxy() {
+fetch_init_d_myproxy() {
     pushd /etc/init.d/ >& /dev/null
     local tfile=myproxy
-    echo "Download and Modifying rc script: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/init.d_${tfile} $((force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
-    cp -vf ${tfile}{.tmpl,}
-    [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod 755 ${tfile}
+    echo "Download MyProxy rc script: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/init.d_${tfile} $((force_install))
+    [ -e "${tfile}" ] && chmod 755 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile

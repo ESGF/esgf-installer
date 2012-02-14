@@ -2001,6 +2001,15 @@ fetch_init_d_myproxy() {
     unset tfile
 }
 
+sanity_check_myproxy_configurations() {
+    edit_myproxy_server_config $((force_install))
+    edit_pam_pgsql_conf $((force_install))
+    fetch_myproxy_certificate_mapapp $((force_install))
+    fetch_etc_pam_d_myproxy $((force_install))
+    fetch_esg_attribute_callout_app $((force_install))
+    fetch_init_d_myproxy $((force_install))
+}
+
 ############################################
 # Utility Functions
 ############################################

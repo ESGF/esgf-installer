@@ -1925,21 +1925,6 @@ edit_myproxy_server_config() {
     return 0
 }
 
-fetch_myproxy_certificate_mapapp() {
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
-    pushd ${myproxy_config_dir} >& /dev/null
-
-    local tfile=myproxy-certificate-mapapp
-    echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((force_install))
-    [ -e "${tfile}" ] && chmod 751 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-    return 0
-}
-
 edit_pam_pgsql_conf() {
     pushd /etc >& /dev/null
     local tfile=pam_pgsql.conf
@@ -1959,6 +1944,21 @@ edit_pam_pgsql_conf() {
     eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
     echo -n "*"
     echo " [OK]"
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+    return 0
+}
+
+fetch_myproxy_certificate_mapapp() {
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+    mkdir -p ${myproxy_config_dir}
+    pushd ${myproxy_config_dir} >& /dev/null
+
+    local tfile=myproxy-certificate-mapapp
+    echo "Downloading configuration file: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((force_install))
+    [ -e "${tfile}" ] && chmod 751 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile

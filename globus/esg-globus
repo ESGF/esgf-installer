@@ -1528,9 +1528,10 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    read -p "Do you wish to install a simple CA? [y/N] " answer
-    [ -z "${answer}" ] && answer="N"
-    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+#    read -p "Do you wish to install a simple CA? [y/N] " answer
+#    [ -z "${answer}" ] && answer="N"
+#    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+    answer="Y"
 
         #TODO: ZOIKS... this does not work... Next thing to try is to do a
         #while read on the output of setup-simple-ca, and then regexp each
@@ -1625,8 +1626,8 @@ config_myproxy_server() {
         
         ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
         
-    fi
-    unset answer
+#    fi
+#    unset answer
     echo
     
     if ((fetch_certs)); then
@@ -1798,15 +1799,11 @@ config_myproxy_server() {
     popd >& /dev/null
     #--------------------
 
-
-
     #--------------------
     # Get myproxy-certificate-mapapp file
     #--------------------
     fetch_myproxy_certificate_mapapp
     #--------------------
-
-
 
     #--------------------
     # Configure pam_sql.conf
@@ -1929,12 +1926,19 @@ edit_myproxy_server_config() {
     local myproxy_config_dir=${esg_config_dir}/myproxy
 
     echo -n "editing myproxy certificate information "
-    
+
+    if [ "x${esgf_home}" = "x" ]; then
+        . /etc/esg.env
+        esgf_home=${ESGF_HOME}
+    fi
+
     eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
     echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@dot_globus\\@\\@#${dot_globus}#g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@esgf_home\\@\\@#${esgf_home}#g' ${tfile}"
     echo -n "*"
     echo " [OK]"
     

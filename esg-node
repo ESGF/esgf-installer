@@ -5792,6 +5792,7 @@ initial_setup_questionnaire() {
         read -e -s -p "What is the db password for publisher user (${publisher_db_user})? : " input
 	if [ -n "${input}" ]; then
             publisher_db_user_passwd=${input}
+            echo "${publisher_db_user_passwd}" > ${pub_secret_file}
         fi
     fi
     [ ! -e "${pub_secret_file}" ] && echo "${publisher_db_user_passwd}" > ${pub_secret_file}

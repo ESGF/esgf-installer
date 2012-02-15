@@ -90,7 +90,7 @@ esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
 esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
 esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
 
-esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
+esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
 #maybe I am paranoid but I want to make sure someone can't just set
 #the environment to any place and have us just accept it and pull from

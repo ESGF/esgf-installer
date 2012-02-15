@@ -238,7 +238,7 @@ setup_globus_services() {
     local dosetup
     local default_val="n"
     if [ -e ${globus_install_dir} ]; then
-        echo "Detected an existing Globus installation... at ${globus_install_dir}"
+        echo "Detected an existing Globus installation at ${globus_install_dir}"
 	if [ -x ${globus_location}/bin/globus-version ]; then
 	    echo "Checking for globus ${globus_version}"
             echo "Current globus version: $(${globus_install_dir}/bin/globus-version)"
@@ -258,7 +258,7 @@ setup_globus_services() {
 	    fi
 	fi
 
-        read -p "Do you want to install/configure Globus ($1)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+        read -p "Do you want to continue with the Globus installation and setup ($1)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
         [ -z "${dosetup}" ] && dosetup=$default_val
 
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -281,8 +281,16 @@ setup_globus_services() {
             echo -n "Checking for GridFTP server version ${gridftp_server_version}"
             local g_ver="(${globus_location}/sbin/globus-gridftp-server -v 2>&1 | cut -b 24-27)"
             check_version_with globus-gridftp-server "$g_ver" "${gridftp_server_version}"
-            local ret=$?
-            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+#            local ret=$?
+#            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+            echo ""
+
+            read -p "Do you want to make a back up of the existing Globus distribution ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+            [ -z "${dosetup}" ] && dosetup=$default_val
+
+            if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
+                backup_and_remove_globus_location
+            fi
 	else
 	    echo "GridFTP is not installed.  Installation is recommended."
 	fi
@@ -334,13 +342,20 @@ setup_globus_services() {
             echo -n "Checking for MyProxy server version ${myproxy_version}"
             local m_ver="(${globus_location}/sbin/myproxy-server -V | cut -b 36-39)"
             check_version_with myproxy-server "$m_ver" "${myproxy_version}"
-            local ret=$?
-            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+#            local ret=$?
+#            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+            echo ""
+
+            read -p "Do you want to make a back up of the existing MyProxy SimpleCA ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+            [ -z "${dosetup}" ] && dosetup=$default_val
+
+            if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
+                backup_and_remove_simpleca
+            fi
 	else
 	    echo "MyProxy Server is not installed.  Installation is recommended."
         fi
 
-	backup_and_remove_simpleca
         create_globus_account
         shift
         local ret=1
@@ -369,6 +384,13 @@ setup_globus_services() {
     install_gss_assist_patch
 
     return 0
+}
+
+backup_and_remove_globus_location() {
+    if [ -d ${globus_location} ]; then
+	backup ${globus_location}
+	rm -rf ${globus_location}
+    fi
 }
 
 backup_and_remove_simpleca() {

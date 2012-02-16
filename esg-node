@@ -5506,7 +5506,8 @@ show_svc_list() {
 run_startup_hooks() {
     echo "Running startup hooks..."
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
-    source ${scripts_dir}/esg-orp && orp_startup_hook
+    (source ${scripts_dir}/esg-orp && orp_startup_hook)
+    (source ${scripts_dir}/esg-security && security_startup_hook)
 }
 
 #Any last bits of cleanup for your module should be called here.
@@ -5535,10 +5536,10 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    [ $((sel & ALL_BIT)) != 0 ] && source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services
+    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
-    [ $((sel & INDEX_BIT)) != 0 ] && source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config}
+    [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
     show_svc_list
@@ -5551,9 +5552,9 @@ start() {
 stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
     read_sel
-    source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
+    (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
+    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
     show_svc_list
@@ -6719,7 +6720,7 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "search subsystem" && setup_subsystem search esg-search 0 ${index_config}
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
 	[ $((sel & TEST_BIT)) != 0 ]	&& [ $((sel & INDEX_BIT)) != 0 ] && echo "test search subsystem" && \
-	    source ${scripts_dir}/esg-search >& /dev/null && test_search_services
+	    (source ${scripts_dir}/esg-search >& /dev/null && test_search_services)
 
 
     #---------------------------------------

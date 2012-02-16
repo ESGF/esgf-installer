@@ -130,7 +130,7 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.2.9"}
+    esg_orp_version=${esg_orp_version:-"1.2.12"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"1.1.9"}
@@ -6746,7 +6746,7 @@ main() {
         #For the sake of the node manager registry, let's just make sure that the derivative whitelist files
         #exits and have the appropriate ownership and permissions
         #This function is defined in the esg-node-manager script, which at this point should have been already sourced!
-        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_whitelist_files)
+        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_generated_whitelist_files)
         #---
 
     #---------------------------------------

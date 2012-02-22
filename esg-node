@@ -1979,7 +1979,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
 	    if [ ! -e ${truststore_file} ]; then
 		fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-		checked_get ${truststore_file} ${esg_dist_url}/certs/${fetch_file} $((force_install))
+		checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
 		if (( $? > 1 )); then
 		    echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
 		    echo "(note - the truststore password will probably not match!)"

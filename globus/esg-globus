@@ -350,7 +350,7 @@ setup_globus_services() {
             [ -z "${dosetup}" ] && dosetup=$default_val
 
             if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
-                backup_and_remove_simpleca
+                backup_simpleca
             fi
 	else
 	    echo "MyProxy Server is not installed.  Installation is recommended."
@@ -393,14 +393,12 @@ backup_and_remove_globus_location() {
     fi
 }
 
-backup_and_remove_simpleca() {
+backup_simpleca() {
     if [ -d ${dot_globus} ]; then
 	backup ${dot_globus}
-	rm -rf ${dot_globus}
     fi
     if [ -d "/etc/grid-security" ]; then
 	backup /etc/grid-security
-	rm -rf /etc/grid-security
     fi
 }
 
@@ -1528,14 +1526,14 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-#    read -p "Do you wish to install a simple CA? [y/N] " answer
-#    [ -z "${answer}" ] && answer="N"
-#    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
-    answer="Y"
+    read -p "Do you wish to install a simple CA? [y/N] " answer
+    [ -z "${answer}" ] && answer="N"
+    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+        #answer="Y"
 
         #TODO: ZOIKS... this does not work... Next thing to try is to do a
         #while read on the output of setup-simple-ca, and then regexp each
-        #line and set if there is a hit and echo lines back out to user.
+        #line and set if there is a hit and echo lines back5A out to user.
         #I have to leave this now to do other things (10/22/2009).  this
         #is where I should pick up from.  Everything else works! (at least
         #should!)  Throw in a command block and direct the output onf
@@ -1546,8 +1544,8 @@ config_myproxy_server() {
         # #Grab the "CA Subject" by scraping the output of setup-simple-ca output
         # local grab
         
-        [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
-        #[ -d ${dot_globus}/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${dot_globus}/simpleCA
+        #[ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
+        [ -d ${dot_globus}/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${dot_globus}/simpleCA
         ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         
@@ -1626,8 +1624,8 @@ config_myproxy_server() {
         
         ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
         
-#    fi
-#    unset answer
+    fi
+    unset answer
     echo
     
     if ((fetch_certs)); then

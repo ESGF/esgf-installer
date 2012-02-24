@@ -2242,6 +2242,18 @@ select_idp_peer() {
     echo
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
+    if [ $((sel & DATA_BIT)) != 0 ]; then
+    printf"
+
+  NOTE:
+  ----------------------------------------------------------------------
+  Be sure that the IDP you have selected shares the same peer group(s)
+  [${node_peer_group}] as this node!
+  ----------------------------------------------------------------------
+
+"
+    fi
+
     #----------------------
     #Fetch and Insert the Certificate of IDP Peer (which is always co-located with myproxy - at least at present)
 
@@ -2528,6 +2540,8 @@ setup_tds() {
 	: $((wait_time--))
     done
 
+    append_esgf_log4j_entries ${tomcat_install_dir}/webapps/thredds/WEB-INF/log4j.xml
+
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
     echo "[OK]"
     write_tds_env
@@ -2545,8 +2559,8 @@ write_tds_env() {
 
 write_tds_install_log() {
     echo "$(date ${date_format}) webapp:thredds=${tds_version} ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}" >> ${install_manifest}
-    write_as_property thredds_endpoint "http://${esgf_host}/${thredds_dist_file%.*}"
-    write_as_property thredds_app_home ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}
+    write_as_property thredds_service_endpoint "http://${esgf_host}/${thredds_dist_file%.*}"
+    write_as_property thredds_service_app_home ${tomcat_install_dir}/webapps/${thredds_dist_file%.*}
     dedup ${install_manifest}
     return 0
 }
@@ -3280,6 +3294,35 @@ extract_keystore_dn() {
     echo "/${dn}"
 }
 
+append_esgf_log4j_entries() {
+    local log4j_file=${1:-"log4j.xml"}
+    shift
+    #Is there a sexier way to assign a default array?
+    local logger_names=($@)
+    if (( ${#logger_names[@]} == 0 )); then
+        logger_names=("esg" "esgf")
+    fi
+
+    [ ! -e "${log4j_file}" ] && echo "WARNING: Could not find ${log4j_file} (no entries can be written)" && return 1
+    echo "Inspecting ${log4j_file}..."
+    for logger_name in ${logger_names[@]} ; do
+        if [ -z "$(sed -n '/<logger[ ]*name="'${logger_name}'".*/p' ${log4j_file})" ]; then
+            echo "Writing log4j.xml entry for ${logger_name}"
+
+            sed -i 's/<\/.*log4j:configuration>.*//p' ${log4j_file}
+            cat >> ${log4j_file} <<EOF
+  <logger name="${logger_name}" additivity="false">
+    <level value="DEBUG"/>
+    <appender-ref ref="threddsServlet"/>
+  </logger>
+</log4j:configuration>
+EOF
+        else
+            echo "Detected existing log4j.xml entry for ${logger_name} (not writing...)"
+        fi
+    done
+    return 0
+}
 
 #Regex's the output from openssl's x509 output in "openssl" format:
 #Subject: O=Grid, OU=GlobusTest, OU=simpleCA-pcmdi3.llnl.gov, CN=pcmdi7.llnl.gov
@@ -6070,7 +6113,7 @@ done_remark() {
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/${node_manager_app_context_root}"
     echo "http://${esgf_host}/thredds"
-    echo "http://${esgf_host}/OpenidRelyingParty"
+    echo "http://${esgf_host}/esg-orp"
     echo
     echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
     echo "http://${esgf_index_peer}/"

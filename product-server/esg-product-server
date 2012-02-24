@@ -463,9 +463,33 @@ install_las() {
 
 write_las_install_log() {
     echo "$(date ${date_format}) webapp:las=${las_version} ${tomcat_install_dir}/webapps/las" >> ${install_logfile}
-    write_as_property las_endpoint "http://${esgf_host}/las"
-    write_as_property las_app_home "${tomcat_install_dir}/webapps/las"
+    write_as_property las_service_endpoint "http://${esgf_host}/las"
+    write_as_property las_service_app_home "${tomcat_install_dir}/webapps/las"
     dedup ${install_logfile}
+    return 0
+}
+
+clean_las_webapp_subsystem() {
+    init
+    local doit="N"
+    if [ -e ${las_service_app_home} ]; then
+        read -p "remove ESGF LAS web service? (${las_service_app_home}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+            echo "removing ${las_service_app_home}"
+            if [ -n ${las_service_app_home} ]; then
+                rm -rf ${las_service_app_home}
+                [ $? != 0 ] && echo "ERROR: Unable to remove ${las_service_app_home}" && return 1
+                perl -n -i -e'print unless m!webapp:las!' ${install_manifest}
+            fi
+        fi
+    fi
+    if [ ! -e ${las_service_app_home} ]; then
+        debug_print "removing orp associated properties..."
+        remove_property las_service_app_home
+        remove_property las_service_endpoint
+        remove_property las_xml_config_dir
+    fi
+
     return 0
 }
 

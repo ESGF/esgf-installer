@@ -158,18 +158,16 @@ install_security_tokenless_filters() {
     #Use utility function...
     insert_file_at_pattern $(readlink -f ${target_file}) ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
 
-    local openidrelyingparty_host=${openidrelyingparty_host:-$(hostname --fqdn)} #default assumes local install
+    local orp_host=${orp_host:-${esgf_host}} #default assumes local install
     local authorization_service_root=${authorization_service_root:-${esgf_idp_peer}} #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
     local truststore_file=${truststore_file:-"${tomcat_install_dir}/conf/jssecacerts"}
     local truststore_password=${truststore_password:-"changeit"}
     
     #Edit the web.xml file for the web app to include these token replacement values
     echo -n "Replacing tokens... "
-    eval "perl -p -i -e 's#\\@openidrelyingparty_host\\@#${openidrelyingparty_host}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@authorization_service_root\\@#${authorization_service_root}#g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's#\\@orp_host\\@#${orp_host}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_file\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_password\\@#${truststore_password}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@esgf_host\\@#${esgf_host}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@esg_root_dir\\@#${esgf_root_dir}#g' ${target_file}"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null

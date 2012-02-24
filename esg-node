@@ -987,13 +987,15 @@ write_ant_install_log() {
 #####
 setup_postgress() {
 
+    debug_print "DEBUG: entering setup_postgress()"
     _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version}"
-    check_version psql ${postgress_min_version}
+    check_version /usr/local/pgsql/bin/psql ${postgress_min_version}
     local ret=$?
-    (($ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
-
+    if [ $ret == 0 ] ; then
+        (( ! force_install )) && echo " [OK]" && return 0
+    fi
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 

@@ -4186,7 +4186,7 @@ set_redirect() {
     local redirect_content="<head><meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=/${web_app_tld}\"></head>"
     [ "${redirect_content}" = "$(cat ${index_file})" ] && echo "Redirect already setup" && return 0
     local doit="Y"
-    read -e -p "Do you wish to setup the redirect to the ${web_app_tld}'s page? [Y/n]: " doit
+    read -e -p "Do you wish to have the ${web_app_tld}'s page as this node's homepage? [Y/n]: " doit
     [ "n" = "${doit}" ] || [ "N" = "${doit}" ] && return 0
     mv ${index_file} ${index_file}.last
     echo "${redirect_content}" > ${index_file}

@@ -184,7 +184,7 @@ install_security_tokenless_filters() {
 #arg 1 - The destination web application lib directory (default thredds)
 get_orp_libs() {
 
-    openid_relying_party_app_home=${openid_relying_party_app_home:-"${CATALINA_HOME}/webapps/OpenidRelyingParty"}
+    orp_service_app_home=${orp_service_app_home:-"${CATALINA_HOME}/webapps/esg-orp"}
 
     local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
     local src_dir=${openid_relying_party_app_home}/WEB-INF/lib

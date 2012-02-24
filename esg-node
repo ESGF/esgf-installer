@@ -130,13 +130,13 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.0.0"}
+    esg_orp_version=${esg_orp_version:-"2.0.1"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"2.0.1"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"2.0.0"}
+    esg_search_version=${esg_search_version:-"2.0.2"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"1.5.0"}
@@ -987,13 +987,15 @@ write_ant_install_log() {
 #####
 setup_postgress() {
 
+    debug_print "DEBUG: entering setup_postgress()"
     _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version}"
-    check_version psql ${postgress_min_version}
+    check_version /usr/local/pgsql/bin/psql ${postgress_min_version}
     local ret=$?
-    (($ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
-
+    if [ $ret == 0 ] ; then
+        (( ! force_install )) && echo " [OK]" && return 0
+    fi
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 
@@ -1289,11 +1291,11 @@ test_postgress() {
     echo "Postgress Test...  "
     echo "----------------------------"
     echo
-    start_postgress
 
     ${postgress_install_dir}/bin/psql --version
     [ $? != 0 ] && echo" ERROR: Could NOT successfully locate postgres installation!!" && popd >& /dev/null && checked_done 1
 
+    start_postgress
     local ret=$(PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -qt -c "select table_name from information_schema.tables;" postgres ${postgress_user} | grep -v ^$ | wc -l)
     ((ret == 0)) && echo " ERROR: Could not verify database installation! (perhaps \"pg_sys_acct_passwd\"  was not set correctly?)" && checked_done 1
     echo "[OK]"
@@ -1979,7 +1981,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
 	    if [ ! -e ${truststore_file} ]; then
 		fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-		checked_get ${truststore_file} ${esg_dist_url}/certs/${fetch_file} $((force_install))
+		checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
 		if (( $? > 1 )); then
 		    echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
 		    echo "(note - the truststore password will probably not match!)"

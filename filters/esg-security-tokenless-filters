@@ -187,7 +187,7 @@ get_orp_libs() {
     orp_service_app_home=${orp_service_app_home:-"${CATALINA_HOME}/webapps/esg-orp"}
 
     local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
-    local src_dir=${openid_relying_party_app_home}/WEB-INF/lib
+    local src_dir=${orp_service_app_home}/WEB-INF/lib
 
     #Jar versions...
     opensaml_version=${opensaml_version:-"2.3.2"}

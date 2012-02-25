@@ -987,13 +987,15 @@ write_ant_install_log() {
 #####
 setup_postgress() {
 
+    debug_print "DEBUG: entering setup_postgress()"
     _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version}"
-    check_version psql ${postgress_min_version}
+    check_version /usr/local/pgsql/bin/psql ${postgress_min_version}
     local ret=$?
-    (($ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
-
+    if [ $ret == 0 ] ; then
+        (( ! force_install )) && echo " [OK]" && return 0
+    fi
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 
@@ -1289,11 +1291,11 @@ test_postgress() {
     echo "Postgress Test...  "
     echo "----------------------------"
     echo
-    start_postgress
 
     ${postgress_install_dir}/bin/psql --version
     [ $? != 0 ] && echo" ERROR: Could NOT successfully locate postgres installation!!" && popd >& /dev/null && checked_done 1
 
+    start_postgress
     local ret=$(PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -qt -c "select table_name from information_schema.tables;" postgres ${postgress_user} | grep -v ^$ | wc -l)
     ((ret == 0)) && echo " ERROR: Could not verify database installation! (perhaps \"pg_sys_acct_passwd\"  was not set correctly?)" && checked_done 1
     echo "[OK]"

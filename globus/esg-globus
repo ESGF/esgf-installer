@@ -90,7 +90,7 @@ esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
 esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
 esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
 
-esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
+esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
 #maybe I am paranoid but I want to make sure someone can't just set
 #the environment to any place and have us just accept it and pull from
@@ -115,6 +115,8 @@ gsoap_version=${gsoap_version:-"2.7.15"}
 
 #-----------
 globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
+# since script runs as root and simpleCA should be done as root, make it /root/.globus here
+dot_globus=/root/.globus
 #NOTE-RedHat/CentOS specific...
 globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
 num_cpus=${num_cpus:-1}
@@ -152,7 +154,7 @@ esg_crontab=${esg_config_dir}/esg_crontab
 #-----------
 myproxy_config_args=${myproxy_config_args:-""}
 myproxy_dist_url_base=${esg_dist_url}/globus/myproxy
-myproxy_dist_url=http://www.globus.org/ftppub/myproxy/myproxy-${myproxy_version}.tar.gz
+myproxy_dist_url=http://downloads.sourceforge.net/project/cilogon/myproxy/myproxy-${myproxy_version}.tar.gz
 myproxy_endpoint=${myproxy_endpoint}
 myproxy_location=${globus_location}/bin/
 #-----------
@@ -225,12 +227,47 @@ dedup ${envfile} && source ${envfile}
 #                    "gateway"  [gen-self-cert] <dir> | (<regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"])
 setup_globus_services() {
 
-    echo -n "Checking for globus services ${globus_version}"
-    check_version_with globus "${globus_location}/bin/globus-version" "${globus_version}"
-    local ret=$?
-    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
-
     local config_type="$1"
+    
+    echo
+    echo "*******************************"
+    echo "Setting up Globus... ($1: $config_type) - (flavor: ${globus_flavor})"
+    echo "*******************************"
+    echo
+
+    local dosetup
+    local default_val="n"
+    if [ -e ${globus_install_dir} ]; then
+        echo "Detected an existing Globus installation at ${globus_install_dir}"
+	if [ -x ${globus_location}/bin/globus-version ]; then
+	    echo "Checking for globus ${globus_version}"
+            echo "Current globus version: $(${globus_install_dir}/bin/globus-version)"
+            check_version_atleast ${globus_location}/bin/globus-version ${globus_version}
+            [ $? == 0 ] && default_val="n" && echo "Globus version appears sufficiently current"
+	else
+	    echo "Globus installation does NOT appear to be complete.  Installation is recommended."
+	fi
+
+	if [ "${config_type}" = "datanode" ]; then
+	    if [ ! -e ${globus_location}/sbin/globus-gridftp-server ]; then
+		echo "GridFTP is not installed.  Installation is recommended";
+	    fi
+	else
+	    if [ ! -d ${dot_globus} ]; then
+		echo "The MyProxy SimpleCA is not installed.  Installation is recommended";
+	    fi
+	fi
+
+        read -p "Do you want to continue with the Globus installation and setup ($1)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+        [ -z "${dosetup}" ] && dosetup=$default_val
+
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
+            return 0
+        fi
+        echo
+    fi
+
     echo "setup_globus_services for ${config_type} - ${globus_word_size}bit arch : [$*]"
     if [ "${config_type}" = "datanode" ]; then
 
@@ -239,6 +276,24 @@ setup_globus_services() {
         echo "Setting up ESGF Globus GridFTP Service(s)"
         echo "*******************************"
         echo
+
+	if [ -x ${globus_location}/sbin/globus-gridftp-server ]; then
+            echo -n "Checking for GridFTP server version ${gridftp_server_version}"
+            local g_ver="(${globus_location}/sbin/globus-gridftp-server -v 2>&1 | cut -b 24-27)"
+            check_version_with globus-gridftp-server "$g_ver" "${gridftp_server_version}"
+#            local ret=$?
+#            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+            echo ""
+
+            read -p "Do you want to make a back up of the existing Globus distribution ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+            [ -z "${dosetup}" ] && dosetup=$default_val
+
+            if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
+                backup_and_remove_globus_location
+            fi
+	else
+	    echo "GridFTP is not installed.  Installation is recommended."
+	fi
 
         create_globus_account
         setup_globus datanode
@@ -283,6 +338,24 @@ setup_globus_services() {
         echo "*******************************"
         echo
 
+        if [ -d ${dot_globus}/simpleCA ]; then
+            echo -n "Checking for MyProxy server version ${myproxy_version}"
+            local m_ver="(${globus_location}/sbin/myproxy-server -V | cut -b 36-39)"
+            check_version_with myproxy-server "$m_ver" "${myproxy_version}"
+#            local ret=$?
+#            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+            echo ""
+
+            read -p "Do you want to make a back up of the existing MyProxy SimpleCA ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+            [ -z "${dosetup}" ] && dosetup=$default_val
+
+            if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
+                backup_and_remove_simpleca
+            fi
+	else
+	    echo "MyProxy Server is not installed.  Installation is recommended."
+        fi
+
         create_globus_account
         shift
         local ret=1
@@ -307,16 +380,28 @@ setup_globus_services() {
         return 1
     fi
 
-    #----------------------------------------------------------------------
-    #NOTE: this is done in upgrade_gridftp_server... but it does not "stick" after myproxy
-    # install.  to remedy this, we apply the update again here
-    globus_assist_dist_file=${globus_workdir}/${globus_assist_patch_dist_url##*/}
-    checked_get ${globus_assist_dist_file} ${gss_assist_patch_dist_url} $((force_install))
-    ${globus_location}/sbin/gpt-build -force -update ${gss_assist_patch_dist_file} ${globus_flavor} ${globus_flavor}
-    [ $? != 0 ] && echo " ERROR: unable to build from ${gss_assist_patch_dist_file}" || echo " [OK] "
-    #----------------------------------------------------------------------
+    # install this patch after both gridftp and myproxy
+    install_gss_assist_patch
 
     return 0
+}
+
+backup_and_remove_globus_location() {
+    if [ -d ${globus_location} ]; then
+	backup ${globus_location}
+	rm -rf ${globus_location}
+    fi
+}
+
+backup_and_remove_simpleca() {
+    if [ -d ${dot_globus} ]; then
+	backup ${dot_globus}
+	rm -rf ${dot_globus}
+    fi
+    if [ -d "/etc/grid-security" ]; then
+	backup /etc/grid-security
+	rm -rf /etc/grid-security
+    fi
 }
 
 #arg1 - config_type ("datanode" ["bdm" | "end-user"] | "gateway")
@@ -390,31 +475,7 @@ setup_globus() {
         echo "You must provide a configuration type arg [datanode | gateway]"
         checked_done 1
     fi
-    
-    echo
-    echo "*******************************"
-    echo "Setting up Globus... ($1: $config_type) - (flavor: ${globus_flavor})"
-    echo "*******************************"
-    echo
 
-    local dosetup
-    local default_val="N"
-    if [ -e ${globus_install_dir} ]; then
-        echo "Detected an existing Globus installation... at ${globus_install_dir}"
-        echo "Current globus version: $(${globus_install_dir}/bin/globus-version)"
-        check_version ${globus_location}/bin/globus-version ${globus_version}
-        [ $? == 0 ] && default_val="n" && echo "Globus version is sufficiently current, upgrade not required"
-        
-        read -p "Do you want to re-install globus again from source? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
-        [ -z "${dosetup}" ] && dosetup=$default_val
-
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
-            return 0
-        fi
-        echo
-    fi
-    
     mkdir -p $globus_workdir
     [ $? != 0 ] && checked_done 1
     chmod a+rw $globus_workdir
@@ -466,50 +527,6 @@ setup_globus() {
 #--------------------------------------------------------------
 
 upgrade_gridftp_server() {
-    #We want to make sure the current version of globus is greater or equal to ${globus_version} (4.2.1)
-
-    echo "Checking for globus ${globus_version}"
-    check_version ${globus_location}/bin/globus-version ${globus_version}
-    [ $? == 0 ] && echo "Globus version is sufficiently current, upgrade not required"
-
-#     local performed_upgrade=0
-#     echo "Checking for gridftp-server ${gridftp_server_version}"
-#     check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
-#     if [ $? == 0 ]; then
-#         echo "Globus version is sufficiently current, upgrade not required"
-#     else
-#         echo "GridFTP - Upgrading..."
-#         pushd ${globus_workdir} >& /dev/null
-
-#         gridftp_update_dist_file=${gridftp_update_dist_url##*/}
-#         if [ ! -e ${gridftp_update_dist_file} ]; then
-#             checked_get ${gridftp_update_dist_file} ${gridftp_update_dist_url} $((force_install))
-#             (( $? > 1 )) && popd && checked_done 1
-#         fi
-#         echo "${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}"
-#         ${globus_location}/sbin/gpt-build -force ${gridftp_update_dist_file} ${globus_flavor}
-#         [ $? != 0 ] && echo " ERROR: unable to build from ${gridftp_update_dist_file}" || (echo " [OK] " && ((performed_upgrade=1)) )
-#     fi
-
-    #Only jump to asking the user about installing patches if it is
-    #determined that there is already an up-to-date gridftp install
-    #i.e. no upgrade has been performed. (performed_upgrade == 0) If
-    #an upgrade had to be performed, don't even ask and apply the
-    #patches.  However, we want to set the default to the question as
-    #"N" to make it easier to breeze through.
-
-    local install_patches
-    local default_val="N"
-    if((performed_upgrade==0)); then
-        read -p "Would you like to install necessary GridFTP patches to current install? $([ "$default_val" = "N" ] && echo "[y/N]" || echo "[Y/n]") " install_patches
-        [ -z "${install_patches}" ] && install_patches=$default_val
-
-        if [ "${install_patches}" != "Y" ] && [ "${install_patches}" != "y" ]; then
-            echo "Skipping Gridftp patch installation - will assume Globus is patched properly"
-            return 0
-        fi
-        echo
-    fi
 
     #-------
     echo "Installing custom gsi authz interface patch..."
@@ -522,8 +539,13 @@ upgrade_gridftp_server() {
     make && make install
     [ $? != 0 ] && (echo " ERROR: unable to build from ${gridftp_update_dist_file}" && popd && popd && checked_done 1) || echo " [OK] "
     popd >& /dev/null
+    checked_done 0
     #-------
+}
 
+install_gss_assist_patch() {
+
+    #-------
     echo "Installing gss assist patch..."
     gss_assist_patch_dist_file=${gss_assist_patch_dist_url##*/}
     if [ ! -e ${gss_assist_patch_dist_file} ]; then
@@ -541,6 +563,7 @@ upgrade_gridftp_server() {
     ${globus_location}/sbin/globus-gridftp-server -v
     popd >& /dev/null
     checked_done 0
+    #-------
 }
 
 
@@ -655,6 +678,8 @@ setup_libglobus_adq() {
     if [ ! -e ${GLOBUS_LOCATION}/lib/libglobus_adq.so ] || ((force_install)); then
         #go back to workbench dir...
         pushd ${globus_workdir} #>& /dev/null
+	local lastdir=`pwd`
+	cd ${globus_workdir}
         #----------
         #Our globus stuff for callouts
         #----------
@@ -676,6 +701,7 @@ setup_libglobus_adq() {
         ((DEBUG)) && echo "libglobus_adq_dir = ${libglobus_adq_dir}"
         #-----
 
+	local lastdir2=`pwd`
         cd ${libglobus_adq_dir}
         sh build.sh 
         [ -n "${GLOBUS_LOCATION}" ] && rm -rvf ${GLOBUS_LOCATION}/lib/libglobus_adq.so*
@@ -684,8 +710,10 @@ setup_libglobus_adq() {
         ln -s libglobus_adq.so.0.0.0 libglobus_adq.so.0
         ln -s libglobus_adq.so.0.0.0 libglobus_adq.so
         popd >& /dev/null
+	cd ${lastdir2}
         #----------
         popd >& /dev/null
+	cd ${lastdir}
     else
         echo "Detected a libglobus_adq installation... will not re-install libglobus_adq"       
     fi
@@ -883,7 +911,11 @@ setup_gridftp_jail() {
     echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
 
     while read mount_name mount_dir; do
-        echo "mounting ${mount_dir} into chroot jail [${gridftp_chroot_jail}/] as ${mount_name##*/}"
+        echo "mounting [${mount_dir}] into chroot jail [${gridftp_chroot_jail}/] as [${mount_name##*/}]"
+        if [ -z "${mount_name}" ] || [ -z "${mount_dir}" ] ; then
+            echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'
+            return 999
+        fi
         local chroot_mount=($(mount -l | grep ${mount_dir} | awk '{print $3}' | sort -u))
         if (( ${#chroot_mount[@]} == 0 )); then
             [ ! -e ${gridftp_chroot_jail}/${mount_name##*/} ] && mkdir -p ${gridftp_chroot_jail}/${mount_name##*/}
@@ -944,24 +976,24 @@ config_gridftp_server() {
 
     local dosetup
     local default_val="Y"
-    if [ -x ${globus_install_dir}/sbin/globus-gridftp-server ]; then
-        echo "Detected an existing Globus GridFTP Server installation..."
+#    if [ -x ${globus_install_dir}/sbin/globus-gridftp-server ]; then
+#        echo "Detected an existing Globus GridFTP Server installation..."
         
         write_as_property gridftp_server_port
 
-        check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
-        [ $? == 0 ] && default_val="n" && echo "GridFTP version is sufficiently current, upgrade not required"
+#        check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
+#        [ $? == 0 ] && default_val="n" && echo "GridFTP version is sufficiently current, upgrade not required"
+#
+#        read -p "Do you want to continue with GridFTP ESG Configuration? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+#        [ -z "${dosetup}" ] && dosetup=$default_val
 
-        read -p "Do you want to continue with GridFTP ESG Configuration? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
-        [ -z "${dosetup}" ] && dosetup=$default_val
+#        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ] ; then 
+#            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
+#            return 0
+#        fi
+#        echo
+#    fi
 
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ] ; then 
-            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
-            return 0
-        fi
-        echo
-    fi
-    
     #TODO: Decide how to maintain semantic integrity
     [ -z ${globus_sys_acct} ] && echo " ERROR: globus_sys_acct=[${globus_sys_acct}] must be set" && checked_done 1
     
@@ -999,6 +1031,7 @@ config_gridftp_server() {
     setup_libglobus_adq
     
     pushd ${gridftp_authz_esgsaml_dist_dir}/source >& /dev/null
+    cd ${gridftp_authz_esgsaml_dist_dir}/source
     if [ -e ${globus_workdir}/libglobus_adq-${adq_version} ]; then 
         ln -v -s ${globus_workdir}/libglobus_adq-${adq_version} libglobus_adq
     else
@@ -1020,6 +1053,7 @@ config_gridftp_server() {
         popd >& /dev/null
         checked_done 1
     fi
+    cd ..
 
     mkdir -p /etc/grid-security
     
@@ -1070,31 +1104,31 @@ config_bdm_gridftp_server() {
     echo "GridFTP - Configuration... for Bulk Data Mover (BDM)"
     echo
     echo "*******************************"
-    echo "Setting up GridFTP... (BDM Amenable Configureation)"
+    echo "Setting up GridFTP... (BDM Configuration)"
     echo "*******************************"
     echo
 
     local dosetup
     local default_val="Y"
-    if [ -x ${globus_install_dir}/sbin/globus-gridftp-server ]; then
-        echo "Detected an existing Globus BDM GridFTP Server installation..."
-        echo "$(${globus_install_dir}/sbin/globus-gridftp-server --version)"
+#    if [ -x ${globus_install_dir}/sbin/globus-gridftp-server ]; then
+#        echo "Detected an existing Globus BDM GridFTP Server installation..."
+#        echo "$(${globus_install_dir}/sbin/globus-gridftp-server --version)"
 
         write_as_property gridftp_bdm_server_port
 
-        check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
-        [ $? == 0 ] && default_val="n" && echo "GridFTP version is sufficiently current, upgrade not required"
-        
-        read -p "Do you want to continue with BDM GridFTP ESG Configuration? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
-        [ -z "${dosetup}" ] && dosetup=$default_val
-        
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ] ; then 
-            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
-            return 0
-        fi
-        echo
-    fi
-    
+#        check_version ${globus_install_dir}/sbin/globus-gridftp-server ${gridftp_server_version}
+#        [ $? == 0 ] && default_val="n" && echo "GridFTP version is sufficiently current, upgrade not required"
+#        
+#        read -p "Do you want to continue with BDM GridFTP ESG Configuration? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+#        [ -z "${dosetup}" ] && dosetup=$default_val
+#        
+#        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ] ; then 
+#            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
+#            return 0
+#        fi
+#        echo
+#    fi
+
     #TODO: Decide how to maintain semantic integrity
     [ -z ${globus_sys_acct} ] && echo " ERROR: globus_sys_acct=[${globus_sys_acct}] must be set" && checked_done 1
     
@@ -1130,6 +1164,8 @@ config_bdm_gridftp_server() {
     fi
 
     pushd ${gridftp_bdm_dist_dir}/source >& /dev/null
+    lastdir=`pwd`
+    cd ${gridftp_bdm_dist_dir}/source
     ./bootstrap 
     [ $? != 0 ] && echo " ERROR: could not perform bootstrap" && checked_done 1
 
@@ -1143,6 +1179,7 @@ config_bdm_gridftp_server() {
     else
         echo " ERROR: Could NOT successfully build GRIDFTP!"
         popd >& /dev/null
+	cd ${lastdir}
         checked_done 1
     fi
 
@@ -1169,6 +1206,7 @@ config_bdm_gridftp_server() {
     chgrp -R ${globus_sys_acct_group} ${globus_location}
 
     popd >& /dev/null
+    cd ${lastdir}
     checked_done 0
     write_as_property gridftp.service.type "Replication"
 }
@@ -1433,21 +1471,21 @@ config_myproxy_server() {
     #------------------------------------
 
     #You have decided to do an install but an installation is already detected
-    if ((install_mode)) && [ -e ${globus_location}/sbin/myproxy-server ]; then
-        local answer="Y"
-        echo "NOTICE:"
-        echo "   Detected that the myproxy-server is already present!"
-        read -p "   Do you still wish to INSTALL myproxy (and usurp what is present)? [y/N] " answer
-        [ -z "${answer}" ] && answer="N"
-        if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
-            install_mode=1
-            echo "(${answer})"
-        else
-            install_mode=0
-            echo "(n)"
-        fi
-        unset answer
-    fi
+#    if ((install_mode)) && [ -e ${globus_location}/sbin/myproxy-server ]; then
+#        local answer="Y"
+#        echo "NOTICE:"
+#        echo "   Detected that the myproxy-server is already present!"
+#        read -p "   Do you still wish to INSTALL myproxy (and usurp what is present)? [y/N] " answer
+#        [ -z "${answer}" ] && answer="N"
+#        if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+#            install_mode=1
+#            echo "(${answer})"
+#        else
+#            install_mode=0
+#            echo "(n)"
+#        fi
+#        unset answer
+#    fi
 
     #You have selected to do an update but the program is not even installed in the first place!
     if ((!install_mode)) && [ ! -e ${globus_location}/sbin/myproxy-server ]; then
@@ -1490,9 +1528,10 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    read -p "Do you wish to install a simple CA? [y/N] " answer
-    [ -z "${answer}" ] && answer="N"
-    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+#    read -p "Do you wish to install a simple CA? [y/N] " answer
+#    [ -z "${answer}" ] && answer="N"
+#    if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
+    answer="Y"
 
         #TODO: ZOIKS... this does not work... Next thing to try is to do a
         #while read on the output of setup-simple-ca, and then regexp each
@@ -1508,7 +1547,7 @@ config_myproxy_server() {
         # local grab
         
         [ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
-        #[ -d ${HOME}/.globus/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${HOME}/.globus/simpleCA
+        #[ -d ${dot_globus}/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${dot_globus}/simpleCA
         ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         
@@ -1581,14 +1620,14 @@ config_myproxy_server() {
         echo "command: ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default"
         
         #move the old files outta the way!
-        [ -e ~/.globus/host/hostcert_request.pem ] && cp -v  ~/.globus/host/hostcert_request.pem ~/.globus/host/hostcert_request.pem.$(date ${date_format}).bak
-        [ -e ~/.globus/host/hostcert.pem ] && cp -v  ~/.globus/host/hostcert.pem ~/.globus/host/hostcert.pem.$(date ${date_format}).bak
-        [ -e ~/.globus/host/hostkey.pem ] && cp -v  ~/.globus/host/hostkey.pem ~/.globus/host/hostkey.pem.$(date ${date_format}).bak
+        [ -e ${dot_globus}/host/hostcert_request.pem ] && cp -v ${dot_globus}/host/hostcert_request.pem ${dot_globus}/host/hostcert_request.pem.$(date ${date_format}).bak
+        [ -e ${dot_globus}/host/hostcert.pem ] && cp -v ${dot_globus}/host/hostcert.pem ${dot_globus}/host/hostcert.pem.$(date ${date_format}).bak
+        [ -e ${dot_globus}/host/hostkey.pem ] && cp -v ${dot_globus}/host/hostkey.pem ${dot_globus}/host/hostkey.pem.$(date ${date_format}).bak
         
         ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
         
-    fi
-    unset answer
+#    fi
+#    unset answer
     echo
     
     if ((fetch_certs)); then
@@ -1608,7 +1647,7 @@ config_myproxy_server() {
         echo "Do not regognize directive... return 1"
     fi
 
-    local simpleCA_cert=${HOME}/.globus/simpleCA/cacert.pem
+    local simpleCA_cert=${dot_globus}/simpleCA/cacert.pem
     if [ -e "${simpleCA_cert}" ]; then
         cp -v ${simpleCA_cert} /etc/grid-security/certificates/ && echo -n "." || echo -n "x"
 	chown -R ${installer_uid}:${installer_gid} /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
@@ -1626,15 +1665,15 @@ config_myproxy_server() {
     [ $((install_mode)) == 0 ] && return 0
 
     #allow for fetched keys to be written in this location.
-    echo "chown -R ${installer_uid}:${installer_gid} $HOME/.globus"
-    chown -R ${installer_uid}:${installer_gid} $HOME/.globus 
+    echo "chown -R ${installer_uid}:${installer_gid} ${dot_globus}"
+    chown -R ${installer_uid}:${installer_gid} ${dot_globus} 
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use myproxy and publisher properly!"
     
     #NOTE: for more info on keys and troubleshooting see:
     #http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/MyProxyCertificateReplacementTesting
 
     #NOTE: To test that the simple CA's key's password is what you think it is:
-    #openssl rsa -in ~/.globus/simpleCA/private/cakey.pem -text -noout
+    #openssl rsa -in ${dot_globus}/simpleCA/private/cakey.pem -text -noout
 
 
     #--------------------
@@ -1760,15 +1799,11 @@ config_myproxy_server() {
     popd >& /dev/null
     #--------------------
 
-
-
     #--------------------
-    # Configure myproxy-certificate-mapapp
+    # Get myproxy-certificate-mapapp file
     #--------------------
-    edit_myproxy_certificate_mapapp
+    fetch_myproxy_certificate_mapapp
     #--------------------
-
-
 
     #--------------------
     # Configure pam_sql.conf
@@ -1789,17 +1824,17 @@ config_myproxy_server() {
 
     
     #--------------------
-    # Configure esg_attribute_callout_app
+    # Get esg_attribute_callout_app file
     #--------------------
-    edit_esg_attribute_callout_app    
+    fetch_esg_attribute_callout_app
     #--------------------
 
     write_db_name_env
 
     #--------------------
-    # Configure myproxy startup/shutdown script
+    # Get myproxy startup/shutdown script (/etc/init.d/myproxy)
     #--------------------
-    edit_init_d_myproxy
+    fetch_init_d_myproxy
     #--------------------
 
     popd >& /dev/null
@@ -1891,12 +1926,19 @@ edit_myproxy_server_config() {
     local myproxy_config_dir=${esg_config_dir}/myproxy
 
     echo -n "editing myproxy certificate information "
-    
+
+    if [ "x${esgf_home}" = "x" ]; then
+        . /etc/esg.env
+        esgf_home=${ESGF_HOME}
+    fi
+
     eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
     echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@home\\@\\@#${HOME}#g' ${tfile}"
+    eval "perl -p -i -e 's#\\@\\@dot_globus\\@\\@#${dot_globus}#g' ${tfile}"
+    echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@esgf_home\\@\\@#${esgf_home}#g' ${tfile}"
     echo -n "*"
     echo " [OK]"
     
@@ -1906,41 +1948,6 @@ edit_myproxy_server_config() {
     unset tfile
     unset cert_password
     #--------------------
-    return 0
-}
-
-edit_myproxy_certificate_mapapp() {
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
-    pushd ${myproxy_config_dir} >& /dev/null
-
-    local tfile=myproxy-certificate-mapapp
-    echo "Download and Modifying configuration template file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak} && chmod 640 ${tfile}.bak
-    cp -vf ${tfile}{.tmpl,}
-    [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@ca_subject\\@\\@#${ca_subject}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod -v 751 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
     return 0
 }
 
@@ -1969,6 +1976,21 @@ edit_pam_pgsql_conf() {
     return 0
 }
 
+fetch_myproxy_certificate_mapapp() {
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+    mkdir -p ${myproxy_config_dir}
+    pushd ${myproxy_config_dir} >& /dev/null
+
+    local tfile=myproxy-certificate-mapapp
+    echo "Downloading configuration file: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((force_install))
+    [ -e "${tfile}" ] && chmod 751 ${tfile}
+    ((DEBUG)) && cat ${tfile}
+    popd >& /dev/null
+    unset tfile
+    return 0
+}
+
 fetch_etc_pam_d_myproxy() {
     pushd /etc/pam.d >& /dev/null
     local tfile=myproxy
@@ -1979,54 +2001,39 @@ fetch_etc_pam_d_myproxy() {
     unset tfile
 }
 
-edit_esg_attribute_callout_app() {
+fetch_esg_attribute_callout_app() {
    #Configure External Attribute Callout with MyProxy
     local myproxy_config_dir=${esg_config_dir}/myproxy
     mkdir -p ${myproxy_config_dir}
     pushd ${myproxy_config_dir} >& /dev/null
 
     local tfile=esg_attribute_callout_app
-    echo "Download and Modifying configuration template file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak} && chmod 640 ${tfile}.bak
-    cp -vf ${tfile}{.tmpl,}
-    [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@openid_dirname\\@\\@#${openid_dirname}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod 751 ${tfile}
+    echo "Downloading configuration file: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((force_install))
+    [ -e "${tfile}" ] && chmod 751 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
 }
 
-edit_init_d_myproxy() {
+fetch_init_d_myproxy() {
     pushd /etc/init.d/ >& /dev/null
     local tfile=myproxy
-    echo "Download and Modifying rc script: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/init.d_${tfile} $((force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
-    cp -vf ${tfile}{.tmpl,}
-    [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's#\\@\\@globus_location\\@\\@#${globus_location}#g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    chmod 755 ${tfile}
+    echo "Download MyProxy rc script: `pwd`/${tfile}"
+    checked_get ${tfile} ${myproxy_dist_url_base}/init.d_${tfile} $((force_install))
+    [ -e "${tfile}" ] && chmod 755 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
+}
+
+sanity_check_myproxy_configurations() {
+    edit_myproxy_server_config $((force_install))
+    edit_pam_pgsql_conf $((force_install))
+    fetch_myproxy_certificate_mapapp $((force_install))
+    fetch_etc_pam_d_myproxy $((force_install))
+    fetch_esg_attribute_callout_app $((force_install))
+    fetch_init_d_myproxy $((force_install))
 }
 
 ############################################

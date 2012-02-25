@@ -70,6 +70,8 @@
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
 
+export LANG=POSIX
+
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 
@@ -93,6 +95,7 @@ esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type
 esgf_secret_file=${esg_config_dir}/.esgf_pass
 pg_secret_file=${esg_config_dir}/.esg_pg_pass
+pub_secret_file=${esg_config_dir}/.esg_pg_publisher_pass
 ks_secret_file=${esg_config_dir}/.esg_keystore_pass
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 install_logfile=${install_manifest}
@@ -116,27 +119,27 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.9.1"}
+    esgcet_version=${esgcet_version:-"2.10.0"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.1"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.4"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"1.5.2"}
+    esgf_security_version=${esgf_security_version:-"2.0.2"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"1.2.7"}
+    esg_orp_version=${esg_orp_version:-"2.0.1"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"1.1.8"}
+    esgf_idp_version=${esgf_idp_version:-"2.0.1"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"1.7.6"}
+    esg_search_version=${esg_search_version:-"2.0.2"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"1.3.1"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"1.5.0"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.0.0"}
@@ -151,9 +154,9 @@ init() {
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.2"} ; ant_min_version=${ant_min_version:-"1.8.2"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"6.0.33"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
+    tomcat_version=${tomcat_version:-"6.0.35"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
-    las_version=${las_version:-"7.3.6"}; las_min_version=${las_min_version:-"7.3.6"}
+    las_version=${las_version:-"7.3.7"}; las_min_version=${las_min_version:-"7.3.7"}
 
     python_version=${python_version:-"2.6"}
 
@@ -168,6 +171,9 @@ init() {
     local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
     pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
     unset pg_secret #only here to hold the tertiary ephemeral value from file, unset asap
+    local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
+    publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
+    unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
     cdat_home=${CDAT_HOME:-${install_prefix}/cdat}
@@ -263,7 +269,8 @@ init() {
     git_workdir=${workdir}/git
     #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
     git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
-    node_db_name=${ESGF_DB_NAME:-esgcet}
+    db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
+    node_db_name=${db_database}
     postgress_workdir=${workdir}/postgress
     postgress_jar=postgresql-8.3-603.jdbc3.jar
     postgress_driver=org.postgresql.Driver
@@ -980,11 +987,15 @@ write_ant_install_log() {
 #####
 setup_postgress() {
 
-    echo -n "Checking for postgresql >= ${postgress_min_version}"
-    check_version psql ${postgress_min_version}
-    local ret=$?
-    (($ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+    debug_print "DEBUG: entering setup_postgress()"
+    _is_managed_db && return 0
 
+    echo -n "Checking for postgresql >= ${postgress_min_version}"
+    check_version /usr/local/pgsql/bin/psql ${postgress_min_version}
+    local ret=$?
+    if [ $ret == 0 ] ; then
+        (( ! force_install )) && echo " [OK]" && return 0
+    fi
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 
@@ -1233,6 +1244,8 @@ write_postgress_install_log() {
 
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 start_postgress() {
+    _is_managed_db && echo "Please be sure externally managed database is running at this point..." && return 0
+
     check_postgress_process && return 1
 
     echo "Starting Postgress..."
@@ -1248,6 +1261,9 @@ start_postgress() {
 }
 
 stop_postgress() {
+
+    _is_managed_db && echo "Please be sure externally managed database is NOT running at this point..." && return 0
+
     sleep 1
     #Stop the database
     #su postgres -c "pg_ctl -D /usr/local/pgsql/data stop" #(gently stop server)
@@ -1275,11 +1291,11 @@ test_postgress() {
     echo "Postgress Test...  "
     echo "----------------------------"
     echo
-    start_postgress
 
     ${postgress_install_dir}/bin/psql --version
     [ $? != 0 ] && echo" ERROR: Could NOT successfully locate postgres installation!!" && popd >& /dev/null && checked_done 1
 
+    start_postgress
     local ret=$(PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -qt -c "select table_name from information_schema.tables;" postgres ${postgress_user} | grep -v ^$ | wc -l)
     ((ret == 0)) && echo " ERROR: Could not verify database installation! (perhaps \"pg_sys_acct_passwd\"  was not set correctly?)" && checked_done 1
     echo "[OK]"
@@ -1385,6 +1401,20 @@ setup_esgcet() {
     echo -n "Checking for esgcet (publisher) ${esgcet_version}"
     check_module_version esgcet ${esgcet_version}
     local ret=$?
+
+    #-------
+    if [ -e "${ESGINI}" ]; then
+        local esgini_dburl=$(sed -n 's@^[^#]*[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI} | head -n1 | sed 's@\r@@')
+        local db_connect_str="postgresql://${publisher_db_user}:${publisher_db_user_passwd}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
+        debug_print "[${esgini_dburl}] =? [${db_connect_str}]"
+        if [ "${esgini_dburl}" != "${db_connect_str}" ]; then
+            printf "\n\n [ERROR: publisher database connection string mis-match... (see ${ESGINI}'s dburl value)] \n\n"
+            trap - INT TERM
+            exit 1
+        fi
+    fi
+    #-------
+
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
     local upgrade=${1:-${ret}}
@@ -1513,17 +1543,14 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
-    local postgress_low_user="esgcet"
-    local pg_user_acct_passwd=${pg_sys_acct_passwd}
-    local security_user_password=${pg_user_acct_passwd:-${security_admin_password}}
-
     if [ "${mode}" = "U" ]; then
 	echo "${cdat_home}/bin/esginitialize -c"
 	${cdat_home}/bin/esginitialize -c
 	[ $? != 0 ] && popd && checked_done 1
     else
-        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ****** ") $( [ -n "${postgress_low_user}" ] && echo "--db-user ${postgress_low_user}" ) $([ -n "${pg_user_acct_passwd:-security_user_password}" ] && echo "--db-user-password ****** ") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
-	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:-security_admin_password}" ] && echo "--db-admin-password ${pg_user_acct_passwd}") $( [ -n "${postgress_low_user}" ] && echo "--db-user ${postgress_low_user}" ) $([ -n "${pg_user_acct_passwd:-security_user_password}" ] && echo "--db-user-password ${security_user_password}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
+
+        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
 
@@ -1954,7 +1981,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
 	    if [ ! -e ${truststore_file} ]; then
 		fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-		checked_get ${truststore_file} ${esg_dist_url}/certs/${fetch_file} $((force_install))
+		checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
 		if (( $? > 1 )); then
 		    echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
 		    echo "(note - the truststore password will probably not match!)"
@@ -2232,6 +2259,31 @@ select_idp_peer() {
         fi
     fi
     write_as_property esgf_idp_peer
+
+    local authorization_service_root
+    get_property authorization_service_root
+
+    #----
+    #Editing web.xml files for projects who use the authorizationService
+    #----
+    echo "updating webapps' web.xml files accordingly..."
+    local web_xml_files=($(find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
+    sed -i.bak 's@\(https://\)[^/]*\(/esgf-security/saml/soap/secure/authorizationService.htm[,]*\)@\1'${authorization_service_root:-${esgf_idp_peer}}'\2@g' ${web_xml_files[@]}
+    local instruct_to_reboot=0
+    for((i=0;i<${#web_xml_files[@]};i++)); do
+        diff ${web_xml_files[${i}]}{,.bak} >& /dev/null
+        ((instruct_to_reboot+=$?))
+    done
+    ((instruct_to_reboot)) && \
+        printf "
+
+	-------------------------------------------------------------------------------------------------
+	webapp web.xml files have been modified - you must restart node stack for changes to be in effect
+        (esg-node restart)
+	-------------------------------------------------------------------------------------------------
+
+"
+    #----
     write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
     write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
     #----------------------
@@ -2740,7 +2792,8 @@ test_publication() {
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
-    echo "(target index node => ${esgf_index_peer})"
+    local index_peer=$(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
+    echo "(target index node => ${index_peer}  $(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
     #Publish the dataset from the THREDDS catalog created above...
     echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish
@@ -2972,7 +3025,7 @@ rebuild_truststore() {
     local tmp_dir=/tmp/esg_scratch
     mkdir -p ${tmp_dir}
 
-    local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*.0$')
+    local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*\.0$')
     for cert_file in $cert_files; do
 	echo -n "$cert_file -> "
 	local cert_hash=$(echo ${cert_file##*/} | awk -F'.' '{print $1}') ;
@@ -4034,6 +4087,56 @@ set_index_peer() {
 # General - Utility Functions
 ############################################
 
+#responds true (returns 0) if this IS intended to be a managed database
+#is expecting the vars:
+# ---- "db_host"
+# ---- "esgf_host"
+# to be set
+# Define: managed - (true|0) this means NOT manipulated by this script but done by external means
+#(hint prepend "externally" before managed to get the meaning - yes I find it confusing but Stephen likes this term :-))
+_is_managed_db() {
+
+    local input
+    local default
+
+    get_property db_managed
+    if((! force_install)); then
+        [ "${db_managed}" != "yes" ] && [ -n "${db_managed}" ] && db_managed="no" && return 1 #Has to be "no" or some other value non-yes value
+        [ "${db_managed}" = "yes" ] && return 0 #Has to be explicitly yes
+    fi
+
+    if [ -z "${db_managed}" ] || ((force_install)); then
+	unset input
+
+        debug_print "esgf_host = $esgf_host"
+        debug_print "db_host = $db_host"
+        #Try to come up with some "sensible" default value for the user...
+        if [ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ] ; then
+	    default=${db_managed:-'no'}
+        else
+            default=${db_managed:-'yes'}
+        fi
+
+        read -e -p "Is this database intended to be an externally managed database? [${default}]: " input
+	[ -z "${input}" ] && db_managed=${default} && write_as_property db_managed
+	[ -n "${input}" ] && db_managed=${input} && write_as_property db_managed
+    else
+	echo "db_managed = [${db_managed}]"
+    fi
+    unset input
+    unset default
+
+    if [ "${db_managed}" = "yes" ] && [ -n "${db_managed}" ]; then
+        echo "Set to use externally \"managed\" database on host: ${db_host}"
+        return 0
+    else
+        debug_print "(hmm... setting db_host to localhost)"
+        #Note: if not managed and on the local machine... always use "localhost"
+        db_host="localhost"
+        return 1
+    fi
+}
+
 set_redirect() {
     local web_app_tld=${1:-esgf-node-manager}
     local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
@@ -4753,7 +4856,7 @@ backup() {
 }
 
 backup_db() {
-    local my_node_db_name=${1:-${node_db_name}}
+    local my_node_db_name=${1:-${db_database}}
     local my_schema_name=${2}
     mkdir -p ${esg_backup_dir}
     pushd ${esg_backup_dir} >& /dev/null
@@ -4790,7 +4893,7 @@ backup_db() {
 }
 
 restore_last_db_backup() {
-    local my_node_db_name=${1:-${node_db_name}}
+    local my_node_db_name=${1:-${db_database}}
     local my_schema_name=${2}
 
     [ ! -d ${esg_backup_dir} ] && echo " ERROR: cannot locate backup directory [${esg_backup_dir}]" && return 1
@@ -5405,7 +5508,8 @@ show_svc_list() {
 run_startup_hooks() {
     echo "Running startup hooks..."
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
-    source ${scripts_dir}/esg-orp && orp_startup_hook
+    (source ${scripts_dir}/esg-orp && orp_startup_hook)
+    (source ${scripts_dir}/esg-security && security_startup_hook)
 }
 
 #Any last bits of cleanup for your module should be called here.
@@ -5434,10 +5538,10 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    [ $((sel & ALL_BIT)) != 0 ] && source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services
+    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
-    [ $((sel & INDEX_BIT)) != 0 ] && source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config}
+    [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
     show_svc_list
@@ -5450,9 +5554,9 @@ start() {
 stop() {
     local sel=${1:-${sel:-$ALL_BIT}}
     read_sel
-    source ${scripts_dir}/esg-search >& /dev/null && stop_search_services
+    (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services
+    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
     show_svc_list
@@ -5658,12 +5762,98 @@ initial_setup_questionnaire() {
 
     unset input
 
+    get_property db_user ${db_user}
+    get_property db_host ${db_host}
+    get_property db_port ${db_port}
+    get_property db_database ${db_database}
+    get_property db_managed ${db_managed}
+    if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || [ -z "${db_managed}" ] || ((force_install)); then
+        _get_db_conn_str_questionnaire && _is_managed_db
+    else
+        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [externally managed = ${db_managed}]"
+    fi
+
+    #--------------------------------
+
+    local input
+    local default
+
+    get_property publisher_db_user ${publisher_db_user}
+    if [ -z "${publisher_db_user}" ] || ((force_install)); then
+	unset input
+	default=${publisher_db_user:-'esgcet'}
+        read -e -p "What is the (low priv) db account for publisher? [${default}]: " input
+	[ -z "${input}" ] && publisher_db_user=${default} && write_as_property publisher_db_user
+	[ -n "${input}" ] && publisher_db_user=${input}	  && write_as_property publisher_db_user
+    else
+	echo "publisher_db_user = [${publisher_db_user}]"
+    fi
+    unset input
+    unset default
+
+    if [ -z "${publisher_db_user_passwd}" ] || ((force_install)); then
+        read -e -s -p "What is the db password for publisher user (${publisher_db_user})? : " input
+	if [ -n "${input}" ]; then
+            publisher_db_user_passwd=${input}
+            echo "${publisher_db_user_passwd}" > ${pub_secret_file}
+        fi
+    fi
+    [ ! -e "${pub_secret_file}" ] && echo "${publisher_db_user_passwd}" > ${pub_secret_file}
+    [ -e "${pub_secret_file}" ] && chmod 640 ${pub_secret_file} && chown ${installer_uid}:${tomcat_group} ${pub_secret_file}
+
+    echo "db publisher connection string = [postgresql://${publisher_db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}]"
+
+    #--------------------------------
+
+
     dedup_properties ${config_file}
     echo "-------------------------------------------------------"
     echo
     echo
     popd >& /dev/null
     return 0
+}
+
+_get_db_conn_str_questionnaire() {
+    #postgresql://esgcet@localhost:5432/esgcet
+    local ret=1
+    local user_ host_ port_ dbname_ connstring_
+    while [ 1 ]; do
+        echo "Please enter the database connection string..."
+        echo " (form: postgresql://[username]@[host]:[port]/[database])"
+        read -e -p "Enter the database connection string: postgresql://" connstring_
+        echo "entered: postgresql://$connstring_"
+        eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${connstring_}"))
+        if [ -z "${user_}" ] || \
+            [ -z "${host_}" ] || \
+            [ -z "${port_}" ] || \
+            [ -z "${dbname_}" ]; then
+            echo "ERROR: Incorrect connection string syntax or values"
+            ret=1
+        else
+            ret=0
+            break
+        fi
+    done
+    debug_print "user = $user_"
+    debug_print "host = $host_"
+    debug_print "port = $port_"
+    debug_print "database = $dbname_"
+
+    #set vars...
+    db_user=${user_}
+    db_host=$([ -n "${host_}" ] && ([ "${host_}" = "${esgf_host}" ] || [ "${host_}" = "localhost" ]) && echo "localhost" || echo "${host_}")
+    db_port=${port_}
+    db_database=${dbname_}
+
+    #write vars to property file
+    write_as_property db_user
+    write_as_property db_host
+    write_as_property db_port
+    write_as_property db_database
+
+    debug_print "ret = $ret"
+    return $ret
 }
 
 ############################################
@@ -5900,7 +6090,7 @@ INDEX_BIT=8
 IDP_BIT=16
 COMPUTE_BIT=32
 WRITE_ENV_BIT=64
-
+#PRIVATE_BIT=128
 #NOTE: remember to adjust (below) when adding new bits!!
 MIN_BIT=4
 MAX_BIT=64
@@ -6447,7 +6637,7 @@ main() {
 	echo "	   Before continuing make sure they are ALL present on this system!!!!!!"
         if [ $((sel & DATA_BIT)) != 0 ]; then
 	    echo "	   If you intend on publishing from this node please check the publishing network prerequisites"
-	    echo "	   http://esgf.org/wiki/Cmip5DataNode/FAQ#PREREQUISITES"
+	    echo "	   http://esgf.org/wiki/ESGFNode/FAQ#PREREQUISITES"
         fi
 	echo "	   ----------------------------------------------------------"
 	echo
@@ -6532,7 +6722,7 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "search subsystem" && setup_subsystem search esg-search 0 ${index_config}
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
 	[ $((sel & TEST_BIT)) != 0 ]	&& [ $((sel & INDEX_BIT)) != 0 ] && echo "test search subsystem" && \
-	    source ${scripts_dir}/esg-search >& /dev/null && test_search_services
+	    (source ${scripts_dir}/esg-search >& /dev/null && test_search_services)
 
 
     #---------------------------------------
@@ -6545,6 +6735,7 @@ main() {
     #---------------------------------------
     # Publishing Test...
     #---------------------------------------
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ -n "${esgf_index_peer}" ] && set_index_peer "${esgf_index_peer}"
 	[ $((sel & TEST_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "test_publication" && test_publication
 
 
@@ -6558,7 +6749,7 @@ main() {
         #For the sake of the node manager registry, let's just make sure that the derivative whitelist files
         #exits and have the appropriate ownership and permissions
         #This function is defined in the esg-node-manager script, which at this point should have been already sourced!
-        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_whitelist_files)
+        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_generated_whitelist_files)
         #---
 
     #---------------------------------------

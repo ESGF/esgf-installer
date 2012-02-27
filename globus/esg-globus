@@ -1909,17 +1909,12 @@ edit_myproxy_server_config() {
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
 
-    local cert_password=$(sed -n 's/^[ ]*certificate_issuer_key_passphrase[ ]*\(.*\)$/\1/p' ${tfile}.bak | grep -v '@@PASSWORD@@')
     #This is the password of the CA's certs created via the simple ca (setup-gsi)
-
-    if [ -z "${cert_password}" ] || ((force_install)); then
-	    #set the password for the system user...
-	while [ 1 ]; do
-	    local input
-            read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]") " input
-	    [ -n "${input}" ] && cert_password=${input}  && unset input && break
-	done
-    fi
+    while [ 1 ]; do
+	local input
+        read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]") " input
+	[ -n "${input}" ] && cert_password=${input}  && unset input && break
+    done
     
     local myproxy_config_dir=${esg_config_dir}/myproxy
 

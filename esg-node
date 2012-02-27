@@ -71,6 +71,7 @@
 #      groupadd is RedHat/CentOS dependent :-(
 
 export LANG=POSIX
+umask 022
 
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}

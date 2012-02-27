@@ -2245,7 +2245,7 @@ select_idp_peer() {
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
     if [ $((sel & DATA_BIT)) != 0 ]; then
-    printf"
+        printf "
 
   NOTE:
   ----------------------------------------------------------------------

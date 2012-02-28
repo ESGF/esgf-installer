@@ -1235,7 +1235,7 @@ test_gridftp_server() {
                 X509_CERT_DIR=${_X509_CERT_DIR} \
                     X509_USER_KEY=${_X509_USER_KEY} \
                     X509_USER_CERT=${_X509_USER_CERT} \
-                    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -T
+                    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
                 [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
 
                 echo -n "GridFTP - End-User Test... [$1]"

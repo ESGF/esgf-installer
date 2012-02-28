@@ -4471,6 +4471,18 @@ set_aside_web_app_cleanup() {
     fi
 }
 
+#Utility function, wraps md5sum so it may be used on either mac or
+#linux machines
+md5sum_() {
+    hash -r
+    if type md5sum >& /dev/null; then
+        echo $(md5sum $@)
+    else
+        echo $(md5 $@ | sed -n 's/MD5[ ]*\(.*\)[^=]*=[ ]*\(.*$\)/\2 \1/p')
+    fi
+}
+
+
 #-------------------------------
 # Process checking utility functions
 #-------------------------------

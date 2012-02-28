@@ -1087,7 +1087,7 @@ config_gridftp_server() {
 #By making this a separate function it may be called directly in the
 #event that the gateway_service_root needs to be repointed. (another Estani gem :-))
 write_esgsaml_auth_conf() {
-    echo "AUTHSERVICE=https://${myproxy_endpoint:-${esgf_idp_peer}}/esgf-orp/saml/soap/secure/authorizationService.htm" > /etc/grid-security/esgsaml_auth.conf
+    echo "AUTHSERVICE=https://${myproxy_endpoint:-${esgf_idp_peer}}/esg-orp/saml/soap/secure/authorizationService.htm" > /etc/grid-security/esgsaml_auth.conf
     echo 
     echo "---------esgsaml_auth.conf---------"
     cat /etc/grid-security/esgsaml_auth.conf

@@ -1231,6 +1231,7 @@ test_gridftp_server() {
     while [ -n "$1" ]; do
         case $1 in
             end-user)
+                echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
                 X509_CERT_DIR=${_X509_CERT_DIR} \
                     X509_USER_KEY=${_X509_USER_KEY} \
                     X509_USER_CERT=${_X509_USER_CERT} \

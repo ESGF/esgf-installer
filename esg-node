@@ -5600,7 +5600,6 @@ run_startup_hooks() {
     echo "Running startup hooks..."
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     (source ${scripts_dir}/esg-orp && orp_startup_hook)
-    (source ${scripts_dir}/esg-security && security_startup_hook)
 }
 
 #Any last bits of cleanup for your module should be called here.

@@ -6329,7 +6329,7 @@ main() {
 		    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
 		    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
 		    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
-		    [ $((sel & IDP_BIT+DATA_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
+		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
 		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
 		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1 ${index_config}
 		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
@@ -6791,7 +6791,7 @@ main() {
     #---------------------------------------
     # Security Services Installation...
     #---------------------------------------
-	[ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
+	[ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
 	[ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
 
     #---------------------------------------

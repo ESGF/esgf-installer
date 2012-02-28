@@ -589,10 +589,6 @@ write_esgcet_las_config_file() {
           <name>esg</name>
           <value>true</value>
         </property>
-        <property>
-          <name>category</name>
-          <value>true</value>
-        </property>
       </property_group>
     </properties>
   </dataset>

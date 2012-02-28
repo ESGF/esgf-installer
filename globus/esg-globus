@@ -1209,17 +1209,40 @@ config_bdm_gridftp_server() {
     write_as_property gridftp.service.type "Replication"
 }
 
+test_auth_service() {
+    /usr/local/src/esgf/workbench/esg/extra/globus/libglobus_adq-0.9.1/libglobus_adq_client https://pcmdi11.llnl.gov/esg-orp/saml/soap/secure/authorizationService.htm https://pcmdi11.llnl.gov/esgf-idp/openid/rootAdmin gsiftp://pcmdi11.llnl.gov:2811//esg_dataroot/test/foobar
+}
+
 test_gridftp_server() {
     local ret=0
     local tmpdestfile
     debug_print "test_gridftp_server: [$@]"
 
+    local personal_credential_repo="$HOME/.globus"
+
+    mkdir -p ${personal_credential_repo}
+    chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
+
+    rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
+    local _X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_KEY=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_CERT=${personal_credential_repo}/esgf_credentials
+
     while [ -n "$1" ]; do
         case $1 in
             end-user)
+                X509_CERT_DIR=${_X509_CERT_DIR} \
+                    X509_USER_KEY=${_X509_USER_KEY} \
+                    X509_USER_CERT=${_X509_USER_CERT} \
+                    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -T
+                [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
+
                 echo -n "GridFTP - End-User Test... [$1]"
                 tmpdestfile=$(mktemp)
-                ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+                X509_CERT_DIR=${_X509_CERT_DIR} \
+                    X509_USER_KEY=${_X509_USER_KEY} \
+                    X509_USER_CERT=${_X509_USER_CERT} \
+                    ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
                     diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
                     rm -f ${tmpdestfile} && echo "[OK]" || ( echo "[FAIL]" && ((ret++)) )
                 ;;

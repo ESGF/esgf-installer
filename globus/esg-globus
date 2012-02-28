@@ -1210,7 +1210,10 @@ config_bdm_gridftp_server() {
 }
 
 test_auth_service() {
-    /usr/local/src/esgf/workbench/esg/extra/globus/libglobus_adq-0.9.1/libglobus_adq_client https://pcmdi11.llnl.gov/esg-orp/saml/soap/secure/authorizationService.htm https://pcmdi11.llnl.gov/esgf-idp/openid/rootAdmin gsiftp://pcmdi11.llnl.gov:2811//esg_dataroot/test/foobar
+    local installer_home=${installer_home:-${ESG_USER_HOME:-/usr/local/src/esgf}}
+    echo -n "Testing authorization service on ${esgf_host} ... "
+    ${installer_home}/workbench/esg/extra/globus/libglobus_adq-0.9.1/libglobus_adq_client https://${esgf_host}/esg-orp/saml/soap/secure/authorizationService.htm https://${esgf_host}/esgf-idp/openid/rootAdmin gsiftp://${esgf_host}:${gridftp_server_port}//esg_dataroot/test/sftlf.nc
+    [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
 }
 
 test_gridftp_server() {

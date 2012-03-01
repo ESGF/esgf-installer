@@ -4321,13 +4321,15 @@ pcheck() {
 }
 
 remove_install_log_entry() {
-    ((DEBUG)) && echo "removing $1's install log entry from ${install_manifest}"
-    sed -i '/:'${key}'=/d' ${install_manifest}
+    local key=${1}
+    ((DEBUG)) && echo "removing ${key}'s install log entry from ${install_manifest}"
+    sed -i '/[:]\?'${key}'=/d' ${install_manifest}
     return $?
 }
 
 remove_env() {
-    ((DEBUG)) && echo "removing $1's environment from ${env_file}"
+    local key=${1}
+    ((DEBUG)) && echo "removing ${key}'s environment from ${env_file}"
     sed -i '/'${key}'/d' ${env_file}
     return $?
 }

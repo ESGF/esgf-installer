@@ -5989,29 +5989,31 @@ esgf_node_info() {
     printf "
 
      The goal of this script is to automate as many tasks as possible
-     regarding the installation of the software stack that is the ESGF
-     Node.  A software stack is a collection of tools that work in
-     concert to perform a particular task or set of tasks that are
-     semantically united.  Essentially, the gestalt is the ESGF
-     Node. The software stack is comprised of; Tomcat, Thredds,
-     CDAT & CDMS, PostgreSQL, MyProxy and RedHat/CentOS. Through the
-     installation process there are different accounts that are
-     created that facilitate the communication between these separate
-     software entities.	 These credentials are internal to the stack.
-     It is recommended that you use the defaults provided throughout
-     this installation.	 The security impact with regards to the
-     visibility and accessibility of the constituent components of the
-     stack depends on other factors to be addressed by your
+     regarding the installation and maintenance of the ESGF software
+     stack that is know as the \"ESGF Node\".  A software stack is a
+     collection of tools that work in concert to perform a particular
+     task or set of tasks that are semantically united. The software
+     stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL,
+     MyProxy, and several ESGF.org custom software applications
+     running on a LINUX (RedHat/CentOS) operating system.
+
+     Through the installation process there are different accounts
+     that are created that facilitate the communication between the
+     software stack entities.  These credentials are internal to the
+     stack.  It is recommended that you use the defaults provided
+     throughout this installation.  The security impact with regards
+     to the visibility and accessibility of the constituent components
+     of the stack depends on other factors to be addressed by your
      organization.
 
-     Please be sure that you have gotten your credentials from your
-     ESGF IDP Peer (or ESG Gateway)
+     Please be sure that you have gotten your created an account on
+     your ESGF IDP Peer.
 
      The primary IDP Peer for ESGF is pcmdi9.llnl.gov
      You may register for an account at PCMDI9 at the following URL:
      http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
 
-     This is prerequisite for publication!
+     Note: Account creation is prerequisite for publication!
 
      ESGF P2P Node:                                             ESGF P2P Node:
       ---------                                                   ---------
@@ -6140,7 +6142,7 @@ usage() {
 	-------------------------------
 	To add this script to the linux boot sequence: (as root)
 	> cd /etc/init.d
-	> cp ${install_prefix}/bin/esg-node
+	> cp ${install_prefix}/bin/esg-node .
 	> chkconfig --add esg-node
 	> chkconfig --list esg-node
 	-------------------------------

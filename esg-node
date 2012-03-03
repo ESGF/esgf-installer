@@ -2053,7 +2053,7 @@ setup_root_app() {
     [ $? != 0 ] && echo " ERROR: Could not extract $(readlink -f ${root_app_dist_url##*/})" && popd && checked_done 1
 
     [ -e ${tomcat_install_dir}/webapps/esgf-node-manager ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.nm,}
-    [ -e ${tomcat_install_dir}/webapps/esgf-web-fe ] && cp -v ${tomcat_install_dir}/webapps/ROOT/index.html{.fe,}
+    [ -e ${tomcat_install_dir}/webapps/esgf-web-fe ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.fe,}
 
     chown -R ${tomcat_user} $(readlink -f ${tomcat_install_dir}/webapps/ROOT)
     chgrp -R ${tomcat_group} $(readlink -f ${tomcat_install_dir}/webapps/ROOT)
@@ -6007,11 +6007,11 @@ esgf_node_info() {
      Please be sure that you have gotten your credentials from your
      ESGF IDP Peer (or ESG Gateway)
 
-     The primary IDP Peer for ESGF is pcmdi3.llnl.gov
-     You may register for an account at PCMDI3 at the following URL:
-     http://pcmdi3.llnl.gov/esgcet/home.htm -> \"create account\"
+     The primary IDP Peer for ESGF is pcmdi9.llnl.gov
+     You may register for an account at PCMDI9 at the following URL:
+     http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
 
-     This is required for publication.
+     This is prerequisite for publication!
 
      ESGF P2P Node:                                             ESGF P2P Node:
       ---------                                                   ---------
@@ -6033,6 +6033,8 @@ esgf_node_info() {
      | Machine |                                                 | Machine |
      |---------|                                                 |---------|
       ---------                                                   ---------
+
+     (Visit http://esgf.org , http://esgf.org/wiki for more information)
 
      -ESGF.org \n\n" | more
 

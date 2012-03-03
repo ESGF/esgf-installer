@@ -4217,14 +4217,14 @@ _is_managed_db() {
 
 set_redirect() {
     local web_app_tld=${1:-esgf-node-manager}
+    local default_answer=${2:-"Y"}
     local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
     [ ! -e ${index_file} ] && echo "Sorry, No \"ROOT\" application found!" && return 1
     [ ! -e ${tomcat_install_dir}/webapps/${web_app_tld} ] && echo "Sorry, No target appliaction directory found for ${web_app_tld}" && return 2
     local redirect_content="<head><meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=/${web_app_tld}\"></head>"
     [ "${redirect_content}" = "$(cat ${index_file})" ] && echo "Redirect already setup" && return 0
-    local doit="N"
-    read -e -t 20 -p "Do you wish to have the ${web_app_tld}'s page as this node's homepage? [y/N]: " doit
-    [ "n" = "${doit}" ] || [ "N" = "${doit}" ] && return 0
+    read -e -t 20 -p "Do you wish to have the ${web_app_tld}'s page as this node's homepage? $([ "$default_answer" = "N" ] && echo "[y/N]" || echo "[Y/n]"): " default_answer
+    [ "n" = "${default_answer}" ] || [ "N" = "${default_answer}" ] && return 0
     mv ${index_file} ${index_file}.last
     echo "${redirect_content}" > ${index_file}
     chmod 644 ${index_file}

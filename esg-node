@@ -6199,13 +6199,23 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${esgf_host}/${node_manager_app_context_root}"
-    echo "http://${esgf_host}/thredds"
-    echo "http://${esgf_host}/esg-orp"
+    echo "http://${esgf_host}/"
+    echo "http://${esgf_host}/esgf-node-manager"
+    if [ $((sel & DATA_BIT ))   != 0 ] ; then
+        echo "http://${esgf_host}/thredds"
+        echo "http://${esgf_host}/esg-orp"
+    fi
+    if [ $((sel & INDEX_BIT))   != 0 ]; then
+        echo "http://${esgf_host}/esgf-web-fe"
+    fi
+    if [ $((sel & COMPUTE_BIT)) != 0 ]; then
+        echo "http://${esgf_host}/las"
+    fi
     echo
-    echo "To see the published test, go your specified \"index\" peer: [${esgf_index_peer}]"
-    echo "http://${esgf_index_peer}/"
-    echo "and browse to \"Test Project\" -> pcmdi.${esg_root_id}.${node_short_name}.test.mytest"
+    echo "Your specified \"index\" peer: [${esgf_index_peer}] (url = http://${esgf_index_peer}/)"
+    echo "Your specified \"idp\" peer  : [${esgf_idp_peer}] (name = ${esgf_idp_peer_name})"
+
+    #echo "(\"Test Project\" -> pcmdi.${esg_root_id}.${node_short_name}.test.mytest)"
     echo ""
 }
 
@@ -6898,9 +6908,8 @@ main() {
     }
 
     esg_node_finally() {
-	echo "(esg_datanode: cleaning up etc...)"
+	debug_print "(esg_datanode: cleaning up etc...)"
 	chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
-	chown -R ${installer_uid}:${installer_gid} ${HOME}/.globus >& /dev/null
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid
     #rm $OUTPUT_PIPE

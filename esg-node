@@ -1805,6 +1805,8 @@ setup_tomcat() {
 	fi
     fi
 
+    setup_root_app
+
     checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt  ${esg_dist_url}/robots.txt  $((force_install))
     checked_get ${tomcat_install_dir}/webapps/ROOT/favicon.ico ${esg_dist_url}/favicon.ico $((force_install))
 
@@ -2025,6 +2027,38 @@ configure_tomcat() {
 	    [ $? != 0 ] && " ERROR: Could not change group of esg's tomcat config dir to \"$tomcat_user\" user" && popd && checked_done 1
 
 	    popd #>& /dev/null
+}
+
+setup_root_app() {
+
+    [ -d "${tomcat_install_dir}/webapps/ROOT" ] && echo "ROOT app in place... [OK]" && return 0
+    echo "Oops, Don't see ROOT web application"
+
+    echo
+    echo "*******************************"
+    echo "Setting up Apache Tomcat...(v${tomcat_version}) ROOT webapp"
+    echo "*******************************"
+    echo
+
+    local root_app_dist_url=${esg_dist_url}/ROOT.tgz
+
+    mkdir -p ${workdir}
+    pushd ${workdir} >& /dev/null
+
+    echo "Downloading ROOT application from ${root_app_dist_url}"
+    checked_get ${root_app_dist_url}
+    (( $? > 1 )) && echo " ERROR: Could not download ROOT app archive" && popd && checked_done 1
+    echo "unpacking ${root_app_dist_url##*/}..."
+    tar xzf ${root_app_dist_url##*/} -C ${tomcat_install_dir}/webapps
+    [ $? != 0 ] && echo " ERROR: Could not extract $(readlink -f ${root_app_dist_url##*/})" && popd && checked_done 1
+
+    [ -e ${tomcat_install_dir}/webapps/esgf-node-manager ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.nm,}
+    [ -e ${tomcat_install_dir}/webapps/esgf-web-fe ] && cp -v ${tomcat_install_dir}/webapps/ROOT/index.html{.fe,}
+
+    chown -R ${tomcat_user} $(readlink -f ${tomcat_install_dir}/webapps/ROOT)
+    chgrp -R ${tomcat_group} $(readlink -f ${tomcat_install_dir}/webapps/ROOT)
+    echo "ROOT application \"installed\""
+    popd >& /dev/null
 }
 
 #Util "private" function for use **AFTER** tomcat has been configured!!!!
@@ -6846,6 +6880,7 @@ main() {
     #---------------------------------------
     #System Launch...
     #---------------------------------------
+        setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 	start ${sel}
 	done_remark

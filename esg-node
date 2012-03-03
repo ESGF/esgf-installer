@@ -2807,8 +2807,8 @@ test_publication() {
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
 
-    local index_peer=$(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
-    echo "(target index node => ${index_peer}  $(sed -n 's@[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
+    local index_peer=$(sed -n 's@^[^#]*[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
+    echo "(target index node => ${index_peer}  $(sed -n 's@^[^#]*[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
     #Publish the dataset from the THREDDS catalog created above...
     echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
     $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish
@@ -4021,8 +4021,8 @@ verify_thredds_credentials() {
     read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9]*\)\".*/\1 \2/p' ${tomcat_users_file}))
 
     echo -n "Inspecting publisher... "
-    local thredds_username=$(sed -n 's@[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
-    local thredds_password=$(sed -n 's@[ ]*thredds_password[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
+    local thredds_username=$(sed -n 's@^[^#]*[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
+    local thredds_password=$(sed -n 's@^[^#]*[ ]*thredds_password[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
     local thredds_password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${thredds_password} | cut -d ":" -f 2) && echo ")" || (echo -n "x" && ((ret++)) )
 
     echo -n "Checking username... "
@@ -5601,7 +5601,8 @@ show_svc_list() {
 run_startup_hooks() {
     echo "Running startup hooks..."
     #If we have the ORP installed make sure that it's configuration file contains the info it needs.
-    (source ${scripts_dir}/esg-orp && orp_startup_hook)
+    (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
+    (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
 }
 
 #Any last bits of cleanup for your module should be called here.

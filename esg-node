@@ -6122,12 +6122,14 @@ usage() {
 	Publication Endpoint Setting (Index Peer/Gateway)
 	-------------------------------
         --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
+        --get-index-peer - tells you where this node is indexing it's data
         --set-publication-target <hostname (and rootdir) of \"gateway\" you wish to publish to> Ex pcmdi3.llnl.gov/esgcet
 
         -------------------------------
 	IDP Endpoint Setting (IDP Peer)
 	-------------------------------
         --set-idp-peer | --set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
+        --get-idp-peer - tells you where this node is authenticating against.
 
         -------------------------------
 	Globus Tool Management
@@ -6551,12 +6553,26 @@ main() {
 		    uninstall
 		    exit $?
 		    ;;
+                --get-idp-peer)
+                    get_property esgf_idp_peer
+                    echo
+                    echo "  Current IDP Peer: [${esgf_idp_peer}]"
+                    echo
+                    exit 0
+                    ;;
                 --set-idp-peer|--set-admin-peer)
                     self_verify
                     check_prerequisites
                     init_structure
                     select_idp_peer
                     exit $?
+                    ;;
+                --get-index-peer)
+                    get_property esgf_index_peer
+                    echo
+                    echo "  Current Index Peer: [${esgf_index_peer}]"
+                    echo
+                    exit 0
                     ;;
                 --set-index-peer)
                     self_verify
@@ -6577,7 +6593,7 @@ main() {
                 --get-default-peer)
                     get_property esgf_default_peer
                     echo
-                    echo "  Current default peer: [${esgf_default_peer}]"
+                    echo "  Current \"default\" Peer: [${esgf_default_peer}]"
                     echo
                     exit 0
                     ;;
@@ -6609,7 +6625,8 @@ main() {
                     exit $?
                     ;;
                 --federation-sanity-check)
-                    check_for_group_intersection_with
+                    shift
+                    check_for_group_intersection_with $*
                     exit $?
                     ;;
 		--register)

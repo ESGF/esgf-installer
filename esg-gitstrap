@@ -158,7 +158,7 @@ my %repoinfo = (
                         "product-server/esg-product-server",
                       ],
         'configlinks' => [],
-        'installerlinks' => [],
+        'installerlinks' => [ "esg-autoinstall-testnode", "esg-purge.sh"],
     },
     'esgf-dashboard' => {
         'url' => 'git://esgf.org/esgf-dashboard.git',

@@ -4519,6 +4519,37 @@ md5sum_() {
 }
 
 
+#------------------------------------------------------------------
+#NOTE: this function DOES DEPEND on the format of the node manager's
+#      registration.xml.  If the format of the file changes, please
+#      make sure this function is appropriately updated
+#------------------------------------------------------------------
+#
+# Checks this node's group membership against the passed in target node
+# The default is to check against the default peer currently assigned
+# Returns true (0) if there IS an intersection, false (1) otherwise
+check_for_group_intersection_with() {
+    get_property esgf_default_peer
+    local target_node=${1:-${esgf_default_peer}}
+    local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
+    [ -z "${target_groups}" ] && echo "Warning: Could not glean peer group membership from target peer (${target_node})" && return 1
+    get_property node_peer_group
+    local shared_groups=($(LC_ALL=C cat <(echo "${target_groups}" | sed 's# ##g' | sed 's#,#\n#g') <(echo "${node_peer_group}" | sed 's# ##g' | sed 's#,#\n#g') | sort | uniq -d | xargs))
+
+    #Let the user know what you've found...
+    if ((${#shared_groups[@]} == 0)); then
+        echo
+        echo "  WARNING: This node does not share any peer groups with peer node $target_node :-("
+        echo
+        return 1
+    else
+        echo
+        echo "  This node shares the group(s) [$(echo ${shared_groups[@]} | sed 's# #, #g')] with ${target_node} [OK]"
+        echo
+        return 0
+    fi
+}
+
 #-------------------------------
 # Process checking utility functions
 #-------------------------------
@@ -6079,6 +6110,15 @@ usage() {
         (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
 
         -------------------------------
+        Federation / Node Relationship Flags:
+        -------------------------------
+        --set-default-peer <hostname of peer to be default>
+        --get-default-peer - tells you this node's currently configured default peer
+        --set-peer-group <name of group(s), comma delim, you wish to participate>
+        --get-peer-group - tells you this node's currenly configured peer group(s)
+        --federation-sanity-check - tells you if your node's configured peer groups intersect with default peer
+
+        -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
 	-------------------------------
         --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
@@ -6532,6 +6572,44 @@ main() {
                     shift
                     init_structure
                     set_index_peer ${1:-"nohost"} "gateway"
+                    exit $?
+                    ;;
+                --get-default-peer)
+                    get_property esgf_default_peer
+                    echo
+                    echo "  Current default peer: [${esgf_default_peer}]"
+                    echo
+                    exit 0
+                    ;;
+                --set-default-peer)
+                    shift
+                    esgf_default_peer="$*"
+                    write_as_property esgf_default_peer
+                    check_for_group_intersection_with
+                    echo "  Default Peer set to: [${esgf_default_peer}]"
+                    echo "  (restart node to enable default peer value)"
+                    echo
+                    exit $?
+                    ;;
+                --get-peer-group)
+                    get_property node_peer_group
+                    echo
+                    echo "  Configured to participate in peer group(s): [${node_peer_group}]"
+                    echo
+                    exit 0
+                    ;;
+                --set-peer-group)
+                    shift
+                    node_peer_group="$*"
+                    write_as_property node_peer_group
+                    check_for_group_intersection_with
+                    echo "  Peer Group is set to: [${node_peer_group}]"
+                    echo "  (restart node to enable group value)"
+                    echo
+                    exit $?
+                    ;;
+                --federation-sanity-check)
+                    check_for_group_intersection_with
                     exit $?
                     ;;
 		--register)

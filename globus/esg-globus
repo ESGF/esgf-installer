@@ -414,7 +414,6 @@ start_globus_services() {
         return $?
     elif [ "${config_type}" = "gateway" ]; then
         start_myproxy_server
-        #write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}:${myproxy_port:-7512}"
         return $?
     else
         echo "You must provide a configuration type arg [datanode | gateway]"
@@ -1874,7 +1873,8 @@ write_myproxy_install_log() {
     [ -e ${globus_location}/sbin/myproxy-server ] && \
         write_as_property myproxy_app_home ${globus_location}/sbin/myproxy-server || \
         echo "WARNING: Cannot find executable ${globus_location}/sbin/myproxy-server"
-    write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}:${myproxy_port:-7512}"
+    ! grep myproxy.endpoint ${config_dir}/esgf.properties && write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}"
+    ! grep myproxy.port ${config_dir}/esgf.properties && write_as_property myproxy_port
     write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /etc/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
     
     echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_manifest}

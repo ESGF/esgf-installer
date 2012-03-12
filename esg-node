@@ -6132,6 +6132,7 @@ usage() {
         --set-peer-group <name of group(s), comma delim, you wish to participate>
         --get-peer-group - tells you this node's currenly configured peer group(s)
         --federation-sanity-check - tells you if your node's configured peer groups intersect with default peer
+        --spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
 
         -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
@@ -6622,14 +6623,14 @@ main() {
                     echo
                     exit $?
                     ;;
-                --get-peer-group)
+                --get-peer-group|--get-peer-groups)
                     get_property node_peer_group
                     echo
                     echo "  Configured to participate in peer group(s): [${node_peer_group}]"
                     echo
                     exit 0
                     ;;
-                --set-peer-group)
+                --set-peer-group|--set-peer-groups)
                     shift
                     node_peer_group="$*"
                     write_as_property node_peer_group
@@ -6642,6 +6643,13 @@ main() {
                 --federation-sanity-check)
                     shift
                     check_for_group_intersection_with $*
+                    exit $?
+                    ;;
+                --spotcheck)
+                    shift
+                    local target="$*"
+                    [ -z "${target}" ] && target="localhost"
+                    (${scripts_dir}/esgf-spotcheck ${target})
                     exit $?
                     ;;
 		--register)

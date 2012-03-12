@@ -6196,7 +6196,7 @@ esgf_node_info() {
 
      (Visit http://esgf.org , http://esgf.org/wiki for more information)
 
-     -ESGF.org \n\n" | more
+     -ESGF.org \n\n"
 
 }
 
@@ -6364,7 +6364,7 @@ usage() {
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
 
-    " | more
+    "
     exit 0
 }
 

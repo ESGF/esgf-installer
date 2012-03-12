@@ -6652,7 +6652,9 @@ main() {
                 --spotcheck)
                     shift
                     local target="$*"
-                    [ -z "${target}" ] && target="localhost"
+                    if grep -q '\-\-' <<<${1} || [ -z "$*" ]; then
+                        target="localhost $*"
+                    fi
                     (${scripts_dir}/esgf-spotcheck ${target})
                     exit $?
                     ;;

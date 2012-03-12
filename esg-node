@@ -4549,7 +4549,11 @@ check_for_group_intersection_with() {
     local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
     [ -z "${target_groups}" ] && echo "Warning: Could not glean peer group membership from target peer (${target_node})" && return 1
     get_property node_peer_group
-    local shared_groups=($(LC_ALL=C cat <(echo "${target_groups}" | sed 's# ##g' | sed 's#,#\n#g') <(echo "${node_peer_group}" | sed 's# ##g' | sed 's#,#\n#g') | sort | uniq -d | xargs))
+    #local shared_groups=($(LC_ALL=C cat <(echo "${target_groups}" | sed 's# ##g' | sed 's#,#\n#g') <(echo "${node_peer_group}" | sed 's# ##g' | sed 's#,#\n#g') | sort | uniq -d | xargs))
+
+    #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
+    #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
+    local shared_groups=($(awk 'BEGIN {RS=",";ORS=" "} {a[$1]+=1} END {for (i in a) if (a[i] >1) print i}'<<<"${target_groups},${node_peer_group}"))
 
     #Let the user know what you've found...
     if ((${#shared_groups[@]} == 0)); then

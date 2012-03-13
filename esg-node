@@ -6274,7 +6274,7 @@ done_remark() {
         echo "http://${esgf_host}/las"
     fi
     echo
-    echo "Your peer group membership ---- : [${node_peer_group}]"
+    echo "Your peer group membership -- : [${node_peer_group}]"
     echo "Your specified \"default\" peer : [$esgf_default_peer]"
     echo "Your specified \"index\" peer - : [${esgf_index_peer}] (url = http://${esgf_index_peer}/)"
     echo "Your specified \"idp\" peer --- : [${esgf_idp_peer}] (name = ${esgf_idp_peer_name})"

@@ -5063,10 +5063,12 @@ backup_db() {
     if [ -n "${my_schema_name}" ]; then
 	my_schema_name=_${my_schema_name}
 	echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
+        debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
 	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql
 	[ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     else
         echo "Backing up database: ${my_node_db_name} -to->	 ${my_node_db_name}_backup_$(date ${date_format}).sql"
+        debug_print "pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
         [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     fi
@@ -5125,11 +5127,13 @@ restore_last_db_backup() {
 	my_schema_name=_${my_schema_name}
 	backup_file=$(ls -rt | grep ${my_node_db_name}_esgf${my_schema_name}_backup_ | tail -n ${n_recent} | head -n 1)
 	echo "Restoring backup esgf schema esgf${my_schema_name} of ${my_node_db_name} <-from- ${backup_file}"
-	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} < ${backup_file}
+        debug_print "psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}"
+	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}
 	[ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     else
 	backup_file=$(ls -rt | grep ${my_node_db_name}_backup_ | tail -n ${n_recent} | head -n 1)
 	echo "Restoring backup ${my_node_db_name} <-from- ${backup_file}"
+        debug_print "psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}"
 	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}
 	[ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     fi

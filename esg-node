@@ -5050,7 +5050,7 @@ backup_db() {
     local my_node_db_name=${db_database}
     local my_schema_name
     
-    echo -n "backup_db: "
+    echo -n "backup db: "
     while [ -n "$1" ]; do
         case ${1} in 
             -s | --schema)
@@ -5082,13 +5082,13 @@ backup_db() {
     #back up the schema specifically, if one is provided
     if [ -n "${my_schema_name}" ]; then
 	my_schema_name=_${my_schema_name}
-        backup_file_root="${my_node_db_name}_esgf${my_schema_name}_backup_"
+        backup_file_root="${my_node_db_name}_esgf${my_schema_name}_backup"
 	echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql"
         debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
 	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql
 	[ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     else
-        backup_file_root="${my_node_db_name}_backup_"
+        backup_file_root="${my_node_db_name}_backup"
         echo "Backing up database: ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql"
         debug_print "pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
@@ -5112,12 +5112,12 @@ backup_db() {
     return 0
 }
 
-restore_last_db_backup() {
+restore_nth_db_backup() {
     local my_node_db_name=${db_database}
     local my_schema_name
     local n_recent=1
     
-    echo -n "backup_db: "
+    echo -n "restore db: "
     while [ -n "$1" ]; do
         case ${1} in 
             -s | --schema)
@@ -5130,7 +5130,7 @@ restore_last_db_backup() {
                 ;;
             -n)
                 shift
-                n_recet=${1}
+                n_recent=${1}
                 ;;
             *)
                 echo " Unknown flag [${1}]"
@@ -5140,16 +5140,20 @@ restore_last_db_backup() {
         esac
         shift
     done
-    echo -n "database = [${my_node_db_name}] "
-    [ -n "${my_schema_name}" ] && echo -n "schema = [${my_schema_name}]"
-    echo
 
     [ ! -d ${esg_backup_dir} ] && echo " ERROR: cannot locate backup directory [${esg_backup_dir}]" && return 1
 
-    local answer="Y" #always be safe.
+    local n_total
+    echo -n "database = [${my_node_db_name}] " && n_total=$(ls -l ${esg_backup_dir} | grep ${my_node_db_name}_backup_ | wc -l)
+    [ -n "${my_schema_name}" ] && echo -n "schema = [${my_schema_name}]" && n_total=$(ls -l ${esg_backup_dir} | grep ${my_node_db_name}_esgf_${my_schema_name}_backup_ | wc -l)
+    echo
+
+    ((n_recent > n_total)) && printf "\n  Sorry, there are not ${n_recent} backups present, only ${n_total} are available\n\n" && return 2
+
+    local default_answer="Y" #always be safe.
     read -e -p "Would you like to first make a back up of the existing database? [Y/n] " answer
-    [ -n ${answer} ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z')
-    [ "${answer}" = "Y" ] && backup_db -db ${my_node_name} -s ${my_schema_name} && ((n_recent++))
+    [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
+    [ "${answer}" = "Y" ] && backup_db -db ${my_node_db_name} -s ${my_schema_name} && ((n_recent++))
     
     start_postgress
 
@@ -6259,9 +6263,11 @@ usage() {
 	Database Management
 	-------------------------------
 	--config-db    - provides database only configuration to support based on note type (see --get-type)
-	--backup-db    - creates a backup of node database to file: -db <database name> -s <schema name (suffix)>
-                         [the prefix for all schemas provided is \"esgf_\"  -s foo will reference schema esgf_foo]
-	--restore-last-db - restores from backup the last backup done <database name <schema name>>
+	--backup-db    - creates a backup of node database to file
+                         the prefix for all schemas provided is \"esgf_\"  -s foo will reference schema esgf_foo
+                         [-s|--schema] <schema suffix> [-db|--database] <database name>
+	--restore-db   - restores from (nth) backup of database
+                         [-s|--schema] <schema suffix> [-db|--database] <database name> -n <reverse backup order>
 
 	-------------------------------
 	Trouble Shooting
@@ -6626,13 +6632,13 @@ main() {
 		    backup_db $@
 		    exit $?
 		    ;;
-		--restore-last-db)
+		--restore-db)
 		    self_verify
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1
                     init_structure
 		    shift
-		    restore_last_db_backup $@
+		    restore_nth_db_backup $@
 		    exit $?
 		    ;;
                 --verify-thredds-credentials)

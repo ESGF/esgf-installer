@@ -5151,6 +5151,8 @@ restore_last_db_backup() {
     [ -n ${answer} ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z')
     [ "${answer}" = "Y" ] && backup_db -db ${my_node_name} -s ${my_schema_name} && ((n_recent++))
     
+    start_postgress
+
     pushd ${esg_backup_dir} >& /dev/null
     local backup_file
     #back up the schema specifically, if one is provided

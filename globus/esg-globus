@@ -1269,6 +1269,18 @@ test_gridftp_server() {
     return ${ret}
 }
 
+configure_esgf_publisher_for_gridftp() {
+    echo -n "configuring publisher to use this gridftp server... "
+    if [ -e ${publisher_home}/${publisher_config} ]; then
+        sed -n 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-esgf_host}':'${gridftp_server_port}'/ #p' ${publisher_home}/${publisher_config}
+        echo "[OK]"
+        return 0
+    else
+        echo "[FAIL]"
+        return 1
+    fi
+}
+
 #Could takes the arg(s): "bdm" | "end-user"
 #see caller start_globus_services() above.
 #returns true  (0) if this function actively started the process
@@ -1290,6 +1302,8 @@ start_gridftp_server() {
         mkdir -p ${gridftp_chroot_jail}/etc/grid-security && \
         (cd /etc/grid-security; tar czpf - certificates) | tar xzpf - -C ${gridftp_chroot_jail}/etc/grid-security
     [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+
+    configure_esgf_publisher_for_gridftp
     
     pushd ${globus_location}/sbin >& /dev/null
 

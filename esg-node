@@ -1612,8 +1612,8 @@ test_esgcet() {
     $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
     [ $? != 0 ] && echo " ERROR: ESG directory scan failed" && popd && checked_done 1
 
-    echo "$cdat_home/bin/esgpublish --map mytest.txt --project test --model test"
-    $cdat_home/bin/esgpublish --map mytest.txt --project test --model test
+    echo "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test"
+    $cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test
     [ $? != 0 ] && echo " ERROR: ESG publish failed" && popd && checked_done 1
 
 
@@ -2544,8 +2544,8 @@ setup_tds() {
     start_postgress
 
     #set in cdms setup (prerequisite)
-    echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
-    ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
+    echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --service fileservice --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
+    ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --service fileservice --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
 
     chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
 
@@ -2618,8 +2618,8 @@ test_tds() {
     start_tomcat
     start_postgress
 
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds"
-    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
+    echo "$cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds"
+    $cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
     [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
     echo "curl http://${esgf_host_ip}/thredds"
@@ -2844,8 +2844,8 @@ test_publication() {
     local index_peer=$(sed -n 's@^[^#]*[ ]*hessian_service_url[ ]*=[ ]*\(.*publishingService\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | sed -n 's@http[s]*://\([^/]*\)/.*@\1@p')
     echo "(target index node => ${index_peer}  $(sed -n 's@^[^#]*[ ]*hessian_service_url[ ]*=[ ]*\(.*\)$@\1@p' ${esg_root_dir}/config/esgcet/esg.ini | grep -q esg-search && echo "(P2P)") )"
     #Publish the dataset from the THREDDS catalog created above...
-    echo "$cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
-    $cdat_home/bin/esgpublish --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish
+    echo "$cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish"
+    $cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --publish
     [ $? != 0 ] && echo " ERROR: unable to successfully execute esgpublish" && return 1
     sleep 3
 

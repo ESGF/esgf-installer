@@ -2121,8 +2121,8 @@ start_tomcat() {
 	-outfile ${tomcat_install_dir}/logs/catalina.out \
 	-errfile ${tomcat_install_dir}/logs/catalina.err \
 	-user $tomcat_user \
-	${tomcat_opts} \
 	$java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false \
+	${tomcat_opts} \
 	org.apache.catalina.startup.Bootstrap
     if [ $? != 0 ]; then
 	echo " ERROR: Could not start up tomcat"

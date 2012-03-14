@@ -5061,6 +5061,11 @@ backup_db() {
                 shift
                 my_node_db_name=${1}
                 ;;
+            *)
+                echo " Unknown flag [${1}]"
+                echo " Valid flags: [-s|--schema] <schema suffix> [-db|--database] <database name>"
+                return 2
+                ;;
         esac
         shift
     done
@@ -5072,16 +5077,19 @@ backup_db() {
     pushd ${esg_backup_dir} >& /dev/null
 
     start_postgress
+    local backup_file
 
     #back up the schema specifically, if one is provided
     if [ -n "${my_schema_name}" ]; then
 	my_schema_name=_${my_schema_name}
-	echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
+        backup_file_root="${my_node_db_name}_esgf${my_schema_name}_backup_"
+	echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql"
         debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql"
 	PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql
 	[ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
     else
-        echo "Backing up database: ${my_node_db_name} -to->	 ${my_node_db_name}_backup_$(date ${date_format}).sql"
+        backup_file_root="${my_node_db_name}_backup_"
+        echo "Backing up database: ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql"
         debug_print "pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql
         [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
@@ -5091,7 +5099,7 @@ backup_db() {
     #keep only the last num_backups_to_keep files
     local num_backups_to_keep=${num_backups_to_keep:-7}
     pushd ${esg_backup_dir} >& /dev/null
-    local files=(`ls -t | grep ${my_node_db_name##*/}.\*.sql | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
+    local files=(`ls -t | grep ${backup_file_root}.\*.sql | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
     if (( ${#files[@]} > 0 )); then
 	echo "Tidying up a bit..."
 	echo "${#files[@]} old backup files to remove: ${files[@]}"
@@ -5107,6 +5115,7 @@ backup_db() {
 restore_last_db_backup() {
     local my_node_db_name=${db_database}
     local my_schema_name
+    local n_recent=1
     
     echo -n "backup_db: "
     while [ -n "$1" ]; do
@@ -5119,6 +5128,15 @@ restore_last_db_backup() {
                 shift
                 my_node_db_name=${1}
                 ;;
+            -n)
+                shift
+                n_recet=${1}
+                ;;
+            *)
+                echo " Unknown flag [${1}]"
+                echo " Valid flags: [-s|--schema] <schema suffix> [-db|--database] <database name> -n <reverse backup order>"
+                return 2
+                ;;
         esac
         shift
     done
@@ -5128,7 +5146,6 @@ restore_last_db_backup() {
 
     [ ! -d ${esg_backup_dir} ] && echo " ERROR: cannot locate backup directory [${esg_backup_dir}]" && return 1
 
-    local n_recent=1
     local answer="Y" #always be safe.
     read -e -p "Would you like to first make a back up of the existing database? [Y/n] " answer
     [ -n ${answer} ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z')

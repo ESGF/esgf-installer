@@ -4558,7 +4558,11 @@ check_for_group_intersection_with() {
     for target_node in ${target_nodes[@]}; do
         grep -q ${target_node} <<<${visited[@]} && debug_print "already visited ${target_node}" && continue
     local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
-    [ -z "${target_groups}" ] && printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n" && return 1
+    if [ -z "${target_groups}" ]; then
+        printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n"
+        ((ret++))
+        continue
+    fi
 
     #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
     #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
@@ -4567,10 +4571,9 @@ check_for_group_intersection_with() {
     #Let the user know what you've found...
     if ((${#shared_groups[@]} == 0)); then
         echo "  WARNING: This node does not share any peer groups with peer node $target_node :-("
-        ret=1
+        ((ret++))
     else
         echo "  This node shares the group(s) [$(echo ${shared_groups[@]} | sed 's# #, #g')] with ${target_node} ($( [ "${esgf_default_peer}" = "${target_node}" ] && echo "default ")$( [ "${esgf_idp_peer}" = "${target_node}" ] && echo "idp ")$( [ "${esgf_index_peer}" = "${target_node}" ] && echo "index")) [OK]"
-        ret=0
     fi
     visited=( ${visited[@]} ${target_node})
     done

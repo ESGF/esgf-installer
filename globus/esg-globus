@@ -1270,15 +1270,13 @@ test_gridftp_server() {
 }
 
 configure_esgf_publisher_for_gridftp() {
-    echo -n "configuring publisher to use this gridftp server... "
+    echo -n " configuring publisher to use this gridftp server... "
     if [ -e ${publisher_home}/${publisher_config} ]; then
-        sed -n 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-esgf_host}':'${gridftp_server_port}'/ #p' ${publisher_home}/${publisher_config}
-        echo "[OK]"
+        cp ${publisher_home}/${publisher_config}{,.bak}
+        sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}
         return 0
-    else
-        echo "[FAIL]"
-        return 1
     fi
+    return 1
 }
 
 #Could takes the arg(s): "bdm" | "end-user"

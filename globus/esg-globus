@@ -1274,8 +1274,10 @@ configure_esgf_publisher_for_gridftp() {
     if [ -e ${publisher_home}/${publisher_config} ]; then
         cp ${publisher_home}/${publisher_config}{,.bak}
         sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}
+        echo "[OK]"
         return 0
     fi
+    echo "[FAIL]"
     return 1
 }
 

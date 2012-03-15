@@ -2320,6 +2320,16 @@ select_idp_peer() {
     write_as_property esgf_idp_peer
 
     #----
+    write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
+    write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
+    #----------------------
+
+    write_tds_env
+}
+
+#TODO - currently an orphaned function... make this a part of a larger configuration sanity check routine...
+sanity_check_web_xmls() {
+    #----
     #Editing web.xml files for projects who use the authorizationService
     #----
     echo "updating webapps' web.xml files accordingly..."
@@ -2339,14 +2349,7 @@ select_idp_peer() {
 	-------------------------------------------------------------------------------------------------
 
 "
-    #----
-    write_as_property myproxy_endpoint #this is used to set the registration.xml's "adminPeer" value (revisit this.. I should be more consistent with naming)
-    write_as_property myproxy_port ${custom_myproxy_port:-${default_myproxy_port}}
-    #----------------------
-
-    write_tds_env
 }
-
 
 #####
 # THREDDS Data Server

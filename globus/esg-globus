@@ -910,6 +910,7 @@ setup_gridftp_jail() {
 
     while read mount_name mount_dir; do
         [ -z ${mount_name} ] && debug_print "blank entry: [${mount_name}]" && continue;
+        [ -z ${mount_dir} ] && debug_print "blank dir entry: [${mount_dir}]" && continue;
         echo "mounting [${mount_dir}] into chroot jail [${gridftp_chroot_jail}/] as [${mount_name##*/}]"
         if [ -z "${mount_name}" ] || [ -z "${mount_dir}" ] ; then
             echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'

@@ -2556,8 +2556,8 @@ setup_tds() {
     start_postgress
 
     #set in cdms setup (prerequisite)
-    echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --service fileservice --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
-    ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --service fileservice --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
+    echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
+    ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
 
     chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
 

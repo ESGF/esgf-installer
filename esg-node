@@ -5406,11 +5406,11 @@ prefix_to_path() {
     local appendage=$(echo "$@" | tr ' ' "${sep}")
 
     if [ -z "${var}" ] ; then
-        echo "WARNING: append_to_path() called with no arguments!" >&2
+        echo "WARNING: prefix_to_path() called with no arguments!" >&2
         return
     fi
     if [ -z "${appendage}" ] ; then
-        echo "WARNING: append_to_path() called with no path to append!" >&2
+        echo "WARNING: prefix_to_path() called with no path to prepend!" >&2
         return
     fi
     export ${var}=$(_path_unique ${appendage}:${!var}:\$${var})

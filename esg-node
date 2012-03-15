@@ -4216,7 +4216,7 @@ _is_managed_db() {
         [ "${db_managed}" = "yes" ] && return 0 #Has to be explicitly yes
     fi
 
-    if [ -z "${db_managed}" ] || ((force_install)); then
+    if [ -z "${db_managed}" ] ; then
 	unset input
 
         debug_print "esgf_host = $esgf_host"

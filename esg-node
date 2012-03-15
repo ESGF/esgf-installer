@@ -188,8 +188,6 @@ init() {
     tomcat_user=${tomcat_user:-tomcat}
     tomcat_group=${tomcat_group:-$tomcat_user}
     globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
-    esgf_idp_peer_name=${ESGF_IDP_PEER_NAME}
-    esgf_idp_peer=${ESGF_IDP_PEER}
     mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     mail_admin_address=${mail_admin_address}
 
@@ -217,7 +215,6 @@ init() {
     export CATALINA_BASE=${CATALINA_HOME}
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
-    export ESG_ROOT_ID=${esg_root_id}
 
     myPATH=${install_prefix}/bin:$OPENSSL_HOME/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
     myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
@@ -353,17 +350,20 @@ init_structure() {
     esgf_host=${esgf_host}
     [ -z "${esgf_host}" ] && get_property esgf_host
 
-    esgf_default_peer=${esgf_default_peer:-${ESGF_DEFAULT_PEER}}
+    esgf_default_peer=${esgf_default_peer}
     [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
 
-    esgf_idp_peer=${esgf_idp_peer:-${ESGF_IDP_PEER}}
+    esgf_idp_peer_name=${esgf_idp_peer_name}
+    [ -z "${esgf_idp_peer_name}" ] && get_property esgf_idp_peer_name
+
+    esgf_idp_peer=${esgf_idp_peer}
     [ -z "${esgf_idp_peer}" ] && get_property esgf_idp_peer
     myproxy_endpoint=${esgf_idp_peer%%/*}
 
     [ -z "${myproxy_port}" ] && get_property myproxy_port
     myproxy_port=${myproxy_port:-7512}
 
-    esg_root_id=${esg_root_id:-${ESGF_ROOT_ID}}
+    esg_root_id=${esg_root_id}
     [ -z "${esg_root_id}" ] && get_property esg_root_id
 
     node_peer_group=${node_peer_group}
@@ -2204,7 +2204,7 @@ select_idp_peer() {
     local choice
     while [ 1 ]; do
 	unset choice
-	printf "Please select the IDP Peer (or gateway) for this node: \n"
+	printf "Please select the IDP Peer for this node: \n"
 	printf "\t-------------------------------------------\n"
 	printf "\t*[1] : ESGF-PCMDI-9 -> pcmdi9.llnl.gov\n"
 	printf "\t [2] : ESGF-PCMDI   -> pcmdi3.llnl.gov\n"
@@ -2248,12 +2248,12 @@ select_idp_peer() {
 		;;
 	    c | C)
 		local input
-		esgf_idp_peer_name=${ESGF_IDP_PEER_NAME:-"ESG-PCMDI"}
-		esgf_idp_peer=${ESGF_IDP_PEER:-"pcmdi3.llnl.gov"}
-		read -e -p "Please enter the IDP Peer's name [${ESGF_IDP_PEER_NAME}] " input
+                get_property esgf_idp_peer_name "ESGF-PCMDI-9"
+                get_property esgf_idp_peer "pcmdi9.llnl.gov"
+		read -e -p "Please enter the IDP Peer's name [${esgf_idp_peer_name}] " input
 		[ -n "${input}" ] && esgf_idp_peer_name=$(echo ${input} | tr 'a-z' 'A-Z')
 		unset input
-		read -e -p "Please enter the IDP Peer's hostname [${ESGF_IDP_PEER}] " input
+		read -e -p "Please enter the IDP Peer's hostname [${esgf_idp_peer}] " input
 		[ -n "${input}" ] && esgf_idp_peer=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
 		unset input
 		choice="(Manual Entry)"
@@ -2279,16 +2279,27 @@ select_idp_peer() {
     echo
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
-    if [ $((sel & DATA_BIT)) != 0 ]; then
-        printf "
+    if [ $((sel & DATA_BIT)) != 0 ] ; then
+        if ! check_for_group_intersection_with ${esgf_idp_peer} ; then
+            printf "
+  ----------------------------------------------------------------------
+  The IDP selected must share at least one of the peer group(s)
+  [${node_peer_group}] that this node is a member of!
 
-  NOTE:
+  run: esg-node --federation-sanity-check ${esgf_idp_peer}
+
+  for confirmation.
   ----------------------------------------------------------------------
-  Be sure that the IDP you have selected shares the same peer group(s)
-  [${node_peer_group}] as this node!
-  ----------------------------------------------------------------------
+
 
 "
+            local answer
+            local default_answer="N" #always be safe.
+            read -e -p "Do you still wish to continue? [y/N] " answer
+            [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
+            [ "${answer}" = "N" ] && exit 1
+
+        fi
     fi
 
     #----------------------
@@ -2305,17 +2316,15 @@ select_idp_peer() {
             add_my_cert_to_truststore && echo ":-)" || echo ":-("
         fi
     fi
+    write_as_property esgf_idp_peer_name
     write_as_property esgf_idp_peer
-
-    local authorization_service_root
-    get_property authorization_service_root
 
     #----
     #Editing web.xml files for projects who use the authorizationService
     #----
     echo "updating webapps' web.xml files accordingly..."
     local web_xml_files=($(find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
-    sed -i.bak 's@\(https://\)[^/]*\(/esgf-security/saml/soap/secure/authorizationService.htm[,]*\)@\1'${authorization_service_root:-${esgf_idp_peer}}'\2@g' ${web_xml_files[@]}
+    sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'${esgf_host}'\2@g' ${web_xml_files[@]}
     local instruct_to_reboot=0
     for((i=0;i<${#web_xml_files[@]};i++)); do
         diff ${web_xml_files[${i}]}{,.bak} >& /dev/null
@@ -4544,10 +4553,10 @@ md5sum_() {
 # The default is to check against the default peer currently assigned
 # Returns true (0) if there IS an intersection, false (1) otherwise
 check_for_group_intersection_with() {
-    get_property node_peer_group
-    get_property esgf_default_peer
-    get_property esgf_idp_peer
-    get_property esgf_index_peer
+    [ -z ${node_peer_group} ]   && get_property node_peer_group
+    [ -z ${esgf_default_peer} ] && get_property esgf_default_peer
+    [ -z ${esgf_idp_peer} ]     && get_property esgf_idp_peer
+    [ -z ${esgf_index_peer} ]   && get_property esgf_index_peer
     
     local target_nodes=($@)
     (( 0 == ${#target_nodes[@]} )) && target_nodes=(${esgf_default_peer} ${esgf_idp_peer} ${esgf_index_peer})
@@ -4560,7 +4569,7 @@ check_for_group_intersection_with() {
         local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
         if [ -z "${target_groups}" ]; then
             printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n"
-            ((ret++))
+            ((ret=ret+100))
             continue
         fi
         
@@ -6669,6 +6678,7 @@ main() {
                     self_verify
                     check_prerequisites
                     init_structure
+                    read_sel
                     select_idp_peer
                     exit $?
                     ;;
@@ -6684,6 +6694,7 @@ main() {
                     check_prerequisites
                     shift
                     init_structure
+                    read_sel
                     set_index_peer ${1:-"self"} "p2p"
                     exit $?
                     ;;
@@ -6692,6 +6703,7 @@ main() {
                     check_prerequisites
                     shift
                     init_structure
+                    read_sel
                     set_index_peer ${1:-"nohost"} "gateway"
                     exit $?
                     ;;
@@ -6703,6 +6715,7 @@ main() {
                     exit 0
                     ;;
                 --set-default-peer)
+                    read_sel
                     shift
                     esgf_default_peer="$*"
                     write_as_property esgf_default_peer
@@ -6723,6 +6736,7 @@ main() {
                     shift
                     node_peer_group="$*"
                     write_as_property node_peer_group
+                    read_sel
                     check_for_group_intersection_with ${node_peer_group}
                     echo "  Peer Group is set to: [${node_peer_group}]"
                     echo "  (restart node to enable group value)"
@@ -6731,6 +6745,7 @@ main() {
                     ;;
                 --federation-sanity-check)
                     shift
+                    read_sel
                     check_for_group_intersection_with $*
                     exit $?
                     ;;

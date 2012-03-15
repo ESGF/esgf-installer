@@ -909,6 +909,7 @@ setup_gridftp_jail() {
     echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
 
     while read mount_name mount_dir; do
+        [ -z ${mount_name} ] && debug_print "blank entry: [${mount_name}]" && continue;
         echo "mounting [${mount_dir}] into chroot jail [${gridftp_chroot_jail}/] as [${mount_name##*/}]"
         if [ -z "${mount_name}" ] || [ -z "${mount_dir}" ] ; then
             echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'
@@ -1270,7 +1271,7 @@ test_gridftp_server() {
 }
 
 configure_esgf_publisher_for_gridftp() {
-    echo -n " configuring publisher to use this gridftp server... "
+    echo -n " configuring publisher to use this GridFTP server... "
     if [ -e ${publisher_home}/${publisher_config} ]; then
         cp ${publisher_home}/${publisher_config}{,.bak}
         sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}

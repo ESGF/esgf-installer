@@ -2279,7 +2279,7 @@ select_idp_peer() {
     echo
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
-    if [ $((sel & DATA_BIT)) != 0 ] ; then
+    if [ $((sel & DATA_BIT)) != 0 ] && [ "${esgf_host}" != "${esgf_idp_peer}" ]; then
         if ! check_for_group_intersection_with ${esgf_idp_peer} ; then
             printf "
   ----------------------------------------------------------------------

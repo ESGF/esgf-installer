@@ -3116,6 +3116,8 @@ rebuild_truststore() {
     #As a side effect there is sync'ing the truststore with what is in the JVM
     (( force_install )) && add_my_cert_to_truststore
 
+    sync_with_java_truststore ${truststore_file_}
+
     chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     echo "...done"
     return 0
@@ -4065,11 +4067,15 @@ sync_with_java_truststore() {
     local external_truststore=${1:-$(readlink -f ${truststore_file})}
     echo -n "Sync'ing ${external_truststore} with ${java_truststore} ... "
     [ ! -e "${external_truststore}" ] && echo "[FAIL]: Cannot locate ${external_truststore}" && return 1
-    [ -e "${java_truststore}" ] && cp ${java_truststore} ${java_truststore}.bak
+
+    #try to not do more work (copying bits) if you don't have to...
+    diff ${external_truststore} ${java_truststore} && echo "[OK]" && return 0
+
+    [ -e "${java_truststore}" ] && cp ${java_truststore}{,.bak}
     cp ${external_truststore} ${java_truststore}
     chmod 644 ${java_truststore}
     chown -R ${installer_uid}:${installer_gid} ${java_truststore}*
-    echo "[OK]"
+    echo "[OK]*"
 }
 
 verify_thredds_credentials() {

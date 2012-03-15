@@ -4069,13 +4069,13 @@ sync_with_java_truststore() {
     [ ! -e "${external_truststore}" ] && echo "[FAIL]: Cannot locate ${external_truststore}" && return 1
 
     #try to not do more work (copying bits) if you don't have to...
-    diff ${external_truststore} ${java_truststore} && echo "[OK]" && return 0
+    diff ${external_truststore} ${java_truststore} >& /dev/null && echo "[OK]." && return 0
 
     [ -e "${java_truststore}" ] && cp ${java_truststore}{,.bak}
     cp ${external_truststore} ${java_truststore}
     chmod 644 ${java_truststore}
     chown -R ${installer_uid}:${installer_gid} ${java_truststore}*
-    echo "[OK]*"
+    echo "[OK]"
 }
 
 verify_thredds_credentials() {

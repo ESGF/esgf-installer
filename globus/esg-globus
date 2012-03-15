@@ -1526,8 +1526,14 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    read -p "Do you wish to install a simple CA? [y/N] " answer
-    [ -z "${answer}" ] && answer="N"
+    if [ -d ${dot_globus} ]; then
+       read -p "Do you wish to install a simple CA? [y/N] " answer
+       [ -z "${answer}" ] && answer="N"
+    else
+       answer="Y"
+    fi
+
+
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
         #answer="Y"
 

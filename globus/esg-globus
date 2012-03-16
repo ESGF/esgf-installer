@@ -140,14 +140,14 @@ gss_assist_patch_dist_url=${gridftp_dist_url_base}/globus_gss_assist-5.5.tar.gz
 gridftp_chroot_jail=${esg_root_dir}/gridftp_root
 #ports end-user configured:
 gridftp_server_port=2811
-gridftp_server_port_range=${gridftp_server_port_range:-6001,6500}
-gridftp_server_source_range=${gridftp_server_source_range:-6001,6500}
+gridftp_server_port_range=${gridftp_server_port_range:-60000,61000}
+gridftp_server_source_range=${gridftp_server_source_range:-60000,61000}
 gridftp_server_usage_log=${esg_log_dir}/esg-server-usage-gridftp.log
 gridftp_server_usage_config=${esg_config_dir}/gridftp/esg-server-usage-gridftp.conf
 #ports bdm-configured:
 gridftp_bdm_server_port=2812
-gridftp_bdm_server_port_range=${gridftp_bdm_server_port_range:-6001,6500}
-gridftp_bdm_server_source_range=${gridftp_bdm_server_source_range:-6100,6500}
+gridftp_bdm_server_port_range=${gridftp_bdm_server_port_range:-60000,61000}
+gridftp_bdm_server_source_range=${gridftp_bdm_server_source_range:-60000,61000}
 gridftp_bdm_server_usage_log=${esg_log_dir}/esg-bdm-usage-gridftp.log
 gridftp_bdm_server_usage_config=${esg_config_dir}/gridftp/esg-bdm-usage-gridftp.conf
 esg_crontab=${esg_config_dir}/esg_crontab
@@ -414,7 +414,6 @@ start_globus_services() {
         return $?
     elif [ "${config_type}" = "gateway" ]; then
         start_myproxy_server
-        #write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}:${myproxy_port:-7512}"
         return $?
     else
         echo "You must provide a configuration type arg [datanode | gateway]"
@@ -445,6 +444,7 @@ test_globus_services() {
     debug_print "test_globus_services for ${config_type} -> [$@]"
     if [ "${config_type}" = "datanode" ]; then
         shift
+        test_auth_service
         test_gridftp_server $@
         return $?
     elif [ "${config_type}" = "gateway" ]; then
@@ -909,6 +909,8 @@ setup_gridftp_jail() {
     echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
 
     while read mount_name mount_dir; do
+        [ -z ${mount_name} ] && debug_print "blank entry: [${mount_name}]" && continue;
+        [ -z ${mount_dir} ] && debug_print "blank dir entry: [${mount_dir}]" && continue;
         echo "mounting [${mount_dir}] into chroot jail [${gridftp_chroot_jail}/] as [${mount_name##*/}]"
         if [ -z "${mount_name}" ] || [ -z "${mount_dir}" ] ; then
             echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'
@@ -1087,7 +1089,7 @@ config_gridftp_server() {
 #By making this a separate function it may be called directly in the
 #event that the gateway_service_root needs to be repointed. (another Estani gem :-))
 write_esgsaml_auth_conf() {
-    echo "AUTHSERVICE=https://${myproxy_endpoint:-${esgf_idp_peer}}/esgf-security/saml/soap/secure/authorizationService.htm" > /etc/grid-security/esgsaml_auth.conf
+    echo "AUTHSERVICE=https://${myproxy_endpoint:-${esgf_idp_peer}}/esg-orp/saml/soap/secure/authorizationService.htm" > /etc/grid-security/esgsaml_auth.conf
     echo 
     echo "---------esgsaml_auth.conf---------"
     cat /etc/grid-security/esgsaml_auth.conf
@@ -1209,17 +1211,46 @@ config_bdm_gridftp_server() {
     write_as_property gridftp.service.type "Replication"
 }
 
+test_auth_service() {
+    local installer_home=${installer_home:-${ESG_USER_HOME:-/usr/local/src/esgf}}
+    echo -n "Testing authorization service on ${esgf_host} ... "
+    ! ${installer_home}/workbench/esg/extra/globus/libglobus_adq-0.9.1/libglobus_adq_client https://${esgf_host}/esg-orp/saml/soap/secure/authorizationService.htm https://${esgf_host}/esgf-idp/openid/rootAdmin gsiftp://${esgf_host}:${gridftp_server_port}//esg_dataroot/test/sftlf.nc | grep -q 'NOT PERMIT' >& /dev/null
+    local ret=$?
+    [ ${ret} == 0 ] && echo "[OK]" || echo "[FAIL]"
+    return ${ret}
+}
+
 test_gridftp_server() {
     local ret=0
     local tmpdestfile
     debug_print "test_gridftp_server: [$@]"
 
+    local personal_credential_repo="$HOME/.globus"
+
+    mkdir -p ${personal_credential_repo}
+    chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
+
+    rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
+    local _X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_KEY=${personal_credential_repo}/esgf_credentials
+    local _X509_USER_CERT=${personal_credential_repo}/esgf_credentials
+
     while [ -n "$1" ]; do
         case $1 in
             end-user)
+                echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
+                X509_CERT_DIR=${_X509_CERT_DIR} \
+                    X509_USER_KEY=${_X509_USER_KEY} \
+                    X509_USER_CERT=${_X509_USER_CERT} \
+                    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
+                [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
+
                 echo -n "GridFTP - End-User Test... [$1]"
                 tmpdestfile=$(mktemp)
-                ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+                X509_CERT_DIR=${_X509_CERT_DIR} \
+                    X509_USER_KEY=${_X509_USER_KEY} \
+                    X509_USER_CERT=${_X509_USER_CERT} \
+                    ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
                     diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
                     rm -f ${tmpdestfile} && echo "[OK]" || ( echo "[FAIL]" && ((ret++)) )
                 ;;
@@ -1238,6 +1269,18 @@ test_gridftp_server() {
         shift
     done
     return ${ret}
+}
+
+configure_esgf_publisher_for_gridftp() {
+    echo -n " configuring publisher to use this GridFTP server... "
+    if [ -e ${publisher_home}/${publisher_config} ]; then
+        cp ${publisher_home}/${publisher_config}{,.bak}
+        sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}
+        echo "[OK]"
+        return 0
+    fi
+    echo "[FAIL]"
+    return 1
 }
 
 #Could takes the arg(s): "bdm" | "end-user"
@@ -1261,6 +1304,8 @@ start_gridftp_server() {
         mkdir -p ${gridftp_chroot_jail}/etc/grid-security && \
         (cd /etc/grid-security; tar czpf - certificates) | tar xzpf - -C ${gridftp_chroot_jail}/etc/grid-security
     [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+
+    configure_esgf_publisher_for_gridftp
     
     pushd ${globus_location}/sbin >& /dev/null
 
@@ -1850,7 +1895,8 @@ write_myproxy_install_log() {
     [ -e ${globus_location}/sbin/myproxy-server ] && \
         write_as_property myproxy_app_home ${globus_location}/sbin/myproxy-server || \
         echo "WARNING: Cannot find executable ${globus_location}/sbin/myproxy-server"
-    write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}:${myproxy_port:-7512}"
+    ! grep myproxy.endpoint ${config_dir}/esgf.properties && write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}"
+    ! grep myproxy.port ${config_dir}/esgf.properties && write_as_property myproxy_port
     write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /etc/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
     
     echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_manifest}
@@ -1915,17 +1961,12 @@ edit_myproxy_server_config() {
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
 
-    local cert_password=$(sed -n 's/^[ ]*certificate_issuer_key_passphrase[ ]*\(.*\)$/\1/p' ${tfile}.bak | grep -v '@@PASSWORD@@')
     #This is the password of the CA's certs created via the simple ca (setup-gsi)
-
-    if [ -z "${cert_password}" ] || ((force_install)); then
-	    #set the password for the system user...
-	while [ 1 ]; do
-	    local input
-            read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]") " input
-	    [ -n "${input}" ] && cert_password=${input}  && unset input && break
-	done
-    fi
+    while [ 1 ]; do
+	local input
+        read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]") " input
+	[ -n "${input}" ] && cert_password=${input}  && unset input && break
+    done
     
     local myproxy_config_dir=${esg_config_dir}/myproxy
 

@@ -140,7 +140,7 @@ init() {
     esg_search_version=${esg_search_version:-"2.4.0"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"1.5.3"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.0.0"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.0.0"}
@@ -153,7 +153,7 @@ init() {
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.3"}
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
-    ant_version=${ant_version:-"1.8.2"} ; ant_min_version=${ant_min_version:-"1.8.2"}
+    ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"6.0.35"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
@@ -259,7 +259,7 @@ init() {
 
     openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
     java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
-    ant_dist_url=http://www.trieuvan.com/apache/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
+    ant_dist_url=http://apache.mirrors.pair.com//ant/binaries/apache-ant-${ant_version}-bin.tar.gz
     openssl_workdir=${workdir}/openssl
     esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
     curl_workdir=${workdir}/curl

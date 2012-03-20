@@ -168,7 +168,7 @@ install_security_tokenless_filters() {
     eval "perl -p -i -e 's#\\@orp_host\\@#${orp_host}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_file\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_password\\@#${truststore_password}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@esg_root_dir\\@#${esgf_root_dir}#g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's#\\@esg_root_dir\\@#${esg_root_dir}#g' ${target_file}"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null
     #----------------------

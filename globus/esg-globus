@@ -252,18 +252,16 @@ setup_globus_services() {
                 return 0
             fi
             echo
-
 	else
 	    echo "Globus installation does NOT appear to be complete.  Installation is recommended."
 	fi
+    fi
 
-        local success=0
-	if [ "${config_type}" = "datanode" ]; then
-            _setup_gridftp_server $@ && ((success++))
-	fi
-        if [ "${config_type}" = "gateway" ]; then
-            _setup_idp_tools $@ && ((success++))
-        fi
+    local success=0
+    if [ "${config_type}" = "datanode" ]; then
+        _setup_gridftp_server $@ && ((success++))
+    elif [ "${config_type}" = "gateway" ]; then
+        _setup_idp_tools $@ && ((success++))
     else
         echo "You must provide a configuration type arg [datanode | gateway]"
         return 1

@@ -16,9 +16,9 @@
 
 ./esg-node
 ./esg-bootstrap
-./ esg-autoinstall-testnode
-./ esg-gitstrap
-./ esg-purge.sh
+./esg-autoinstall-testnode
+./esg-gitstrap
+./esg-purge.sh
 
 [esgf-product-server]
 ./product-server/esg-product-server

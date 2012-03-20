@@ -38,7 +38,7 @@ set NAMESPACE localdomain.localhost
 # Hostname of the node to publish to
 set PUBLISHNODE pcmdi9.llnl.gov
 
-# IDP Peer (or gateway)
+# IDP Peer
 # This is a numeric selection, not an actual name
 # If you want a custom entry, the value you want here is "C"
 set IDPPEER ""
@@ -164,10 +164,13 @@ expect {
     "Please Enter the IP address of this host" {
         send \n ; exp_continue
     }
-    "Please select the IDP Peer (or gateway) for this node" {
+    "Please select the IDP Peer for this node" {
         send ${IDPPEER}\n ; exp_continue
     }
     "Is this correct?" {
+        send Y\n ; exp_continue
+    }
+    "Do you still wish to continue?" {
         send Y\n ; exp_continue
     }
     "Enter certificate to add to trusted keystore" {

@@ -92,7 +92,16 @@ esg-purge () {
 }
 
 esg-purge-base () {
-    # WARNING: ensure that any mounts are gone from /esg before this stage
+    # WARNING: ensure that any mounts are gone from /esg before this
+    # stage.
+    #
+    # The default esg.ini file uses esg_dataroot, so we'll try
+    # to unmount that first.  If esg.ini was changed, there may be
+    # others.
+    if [ -d /esg/gridftp_root/esg_dataroot ] ; then
+        umount -f /esg/gridftp_root/esg_dataroot
+    fi
+
     rm -rf /esg
     rm -f /etc/esg.env
     rm -rf /usr/local/esgf-dashboard-ip

@@ -6621,7 +6621,7 @@ main() {
 		    fi
 		    exit 0
 		    ;;
-		--clear-certs)
+		--clear-my-certs)
 		    self_verify
 		    check_prerequisites
 		    [ $? != 0 ] && echo && exit 1

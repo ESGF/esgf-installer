@@ -1310,7 +1310,9 @@ postgres_list_dbs() {
     #
     # 'psql' must be in the path for this to work
     #
-    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -lat -U ${postgress_user} | cut -d' ' -f2 | grep -Ev "^(template[0-9]|postgres)$" | grep ${1:-"."})
+    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
+        psql -lat -U ${postgress_user} | cut -d' ' -f2 | \
+        grep -Ev "^(template[0-9]|postgres)$" | grep ${1:-"."})
 }
 
 #####

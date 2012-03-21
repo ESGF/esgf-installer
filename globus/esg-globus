@@ -1610,19 +1610,11 @@ config_myproxy_server() {
     
     export GPT_LOCATION=${globus_location}
     
-    #-----------------------------------------------------------------
-    local answer="N"
-    #If we don't have a simpleCA setup then don't ask...
-    if [ -d ${dot_globus}/simpleCA ]; then
-        echo "Detected a simpleCA installation is present... (will leave intact) "
-        if ((force_install)) ; then
-            read -p "Do you wish to install a new simple CA to replace it? [y/N] " answer
-            [ -z "${answer}" ] && answer="N"
-        fi
-    else
-        asnwer="Y"
+    if [ -d ${dot_globus} ]; then
+        read -p "Do you wish to install a simple CA? [y/N] " answer
+        [ -z "${answer}" ] && answer="N"
+        answer="Y"
     fi
-    #-----------------------------------------------------------------
 
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
         unset answer

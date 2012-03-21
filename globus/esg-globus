@@ -226,7 +226,7 @@ dedup ${envfile} && source ${envfile}
 #arg1 - config_type ("datanode" ["bdm"|"end-user"] | 
 #                    "gateway"  [gen-self-cert] <dir> | [regen-simpleca] <fetch-certs|gen-self-cert|keep-certs> | ["install"|"update"])
 setup_globus_services() {
-
+    debug_print "setup_globus_services [$@]"
     local config_type="$1"
     
     echo
@@ -274,6 +274,7 @@ setup_globus_services() {
 }
 
 _setup_gridftp_server() {
+    debug_print "_setup_gridftp_server [$@]"
     echo "setup_gridftp_server for ${config_type} - ${globus_word_size}bit arch : [$*]"
     local config_type=$1
     if [ "${config_type}" = "datanode" ]; then
@@ -347,8 +348,9 @@ _setup_gridftp_server() {
 }
 
 _setup_idp_tools() {
-    echo "_setup_idp_tools for ${config_type} - ${globus_word_size}bit arch : [$*]"
+    debug_print "_setup_idp_tools [$@]"
     local config_type=$1
+    echo "_setup_idp_tools for ${config_type} - ${globus_word_size}bit arch : [$*]"
     if [ "${config_type}" = "gateway" ]; then
 
         #------------------------------------------------------------------------

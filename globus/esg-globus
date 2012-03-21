@@ -2019,9 +2019,10 @@ edit_myproxy_server_config() {
 
     echo -n "editing myproxy certificate information "
 
-    if [ "x${esgf_home}" = "x" ]; then
-        . /etc/esg.env
-        esgf_home=${ESGF_HOME}
+    esgf_home=${esg_root_dir:-${ESGF_HOME}}
+    if [ -z "${esgf_home}" ]; then
+        eval $(grep ESGF_HOME /etc/esg.env)
+        esgf_home=${ESGF_HOME:-"/esg"}
     fi
 
     eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"

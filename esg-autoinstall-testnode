@@ -227,8 +227,11 @@ expect {
     "Do you want to make a back up of the existing MyProxy SimpleCA (gateway)?" {
         send Y\n ; exp_continue
     }
+    # This prompt in theory should only appear if you in fact already
+    # have a simple CA, and the default will be 'N', correct for
+    # upgrades.
     "Do you wish to install a simple CA?" {
-        send Y\n ; exp_continue
+        send \n ; exp_continue
     }
     "Would you like to remove the current CA setup?" {
         send \n ; exp_continue

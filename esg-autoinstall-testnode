@@ -266,4 +266,9 @@ expect {
     "Do you wish to have the esgf-node-manager's page as this node's homepage?" {
         send \n ; exp_continue
     }
+
+    # Victory condition
+    "(esg_datanode: cleaning up etc...)" {
+        exit 0
+    }
 }

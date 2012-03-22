@@ -237,17 +237,6 @@ my %repoinfo = (
         'configlinks' => [],
         'installerlinks' => [],
     },
-    'esgf-stager' => {
-        'url' => 'git://esgf.org/esgf-stager.git',
-        'branch' => {
-            'stable' => 'master',
-            'devel' => 'devel',
-            'experiment' => 'devel',
-        },
-        'binlinks' => [],
-        'configlinks' => [],
-        'installerlinks' => [],
-    },
     'esgf-web-fe' => {
         'url' => 'git://esgf.org/esgf-web-fe.git',
         'branch' => {

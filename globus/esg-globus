@@ -224,9 +224,9 @@ dedup ${envfile} && source ${envfile}
 #--------------------------------------------------------------
 
 #arg1 - config_type ("datanode" ["bdm"|"end-user"] | 
-#                    "gateway"  [gen-self-cert] <dir> | [regen-simpleca] <fetch-certs|gen-self-cert|keep-certs> | ["install"|"update"])
+#                    "gateway"  [gen-self-cert] <dir> | (<regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"])
 setup_globus_services() {
-    debug_print "setup_globus_services [$@]"
+
     local config_type="$1"
     
     echo
@@ -242,46 +242,34 @@ setup_globus_services() {
 	if [ -x ${globus_location}/bin/globus-version ]; then
 	    echo "Checking for globus ${globus_version}"
             echo "Current globus version: $(${globus_install_dir}/bin/globus-version)"
-            check_version_atleast ${globus_install_dir}/bin/globus-version ${globus_version}
-
+            check_version_atleast ${globus_location}/bin/globus-version ${globus_version}
             [ $? == 0 ] && default_val="n" && echo "Globus version appears sufficiently current"
-            read -p "Do you want to continue with the Globus installation and setup ($1)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
-            [ -z "${dosetup}" ] && dosetup=$default_val
-            if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-                echo "Skipping Globus installation and setup - will assume Globus is setup properly"
-                return 0
-            fi
-            echo
 	else
 	    echo "Globus installation does NOT appear to be complete.  Installation is recommended."
 	fi
-    fi
 
-    local success=0
-    if [ "${config_type}" = "datanode" ]; then
-        _setup_gridftp_server $@ && ((success++))
-    elif [ "${config_type}" = "gateway" ]; then
-        _setup_idp_tools $@ && ((success++))
-    else
-        echo "You must provide a configuration type arg [datanode | gateway]"
-        return 1
-    fi
-
-    # install this patch after both gridftp and myproxy
-    ((success > 0 )) && install_gss_assist_patch
-
-    return 0
-}
-
-_setup_gridftp_server() {
-    debug_print "_setup_gridftp_server [$@]"
-    echo "setup_gridftp_server for ${config_type} - ${globus_word_size}bit arch : [$*]"
-    local config_type=$1
-    if [ "${config_type}" = "datanode" ]; then
-
-	if [ ! -e ${globus_location}/sbin/globus-gridftp-server ]; then
-	    echo "GridFTP is not installed.  Installation is recommended"
+	if [ "${config_type}" = "datanode" ]; then
+	    if [ ! -e ${globus_location}/sbin/globus-gridftp-server ]; then
+		echo "GridFTP is not installed.  Installation is recommended";
+	    fi
+	else
+	    if [ ! -d ${dot_globus} ]; then
+		echo "The MyProxy SimpleCA is not installed.  Installation is recommended";
+	    fi
 	fi
+
+        read -p "Do you want to continue with the Globus installation and setup ($1)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+        [ -z "${dosetup}" ] && dosetup=$default_val
+
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping Globus installation and setup - will assume Globus is setup properly"
+            return 0
+        fi
+        echo
+    fi
+
+    echo "setup_globus_services for ${config_type} - ${globus_word_size}bit arch : [$*]"
+    if [ "${config_type}" = "datanode" ]; then
 
         echo
         echo "*******************************"
@@ -297,7 +285,6 @@ _setup_gridftp_server() {
 #            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
             echo ""
 
-            local default_val="n"
             read -p "Do you want to make a back up of the existing Globus distribution ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
             [ -z "${dosetup}" ] && dosetup=$default_val
 
@@ -342,16 +329,14 @@ _setup_gridftp_server() {
             write_as_property gridftp_app_home ${globus_location}/sbin/globus-gridftp-server || \
             echo "WARNING: Cannot find executable ${globus_location}/sbin/globus-gridftp-server"
         setup_gridftp_jail
-    else
-        echo "_setup_gridftp_server may only be called for idp installation scenarios"
-    fi
-}
 
-_setup_idp_tools() {
-    debug_print "_setup_idp_tools [$@]"
-    local config_type=$1
-    echo "_setup_idp_tools for ${config_type} - ${globus_word_size}bit arch : [$*]"
-    if [ "${config_type}" = "gateway" ]; then
+    elif [ "${config_type}" = "gateway" ]; then
+
+        echo
+        echo "*******************************"
+        echo "Setting up The ESGF Globus MyProxy Services"
+        echo "*******************************"
+        echo
 
         #------------------------------------------------------------------------
         # A bit of migration code.  Older installations installed in HOME/.globus
@@ -386,12 +371,6 @@ _setup_idp_tools() {
         fi
         #------------------------------------------------------------------------
 
-        echo
-        echo "*******************************"
-        echo "Setting up The ESGF Globus MyProxy Services"
-        echo "*******************************"
-        echo
-
         if [ -d ${dot_globus}/simpleCA ]; then
             echo -n "Checking for MyProxy server version ${myproxy_version}"
             local m_ver="(${globus_location}/sbin/myproxy-server -V | cut -b 36-39)"
@@ -399,11 +378,17 @@ _setup_idp_tools() {
 #            local ret=$?
 #            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
             echo ""
-            backup_simpleca
+
+            read -p "Do you want to make a back up of the existing MyProxy SimpleCA ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+            [ -z "${dosetup}" ] && dosetup=$default_val
+
+            if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
+                backup_simpleca
+            fi
 	else
 	    echo "MyProxy Server is not installed.  Installation is recommended."
         fi
-        
+
         create_globus_account
         shift
         local ret=1
@@ -422,9 +407,16 @@ _setup_idp_tools() {
             config_myproxy_server $@
             [ $? != 0 ] && return 3
         fi
+        
     else
-        echo "_setup_idp_tools (i.e. myproxy) may only be called for idp installation scenarios"
+        echo "You must provide a configuration type arg [datanode | gateway]"
+        return 1
     fi
+
+    # install this patch after both gridftp and myproxy
+    install_gss_assist_patch
+
+    return 0
 }
 
 backup_and_remove_globus_location() {
@@ -1613,13 +1605,15 @@ config_myproxy_server() {
     export GPT_LOCATION=${globus_location}
     
     if [ -d ${dot_globus} ]; then
-        read -p "Do you wish to install a simple CA? [y/N] " answer
-        [ -z "${answer}" ] && answer="N"
-        answer="Y"
+       read -p "Do you wish to install a simple CA? [y/N] " answer
+       [ -z "${answer}" ] && answer="N"
+    else
+       answer="Y"
     fi
 
+
     if [ "${answer}" = "Y" ] || [ "${answer}" = "y" ]; then
-        unset answer
+        #answer="Y"
 
         #TODO: ZOIKS... this does not work... Next thing to try is to do a
         #while read on the output of setup-simple-ca, and then regexp each
@@ -1999,8 +1993,6 @@ edit_myproxy_server_config() {
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
-
-    cert_password=$(sed -n 's/.*passphrase[ ]*\(.*\)$/\1/p' ${tfile}.bak)
 
     #This is the password of the CA's certs created via the simple ca (setup-gsi)
     while [ 1 ]; do

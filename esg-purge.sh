@@ -36,6 +36,7 @@ esg-purge () {
     case $PURGEMODE in
     default)
         esg-purge-base
+        esg-purge-cdat
         esg-purge-globus
         esg-purge-las
         esg-purge-postgres
@@ -44,12 +45,12 @@ esg-purge () {
     all)
         # This part is the same as default
         esg-purge-base
+        esg-purge-cdat
         esg-purge-globus
         esg-purge-las
         esg-purge-postgres
         esg-purge-tomcat
         # ... but we add ...
-        esg-purge-cdat
         esg-purge-utils
         esg-purge-workbench
         ;;
@@ -65,12 +66,13 @@ esg-purge () {
     more)
         # This part is the same as default
         esg-purge-base
+        esg-purge-cdat
         esg-purge-globus
         esg-purge-las
         esg-purge-postgres
         esg-purge-tomcat
         # ... but we add ...
-        esg-purge-cdat
+        esg-purge-workbench
         ;;
     postgres)
         esg-purge-postgres

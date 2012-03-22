@@ -26,6 +26,9 @@ set LONGNAME "ESGF Local Test Data Node"
 # Admin password (alphanumeric-only)
 set ADMINPASS "CHANGEME"
 
+# CA Certificate password
+set CACERTPASS "CHANGEME"
+
 # Organization name
 set ORGNAME "NOT-A-VALID-ORG"
 

@@ -1928,8 +1928,8 @@ write_myproxy_install_log() {
     [ -e ${globus_location}/sbin/myproxy-server ] && \
         write_as_property myproxy_app_home ${globus_location}/sbin/myproxy-server || \
         echo "WARNING: Cannot find executable ${globus_location}/sbin/myproxy-server"
-    ! grep myproxy.endpoint ${config_dir}/esgf.properties && write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}"
-    ! grep myproxy.port ${config_dir}/esgf.properties && write_as_property myproxy_port
+    ! grep myproxy.endpoint ${esg_config_dir}/esgf.properties && write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}"
+    ! grep myproxy.port ${esg_config_dir}/esgf.properties && write_as_property myproxy_port
     write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /etc/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
     
     echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_manifest}

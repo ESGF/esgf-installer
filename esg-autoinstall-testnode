@@ -263,6 +263,9 @@ expect {
     "Would you like to continue to use the detected simpleCA installation?" {
         send Y\n; exp_continue
     }
+    "Do you want to continue with web front-end installation and setup?" {
+        send \n ; exp_continue
+    }
     "Do you wish to have the esgf-node-manager's page as this node's homepage?" {
         send \n ; exp_continue
     }

@@ -23,6 +23,9 @@ unset PGHOME
 unset PGHOST
 unset PGPORT
 unset PGUSER
+unset X509_CERT_DIR
+unset X509_USER_CERT
+unset X509_USER_KEY
 
 esg-purge () {
     if [ X"$1" = "X" ] ; then

@@ -1,0 +1,42 @@
+_esg-node() 
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    flag_opts="--install --verify --test --type -t --set-type --get-type --show-type --start --stop --shutdown --restart --status --update --upgrade --update-sub-installer --write-env --version -v --recommended --custom --use-local-files --devel --prod --verbose --clear --clear-my-certs --clear --info --verbose --test-pub --check --config-db --backup-db --restore-db --verify-thredds-credentials --uninstall --get-idp-peer --set-idp-peer --get-index-peer --set-index-peer --set-publication-target --get-default-peer --set-default-peer --get-peer-group --set-peer-group --federation-sanity-check --spotcheck --register --fetch-esgf-certs --rebuild-truststore --add-my-cert-to-truststore --generate-ssl-key-and-csr --install-keypair --dname --keystore-password --keystore-alias --keystore-file --prefix --workdir --no-globus --force --gridftp-config --index-config --myproxy --help"
+    gridftp_config_opts="bdm end-user"
+    index_config_opts="master slave"
+    word_opts="start stop shutdown restart status update upgrade"
+    myproxy_opts="gen-self-cert regen-simple-ca install update"
+    regen_simple_ca_opts="fetch-certs gen-self-cert keep-certs"
+    type_opts="DATA INDEX IDP COMPUTE"
+
+    #COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+
+    case "${prev}" in 
+        start | stop | shutdown | restart | status | update)
+            COMPREPLY=( $(compgen -W "${word_opts}" -- ${cur}) )
+            return 0
+            ;;
+        -t)
+            COMPREPLY=( $(compgen -W "${type_opts}" -- ${cur}) )
+            return 0
+            ;;
+        --myproxy)
+            COMPREPLY=( $(compgen -W "${myproxy_opts}" -- ${cur}) )
+            return 0
+            ;;
+        *)
+            if [[ ${cur} == -* ]] ; then
+                COMPREPLY=( $(compgen -W "${flag_opts}" -- ${cur}) )
+                return 0
+            fi    
+            ;;
+    esac
+
+    #COMPREPLY=( $(compgen -W "${word_opts}" -- ${cur}) )
+    return 0
+}
+complete -F _esg-node esg-node

@@ -4435,7 +4435,7 @@ uninstall() {
 	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
 	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
         source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
-	source ${scripts_dir}/esg-security >& /dev/null && clean_security_webapp_subsystem && clean_security_database_subsystem_installation
+	source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation
 	source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation
 	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
 

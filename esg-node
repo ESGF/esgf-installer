@@ -1303,6 +1303,19 @@ test_postgress() {
     checked_done 0
 }
 
+postgres_list_db_schemas() {
+    # This prints a list of all schemas known to postgres.
+    # If $1 is specified, it is used an awk filter
+    # Returns the return value of the matches
+    #
+    # 'psql' must be in the path for this to work
+    #
+    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
+        psql -U dbsuper esgcet -qt -c "\dn;" | \
+        awk '/'${1:-"."}'/ {print $1}' | \
+        grep -Ev "^pg_.*")
+}
+
 postgres_list_dbs() {
     # This prints a list of all databases known to postgres.
     # If $1 is specified, it is used a grep filter

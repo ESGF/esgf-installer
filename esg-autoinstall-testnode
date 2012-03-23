@@ -209,6 +209,12 @@ expect {
     "Do you want to continue with search services installation and setup?" {
         send \n ; exp_continue
     }
+    "Do you want to continue with security schema setup?" {
+        send \n ; exp_continue
+    }
+    "Do you want to make a back up of the existing database schema" {
+        send \n ; exp_continue
+    }
     "Do you want to continue with the Globus installation and setup (datanode)?" {
         send \n ; exp_continue
     }

@@ -4576,6 +4576,10 @@ md5sum_() {
     fi
 }
 
+install_bash_completion_file() {
+    [ ! -d "/etc/bash_completion.d/" ] && return 1
+    checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
+}
 
 #------------------------------------------------------------------
 #NOTE: this function DOES DEPEND on the format of the node manager's
@@ -7153,6 +7157,7 @@ main() {
     #---------------------------------------
     #System Launch...
     #---------------------------------------
+        install_bash_completion_file
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 	start ${sel}

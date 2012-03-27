@@ -1630,7 +1630,7 @@ config_myproxy_server() {
         
         #[ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
         [ -d ${dot_globus}/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${dot_globus}/simpleCA
-        ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
+        GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         
         # 

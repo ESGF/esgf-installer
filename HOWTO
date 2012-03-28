@@ -38,7 +38,7 @@ Thank you for your participation!
 Instructions:
 *************
 - Before you do any installation REGISTER (get an account) at the
-gateway you intend to connect to:
+index node you intend to connect to:
         Ex: (ESG-PCMDI-9) http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
 
 - Be sure the machine you are installing on is a CentOS/Redhat linux
@@ -76,7 +76,7 @@ hostname -s, hostname --domain and hostname --fqdn.
    
    % sudo -s  
    
-   (do not run the script directly from sudo because sudo filters env vars)
+   (use -s : do not run the script directly from sudo because sudo filters env vars)
 
 
 3) Download the "bootstrap" script to /usr/local/bin on the target machine
@@ -125,8 +125,8 @@ hostname -s, hostname --domain and hostname --fqdn.
 
    With the --verify flag verification tests are run throughout the
    installation procedure.  Also, the last verification step of the
-   installation will perform a test publish to the chosen gateway
-   (default: ESG-PCMDI)
+   installation will perform a test publish to the chosen index node
+   (default: ESGF-PCMDI-9)
 
    After the initial installation you may subsequently perform test
    publications independently by using the --test-pub flag.

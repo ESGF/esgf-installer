@@ -2852,7 +2852,7 @@ test_publication() {
     echo
     [ -z "${myproxy_user}" ] && read -e -p "Enter your myproxy username: " myproxy_user
 
-    local personal_credential_repo="$HOME/.globus"
+    personal_credential_repo=${personal_credential_repo:-"$HOME/.globus"}
 
     mkdir -p ${personal_credential_repo}
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}

@@ -338,38 +338,7 @@ setup_globus_services() {
         echo "*******************************"
         echo
 
-        #------------------------------------------------------------------------
-        # A bit of migration code.  Older installations installed in HOME/.globus
-        # Current installations are always under /root/.globus
-        #------------------------------------------------------------------------
-        if [ -e "${HOME}/.globus" ] && [ ! -d ${dot_globus} ] && [ "${HOME}" != "/root" ]; then
-            echo "Noticed that you have a simpleCA in ${HOME}/.globus, hmmm...."
-            echo "You may install a new simpleCA or transfer the detected installation."
-            echo
-            local answer
-            while [ -z "${answer}" ]; do
-                read -e -p "Would you like to continue to use the detected simpleCA installation? [y/n] " answer
-                answer=$(echo ${answer} | tr 'A-Z' 'a-z')
-                ( [ "${answer}" != "y" ] && [ "${answer}" != "n" ] ) && unset answer
-            done
-            if [ "${answer}" = "y" ]; then
-                pushd ${HOME} >& /dev/null
-                echo -n "transferring... "
-                tar czpf - .globus | (cd ${dot_globus%/*}; tar xzpf - )
-                [ -d "${dot_globus}" ] && echo "[OK]"
-                echo -n "backing up detected installation... "
-                if tar czpf .globus-$(date ${date_format}).tgz .globus ; then
-                    echo "[OK]"
-                    echo -n "cleaning up... "
-                    rm -rf "${HOME}/.globus" && echo "[OK]" || (echo "[FAIL]" && popd >& /dev/null && return 1)
-                else
-                    echo "[FAIL]"
-                fi
-                popd >& /dev/null
-            fi
-            echo
-        fi
-        #------------------------------------------------------------------------
+        _mv_simpleca_to_root
 
         if [ -d ${dot_globus}/simpleCA ]; then
             echo -n "Checking for MyProxy server version ${myproxy_version}"
@@ -405,7 +374,9 @@ setup_globus_services() {
             setup_globus gateway
             upgrade_myproxy_server
             config_myproxy_server $@
-            [ $? != 0 ] && return 3
+            ret=$?
+            _mv_simpleca_to_root
+            [ $ret != 0 ] && return 3
         fi
         
     else
@@ -417,6 +388,32 @@ setup_globus_services() {
     install_gss_assist_patch
 
     return 0
+}
+
+_mv_simpleca_to_root() {
+        #------------------------------------------------------------------------
+        # A bit of migration code.  Older installations installed in HOME/.globus
+        # Current installations are always under /root/.globus
+        #------------------------------------------------------------------------
+        if [ -e "${HOME}/.globus" ] && [ ! -d ${dot_globus} ]; then
+            echo "Noticed that you have a simpleCA in ${HOME}/.globus, hmmm...."
+            echo "The only valid location for simpleCA setup is in /root/.globus.... "
+            pushd ${HOME} >& /dev/null
+            echo -n "transferring... ${HOME}/.globus -to-> /root/.globus "
+            tar czpf - .globus | (cd ${dot_globus%/*}; tar xzpf - )
+            [ -d "${dot_globus}" ] && echo "[OK]"
+            echo -n "backing up detected installation... "
+            if tar czpf .globus-$(date ${date_format}).tgz .globus ; then
+                echo "[OK]"
+                echo -n "cleaning up... "
+                rm -rf "${HOME}/.globus" && echo "[OK]" || (echo "[FAIL]" && popd >& /dev/null && return 1)
+            else
+                echo "[FAIL]"
+            fi
+            popd >& /dev/null
+            echo
+        fi
+        #------------------------------------------------------------------------
 }
 
 backup_and_remove_globus_location() {
@@ -1630,6 +1627,7 @@ config_myproxy_server() {
         
         #[ -d /tmp/root_tmp_ca_setup ] && tar cvzf /tmp/root_tmp_ca_setup.$(date ${date_format}).tgz /tmp/root_tmp_ca_setup && rm -rf /tmp/root_tmp_ca_setup
         [ -d ${dot_globus}/simpleCA ] && read -p "Would you like to remove the current CA setup? [Y/n] " && rm -rf ${dot_globus}/simpleCA
+        echo "%> GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca"
         GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         

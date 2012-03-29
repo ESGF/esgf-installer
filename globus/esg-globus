@@ -116,7 +116,8 @@ gsoap_version=${gsoap_version:-"2.7.15"}
 #-----------
 globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
 # since script runs as root and simpleCA should be done as root, make it /root/.globus here
-dot_globus=/root/.globus
+#dot_globus=/root/.globus
+dot_globus=${HOME}/.globus
 #NOTE-RedHat/CentOS specific...
 globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
 num_cpus=${num_cpus:-1}
@@ -258,7 +259,7 @@ setup_globus_services() {
 	    fi
 	fi
 
-        read -p "Do you want to continue with the Globus installation and setup ($1)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+        read -p "Do you want to continue with the Globus installation and setup (idp)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
         [ -z "${dosetup}" ] && dosetup=$default_val
 
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -285,7 +286,7 @@ setup_globus_services() {
 #            ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
             echo ""
 
-            read -p "Do you want to make a back up of the existing Globus distribution ($1)? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+            read -p "Do you want to make a back up of the existing Globus distribution? $([ "$default_val" = "N" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
             [ -z "${dosetup}" ] && dosetup=$default_val
 
             if [ "${dosetup}" != "N" ] && [ "${dosetup}" != "n" ]; then
@@ -393,13 +394,13 @@ setup_globus_services() {
 _mv_simpleca_to_root() {
         #------------------------------------------------------------------------
         # A bit of migration code.  Older installations installed in HOME/.globus
-        # Current installations are always under /root/.globus
+        # Current installations are always under ${dot_globus} (defined at top)
         #------------------------------------------------------------------------
         if [ -e "${HOME}/.globus" ] && [ ! -d ${dot_globus} ]; then
             echo "Noticed that you have a simpleCA in ${HOME}/.globus, hmmm...."
             echo "The only valid location for simpleCA setup is in /root/.globus.... "
             pushd ${HOME} >& /dev/null
-            echo -n "transferring... ${HOME}/.globus -to-> /root/.globus "
+            echo -n "transferring... ${HOME}/.globus -to-> ${dot_globus}"
             tar czpf - .globus | (cd ${dot_globus%/*}; tar xzpf - )
             [ -d "${dot_globus}" ] && echo "[OK]"
             echo -n "backing up detected installation... "
@@ -2060,8 +2061,11 @@ fetch_myproxy_certificate_mapapp() {
 
     local tfile=myproxy-certificate-mapapp
     echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((force_install))
-    [ -e "${tfile}" ] && chmod 751 ${tfile}
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
+    local ret=$?
+    (( ret >= 1 )) && return 0
+    [ -e "${tfile}.tmpl" ] && chmod 640 ${tfile}.tmpl && cp -v ${tfile}{.tmpl,} && chmod 751 ${tfile} && \
+        sed -i '.bak' 's#\(ca_subject=.*-in \)\(.*\)\(/simpleCA/\)#\1'${dot_globus}'\3#' ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile

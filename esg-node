@@ -1250,6 +1250,7 @@ start_postgress() {
     check_postgress_process && return 1
 
     echo "Starting Postgress..."
+    check_shmmax
     echo "su $pg_sys_acct -c \"$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start\""
     PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
     [ $? != 0 ] && echo " ERROR: Could not start database!" && popd && return 1
@@ -4343,15 +4344,17 @@ debug_print() { ((DEBUG)) && echo -e $@ >&2; return 0; }
 #NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
 #arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
 check_shmmax() {
-    set_value_mb=${1:-40} #default is 32MB + headroom = 40MB
+    get_property kernel_shmmax 48
+    local set_value_mb=${1:-${kernel_shmmax}} #default is 40MB + headroom = 48MB
     let set_value_bytes=$((set_value_mb*1024*1024))
-    cur_value_bytes=$(sysctl -q kernel.shmmax | tr -s "=" | cut -d= -f2)
+    local cur_value_bytes=$(sysctl -q kernel.shmmax | tr -s "=" | cut -d= -f2)
     let cur_value_bytes=${cur_value_bytes## }
 
     if ((cur_value_bytes < set_value_bytes)); then
 	echo "Current system shared mem value too low [$cur_value_bytes bytes] changing to [$set_value_bytes bytes]"
 	sysctl -w kernel.shmmax=${set_value_bytes}
-	echo "kernel.shmmax = ${set_value_bytes}" >> /etc/sysctl.conf
+        sed -i.bak 's/\(^[^# ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf
+        write_as_property kernel_shmmax ${set_value_mb}
     fi
 }
 

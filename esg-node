@@ -5105,7 +5105,7 @@ backup_db() {
         case ${1} in 
             -s | --schema)
                 shift
-                my_schema_name=${1}
+                [ "esgf" = "${1%%_*}" ] && my_schema_name="${1#*_}" || my_schema_name="${1}"
                 ;;
             -db | --database)
                 shift

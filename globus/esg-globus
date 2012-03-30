@@ -259,7 +259,7 @@ setup_globus_services() {
 	    fi
 	fi
 
-        read -p "Do you want to continue with the Globus installation and setup (idp)? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+        read -p "Do you want to continue with the Globus installation and setup? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
         [ -z "${dosetup}" ] && dosetup=$default_val
 
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then

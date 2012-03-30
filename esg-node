@@ -5120,7 +5120,7 @@ backup_db() {
         shift
     done
     echo -n "database = [${my_node_db_name}] "
-    [ -n "${my_schema_name}" ] && echo -n "schema = [${my_schema_name}]"
+    [ -n "${my_schema_name}" ] && echo -n "schema = [esgf_${my_schema_name}]"
     echo
 
     mkdir -p ${esg_backup_dir}

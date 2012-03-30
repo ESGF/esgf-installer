@@ -2240,6 +2240,7 @@ select_idp_peer() {
 	printf "\t [6] : ESGF-DKRZ    -> ipcc-ar5.dkrz.de\n"
 	printf "\t [7] : ESGF-PNNL    -> esg1-gw.pnl.gov\n"
 	printf "\t [8] : ESGF-ANL     -> dev.esg.anl.gov\n"
+	printf "\t [9] : ESGF-PCMDI-TEST3 -> esgf-node3.llnl.gov\n"
 	printf "\t-------------------------------------------\n"
 	printf "\t [C] : (Manual Entry)\n"
 	printf "\t-------------------------------------------\n"
@@ -2247,6 +2248,9 @@ select_idp_peer() {
 
 	[ -z "${choice}" ] && choice=1 #default
 	case ${choice} in
+	    9)	esgf_idp_peer_name="ESGF-PCMDI-TEST3"
+		esgf_idp_peer="esgf-node3.llnl.gov"
+		;;
 	    8)	esgf_idp_peer_name="ESGF-ANL"
 		esgf_idp_peer="dev.esg.anl.gov"
 		;;

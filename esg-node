@@ -2708,7 +2708,7 @@ my_setup_globus() {
 	echo -n "Globus Setup for Data-Node... (GridFTP server) "
 	directive="datanode"
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@
+	(source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@)
 	ret=$?
 	popd >& /dev/null
 	[ ${ret} = 0 ] && write_globus_env || checked_done 1
@@ -2723,7 +2723,7 @@ my_setup_globus() {
 	pushd ${workdir} >& /dev/null
 	local setup_mode="update"
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_mode="install"
-	source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@ "${setup_mode}"
+	(source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@ "${setup_mode}")
 	ret=$?
 	popd >& /dev/null
 	[ ${ret} = 0 ] && write_globus_env || checked_done 1
@@ -6660,6 +6660,11 @@ main() {
 		    echo "test_publication" && test_publication $@
 		    exit
 		    ;;
+                --test-globus)
+                    init_structure
+                    read_sel
+                    test_globus $sel $@
+                    ;;
 		--info)
 		    info
 		    exit

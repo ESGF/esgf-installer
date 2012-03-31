@@ -2753,7 +2753,7 @@ test_globus() {
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@
+	(source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@)
 	ret=$?
 	popd >& /dev/null
     fi
@@ -2766,7 +2766,7 @@ test_globus() {
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@
+	(source ${scripts_dir}/esg-globus && test_globus_services "${directive}" $@)
 	ret=$?
 	popd >& /dev/null
     fi
@@ -2789,7 +2789,7 @@ start_globus() {
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/esg-globus && start_globus_services "${directive}" $@
+	(source ${scripts_dir}/esg-globus && start_globus_services "${directive}" $@)
 	data_node_ret=$?
 	[ ${data_node_ret} != 0 ] && echo "Could Not Start Globus ESGF Node related services (GridFTP)"
 	popd >& /dev/null
@@ -2803,7 +2803,7 @@ start_globus() {
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/esg-globus && start_globus_services "${directive}" $@
+	(source ${scripts_dir}/esg-globus && start_globus_services "${directive}" $@)
 	idp_node_ret=$?
 	[ ${idp_node_ret} != 0 ] && echo "Could Not Start Globus IDP Node related services (MyProxy)"
 	popd >& /dev/null
@@ -2827,7 +2827,7 @@ stop_globus() {
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/esg-globus && stop_globus_services "${directive}" $@
+	(source ${scripts_dir}/esg-globus && stop_globus_services "${directive}" $@)
 	ret=$?
 	popd >& /dev/null
     fi
@@ -2838,7 +2838,7 @@ stop_globus() {
 	mkdir -p ${workdir}
 	[ $? != 0 ] && checked_done 1
 	pushd ${workdir} >& /dev/null
-	source ${scripts_dir}/esg-globus && stop_globus_services "${directive}" $@
+	(source ${scripts_dir}/esg-globus && stop_globus_services "${directive}" $@)
 	ret=$?
 	popd >& /dev/null
     fi

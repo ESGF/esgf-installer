@@ -69,6 +69,11 @@ force_install=${force_install:-0}
 workdir=${workdir:-~/workbench/esg}
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 
+#------------------------------------------------------------
+# We want globus to fully behave as though it's home is /root
+HOME=/root
+#------------------------------------------------------------
+
 #--------------
 # ID Setting
 #--------------

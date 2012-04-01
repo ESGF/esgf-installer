@@ -71,6 +71,7 @@ install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 
 #------------------------------------------------------------
 # We want globus to fully behave as though it's home is /root
+orig_user_home=${HOME}
 HOME=/root
 #------------------------------------------------------------
 
@@ -121,7 +122,6 @@ gsoap_version=${gsoap_version:-"2.7.15"}
 #-----------
 globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
 # since script runs as root and simpleCA should be done as root, make it /root/.globus here
-#dot_globus=/root/.globus
 dot_globus=${HOME}/.globus
 #NOTE-RedHat/CentOS specific...
 globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
@@ -397,29 +397,29 @@ setup_globus_services() {
 }
 
 _mv_simpleca_to_root() {
-        #------------------------------------------------------------------------
-        # A bit of migration code.  Older installations installed in HOME/.globus
-        # Current installations are always under ${dot_globus} (defined at top)
-        #------------------------------------------------------------------------
-        if [ -e "${HOME}/.globus" ] && [ ! -d ${dot_globus} ]; then
-            echo "Noticed that you have a simpleCA in ${HOME}/.globus, hmmm...."
-            echo "The only valid location for simpleCA setup is in /root/.globus.... "
-            pushd ${HOME} >& /dev/null
-            echo -n "transferring... ${HOME}/.globus -to-> ${dot_globus}"
-            tar czpf - .globus | (cd ${dot_globus%/*}; tar xzpf - )
-            [ -d "${dot_globus}" ] && echo "[OK]"
-            echo -n "backing up detected installation... "
-            if tar czpf .globus-$(date ${date_format}).tgz .globus ; then
-                echo "[OK]"
-                echo -n "cleaning up... "
-                rm -rf "${HOME}/.globus" && echo "[OK]" || (echo "[FAIL]" && popd >& /dev/null && return 1)
-            else
-                echo "[FAIL]"
-            fi
-            popd >& /dev/null
-            echo
+    #------------------------------------------------------------------------
+    # A bit of migration code.  Older installations installed in ${orig_user_home}/.globus
+    # Current installations are always under ${dot_globus} (defined at top)
+    #------------------------------------------------------------------------
+    if [ -e "${orig_user_home}/.globus" ] && [ ! -d ${dot_globus} ]; then
+        echo "Noticed that you have a simpleCA in ${orig_user_home}/.globus, hmmm...."
+        echo "The only valid location for simpleCA setup is in ${dot_globus}.... "
+        pushd ${orig_user_home} >& /dev/null
+        echo -n "transferring... ${orig_user_home}/.globus -to-> ${dot_globus}"
+        tar czpf - .globus | (cd ${dot_globus%/*}; tar xzpf - )
+        [ -d "${dot_globus}" ] && echo "[OK]"
+        echo -n "backing up detected installation... "
+        if tar czpf .globus-$(date ${date_format}).tgz .globus ; then
+            echo "[OK]"
+            echo -n "cleaning up... "
+            rm -rf "${orig_user_home}/.globus" && echo "[OK]" || (echo "[FAIL]" && popd >& /dev/null && return 1)
+        else
+            echo "[FAIL]"
         fi
-        #------------------------------------------------------------------------
+        popd >& /dev/null
+        echo
+    fi
+    #------------------------------------------------------------------------
 }
 
 backup_and_remove_globus_location() {
@@ -1736,9 +1736,9 @@ config_myproxy_server() {
     local simpleCA_cert=${dot_globus}/simpleCA/cacert.pem
     if [ -e "${simpleCA_cert}" ]; then
         cp -v ${simpleCA_cert} /etc/grid-security/certificates/ && echo -n "." || echo -n "x"
-	chown -R ${installer_uid}:${installer_gid} /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
-	chown -R ${installer_uid}:${installer_gid} /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
-        echo
+	chown -R $(id -u):$(id -g) /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
+	chown -R $(id -u):$(id -g) /etc/grid-security/certificates/${simpleCA_cert##/*/} >& /dev/null && echo -n "." || echo -n "x"
+        #echo
         [ -e "/etc/grid-security/certificates/${simpleCA_cert##/*/}" ] && rebuild_truststore
     fi
 
@@ -1751,8 +1751,8 @@ config_myproxy_server() {
     [ $((install_mode)) == 0 ] && return 0
 
     #allow for fetched keys to be written in this location.
-    echo "chown -R ${installer_uid}:${installer_gid} ${dot_globus}"
-    chown -R ${installer_uid}:${installer_gid} ${dot_globus} 
+    echo "chown -R $(id -u):$(id -g) ${dot_globus}"
+    chown -R $(id -u):$(id -g) ${dot_globus}
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use myproxy and publisher properly!"
     
     #NOTE: for more info on keys and troubleshooting see:

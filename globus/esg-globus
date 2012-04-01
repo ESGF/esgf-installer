@@ -405,7 +405,7 @@ _mv_simpleca_to_root() {
         echo "Noticed that you have a simpleCA in ${orig_user_home}/.globus, hmmm...."
         echo "The only valid location for simpleCA setup is in ${dot_globus}.... "
         pushd ${orig_user_home} >& /dev/null
-        echo -n "transferring... ${orig_user_home}/.globus -to-> ${dot_globus}"
+        echo -n "transferring... ${orig_user_home}/.globus -to-> ${dot_globus} "
         tar czpf - .globus | (cd ${dot_globus%/*}; tar xzpf - )
         [ -d "${dot_globus}" ] && echo "[OK]"
         echo -n "backing up detected installation... "
@@ -418,6 +418,7 @@ _mv_simpleca_to_root() {
         fi
         popd >& /dev/null
         echo
+        _performed_simpleCA_migration=1
     fi
     #------------------------------------------------------------------------
 }
@@ -1888,7 +1889,7 @@ config_myproxy_server() {
     #--------------------
     # Get myproxy-certificate-mapapp file
     #--------------------
-    fetch_myproxy_certificate_mapapp
+    fetch_myproxy_certificate_mapapp $((_performed_simpleCA_migration))
     #--------------------
 
     #--------------------
@@ -1989,11 +1990,12 @@ check_myproxy_process() {
 ############################################
 
 edit_myproxy_server_config() {
+    local _force_install=$((force_install + ${1:-0}))
     local cert_password
     pushd /etc >& /dev/null
     local tfile=myproxy-server.config
     echo "Download and Modifying myproxy server configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((_force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
@@ -2035,10 +2037,11 @@ edit_myproxy_server_config() {
 }
 
 edit_pam_pgsql_conf() {
+    local _force_install=$((force_install + ${1:-0}))
     pushd /etc >& /dev/null
     local tfile=pam_pgsql.conf
     echo "Download and Modifying pam pgsql configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/etc_${tfile} $((force_install))
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/etc_${tfile} $((_force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
     [ $? != 0 ] && return 1
@@ -2060,17 +2063,18 @@ edit_pam_pgsql_conf() {
 }
 
 fetch_myproxy_certificate_mapapp() {
+    local _force_install=$((force_install + ${1:-0}))
     local myproxy_config_dir=${esg_config_dir}/myproxy
     mkdir -p ${myproxy_config_dir}
     pushd ${myproxy_config_dir} >& /dev/null
 
     local tfile=myproxy-certificate-mapapp
     echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((force_install))
+    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((_force_install))
     local ret=$?
     (( ret >= 1 )) && return 0
     [ -e "${tfile}.tmpl" ] && chmod 640 ${tfile}.tmpl && cp -v ${tfile}{.tmpl,} && chmod 751 ${tfile} && \
-        sed -i '.bak' 's#\(ca_subject=.*-in \)\(.*\)\(/simpleCA/\)#\1'${dot_globus}'\3#' ${tfile}
+        sed -i.bak 's#\(ca_subject=.*-in \)\(.*\)\(/simpleCA/\)#\1'${dot_globus}'\3#' ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
@@ -2078,16 +2082,18 @@ fetch_myproxy_certificate_mapapp() {
 }
 
 fetch_etc_pam_d_myproxy() {
+    local _force_install=$((force_install + ${1:-0}))
     pushd /etc/pam.d >& /dev/null
     local tfile=myproxy
     echo "Fetching pam's myproxy resource file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/etc_pam.d_${tfile}
+    checked_get ${tfile} ${myproxy_dist_url_base}/etc_pam.d_${tfile} $((_force_install))
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
 }
 
 fetch_esg_attribute_callout_app() {
+    local _force_install=$((force_install + ${1:-0}))
    #Configure External Attribute Callout with MyProxy
     local myproxy_config_dir=${esg_config_dir}/myproxy
     mkdir -p ${myproxy_config_dir}
@@ -2095,7 +2101,7 @@ fetch_esg_attribute_callout_app() {
 
     local tfile=esg_attribute_callout_app
     echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((force_install))
+    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((_force_install))
     [ -e "${tfile}" ] && chmod 751 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
@@ -2103,10 +2109,11 @@ fetch_esg_attribute_callout_app() {
 }
 
 fetch_init_d_myproxy() {
+    local _force_install=$((force_install + ${1:-0}))
     pushd /etc/init.d/ >& /dev/null
     local tfile=myproxy
     echo "Download MyProxy rc script: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/init.d_${tfile} $((force_install))
+    checked_get ${tfile} ${myproxy_dist_url_base}/init.d_${tfile} $((_force_install))
     [ -e "${tfile}" ] && chmod 755 ${tfile}
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
@@ -2114,12 +2121,13 @@ fetch_init_d_myproxy() {
 }
 
 sanity_check_myproxy_configurations() {
-    edit_myproxy_server_config $((force_install))
-    edit_pam_pgsql_conf $((force_install))
-    fetch_myproxy_certificate_mapapp $((force_install))
-    fetch_etc_pam_d_myproxy $((force_install))
-    fetch_esg_attribute_callout_app $((force_install))
-    fetch_init_d_myproxy $((force_install))
+    local _force_install=$((force_install + ${1:-0}))
+    edit_myproxy_server_config $((_force_install))
+    edit_pam_pgsql_conf $((_force_install))
+    fetch_myproxy_certificate_mapapp $((_force_install))
+    fetch_etc_pam_d_myproxy $((_force_install))
+    fetch_esg_attribute_callout_app $((_force_install))
+    fetch_init_d_myproxy $((_force_install))
 }
 
 ############################################

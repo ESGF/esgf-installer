@@ -2575,7 +2575,7 @@ setup_tds() {
     #HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
     #		  So have to manually move over this directory to avert server not starting! WTF!? -gavin
     local created_brand_new_thredds_content_dir=0
-    if [ ! -d ${thredds_content_dir}/thredds ]; then
+    if [ ! -d ${thredds_content_dir}/thredds ] || ((force_install)); then
         mkdir -p ${thredds_content_dir}/thredds
         cp -R ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public ${thredds_content_dir}/thredds
         chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
@@ -2607,7 +2607,7 @@ setup_tds() {
     echo
 
     #Set ownership of esgcet "thredds content" directory to installation owner
-    if [ ! -d ${thredds_content_dir}/thredds/esgcet ]; then
+    if [ ! -d ${thredds_content_dir}/thredds/esgcet ] || ((force_install)); then
         mkdir -p ${thredds_content_dir}/thredds/esgcet
         echo "chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet"
         chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet

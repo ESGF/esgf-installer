@@ -7185,12 +7185,11 @@ main() {
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 	start ${sel}
 	done_remark
-	echo "${version}" |tee ${esg_root_dir}/version
+	echo "${script_version}" |tee ${esg_root_dir}/version
 	echo
 	write_as_property version ${script_version}
 	write_as_property release ${script_release}
 	write_as_property gridftp_config
-	echo
 	esg_node_finally
     }
 

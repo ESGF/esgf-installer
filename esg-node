@@ -4363,7 +4363,7 @@ check_shmmax() {
     if ((cur_value_bytes < set_value_bytes)); then
 	echo "Current system shared mem value too low [$cur_value_bytes bytes] changing to [$set_value_bytes bytes]"
 	sysctl -w kernel.shmmax=${set_value_bytes}
-        sed -i.bak 's/\(^[^# ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf
+        sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf
         write_as_property kernel_shmmax ${set_value_mb}
     fi
 }

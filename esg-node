@@ -2574,10 +2574,14 @@ setup_tds() {
     #--------
     #HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
     #		  So have to manually move over this directory to avert server not starting! WTF!? -gavin
-    mkdir -p ${thredds_content_dir}/thredds
-    cp -R ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public ${thredds_content_dir}/thredds
-    chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
-    chmod -R 755 ${thredds_content_dir}
+    local created_brand_new_thredds_content_dir=0
+    if [ ! -d ${thredds_content_dir}/thredds ]; then
+        mkdir -p ${thredds_content_dir}/thredds
+        cp -R ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public ${thredds_content_dir}/thredds
+        chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
+        chmod -R 755 ${thredds_content_dir}
+        created_brand_new_thredds_content_dir=1
+    fi
     #--------
 
     #restart tomcat to put modifications in effect.
@@ -2589,7 +2593,7 @@ setup_tds() {
     echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
     ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
 
-    chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
+    ((created_brand_new_thredds_content_dir)) && chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
 
     popd >& /dev/null
     echo
@@ -2603,10 +2607,12 @@ setup_tds() {
     echo
 
     #Set ownership of esgcet "thredds content" directory to installation owner
-    mkdir -p ${thredds_content_dir}/thredds/esgcet
-    echo "chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet"
-    chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet
-    [ $? != 0 ] && echo "WARNING: Could not change owner successfully - this will lead to unability to create new catalogs via the publisher!"
+    if [ ! -d ${thredds_content_dir}/thredds/esgcet ]; then
+        mkdir -p ${thredds_content_dir}/thredds/esgcet
+        echo "chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet"
+        chown -R ${installer_uid}:${installer_gid} ${thredds_content_dir}/thredds/esgcet
+        [ $? != 0 ] && echo "WARNING: Could not change owner successfully - this will lead to unability to create new catalogs via the publisher!"
+    fi
 
     echo "curl http://${esgf_host_ip}/thredds"
     local wait_time=5
@@ -6416,6 +6422,11 @@ done_remark() {
     echo "Your specified \"index\" peer - : [${esgf_index_peer}] (url = http://${esgf_index_peer}/)"
     echo "Your specified \"idp\" peer --- : [${esgf_idp_peer}] (name = ${esgf_idp_peer_name})"
 
+    if [ -d "${thredds_content_dir}/thredds" ]; then
+        echo
+        echo "(Use UNIX group permissions on ${thredds_content_dir}/thredds/esgcet to allow publisher user to publish thredds catalogs)"
+        echo " %> chgrp -R <appropriate unix group for publishing users> ${thredds_content_dir}/thredds"
+    fi
     #echo "(\"Test Project\" -> pcmdi.${esg_root_id}.${node_short_name}.test.mytest)"
     echo ""
 }

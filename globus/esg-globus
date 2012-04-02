@@ -1351,7 +1351,6 @@ start_gridftp_server() {
     
     pushd ${globus_location}/sbin >& /dev/null
 
-    #NOTE: this option does not work...
     disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
 
     while [ -n "$1" ]; do

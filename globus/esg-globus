@@ -260,7 +260,12 @@ setup_globus_services() {
 	    fi
 	else
 	    if [ ! -d ${dot_globus} ]; then
-		echo "The MyProxy SimpleCA is not installed.  Installation is recommended";
+		echo "The MyProxy SimpleCA is not found in official location [${dot_globus}] "
+                if [ -e "${orig_user_home}/.globus" ]; then
+                    echo "(It looks like a migration is can be performed from [${orig_user_home}/.globus])"
+                else
+                    echo "Installation is recommended";
+                fi
 	    fi
 	fi
 

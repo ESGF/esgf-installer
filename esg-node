@@ -120,7 +120,7 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.10.0"}
+    esgcet_version=${esgcet_version:-"2.10.1"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.6.7"}
@@ -1481,14 +1481,14 @@ setup_esgcet() {
     #	 if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
     #	     #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
     #	     #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-    checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     (( $? > 1 )) && return 0
     $cdat_home/bin/easy_install ${esgcet_egg_file}
     [ $? != 0 ] && checked_done 1
     #	 elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
-    #	     #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet"
-    #	     #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet
-    #	     checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    #	     #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet"
+    #	     #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet
+    #	     checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     #	     (( $? > 1 )) && return 0
     #	     $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file}
     #	     [ $? != 0 ] && checked_done 1
@@ -1627,7 +1627,7 @@ test_esgcet() {
     echo "esgcet test directory: [${esgcet_testdir}]"
     local fetch_file
     fetch_file=sftlf.nc
-    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url}/externals/${fetch_file} $((force_install))
+    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url_root}/externals/${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
 

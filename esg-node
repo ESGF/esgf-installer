@@ -5682,6 +5682,12 @@ _version_segment_cmp() {
     fi
 
     for index in `seq 1 $VERSIONLENGTH` ; do
+    
+    if ( [ -n "$(sed -n 's/\([^0-9]\)/\1/p' <<<${VERSIONA[$index]})" ] || [ -n "$(sed -n 's/\([^0-9]\)/\1/p' <<<${VERSIONB[$index]})" ] ) ; then 
+        #-----------------------------------
+        #Support for Alpha Comparison
+        #-----------------------------------
+        debug_print "alpha comparison"
         if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
             echo "1"
             return
@@ -5689,6 +5695,19 @@ _version_segment_cmp() {
             echo "-1"
             return
         fi
+    else
+       #-----------------------------------
+        #PERFORM PURELY NUMERIC COMPARISON
+        #-----------------------------------
+        debug_print "numeric comparison"
+        if (( ${VERSIONA[$index]:-0} > ${VERSIONB[$index]:-0} )) ; then
+            echo "1"
+            return
+        elif (( ${VERSIONA[$index]:-0} < ${VERSIONB[$index]:-0} )) ; then
+            echo "-1"
+            return
+        fi
+    fi
     done
     echo "0"
 }

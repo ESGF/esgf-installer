@@ -4608,10 +4608,10 @@ check_for_group_intersection_with() {
     [ -z ${esgf_default_peer} ] && get_property esgf_default_peer
     [ -z ${esgf_idp_peer} ]     && get_property esgf_idp_peer
     [ -z ${esgf_index_peer} ]   && get_property esgf_index_peer
-    
+
     local target_nodes=($@)
     (( 0 == ${#target_nodes[@]} )) && target_nodes=(${esgf_default_peer} ${esgf_idp_peer} ${esgf_index_peer})
-    
+
     echo
     local ret=0
     local visited=()
@@ -4623,11 +4623,11 @@ check_for_group_intersection_with() {
             ((ret=ret+100))
             continue
         fi
-        
+
         #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
         #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
         local shared_groups=($(awk 'BEGIN {RS=",";ORS=" "} {a[$1]+=1} END {for (i in a) if (a[i] >1) print i}'<<<"${target_groups},${node_peer_group}"))
-        
+
         #Let the user know what you've found...
         if ((${#shared_groups[@]} == 0)); then
             echo "  WARNING: This node does not share any peer groups with peer node $target_node :-("
@@ -5109,10 +5109,10 @@ backup() {
 backup_db() {
     local my_node_db_name=${db_database}
     local my_schema_name
-    
+
     echo -n "backup db: "
     while [ -n "$1" ]; do
-        case ${1} in 
+        case ${1} in
             -s | --schema)
                 shift
                 [ "esgf" = "${1%%_*}" ] && my_schema_name="${1#*_}" || my_schema_name="${1}"
@@ -5176,10 +5176,10 @@ restore_nth_db_backup() {
     local my_node_db_name=${db_database}
     local my_schema_name
     local n_recent=1
-    
+
     echo -n "restore db: "
     while [ -n "$1" ]; do
-        case ${1} in 
+        case ${1} in
             -s | --schema)
                 shift
                 my_schema_name=${1}
@@ -5214,7 +5214,7 @@ restore_nth_db_backup() {
     read -e -p "Would you like to first make a back up of the existing database? [Y/n] " answer
     [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
     [ "${answer}" = "Y" ] && backup_db -db ${my_node_db_name} -s ${my_schema_name} && ((n_recent++))
-    
+
     start_postgress
 
     pushd ${esg_backup_dir} >& /dev/null

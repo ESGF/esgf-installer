@@ -5600,7 +5600,7 @@ _verify() {
 _version_cmp() {
     # Takes two strings, splits them into epoch (before the last ':'),
     # version (between the last ':' and the first '-'), and release
-    # (after the first '-'), and then calls version_segment_cmp on
+    # (after the first '-'), and then calls _version_segment_cmp on
     # each part until a difference is found.
     #
     # Empty segments are replaced with "-1" so that an empty segment
@@ -5660,9 +5660,10 @@ _version_segment_cmp() {
     # "-" segments).  If you want to compare versions in the format of
     # "1:2.3-4", use _version_cmp(), which calls this function.
     #
-    # Note that the individual section comparisons are string
-    # comparisons, so this is not guaranteed to produce sane results
-    # where leading zeroes or nonstandard formats are present.  Null
+    # If the values for both array elements are purely numeric, a
+    # numeric compare is done (to handle problems such as 9 > 10 or
+    # 02 < 1 in a string compare), but if either value contains a
+    # non-numeric value or is null a string compare is done.  Null
     # values are considered less than zero.
     #
     # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
@@ -5682,32 +5683,26 @@ _version_segment_cmp() {
     fi
 
     for index in `seq 1 $VERSIONLENGTH` ; do
-    
-    if ( [ -n "$(sed -n 's/\([^0-9]\)/\1/p' <<<${VERSIONA[$index]})" ] || [ -n "$(sed -n 's/\([^0-9]\)/\1/p' <<<${VERSIONB[$index]})" ] ) ; then 
-        #-----------------------------------
-        #Support for Alpha Comparison
-        #-----------------------------------
-        debug_print "alpha comparison"
-        if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
-            echo "1"
-            return
-        elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
-            echo "-1"
-            return
+        if ( [ -z ${VERSIONA[$index]##*[!0-9]*} ] ||
+             [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
+            # Non-numeric comparison
+            if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
+                echo "1"
+                return
+            elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
+                echo "-1"
+                return
+            fi
+        else
+            # Purely numeric comparison
+            if (( ${VERSIONA[$index]:-0} > ${VERSIONB[$index]:-0} )) ; then
+                echo "1"
+                return
+            elif (( ${VERSIONA[$index]:-0} < ${VERSIONB[$index]:-0} )) ; then
+                echo "-1"
+                return
+            fi
         fi
-    else
-       #-----------------------------------
-        #PERFORM PURELY NUMERIC COMPARISON
-        #-----------------------------------
-        debug_print "numeric comparison"
-        if (( ${VERSIONA[$index]:-0} > ${VERSIONB[$index]:-0} )) ; then
-            echo "1"
-            return
-        elif (( ${VERSIONA[$index]:-0} < ${VERSIONB[$index]:-0} )) ; then
-            echo "-1"
-            return
-        fi
-    fi
     done
     echo "0"
 }

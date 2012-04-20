@@ -1125,6 +1125,15 @@ setup_postgress() {
 	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
+    else
+        #check that this existing postgres account has a shell (required)
+        local postgress_user_shell="$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)"
+        if [ "${postgress_user_shell}" != "/bin/bash" ]; then
+            echo "Noticed that the existing postgres user [${pg_sys_acct}] does not have the bash shell... Hmmm... making it so "
+            sed -i 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd
+            echo "grep '${pg_sys_acct}': /etc/passwd"
+            [ "$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)" = "/bin/bash" ] && echo "[OK]" || echo "[FAIL]"
+        fi
     fi
     [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 

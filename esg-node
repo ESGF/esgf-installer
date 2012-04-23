@@ -120,7 +120,7 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.10.0"}
+    esgcet_version=${esgcet_version:-"2.10.1"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.6.7"}
@@ -137,10 +137,10 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.1.2"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"2.4.1"}
+    esg_search_version=${esg_search_version:-"2.5.4"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.0.3"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.0.4"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.0.0"}
@@ -1481,14 +1481,14 @@ setup_esgcet() {
     #	 if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
     #	     #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
     #	     #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-    checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     (( $? > 1 )) && return 0
     $cdat_home/bin/easy_install ${esgcet_egg_file}
     [ $? != 0 ] && checked_done 1
     #	 elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
-    #	     #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet"
-    #	     #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet
-    #	     checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    #	     #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet"
+    #	     #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet
+    #	     checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     #	     (( $? > 1 )) && return 0
     #	     $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file}
     #	     [ $? != 0 ] && checked_done 1
@@ -1570,16 +1570,16 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
-    if [ "${mode}" = "U" ]; then
-	echo "${cdat_home}/bin/esginitialize -c"
-	${cdat_home}/bin/esginitialize -c
-	[ $? != 0 ] && popd && checked_done 1
-    else
+    if [ "${mode}" = "I" ]; then
 
         echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
 	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
+
+    echo "${cdat_home}/bin/esginitialize -c"
+    ${cdat_home}/bin/esginitialize -c
+    [ $? != 0 ] && popd && checked_done 1
 
     popd >& /dev/null
     echo
@@ -1627,7 +1627,7 @@ test_esgcet() {
     echo "esgcet test directory: [${esgcet_testdir}]"
     local fetch_file
     fetch_file=sftlf.nc
-    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url}/externals/${fetch_file} $((force_install))
+    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url_root}/externals/${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
 
@@ -4264,7 +4264,7 @@ _is_managed_db() {
             default=${db_managed:-'yes'}
         fi
 
-        read -e -p "Is this database intended to be an externally managed database? [${default}]: " input
+        read -e -p "Is the database an external to this node? [${default}]: " input
 	[ -z "${input}" ] && db_managed=${default} && write_as_property db_managed
 	[ -n "${input}" ] && db_managed=${input} && write_as_property db_managed
     else
@@ -4608,10 +4608,10 @@ check_for_group_intersection_with() {
     [ -z ${esgf_default_peer} ] && get_property esgf_default_peer
     [ -z ${esgf_idp_peer} ]     && get_property esgf_idp_peer
     [ -z ${esgf_index_peer} ]   && get_property esgf_index_peer
-    
+
     local target_nodes=($@)
     (( 0 == ${#target_nodes[@]} )) && target_nodes=(${esgf_default_peer} ${esgf_idp_peer} ${esgf_index_peer})
-    
+
     echo
     local ret=0
     local visited=()
@@ -4623,11 +4623,11 @@ check_for_group_intersection_with() {
             ((ret=ret+100))
             continue
         fi
-        
+
         #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
         #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
         local shared_groups=($(awk 'BEGIN {RS=",";ORS=" "} {a[$1]+=1} END {for (i in a) if (a[i] >1) print i}'<<<"${target_groups},${node_peer_group}"))
-        
+
         #Let the user know what you've found...
         if ((${#shared_groups[@]} == 0)); then
             echo "  WARNING: This node does not share any peer groups with peer node $target_node :-("
@@ -5109,10 +5109,10 @@ backup() {
 backup_db() {
     local my_node_db_name=${db_database}
     local my_schema_name
-    
+
     echo -n "backup db: "
     while [ -n "$1" ]; do
-        case ${1} in 
+        case ${1} in
             -s | --schema)
                 shift
                 [ "esgf" = "${1%%_*}" ] && my_schema_name="${1#*_}" || my_schema_name="${1}"
@@ -5176,10 +5176,10 @@ restore_nth_db_backup() {
     local my_node_db_name=${db_database}
     local my_schema_name
     local n_recent=1
-    
+
     echo -n "restore db: "
     while [ -n "$1" ]; do
-        case ${1} in 
+        case ${1} in
             -s | --schema)
                 shift
                 my_schema_name=${1}
@@ -5214,7 +5214,7 @@ restore_nth_db_backup() {
     read -e -p "Would you like to first make a back up of the existing database? [Y/n] " answer
     [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
     [ "${answer}" = "Y" ] && backup_db -db ${my_node_db_name} -s ${my_schema_name} && ((n_recent++))
-    
+
     start_postgress
 
     pushd ${esg_backup_dir} >& /dev/null
@@ -5600,7 +5600,7 @@ _verify() {
 _version_cmp() {
     # Takes two strings, splits them into epoch (before the last ':'),
     # version (between the last ':' and the first '-'), and release
-    # (after the first '-'), and then calls version_segment_cmp on
+    # (after the first '-'), and then calls _version_segment_cmp on
     # each part until a difference is found.
     #
     # Empty segments are replaced with "-1" so that an empty segment
@@ -5660,9 +5660,10 @@ _version_segment_cmp() {
     # "-" segments).  If you want to compare versions in the format of
     # "1:2.3-4", use _version_cmp(), which calls this function.
     #
-    # Note that the individual section comparisons are string
-    # comparisons, so this is not guaranteed to produce sane results
-    # where leading zeroes or nonstandard formats are present.  Null
+    # If the values for both array elements are purely numeric, a
+    # numeric compare is done (to handle problems such as 9 > 10 or
+    # 02 < 1 in a string compare), but if either value contains a
+    # non-numeric value or is null a string compare is done.  Null
     # values are considered less than zero.
     #
     # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
@@ -5682,12 +5683,25 @@ _version_segment_cmp() {
     fi
 
     for index in `seq 1 $VERSIONLENGTH` ; do
-        if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
-            echo "1"
-            return
-        elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
-            echo "-1"
-            return
+        if ( [ -z ${VERSIONA[$index]##*[!0-9]*} ] ||
+             [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
+            # Non-numeric comparison
+            if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
+                echo "1"
+                return
+            elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
+                echo "-1"
+                return
+            fi
+        else
+            # Purely numeric comparison
+            if (( ${VERSIONA[$index]:-0} > ${VERSIONB[$index]:-0} )) ; then
+                echo "1"
+                return
+            elif (( ${VERSIONA[$index]:-0} < ${VERSIONB[$index]:-0} )) ; then
+                echo "-1"
+                return
+            fi
         fi
     done
     echo "0"
@@ -5936,7 +5950,6 @@ initial_setup_questionnaire() {
     if [ -z "${security_admin_password}" ] || ((force_install)); then
 	while [ 1 ]; do
 	    unset input
-	    echo
 	    read -e -s -p "What is the admin password to use for this installation? (alpha-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
 	    ((force_install)) && [ -z "${input}" ] && [ -n "${security_admin_password}" ] && changed=0 && echo && break
 	    ( [ -z "${input}" ] || [ -n "$(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p')" ] ) && echo "Invalid password... " && continue
@@ -6133,12 +6146,22 @@ _get_db_conn_str_questionnaire() {
     #postgresql://esgcet@localhost:5432/esgcet
     local ret=1
     local user_ host_ port_ dbname_ connstring_
+
+    #Note the values referenced here should have been set by prior get_property *** calls
+    #that sets these values in the script scope. (see the call in questionnaire function - above)
+    if [ -n "${db_user}" ] && [ -n "${db_host}" ] && [ -n "${db_port}" ] && [ -n "${db_database}" ]; then
+        connstring_="${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
+    fi
+
     while [ 1 ]; do
+        local input
         echo "Please enter the database connection string..."
         echo " (form: postgresql://[username]@[host]:[port]/[database])"
-        read -e -p "Enter the database connection string: postgresql://" connstring_
-        echo "entered: postgresql://$connstring_"
-        eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${connstring_}"))
+        read -e -p "Enter the database connection string: postgresql://${connstring_}" input
+        [ -z "${input}" ] && input="${connstring_}"
+        echo "entered: postgresql://${input}"
+        [ -z "${input}" ] && continue
+        eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${input}"))
         if [ -z "${user_}" ] || \
             [ -z "${host_}" ] || \
             [ -z "${port_}" ] || \

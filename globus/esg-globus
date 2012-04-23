@@ -260,7 +260,12 @@ setup_globus_services() {
 	    fi
 	else
 	    if [ ! -d ${dot_globus} ]; then
-		echo "The MyProxy SimpleCA is not installed.  Installation is recommended";
+		echo "The MyProxy SimpleCA is not found in official location [${dot_globus}] "
+                if [ -e "${orig_user_home}/.globus" ]; then
+                    echo "(It looks like a migration is can be performed from [${orig_user_home}/.globus])"
+                else
+                    echo "Installation is recommended";
+                fi
 	    fi
 	fi
 
@@ -1346,7 +1351,6 @@ start_gridftp_server() {
     
     pushd ${globus_location}/sbin >& /dev/null
 
-    #NOTE: this option does not work...
     disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
 
     while [ -n "$1" ]; do

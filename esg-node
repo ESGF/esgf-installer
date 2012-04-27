@@ -6605,49 +6605,6 @@ main() {
 		    status
 		    exit $?
 		    ;;
-		#update | --update | upgrade | --upgrade )
-		#    shift
-		#    (( $# != 0 )) && echo "error: \"update\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
-		#    self_verify
-		#    check_prerequisites
-		#    [ $? != 0 ] && echo && exit 1
-                #    
-                #    init_structure
-                #
-		#    read_sel
-                #
-		#---------------
-		#version checking...
-		#---------------
-                #    setup_openssl
-		#    setup_curl
-		#    setup_git
-		#    setup_java
-		#    setup_ant
-		#    setup_postgress
-		##TODO: no check for cdat yet :-(
-                #
-		##The arg "1" indicates an upgrade (see function)
-		#    setup_esgcet 1
-		#    setup_tomcat 1
-		#    setup_tds 1
-		#    setup_subsystem node-manager esgf-node-manager 1
-		#    setup_subsystem dashboard esgf-dashboard 1
-		#    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
-		#    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
-		#    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
-		#    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
-		#    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
-		#    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1 ${index_config}
-		#    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
-		#    [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
-                #
-		##---
-		#    debug_print "STARTING UPDATED SERVICES: ${sel}"
-		#    start ${sel}
-                #
-		#    exit 0
-		#    ;;
                 --update-sub-installer)
 		    shift
 		    self_verify

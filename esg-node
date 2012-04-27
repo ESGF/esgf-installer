@@ -2994,7 +2994,7 @@ setup_subsystem() {
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
     debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} $@"
-    source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} $@
+    source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@
     checked_done $?
     echo "-------------------------------"
     echo
@@ -6488,6 +6488,8 @@ show_type() {
     echo "node type: [ ${resolved_to}] (${sel}) "
 }
 
+upgrade_mode=0
+install_mode=0
 main() {
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 	init
@@ -6497,8 +6499,20 @@ main() {
     #echo "arg ${i} = $1"
 	    local unshift=0
 	    case $1 in
-		--install | install)
-		    debug_print "INSTALL SERVICES"
+                --install | install | update | --update | upgrade | --upgrade)
+                    if [ "${1##*-}" = "update" ] || [ "${1##*-}" = "upgrade" ] ; then
+                        if (( (install_mode+upgrade_mode) == 0)); then
+                            upgrade_mode=1
+                            install_mode=0
+		            debug_print "UPDATE SERVICES"
+                        fi
+                    else
+                        if (( (install_mode+upgrade_mode) == 0)); then
+                            upgrade_mode=0
+                            install_mode=1
+		            debug_print "INSTALL SERVICES"
+                        fi
+                    fi
 		    (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
 		    ;;
 		--verify | --test)
@@ -6591,49 +6605,49 @@ main() {
 		    status
 		    exit $?
 		    ;;
-		update | --update | upgrade | --upgrade )
-		    shift
-		    (( $# != 0 )) && echo "error: \"update\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
-		    self_verify
-		    check_prerequisites
-		    [ $? != 0 ] && echo && exit 1
-
-                    init_structure
-
-		    read_sel
-
+		#update | --update | upgrade | --upgrade )
+		#    shift
+		#    (( $# != 0 )) && echo "error: \"update\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
+		#    self_verify
+		#    check_prerequisites
+		#    [ $? != 0 ] && echo && exit 1
+                #    
+                #    init_structure
+                #
+		#    read_sel
+                #
 		#---------------
 		#version checking...
 		#---------------
-                    setup_openssl
-		    setup_curl
-		    setup_git
-		    setup_java
-		    setup_ant
-		    setup_postgress
-		#TODO: no check for cdat yet :-(
-
-		#The arg "1" indicates an upgrade (see function)
-		    setup_esgcet 1
-		    setup_tomcat 1
-		    setup_tds 1
-		    setup_subsystem node-manager esgf-node-manager 1
-		    setup_subsystem dashboard esgf-dashboard 1
-		    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
-		    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
-		    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
-		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
-		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
-		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1 ${index_config}
-		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
-		    [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
-
-		#---
-		    debug_print "STARTING UPDATED SERVICES: ${sel}"
-		    start ${sel}
-
-		    exit 0
-		    ;;
+                #    setup_openssl
+		#    setup_curl
+		#    setup_git
+		#    setup_java
+		#    setup_ant
+		#    setup_postgress
+		##TODO: no check for cdat yet :-(
+                #
+		##The arg "1" indicates an upgrade (see function)
+		#    setup_esgcet 1
+		#    setup_tomcat 1
+		#    setup_tds 1
+		#    setup_subsystem node-manager esgf-node-manager 1
+		#    setup_subsystem dashboard esgf-dashboard 1
+		#    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
+		#    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
+		#    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
+		#    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
+		#    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
+		#    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1 ${index_config}
+		#    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
+		#    [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
+                #
+		##---
+		#    debug_print "STARTING UPDATED SERVICES: ${sel}"
+		#    start ${sel}
+                #
+		#    exit 0
+		#    ;;
                 --update-sub-installer)
 		    shift
 		    self_verify
@@ -7127,11 +7141,11 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
 	[ $((sel & TEST_BIT))	 != 0 ] && test_postgress
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
-	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat
+	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && test_tomcat
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)

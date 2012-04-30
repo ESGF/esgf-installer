@@ -6828,6 +6828,7 @@ main() {
                     exit $?
                     ;;
                 --policy-check)
+                    shift
                     (source ${scripts_dir}/esgf-policy-check && check_policies_for_resource $*)
                     [ $? != 0 ] && echo "The flag --policy-check is not enabled..." && exit 1
                     exit 0

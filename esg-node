@@ -6311,6 +6311,11 @@ usage() {
         --spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
 
         -------------------------------
+	Security Policy...
+	-------------------------------
+        --policy-check <resource string> - returns the list of policies that are triggered by the provided resource
+
+        -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
 	-------------------------------
         --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
@@ -6821,6 +6826,11 @@ main() {
                     fi
                     (${scripts_dir}/esgf-spotcheck ${target})
                     exit $?
+                    ;;
+                --policy-check)
+                    (source ${scripts_dir}/esgf-policy-check && check_policies_for_resource $*)
+                    [ $? != 0 ] && echo "The flag --policy-check is not enabled..." && exit 1
+                    exit 0
                     ;;
 		--register)
 		    self_verify

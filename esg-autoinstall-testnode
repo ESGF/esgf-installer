@@ -128,7 +128,7 @@ expect {
     "Enter the database connection string:" {
         send ${DBSTRING}\n ; exp_continue
     }
-    "Is this database intended to be an externally managed database?" {
+    "Is the database an external to this node?" {
         send ${DBEXTERNAL}\n ; exp_continue
     }
     "What is the (low priv) db account for publisher?" {

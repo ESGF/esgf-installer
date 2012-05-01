@@ -127,7 +127,7 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.1.3"}
+    esgf_security_version=${esgf_security_version:-"2.1.4"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
@@ -1125,6 +1125,15 @@ setup_postgress() {
 	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
+    else
+        #check that this existing postgres account has a shell (required)
+        local postgress_user_shell="$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)"
+        if [ "${postgress_user_shell}" != "/bin/bash" ]; then
+            echo "Noticed that the existing postgres user [${pg_sys_acct}] does not have the bash shell... Hmmm... making it so "
+            sed -i 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd
+            echo "grep '${pg_sys_acct}': /etc/passwd"
+            [ "$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)" = "/bin/bash" ] && echo "[OK]" || echo "[FAIL]"
+        fi
     fi
     [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
@@ -2985,7 +2994,7 @@ setup_subsystem() {
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
     debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} $@"
-    source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} $@
+    (source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@ )
     checked_done $?
     echo "-------------------------------"
     echo
@@ -4444,13 +4453,13 @@ uninstall() {
     read -e -p "Are you sure you want to uninstall? [y/N]: " doit
     if [ "$doit" = "y" ] || [ "$doit" = "Y" ]; then
 
-	source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem
-	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
-	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
-        source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
-	source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation
-	source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation
-	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
+	(source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem)
+	(source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem)
+	(source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem)
+        (source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem)
+	(source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation)
+	(source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
+	(source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
 
 	doit="N"
 	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -6302,6 +6311,11 @@ usage() {
         --spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
 
         -------------------------------
+	Security Policy...
+	-------------------------------
+        --policy-check <resource string> - returns the list of policies that are triggered by the provided resource
+
+        -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
 	-------------------------------
         --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
@@ -6479,6 +6493,8 @@ show_type() {
     echo "node type: [ ${resolved_to}] (${sel}) "
 }
 
+upgrade_mode=0
+install_mode=0
 main() {
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 	init
@@ -6488,8 +6504,20 @@ main() {
     #echo "arg ${i} = $1"
 	    local unshift=0
 	    case $1 in
-		--install | install)
-		    debug_print "INSTALL SERVICES"
+                --install | install | update | --update | upgrade | --upgrade)
+                    if [ "${1##*-}" = "update" ] || [ "${1##*-}" = "upgrade" ] ; then
+                        if (( (install_mode+upgrade_mode) == 0)); then
+                            upgrade_mode=1
+                            install_mode=0
+		            debug_print "UPDATE SERVICES"
+                        fi
+                    else
+                        if (( (install_mode+upgrade_mode) == 0)); then
+                            upgrade_mode=0
+                            install_mode=1
+		            debug_print "INSTALL SERVICES"
+                        fi
+                    fi
 		    (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
 		    ;;
 		--verify | --test)
@@ -6581,49 +6609,6 @@ main() {
 		    [ $? != 0 ] && echo && exit 1
 		    status
 		    exit $?
-		    ;;
-		update | --update | upgrade | --upgrade )
-		    shift
-		    (( $# != 0 )) && echo "error: \"update\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
-		    self_verify
-		    check_prerequisites
-		    [ $? != 0 ] && echo && exit 1
-
-                    init_structure
-
-		    read_sel
-
-		#---------------
-		#version checking...
-		#---------------
-                    setup_openssl
-		    setup_curl
-		    setup_git
-		    setup_java
-		    setup_ant
-		    setup_postgress
-		#TODO: no check for cdat yet :-(
-
-		#The arg "1" indicates an upgrade (see function)
-		    setup_esgcet 1
-		    setup_tomcat 1
-		    setup_tds 1
-		    setup_subsystem node-manager esgf-node-manager 1
-		    setup_subsystem dashboard esgf-dashboard 1
-		    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
-		    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
-		    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
-		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
-		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
-		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1 ${index_config}
-		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
-		    [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
-
-		#---
-		    debug_print "STARTING UPDATED SERVICES: ${sel}"
-		    start ${sel}
-
-		    exit 0
 		    ;;
                 --update-sub-installer)
 		    shift
@@ -6841,6 +6826,12 @@ main() {
                     fi
                     (${scripts_dir}/esgf-spotcheck ${target})
                     exit $?
+                    ;;
+                --policy-check)
+                    shift
+                    (source ${scripts_dir}/esgf-policy-check && check_policies_for_resource $*)
+                    [ $? != 0 ] && echo "The flag --policy-check is not enabled..." && exit 1
+                    exit 0
                     ;;
 		--register)
 		    self_verify
@@ -7118,11 +7109,11 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
 	[ $((sel & TEST_BIT))	 != 0 ] && test_postgress
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
-	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat
+	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && test_tomcat
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)

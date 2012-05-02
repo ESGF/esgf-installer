@@ -157,7 +157,7 @@ init() {
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"6.0.35"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
-    las_version=${las_version:-"7.3.7"}; las_min_version=${las_min_version:-"7.3.7"}
+    las_version=${las_version:-"7.3.8"}; las_min_version=${las_min_version:-"7.3.8"}
 
     python_version=${python_version:-"2.6"}
 

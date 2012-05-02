@@ -3400,7 +3400,7 @@ extract_keystore_dn() {
 	#this is a bit of defensive coding so we don't run into the problem of not having the password and running a broken arg sequence
 	[ -n "${storepass}" ] && storepass_switch="-storepass ${storepass}"
 	#Note: I apologize for this horribile hacking of regex (this should be more cleanly accomplished with sed or perl using a capture group or a simple look behind)
-	dn=$($java_install_dir/bin/keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
+	dn=$($java_install_dir/bin/keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -m 1 '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
     fi
     echo "/${dn}"
 }

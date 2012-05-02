@@ -143,7 +143,7 @@ init() {
     esgf_web_fe_version=${esgf_web_fe_version:-"2.0.4"}
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.1.0"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.0.0"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
 
     #--------------------------------

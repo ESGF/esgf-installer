@@ -1566,7 +1566,7 @@ setup_esgcet() {
 	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
 	[ $? != 0 ] && popd && checked_done 1
     fi
-
+    mkdir -p ${publisher_home}
     echo "chown -R ${installer_uid}:${installer_gid} ${publisher_home}"
     chown -R ${installer_uid}:${installer_gid} ${publisher_home}
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"

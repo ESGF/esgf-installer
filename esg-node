@@ -1321,7 +1321,7 @@ postgres_list_db_schemas() {
     # 'psql' must be in the path for this to work
     #
     (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
-        psql -U dbsuper esgcet -qt -c "\dn;" | \
+        psql -U ${postgress_user} ${db_database} -qt -c "\dn;" | \
         awk '/'${1:-"."}'/ {print $1}' | \
         grep -Ev "^pg_.*")
 }

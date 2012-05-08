@@ -5962,6 +5962,7 @@ initial_setup_questionnaire() {
 	    read -e -s -p "What is the admin password to use for this installation? (alpha-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
 	    ((force_install)) && [ -z "${input}" ] && [ -n "${security_admin_password}" ] && changed=0 && echo && break
 	    ( [ -z "${input}" ] || [ -n "$(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p')" ] ) && echo "Invalid password... " && continue
+            ( [ -z "${input}" ] || (( ${#input} < 6 )) ) && echo "Sorry password must be at least six characters :-( " && continue
 	    [ -n "${input}" ] && security_admin_password=${input} && changed=1
 	    echo
 	    read -e -s -p "Please re-enter password: " verify_password

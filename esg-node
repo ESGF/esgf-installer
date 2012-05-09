@@ -2150,6 +2150,7 @@ start_tomcat() {
     echo "$jsvc_launch_command"
     JAVA_HOME=${java_install_dir} ./bin/jsvc \
 	-Djava.awt.headless=true \
+        -Dcom.sun.enterprise.server.ss.ASQuickStartup=false \
 	-Dcatalina.home=${tomcat_install_dir} \
 	-pidfile ${tomcat_pid_file} \
 	-cp $(find $(readlink -f `pwd`/bin/) | grep .jar | xargs | perl -pe 's/ /:/g') \

@@ -81,6 +81,7 @@ expect {
     "ERROR:" { exit 1 }
     "could not change directory to" { exit 1 }
     "Permission denied" { exit 1 }
+    "This action did not complete successfully" { exit 1 }
 
     # Actual script responses
     "Are you ready to begin the installation?" {

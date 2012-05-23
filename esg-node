@@ -1456,7 +1456,7 @@ setup_esgcet() {
     local upgrade=${1:-${ret}}
 
     local mode="I"
-    ( ((upgrade < 2)) && (( ! force_install )) ) && mode="U" || mode="I"
+    ( ((upgrade == 1)) && (( ! force_install )) ) && mode="U"
 
     echo
     echo "*******************************"

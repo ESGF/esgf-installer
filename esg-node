@@ -4251,6 +4251,7 @@ set_index_peer() {
 # to be set
 # Define: managed - (true|0) this means NOT manipulated by this script but done by external means
 #(hint prepend "externally" before managed to get the meaning - yes I find it confusing but Stephen likes this term :-))
+#db_managed=no means that it is a LOCAL database. (I have to change this damn verbiage... what I get for following pasco-speak ;-).
 _is_managed_db() {
 
     local input
@@ -6107,7 +6108,7 @@ initial_setup_questionnaire() {
     get_property db_database ${db_database}
     get_property db_managed ${db_managed}
     if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || [ -z "${db_managed}" ] || ((force_install)); then
-        _get_db_conn_str_questionnaire && _is_managed_db
+        _is_managed_db && _get_db_conn_str_questionnaire
     else
         echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [externally managed = ${db_managed}]"
     fi
@@ -6168,6 +6169,11 @@ _get_db_conn_str_questionnaire() {
         local input
         echo "Please enter the database connection string..."
         echo " (form: postgresql://[username]@[host]:[port]/[database])"
+        get_property db_managed
+        #(if it is a not a force install and we are using a LOCAL (NOT MANAGED) database then db_managed == "no")
+        if [ -z "${connstring_}" ] && [ "${db_managed}" != "yes" ] && ((! force_install)) ; then
+            connstring_="dbsuper@localhost:5432/esgcet"
+        fi
         read -e -p "Enter the database connection string: postgresql://${connstring_}" input
         [ -z "${input}" ] && input="${connstring_}"
         echo "entered: postgresql://${input}"

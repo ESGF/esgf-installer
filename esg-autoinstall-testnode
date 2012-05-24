@@ -129,6 +129,9 @@ expect {
     "Enter the database connection string:" {
         send ${DBSTRING}\n ; exp_continue
     }
+    "What is the database connection string?" {
+        send ${DBSTRING}\n ; exp_continue
+    }
     "Is the database external to this node?" {
         send ${DBEXTERNAL}\n ; exp_continue
     }

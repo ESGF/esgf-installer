@@ -4269,13 +4269,13 @@ _is_managed_db() {
         debug_print "esgf_host = $esgf_host"
         debug_print "db_host = $db_host"
         #Try to come up with some "sensible" default value for the user...
-        if [ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ] ; then
+        if [ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ] || [ -z "${db_host}" ]; then
 	    default=${db_managed:-'no'}
         else
             default=${db_managed:-'yes'}
         fi
 
-        read -e -p "Is the database an external to this node? [${default}]: " input
+        read -e -p "Is the database external to this node? [${default}]: " input
 	[ -z "${input}" ] && db_managed=${default} && write_as_property db_managed
 	[ -n "${input}" ] && db_managed=${input} && write_as_property db_managed
     else

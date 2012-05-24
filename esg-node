@@ -4275,9 +4275,16 @@ _is_managed_db() {
             default=${db_managed:-'yes'}
         fi
 
-        read -e -p "Is the database external to this node? [${default}]: " input
+        read -e -p "Is the database external to this node? $([ "$default" = "no" ] && echo "[y/N]" || echo "[Y/n]"): " input
 	[ -z "${input}" ] && db_managed=${default} && write_as_property db_managed
-	[ -n "${input}" ] && db_managed=${input} && write_as_property db_managed
+	if [ -n "${input}" ]; then
+	    if [ "${input}" = "Y" ] || [ "${input}" = "y" ] || [ "${input}" = "YES" ] || [ "${input}" = "yes" ]; then
+                db_managed="yes"
+            else
+                db_managed="no"
+            fi
+            write_as_property db_managed
+        fi
     else
 	echo "db_managed = [${db_managed}]"
     fi
@@ -6133,7 +6140,7 @@ initial_setup_questionnaire() {
     unset default
 
     if [ -z "${publisher_db_user_passwd}" ] || ((force_install)); then
-        read -e -s -p "What is the db password for publisher user (${publisher_db_user})? : " input
+        read -e -s -p "What is the db password for publisher user (${publisher_db_user})? [$([ -n "${publisher_db_user_passwd}" ] && echo "*******")]: " input
 	if [ -n "${input}" ]; then
             publisher_db_user_passwd=${input}
             echo "${publisher_db_user_passwd}" > ${pub_secret_file}

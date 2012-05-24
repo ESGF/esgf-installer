@@ -219,14 +219,11 @@ expect {
     "Do you want to make a back up of the existing database schema" {
         send \n ; exp_continue
     }
-    "Do you want to continue with the Globus installation and setup (datanode)?" {
+    "Do you want to continue with the Globus installation and setup" {
         send \n ; exp_continue
     }
     "Do you want to make a back up of the existing Globus distribution (datanode)?" {
         send \n ; exp_continue
-    }
-    "Do you want to continue with the Globus installation and setup (gateway)" {
-        send Y\n ; exp_continue
     }
     "Do you still wish to (re)GENERATE self signed certs (and usurp what is present)?" {
         send \n ; exp_continue

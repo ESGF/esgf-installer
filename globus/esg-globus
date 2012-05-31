@@ -1489,9 +1489,11 @@ generate_self_cert() {
     [ -e /etc/grid-security/hostkey.pem ] && mv /etc/grid-security/hostkey.pem /etc/grid-security/hostkey.pem.bak
 
     cp -f -v ${gendir}/hostcert.pem /etc/grid-security/hostcert.pem
+    cp -f -v ${gendir}/hostcert_request.pem /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
     cp -f -v ${gendir}/hostkey.pem  /etc/grid-security/hostkey.pem
     
     chmod 644 /etc/grid-security/hostcert.pem
+    chmod 644 /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
     chmod 600 /etc/grid-security/hostkey.pem
     
     echo "self signed key generation is complete..."

@@ -7166,7 +7166,7 @@ main() {
     #---------------------------------------
     # Security Services Installation...
     #---------------------------------------
-	[ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
+	[ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
 	[ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
 
     #---------------------------------------

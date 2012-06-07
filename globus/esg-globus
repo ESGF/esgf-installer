@@ -1351,7 +1351,8 @@ start_gridftp_server() {
     
     pushd ${globus_location}/sbin >& /dev/null
 
-    disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
+    #disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
+    disable_command_list=""
 
     while [ -n "$1" ]; do
         case $1 in

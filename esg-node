@@ -140,7 +140,7 @@ init() {
     esg_search_version=${esg_search_version:-"2.6.3"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.1.5"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.1.6"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.2.1"}

@@ -3059,11 +3059,41 @@ write_env() {
 # Certificate Management Utility Functions
 ############################################
 
+_relocate_n_relink_globus_certicates_conf() {
+    local grid_security_dir=${globus_global_certs_dir%/*}
+    pushd ${grid_secuirty_dir} >& /dev/null
+    local globus_ca_config_files=(globus-host-ssl.conf globus-user-ssl.conf grid-security.conf)
+    local link target
+    for file in ${globus_ca_config_files[@]}; do
+        if [ -h "${file}" ]; then
+            #------
+            #Will not throw away a perfectly good regex (hard to find out how to escape ' !)
+            #read link target <<< $(stat ${file} | sed -n 's/[ ]*File:[ ]*`\(.*\)[\"'\''].*->.*`\(.*\)[\"'\''].*/\1 \2/p')
+            #------
+
+            link=${file}
+            target=$(readlink ${file})
+
+            ( [ -e "./${target##*/}" ] || [ ! -e "${target}" ] ) && continue
+            echo -n "Relinking... ${link} -->> ${target##*/} "
+            debug_print "\nlink = $link"
+            debug_print "target = $target"
+            debug_print "\cp ${target} ${grid_security_dir}/${target##*/}"
+            \cp ${target} ${grid_security_dir}/${target##*/}
+            debug_print "ln -sf ${target##*/} ${link} "
+            ln -sf ${target##*/} ${link}
+            [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+        fi
+    done
+    popd >& /dev/null
+}
+
 #Goes to ESG distribution server and pulls down all certificates for the federation.
 #(suitable for crontabbing)
 fetch_esgf_certificates() {
     echo
     echo "Fetching Freshest ESG Federation Certificates..."
+    _relocate_n_relink_globus_certicates_conf
     #globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}

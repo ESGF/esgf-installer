@@ -3585,22 +3585,23 @@ install_keypair() {
     #register ${esgf_idp_peer}
 
     #--------------------------------------------------
-    #Copy the files to where they need to go for GLOBUS
+    #Install signed globus pem file
     #--------------------------------------------------
-    #local out=""
-    #if (( ! no_globus )); then
-    #    local globus_grid_security_dir=${globus_global_certs_dir%/*}
-    #    [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
-    #
-    #    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.bak
-    #    cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
-    #        chmod 600 ${globus_grid_security_dir}/hostkey.pem
-    #
-    #    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.bak
-    #    cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
-    #        chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-    #        openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
-    #fi
+    if (( ! no_globus )); then
+        local globus_grid_security_dir=${globus_global_certs_dir%/*}
+        if [ -d  ${globus_grid_security_dir} ]; then
+            local globus_signed_cert=${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem
+            if [ -e "${globus_signed_cert}" ]; then
+                [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
+                cp -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
+                    chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
+                    openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+            fi
+        else
+            echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"
+            exit 6
+        fi
+    fi
 
     echo "Please restart this node for keys to take effect: \"$0 restart\""
     [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \

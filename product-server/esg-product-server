@@ -421,6 +421,7 @@ get_las() {
 	echo "Don't see LAS tar file ${las_dist_file}"
 	echo "Downloading LAS from ${las_dist_file} -to-> $(pwd)/${las_dist_file}"
 
+	echo "wget -O ${las_dist_file} ${las_tar_url}"
 	wget -O ${las_dist_file} ${las_tar_url}
 	[ $? != 0 ] && echo " ERROR: Could not download LAS:${las_dist_file}" && popd && checked_done 1
     fi

@@ -127,11 +127,11 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.1.8"}
+    esgf_security_version=${esgf_security_version:-"2.1.10"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.1.10"}
+    esg_orp_version=${esg_orp_version:-"2.1.11"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"2.1.4"}
@@ -5897,8 +5897,8 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo "Running startup hooks..."
-    #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
+    (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
 }
 

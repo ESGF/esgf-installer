@@ -1104,6 +1104,7 @@ setup_postgress() {
     ########
     #Create the system account for postgress to run as.
     ########
+    local pg_sys_acct_homedir="/var/lib/pgsql"
     id $pg_sys_acct
     if [ $? != 0 ]; then
 	echo " Hmmm...: There is no postgres system account user \"$pg_sys_acct\" present on system, making one..."
@@ -1122,7 +1123,7 @@ setup_postgress() {
 	    done
 	fi
 	echo "Creating account..."
-	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
+	/usr/sbin/useradd -r -c"PostgreSQL Service ESGF" -d $pg_sys_acct_homedir -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
     else

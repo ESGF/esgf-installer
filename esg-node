@@ -127,17 +127,17 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.1.8"}
+    esgf_security_version=${esgf_security_version:-"2.1.10"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.1.10"}
+    esg_orp_version=${esg_orp_version:-"2.1.11"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"2.1.4"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"2.6.3"}
+    esg_search_version=${esg_search_version:-"2.6.6"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.1.8"}
@@ -1104,6 +1104,7 @@ setup_postgress() {
     ########
     #Create the system account for postgress to run as.
     ########
+    local pg_sys_acct_homedir="/var/lib/pgsql"
     id $pg_sys_acct
     if [ $? != 0 ]; then
 	echo " Hmmm...: There is no postgres system account user \"$pg_sys_acct\" present on system, making one..."
@@ -1122,7 +1123,7 @@ setup_postgress() {
 	    done
 	fi
 	echo "Creating account..."
-	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
+	/usr/sbin/useradd -r -c"PostgreSQL Service ESGF" -d $pg_sys_acct_homedir -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
     else
@@ -5897,8 +5898,8 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo "Running startup hooks..."
-    #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
+    (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
 }
 

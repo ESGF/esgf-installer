@@ -6374,6 +6374,11 @@ usage() {
         --policy-check <resource string> - returns the list of policies that are triggered by the provided resource
 
         -------------------------------
+	Index (search) Utils...
+	-------------------------------
+        --optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
+
+        -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
 	-------------------------------
         --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
@@ -6884,6 +6889,12 @@ main() {
                     fi
                     (${scripts_dir}/esgf-spotcheck ${target})
                     exit $?
+                    ;;
+                --optimize-index)
+                    shift
+                    (source ${scripts_dir}/esgf-optimize-index $*)
+                    [ $? != 0 ] && echo "The flag --optimize-index is not enabled..." && exit 1
+                    exit 0
                     ;;
                 --policy-check)
                     shift

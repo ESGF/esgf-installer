@@ -120,30 +120,30 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.10.0"}
+    esgcet_version=${esgcet_version:-"2.10.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.7"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.11"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.1.3"}
+    esgf_security_version=${esgf_security_version:-"2.1.10"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.1.5"}
+    esg_orp_version=${esg_orp_version:-"2.1.11"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.1.2"}
+    esgf_idp_version=${esgf_idp_version:-"2.1.4"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"2.4.1"}
+    esg_search_version=${esg_search_version:-"2.6.7"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.0.3"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.1.9"}
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.0.0"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.2.1"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
 
     #--------------------------------
@@ -157,7 +157,7 @@ init() {
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"6.0.35"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
     tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
-    las_version=${las_version:-"7.3.7"}; las_min_version=${las_min_version:-"7.3.7"}
+    las_version=${las_version:-"7.3.9"}; las_min_version=${las_min_version:-"7.3.9"}
 
     python_version=${python_version:-"2.6"}
 
@@ -1104,6 +1104,7 @@ setup_postgress() {
     ########
     #Create the system account for postgress to run as.
     ########
+    local pg_sys_acct_homedir="/var/lib/pgsql"
     id $pg_sys_acct
     if [ $? != 0 ]; then
 	echo " Hmmm...: There is no postgres system account user \"$pg_sys_acct\" present on system, making one..."
@@ -1122,9 +1123,18 @@ setup_postgress() {
 	    done
 	fi
 	echo "Creating account..."
-	/usr/sbin/useradd -r -c"PostgreSQL Service" -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
+	/usr/sbin/useradd -r -c"PostgreSQL Service ESGF" -d $pg_sys_acct_homedir -g $pg_sys_acct_group -p $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct
 	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add postgres system account user" && popd && checked_done 1
 	echo "${pg_sys_acct_passwd}" > ${pg_secret_file}
+    else
+        #check that this existing postgres account has a shell (required)
+        local postgress_user_shell="$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)"
+        if [ "${postgress_user_shell}" != "/bin/bash" ]; then
+            echo "Noticed that the existing postgres user [${pg_sys_acct}] does not have the bash shell... Hmmm... making it so "
+            sed -i 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd
+            echo "grep '${pg_sys_acct}': /etc/passwd"
+            [ "$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)" = "/bin/bash" ] && echo "[OK]" || echo "[FAIL]"
+        fi
     fi
     [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
 
@@ -1312,7 +1322,7 @@ postgres_list_db_schemas() {
     # 'psql' must be in the path for this to work
     #
     (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
-        psql -U dbsuper esgcet -qt -c "\dn;" | \
+        psql -U ${postgress_user} ${db_database} -qt -c "\dn;" | \
         awk '/'${1:-"."}'/ {print $1}' | \
         grep -Ev "^pg_.*")
 }
@@ -1431,14 +1441,24 @@ setup_esgcet() {
 
     #-------
     if [ -e "${ESGINI}" ]; then
+        local urls_mis_match=1
         local esgini_dburl=$(sed -n 's@^[^#]*[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI} | head -n1 | sed 's@\r@@')
         local db_connect_str="postgresql://${publisher_db_user}:${publisher_db_user_passwd}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
         debug_print "[${esgini_dburl}] =? [${db_connect_str}]"
         if [ "${esgini_dburl}" != "${db_connect_str}" ]; then
-            printf "\n\n [ERROR: publisher database connection string mis-match... (see ${ESGINI}'s dburl value)] \n\n"
-            trap - INT TERM
-            exit 1
+            printf "\n [ERROR]: publisher database connection string mis-match... (inspecting ${ESGINI}'s \"dburl\" value) \n"
+            printf " Attempting to address the issue... "
+            if [ "$(sed -e 's#\(postgresql://.*@\)\([^:]*\)\(.*\)#\1localhost\3#' <<< ${esgini_dburl})" != "${db_connect_str}" ]; then
+                trap - INT TERM
+                printf " Sorry, [FAILED]\n"
+                exit 1
+            fi
+            printf "Editing esg.ini accordingly... "
+            sed -i 's#^[ ]*\(dburl[ ]*=[ ]*\).*$#\1'${db_connect_str}'#' ${ESGINI} && echo -n ":-) " && urls_mis_match=0 || echo -n " 8-( "
+        else
+            urls_mis_match=0
         fi
+        ((urls_mis_match)) && exit 1
     fi
     #-------
 
@@ -1447,7 +1467,7 @@ setup_esgcet() {
     local upgrade=${1:-${ret}}
 
     local mode="I"
-    ( ((upgrade < 2)) && (( ! force_install )) ) && mode="U" || mode="I"
+    ( ((upgrade == 1)) && (( ! force_install )) ) && mode="U"
 
     echo
     echo "*******************************"
@@ -1481,14 +1501,14 @@ setup_esgcet() {
     #	 if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
     #	     #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
     #	     #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-    checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     (( $? > 1 )) && return 0
     $cdat_home/bin/easy_install ${esgcet_egg_file}
     [ $? != 0 ] && checked_done 1
     #	 elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
-    #	     #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet"
-    #	     #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url}/externals esgcet
-    #	     checked_get ${esgcet_egg_file} ${esg_dist_url}/externals/${esgcet_egg_file} $((force_install))
+    #	     #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet"
+    #	     #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet
+    #	     checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     #	     (( $? > 1 )) && return 0
     #	     $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file}
     #	     [ $? != 0 ] && checked_done 1
@@ -1554,10 +1574,10 @@ setup_esgcet() {
 	[ ! -z "${input}" ] && esg_root_id=${input}
 
 	echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
+        mkdir -p ${publisher_home}
 	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
 	[ $? != 0 ] && popd && checked_done 1
     fi
-
     echo "chown -R ${installer_uid}:${installer_gid} ${publisher_home}"
     chown -R ${installer_uid}:${installer_gid} ${publisher_home}
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
@@ -1570,16 +1590,16 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
-    if [ "${mode}" = "U" ]; then
-	echo "${cdat_home}/bin/esginitialize -c"
-	${cdat_home}/bin/esginitialize -c
-	[ $? != 0 ] && popd && checked_done 1
-    else
+    if [ "${mode}" = "I" ]; then
 
         echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
 	ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
 	[ $? != 0 ] && popd && checked_done 1
     fi
+
+    echo "${cdat_home}/bin/esginitialize -c"
+    ${cdat_home}/bin/esginitialize -c
+    [ $? != 0 ] && popd && checked_done 1
 
     popd >& /dev/null
     echo
@@ -1627,7 +1647,7 @@ test_esgcet() {
     echo "esgcet test directory: [${esgcet_testdir}]"
     local fetch_file
     fetch_file=sftlf.nc
-    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url}/externals/${fetch_file} $((force_install))
+    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url_root}/externals/${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
 
@@ -2137,10 +2157,11 @@ start_tomcat() {
 
     pushd $tomcat_install_dir >& /dev/null
     [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -Xms1024m -XX:MaxPermSize=512m $java_opts"
-    jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
+    jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
     echo "$jsvc_launch_command"
     JAVA_HOME=${java_install_dir} ./bin/jsvc \
 	-Djava.awt.headless=true \
+        -Dcom.sun.enterprise.server.ss.ASQuickStartup=false \
 	-Dcatalina.home=${tomcat_install_dir} \
 	-pidfile ${tomcat_pid_file} \
 	-cp $(find $(readlink -f `pwd`/bin/) | grep .jar | xargs | perl -pe 's/ /:/g') \
@@ -2559,8 +2580,8 @@ setup_tds() {
     #EDIT the thredds property file: ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
     #replace the value for token "tds..content.root.path" with ${thredds_content_dir}
     local thredds_property_file=${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
-    if [ -e ${thredds_property_file} ]; then
-	echo "$(sed -e 's#tds.content.root.path=.*#tds.content.root.path='${thredds_content_dir}'#' ${thredds_property_file} )" > ${thredds_property_file}
+    if [ -e "${thredds_property_file}" ]; then
+        sed -i.bak -e 's#tds.content.root.path=.*#tds.content.root.path='${thredds_content_dir}'#' ${thredds_property_file}
 	chown -R ${tomcat_user}:${tomcat_group} ${thredds_property_file}
 	chmod 644 ${thredds_property_file}
 	echo "configured thredds content root -> $(egrep -e 'tds.content.root.path=.*' ${thredds_property_file})"
@@ -2985,7 +3006,7 @@ setup_subsystem() {
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
     debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} $@"
-    source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} $@
+    (source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@ )
     checked_done $?
     echo "-------------------------------"
     echo
@@ -3039,11 +3060,41 @@ write_env() {
 # Certificate Management Utility Functions
 ############################################
 
+_relocate_n_relink_globus_certicates_conf() {
+    local grid_security_dir=${globus_global_certs_dir%/*}
+    pushd ${grid_secuirty_dir} >& /dev/null
+    local globus_ca_config_files=(globus-host-ssl.conf globus-user-ssl.conf grid-security.conf)
+    local link target
+    for file in ${globus_ca_config_files[@]}; do
+        if [ -h "${file}" ]; then
+            #------
+            #Will not throw away a perfectly good regex (hard to find out how to escape ' !)
+            #read link target <<< $(stat ${file} | sed -n 's/[ ]*File:[ ]*`\(.*\)[\"'\''].*->.*`\(.*\)[\"'\''].*/\1 \2/p')
+            #------
+
+            link=${file}
+            target=$(readlink ${file})
+
+            ( [ -e "./${target##*/}" ] || [ ! -e "${target}" ] ) && continue
+            echo -n "Relinking... ${link} -->> ${target##*/} "
+            debug_print "\nlink = $link"
+            debug_print "target = $target"
+            debug_print "\cp ${target} ${grid_security_dir}/${target##*/}"
+            \cp ${target} ${grid_security_dir}/${target##*/}
+            debug_print "ln -sf ${target##*/} ${link} "
+            ln -sf ${target##*/} ${link}
+            [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+        fi
+    done
+    popd >& /dev/null
+}
+
 #Goes to ESG distribution server and pulls down all certificates for the federation.
 #(suitable for crontabbing)
 fetch_esgf_certificates() {
     echo
     echo "Fetching Freshest ESG Federation Certificates..."
+    _relocate_n_relink_globus_certicates_conf
     #globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
@@ -3391,7 +3442,7 @@ extract_keystore_dn() {
 	#this is a bit of defensive coding so we don't run into the problem of not having the password and running a broken arg sequence
 	[ -n "${storepass}" ] && storepass_switch="-storepass ${storepass}"
 	#Note: I apologize for this horribile hacking of regex (this should be more cleanly accomplished with sed or perl using a capture group or a simple look behind)
-	dn=$($java_install_dir/bin/keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -e '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
+	dn=$($java_install_dir/bin/keytool -list -v -keystore ${keystore_file} ${storepass_switch} | egrep -m 1 '^Owner:[ ]*?*' | tr -s " " | sed -e 's@^Owner: @@' | sed -e s@", "@" "@g | tac -s " " | xargs | sed -e 's@ @/@g')
     fi
     echo "/${dn}"
 }
@@ -3535,22 +3586,23 @@ install_keypair() {
     #register ${esgf_idp_peer}
 
     #--------------------------------------------------
-    #Copy the files to where they need to go for GLOBUS
+    #Install signed globus pem file
     #--------------------------------------------------
-    #local out=""
-    #if (( ! no_globus )); then
-    #    local globus_grid_security_dir=${globus_global_certs_dir%/*}
-    #    [ ! -d  ${globus_grid_security_dir} ] && echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]" && exit 6
-    #
-    #    [ -e ${globus_grid_security_dir}/hostkey.pem ] && mv ${globus_grid_security_dir}/hostkey.pem ${globus_grid_security_dir}/hostkey.pem.bak
-    #    cp -v ${private_key} ${globus_grid_security_dir}/hostkey.pem && \
-    #        chmod 600 ${globus_grid_security_dir}/hostkey.pem
-    #
-    #    [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem ${globus_grid_security_dir}/hostcert.pem.bak
-    #    cp -v ${public_cert} ${globus_grid_security_dir}/hostcert.pem && \
-    #        chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-    #        openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
-    #fi
+    if (( ! no_globus )); then
+        local globus_grid_security_dir=${globus_global_certs_dir%/*}
+        if [ -d  ${globus_grid_security_dir} ]; then
+            local globus_signed_cert=${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem
+            if [ -e "${globus_signed_cert}" ]; then
+                [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
+                cp -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
+                    chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
+                    openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+            fi
+        else
+            echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"
+            exit 6
+        fi
+    fi
 
     echo "Please restart this node for keys to take effect: \"$0 restart\""
     [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
@@ -4241,6 +4293,7 @@ set_index_peer() {
 # to be set
 # Define: managed - (true|0) this means NOT manipulated by this script but done by external means
 #(hint prepend "externally" before managed to get the meaning - yes I find it confusing but Stephen likes this term :-))
+#db_managed=no means that it is a LOCAL database. (I have to change this damn verbiage... what I get for following pasco-speak ;-).
 _is_managed_db() {
 
     local input
@@ -4258,15 +4311,22 @@ _is_managed_db() {
         debug_print "esgf_host = $esgf_host"
         debug_print "db_host = $db_host"
         #Try to come up with some "sensible" default value for the user...
-        if [ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ] ; then
+        if [ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ] || [ -z "${db_host}" ]; then
 	    default=${db_managed:-'no'}
         else
             default=${db_managed:-'yes'}
         fi
 
-        read -e -p "Is this database intended to be an externally managed database? [${default}]: " input
+        read -e -p "Is the database external to this node? $([ "$default" = "no" ] && echo "[y/N]" || echo "[Y/n]"): " input
 	[ -z "${input}" ] && db_managed=${default} && write_as_property db_managed
-	[ -n "${input}" ] && db_managed=${input} && write_as_property db_managed
+	if [ -n "${input}" ]; then
+	    if [ "${input}" = "Y" ] || [ "${input}" = "y" ] || [ "${input}" = "YES" ] || [ "${input}" = "yes" ]; then
+                db_managed="yes"
+            else
+                db_managed="no"
+            fi
+            write_as_property db_managed
+        fi
     else
 	echo "db_managed = [${db_managed}]"
     fi
@@ -4444,13 +4504,13 @@ uninstall() {
     read -e -p "Are you sure you want to uninstall? [y/N]: " doit
     if [ "$doit" = "y" ] || [ "$doit" = "Y" ]; then
 
-	source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem
-	source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem
-	source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem
-        source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem
-	source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation
-	source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation
-	source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation
+	(source ${scripts_dir}/esg-web-fe >& /dev/null && clean_web_fe_webapp_subsystem)
+	(source ${scripts_dir}/esg-idp >& /dev/null && clean_idp_webapp_subsystem)
+	(source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem)
+        (source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem)
+	(source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation)
+	(source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
+	(source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
 
 	doit="N"
 	if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -4608,10 +4668,10 @@ check_for_group_intersection_with() {
     [ -z ${esgf_default_peer} ] && get_property esgf_default_peer
     [ -z ${esgf_idp_peer} ]     && get_property esgf_idp_peer
     [ -z ${esgf_index_peer} ]   && get_property esgf_index_peer
-    
+
     local target_nodes=($@)
     (( 0 == ${#target_nodes[@]} )) && target_nodes=(${esgf_default_peer} ${esgf_idp_peer} ${esgf_index_peer})
-    
+
     echo
     local ret=0
     local visited=()
@@ -4623,11 +4683,11 @@ check_for_group_intersection_with() {
             ((ret=ret+100))
             continue
         fi
-        
+
         #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
         #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
         local shared_groups=($(awk 'BEGIN {RS=",";ORS=" "} {a[$1]+=1} END {for (i in a) if (a[i] >1) print i}'<<<"${target_groups},${node_peer_group}"))
-        
+
         #Let the user know what you've found...
         if ((${#shared_groups[@]} == 0)); then
             echo "  WARNING: This node does not share any peer groups with peer node $target_node :-("
@@ -5109,10 +5169,10 @@ backup() {
 backup_db() {
     local my_node_db_name=${db_database}
     local my_schema_name
-    
+
     echo -n "backup db: "
     while [ -n "$1" ]; do
-        case ${1} in 
+        case ${1} in
             -s | --schema)
                 shift
                 [ "esgf" = "${1%%_*}" ] && my_schema_name="${1#*_}" || my_schema_name="${1}"
@@ -5176,10 +5236,10 @@ restore_nth_db_backup() {
     local my_node_db_name=${db_database}
     local my_schema_name
     local n_recent=1
-    
+
     echo -n "restore db: "
     while [ -n "$1" ]; do
-        case ${1} in 
+        case ${1} in
             -s | --schema)
                 shift
                 my_schema_name=${1}
@@ -5214,7 +5274,7 @@ restore_nth_db_backup() {
     read -e -p "Would you like to first make a back up of the existing database? [Y/n] " answer
     [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
     [ "${answer}" = "Y" ] && backup_db -db ${my_node_db_name} -s ${my_schema_name} && ((n_recent++))
-    
+
     start_postgress
 
     pushd ${esg_backup_dir} >& /dev/null
@@ -5600,7 +5660,7 @@ _verify() {
 _version_cmp() {
     # Takes two strings, splits them into epoch (before the last ':'),
     # version (between the last ':' and the first '-'), and release
-    # (after the first '-'), and then calls version_segment_cmp on
+    # (after the first '-'), and then calls _version_segment_cmp on
     # each part until a difference is found.
     #
     # Empty segments are replaced with "-1" so that an empty segment
@@ -5660,9 +5720,10 @@ _version_segment_cmp() {
     # "-" segments).  If you want to compare versions in the format of
     # "1:2.3-4", use _version_cmp(), which calls this function.
     #
-    # Note that the individual section comparisons are string
-    # comparisons, so this is not guaranteed to produce sane results
-    # where leading zeroes or nonstandard formats are present.  Null
+    # If the values for both array elements are purely numeric, a
+    # numeric compare is done (to handle problems such as 9 > 10 or
+    # 02 < 1 in a string compare), but if either value contains a
+    # non-numeric value or is null a string compare is done.  Null
     # values are considered less than zero.
     #
     # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
@@ -5682,12 +5743,25 @@ _version_segment_cmp() {
     fi
 
     for index in `seq 1 $VERSIONLENGTH` ; do
-        if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
-            echo "1"
-            return
-        elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
-            echo "-1"
-            return
+        if ( [ -z ${VERSIONA[$index]##*[!0-9]*} ] ||
+             [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
+            # Non-numeric comparison
+            if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
+                echo "1"
+                return
+            elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
+                echo "-1"
+                return
+            fi
+        else
+            # Purely numeric comparison
+            if (( ${VERSIONA[$index]:-0} > ${VERSIONB[$index]:-0} )) ; then
+                echo "1"
+                return
+            elif (( ${VERSIONA[$index]:-0} < ${VERSIONB[$index]:-0} )) ; then
+                echo "-1"
+                return
+            fi
         fi
     done
     echo "0"
@@ -5824,8 +5898,8 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo "Running startup hooks..."
-    #If we have the ORP installed make sure that it's configuration file contains the info it needs.
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
+    (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
 }
 
@@ -5936,10 +6010,10 @@ initial_setup_questionnaire() {
     if [ -z "${security_admin_password}" ] || ((force_install)); then
 	while [ 1 ]; do
 	    unset input
-	    echo
 	    read -e -s -p "What is the admin password to use for this installation? (alpha-numeric only) [$([ -n "${security_admin_password}" ] && echo "*******")]: " input
 	    ((force_install)) && [ -z "${input}" ] && [ -n "${security_admin_password}" ] && changed=0 && echo && break
 	    ( [ -z "${input}" ] || [ -n "$(echo ${input} | sed -n -e 's/[a-zA-Z0-9]*//p')" ] ) && echo "Invalid password... " && continue
+            ( [ -z "${input}" ] || (( ${#input} < 6 )) ) && echo "Sorry password must be at least six characters :-( " && continue
 	    [ -n "${input}" ] && security_admin_password=${input} && changed=1
 	    echo
 	    read -e -s -p "Please re-enter password: " verify_password
@@ -6083,7 +6157,8 @@ initial_setup_questionnaire() {
     get_property db_database ${db_database}
     get_property db_managed ${db_managed}
     if [ -z "${db_user}" ] || [ -z "${db_host}" ] || [ -z "${db_port}" ] || [ -z "${db_database}" ] || [ -z "${db_managed}" ] || ((force_install)); then
-        _get_db_conn_str_questionnaire && _is_managed_db
+        _is_managed_db
+        _get_db_conn_str_questionnaire
     else
         echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [externally managed = ${db_managed}]"
     fi
@@ -6107,7 +6182,7 @@ initial_setup_questionnaire() {
     unset default
 
     if [ -z "${publisher_db_user_passwd}" ] || ((force_install)); then
-        read -e -s -p "What is the db password for publisher user (${publisher_db_user})? : " input
+        read -e -s -p "What is the db password for publisher user (${publisher_db_user})? [$([ -n "${publisher_db_user_passwd}" ] && echo "*******")]: " input
 	if [ -n "${input}" ]; then
             publisher_db_user_passwd=${input}
             echo "${publisher_db_user_passwd}" > ${pub_secret_file}
@@ -6133,12 +6208,27 @@ _get_db_conn_str_questionnaire() {
     #postgresql://esgcet@localhost:5432/esgcet
     local ret=1
     local user_ host_ port_ dbname_ connstring_
+
+    #Note the values referenced here should have been set by prior get_property *** calls
+    #that sets these values in the script scope. (see the call in questionnaire function - above)
+    if [ -n "${db_user}" ] && [ -n "${db_host}" ] && [ -n "${db_port}" ] && [ -n "${db_database}" ]; then
+        connstring_="${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
+    fi
+
     while [ 1 ]; do
+        local input
         echo "Please enter the database connection string..."
-        echo " (form: postgresql://[username]@[host]:[port]/[database])"
-        read -e -p "Enter the database connection string: postgresql://" connstring_
-        echo "entered: postgresql://$connstring_"
-        eval $(sed -n 's#postgresql://\([^:]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${connstring_}"))
+        echo " (form: postgresql://[username]@[host]:[port]/esgcet)"
+        get_property db_managed
+        #(if it is a not a force install and we are using a LOCAL (NOT MANAGED) database then db_managed == "no")
+        if [ -z "${connstring_}" ] && [ "${db_managed}" != "yes" ] && ((! force_install)) ; then
+            connstring_="dbsuper@localhost:5432/esgcet"
+        fi
+        read -e -p "What is the database connection string? [${connstring_}]: postgresql://" input
+        [ -z "${input}" ] && input="${connstring_}"
+        echo "entered: postgresql://${input}"
+        [ -z "${input}" ] && continue
+        eval $(sed -n 's#postgresql://\([^@]*\)@\([^:]*\):\([^/]*\)/\(esgcet\)[ ]*$#user_=\1 host_=\2 port_=\3 dbname_=\4#p' <(echo "postgresql://${input}"))
         if [ -z "${user_}" ] || \
             [ -z "${host_}" ] || \
             [ -z "${port_}" ] || \
@@ -6277,6 +6367,16 @@ usage() {
         --get-peer-group - tells you this node's currenly configured peer group(s)
         --federation-sanity-check - tells you if your node's configured peer groups intersect with default peer
         --spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
+
+        -------------------------------
+	Security Policy...
+	-------------------------------
+        --policy-check <resource string> - returns the list of policies that are triggered by the provided resource
+
+        -------------------------------
+	Index (search) Utils...
+	-------------------------------
+        --optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
 
         -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
@@ -6456,6 +6556,8 @@ show_type() {
     echo "node type: [ ${resolved_to}] (${sel}) "
 }
 
+upgrade_mode=0
+install_mode=0
 main() {
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 	init
@@ -6465,8 +6567,20 @@ main() {
     #echo "arg ${i} = $1"
 	    local unshift=0
 	    case $1 in
-		--install | install)
-		    debug_print "INSTALL SERVICES"
+                --install | install | update | --update | upgrade | --upgrade)
+                    if [ "${1##*-}" = "update" ] || [ "${1##*-}" = "upgrade" ] ; then
+                        if (( (install_mode+upgrade_mode) == 0)); then
+                            upgrade_mode=1
+                            install_mode=0
+		            debug_print "UPDATE SERVICES"
+                        fi
+                    else
+                        if (( (install_mode+upgrade_mode) == 0)); then
+                            upgrade_mode=0
+                            install_mode=1
+		            debug_print "INSTALL SERVICES"
+                        fi
+                    fi
 		    (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
 		    ;;
 		--verify | --test)
@@ -6558,49 +6672,6 @@ main() {
 		    [ $? != 0 ] && echo && exit 1
 		    status
 		    exit $?
-		    ;;
-		update | --update | upgrade | --upgrade )
-		    shift
-		    (( $# != 0 )) && echo "error: \"update\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
-		    self_verify
-		    check_prerequisites
-		    [ $? != 0 ] && echo && exit 1
-
-                    init_structure
-
-		    read_sel
-
-		#---------------
-		#version checking...
-		#---------------
-                    setup_openssl
-		    setup_curl
-		    setup_git
-		    setup_java
-		    setup_ant
-		    setup_postgress
-		#TODO: no check for cdat yet :-(
-
-		#The arg "1" indicates an upgrade (see function)
-		    setup_esgcet 1
-		    setup_tomcat 1
-		    setup_tds 1
-		    setup_subsystem node-manager esgf-node-manager 1
-		    setup_subsystem dashboard esgf-dashboard 1
-		    [ $((sel & DATA_BIT ))   != 0 ] && setup_subsystem orp esg-orp 1
-		    [ $((sel & DATA_BIT))    != 0 ] && (( ! no_globus )) && my_setup_globus ${DATA_BIT} ${gridftp_config}
-		    [ $((sel & IDP_BIT ))    != 0 ] && (( ! no_globus )) && my_setup_globus ${IDP_BIT}	${myproxy_config_args}
-		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem security esgf-security 1
-		    [ $((sel & IDP_BIT ))    != 0 ] && setup_subsystem idp esgf-idp 1
-		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem search esg-search 1 ${index_config}
-		    [ $((sel & INDEX_BIT))   != 0 ] && setup_subsystem web-fe esgf-web-fe 1
-		    [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server 1
-
-		#---
-		    debug_print "STARTING UPDATED SERVICES: ${sel}"
-		    start ${sel}
-
-		    exit 0
 		    ;;
                 --update-sub-installer)
 		    shift
@@ -6818,6 +6889,18 @@ main() {
                     fi
                     (${scripts_dir}/esgf-spotcheck ${target})
                     exit $?
+                    ;;
+                --optimize-index)
+                    shift
+                    (source ${scripts_dir}/esgf-optimize-index $*)
+                    [ $? != 0 ] && echo "The flag --optimize-index is not enabled..." && exit 1
+                    exit 0
+                    ;;
+                --policy-check)
+                    shift
+                    (source ${scripts_dir}/esgf-policy-check && check_policies_for_resource $*)
+                    [ $? != 0 ] && echo "The flag --policy-check is not enabled..." && exit 1
+                    exit 0
                     ;;
 		--register)
 		    self_verify
@@ -7095,11 +7178,11 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
 	[ $((sel & TEST_BIT))	 != 0 ] && test_postgress
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
-	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat
+	[ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && test_tomcat
-	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds
+	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
@@ -7126,7 +7209,7 @@ main() {
     #---------------------------------------
     # Security Services Installation...
     #---------------------------------------
-	[ $((sel & IDP_BIT )) != 0 ] && setup_subsystem security esgf-security $@
+	[ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
 	[ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
 
     #---------------------------------------

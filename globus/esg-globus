@@ -137,7 +137,8 @@ gridftp_config=${gridftp_config:-""}
 gridftp_dist_url_base=${esg_dist_url}/globus/gridftp
 gridftp_update_dist_url=${gridftp_dist_url_base}/globus_gridftp_server-${gridftp_server_version}.tar.gz
 #gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-09-02-2010.tar.gz
-gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-07-18-2011.tar.gz
+#gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-07-18-2011.tar.gz
+gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-06-06-2012.tar.gz
 #gridftp_bdm_dist_url=${gridftp_dist_url_base}/BDM/authz_bdm_callout-12-17-2009.tar.gz
 gridftp_bdm_dist_url=${gridftp_dist_url_base}/BDM/authz_bdm_callout-02-11-2011.tar.gz
 gsi_authz_conf_dist_url=${gridftp_dist_url_base}/authz_callouts_esgsaml${globus_word_size}.cfg
@@ -260,7 +261,12 @@ setup_globus_services() {
 	    fi
 	else
 	    if [ ! -d ${dot_globus} ]; then
-		echo "The MyProxy SimpleCA is not installed.  Installation is recommended";
+		echo "The MyProxy SimpleCA is not found in official location [${dot_globus}] "
+                if [ -e "${orig_user_home}/.globus" ]; then
+                    echo "(It looks like a migration is can be performed from [${orig_user_home}/.globus])"
+                else
+                    echo "Installation is recommended";
+                fi
 	    fi
 	fi
 
@@ -1346,8 +1352,8 @@ start_gridftp_server() {
     
     pushd ${globus_location}/sbin >& /dev/null
 
-    #NOTE: this option does not work...
-    disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
+    #disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
+    disable_command_list=""
 
     while [ -n "$1" ]; do
         case $1 in
@@ -1485,9 +1491,11 @@ generate_self_cert() {
     [ -e /etc/grid-security/hostkey.pem ] && mv /etc/grid-security/hostkey.pem /etc/grid-security/hostkey.pem.bak
 
     cp -f -v ${gendir}/hostcert.pem /etc/grid-security/hostcert.pem
+    cp -f -v ${gendir}/hostcert_request.pem /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
     cp -f -v ${gendir}/hostkey.pem  /etc/grid-security/hostkey.pem
     
     chmod 644 /etc/grid-security/hostcert.pem
+    chmod 644 /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
     chmod 600 /etc/grid-security/hostkey.pem
     
     echo "self signed key generation is complete..."

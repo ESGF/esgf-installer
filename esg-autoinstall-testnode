@@ -81,6 +81,7 @@ expect {
     "ERROR:" { exit 1 }
     "could not change directory to" { exit 1 }
     "Permission denied" { exit 1 }
+    "This action did not complete successfully" { exit 1 }
 
     # Actual script responses
     "Are you ready to begin the installation?" {
@@ -128,7 +129,10 @@ expect {
     "Enter the database connection string:" {
         send ${DBSTRING}\n ; exp_continue
     }
-    "Is this database intended to be an externally managed database?" {
+    "What is the database connection string?" {
+        send ${DBSTRING}\n ; exp_continue
+    }
+    "Is the database external to this node?" {
         send ${DBEXTERNAL}\n ; exp_continue
     }
     "What is the (low priv) db account for publisher?" {
@@ -215,14 +219,11 @@ expect {
     "Do you want to make a back up of the existing database schema" {
         send \n ; exp_continue
     }
-    "Do you want to continue with the Globus installation and setup (datanode)?" {
+    "Do you want to continue with the Globus installation and setup" {
         send \n ; exp_continue
     }
     "Do you want to make a back up of the existing Globus distribution (datanode)?" {
         send \n ; exp_continue
-    }
-    "Do you want to continue with the Globus installation and setup (gateway)" {
-        send Y\n ; exp_continue
     }
     "Do you still wish to (re)GENERATE self signed certs (and usurp what is present)?" {
         send \n ; exp_continue

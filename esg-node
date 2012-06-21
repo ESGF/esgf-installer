@@ -3157,7 +3157,7 @@ fetch_esgf_truststore() {
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
     checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
-    (( $? > 1 )) && echo "[FAIL]" || echo "[OK]"
+    (( $? > 1 )) && echo "[FAIL]" && mv -v ${truststore_file_}{.bak,} || echo "[OK]"
 }
 
 #Converts ESG certificates (that can be fetch by above function) into a truststore

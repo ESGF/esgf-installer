@@ -3151,6 +3151,15 @@ fetch_esgf_certificates() {
     chmod 644 ${globus_global_certs_dir}/*
 }
 
+fetch_esgf_truststore() {
+    echo "Fetching ESGF Federation Truststore... "
+    local truststore_file_=${1:-${truststore_file}}
+    [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
+    [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
+    checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
+    (( $? > 1 )) && echo "[FAIL]" || echo "[OK]"
+}
+
 #Converts ESG certificates (that can be fetch by above function) into a truststore
 #(adapted from original rendition by Philip Kershaw)
 rebuild_truststore() {
@@ -5901,6 +5910,17 @@ run_startup_hooks() {
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
+
+    #------------------------------------------
+    #When starting up pull down necessary federation certificates
+    #Default is to fetch them... unless explictly set otherwise (see --set-auto-fetch-certs flag)
+    get_property node_auto_fetch_certs
+    [ -z "${node_auto_fetch_certs}" ] && node_auto_fetch_certs="true" && write_as_property node_auto_fetch_certs
+    if [ "${node_auto_fetch_certs}" = "true" ] ; then
+        echo -n "Fetching federation certificates... " && fetch_esgf_certificates >& /dev/null && echo "[OK]" || echo "[FAILED]"
+        echo -n "Fetching federation truststore..... " && fetch_esgf_truststore >& /dev/null && echo "[OK]" || echo "[FAILED]"
+    fi
+    #------------------------------------------
 }
 
 #Any last bits of cleanup for your module should be called here.
@@ -6409,6 +6429,7 @@ usage() {
 	--rebuild-truststore - converts globus' (public) ca certificates into a truststore.
 	--add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
 	--clear-certs - removes the user-level public certificates' directory (used by myproxy)
+        --set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup
 
 	(deprecated) --install-signed-cert - installs signed host certificate into keystore and truststore <signed PEM file>
 	(deprecated) --export-keys-to-globus  - exports keystore certificates to globus host{cert,key}.pem files.
@@ -6911,6 +6932,12 @@ main() {
 		    register $1 $2
 		    exit $?
 		    ;;
+                --set-auto-fetch-certs)
+                    shift
+                    [ "$1" = "off" ] || [ "$1" = "false" ] && node_auto_fetch_certs=false || node_auto_fetch_certs=true
+                    write_as_property node_auto_fetch_certs
+                    exit $?
+                    ;;
 		--fetch-esgf-certs)
 		    self_verify
 		    shift

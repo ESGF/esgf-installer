@@ -4682,18 +4682,20 @@ md5sum_() {
 }
 
 install_bash_completion_file() {
-    if [ ! -d "/etc/bash_completion" ]; then
+    if [ ! -e "/etc/bash_completion" ]; then
         debug_print "Oh you should have bash completions... :-) "
         mkdir -p ${workdir} || return 1
         pushd ${workdir} >& /dev/null
-        checked_get bash_completion_url
+        checked_get ${bash_completion_url}
         (( $? > 1 )) && popd >& /dev/null && return 2
         rpm -ivh ${bash_completion_url##*/}
         [ $? != 0 ] && popd >& /dev/null && return 3
         source /etc/bash_completion
         popd >& /dev/null
     fi
-    [ -d "/etc/bash_completion" ] && checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
+    [ -e "/etc/bash_completion" ] && \
+        [ ! -e "/etc/bash_completion.d/esg-node" ] && \
+        checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
 }
 
 #------------------------------------------------------------------

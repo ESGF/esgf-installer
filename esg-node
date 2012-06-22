@@ -3098,6 +3098,7 @@ fetch_esgf_certificates() {
     #globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
+    [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
     debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
     curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
@@ -3159,12 +3160,16 @@ fetch_esgf_truststore() {
     checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
     (( $? > 1 )) && echo "[FAIL]" && mv -v ${truststore_file_}{.bak,} || echo "[OK]"
 
-    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
-    local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
-    ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
+    # For the IDP it is good to trust yourself ;-)...
+    if [ -e /etc/myproxy-server.config ] ; then
+        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+        local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
+        _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
+    fi
 
-    _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
-    sync_with_java_truststore ${truststore_file_}
+    # From an SSL p.o.v. you should trust yourself as well...
+    add_my_cert_to_truststore
+    #sync_with_java_truststore ${truststore_file_}
 }
 
 #Converts ESG certificates (that can be fetch by above function) into a truststore

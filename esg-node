@@ -6801,6 +6801,7 @@ main() {
                 --test-globus)
                     init_structure
                     read_sel
+                    shift
                     test_globus $sel $@
                     exit 0
                     ;;

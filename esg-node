@@ -6796,16 +6796,17 @@ main() {
                     init_structure
 		    shift
 		    echo "test_publication" && test_publication $@
-		    exit
+		    exit 0
 		    ;;
                 --test-globus)
                     init_structure
                     read_sel
                     test_globus $sel $@
+                    exit 0
                     ;;
 		--info)
 		    info
-		    exit
+		    exit 0
 		    ;;
 		--check)
 		    shift

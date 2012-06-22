@@ -4687,7 +4687,9 @@ install_bash_completion_file() {
         mkdir -p ${workbench} || return 1
         pushd ${workbench} >& /dev/null
         checked_get bash_completion_url
+        (( $? > 1 )) && popd >& /dev/null && return 2
         rpm -ivh ${bash_completion_url##*/}
+        [ $? != 0 ] && popd >& /dev/null && return 3
         source /etc/bash_completion
         popd >& /dev/null
     fi

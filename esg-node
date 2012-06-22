@@ -267,6 +267,7 @@ init() {
     git_workdir=${workdir}/git
     #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
     git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
+    bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
     db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
     node_db_name=${db_database}
     postgress_workdir=${workdir}/postgress
@@ -4681,8 +4682,16 @@ md5sum_() {
 }
 
 install_bash_completion_file() {
-    [ ! -d "/etc/bash_completion.d/" ] && return 1
-    checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
+    if [ ! -d "/etc/bash_completion" ]; then
+        debug_print "Oh you should have bash completions... :-) "
+        mkdir -p ${workbench} || return 1
+        pushd ${workbench} >& /dev/null
+        checked_get bash_completion_url
+        rpm -ivh ${bash_completion_url##*/}
+        source /etc/bash_completion
+        popd >& /dev/null
+    fi
+    [ -d "/etc/bash_completion" ] && checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
 }
 
 #------------------------------------------------------------------
@@ -7312,10 +7321,10 @@ main() {
     #---------------------------------------
     #System Launch...
     #---------------------------------------
-        install_bash_completion_file
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 	start ${sel}
+        install_bash_completion_file
 	done_remark
 	echo "${script_version}" |tee ${esg_root_dir}/version
 	echo

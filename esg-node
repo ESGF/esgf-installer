@@ -4684,8 +4684,8 @@ md5sum_() {
 install_bash_completion_file() {
     if [ ! -d "/etc/bash_completion" ]; then
         debug_print "Oh you should have bash completions... :-) "
-        mkdir -p ${workbench} || return 1
-        pushd ${workbench} >& /dev/null
+        mkdir -p ${workdir} || return 1
+        pushd ${workdir} >& /dev/null
         checked_get bash_completion_url
         (( $? > 1 )) && popd >& /dev/null && return 2
         rpm -ivh ${bash_completion_url##*/}

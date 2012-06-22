@@ -3158,6 +3158,12 @@ fetch_esgf_truststore() {
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
     checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
     (( $? > 1 )) && echo "[FAIL]" && mv -v ${truststore_file_}{.bak,} || echo "[OK]"
+
+    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
+    ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
+
+    _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
     sync_with_java_truststore ${truststore_file_}
 }
 
@@ -3185,27 +3191,7 @@ rebuild_truststore() {
 
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*\.0$')
     for cert_file in $cert_files; do
-	echo -n "$cert_file -> "
-	local cert_hash=$(echo ${cert_file##*/} | awk -F'.' '{print $1}') ;
-	local der_file="${tmp_dir}/${cert_hash}.der" ;
-
-	#--------------
-	# Convert from PEM format to DER format - for ingest into keystore
-	openssl x509 -inform pem -in ${cert_file} -outform der -out ${der_file}
-	#--------------
-
-	if [ -f ${truststore_file_} ]; then
-	    $java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file_} \
-		-storepass ${truststore_password} 2>&1 > /dev/null ;
-	    [ $? == 0 ] && echo -n "- " || echo -n "  "
-	fi
-
-	[ $? == 0 ] && echo -n "+ " || echo -n "  "
-	$java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file_} \
-	    -storepass ${truststore_password} -noprompt ;
-	[ $? != 0 ] && echo " [FAILED]"
-
-	rm -f ${der_file} ;
+        _insert_cert_into_truststore ${cert_file} ${truststore_file_}
     done
     rmdir ${tmp_dir}
 
@@ -3217,6 +3203,36 @@ rebuild_truststore() {
 
     chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     echo "...done"
+    return 0
+}
+
+#Takes full path to a pem certificate file and incorporates it into the given truststore
+#
+_insert_cert_into_truststore() {
+    local cert_file=$1
+    [ -z "${cert_file}" ] && echo "No certificate (pem) file specified" && exit 1
+    local truststore_file_=${2:-${truststore_file}}
+    echo -n "$cert_file -> "
+    local cert_hash=$(echo ${cert_file##*/} | awk -F'.' '{print $1}') ;
+    local der_file="${tmp_dir}/${cert_hash}.der" ;
+
+    #--------------
+    # Convert from PEM format to DER format - for ingest into keystore
+    openssl x509 -inform pem -in ${cert_file} -outform der -out ${der_file}
+    #--------------
+
+    if [ -f ${truststore_file_} ]; then
+	$java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file_} \
+	    -storepass ${truststore_password} 2>&1 > /dev/null
+	[ $? == 0 ] && echo -n "- " || echo -n "  "
+    fi
+
+    [ $? == 0 ] && echo -n "+ " || echo -n "  "
+    $java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file_} \
+	-storepass ${truststore_password} -noprompt
+    [ $? != 0 ] && echo " [FAILED]"
+
+    rm -f ${der_file}
     return 0
 }
 

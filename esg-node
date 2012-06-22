@@ -3120,7 +3120,7 @@ fetch_esgf_certificates() {
 
         (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 && \
             tar xvzfO ${simpleCA_cert%/*}/globus_simple_ca_${simpleCA_cert_hash}_setup*.tar.gz globus_simple_ca_${simpleCA_cert_hash}_setup-*/${simpleCA_cert_hash}.signing_policy > ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy && \
-            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -hash -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
             echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
                 echo "[OK]") || echo "[FAIL]"

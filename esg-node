@@ -5951,11 +5951,34 @@ run_startup_hooks() {
     #Default is to fetch them... unless explictly set otherwise (see --set-auto-fetch-certs flag)
     get_property node_auto_fetch_certs
     [ -z "${node_auto_fetch_certs}" ] && node_auto_fetch_certs="true" && write_as_property node_auto_fetch_certs
-    if [ "${node_auto_fetch_certs}" = "true" ] ; then
+    if [ "${node_auto_fetch_certs}" = "true" ] && ! is_no_auto_fetch_certs_file_present ; then
         echo -n "Fetching federation certificates... " && fetch_esgf_certificates >& /dev/null && echo "[OK]" || echo "[FAILED]"
         echo -n "Fetching federation truststore..... " && fetch_esgf_truststore >& /dev/null && echo "[OK]" || echo "[FAILED]"
     fi
+    is_no_auto_fetch_certs_file_present && remove_no_auto_fetch_certs_file
     #------------------------------------------
+}
+
+set_no_auto_fetch_file() {
+    touch ${esg_root_dir}/.no_auto_fetch_certs && chmod 600 ${esg_root_dir}/.no_auto_fetch_certs
+}
+
+is_no_auto_fetch_certs_file_present() {
+    [ -e ${esg_root_dir}/.no_auto_fetch_certs ]
+}
+
+remove_no_auto_fetch_certs_file() {
+    [ -e ${esg_root_dir}/.no_auto_fetch_certs ] && rm ${esg_root_dir}/.no_auto_fetch_certs || return 0
+    printf "
+
+    -----------------------------------------------------------
+    BE ADVISED... The automatic loading of federation certificates
+    has been suspended during THIS current instantiation of the ESGF node.
+    If you wish to suspend auto loading of federation certificates beyond
+    this instance please use the \"--set-auto-fetch-certs off\" flag.
+    -----------------------------------------------------------
+
+"
 }
 
 #Any last bits of cleanup for your module should be called here.
@@ -6552,7 +6575,7 @@ usage() {
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
 
-    "
+"
     exit 0
 }
 
@@ -6967,6 +6990,7 @@ main() {
 		    shift
                     init_structure
 		    register $1 $2
+                    [ $? == 0 ] && set_no_auto_fetch_file
 		    exit $?
 		    ;;
                 --set-auto-fetch-certs)

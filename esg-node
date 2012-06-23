@@ -4698,6 +4698,28 @@ install_bash_completion_file() {
         checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
 }
 
+_set_no_auto_fetch_file() {
+    touch ${esg_root_dir}/.no_auto_fetch_certs && chmod 600 ${esg_root_dir}/.no_auto_fetch_certs
+}
+
+_is_no_auto_fetch_certs_file_present() {
+    [ -e ${esg_root_dir}/.no_auto_fetch_certs ]
+}
+
+_remove_no_auto_fetch_certs_file() {
+    [ -e ${esg_root_dir}/.no_auto_fetch_certs ] && rm ${esg_root_dir}/.no_auto_fetch_certs || return 0
+    printf "
+
+    -----------------------------------------------------------
+    BE ADVISED... The automatic loading of federation certificates
+    has been suspended during THIS current instantiation of the ESGF node.
+    If you wish to suspend auto loading of federation certificates beyond
+    this instance please use the \"--set-auto-fetch-certs off\" flag.
+    -----------------------------------------------------------
+
+"
+}
+
 #------------------------------------------------------------------
 #NOTE: this function DOES DEPEND on the format of the node manager's
 #      registration.xml.  If the format of the file changes, please
@@ -5957,28 +5979,6 @@ run_startup_hooks() {
     fi
     _is_no_auto_fetch_certs_file_present && _remove_no_auto_fetch_certs_file
     #------------------------------------------
-}
-
-_set_no_auto_fetch_file() {
-    touch ${esg_root_dir}/.no_auto_fetch_certs && chmod 600 ${esg_root_dir}/.no_auto_fetch_certs
-}
-
-_is_no_auto_fetch_certs_file_present() {
-    [ -e ${esg_root_dir}/.no_auto_fetch_certs ]
-}
-
-_remove_no_auto_fetch_certs_file() {
-    [ -e ${esg_root_dir}/.no_auto_fetch_certs ] && rm ${esg_root_dir}/.no_auto_fetch_certs || return 0
-    printf "
-
-    -----------------------------------------------------------
-    BE ADVISED... The automatic loading of federation certificates
-    has been suspended during THIS current instantiation of the ESGF node.
-    If you wish to suspend auto loading of federation certificates beyond
-    this instance please use the \"--set-auto-fetch-certs off\" flag.
-    -----------------------------------------------------------
-
-"
 }
 
 #Any last bits of cleanup for your module should be called here.

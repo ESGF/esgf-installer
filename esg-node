@@ -127,20 +127,20 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.1.10"}
+    esgf_security_version=${esgf_security_version:-"2.2.1"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
     esg_orp_version=${esg_orp_version:-"2.1.11"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.1.4"}
+    esgf_idp_version=${esgf_idp_version:-"2.1.6"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"2.6.7"}
+    esg_search_version=${esg_search_version:-"2.6.8"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.1.9"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.1.12"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.2.1"}
@@ -267,6 +267,7 @@ init() {
     git_workdir=${workdir}/git
     #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
     git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
+    bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
     db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
     node_db_name=${db_database}
     postgress_workdir=${workdir}/postgress
@@ -3098,6 +3099,7 @@ fetch_esgf_certificates() {
     #globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
+    [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
     debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
     curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
@@ -3119,7 +3121,7 @@ fetch_esgf_certificates() {
 
         (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 && \
             tar xvzfO ${simpleCA_cert%/*}/globus_simple_ca_${simpleCA_cert_hash}_setup*.tar.gz globus_simple_ca_${simpleCA_cert_hash}_setup-*/${simpleCA_cert_hash}.signing_policy > ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy && \
-            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
+            [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -hash -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
             echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
                 echo "[OK]") || echo "[FAIL]"
@@ -3157,7 +3159,18 @@ fetch_esgf_truststore() {
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
     checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
-    (( $? > 1 )) && echo "[FAIL]" || echo "[OK]"
+    (( $? > 1 )) && echo "[FAIL]" && mv -v ${truststore_file_}{.bak,} || echo "[OK]"
+
+    # For the IDP it is good to trust yourself ;-)...
+    if [ -e /etc/myproxy-server.config ] ; then
+        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+        local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
+        _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
+    fi
+
+    # From an SSL p.o.v. you should trust yourself as well...
+    add_my_cert_to_truststore
+    #sync_with_java_truststore ${truststore_file_}
 }
 
 #Converts ESG certificates (that can be fetch by above function) into a truststore
@@ -3184,27 +3197,7 @@ rebuild_truststore() {
 
     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*\.0$')
     for cert_file in $cert_files; do
-	echo -n "$cert_file -> "
-	local cert_hash=$(echo ${cert_file##*/} | awk -F'.' '{print $1}') ;
-	local der_file="${tmp_dir}/${cert_hash}.der" ;
-
-	#--------------
-	# Convert from PEM format to DER format - for ingest into keystore
-	openssl x509 -inform pem -in ${cert_file} -outform der -out ${der_file}
-	#--------------
-
-	if [ -f ${truststore_file_} ]; then
-	    $java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file_} \
-		-storepass ${truststore_password} 2>&1 > /dev/null ;
-	    [ $? == 0 ] && echo -n "- " || echo -n "  "
-	fi
-
-	[ $? == 0 ] && echo -n "+ " || echo -n "  "
-	$java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file_} \
-	    -storepass ${truststore_password} -noprompt ;
-	[ $? != 0 ] && echo " [FAILED]"
-
-	rm -f ${der_file} ;
+        _insert_cert_into_truststore ${cert_file} ${truststore_file_}
     done
     rmdir ${tmp_dir}
 
@@ -3216,6 +3209,36 @@ rebuild_truststore() {
 
     chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     echo "...done"
+    return 0
+}
+
+#Takes full path to a pem certificate file and incorporates it into the given truststore
+#
+_insert_cert_into_truststore() {
+    local cert_file=$1
+    [ -z "${cert_file}" ] && echo "No certificate (pem) file specified" && exit 1
+    local truststore_file_=${2:-${truststore_file}}
+    echo -n "$cert_file -> "
+    local cert_hash=$(echo ${cert_file##*/} | awk -F'.' '{print $1}') ;
+    local der_file="${tmp_dir}/${cert_hash}.der" ;
+
+    #--------------
+    # Convert from PEM format to DER format - for ingest into keystore
+    openssl x509 -inform pem -in ${cert_file} -outform der -out ${der_file}
+    #--------------
+
+    if [ -f ${truststore_file_} ]; then
+	$java_install_dir/bin/keytool -delete -alias ${cert_hash} -keystore ${truststore_file_} \
+	    -storepass ${truststore_password} 2>&1 > /dev/null
+	[ $? == 0 ] && echo -n "- " || echo -n "  "
+    fi
+
+    [ $? == 0 ] && echo -n "+ " || echo -n "  "
+    $java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file_} \
+	-storepass ${truststore_password} -noprompt
+    [ $? != 0 ] && echo " [FAILED]"
+
+    rm -f ${der_file}
     return 0
 }
 
@@ -4659,8 +4682,42 @@ md5sum_() {
 }
 
 install_bash_completion_file() {
-    [ ! -d "/etc/bash_completion.d/" ] && return 1
-    checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
+    if [ ! -e "/etc/bash_completion" ]; then
+        debug_print "Oh you should have bash completions... :-) "
+        mkdir -p ${workdir} || return 1
+        pushd ${workdir} >& /dev/null
+        checked_get ${bash_completion_url}
+        (( $? > 1 )) && popd >& /dev/null && return 2
+        rpm -ivh ${bash_completion_url##*/}
+        [ $? != 0 ] && popd >& /dev/null && return 3
+        source /etc/bash_completion
+        popd >& /dev/null
+    fi
+    [ -e "/etc/bash_completion" ] && \
+        [ ! -e "/etc/bash_completion.d/esg-node" ] && \
+        checked_get /etc/bash_completion.d/esg-node ${esg_dist_url}/esgf-installer/esg-node.completion
+}
+
+_set_no_auto_fetch_file() {
+    touch ${esg_root_dir}/.no_auto_fetch_certs && chmod 600 ${esg_root_dir}/.no_auto_fetch_certs
+}
+
+_is_no_auto_fetch_certs_file_present() {
+    [ -e ${esg_root_dir}/.no_auto_fetch_certs ]
+}
+
+_remove_no_auto_fetch_certs_file() {
+    [ -e ${esg_root_dir}/.no_auto_fetch_certs ] && rm ${esg_root_dir}/.no_auto_fetch_certs || return 0
+    printf "
+
+    -----------------------------------------------------------
+    BE ADVISED... The automatic loading of federation certificates
+    has been suspended during THIS current instantiation of the ESGF node.
+    If you wish to suspend auto loading of federation certificates beyond
+    this instance please use the \"--set-auto-fetch-certs off\" flag.
+    -----------------------------------------------------------
+
+"
 }
 
 #------------------------------------------------------------------
@@ -5916,10 +5973,11 @@ run_startup_hooks() {
     #Default is to fetch them... unless explictly set otherwise (see --set-auto-fetch-certs flag)
     get_property node_auto_fetch_certs
     [ -z "${node_auto_fetch_certs}" ] && node_auto_fetch_certs="true" && write_as_property node_auto_fetch_certs
-    if [ "${node_auto_fetch_certs}" = "true" ] ; then
+    if [ "${node_auto_fetch_certs}" = "true" ] && ! _is_no_auto_fetch_certs_file_present ; then
         echo -n "Fetching federation certificates... " && fetch_esgf_certificates >& /dev/null && echo "[OK]" || echo "[FAILED]"
         echo -n "Fetching federation truststore..... " && fetch_esgf_truststore >& /dev/null && echo "[OK]" || echo "[FAILED]"
     fi
+    _is_no_auto_fetch_certs_file_present && _remove_no_auto_fetch_certs_file
     #------------------------------------------
 }
 
@@ -6517,7 +6575,7 @@ usage() {
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
 
-    "
+"
     exit 0
 }
 
@@ -6761,16 +6819,18 @@ main() {
                     init_structure
 		    shift
 		    echo "test_publication" && test_publication $@
-		    exit
+		    exit 0
 		    ;;
                 --test-globus)
                     init_structure
                     read_sel
+                    shift
                     test_globus $sel $@
+                    exit 0
                     ;;
 		--info)
 		    info
-		    exit
+		    exit 0
 		    ;;
 		--check)
 		    shift
@@ -6930,6 +6990,7 @@ main() {
 		    shift
                     init_structure
 		    register $1 $2
+                    [ $? == 0 ] && _set_no_auto_fetch_file
 		    exit $?
 		    ;;
                 --set-auto-fetch-certs)
@@ -7290,10 +7351,10 @@ main() {
     #---------------------------------------
     #System Launch...
     #---------------------------------------
-        install_bash_completion_file
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 	start ${sel}
+        install_bash_completion_file
 	done_remark
 	echo "${script_version}" |tee ${esg_root_dir}/version
 	echo

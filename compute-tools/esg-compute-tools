@@ -1,0 +1,6 @@
+#!/bin/bash
+
+setup_compute_tools() {
+    echo "hello world... here is Eugenia!!!"
+    echo "awww shi...."
+}

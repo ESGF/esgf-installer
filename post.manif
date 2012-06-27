@@ -24,6 +24,9 @@
 [esgf-product-server]
 ./product-server/esg-product-server
 
+[esgf-compute-tools]
+./compute-tools/esg-compute-tools
+
 [externals/bootstrap]
 ./globus/esg-globus
 

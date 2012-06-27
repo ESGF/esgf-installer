@@ -62,8 +62,40 @@
 #****************************************************************************
 #####
 
+#--------------------------------
+# External programs' versions
+#--------------------------------
+mesos_version=${mesos_version:="0.9.0"}
+mesos_min_version=${mesos_min_version:="0.9.0"}
+
+#####
+# Mesos (Cluster manager for resource sharing across distirbuted applications)
+#####
+compute_setup_mesos() {
+	echo -n "Checking for mesos >= " #${mesos_min_version} "
+ 	#check_version mesos ${mesos_min_version}
+ 	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+ 
+	echo
+	echo "*******************************"
+ 	echo "Setting up Mesos ${mesos_version}"
+ 	echo "*******************************"
+	echo
+}
+
 setup_compute_tools() {
-    echo "hello world"
+	echo
+	echo "-----------------------------------"
+	echo "ESGF Node Compute Tools"
+	echo "-----------------------------------"
+	echo
+
+	# Installing Mesos
+	compute_setup_mesos
+
+	# Installing Spark
+	# Installing Scala
+	# Installing Hadoop
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

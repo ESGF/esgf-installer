@@ -4682,7 +4682,7 @@ md5sum_() {
 }
 
 install_bash_completion_file() {
-    if [ ! -e "/etc/bash_completion" ]; then
+    if (type rpm >& /dev/null) && [ ! -e "/etc/bash_completion" ]; then
         debug_print "Oh you should have bash completions... :-) "
         mkdir -p ${workdir} || return 1
         pushd ${workdir} >& /dev/null

@@ -62,17 +62,75 @@
 #****************************************************************************
 #####
 
+#####
+# Description: Installer for ESG Compute Tools
+# Authors: gabrielov1@llnl.gov
+####
+
+#####
+# uses: git, tar
+#####
+
+#--------------
+# User Defined / Settable (public)
+#--------------
+install_prefix=${install_prefix:-"/usr/local"}
+DEBUG=${DEBUG:-0}
+git_placeholder="$install_prefix/git"
+git_exec_path_param="--exec-path=$git_placeholder/libexec/git-core"
+java_placeholder="$install_prefix/java"
+java_install_path_config_param="--with-java-home=$java_placeholder/bin/java"
+
 #--------------------------------
 # External programs' versions
 #--------------------------------
 mesos_version=${mesos_version:="0.9.0"}
 mesos_min_version=${mesos_min_version:="0.9.0"}
 
+#--------------------------------
+# External programs' script variables
+#--------------------------------
+mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
+mesos_git_url="git://git.apache.org/mesos.git"
+
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
+
+# Fixme find uninstall template
+uninstall_mesos () {
+	if [ -d "$mesos_install_dir" ]; then
+		sudo rm -r "$mesos_install_dir"
+	fi
+}
+
+# FIXME Look up esg-node test formatting
+test_mesos_build () {
+	cd "$mesos_install_dir"
+	make check
+}
+
+# Mesos is an Apache project, and can be obtained from its git and svn repositories. 
+# For the purpose of this installation, we use the git repository as the source, and 
+# configure the mesos install with local versions of java and git.
+get_mesos () {
+	if [! -d $mesos_install_dir ]
+	then
+		git "$git_exec_path_param" clone "$mesos_git_url" "$mesos_install_dir"
+	else
+		cd "$mesos_install_dir"
+		make clean
+	fi
+
+	cd "$mesos_install_dir"
+	./bootstrap
+	./configure "$java_install_path_config_param" --with-webui --with-included-zookeeper
+	make
+	test_mesos_build
+}
+
 compute_setup_mesos() {
-	echo -n "Checking for mesos >= " #${mesos_min_version} "
+	echo -n "[Placeholder] Checking for mesos >= ${mesos_min_version}"
  	#check_version mesos ${mesos_min_version}
  	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
  
@@ -81,6 +139,9 @@ compute_setup_mesos() {
  	echo "Setting up Mesos ${mesos_version}"
  	echo "*******************************"
 	echo
+
+	# Get Mesos from Online Source
+	get_mesos
 }
 
 setup_compute_tools() {

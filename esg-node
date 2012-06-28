@@ -6483,7 +6483,7 @@ usage() {
 	--generate-ssl-key-and-csr - generate new key and cert request files <key file> <cert file> [<dn>]
 				     (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESG-DATA-NODE/CN=<fqdn>')
 
-                   Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/hostkey.pem /usr/local/tomcat/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
+                   Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
 
 	--install-keypair - takes as input private key and public cert files and installs them. <key> <cert> [<keystore> <alias> <password>]
 	--fetch-esgf-certs - fetches and installs all current public esgf certificates (used by globus)

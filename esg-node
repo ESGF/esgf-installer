@@ -4756,7 +4756,9 @@ check_for_group_intersection_with() {
 
         #Let the user know what you've found...
         if ((${#shared_groups[@]} == 0)); then
-            echo "  WARNING: This node does not share any peer groups with peer node $target_node :-("
+            echo "  WARNING: This node does not share any peer groups with default peer node $target_node :-("
+            echo "           Please set a different default peer with: --set-default-peer <hostname>"
+            echo
             ((ret++))
         else
             echo "  This node shares the group(s) [$(echo ${shared_groups[@]} | sed 's# #, #g')] with ${target_node} ($( [ "${esgf_default_peer}" = "${target_node}" ] && echo "default ")$( [ "${esgf_idp_peer}" = "${target_node}" ] && echo "idp ")$( [ "${esgf_index_peer}" = "${target_node}" ] && echo "index")) [OK]"

@@ -160,7 +160,7 @@ compute_setup_mesos() {
 
 uninstall_scala () {
 	if [ -e ${scala_install_dir} ]; then
-		sudo rm -r "${install_prefix}/scala*"
+		sudo rm -r ${scala_install_dir}
 	fi
 }
 
@@ -197,7 +197,9 @@ get_scala() {
 	# The Scala distribution we are obtaining contains scala as an executable in its bin/
 	# subdirectory. No further action is needed if the file is unpacked correctly, though
 	# some error-checking will be added here in case there are other issues.
-	rm ${scala_dist_file}
+	if [ -e ${scala_dist_file} ]; then
+		rm ${scala_dist_file}
+	fi
 }
 
 compute_setup_scala() {
@@ -233,6 +235,14 @@ compute_setup_hadoop() {
 # Core Methods
 #####
 
+# Uninstall Mesos, Spark, Scala, Hadoop
+uninstall_compute_tools() {
+	uninstall_scala
+	# uninstall_spark
+	# uninstall_hadoop
+	uninstall_mesos
+}
+
 setup_compute_tools() {
 	echo
 	echo "-----------------------------------"
@@ -255,5 +265,7 @@ setup_compute_tools() {
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
- setup_compute_tools 
+	echo
+	echo "----- Setting Up Compute Tools -----"
+	setup_compute_tools
 fi

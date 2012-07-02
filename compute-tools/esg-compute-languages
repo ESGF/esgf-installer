@@ -64,5 +64,130 @@
 #****************************************************************************
 #####
 
-setup_compute_languages () {
+#####
+# Description: Installer for ESG Computation Languages
+# Authors: gabrielov1@llnl.gov
+#####
+
+#####
+# uses: unzip 
+#####
+
+#--------------
+# User Defined / Settable (public)
+#--------------
+install_prefix=${install_prefix:-"/usr/local"}
+DEBUG=${DEBUG:-0}
+java_placeholder="$install_prefix/java"
+java_install_path_config_param="--with-java-home=$java_placeholder/bin/java"
+compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+
+#--------------------------------
+# External programs' versions
+#--------------------------------
+clojure_version=${clojure_version:="1.4.0"}
+clojure_min_version=${clojure_min_version:="1.4.0"}
+scala_version=${scala_version:="2.9.2"}
+scala_min_version=${scala_min_version:="2.9.1"} # 2.9.1 is the minimum version supported by Spark.
+
+#--------------------------------
+# External programs' script variables
+#--------------------------------
+clojure_install_dir=${CLOJURE_HOME:-${install_prefix}/clojure}
+clojure_dist_url="http://repo1.maven.org/maven2/org/clojure/clojure/1.4.0/clojure-1.4.0.zip"
+scala_install_dir=${SCALA_HOME:-${install_prefix}/scala}
+scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-2.9.2.tgz"
+
+#####
+# Clojure (a powerful dialect of Lisp that supports multicore computing on the JVM and a number
+# of other powerful computing facilities)
+#####
+
+
+#####
+# Scala (both functional and object-oriented, Scala integrates well with Java and provides support
+# for concurrency and scalability)
+#####
+
+uninstall_scala () {
+    if [ -e ${scala_install_dir} ]; then
+        sudo rm -r ${scala_install_dir}
+    fi
 }
+
+get_scala() {
+    # Debug Placeholder
+    uninstall_scala
+
+    # Retrieve Scala
+    local scala_dist_file=${scala_dist_url##*/}
+    # strip off .tar.gz at the end
+    local scala_dist_dir=$(echo ${scala_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+
+    if [ ! -e ${scala_install_dir} ]; then
+        echo "Don't see Scala distribution directory ${scala_dist_dir}"
+        if [ ! -e "${install_prefix}/${scala_dist_file}" ]; then
+            echo "Don't see Scala distribution file ${scala_dist_file} either"
+            echo "Downloading Scala from ${scala_dist_url}"
+            wget -O ${scala_dist_file} ${scala_dist_url}
+            #[ $? != 0 ] && echo " ERROR: Could not download Scala:${scala_dist_file}" && popd && checked_done 1
+            echo "Unpacking ${scala_dist_file}..."
+            tar xzf ${scala_dist_file} -C "${install_prefix}/"
+            mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
+            #[ $? != 0 ] && echo " ERROR: Could not extract OpenSSL: ${openssl_dist_file}" && popd && checked_done 1
+        fi
+    fi
+
+    # If directory does not exist but distribution archive does, unpack and continue
+    if [ -e "${install_prefix}/${scala_dist_file}" ] && [ ! -e ${scala_install_dir} ]; then
+        echo "unpacking ${scala_dist_file}..."
+        tar xzf ${scala_dist_file} -C "${install_prefix}/"
+        mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
+    fi
+
+    # The Scala distribution we are obtaining contains scala as an executable in its bin/
+    # subdirectory. No further action is needed if the file is unpacked correctly, though
+    # some error-checking will be added here in case there are other issues.
+    if [ -e ${scala_dist_file} ]; then
+        rm ${scala_dist_file}
+    fi
+}
+
+compute_setup_scala() {
+    echo -n "Checking for scala >= ${scala_min_version}"
+    #check_version scala ${scala_min_version}
+    #[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+
+    echo
+    echo "*****************************"
+    echo "Setting up Scala ${scala_version}"
+    echo "*****************************"
+    echo
+
+    # Set up Scala
+    get_scala
+}
+
+#####
+# Core Compute Language Methods - Call all setup methods, or uninstall all
+#####
+
+setup_compute_languages () {
+    echo
+    echo "-----------------------------------"
+    echo "ESGF Node Compute Languages"
+    echo "-----------------------------------"
+    echo
+
+	# Install Scala
+	compute_setup_scala
+
+	# Install Clojure
+}
+
+if [[ "$BASH_SOURCE" == "$0" ]]
+then
+    echo
+    echo "----- Setting Up Compute Languages -----"
+    setup_compute_languages
+fi

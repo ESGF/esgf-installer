@@ -88,18 +88,16 @@ compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
 #--------------------------------
 mesos_version=${mesos_version:="0.9.0"}
 mesos_min_version=${mesos_min_version:="0.9.0"}
-scala_version=${scala_version:="2.9.2"}
-scala_min_version=${scala_min_version:="2.9.1"}
 spark_version=${spark_version:="0.5.0"}
 spark_min_version=${spark_min_version:="0.5.0"}
+# yarn_version
+# hadoop_version
 
 #--------------------------------
 # External programs' script variables
 #--------------------------------
 mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
-scala_install_dir=${SCALA_HOME:-${install_prefix}/scala}
-scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-2.9.2.tgz"
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 
@@ -160,69 +158,6 @@ compute_setup_mesos() {
 }
 
 #####
-# Scala (FIXME describe Scala in a manner relevant to ESG here)
-#####
-
-uninstall_scala () {
-	if [ -e ${scala_install_dir} ]; then
-		sudo rm -r ${scala_install_dir}
-	fi
-}
-
-get_scala() {
-	# Debug Placeholder
-	uninstall_scala
-	
-	# Retrieve Scala
-	local scala_dist_file=${scala_dist_url##*/}
-	# strip off .tar.gz at the end
-	local scala_dist_dir=$(echo ${scala_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-	if [ ! -e ${scala_install_dir} ]; then
-		echo "Don't see Scala distribution directory ${scala_dist_dir}"
-		if [ ! -e "${install_prefix}/${scala_dist_file}" ]; then
-			echo "Don't see Scala distribution file ${scala_dist_file} either"
-			echo "Downloading Scala from ${scala_dist_url}"
-			wget -O ${scala_dist_file} ${scala_dist_url}
-			#[ $? != 0 ] && echo " ERROR: Could not download Scala:${scala_dist_file}" && popd && checked_done 1
-			echo "Unpacking ${scala_dist_file}..."
-			tar xzf ${scala_dist_file} -C "${install_prefix}/"
-			mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
-			#[ $? != 0 ] && echo " ERROR: Could not extract OpenSSL: ${openssl_dist_file}" && popd && checked_done 1
-		fi
-	fi
-
-	# If directory does not exist but distribution archive does, unpack and continue
-	if [ -e "${install_prefix}/${scala_dist_file}" ] && [ ! -e ${scala_install_dir} ]; then
-		echo "unpacking ${scala_dist_file}..."
- 		tar xzf ${scala_dist_file} -C "${install_prefix}/"
-		mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
-	fi
-
-	# The Scala distribution we are obtaining contains scala as an executable in its bin/
-	# subdirectory. No further action is needed if the file is unpacked correctly, though
-	# some error-checking will be added here in case there are other issues.
-	if [ -e ${scala_dist_file} ]; then
-		rm ${scala_dist_file}
-	fi
-}
-
-compute_setup_scala() {
-	echo -n "Checking for scala >= ${scala_min_version}"
-	#check_version scala ${scala_min_version}
-	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-
-	echo
-	echo "*****************************"
-	echo "Setting up Scala ${scala_version}"
-	echo "*****************************"
-	echo
-
-	# Set up Scala
-	get_scala
-}
-
-#####
 # Spark (FIXME ESG-relevant Spark description here)
 #####
 
@@ -278,7 +213,6 @@ compute_setup_hadoop() {
 
 # Uninstall Mesos, Spark, Scala, Hadoop
 uninstall_compute_tools() {
-	uninstall_scala
 	uninstall_spark
 	# uninstall_hadoop
 	uninstall_mesos
@@ -290,9 +224,6 @@ setup_compute_tools() {
 	echo "ESGF Node Compute Tools"
 	echo "-----------------------------------"
 	echo
-
-	# Installing Scala
-	compute_setup_scala
 
 	# Installing Spark
 	compute_setup_spark

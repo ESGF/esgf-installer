@@ -124,6 +124,7 @@ get_clojure () {
 		echo "Unpacking ${clojure_dist_file}..."
 		unzip -q "${install_prefix}/${clojure_dist_file}" -d ${install_prefix}
 		mv "${install_prefix}/${clojure_dist_dir}" ${clojure_install_dir}
+		chmod 755 ${clojure_install_dir}
 		#[ $? != 0 ] && echo " ERROR: Could not extract Clojure: ${clojure_dist_file}" && popd && checked_done 1
 	fi
 	

@@ -172,6 +172,20 @@ compute_setup_scala() {
 # Core Compute Language Methods - Call all setup methods, or uninstall all
 #####
 
+uninstall_compute_languages () {
+	echo
+    echo "-----------------------------------"
+	echo "Uninstalling ESGF Compute Languages"
+	echo "-----------------------------------"
+	echo
+
+	# Uninstalling Scala
+	uninstall_scala
+
+	# Uninstalling Clojure
+	
+}
+
 setup_compute_languages () {
     echo
     echo "-----------------------------------"

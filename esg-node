@@ -7273,7 +7273,10 @@ main() {
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
 	[ $((sel & TEST_BIT))	 != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
 	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+	[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+	
+	# Compute Languages and Tools Setup
+	#[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_languages
 	#[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_tools
 
     #---------------------------------------

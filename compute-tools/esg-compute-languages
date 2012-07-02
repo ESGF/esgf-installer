@@ -103,6 +103,32 @@ scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-2.9.2.tg
 # of other powerful computing facilities)
 #####
 
+uninstall_clojure () {
+    if [ -e ${clojure_install_dir} ]; then
+        sudo rm -r ${clojure_install_dir}
+    fi
+}
+
+get_clojure () {
+	# Debug Placeholder
+	uninstall_clojure
+}
+
+compute_setup_clojure () {
+	echo
+    echo -n "Checking for clojure >= ${clojure_min_version}"
+    #check_version clojure ${clojure_min_version}
+    #[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+
+    echo
+    echo "*****************************"
+    echo "Setting up Clojure ${clojure_version}"
+    echo "*****************************"
+    echo
+
+    # Set up Scala
+    get_clojure
+}
 
 #####
 # Scala (both functional and object-oriented, Scala integrates well with Java and provides support
@@ -154,7 +180,8 @@ get_scala() {
 }
 
 compute_setup_scala() {
-    echo -n "Checking for scala >= ${scala_min_version}"
+    echo
+	echo -n "Checking for scala >= ${scala_min_version}"
     #check_version scala ${scala_min_version}
     #[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -183,7 +210,7 @@ uninstall_compute_languages () {
 	uninstall_scala
 
 	# Uninstalling Clojure
-	
+	uninstall_clojure
 }
 
 setup_compute_languages () {
@@ -197,6 +224,7 @@ setup_compute_languages () {
 	compute_setup_scala
 
 	# Install Clojure
+	compute_setup_clojure
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

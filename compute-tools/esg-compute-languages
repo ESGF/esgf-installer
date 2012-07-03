@@ -186,9 +186,6 @@ uninstall_scala() {
 }
 
 get_scala() {
-    # Debug Placeholder
-    uninstall_scala
-
 	# TODO Check for empty file size
 
     # Retrieve Scala
@@ -217,7 +214,8 @@ get_scala() {
         mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
     fi
 
-	# TODO Set SCALA_HOME environment variable
+	# TODO Set SCALA_HOME environment variable in environment and environment file
+	#export SCALA_HOME="${scala_install_dir}/bin/"
 
     # The Scala distribution we are obtaining contains scala as an executable in its bin/
     # subdirectory. No further action is needed if the file is unpacked correctly, though
@@ -228,14 +226,13 @@ get_scala() {
 }
 
 compute_check_version_scala() {
-	echo
-	#./scala -version | awk '{print $5}'
+	echo -n Scala `${SCALA_HOME}/bin/scala -version | awk '{print $5}'`
 }
 
 compute_setup_scala() {
     echo
-	echo -n "Checking for scala >= ${scala_min_version}"
-    #check_version scala ${scala_min_version}
+	echo "Checking for scala >= ${scala_min_version}"
+    compute_check_version_scala scala ${scala_min_version}
     #[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 
     echo

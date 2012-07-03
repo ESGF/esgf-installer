@@ -119,9 +119,6 @@ uninstall_clojure() {
 }
 
 get_clojure() {
-	# Debug Placeholder
-	uninstall_clojure
-
 	# TODO Check for empty file size in distributed file
 
     # Retrieve Clojure Distribution File
@@ -137,6 +134,9 @@ get_clojure() {
 		mv "${install_prefix}/${clojure_dist_dir}" ${clojure_install_dir}
 		chmod 755 ${clojure_install_dir}
 		#[ $? != 0 ] && echo " ERROR: Could not extract Clojure: ${clojure_dist_file}" && popd && checked_done 1
+
+		cd ${clojure_install_dir}
+		ant
 	fi
 
 	# TODO Set CLOJURE_HOME environment variable
@@ -148,15 +148,13 @@ get_clojure() {
 }
 
 compute_check_version_clojure() {
-	echo
-	# java -jar clojure.jar --eval 'println (str (get *clojure-version* :major)"."(get *clojure-version* :minor)"."(get *clojure-version* :incremental))' |xa    rgs | awk '{print $3}'
-
+	echo `java -jar ${clojure_install_dir}/clojure.jar --eval 'println (str (get *clojure-version* :major)"."(get *clojure-version* :minor)"."(get *clojure-version* :incremental))' |xargs | awk '{print $3}'`
 }
 
 compute_setup_clojure() {
 	echo
-    echo -n "Checking for clojure >= ${clojure_min_version}"
-    #check_version clojure ${clojure_min_version}
+    echo "Checking for clojure >= ${clojure_min_version}"
+    compute_check_version_clojure clojure ${clojure_min_version}
     #[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 
     echo
@@ -165,7 +163,7 @@ compute_setup_clojure() {
     echo "*****************************"
     echo
 
-    # Set up Scala
+    # Set up Clojure
     get_clojure
 }
 

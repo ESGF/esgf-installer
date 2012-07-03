@@ -78,7 +78,10 @@
 #--------------
 install_prefix=${install_prefix:-"/usr/local"}
 DEBUG=${DEBUG:-0}
+VERBOSE=${VERBOSE:-0}
+devel=${devel:-0}
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar|.zip"
+envfile="/etc/esg.env"
 
 #--------------------------------
 # External programs' versions
@@ -96,15 +99,23 @@ clojure_dist_url="http://repo1.maven.org/maven2/org/clojure/clojure/${clojure_ve
 scala_install_dir=${SCALA_HOME:-${install_prefix}/scala}
 scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-${scala_version}.tgz"
 
+export SCALA_HOME=${scala_install_dir}
+export CLOJURE_HOME=${clojure_install_dir}
+
 #####
 # Clojure (a powerful dialect of Lisp that supports multicore computing on the JVM and a number
 # of other powerful computing facilities)
 #####
 
 uninstall_clojure() {
-    if [ -e ${clojure_install_dir} ]; then
+    # Delete clojure install directory
+	if [ -e ${clojure_install_dir} ]; then
         sudo rm -r ${clojure_install_dir}
     fi
+
+	# Remove clojure home from environment
+	local key=${1}
+	sed -i '/'${key}'/d' ${envfile}
 }
 
 get_clojure() {
@@ -164,9 +175,14 @@ compute_setup_clojure() {
 #####
 
 uninstall_scala() {
-    if [ -e ${scala_install_dir} ]; then
+	# Remove scala install directory
+	if [ -e ${scala_install_dir} ]; then
         sudo rm -r ${scala_install_dir}
     fi
+
+	# Remove scala home from environment
+	local key=${1}
+	sed -i '/'${key}'/d' ${envfile}
 }
 
 get_scala() {
@@ -244,10 +260,10 @@ uninstall_compute_languages() {
 	echo
 
 	# Uninstalling Scala
-	uninstall_scala
+	uninstall_scala SCALA_HOME
 
 	# Uninstalling Clojure
-	uninstall_clojure
+	uninstall_clojure CLOJURE_HOME
 }
 
 setup_compute_languages() {

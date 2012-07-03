@@ -70,7 +70,7 @@
 #####
 
 #####
-# uses: unzip 
+# uses: unzip, wget 
 #####
 
 #--------------
@@ -78,8 +78,6 @@
 #--------------
 install_prefix=${install_prefix:-"/usr/local"}
 DEBUG=${DEBUG:-0}
-java_placeholder="$install_prefix/java"
-java_install_path_config_param="--with-java-home=$java_placeholder/bin/java"
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar|.zip"
 
 #--------------------------------
@@ -94,24 +92,26 @@ scala_min_version=${scala_min_version:="2.9.1"} # 2.9.1 is the minimum version s
 # External programs' script variables
 #--------------------------------
 clojure_install_dir=${CLOJURE_HOME:-${install_prefix}/clojure}
-clojure_dist_url="http://repo1.maven.org/maven2/org/clojure/clojure/1.4.0/clojure-1.4.0.zip"
+clojure_dist_url="http://repo1.maven.org/maven2/org/clojure/clojure/${clojure_version}/clojure-${clojure_version}.zip"
 scala_install_dir=${SCALA_HOME:-${install_prefix}/scala}
-scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-2.9.2.tgz"
+scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-${scala_version}.tgz"
 
 #####
 # Clojure (a powerful dialect of Lisp that supports multicore computing on the JVM and a number
 # of other powerful computing facilities)
 #####
 
-uninstall_clojure () {
+uninstall_clojure() {
     if [ -e ${clojure_install_dir} ]; then
         sudo rm -r ${clojure_install_dir}
     fi
 }
 
-get_clojure () {
+get_clojure() {
 	# Debug Placeholder
 	uninstall_clojure
+
+	# TODO Check for empty file size in distributed file
 
     # Retrieve Clojure Distribution File
 	local clojure_dist_file=${clojure_dist_url##*/}
@@ -127,6 +127,8 @@ get_clojure () {
 		chmod 755 ${clojure_install_dir}
 		#[ $? != 0 ] && echo " ERROR: Could not extract Clojure: ${clojure_dist_file}" && popd && checked_done 1
 	fi
+
+	# TODO Set CLOJURE_HOME environment variable
 	
 	# Remove Clojure Distribution File
 	if [ -e "${install_prefix}/${clojure_dist_file}" ]; then
@@ -134,7 +136,13 @@ get_clojure () {
 	fi
 }
 
-compute_setup_clojure () {
+compute_check_version_clojure() {
+	echo
+	# java -jar clojure.jar --eval 'println (str (get *clojure-version* :major)"."(get *clojure-version* :minor)"."(get *clojure-version* :incremental))' |xa    rgs | awk '{print $3}'
+
+}
+
+compute_setup_clojure() {
 	echo
     echo -n "Checking for clojure >= ${clojure_min_version}"
     #check_version clojure ${clojure_min_version}
@@ -155,7 +163,7 @@ compute_setup_clojure () {
 # for concurrency and scalability)
 #####
 
-uninstall_scala () {
+uninstall_scala() {
     if [ -e ${scala_install_dir} ]; then
         sudo rm -r ${scala_install_dir}
     fi
@@ -164,6 +172,8 @@ uninstall_scala () {
 get_scala() {
     # Debug Placeholder
     uninstall_scala
+
+	# TODO Check for empty file size
 
     # Retrieve Scala
     local scala_dist_file=${scala_dist_url##*/}
@@ -191,12 +201,19 @@ get_scala() {
         mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
     fi
 
+	# TODO Set SCALA_HOME environment variable
+
     # The Scala distribution we are obtaining contains scala as an executable in its bin/
     # subdirectory. No further action is needed if the file is unpacked correctly, though
     # some error-checking will be added here in case there are other issues.
     if [ -e ${scala_dist_file} ]; then
         rm ${scala_dist_file}
     fi
+}
+
+compute_check_version_scala() {
+	echo
+	#./scala -version | awk '{print $5}'
 }
 
 compute_setup_scala() {
@@ -219,7 +236,7 @@ compute_setup_scala() {
 # Core Compute Language Methods - Call all setup methods, or uninstall all
 #####
 
-uninstall_compute_languages () {
+uninstall_compute_languages() {
 	echo
     echo "-----------------------------------"
 	echo "Uninstalling ESGF Compute Languages"
@@ -233,7 +250,7 @@ uninstall_compute_languages () {
 	uninstall_clojure
 }
 
-setup_compute_languages () {
+setup_compute_languages() {
     echo
     echo "-----------------------------------"
     echo "ESGF Node Compute Languages"

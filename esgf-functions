@@ -70,6 +70,228 @@
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
 
+#Needed to reduce the number of commands when wanting to make a verbose conditional print
+verbose_print() { ((VERBOSE)) && echo $@; return 0; }
+debug_print() { ((DEBUG)) && echo -e $@ >&2; return 0; }
+
+_trimline() {
+	# Strips leading and trailing whitespace even if IFS is set, also
+	# removing the final newline on every line of input (i.e. the
+	# result of using this on a multi-line string will be a
+	# single-line string with no space between the last word on one
+	# line and the first word on the next, with no leading or trailing
+	# whitespace)
+	echo "$@" | perl -p -e 's/^\s+|\s+$//g';
+}
+
+_version_cmp() {
+    # Takes two strings, splits them into epoch (before the last ':'),
+    # version (between the last ':' and the first '-'), and release
+    # (after the first '-'), and then calls _version_segment_cmp on
+    # each part until a difference is found.
+    #
+    # Empty segments are replaced with "-1" so that an empty segment
+    # can precede a non-empty segment when being passed to
+    # _version_segment_cmp.  As with _version_segment_cmp, leading
+    # zeroes will likely confuse comparison as this is still
+    # fundamentally a string sort to allow strings like "3.0alpha1".
+    #
+    # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
+    # Usage example:
+    #   if [ "$(_version_cmp $MYVERSION 1:2.3.4-5)" -lt 0 ] ; then ...
+
+    EPOCHA=(`echo $1 | perl -ne 'my ($part)=/(.*):.*/;print "$part\n"'`)
+    EPOCHB=(`echo $2 | perl -ne 'my ($part)=/(.*):.*/;print "$part\n"'`)
+    EPOCHA=${EPOCHA:-"-1"}
+    EPOCHB=${EPOCHB:-"-1"}
+
+    NONEPOCHA=(`echo $1 | perl -ne 'my ($part)=/(?:.*:)?(.*)/;print "$part\n"'`)
+    NONEPOCHB=(`echo $2 | perl -ne 'my ($part)=/(?:.*:)?(.*)/;print "$part\n"'`)
+
+    VERSIONA=(`echo $NONEPOCHA | perl -ne 'my ($part)=/([^-]*)/;print "$part\n"'`)
+    VERSIONB=(`echo $NONEPOCHB | perl -ne 'my ($part)=/([^-]*)/;print "$part\n"'`)
+    VERSIONA=${VERSIONA:-"-1"}
+    VERSIONB=${VERSIONB:-"-1"}
+
+    RELEASEA=(`echo $NONEPOCHA | perl -ne 'my ($part)=/[^-]*-(.*)/;print "$part\n"'`)
+    RELEASEB=(`echo $NONEPOCHB | perl -ne 'my ($part)=/[^-]*-(.*)/;print "$part\n"'`)
+    RELEASEA=${RELEASEA:-"-1"}
+    RELEASEB=${RELEASEB:-"-1"}
+
+    EPOCHCMP=$(_version_segment_cmp ${EPOCHA} ${EPOCHB})
+    if [ ${EPOCHCMP} -ne 0 ] ; then
+        echo ${EPOCHCMP}
+    else
+        VERSIONCMP=$(_version_segment_cmp ${VERSIONA} ${VERSIONB})
+        if [ ${VERSIONCMP} -ne 0 ] ; then
+            echo ${VERSIONCMP}
+        else
+            RELEASECMP=$(_version_segment_cmp ${RELEASEA} ${RELEASEB})
+            if [ ${RELEASECMP} -ne 0 ] ; then
+                echo ${RELEASECMP}
+            else
+                echo "0"
+            fi
+        fi
+    fi
+}
+
+_version_segment_cmp() {
+    # Takes two strings, splits them on each '.' into arrays, compares
+    # array elements until a difference is found.
+    #
+    # If a third argument is specified, it will override the separator
+    # '.' with whatever characters were specified.
+    #
+    # This doesn't take into account epoch or release strings (":" or
+    # "-" segments).  If you want to compare versions in the format of
+    # "1:2.3-4", use _version_cmp(), which calls this function.
+    #
+    # If the values for both array elements are purely numeric, a
+    # numeric compare is done (to handle problems such as 9 > 10 or
+    # 02 < 1 in a string compare), but if either value contains a
+    # non-numeric value or is null a string compare is done.  Null
+    # values are considered less than zero.
+    #
+    # If $1 > $2, prints 1.  If $1 < $2, prints -1.  If $1 = $2, prints 0.
+    #
+    # Usage example:
+    #   if [ "$(_version_segment_cmp $MYVERSION 1.2.3)" -lt 0 ] ; then ...
+
+    SEP=${3:-"."}
+
+    VERSIONA=(`echo $1 | perl -pe "s/[$SEP]/ /g"`)
+    VERSIONB=(`echo $2 | perl -pe "s/[$SEP]/ /g"`)
+
+    if [ ${#VERSIONA[*]} -gt ${#VERSIONB[*]} ] ; then
+        VERSIONLENGTH=${#VERSIONA[*]}
+    else
+        VERSIONLENGTH=${#VERSIONB[*]}
+    fi
+
+    for index in `seq 1 $VERSIONLENGTH` ; do
+        if ( [ -z ${VERSIONA[$index]##*[!0-9]*} ] ||
+             [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
+            # Non-numeric comparison
+            if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
+                echo "1"
+                return
+            elif [[ ${VERSIONA[$index]} < ${VERSIONB[$index]} ]] ; then
+                echo "-1"
+                return
+            fi
+        else
+            # Purely numeric comparison
+            if (( ${VERSIONA[$index]:-0} > ${VERSIONB[$index]:-0} )) ; then
+                echo "1"
+                return
+            elif (( ${VERSIONA[$index]:-0} < ${VERSIONB[$index]:-0} )) ; then
+                echo "-1"
+                return
+            fi
+        fi
+    done
+    echo "0"
+}
+
+#-------------------------------
+# Version Checking Utility Functions
+#-------------------------------
+
+check_version_atleast() {
+    # Takes the following arguments:
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #
+    # Returns 0 if the first argument is greater than or equal to the
+    # second and 1 otherwise.
+    #
+    # Returns 255 if called with less than two arguments.
+
+    debug_print "DEBUG: check_version_atleast \$1='$1'  \$2='$2'"
+
+    if [[ -z "${1}" || -z "${2}" ]] ; then
+        echo "CRITICAL FAILURE: check_version_atleast called with insufficient arguments" >&2
+        echo "  (\$1='$1'  \$2='$2')" >&2
+        return 255
+    fi
+
+    if [ "$(_version_cmp ${1} ${2})" -ge 0 ] ; then return 0 ; fi
+    return 1;
+}
+
+check_version_between() {
+    # Takes the following arguments:
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #   $3: the maximum acceptable version
+    #
+    # Returns 0 if the tested version is in the acceptable range
+    # (greater than or equal to the second argument, and less than or
+    # equal to the third), and 1 otherwise.
+    #
+    # Returns 255 if called with less than three arguments.
+
+    debug_print "DEBUG: check_version_between \$1='$1'  \$2='$2'  \$3='$3'"
+
+    if [[ -z "${1}" || -z "${2}" || -z "${3}" ]] ; then
+        echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
+        echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
+        return 255
+    fi
+
+    if [ "$(_version_cmp ${1} ${2})" -ge 0 ] \
+        && [ "$(_version_cmp ${1} ${3})" -le 0 ] ; then
+        return 0 ;
+    fi
+    return 1;
+}
+
+check_version_helper() {
+    # Primary helper method for verifying version constraints,
+    # automatically detecting by argument count whether to check for a
+    # minimum version or a range.
+    #    
+    # Takes the following arguments:
+    #   $1: a string containing the version to test
+    #   $2: the minimum acceptable version
+    #   $3 (optional): the maximum acceptable version
+    #    
+    # If called with only one argument, the function will attempt to
+    # split it on spaces into multiple arguments automatically, and
+    # then follow the above argument logic.
+    #    
+    # Returns 0 if the tested version is in the acceptable range
+    #    
+    # Returns 255 if less than two arguments are detected after
+    # automatic argument splitting.
+
+    debug_print "DEBUG: check_version_helper \$1='$1'  \$2='$2'  \$3='$3'"
+
+    # Split a lone argument
+    [[ $# == 1 ]] && set -- $1
+
+    # Spit out a nasty error message and return with 255 if there are
+    # insufficient arguments (this causes the version check to fail,
+    # but does NOT abort the script -- watch for the CRITICAL FAILURE
+    # string in your output)
+    if [[  -z "${1}" || -z "${2}"  ]]; then 
+        echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
+        echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
+        return 255
+    fi   
+
+    if [ -z "${3}" ] ; then 
+        # Only two arguments, check for a minimum version
+        check_version_atleast ${1} ${2} 
+        return $?
+    fi   
+    check_version_between ${1} ${2} ${3} 
+    return $?
+}
+
+#--------------------------------------------------------------------------
+
 check_version() {
     # This is the most commonly used "public" version checking
     # routine.  It delegates to check_version_helper() for the actual

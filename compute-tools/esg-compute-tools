@@ -101,15 +101,23 @@ mesos_git_url="git://git.apache.org/mesos.git"
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 
+[ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
 
 # Fixme find uninstall template
 uninstall_mesos () {
+	# Delete Mesos install directory
 	if [ -d "$mesos_install_dir" ]; then
 		sudo rm -r "$mesos_install_dir"
 	fi
+
+	# Remove mesos from environment variable file
+	local key=${1}
+	sed -i '/'${key}'/d' ${envfile}
 }
 
 # FIXME Look up esg-node test formatting
@@ -162,13 +170,18 @@ compute_setup_mesos() {
 #####
 
 uninstall_spark () {
+	# Remove Spark install directory
 	if [ -e ${spark_install_dir} ]; then
 		sudo rm -r ${spark_install_dir}
 	fi
+
+	# Remove Spark home from environment file
+	local key=${1}
+	sed -i '/'${key}'/d' ${envfile}
 }
 
 # Task for Eugenia: Need to implement a Testing Method for Spark here, using one of the
-# included examples
+# included examples?
 
 get_spark () {
 	if [ ! -e ${spark_install_dir} ]
@@ -213,9 +226,13 @@ compute_setup_hadoop() {
 
 # Uninstall Mesos, Spark, Scala, Hadoop
 uninstall_compute_tools() {
-	uninstall_spark
-	# uninstall_hadoop
-	uninstall_mesos
+	# Uninstall Spark Framework
+	uninstall_spark SPARK_HOME
+
+	# Uninstall Mesos cluster manager
+	uninstall_mesos MESOS_HOME
+
+	# Placeholder uninstall Hadoop
 }
 
 setup_compute_tools() {

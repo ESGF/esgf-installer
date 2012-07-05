@@ -82,6 +82,9 @@ git_exec_path_param="--exec-path=$git_placeholder/libexec/git-core"
 java_placeholder="$install_prefix/java"
 java_install_path_config_param="--with-java-home=$java_placeholder/bin/java"
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+envfile="/etc/esg.env"
+esg_functions_file=./esgf-functions
+esg_compute_languages_file=./esg-compute-languages
 
 #--------------------------------
 # External programs' versions
@@ -103,6 +106,10 @@ spark_git_url="git://github.com/mesos/spark.git"
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+
+# This is sourcing for now to help Scala/Clojure dependent frameworks install. Once the environment stuff in those is correctly 
+# implemented, it will not be necessary to source this file.
+[ -e ${esg_compute_languages_file} ] && source ${esg_compute_languages_file} && ((VERBOSE)) && printf "sourcing from: ${esg_compute_languages_file} \n"
 
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
@@ -190,12 +197,13 @@ get_spark () {
 	else
 		cd ${spark_install_dir}
 		sbt/sbt clean
+		git pull
 	fi
 
 	cd ${spark_install_dir}
-	# In Progress
-	#./${spark_install_dir}/sbt/sbt set 
-	#./${spark_install_dir}/sbt/sbt compile SCALAHOME = ${scala_install_dir}
+	#TODO remove hardcoding here
+	${spark_install_dir}/sbt/sbt -DSCALA_HOME=/usr/local/scala compile
+	# Check for compile errors here
 }
 
 compute_setup_spark() {
@@ -246,7 +254,7 @@ setup_compute_tools() {
 	compute_setup_spark
 
 	# Installing Hadoop
-	compute_setup_hadoop
+	#compute_setup_hadoop
 
 	# Installing Mesos
 	# compute_setup_mesos

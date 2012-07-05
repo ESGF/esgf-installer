@@ -116,7 +116,7 @@ export CLOJURE_HOME=${clojure_install_dir}
 uninstall_clojure() {
     # Delete clojure install directory
 	if [ -e ${clojure_install_dir} ]; then
-        sudo rm -r ${clojure_install_dir}
+        rm -r ${clojure_install_dir}
     fi
 
 	# Remove clojure home from environment
@@ -177,7 +177,7 @@ compute_setup_clojure() {
 uninstall_scala() {
 	# Remove scala install directory
 	if [ -e ${scala_install_dir} ]; then
-        sudo rm -r ${scala_install_dir}
+        rm -r ${scala_install_dir}
     fi
 
 	# Remove scala home from environment

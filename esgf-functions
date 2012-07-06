@@ -376,7 +376,7 @@ check_version_with() {
     [ -z "${3}" ] && return 0
 
     local current_version=$(eval ${version_command})
-    if [ $? != 0 ] ; then
+    if [ -z "${current_version}" ] || [ $? != 0 ] ; then
         echo " WARNING: Could not detect version of ${app_name##*/}"
         return 2
     fi
@@ -462,3 +462,12 @@ check_app_version() {
     return 1
 }
 
+#----------------------------------------------------------
+# Environment Management Utility Functions
+#----------------------------------------------------------
+remove_env() {
+	local key=${1}
+	((DEBUG)) && echo "removing ${key}'s environment from ${env_file}"
+	sed -i '/'${key}'/d' ${env_file}
+	return $?
+}

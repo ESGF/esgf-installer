@@ -81,7 +81,7 @@ DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 devel=${devel:-0}
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar|.zip"
-envfile="/etc/esg.env"
+env_file="/etc/esg.env"
 esg_functions_file=./esgf-functions
 
 #--------------------------------
@@ -105,7 +105,7 @@ scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-${scala_
 export SCALA_HOME=${scala_install_dir}
 export CLOJURE_HOME=${clojure_install_dir}
 
-[ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
+[ -e "${env_file}" ] && source ${env_file} && ((VERBOSE)) && printf "sourcing environment from: ${env_file} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
 #####
@@ -113,15 +113,19 @@ export CLOJURE_HOME=${clojure_install_dir}
 # of other powerful computing facilities)
 #####
 
-uninstall_clojure() {
-    # Delete clojure install directory
-	if [ -e ${clojure_install_dir} ]; then
-        rm -r ${clojure_install_dir}
-    fi
+clean_clojure() {
 
-	# Remove clojure home from environment
-	local key=${1}
-	sed -i '/'${key}'/d' ${envfile}
+    doit="N"
+    if [ -e ${clojure_install_dir} ]; then 
+        read -e -p "remove compute language Clojure? (${clojure_install_dir}) [y/N]: " doit 
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then 
+        echo "removing ${clojure_install_dir}"
+        rm -rf ${clojure_install_dir}
+        [ $? != 0 ] && echo "ERROR: Unable to remove ${clojure_install_dir}"
+        fi   
+    fi 
+
+	remove_env CLOJURE_HOME
 }
 
 get_clojure() {
@@ -174,15 +178,18 @@ compute_setup_clojure() {
 # for concurrency and scalability)
 #####
 
-uninstall_scala() {
-	# Remove scala install directory
-	if [ -e ${scala_install_dir} ]; then
-        rm -r ${scala_install_dir}
-    fi
+clean_scala() {
+    doit="N"
+    if [ -e ${scala_install_dir}/bin/scala ]; then 
+        read -e -p "remove compute language Scala? (${scala_install_dir}) [y/N]: " doit 
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then 
+        echo "removing ${scala_install_dir}"
+        rm -rf ${scala_install_dir}
+        [ $? != 0 ] && echo "ERROR: Unable to remove ${scala_install_dir}"
+        fi   
+    fi  
 
-	# Remove scala home from environment
-	local key=${1}
-	sed -i '/'${key}'/d' ${envfile}
+    remove_env SCALA_HOME
 }
 
 get_scala() {
@@ -228,8 +235,15 @@ get_scala() {
 compute_setup_scala() {
     echo
 	echo -n "Checking for scala >= ${scala_min_version}"
-    check_version_with scala "${SCALA_HOME}/bin/scala -version | awk '{print \$5}'" ${scala_min_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+	
+	if [ -e ${scala_install_dir} ]; then
+		local scala_current_version=$(${SCALA_HOME}/bin/scala -version | awk '{print $5}')
+		check_version_helper $scala_current_version ${scala_min_version}
+		[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+	else
+		echo
+		echo "No Scala installation detected"
+	fi
 
     echo
     echo "*****************************"
@@ -245,7 +259,7 @@ compute_setup_scala() {
 # Core Compute Language Methods - Call all setup methods, or uninstall all
 #####
 
-uninstall_compute_languages() {
+clean_compute_languages() {
 	echo
     echo "-----------------------------------"
 	echo "Uninstalling ESGF Compute Languages"
@@ -253,10 +267,10 @@ uninstall_compute_languages() {
 	echo
 
 	# Uninstalling Scala
-	uninstall_scala SCALA_HOME
+	clean_scala
 
 	# Uninstalling Clojure
-	uninstall_clojure CLOJURE_HOME
+	clean_clojure
 }
 
 setup_compute_languages() {
@@ -271,6 +285,9 @@ setup_compute_languages() {
 
 	# Install Clojure
 	compute_setup_clojure
+
+	# Uninstall all
+	#clean_compute_languages
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

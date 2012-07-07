@@ -2054,6 +2054,7 @@ edit_pam_pgsql_conf() {
     checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/etc_${tfile} $((_force_install))
     [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
     cp -vf ${tfile}{.tmpl,}
+    [ -n "${tfile}" ] && chmod 600 ${tfile}* >& /dev/null
     [ $? != 0 ] && return 1
     eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
     echo -n "*"

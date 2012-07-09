@@ -75,8 +75,6 @@
 #####
 
 # TODO Zookeeper copy-over
-# TODO start_
-# TODO test_
 # TODO mesos fix
 # TODO sanity check zookeeper
 
@@ -101,8 +99,6 @@ mesos_version=${mesos_version:="0.9.0"}
 mesos_min_version=${mesos_min_version:="0.9.0"}
 spark_version=${spark_version:="0.5.0"}
 spark_min_version=${spark_min_version:="0.5.0"}
-# yarn_version
-# hadoop_version
 
 #--------------------------------
 # External programs' script variables
@@ -123,82 +119,67 @@ spark_git_url="git://github.com/mesos/spark.git"
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
 
-# Fixme find uninstall template
-uninstall_mesos () {
-	# Delete Mesos install directory
-	if [ -d "$mesos_install_dir" ]; then
-		rm -rf "$mesos_install_dir"
-	fi
+setup_mesos() {
+	echo -n "Checking for mesos >= ${mesos_min_version}"
 
-	# Remove mesos from environment variable file
-	local key=${1}
-	sed -i '/'${key}'/d' ${envfile}
-}
-
-# FIXME Look up esg-node test formatting
-test_mesos_build () {
-	cd "$mesos_install_dir"
-	#make check
-	echo
-	echo "---------------"
-	echo "Skipping Mesos Test Temporarily"
-	echo "---------------"
-	echo
-}
-
-# Mesos is an Apache project, and can be obtained from its git and svn repositories. 
-# For the purpose of this installation, we use the git repository as the source, and 
-# configure the mesos install with local versions of java and git.
-get_mesos () {
 	if [! -d $mesos_install_dir ]
 	then
-		git "$git_exec_path_param" clone "$mesos_git_url" "$mesos_install_dir"
+		git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
 	else
-		cd "$mesos_install_dir"
+		cd ${mesos_install_dir}
 		make clean
 	fi
 
-	cd "$mesos_install_dir"
+	cd ${mesos_install_dir}
 	./bootstrap
-	./configure "$java_install_path_config_param" --with-webui --with-included-zookeeper
-	make
-	test_mesos_build
+	./configure
+	#make
+	#make install
 }
 
-compute_setup_mesos() {
-	echo -n "[Placeholder] Checking for mesos >= ${mesos_min_version}"
- 	#check_version mesos ${mesos_min_version}
- 	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
- 
-	echo
-	echo "*******************************"
- 	echo "Setting up Mesos ${mesos_version}"
- 	echo "*******************************"
-	echo
+config_mesos() {
+    echo
+}
 
-	# Get Mesos from Online Source
-	get_mesos
+test_mesos() {
+    echo
+    echo "---------------"
+    echo "Mesos Test Placeholder"
+    echo "---------------"
+    echo
+}
+
+run_mesos() {
+	echo
+}
+
+clean_mesos() {
+    # Delete Mesos install directory
+    if [ -d "$mesos_install_dir" ]; then
+        rm -rf "$mesos_install_dir"
+    fi
+
+    # Remove mesos from environment variable file
+    local key=${1}
+    sed -i '/'${key}'/d' ${envfile}
 }
 
 #####
-# Spark (FIXME ESG-relevant Spark description here)
+# Spark (Mapreduce framework in Scala, targeted at iterative applications that make use of working
+# sets of data)
 #####
 
-uninstall_spark () {
-	# Remove Spark install directory
-	if [ -e ${spark_install_dir} ]; then
-		rm -rf ${spark_install_dir}
-	fi
+setup_spark() {
+	echo -n "Checking for spark >= ${spark_min_version}"
+	#check_version spark ${spark_min_version}
+	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 
-	# Remove Spark home from environment file
-	local key=${1}
-	sed -i '/'${key}'/d' ${envfile}
-}
+    echo
+	echo "*****************************"
+	echo "Setting Up Spark ${spark_version}"
+	echo "*****************************"
+	echo
 
-# Task for Eugenia: Need to implement a Testing Method for Spark here, using one of the
-# included examples?
-
-get_spark () {
 	if [ ! -e ${spark_install_dir} ]
 	then
 		git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
@@ -214,58 +195,83 @@ get_spark () {
 	# Check for compile errors here
 }
 
-compute_setup_spark() {
-	echo -n "Checking for spark >= ${spark_min_version}"
-	#check_version spark ${spark_min_version}
-	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-
+config_spark() {
 	echo
-	echo "*****************************"
-	echo "Setting Up Spark ${spark_version}"
-	echo "*****************************"
-	echo
+}
 
-	# Set up Spark
-	get_spark
+test_spark() {
+	echo
+}
+
+run_spark() {
+	echo
+}
+
+clean_spark() {
+    # Remove Spark install directory
+    if [ -e ${spark_install_dir} ]; then
+        rm -rf ${spark_install_dir}
+    fi  
+
+    # Remove Spark home from environment file
+    local key=${1}
+    sed -i '/'${key}'/d' ${envfile}
 }
 
 #####
-# Hadoop (FIXME ESG-relevant Hadoop description here)
+# Hadoop (MapReduce distributed computing on HDFS)
 #####
-compute_setup_hadoop() {
+setup_hadoop() {
 	echo
 }
+
+config_hadoop() {
+	echo
+}
+
+test_hadoop() {
+	echo
+}
+
+run_hadoop() {
+	echo
+}
+
+clean_hadoop() {
+	echo
+}
+
+#####
+# Zookeeper (Synchronization and quorum manager for clusters)
+#####
+
 
 #####
 # Core Methods
 #####
 
-# Uninstall Mesos, Spark, Scala, Hadoop
-uninstall_compute_tools() {
-	# Uninstall Spark Framework
-	uninstall_spark SPARK_HOME
-
-	# Uninstall Mesos cluster manager
-	uninstall_mesos MESOS_HOME
-
-	# Placeholder uninstall Hadoop
+clean_compute_tools() {
+	clean_spark
+	clean_mesos
+	clean_hadoop
+	clean_zookeeper
 }
 
 setup_compute_tools() {
 	echo
 	echo "-----------------------------------"
-	echo "ESGF Node Compute Tools"
+	echo "Installing ESGF Node Compute Tools"
 	echo "-----------------------------------"
 	echo
 
 	# Installing Spark
-	compute_setup_spark
+	setup_spark
 
 	# Installing Hadoop
-	#compute_setup_hadoop
+	#setup_hadoop
 
 	# Installing Mesos
-	# compute_setup_mesos
+	#setup_mesos
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

@@ -109,25 +109,6 @@ scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-${scala_
 # of other powerful computing facilities)
 #####
 
-clean_clojure() {
-
-    doit="N"
-    if [ -e ${clojure_install_dir} ]; then 
-        read -e -p "remove compute language Clojure? (${clojure_install_dir}) [y/N]: " doit 
-        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then 
-        echo "removing ${clojure_install_dir}"
-        rm -rf ${clojure_install_dir}
-        [ $? != 0 ] && echo "ERROR: Unable to remove ${clojure_install_dir}"
-			remove_env CLOJURE_HOME
-			remove_install_log_entry clojure
-		fi   
-    fi 
-}
-
-config_clojure() {
-	echo
-}
-
 setup_clojure() {
 
 	echo
@@ -176,31 +157,30 @@ setup_clojure() {
 	fi
 }
 
+config_clojure() {
+    echo
+}
+
+clean_clojure() {
+
+    doit="N"
+    if [ -e ${clojure_install_dir} ]; then
+        read -e -p "remove compute language Clojure? (${clojure_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+        echo "removing ${clojure_install_dir}"
+        rm -rf ${clojure_install_dir}
+        [ $? != 0 ] && echo "ERROR: Unable to remove ${clojure_install_dir}"
+            remove_env CLOJURE_HOME
+            remove_install_log_entry clojure
+        fi
+    fi
+}
+
 #####
 # Scala (both functional and object-oriented, Scala integrates well with Java and provides support
 # for concurrency and scalability)
 #####
-
-clean_scala() {
-    doit="N"
-    if [ -e ${scala_install_dir}/bin/scala ]; then 
-        read -e -p "remove compute language Scala? (${scala_install_dir}) [y/N]: " doit 
-        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then 
-        echo "removing ${scala_install_dir}"
-        rm -rf ${scala_install_dir}
-        [ $? != 0 ] && echo "ERROR: Unable to remove ${scala_install_dir}"
-			remove_env SCALA_HOME        
-			remove_install_log_entry scala	
-		fi   
-    fi  
-}
-
-config_scala() {
-	echo
-}
-
 setup_scala() {
-
 	echo
     echo -n "Checking for scala >= ${scala_min_version}"
 
@@ -258,31 +238,27 @@ setup_scala() {
     fi
 }
 
+config_scala() {
+    echo
+}
+
+clean_scala() {
+    doit="N"
+    if [ -e ${scala_install_dir}/bin/scala ]; then
+        read -e -p "remove compute language Scala? (${scala_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+        echo "removing ${scala_install_dir}"
+        rm -rf ${scala_install_dir}
+        [ $? != 0 ] && echo "ERROR: Unable to remove ${scala_install_dir}"
+            remove_env SCALA_HOME
+            remove_install_log_entry scala
+        fi
+    fi
+}
+
 #####
 # Core Compute Language Methods - Call all setup methods, or uninstall all
 #####
-
-clean_compute_languages() {
-	echo
-    echo "-----------------------------------"
-	echo "Uninstalling ESGF Compute Languages"
-	echo "-----------------------------------"
-	echo
-
-	# Uninstalling Scala
-	clean_scala
-
-	# Uninstalling Clojure
-	clean_clojure
-}
-
-config_compute_languages() {
-	# Configure Scala
-	config_scala
-
-	# Configure Clojure
-	config_clojure
-}
 
 setup_compute_languages() {
     echo
@@ -296,6 +272,25 @@ setup_compute_languages() {
 
 	# Install Clojure
 	setup_clojure
+}
+
+config_compute_languages() {
+    config_scala
+    config_clojure
+}
+
+clean_compute_languages() {
+    echo
+    echo "-----------------------------------"
+    echo "Uninstalling ESGF Compute Languages"
+    echo "-----------------------------------"
+    echo
+
+    # Uninstalling Scala
+    clean_scala
+
+    # Uninstalling Clojure
+    clean_clojure
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

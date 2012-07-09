@@ -65,12 +65,20 @@
 
 #####
 # Description: Installer for ESG Compute Tools
-# Authors: gabrielov1@llnl.gov
+# Implemented Tools: Spark, Hadoop, Zookeeper
+# Tools in Progress: Yarn (Hadoop Streaming), Mesos (Cluster Management), Cascalog
+# Authors: Eugenia Gabrielova {gabrielov1@llnl.gov, genia.likes.science@gmail.com}
 ####
 
 #####
 # uses: git, tar
 #####
+
+# TODO Zookeeper copy-over
+# TODO start_
+# TODO test_
+# TODO mesos fix
+# TODO sanity check zookeeper
 
 #--------------
 # User Defined / Settable (public)
@@ -119,7 +127,7 @@ spark_git_url="git://github.com/mesos/spark.git"
 uninstall_mesos () {
 	# Delete Mesos install directory
 	if [ -d "$mesos_install_dir" ]; then
-		sudo rm -r "$mesos_install_dir"
+		rm -rf "$mesos_install_dir"
 	fi
 
 	# Remove mesos from environment variable file
@@ -179,7 +187,7 @@ compute_setup_mesos() {
 uninstall_spark () {
 	# Remove Spark install directory
 	if [ -e ${spark_install_dir} ]; then
-		sudo rm -r ${spark_install_dir}
+		rm -rf ${spark_install_dir}
 	fi
 
 	# Remove Spark home from environment file

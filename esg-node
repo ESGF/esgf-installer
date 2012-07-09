@@ -4519,20 +4519,6 @@ pcheck() {
     return $ret
 }
 
-remove_install_log_entry() {
-    local key=${1}
-    ((DEBUG)) && echo "removing ${key}'s install log entry from ${install_manifest}"
-    sed -i '/[:]\?'${key}'=/d' ${install_manifest}
-    return $?
-}
-
-remove_env() {
-    local key=${1}
-    ((DEBUG)) && echo "removing ${key}'s environment from ${env_file}"
-    sed -i '/'${key}'/d' ${env_file}
-    return $?
-}
-
 uninstall() {
     local doit="N"
     read -e -p "Are you sure you want to uninstall? [y/N]: " doit
@@ -4606,6 +4592,8 @@ uninstall() {
 		[ $? != 0 ] && echo "ERROR: Unable to remove ${globus_location}"
 	    fi
 	fi
+
+	# TODO Placeholder for compute tools and languages uninstall
 
 	doit="N"
 	if [ -e $openssl_install_dir ]; then

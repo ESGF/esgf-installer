@@ -467,7 +467,14 @@ check_app_version() {
 #----------------------------------------------------------
 remove_env() {
 	local key=${1}
-	((DEBUG)) && echo "removing ${key}'s environment from ${env_file}"
-	sed -i '/'${key}'/d' ${env_file}
+	((DEBUG)) && echo "removing ${key}'s environment from ${envfile}"
+	sed -i '/'${key}'/d' ${envfile}
 	return $?
+}
+
+remove_install_log_entry() {
+    local key=${1}
+    ((DEBUG)) && echo "removing ${key}'s install log entry from ${install_manifest}"
+    sed -i '/[:]\?'${key}'=/d' ${install_manifest}
+    return $?
 }

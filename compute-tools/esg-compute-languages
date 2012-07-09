@@ -98,7 +98,6 @@ scala_max_version=${scala_max_version:="2.9.2"}
 #--------------------------------
 clojure_install_dir=${CLOJURE_HOME:-${install_prefix}/clojure}
 clojure_dist_url="http://repo1.maven.org/maven2/org/clojure/clojure/${clojure_version}/clojure-${clojure_version}.zip"
-clojure_version_evaluation="java -jar ${clojure_install_dir}/clojure.jar --eval 'println (str (get *clojure-version* :major)"."(get *clojure-version* :minor)"."(get *clojure-version* :incremental))' |xargs | awk '{print $3}"
 scala_install_dir=${SCALA_HOME:-${install_prefix}/scala}
 scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-${scala_version}.tgz"
 
@@ -128,7 +127,29 @@ clean_clojure() {
 	remove_env CLOJURE_HOME
 }
 
-get_clojure() {
+config_clojure() {
+	echo
+}
+
+setup_clojure() {
+
+	echo
+    echo -n "Checking for clojure >= ${clojure_min_version}"
+	
+	if [ -e ${clojure_install_dir} ]; then
+        local clojure_current_version=`java -jar ${clojure_install_dir}/clojure.jar --eval 'println (str (get *clojure-version* :major)"."(get *clojure-version* :minor)"."(get *clojure-version* :incremental))' |xargs | awk '{print $3}'`
+        check_version_helper $clojure_current_version ${clojure_min_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    else
+        echo
+        echo "No Clojure installation detected"
+		echo
+    	echo "*****************************"
+    	echo "Setting up Clojure ${clojure_version}"
+    	echo "*****************************"
+    	echo
+    fi  
+
 	# TODO Check for empty file size in distributed file
 
     # Retrieve Clojure Distribution File
@@ -157,22 +178,6 @@ get_clojure() {
 	fi
 }
 
-compute_setup_clojure() {
-	echo
-    echo -n "Checking for clojure >= ${clojure_min_version}"
-    check_version_with clojure $clojure_version_evaluation ${clojure_min_version}
-	[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-
-    echo
-    echo "*****************************"
-    echo "Setting up Clojure ${clojure_version}"
-    echo "*****************************"
-    echo
-
-    # Set up Clojure
-    get_clojure
-}
-
 #####
 # Scala (both functional and object-oriented, Scala integrates well with Java and provides support
 # for concurrency and scalability)
@@ -192,8 +197,31 @@ clean_scala() {
     remove_env SCALA_HOME
 }
 
-get_scala() {
-	# TODO Check for empty file size
+config_scala() {
+	echo
+}
+
+setup_scala() {
+
+	echo
+    echo -n "Checking for scala >= ${scala_min_version}"
+
+    if [ -e ${scala_install_dir} ]; then
+        local scala_current_version=$(${SCALA_HOME}/bin/scala -version | awk '{print $5}')
+        check_version_helper $scala_current_version ${scala_min_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    else
+        echo
+        echo "No Scala installation detected"
+    fi
+
+    echo
+    echo "*****************************"
+    echo "Setting up Scala ${scala_version}"
+    echo "*****************************"
+    echo
+
+	# TODO Check for empty file size when downloaded
 
     # Retrieve Scala
     local scala_dist_file=${scala_dist_url##*/}
@@ -232,29 +260,6 @@ get_scala() {
     fi
 }
 
-compute_setup_scala() {
-    echo
-	echo -n "Checking for scala >= ${scala_min_version}"
-	
-	if [ -e ${scala_install_dir} ]; then
-		local scala_current_version=$(${SCALA_HOME}/bin/scala -version | awk '{print $5}')
-		check_version_helper $scala_current_version ${scala_min_version}
-		[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-	else
-		echo
-		echo "No Scala installation detected"
-	fi
-
-    echo
-    echo "*****************************"
-    echo "Setting up Scala ${scala_version}"
-    echo "*****************************"
-    echo
-
-    # Set up Scala
-    get_scala
-}
-
 #####
 # Core Compute Language Methods - Call all setup methods, or uninstall all
 #####
@@ -273,6 +278,14 @@ clean_compute_languages() {
 	clean_clojure
 }
 
+config_compute_languages() {
+	# Configure Scala
+	config_scala
+
+	# Configure Clojure
+	config_clojure
+}
+
 setup_compute_languages() {
     echo
     echo "-----------------------------------"
@@ -281,13 +294,10 @@ setup_compute_languages() {
     echo
 
 	# Install Scala
-	compute_setup_scala
+	setup_scala
 
 	# Install Clojure
-	compute_setup_clojure
-
-	# Uninstall all
-	#clean_compute_languages
+	setup_clojure
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

@@ -280,16 +280,18 @@ setup_hadoop() {
 }
 
 config_hadoop() {
-	echo
+	# This configuration method should prompt the user to enter settings pertaining to the type
+	# of Hadoop distribution (local, semi-distributed, cluster distributed). 
+	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
 }
 
 test_hadoop() {
-	echo
+	# This method will test hadoop in the local configuration at first, to make sure it can do a basic
+	# wordcount example
 }
 
-# Hadoop can be run in single, locally distributed, and cluster distributed modes.
 run_hadoop() {
-	echo
+	# Hadoop can be run in single, locally distributed, and cluster distributed modes.
 }
 
 clean_hadoop() {

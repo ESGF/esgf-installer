@@ -101,6 +101,9 @@ mesos_version=${mesos_version:="0.9.0"}
 mesos_min_version=${mesos_min_version:="0.9.0"}
 spark_version=${spark_version:="0.5.0"}
 spark_min_version=${spark_min_version:="0.5.0"}
+hadoop_version=${hadoop_version:="1.0.3"}
+hadoop_min_version=${hadoop_min_version:="1.0.1"}
+hadoop_max_version=${hadoop_max_version:="1.0.4"}
 
 #--------------------------------
 # External programs' script variables
@@ -110,7 +113,9 @@ mesos_git_url="git://git.apache.org/mesos.git"
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
-zookeeper_dist_url=www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
+zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
+hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
+hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -226,7 +231,28 @@ clean_spark() {
 # Hadoop (MapReduce distributed computing on HDFS)
 #####
 setup_hadoop() {
+	# Check Hadoop Version
 	echo
+	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
+	# TODO Check Hadoop Version
+
+	#if [ -e ${hadoop_install_dir} ]; then
+        local hadoop_current_version=$(/export/gabrielov1/Projects/hadoop-1.0.3/bin/hadoop version |xargs |awk '{print $2}')
+        f=${hadoop_current_version#*-}
+		echo
+		echo $hadoop_current_version $f
+		# check_version_helper $scala_current_version ${scala_min_version}
+        # [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    #else
+     #   echo
+      #  echo "No Scala installation detected"
+    #fi  
+
+    echo
+    echo "*****************************"
+    echo "Setting up Hadoop ${hadoop_version}"
+    echo "*****************************"
+    echo
 }
 
 config_hadoop() {
@@ -237,6 +263,7 @@ test_hadoop() {
 	echo
 }
 
+# Hadoop can be run in single, locally distributed, and cluster distributed modes.
 run_hadoop() {
 	echo
 }
@@ -248,10 +275,7 @@ clean_hadoop() {
 #####
 # Zookeeper (Synchronization and quorum manager for clusters)
 #####
-zookeeper_version="3.3.1"
-zookeeper_dist_url=http://archive.apache.org/dist/hadoop/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
 zookeeper_workdir=${workdir}/zookeeper
-zookeeper_install_dir=${install_prefix}/zookeeper
 zookeeper_data_dir=${esg_root_dir}/zookeeper
 zookeeper_client_port=2181
 
@@ -457,9 +481,8 @@ check_zookeeper_process() {
     [ -n "$pid" ] && echo " Zookeeper process running on port [${zookeeper_client_port}]... " && return 0
 }
 
-remove_zookeeper() {
-    echo "Removing Zookeeper... (faux)"
-    #TODO (zoiks)
+clean_zookeeper() {
+	echo
 }
 
 #####
@@ -487,7 +510,7 @@ setup_compute_tools() {
 	# 4. Spark (Requires Mesos)
 	# Future: Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 	
-	# setup_hadoop
+	setup_hadoop
 	# setup_zookeeper
 	# setup_mesos
 	# setup_spark

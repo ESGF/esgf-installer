@@ -234,25 +234,49 @@ setup_hadoop() {
 	# Check Hadoop Version
 	echo
 	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
-	# TODO Check Hadoop Version
+	if [ -e ${hadoop_install_dir} ]; then
+        local hadoop_current_version=$(/export/gabrielov1/Projects/hadoop-1.0.3/bin/hadoop version | head -1 | awk '{print $2}')
+		local hadoop_version_number=${hadoop_current_version%-*}
+		check_version_helper $hadoop_version_number ${hadoop_min_version} ${hadoop_max_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    else
+    	echo
+    	echo "No Hadoop installation detected"
+    fi 
 
-	#if [ -e ${hadoop_install_dir} ]; then
-        local hadoop_current_version=$(/export/gabrielov1/Projects/hadoop-1.0.3/bin/hadoop version |xargs |awk '{print $2}')
-        f=${hadoop_current_version#*-}
-		echo
-		echo $hadoop_current_version $f
-		# check_version_helper $scala_current_version ${scala_min_version}
-        # [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-    #else
-     #   echo
-      #  echo "No Scala installation detected"
-    #fi  
+	# TODO Version detection throws deprecated HADOOP_HOME version warning 
 
     echo
     echo "*****************************"
     echo "Setting up Hadoop ${hadoop_version}"
     echo "*****************************"
     echo
+
+	# Retrieve Hadoop Distribution File
+	local hadoop_dist_file=${hadoop_dist_url##*/}
+	local hadoop_dist_dir=$(echo ${hadoop_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+
+	# Check for empty distribution file (size 0)
+	# TODO
+
+	if [ ! -e ${hadoop_dist_dir} ]; then
+		echo "Don't see Hadoop distribution directory ${hadoop_dist_dir}"
+		wget -O "${install_prefix}/${hadoop_dist_file}" ${hadoop_dist_url}
+		[ $? != 0 ] && echo " ERROR: Could not download Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
+		echo "Unpacking ${hadoop_dist_file}..."
+		tar xzf ${install_prefix}/${hadoop_dist_file} -C ${install_prefix}
+		mv "${install_prefix}/${hadoop_dist_dir}" ${hadoop_install_dir}
+		chmod 755 ${hadoop_install_dir}
+		[ $? != 0 ] && echo " ERROR: Could not extract Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
+	fi
+
+    # Add Hadoop home to environment and TODO install manifest
+    echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+
+    # Remove Hadoop Distribution File
+    if [ -e "${install_prefix}/${hadoop_dist_file}" ]; then
+        rm "${install_prefix}/${hadoop_dist_file}"
+    fi
 }
 
 config_hadoop() {
@@ -269,7 +293,17 @@ run_hadoop() {
 }
 
 clean_hadoop() {
-	echo
+	doit="N"
+    if [ -e ${hadoop_install_dir} ]; then
+        read -e -p "remove mapreduce framework Hadoop? (${hadoop_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+        echo "removing ${hadoop_install_dir}"
+        rm -rf ${hadoop_install_dir}
+        [ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
+            remove_env HADOOP_HOME
+            remove_install_log_entry hadoop
+        fi  
+    fi  
 }
 
 #####

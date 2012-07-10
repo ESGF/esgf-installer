@@ -74,9 +74,6 @@
 # uses: git, tar
 #####
 
-# TODO mesos fix
-# TODO sanity check zookeeper
-
 #--------------
 # User Defined / Settable (public)
 #--------------
@@ -127,23 +124,53 @@ hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${ha
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
-
 setup_mesos() {
+	# Checking Mesos Version
+	echo
 	echo -n "Checking for mesos >= ${mesos_min_version}"
+	if [ -e ${mesos_install_dir} ]; then
+		
+		# Unconfigured Mesos will not be able to check its version
+		if [ ! -e ${mesos_install_dir}/configure ]; then
+			pushd ${mesos_install_dir}
+			./bootstrap
+			popd >& /dev/null
+		fi
+		# TODO Maybe rebuild Mesos method would be useful
 
-	if [! -d $mesos_install_dir ]
-	then
-		git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
+		local mesos_current_version=`${mesos_install_dir}/configure -version | head -1 | awk '{print $3}'`
+		check_version_helper $mesos_current_version ${mesos_min_version} 
+		[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 	else
-		cd ${mesos_install_dir}
-		make clean
+		echo
+		echo "No Mesos installation detected"
 	fi
 
-	cd ${mesos_install_dir}
+	echo
+	echo "**********************************"
+	echo "Setting Up Mesos ${mesos_version}"
+	echo "**********************************"
+	echo 
+
+	# Retrieve Mesos Source and build after configuration for ESGF tools
+	# Uses: Hadoop, Zookeeper, Java, Python
+	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
+	pushd ${mesos_install_dir}
 	./bootstrap
 	./configure
-	#make
-	#make install
+	make
+	# make check
+	make install
+	popd >& /dev/null
+
+	# TODO make check hangs on zookeeper install
+	# TODO Check download errors (git failure)
+	# Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
+	# TODO Mesos /usr/local configuration
+	# TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
+    
+	# Add Mesos home to environment and TODO install manifest
+    echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
 }
 
 config_mesos() {
@@ -235,7 +262,7 @@ setup_hadoop() {
 	echo
 	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
 	if [ -e ${hadoop_install_dir} ]; then
-        local hadoop_current_version=$(/export/gabrielov1/Projects/hadoop-1.0.3/bin/hadoop version | head -1 | awk '{print $2}')
+        local hadoop_current_version=$(${hadoop_install_dir}/bin/hadoop version | head -1 | awk '{print $2}')
 		local hadoop_version_number=${hadoop_current_version%-*}
 		check_version_helper $hadoop_version_number ${hadoop_min_version} ${hadoop_max_version}
         [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
@@ -266,7 +293,6 @@ setup_hadoop() {
 		echo "Unpacking ${hadoop_dist_file}..."
 		tar xzf ${install_prefix}/${hadoop_dist_file} -C ${install_prefix}
 		mv "${install_prefix}/${hadoop_dist_dir}" ${hadoop_install_dir}
-		chmod 755 ${hadoop_install_dir}
 		[ $? != 0 ] && echo " ERROR: Could not extract Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
 	fi
 
@@ -283,15 +309,18 @@ config_hadoop() {
 	# This configuration method should prompt the user to enter settings pertaining to the type
 	# of Hadoop distribution (local, semi-distributed, cluster distributed). 
 	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
+	echo
 }
 
 test_hadoop() {
 	# This method will test hadoop in the local configuration at first, to make sure it can do a basic
 	# wordcount example
+	echo
 }
 
 run_hadoop() {
 	# Hadoop can be run in single, locally distributed, and cluster distributed modes.
+	echo
 }
 
 clean_hadoop() {
@@ -548,7 +577,7 @@ setup_compute_tools() {
 	
 	setup_hadoop
 	# setup_zookeeper
-	# setup_mesos
+	setup_mesos
 	# setup_spark
 }
 

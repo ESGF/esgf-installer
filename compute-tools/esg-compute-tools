@@ -74,7 +74,6 @@
 # uses: git, tar
 #####
 
-# TODO Zookeeper copy-over
 # TODO mesos fix
 # TODO sanity check zookeeper
 
@@ -95,6 +94,9 @@ esg_compute_languages_file=./esg-compute-languages
 #--------------------------------
 # External programs' versions
 #--------------------------------
+zookeeper_version=${zookeeper_version:="3.3.5"} #
+zookeeper_min_version=${zookeeper_min_version:="3.3.3"}
+zookeeper_max_version=${zookeeper_max_version:="3.4.3"}
 mesos_version=${mesos_version:="0.9.0"}
 mesos_min_version=${mesos_min_version:="0.9.0"}
 spark_version=${spark_version:="0.5.0"}
@@ -107,6 +109,8 @@ mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
+zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
+zookeeper_dist_url=www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -244,7 +248,219 @@ clean_hadoop() {
 #####
 # Zookeeper (Synchronization and quorum manager for clusters)
 #####
+zookeeper_version="3.3.1"
+zookeeper_dist_url=http://archive.apache.org/dist/hadoop/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
+zookeeper_workdir=${workdir}/zookeeper
+zookeeper_install_dir=${install_prefix}/zookeeper
+zookeeper_data_dir=${esg_root_dir}/zookeeper
+zookeeper_client_port=2181
 
+setup_zookeeper() {
+
+    echo -n "Checking for zookeeper ${zookeeper_version}... "
+    [ -x ${zookeeper_install_dir}/bin/zkServer.sh ] && check_zookeeper_version
+    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+
+    echo
+    echo "*******************************"
+    echo "Setting up Zookeeper... ${zookeeper_version}"
+    echo "*******************************"
+    echo
+
+    local dosetup
+    if [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then 
+        echo "Detected an existing zookeeper installation..."
+        read -p "Do you want to continue with zookeeper installation and setup? [y/N] " dosetup
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping zookeeper installation and setup - will assume zookeeper is setup properly"
+            return 0
+        fi
+        echo
+    fi
+
+    echo "Installing zookeeper v${zookeeper_version}"
+    mkdir -p ${zookeeper_workdir}
+    pushd ${zookeeper_workdir} >& /dev/null
+
+    local zookeeper_dist_file=${zookeeper_dist_url##*/}
+    local zookeeper_dist_dir=$(echo ${zookeeper_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+
+    #There is this pesky case of having a zero sized dist file... WTF!?
+    if [ -e ${zookeeper_dist_file} ]; then
+        ls -l ${zookeeper_dist_file}
+        local size=$(stat -c%s ${zookeeper_dist_file})
+        (( size == 0 )) && rm -v ${zookeeper_dist_file}
+    fi
+
+    #Check to see if we already have a zookeeper distribution directory
+    if [ ! -e ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ]; then
+        echo "Don't see zookeeper distribution dir ${zookeeper_install_dir%/*}/${zookeeper_dist_dir}"
+        if [ ! -e ${zookeeper_dist_file} ]; then
+            echo "Don't see zookeeper distribution file $(pwd)/${zookeeper_dist_file} either"
+            echo "Downloading zookeeper from ${zookeeper_dist_url}"
+            #NOTE: this should be a checked_get call!
+            #When I do the refactoring of some of the functions, then I can source that functions file and use checked_get.
+            #For now just fetch it.
+            wget -O ${zookeeper_dist_file} ${zookeeper_dist_url}
+            [ $? != 0 ] && echo " ERROR: Could not download zookeeper ${zookeeper_dist_file}" && popd && checked_done 1
+            echo "unpacking ${zookeeper_dist_file}... into ${zookeeper_install_dir%/*}"
+            tar xzf ${zookeeper_dist_file} -C ${zookeeper_install_dir%/*}
+            [ $? != 0 ] && echo " ERROR: Could not extract zookeeper :-( " && popd && checked_done 1
+        fi
+    fi
+    
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it and go from there....
+    if [ -e ${zookeeper_dist_file} ] && [ ! -e ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ]; then
+        echo "unpacking* ${zookeeper_dist_file} into ${zookeeper_install_dir%/*}"
+        tar xzf ${zookeeper_dist_file} -C ${zookeeper_install_dir%/*}
+        [ $? != 0 ] && echo " ERROR: Could not extract zookeeper :-( " && popd && checked_done 1
+    fi
+
+    if [ ! -e ${zookeeper_install_dir} ]; then
+        ln -s ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ${zookeeper_install_dir}
+        [ $? != 0 ] && \
+            echo " ERROR: Could not create sym link ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} -> ${zookeeper_install_dir}" && popd && checked_done 1
+    else
+        unlink ${zookeeper_install_dir}
+        [ $? != 0 ] && mv ${zookeeper_install_dir} ${zookeeper_install_dir}.$(date ${date_format}).bak
+        
+        ln -s ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ${zookeeper_install_dir}
+        [ $? != 0 ] && \
+            echo " ERROR*: Could not create sym link ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} -> ${zookeeper_install_dir}" && popd && checked_done 1
+    fi
+    (($DEBUG)) && echo "chown -R ${installer_uid}:${installer_gid} ${zookeeper_install_dir}"
+    chown    ${installer_uid}:${installer_gid} ${zookeeper_install_dir}
+    chown -R ${installer_uid}:${installer_gid} $(readlink -f ${zookeeper_install_dir})
+    
+    popd >& /dev/null
+    echo "zookeeper setup [OK]"
+    return 0
+}
+
+#Helper Method to figure out the version of Zookeeper installation
+check_zookeeper_version() {
+    #NOTE: This would have been much sexier with sed and probably in one line... 
+    #but my sed is a bit weak at the moment. :-(
+    local f=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$')
+    f=${f%*.jar}
+    f=${f#*-}
+    [ "${f}" = "${zookeeper_version}" ]
+}
+
+configure_zookeeper() {
+    echo -n "Configuring zookeeper... $@"
+    pushd ${zookeeper_install_dir} >& /dev/null
+    [ $? != 0 ] && echo " ERROR: Unable to peform configuration: no such dir ${zookeeper_install_dir}" && checked_done 1
+
+    #old line
+    #sed "s:/tmp/zookeeper:${zookeeper_data_dir}:" <(curl -s -L --insecure ${esg_dist_url}/esg-search/zookeeper/zoo.cfg) > ${zookeeper_install_dir}/conf/zoo.cfg
+
+    #-------------
+    #new hotness....
+    local config_file="${zookeeper_install_dir}/conf/zoo.cfg"
+    local config_info=""
+    local key="${1:-dataDir}"
+    local value="${2:-${zookeeper_data_dir}}"
+
+    #Look for the local config file first.  If it is there and the key is present then do a local replacement of the value with ${zookeeper_data_dir}
+    #If the file is not there OR this particular key is not present, pull the distribution config file down and to the replacement based on that content.
+
+    if [ -f "${config_file}" ] && (grep "${key}" "${config_file}" >& /dev/null) && (( ! $force_install )); then
+        config_info=$(cat "${config_file}")
+    else 
+        echo "fetching base config file ${config_file##*/} from distribution server..."
+        config_info=$(curl -s -L --insecure ${esg_dist_url}/esg-search/zookeeper/${config_file##*/})
+        (($force_install)) && cp ${config_file} ${config_file}.last
+    fi
+    
+    (($DEBUG)) && echo "(pre) Configuration Infos:" && echo "${config_info}"
+
+    #Now, do the value replacement based on matching against the KEY not the VALUE! (more flexible and robust)
+    sed 's#\('${key}'=\)\(.*\)#\1'${value}'#g'  <(echo "${config_info}") >> ${config_file}
+
+    #dedup the configuration file
+    local tmp=$(tac ${config_file} | awk 'BEGIN {FS="="} !($1 in a) {a[$1];print $0}' | sort -k1,1)
+    echo "$tmp" > ${config_file}
+
+    
+    (($DEBUG)) && echo "(post) Configuration Info:" && cat ${config_file}
+    #-------------
+
+    #Set this node's zookeeper ID
+    mkdir -p ${zookeeper_data_dir}
+    get_node_id > ${zookeeper_data_dir}/myid
+    chown    ${installer_uid}:${installer_gid} ${zookeeper_data_dir}
+    chown -R ${installer_uid}:${installer_gid} $(readlink -f ${zookeeper_data_dir})
+    echo -n "zookeeper id: $(cat ${zookeeper_data_dir}/myid)"
+    popd >& /dev/null
+    echo " [OK]"
+    return 0
+}
+
+test_zookeeper() {
+    echo -n "Testing zookeeper..."
+    #test client connection
+    ${zookeeper_install_dir}/bin/zkCli.sh -server localhost:${zookeeper_client_port} ls / quit >& /dev/null
+    ret=$?
+    [ ${ret} == 0 ] && echo " [OK]" || echo " [FAIL]"
+    return ${ret}
+}
+
+write_zookeeper_install_log() {
+    local entry="$(date ${date_format}) esg-search:zookeeper=${zookeeper_version} ${zookeeper_install_dir}"
+    echo ${entry} >> ${install_manifest}
+    dedup ${install_manifest}
+    return 0
+}
+
+start_zookeeper() {
+
+    check_zookeeper_process && return 1
+    echo "Starting zookeeper server on port ${zookeeper_client_port}"
+
+    ${zookeeper_install_dir}/bin/zkServer.sh start
+
+    #-----
+    #NOTE: (potential timing issue)
+    #Luca: the wait is because Solr, on startup, needs to send information to Zookeeper
+    #  not sure if it is enough to wait for the client port to be accessible, we'll test
+    #-----
+
+    #Don't wait 10 seconds if you don't have to...
+    #just check every second up till 10 seconds (or <= 10x)
+    local wait_time=10
+    local ret=1
+    while [[ $wait_time > 0 ]]; do
+        netstat -na | grep -i ${zookeeper_client_port}
+        ret=$?
+        [ $ret == 0 ] && break
+        sleep 1
+        ((wait_time--))
+        echo -n "."
+    done
+    [ $ret == 0 ] && echo " [OK]" || echo " [FAIL]"
+    return $ret
+}
+
+stop_zookeeper() {
+    echo "Stopping zookeeper..."
+    ${zookeeper_install_dir}/bin/zkServer.sh stop
+    local ret=$?
+    [ ${ret} == 0 ] && echo " [OK]" || echo " [FAIL]"
+    return ${ret}
+}
+
+#status
+check_zookeeper_process() {
+    local pid=`lsof -i:${zookeeper_client_port} | grep -i java | awk '{print $2}'`
+    [ -n "$pid" ] && echo " Zookeeper process running on port [${zookeeper_client_port}]... " && return 0
+}
+
+remove_zookeeper() {
+    echo "Removing Zookeeper... (faux)"
+    #TODO (zoiks)
+}
 
 #####
 # Core Methods
@@ -264,14 +480,17 @@ setup_compute_tools() {
 	echo "-----------------------------------"
 	echo
 
-	# Installing Spark
-	setup_spark
-
-	# Installing Hadoop
-	#setup_hadoop
-
-	# Installing Mesos
-	#setup_mesos
+	# The optimal install order, as below, depends on the following:
+	# 1. Hadoop
+	# 2. Zookeeper
+	# 3. Mesos (Requires Zookeeper, Hadoop)
+	# 4. Spark (Requires Mesos)
+	# Future: Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
+	
+	# setup_hadoop
+	# setup_zookeeper
+	# setup_mesos
+	# setup_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

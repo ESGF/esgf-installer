@@ -132,9 +132,7 @@ setup_mesos() {
 		
 		# Unconfigured Mesos will not be able to check its version
 		if [ ! -e ${mesos_install_dir}/configure ]; then
-			pushd ${mesos_install_dir}
-			./bootstrap
-			popd >& /dev/null
+			(cd ${mesos_install_dir} && ./bootstrap)
 		fi
 		# TODO Maybe rebuild Mesos method would be useful
 
@@ -155,13 +153,7 @@ setup_mesos() {
 	# Retrieve Mesos Source and build after configuration for ESGF tools
 	# Uses: Hadoop, Zookeeper, Java, Python
 	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	pushd ${mesos_install_dir}
-	./bootstrap
-	./configure
-	make
-	# make check
-	make install
-	popd >& /dev/null
+	(cd ${mesos_install_dir} && ./bootstrap && ./configure && make && make install)
 
 	# TODO make check hangs on zookeeper install
 	# TODO Check download errors (git failure)
@@ -170,11 +162,17 @@ setup_mesos() {
 	# TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
     
 	# Add Mesos home to environment and TODO install manifest
-    echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
+	write_env_mesos
 }
 
 reinstall_mesos () {
 	echo
+}
+
+write_env_mesos() {
+	echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
+	dedup ${envfile} && source ${envfile}
+	return 0
 }
 
 config_mesos() {
@@ -236,7 +234,13 @@ setup_spark() {
 	# TODO write spark test code 
 	
 	# Add Spark home to environment and TODO install manifest
-    echo "export SPARK_HOME=${spark_install_dir}" >> ${envfile}
+	write_env_spark
+}
+
+write_env_spark() {
+	echo "export SPARK_HOME=${spark_install_dir}" >> ${envfile}	
+	dedup ${envfile} && source ${envfile}
+	return 0
 }
 
 config_spark() {
@@ -305,12 +309,18 @@ setup_hadoop() {
 	fi
 
     # Add Hadoop home to environment and TODO install manifest
-    echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+	write_env_hadoop
 
     # Remove Hadoop Distribution File
     if [ -e "${install_prefix}/${hadoop_dist_file}" ]; then
         rm "${install_prefix}/${hadoop_dist_file}"
     fi
+}
+
+write_env_hadoop() {
+	echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+	dedup ${envfile} && source ${envfile}
+	return 0
 }
 
 config_hadoop() {

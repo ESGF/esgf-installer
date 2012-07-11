@@ -5145,28 +5145,6 @@ insert_file_at_pattern() {
     return ${ret}
 }
 
-# Environment variable files of the form
-# Ex: export FOOBAR=some_value
-# Will have duplcate keys removed such that the
-# last entry of that variable is the only one present
-# in the final output.
-# arg 1 - The environment file to dedup.
-dedup() {
-    local infile=${1:-${envfile}}
-    [ ! -e "${infile}" ] && echo "WARNING: dedup() - unable to locate ${infile} does it exist?" && return 1
-    [ ! -w "${infile}" ] && echo "WARNING: dedup() - unable to write to ${infile}" && return 1
-    local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($2 in a) {a[$2];print $0}' | sort -k2,2)
-    echo "$tmp" > ${infile}
-}
-
-dedup_properties() {
-    local infile=${1:-${config_file}}
-    [ ! -e "${infile}" ] && echo "WARNING: dedup_properties() - unable to locate ${infile} does it exist?" && return 1
-    [ ! -w "${infile}" ] && echo "WARNING: dedup_properties() - unable to write to ${infile}" && return 1
-    local tmp=$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($1 in a) {a[$1];print $0}' | sort -k1,1)
-    echo "$tmp" > ${infile}
-}
-
 #Load properties from a java-style property file
 #providing them as script variables in this context
 #arg 1 - optional property file (default is ${config_file})

@@ -149,12 +149,18 @@ setup_clojure() {
 	fi
 
 	# Add Clojure home to environment and TODO install manifest
-	echo "export CLOJURE_HOME=${clojure_install_dir}" >> ${envfile}
+	write_clojure_env
 
 	# Remove Clojure Distribution File
 	if [ -e "${install_prefix}/${clojure_dist_file}" ]; then
         rm "${install_prefix}/${clojure_dist_file}"
 	fi
+}
+
+write_clojure_env() {
+	echo "export CLOJURE_HOME=${clojure_install_dir}" >> ${envfile}
+	dedup ${envfile} && source ${envfile}
+	return 0
 }
 
 config_clojure() {
@@ -228,7 +234,7 @@ setup_scala() {
     fi
 
 	# Add Scala home to environment and TODO install manifest
-	echo "export SCALA_HOME=${scala_install_dir}" >> ${envfile}
+	write_scala_env
 
     # The Scala distribution we are obtaining contains scala as an executable in its bin/
     # subdirectory. No further action is needed if the file is unpacked correctly, though
@@ -236,6 +242,14 @@ setup_scala() {
     if [ -e ${scala_dist_file} ]; then
         rm ${scala_dist_file}
     fi
+}
+
+write_scala_env() {
+	echo "export SCALA_HOME=${scala_install_dir}" >> ${envfile}
+	# TODO Add prefix_to_path to esgf-functions
+	# prefix_to_path PATH ${scala_install_dir}/bin >> ${envfile}
+	dedup ${envfile} && source ${envfile}
+	return 0
 }
 
 config_scala() {

@@ -192,14 +192,17 @@ run_mesos() {
 }
 
 clean_mesos() {
-    # Delete Mesos install directory
-    if [ -d "$mesos_install_dir" ]; then
-        rm -rf "$mesos_install_dir"
-    fi
-
-    # Remove mesos from environment variable file
-    local key=${1}
-    sed -i '/'${key}'/d' ${envfile}
+	doit="N"
+    if [ -e ${mesos_install_dir} ]; then
+        read -e -p "remove cluster management framework Mesos? (${mesos_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+        	echo "removing ${mesos_install_dir}"
+        	rm -rf ${mesos_install_dir}
+        	[ $? != 0 ] && echo "ERROR: Unable to remove ${mesos_install_dir}"
+            remove_env MESOS_HOME
+            #remove_install_log_entry mesos
+        fi  
+    fi  
 }
 
 #####
@@ -269,14 +272,17 @@ run_spark() {
 }
 
 clean_spark() {
-    # Remove Spark install directory
+	doit="N"
     if [ -e ${spark_install_dir} ]; then
-        rm -rf ${spark_install_dir}
+        read -e -p "remove iterative computation framework Spark? (${spark_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+        	echo "removing ${spark_install_dir}"
+        	rm -rf ${spark_install_dir}
+        	[ $? != 0 ] && echo "ERROR: Unable to remove ${spark_install_dir}"
+            remove_env SPARK_HOME
+            #remove_install_log_entry spark
+        fi  
     fi  
-
-    # Remove Spark home from environment file
-    local key=${1}
-    sed -i '/'${key}'/d' ${envfile}
 }
 
 #####
@@ -359,11 +365,11 @@ clean_hadoop() {
     if [ -e ${hadoop_install_dir} ]; then
         read -e -p "remove mapreduce framework Hadoop? (${hadoop_install_dir}) [y/N]: " doit
         if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-        echo "removing ${hadoop_install_dir}"
-        rm -rf ${hadoop_install_dir}
-        [ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
+        	echo "removing ${hadoop_install_dir}"
+        	rm -rf ${hadoop_install_dir}
+        	[ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
             remove_env HADOOP_HOME
-            remove_install_log_entry hadoop
+            #remove_install_log_entry hadoop
         fi  
     fi  
 }
@@ -586,6 +592,10 @@ clean_zookeeper() {
 #####
 
 clean_compute_tools() {
+	# TODO: A few of these computation frameworks rely on one another,
+	# so uninstalling portions of this suite may leave parts unstable. Some
+	# sort of sanity check would be useful here.
+
 	clean_spark
 	clean_mesos
 	clean_hadoop

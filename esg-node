@@ -137,7 +137,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.1.6"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"2.6.8"}
+    esg_search_version=${esg_search_version:-"3.1.0"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.1.12"}
@@ -3006,7 +3006,7 @@ setup_subsystem() {
     #source subsystem file and go!
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
-    debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} $@"
+    debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} ${upgrade_mode} $@"
     (source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@ )
     checked_done $?
     echo "-------------------------------"

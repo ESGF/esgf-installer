@@ -228,13 +228,26 @@ setup_spark() {
 
 	# Retrieve and build Spark
 	git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
-	(cd ${spark_install_dir} && sbt/sbt -DSCALA_HOME=/usr/local/scala compile)
+	config_build_spark
+	(cd ${spark_install_dir} && sbt/sbt compile)
 	
 	# TODO check for download errors or git failures
 	# TODO write spark test code 
 	
 	# Add Spark home to environment and TODO install manifest
 	write_env_spark
+}
+
+config_build_spark() {
+	# It is more reliable to export relevant environment variables to
+	# Spark's configuration files; this might be a byproduct of the standalone
+	# compute tools installation.
+
+	# Spark/Scala Configuration
+	echo "SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
+	dedup ${spark_install_dir}/conf/spark-env.sh && source ${spark_install_dir}/conf/spark-env.sh
+
+	# Java configuration
 }
 
 write_env_spark() {

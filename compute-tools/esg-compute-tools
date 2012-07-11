@@ -173,6 +173,10 @@ setup_mesos() {
     echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
 }
 
+reinstall_mesos () {
+	echo
+}
+
 config_mesos() {
     echo
 }
@@ -206,9 +210,17 @@ clean_mesos() {
 #####
 
 setup_spark() {
+	# Checking for Spark Version
+	echo
 	echo -n "Checking for spark >= ${spark_min_version}"
-	#check_version spark ${spark_min_version}
-	#[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+	if [ -e ${spark_install_dir} ]; then
+		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
+		check_version_helper $spark_current_version ${spark_min_version}
+		[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 
+	else
+		echo
+		echo "No Spark installation detected"
+	fi
 
     echo
 	echo "*****************************"
@@ -216,19 +228,15 @@ setup_spark() {
 	echo "*****************************"
 	echo
 
-	if [ ! -e ${spark_install_dir} ]
-	then
-		git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
-	else
-		cd ${spark_install_dir}
-		sbt/sbt clean
-		git pull
-	fi
-
-	cd ${spark_install_dir}
-	#TODO remove hardcoding here
-	${spark_install_dir}/sbt/sbt -DSCALA_HOME=/usr/local/scala compile
-	# Check for compile errors here
+	# Retrieve and build Spark
+	git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
+	(cd ${spark_install_dir} && sbt/sbt -DSCALA_HOME=/usr/local/scala compile)
+	
+	# TODO check for download errors or git failures
+	# TODO write spark test code 
+	
+	# Add Spark home to environment and TODO install manifest
+    echo "export SPARK_HOME=${spark_install_dir}" >> ${envfile}
 }
 
 config_spark() {
@@ -578,7 +586,7 @@ setup_compute_tools() {
 	setup_hadoop
 	# setup_zookeeper
 	setup_mesos
-	# setup_spark
+	setup_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

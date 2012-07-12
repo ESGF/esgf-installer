@@ -128,6 +128,7 @@ setup_clojure() {
     	echo
     fi  
 
+	# TODO Check for existing Scala installation, ask if backup desired
 	# TODO Check for empty file size in distributed file
 
     # Retrieve Clojure Distribution File
@@ -168,7 +169,6 @@ config_clojure() {
 }
 
 clean_clojure() {
-
     doit="N"
     if [ -e ${clojure_install_dir} ]; then
         read -e -p "remove compute language Clojure? (${clojure_install_dir}) [y/N]: " doit
@@ -205,6 +205,8 @@ setup_scala() {
     echo "*****************************"
     echo
 
+	# TODO Check for existing Scala installation, ask if backup desired
+	
 	# TODO Check for empty file size when downloaded
 
     # Retrieve Scala
@@ -276,9 +278,9 @@ clean_scala() {
 
 setup_compute_languages() {
     echo
-    echo "-----------------------------------"
-    echo "ESGF Node Compute Languages"
-    echo "-----------------------------------"
+    echo "-------------------------------------------"
+    echo "Installation of ESGF Node Compute Languages"
+    echo "-------------------------------------------"
     echo
 
 	# Install Scala

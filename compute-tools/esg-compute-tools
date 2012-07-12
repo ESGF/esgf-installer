@@ -377,6 +377,37 @@ clean_hadoop() {
 #####
 # Zookeeper (Synchronization and quorum manager for clusters)
 #####
+setup_zookeeper() {
+	echo
+}
+
+write_env_zookeeper() {
+	echo
+}
+
+config_zookeeper() {
+	echo
+}
+
+test_zookeeper() {
+	echo
+}
+
+clean_zookeeper() {
+	doit="N"
+    if [ -e ${zookeeper_install_dir} ]; then
+        read -e -p "remove cluster management tool Zookeeper? (${zookeeper_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+        	echo "removing ${zookeeper_install_dir}"
+        	rm -rf ${zookeeper_install_dir}
+        	[ $? != 0 ] && echo "ERROR: Unable to remove ${zookeeper_install_dir}"
+            remove_env ZOOKEEPER_HOME
+            #remove_install_log_entry hadoop
+        fi  
+    fi  
+}
+
+: << '--COMMENT--'
 zookeeper_workdir=${workdir}/zookeeper
 zookeeper_data_dir=${esg_root_dir}/zookeeper
 zookeeper_client_port=2181
@@ -583,9 +614,7 @@ check_zookeeper_process() {
     [ -n "$pid" ] && echo " Zookeeper process running on port [${zookeeper_client_port}]... " && return 0
 }
 
-clean_zookeeper() {
-	echo
-}
+--COMMENT--
 
 #####
 # Core Methods
@@ -617,7 +646,7 @@ setup_compute_tools() {
 	# Future: Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 	
 	setup_hadoop
-	# setup_zookeeper
+	setup_zookeeper
 	setup_mesos
 	setup_spark
 }

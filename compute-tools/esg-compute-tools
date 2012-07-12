@@ -379,10 +379,49 @@ clean_hadoop() {
 #####
 setup_zookeeper() {
 	echo
+	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
+	if [ -e ${zookeeper_install_dir} ]; then
+		echo 	
+	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
+		check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+	else
+		echo
+		echo "No Zookeeper installation detected"
+	fi
+
+    echo
+    echo "*****************************"
+    echo "Setting up Zookeeper ${hadoop_version}"
+    echo "*****************************"
+    echo
+	
+	# Retrieve Zookeeper Distribution File
+	local zookeeper_dist_file=${zookeeper_dist_url##*/}
+	local zookeeper_dist_dir=$(echo ${zookeeper_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+
+	# Check for empty distribution file (size 0)
+	# TODO
+
+	if [ ! -e ${zookeeper_dist_dir} ]; then
+		echo "Don't see Zookeeper distribution directory ${zookeeper_dist_dir}"
+		wget -O "${install_prefix}/${zookeeper_dist_file}" ${zookeeper_dist_url}
+		[ $? != 0 ] && echo " ERROR: Could not download Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
+		echo "Unpacking ${zookeeper_dist_file}..."
+		tar xzf ${install_prefix}/${zookeeper_dist_file} -C ${install_prefix}
+		mv "${install_prefix}/${zookeeper_dist_dir}" ${zookeeper_install_dir}
+		[ $? != 0 ] && echo " ERROR: Could not extract Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
+	fi
+
+    # Add Zookeeper home to environment and TODO install manifest
+	write_env_zookeeper
+
 }
 
-write_env_zookeeper() {
-	echo
+write_env_zookeeper() {	
+	echo "export ZOOKEEPER_HOME=${zookeeper_install_dir}" >> ${envfile}
+	dedup ${envfile} && source ${envfile}
+	return 0
 }
 
 config_zookeeper() {

@@ -252,12 +252,12 @@ config_spark() {
 
 test_spark() {
 	# Test 1: Running a "local" version of Spark with 2 cores
-	echo -n "Testing Spark Compute - Local...   "
+	echo -n "Testing Spark - Local...   "
 	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
 	if [ $sparkResult == 0 ]; then
-		echo "[Passed]"
+		echo "[ Passed ]"
 	else
-		echo "[Failed]"
+		echo "[ Failed ]"
 	fi
 }
 
@@ -318,6 +318,7 @@ setup_hadoop() {
 		echo "Unpacking ${hadoop_dist_file}..."
 		tar xzf ${install_prefix}/${hadoop_dist_file} -C ${install_prefix}
 		mv "${install_prefix}/${hadoop_dist_dir}" ${hadoop_install_dir}
+		mkdir $
 		[ $? != 0 ] && echo " ERROR: Could not extract Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
 	fi
 
@@ -331,6 +332,7 @@ setup_hadoop() {
 }
 
 write_env_hadoop() {
+	echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
 	echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
 	dedup ${envfile} && source ${envfile}
 	return 0
@@ -346,7 +348,25 @@ config_hadoop() {
 test_hadoop() {
 	# This method will test hadoop in the local configuration at first, to make sure it can do a basic
 	# wordcount example
-	echo "Hadoop test placeholder"
+	
+	# Hadoop Test 1 - Local (Standalone) Mode
+	echo -n "Testing Hadoop - Local (Standalone) Mode...   "
+	
+	mkdir ${hadoop_install_dir}/sandbox
+	pushd ${hadoop_install_dir} >& /dev/null
+	
+	# Hadoop Grep example - TODO write a bash version to do the same to test it
+	mkdir sandbox/input
+	cp conf/*.xml sandbox/input
+	bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+'	>& /dev/null
+	if [ -e sandbox/output/_SUCCESS ]; then
+		echo [ "Passed" ]
+	else
+		echo [ "Failed" ]
+	fi
+	
+	popd >& /dev/null
+	rm -rf ${hadoop_install_dir}/sandbox
 }
 
 run_hadoop() {
@@ -654,7 +674,7 @@ test_compute_tools() {
 	echo " Testing ESGF Node Compute Tools "
 	echo "---------------------------------"
 	echo
-	
+
 	# Test Hadoop Single-node
 	test_hadoop
 

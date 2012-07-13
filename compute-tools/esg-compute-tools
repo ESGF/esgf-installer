@@ -286,7 +286,8 @@ setup_hadoop() {
 	echo
 	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
 	if [ -e ${hadoop_install_dir} ]; then
-        local hadoop_current_version=$(${hadoop_install_dir}/bin/hadoop version | head -1 | awk '{print $2}')
+        local hadoop_current_version=$(export HADOOP_HOME_WARN_SUPPRESS="TRUE" && \
+			${hadoop_install_dir}/bin/hadoop version | head -1 | awk '{print $2}')
 		local hadoop_version_number=${hadoop_current_version%-*}
 		check_version_helper $hadoop_version_number ${hadoop_min_version} ${hadoop_max_version}
         [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
@@ -374,8 +375,7 @@ setup_zookeeper() {
 	# Check ZooKeeper Version
 	echo
 	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
-	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then
-		echo 	
+	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then	
 	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
 		check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
         [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0

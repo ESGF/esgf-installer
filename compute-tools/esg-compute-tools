@@ -116,6 +116,12 @@ zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
 hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 
+#-------------------------------
+# External programs' configuration variables
+#-------------------------------
+zookeeper_client_port=2181
+zookeeper_workdir=${workdir}/zookeeper
+
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
@@ -255,9 +261,9 @@ test_spark() {
 	echo -n "Testing Spark - Local...   "
 	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
 	if [ $sparkResult == 0 ]; then
-		echo "[ Passed ]"
+		echo "[ PASSED ]"
 	else
-		echo "[ Failed ]"
+		echo "[ FAILED ]"
 	fi
 }
 
@@ -360,9 +366,9 @@ test_hadoop() {
 	cp conf/*.xml sandbox/input
 	bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+'	>& /dev/null
 	if [ -e sandbox/output/_SUCCESS ]; then
-		echo [ "Passed" ]
+		echo [ "PASSED" ]
 	else
-		echo [ "Failed" ]
+		echo [ "FAILED" ]
 	fi
 	
 	popd >& /dev/null
@@ -391,6 +397,7 @@ clean_hadoop() {
 #####
 # Zookeeper (Synchronization and quorum manager for clusters)
 #####
+
 setup_zookeeper() {
 	# Check ZooKeeper Version
 	echo
@@ -429,6 +436,12 @@ setup_zookeeper() {
 		[ $? != 0 ] && echo " ERROR: Could not extract Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
 	fi
 
+	# Configure Zookeeper environment (this is temporary)
+	mkdir ${zookeeper_install_dir}/zookeeper_working_sandbox 
+	echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo.cfg
+	echo "dataDir=${zookeeper_install_dir}/zookeeper_working_sandbox" >> ${zookeeper_install_dir}/conf/zoo.cfg
+	echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo.cfg
+
     # Add Zookeeper home to environment and TODO install manifest
 	write_env_zookeeper
 
@@ -445,7 +458,15 @@ config_zookeeper() {
 }
 
 test_zookeeper() {
-	echo "Test Zookeeper placeholder"
+	# Basic zookeeper test for client connection	
+	echo -n "Testing Zookeeper client connection...   "
+
+	${zookeeper_install_dir}/bin/zkServer.sh start >& /dev/null
+    ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
+    zkRet=$?
+    [ ${zkRet} == 0 ] && echo " [ PASSED ]" || echo " [ FAILED ]"
+    ${zookeeper_install_dir}/bin/zkServer.sh stop >& /dev/null
+	return ${zkRet}
 }
 
 clean_zookeeper() {
@@ -465,7 +486,6 @@ clean_zookeeper() {
 : << '--COMMENT--'
 zookeeper_workdir=${workdir}/zookeeper
 zookeeper_data_dir=${esg_root_dir}/zookeeper
-zookeeper_client_port=2181
 
 setup_zookeeper() {
     
@@ -588,15 +608,6 @@ configure_zookeeper() {
     popd >& /dev/null
     echo " [OK]"
     return 0
-}
-
-test_zookeeper() {
-    echo -n "Testing zookeeper..."
-    #test client connection
-    ${zookeeper_install_dir}/bin/zkCli.sh -server localhost:${zookeeper_client_port} ls / quit >& /dev/null
-    ret=$?
-    [ ${ret} == 0 ] && echo " [OK]" || echo " [FAIL]"
-    return ${ret}
 }
 
 write_zookeeper_install_log() {

@@ -74,6 +74,8 @@
 # uses: git, tar
 #####
 
+# TODO When missing variables, add them as "use defaults" below --v
+
 #--------------
 # User Defined / Settable (public)
 #--------------
@@ -231,7 +233,8 @@ setup_spark() {
 
 	# Retrieve and build Spark
 	git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
-	config_build_spark
+	echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
+	# TODO Spark Java environment configuration
 	(cd ${spark_install_dir} && sbt/sbt compile)
 	
 	# TODO check for download errors or git failures
@@ -239,18 +242,6 @@ setup_spark() {
 	
 	# Add Spark home to environment and TODO install manifest
 	write_env_spark
-}
-
-config_build_spark() {
-	# It is more reliable to export relevant environment variables to
-	# Spark's configuration files; this might be a byproduct of the standalone
-	# compute tools installation.
-
-	# Spark/Scala Configuration
-	echo "SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
-	dedup ${spark_install_dir}/conf/spark-env.sh && source ${spark_install_dir}/conf/spark-env.sh
-
-	# Java configuration
 }
 
 write_env_spark() {
@@ -264,6 +255,8 @@ config_spark() {
 }
 
 test_spark() {
+	# Test 1: Running a "local" version of Spark with 2 cores
+	#./run spark.examples.SparkLR local[2]
 	echo
 }
 
@@ -378,9 +371,10 @@ clean_hadoop() {
 # Zookeeper (Synchronization and quorum manager for clusters)
 #####
 setup_zookeeper() {
+	# Check ZooKeeper Version
 	echo
 	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
-	if [ -e ${zookeeper_install_dir} ]; then
+	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then
 		echo 	
 	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
 		check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
@@ -395,6 +389,8 @@ setup_zookeeper() {
     echo "Setting up Zookeeper ${hadoop_version}"
     echo "*****************************"
     echo
+
+	# TODO Check if existing installation + backup?
 	
 	# Retrieve Zookeeper Distribution File
 	local zookeeper_dist_file=${zookeeper_dist_url##*/}
@@ -452,18 +448,8 @@ zookeeper_data_dir=${esg_root_dir}/zookeeper
 zookeeper_client_port=2181
 
 setup_zookeeper() {
-
-    echo -n "Checking for zookeeper ${zookeeper_version}... "
-    [ -x ${zookeeper_install_dir}/bin/zkServer.sh ] && check_zookeeper_version
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-
-    echo
-    echo "*******************************"
-    echo "Setting up Zookeeper... ${zookeeper_version}"
-    echo "*******************************"
-    echo
-
-    local dosetup
+    
+	local dosetup
     if [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then 
         echo "Detected an existing zookeeper installation..."
         read -p "Do you want to continue with zookeeper installation and setup? [y/N] " dosetup
@@ -532,16 +518,6 @@ setup_zookeeper() {
     popd >& /dev/null
     echo "zookeeper setup [OK]"
     return 0
-}
-
-#Helper Method to figure out the version of Zookeeper installation
-check_zookeeper_version() {
-    #NOTE: This would have been much sexier with sed and probably in one line... 
-    #but my sed is a bit weak at the moment. :-(
-    local f=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$')
-    f=${f%*.jar}
-    f=${f#*-}
-    [ "${f}" = "${zookeeper_version}" ]
 }
 
 configure_zookeeper() {

@@ -129,7 +129,7 @@ hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${ha
 setup_mesos() {
 	# Checking Mesos Version
 	echo
-	echo -n "Checking for mesos >= ${mesos_min_version}"
+	echo -n "Checking for Mesos >= ${mesos_min_version}"
 	if [ -e ${mesos_install_dir} ]; then
 		
 		# Unconfigured Mesos will not be able to check its version
@@ -182,11 +182,7 @@ config_mesos() {
 }
 
 test_mesos() {
-    echo
-    echo "---------------"
     echo "Mesos Test Placeholder"
-    echo "---------------"
-    echo
 }
 
 run_mesos() {
@@ -215,7 +211,7 @@ clean_mesos() {
 setup_spark() {
 	# Checking for Spark Version
 	echo
-	echo -n "Checking for spark >= ${spark_min_version}"
+	echo -n "Checking for Spark >= ${spark_min_version}"
 	if [ -e ${spark_install_dir} ]; then
 		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
 		check_version_helper $spark_current_version ${spark_min_version}
@@ -256,8 +252,13 @@ config_spark() {
 
 test_spark() {
 	# Test 1: Running a "local" version of Spark with 2 cores
-	#./run spark.examples.SparkLR local[2]
-	echo
+	echo -n "Testing Spark Compute - Local...   "
+	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
+	if [ $sparkResult == 0 ]; then
+		echo "[Passed]"
+	else
+		echo "[Failed]"
+	fi
 }
 
 run_spark() {
@@ -283,7 +284,6 @@ clean_spark() {
 #####
 setup_hadoop() {
 	# Check Hadoop Version
-	echo
 	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
 	if [ -e ${hadoop_install_dir} ]; then
         local hadoop_current_version=$(export HADOOP_HOME_WARN_SUPPRESS="TRUE" && \
@@ -346,7 +346,7 @@ config_hadoop() {
 test_hadoop() {
 	# This method will test hadoop in the local configuration at first, to make sure it can do a basic
 	# wordcount example
-	echo
+	echo "Hadoop test placeholder"
 }
 
 run_hadoop() {
@@ -425,7 +425,7 @@ config_zookeeper() {
 }
 
 test_zookeeper() {
-	echo
+	echo "Test Zookeeper placeholder"
 }
 
 clean_zookeeper() {
@@ -646,6 +646,28 @@ clean_compute_tools() {
 	clean_zookeeper
 }
 
+test_compute_tools() {
+	# Method to run test suites of all compute tools.
+
+	echo
+	echo "---------------------------------"
+	echo " Testing ESGF Node Compute Tools "
+	echo "---------------------------------"
+	echo
+	
+	# Test Hadoop Single-node
+	test_hadoop
+
+	# Test Zookeeper Local
+	test_zookeeper
+
+	# Test Mesos Local
+	test_mesos
+
+	# Test Spark Local
+	test_spark
+}
+
 setup_compute_tools() {
 	echo
 	echo "-----------------------------------"
@@ -664,6 +686,8 @@ setup_compute_tools() {
 	setup_zookeeper
 	setup_mesos
 	setup_spark
+
+	test_compute_tools
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

@@ -77,12 +77,14 @@
 # User Defined / Settable (public)
 #--------------
 install_prefix=${install_prefix:-"/usr/local"}
+esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 DEBUG=${DEBUG:-0}
 VERBOSE=${VERBOSE:-0}
 devel=${devel:-0}
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar|.zip"
 envfile="/etc/esg.env"
 esg_functions_file=./esgf-functions
+install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 
 #--------------------------------
 # External programs' versions
@@ -100,6 +102,12 @@ clojure_install_dir=${CLOJURE_HOME:-${install_prefix}/clojure}
 clojure_dist_url="http://repo1.maven.org/maven2/org/clojure/clojure/${clojure_version}/clojure-${clojure_version}.zip"
 scala_install_dir=${SCALA_HOME:-${install_prefix}/scala}
 scala_dist_url="http://www.scala-lang.org/downloads/distrib/files/scala-${scala_version}.tgz"
+
+#--------------------------------
+# Internal Script Variables
+#--------------------------------
+date_format="+%Y_%m_%d_%H%M%S"
+
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -149,8 +157,9 @@ setup_clojure() {
 		ant
 	fi
 
-	# Add Clojure home to environment and TODO install manifest
+	# Add Clojure home to environment and install manifest
 	write_clojure_env
+	write_clojure_install_log_entry
 
 	# Remove Clojure Distribution File
 	if [ -e "${install_prefix}/${clojure_dist_file}" ]; then
@@ -161,6 +170,13 @@ setup_clojure() {
 write_clojure_env() {
 	echo "export CLOJURE_HOME=${clojure_install_dir}" >> ${envfile}
 	dedup ${envfile} && source ${envfile}
+	return 0
+}
+
+write_clojure_install_log_entry() {
+	local entry="$(date ${date_format}) esg-compute-languages:clojure=${clojure_version} ${clojure_install_dir}"
+	echo ${entry} >> ${install_manifest}
+	dedup ${install_manifest}
 	return 0
 }
 
@@ -235,8 +251,9 @@ setup_scala() {
         mv "${install_prefix}/${scala_dist_dir}" ${scala_install_dir}
     fi
 
-	# Add Scala home to environment and TODO install manifest
+	# Add Scala home to environment and install manifest
 	write_scala_env
+	write_scala_install_log_entry
 
     # The Scala distribution we are obtaining contains scala as an executable in its bin/
     # subdirectory. No further action is needed if the file is unpacked correctly, though
@@ -251,6 +268,13 @@ write_scala_env() {
 	# TODO Add prefix_to_path to esgf-functions
 	# prefix_to_path PATH ${scala_install_dir}/bin >> ${envfile}
 	dedup ${envfile} && source ${envfile}
+	return 0
+}
+
+write_scala_install_log_entry() {
+	local entry="$(date ${date_format}) esg-compute-languages:scala=${scala_version} ${scala_install_dir}"
+	echo ${entry} >> ${install_manifest}
+	dedup ${install_manifest}
 	return 0
 }
 

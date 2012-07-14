@@ -80,6 +80,7 @@
 # User Defined / Settable (public)
 #--------------
 install_prefix=${install_prefix:-"/usr/local"}
+esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 DEBUG=${DEBUG:-0}
 git_placeholder="$install_prefix/git"
 git_exec_path_param="--exec-path=$git_placeholder/libexec/git-core"
@@ -89,6 +90,7 @@ compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
 envfile="/etc/esg.env"
 esg_functions_file=./esgf-functions
 esg_compute_languages_file=./esg-compute-languages
+install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 
 #--------------------------------
 # External programs' versions
@@ -122,12 +124,13 @@ hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${ha
 zookeeper_client_port=2181
 zookeeper_workdir=${workdir}/zookeeper
 
+#-------------------------------
+# Internal script variables
+#-------------------------------
+date_format="+%Y_%m_%d_%H%M%S"
+
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
-
-# This is sourcing for now to help Scala/Clojure dependent frameworks install. Once the environment stuff in those is correctly 
-# implemented, it will not be necessary to source this file.
-[ -e ${esg_compute_languages_file} ] && source ${esg_compute_languages_file} && ((VERBOSE)) && printf "sourcing from: ${esg_compute_languages_file} \n"
 
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
@@ -161,7 +164,12 @@ setup_mesos() {
 	# Retrieve Mesos Source and build after configuration for ESGF tools
 	# Uses: Hadoop, Zookeeper, Java, Python
 	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	(cd ${mesos_install_dir} && ./bootstrap && ./configure && make && make install)
+	pushd ${mesos_install_dir} >& /dev/null
+	./bootstrap
+	./configure --with-zookeeper=${zookeeper_install_dir}
+	make
+	make install
+	popd >& /dev/null
 
 	# TODO make check hangs on zookeeper install
 	# TODO Check download errors (git failure)
@@ -169,8 +177,9 @@ setup_mesos() {
 	# TODO Mesos /usr/local configuration
 	# TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
     
-	# Add Mesos home to environment and TODO install manifest
+	# Add Mesos home to environment and install manifest
 	write_env_mesos
+	write_mesos_install_log_entry
 }
 
 reinstall_mesos () {
@@ -183,12 +192,25 @@ write_env_mesos() {
 	return 0
 }
 
+write_mesos_install_log_entry() {	
+    local entry="$(date ${date_format}) esg-compute-tools:mesos=${mesos_version} ${mesos_install_dir}"
+    echo ${entry} >> ${install_manifest}
+	dedup ${install_manifest}
+	return 0
+}
+
 config_mesos() {
     echo
 }
 
 test_mesos() {
-    echo "Mesos Test Placeholder"
+	# Test the installation of Mesos
+	echo "Testing Mesos configuration... "
+	local mesosTestConfiguration=$(cd ${mesos_install_dir} && make check && echo $?)
+	echo $mesosTestConfiguration
+
+	# Test the language-specific test frameworks
+	# Test Hadoop and Spark
 }
 
 run_mesos() {
@@ -240,15 +262,22 @@ setup_spark() {
 	(cd ${spark_install_dir} && sbt/sbt compile)
 	
 	# TODO check for download errors or git failures
-	# TODO write spark test code 
 	
-	# Add Spark home to environment and TODO install manifest
+	# Add Spark home to environment and install manifest
 	write_env_spark
+	write_spark_install_log_entry
 }
 
 write_env_spark() {
 	echo "export SPARK_HOME=${spark_install_dir}" >> ${envfile}	
 	dedup ${envfile} && source ${envfile}
+	return 0
+}
+
+write_spark_install_log_entry() {
+    local entry="$(date ${date_format}) esg-compute-tools:spark=${spark_version} ${spark_install_dir}"
+    echo ${entry} >> ${install_manifest}
+	dedup ${install_manifest}
 	return 0
 }
 
@@ -260,11 +289,7 @@ test_spark() {
 	# Test 1: Running a "local" version of Spark with 2 cores
 	echo -n "Testing Spark - Local...   "
 	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
-	if [ $sparkResult == 0 ]; then
-		echo "[ PASSED ]"
-	else
-		echo "[ FAILED ]"
-	fi
+	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 }
 
 run_spark() {
@@ -328,8 +353,9 @@ setup_hadoop() {
 		[ $? != 0 ] && echo " ERROR: Could not extract Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
 	fi
 
-    # Add Hadoop home to environment and TODO install manifest
+    # Add Hadoop home to environment and install manifest
 	write_env_hadoop
+	write_hadoop_install_log_entry
 
     # Remove Hadoop Distribution File
     if [ -e "${install_prefix}/${hadoop_dist_file}" ]; then
@@ -341,6 +367,13 @@ write_env_hadoop() {
 	echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
 	echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
 	dedup ${envfile} && source ${envfile}
+	return 0
+}
+
+write_hadoop_install_log_entry() {	
+    local entry="$(date ${date_format}) esg-compute-tools:hadoop=${hadoop_version} ${hadoop_install_dir}"
+    echo ${entry} >> ${install_manifest}
+	dedup ${install_manifest}
 	return 0
 }
 
@@ -365,11 +398,7 @@ test_hadoop() {
 	mkdir sandbox/input
 	cp conf/*.xml sandbox/input
 	bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+'	>& /dev/null
-	if [ -e sandbox/output/_SUCCESS ]; then
-		echo [ "PASSED" ]
-	else
-		echo [ "FAILED" ]
-	fi
+	[ -e sandbox/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 	
 	popd >& /dev/null
 	rm -rf ${hadoop_install_dir}/sandbox
@@ -442,14 +471,21 @@ setup_zookeeper() {
 	echo "dataDir=${zookeeper_install_dir}/zookeeper_working_sandbox" >> ${zookeeper_install_dir}/conf/zoo.cfg
 	echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo.cfg
 
-    # Add Zookeeper home to environment and TODO install manifest
+    # Add Zookeeper home to environment and install manifest
 	write_env_zookeeper
-
+	write_zookeeper_install_log_entry
 }
 
 write_env_zookeeper() {	
 	echo "export ZOOKEEPER_HOME=${zookeeper_install_dir}" >> ${envfile}
 	dedup ${envfile} && source ${envfile}
+	return 0
+}
+
+write_zookeeper_install_log_entry() {
+    local entry="$(date ${date_format}) esg-compute-tools:zookeeper=${zookeeper_version} ${zookeeper_install_dir}"
+    echo ${entry} >> ${install_manifest}
+	dedup ${install_manifest}
 	return 0
 }
 
@@ -489,19 +525,7 @@ zookeeper_data_dir=${esg_root_dir}/zookeeper
 
 setup_zookeeper() {
     
-	local dosetup
-    if [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then 
-        echo "Detected an existing zookeeper installation..."
-        read -p "Do you want to continue with zookeeper installation and setup? [y/N] " dosetup
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-            echo "Skipping zookeeper installation and setup - will assume zookeeper is setup properly"
-            return 0
-        fi
-        echo
-    fi
-
-    echo "Installing zookeeper v${zookeeper_version}"
-    mkdir -p ${zookeeper_workdir}
+	mkdir -p ${zookeeper_workdir}
     pushd ${zookeeper_workdir} >& /dev/null
 
     local zookeeper_dist_file=${zookeeper_dist_url##*/}
@@ -610,13 +634,6 @@ configure_zookeeper() {
     return 0
 }
 
-write_zookeeper_install_log() {
-    local entry="$(date ${date_format}) esg-search:zookeeper=${zookeeper_version} ${zookeeper_install_dir}"
-    echo ${entry} >> ${install_manifest}
-    dedup ${install_manifest}
-    return 0
-}
-
 start_zookeeper() {
 
     check_zookeeper_process && return 1
@@ -693,7 +710,7 @@ test_compute_tools() {
 	test_zookeeper
 
 	# Test Mesos Local
-	test_mesos
+	# test_mesos
 
 	# Test Spark Local
 	test_spark
@@ -701,9 +718,9 @@ test_compute_tools() {
 
 setup_compute_tools() {
 	echo
-	echo "-----------------------------------"
-	echo "Installing ESGF Node Compute Tools"
-	echo "-----------------------------------"
+	echo "-------------------------------------------------------------"
+	echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Spark}"
+	echo "-------------------------------------------------------------"
 	echo
 
 	# The optimal install order, as below, depends on the following:
@@ -715,7 +732,7 @@ setup_compute_tools() {
 	
 	setup_hadoop
 	setup_zookeeper
-	setup_mesos
+	#setup_mesos
 	setup_spark
 
 	test_compute_tools

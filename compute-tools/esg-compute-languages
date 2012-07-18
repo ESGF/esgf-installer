@@ -179,10 +179,6 @@ write_clojure_install_log_entry() {
 	return 0
 }
 
-config_clojure() {
-    echo
-}
-
 clean_clojure() {
     doit="N"
     if [ -e ${clojure_install_dir} ]; then
@@ -277,10 +273,6 @@ write_scala_install_log_entry() {
 	return 0
 }
 
-config_scala() {
-    echo
-}
-
 clean_scala() {
     doit="N"
     if [ -e ${scala_install_dir}/bin/scala ]; then
@@ -311,11 +303,6 @@ setup_compute_languages() {
 
 	# Install Clojure
 	setup_clojure
-}
-
-config_compute_languages() {
-    config_scala
-    config_clojure
 }
 
 clean_compute_languages() {

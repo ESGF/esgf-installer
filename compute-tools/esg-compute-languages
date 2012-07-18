@@ -136,7 +136,6 @@ setup_clojure() {
     	echo
     fi  
 
-	# TODO Check for existing Scala installation, ask if backup desired
 	# TODO Check for empty file size in distributed file
 
     # Retrieve Clojure Distribution File

@@ -66,12 +66,17 @@
 #####
 # Description: Installer for ESG Compute Tools
 # Implemented Tools: Spark, Hadoop, Zookeeper
-# Tools in Progress: Yarn (Hadoop Streaming), Mesos (Cluster Management), Cascalog
+# Tools in Progress: 
+# * Yarn (Hadoop Streaming)
+# * Mesos (Cluster Management)
+# * Cascalog (Clojure-based query language for Hadoop)
+# * Scoobi (Scala framework for Hadoop)
+
 # Authors: Eugenia Gabrielova {gabrielov1@llnl.gov, genia.likes.science@gmail.com}
 ####
 
 #####
-# uses: git, tar
+# uses: git, tar, wget
 #####
 
 # TODO When missing variables, add them as "use defaults" below --v
@@ -326,8 +331,6 @@ setup_hadoop() {
     	echo
     	echo "No Hadoop installation detected"
     fi 
-
-	# TODO Version detection throws deprecated HADOOP_HOME version warning 
 
     echo
     echo "*****************************"

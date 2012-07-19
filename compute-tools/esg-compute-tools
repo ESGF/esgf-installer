@@ -558,12 +558,16 @@ test_hadoop_pseudo_distributed() {
 
 	echo -n "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
     if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
-		${hadoop_install_dir}/bin/hadoop namenode -format
-		${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed
-		# bin/hadoop fs -put conf input
-		# bin/hadoop jar hadoop-*-examples.jar grep input output 'dfs[a-z.]+' 
-		# bin/hadoop fs cat output/*
-		${hadoop_install_dir}/bin/stop-all.sh
+		#${hadoop_install_dir}/bin/hadoop namenode -format
+		${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+		${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
+		${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
+		# Fix hard-coding yo...
+		${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
+		[ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
+		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
+		${hadoop_install_dir}/bin/stop-all.sh >& /dev/null
     else
 		echo
         echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
@@ -912,13 +916,12 @@ setup_compute_tools() {
 	# Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 	
 	setup_hadoop
-	setup_zookeeper
-	setup_spark
-
-	write_env_hadoop
-
-	config_compute_tools
-	test_compute_tools
+	#setup_zookeeper
+	#setup_spark
+	config_hadoop
+	test_hadoop
+	#config_compute_tools
+	#test_compute_tools
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

@@ -6406,7 +6406,7 @@ usage() {
     printf "
      usage:
      (as root)
-     ${progname} ([--<directive>] | [start] | [stop] | [status] [restart]
+     ${progname} ([--<directive>] | [start] | [stop] | [status] | [restart]
 	 --prefix      - specify the top level directory for this entire installation's \"external\" tools
                          (default:/usr/local - currently:$install_prefix)
         --workdir     - specify the directory used by the installation to download and build esg artifacts for installation

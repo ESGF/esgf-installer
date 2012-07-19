@@ -122,6 +122,7 @@ zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
 zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
 hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
+hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
 
 #-------------------------------
 # External programs' configuration variables
@@ -378,6 +379,11 @@ setup_hadoop() {
     if [ -e "${install_prefix}/${hadoop_dist_file}" ]; then
         rm "${install_prefix}/${hadoop_dist_file}"
     fi
+
+	# Create working diretory
+	if [ ! -e ${hadoop_work_dir} ]; then
+		mkdir ${hadoop_work_dir}
+	fi
 }
 
 write_env_hadoop() {
@@ -400,7 +406,7 @@ config_hadoop() {
 	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
 	
 	# Initialize configuration
-	doconfig="N" 
+	local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
         read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
         
@@ -408,13 +414,48 @@ config_hadoop() {
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
         	echo "Configuring Hadoop..."
        
-			# TODO Configure Hadoop here 
+			# Configuration variables
+            local distribution_mode="1"
+            local input_directory="${hadoop_work_dir}/input"
+            local output_directory="${hadoop_work_dir}/output"
+
+			echo "Configuring Hadoop distribution mode:"
+			echo "[1] Stand-alone operation on local"
+			echo "[2] Pseudo-distributed operation on local"
+			echo "[3] Fully distributed operation on cluster"
+			read -e -p "(Default: Stand-Alone Operation [1]): " distribution_mode
+
+			if [ "$distribution_mode" = "3" ]; then
+
+				echo "Fully distributed operation"
+
+			else 
+
+				if [ "$distribution_mode" = "2" ]; then
+				
+					echo "Pseudo-Distributed operation"
+				
+				else
+			
+					echo "Stand-alone operation"
+
+				fi
+
+			fi	
 		
 		# Inform user of skipped configuration step
 		else
 			echo "Skipping Hadoop Configuration..."
 		fi
 	fi  
+}
+
+start_hadoop() {
+	echo
+}
+
+stop_hadoop() {
+	echo
 }
 
 test_hadoop() {
@@ -435,11 +476,6 @@ test_hadoop() {
 	
 	popd >& /dev/null
 	rm -rf ${hadoop_install_dir}/sandbox
-}
-
-run_hadoop() {
-	# Hadoop can be run in single, locally distributed, and cluster distributed modes.
-	echo
 }
 
 clean_hadoop() {

@@ -405,6 +405,10 @@ config_hadoop() {
 	# of Hadoop distribution (local, semi-distributed, cluster distributed). 
 	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
 	
+	# TODO Fully distributed operation requires a pretty hefty amount of configuration. Using the defaults
+	# Hadoop provides is probably best. This configuration guide will be used for fully distributed configuration:
+	# http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html	
+
 	# Initialize configuration
 	local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
@@ -419,29 +423,20 @@ config_hadoop() {
             local input_directory="${hadoop_work_dir}/input"
             local output_directory="${hadoop_work_dir}/output"
 
-			echo "Configuring Hadoop distribution mode:"
+			echo "Configuring Hadoop distribution mode for this node:"
 			echo "[1] Stand-alone operation on local"
 			echo "[2] Pseudo-distributed operation on local"
-			echo "[3] Fully distributed operation on cluster"
 			read -e -p "(Default: Stand-Alone Operation [1]): " distribution_mode
 
-			if [ "$distribution_mode" = "3" ]; then
-
-				echo "Fully distributed operation"
-
-			else 
-
-				if [ "$distribution_mode" = "2" ]; then
+            if [ "$distribution_mode" = "2" ]; then
 				
-					echo "Pseudo-Distributed operation"
+                echo "Pseudo-Distributed operation"
 				
-				else
+            else
 			
-					echo "Stand-alone operation"
+                echo "Stand-alone operation"
 
-				fi
-
-			fi	
+            fi	
 		
 		# Inform user of skipped configuration step
 		else

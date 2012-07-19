@@ -712,11 +712,24 @@ test_compute_tools() {
 	# Test Zookeeper Local
 	test_zookeeper
 
-	# Test Mesos Local
-	# test_mesos
+	# Test Mesos Local placeholder
 
 	# Test Spark Local
 	test_spark
+}
+
+config_compute_tools() {
+	# Method to run configuration methods of all compute tools.
+	
+	echo
+	echo "---------------------------------"
+	echo " Configuring ESGF Node Compute Tools "
+	echo "---------------------------------"
+	echo
+
+	config_hadoop
+	config_zookeeper
+	config_spark
 }
 
 setup_compute_tools() {
@@ -729,16 +742,15 @@ setup_compute_tools() {
 	# The optimal install order, as below, depends on the following:
 	# 1. Hadoop
 	# 2. Zookeeper
-	# 3. Mesos (Requires Zookeeper, Hadoop)
-	# 4. Spark (Requires Mesos)
-	# Future: Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
+	# 3. Spark (Requires Mesos for distributed computation)
+	# Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 	
 	setup_hadoop
 	setup_zookeeper
-	#setup_mesos
 	setup_spark
 
 	test_compute_tools
+	config_compute_tools
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

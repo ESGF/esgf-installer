@@ -286,8 +286,22 @@ write_spark_install_log_entry() {
 	return 0
 }
 
-config_spark() {
-	echo
+config_spark() {	
+	doconfig="N" 
+    if [ -e ${spark_install_dir} ]; then
+        read -e -p "Configure Spark Installation? [y/N]: " doconfig
+        
+		# Configure Spark environment, deployment, local/Mesos
+		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+        	echo "Configuring Spark..."
+       
+			# TODO Configure Spark here 
+		
+		# Inform user of skipped configuration step
+		else
+			echo "Skipping Spark Configuration..."
+		fi
+	fi  
 }
 
 test_spark() {
@@ -384,7 +398,23 @@ config_hadoop() {
 	# This configuration method should prompt the user to enter settings pertaining to the type
 	# of Hadoop distribution (local, semi-distributed, cluster distributed). 
 	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
-	echo
+	
+	# Initialize configuration
+	doconfig="N" 
+    if [ -e ${hadoop_install_dir} ]; then
+        read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
+        
+		# Configure Hadoop modes, HDFS, configuration
+		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+        	echo "Configuring Hadoop..."
+       
+			# TODO Configure Hadoop here 
+		
+		# Inform user of skipped configuration step
+		else
+			echo "Skipping Hadoop Configuration..."
+		fi
+	fi  
 }
 
 test_hadoop() {
@@ -449,8 +479,6 @@ setup_zookeeper() {
     echo "*****************************"
     echo
 
-	# TODO Check if existing installation + backup?
-	
 	# Retrieve Zookeeper Distribution File
 	local zookeeper_dist_file=${zookeeper_dist_url##*/}
 	local zookeeper_dist_dir=$(echo ${zookeeper_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
@@ -493,7 +521,21 @@ write_zookeeper_install_log_entry() {
 }
 
 config_zookeeper() {
-	echo
+	doconfig="N" 
+    if [ -e ${zookeeper_install_dir} ]; then
+        read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
+        
+		# Configure Hadoop modes, HDFS, configuration
+		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+        	echo "Configuring Zookeeper..."
+       
+			# TODO Configure Zookeeper here 
+		
+		# Inform user of skipped configuration step
+		else
+			echo "Skipping Zookeeper Configuration..."
+		fi
+	fi  
 }
 
 test_zookeeper() {
@@ -592,10 +634,6 @@ configure_zookeeper() {
     pushd ${zookeeper_install_dir} >& /dev/null
     [ $? != 0 ] && echo " ERROR: Unable to peform configuration: no such dir ${zookeeper_install_dir}" && checked_done 1
 
-    #old line
-    #sed "s:/tmp/zookeeper:${zookeeper_data_dir}:" <(curl -s -L --insecure ${esg_dist_url}/esg-search/zookeeper/zoo.cfg) > ${zookeeper_install_dir}/conf/zoo.cfg
-
-    #-------------
     #new hotness....
     local config_file="${zookeeper_install_dir}/conf/zoo.cfg"
     local config_info=""

@@ -389,6 +389,7 @@ setup_hadoop() {
 write_env_hadoop() {
 	echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
 	echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+	echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_install_dir}/conf/hadoop-env.sh
 	dedup ${envfile} && source ${envfile}
 	return 0
 }
@@ -404,7 +405,7 @@ config_hadoop() {
 	# This configuration method should prompt the user to enter settings pertaining to the type
 	# of Hadoop distribution (local, semi-distributed, cluster distributed). 
 	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
-	
+
 	# TODO Fully distributed operation requires a pretty hefty amount of configuration. Using the defaults
 	# Hadoop provides is probably best. This configuration guide will be used for fully distributed configuration:
 	# http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html	
@@ -417,25 +418,44 @@ config_hadoop() {
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
         	echo "Configuring Hadoop..."
-       
-			# Configuration variables
-            local distribution_mode="1"
-            local input_directory="${hadoop_work_dir}/input"
-            local output_directory="${hadoop_work_dir}/output"
+			
+			pseudo_distributed_config_setup
 
-			echo "Configuring Hadoop distribution mode for this node:"
-			echo "[1] Stand-alone operation on local"
+			echo "Configuring Hadoop distribution mode for this node..."
+			
+            # TODO: Stand-alone operation doesn't really require configuration,
+            # as Hadoop just runs as a .jar file. Some examples may require an 
+            # input and output directory, but it is probably overkill to configure 
+            # that here. Configuring Hadoop to run local should be enough.
+            echo "[1] Stand-alone operation configuration complete."
+			
+			
+				
 			echo "[2] Pseudo-distributed operation on local"
 			read -e -p "(Default: Stand-Alone Operation [1]): " distribution_mode
 
             if [ "$distribution_mode" = "2" ]; then
-				
-                echo "Pseudo-Distributed operation"
-				
-            else
+				# To learn more about Pseudo-Distributed operation or to fine-tune your configuration,
+				# check out the Hadoop documentation here: 
+                # http://hadoop.apache.org/common/docs/r0.20.2/quickstart.html#PseudoDistributed	
+                echo "Hadoop: Configuring Pseudo-Distributed operation"
 			
-                echo "Stand-alone operation"
+           		    	 	
 
+				# TODO: Call pseudo-distributed operation test here
+				echo "Hadoop: Psuedo-Distributed operation is now default for this node."
+            
+			else
+
+				# TODO: Stand-alone operation doesn't really require configuration,
+				# as Hadoop just runs as a .jar file. Some examples may require an 
+				# input and output directory, but it is probably overkill to configure 
+				# that here. Configuring Hadoop to run local should be enough.
+							
+                # TODO: Maybe call stand-alone Hadoop test method here to ensure properly working config.
+                echo "Hadoop: Stand-Alone Hadoop Operation is now default for this node."
+				
+				# TODO: Need to reconfigure to stand-alone if previous default was pseudo-distributed
             fi	
 		
 		# Inform user of skipped configuration step
@@ -445,32 +465,109 @@ config_hadoop() {
 	fi  
 }
 
-start_hadoop() {
-	echo
+pseudo_distributed_config_setup() {
+
+	# TODO Best practice would be to not keep these guys in Hadoop's install tree...
+	# Create directories for standalone, local_distributed configuration
+	# For now we destroy them first.
+	rm -rf ${hadoop_install_dir}/conf/standalone
+	rm -rf ${hadoop_install_dir}/conf/local_distributed
+	mkdir ${hadoop_install_dir}/conf/standalone 
+	mkdir ${hadoop_install_dir}/conf/local_distributed
+
+	# Copy default example config files to new directory for standalone	
+	cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/standalone/
+	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/standalone/hadoop-env.sh
+	cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/standalone/slaves
+	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/local_distributed/hadoop-env.sh
+	cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/local_distributed/slaves
+
+	# Create configuration files for pseudo-distributed mode
+	echo '<?xml version="1.0"?>
+	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+	<configuration>
+	<property>
+	<name>fs.default.name</name>
+	<value>hdfs://localhost:9000</value>
+	</property>
+	</configuration>' >> ${hadoop_install_dir}/conf/local_distributed/core-site.xml
+
+	echo '<?xml version="1.0"?>
+	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+    <configuration>
+	<property>
+    <name>dfs.replication</name>
+    <value>1</value>
+    </property>
+    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/hdfs-site.xml
+
+	echo '<?xml version="1.0"?>
+	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+	<configuration>
+    <property>
+    <name>mapred.job.tracker</name>
+    <value>localhost:9001</value>
+    </property>
+    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/mapred-site.xml
 }
 
-stop_hadoop() {
+run_hadoop() {
+	# TODO: How this is implemented will depend on how we decide to switch between
+	# single stand-alone, locally distributed, and fully distributed modes...	
 	echo
 }
 
 test_hadoop() {
-	# This method will test hadoop in the local configuration at first, to make sure it can do a basic
-	# wordcount example
+    # Hadoop Test - Local (Standalone) Mode
+    test_hadoop_standalone
 	
-	# Hadoop Test 1 - Local (Standalone) Mode
+    # Hadoop Test 2 - Local Psuedo-Distributed
+	test_hadoop_pseudo_distributed
+}
+
+test_hadoop_standalone() {
+
+	# Hadoop Test - Local (Standalone) Mode, with wordcount example
 	echo -n "Testing Hadoop - Local (Standalone) Mode...   "
 	
 	mkdir ${hadoop_install_dir}/sandbox
 	pushd ${hadoop_install_dir} >& /dev/null
 	
-	# Hadoop Grep example - TODO write a bash version to do the same to test it
 	mkdir sandbox/input
 	cp conf/*.xml sandbox/input
-	bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+'	>& /dev/null
+	bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+' >& /dev/null
 	[ -e sandbox/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 	
 	popd >& /dev/null
 	rm -rf ${hadoop_install_dir}/sandbox
+}
+
+hadoop_temp_local_ssh () {
+	# Setup a local ssh: this functionality is duplicated elsewhere in esg-node
+	# installer but is needed temporarily for hadoop pseudo-distribution
+	if [ ! -e ~/.ssh/id_dsa ]; then
+		ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa
+		cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+	fi
+}
+
+test_hadoop_pseudo_distributed() {
+	
+	# Generate temporary ssh keys
+	hadoop_temp_local_ssh
+
+	echo -n "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
+    if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
+		${hadoop_install_dir}/bin/hadoop namenode -format
+		${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed
+		# bin/hadoop fs -put conf input
+		# bin/hadoop jar hadoop-*-examples.jar grep input output 'dfs[a-z.]+' 
+		# bin/hadoop fs cat output/*
+		${hadoop_install_dir}/bin/stop-all.sh
+    else
+		echo
+        echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
+    fi
 }
 
 clean_hadoop() {
@@ -818,8 +915,10 @@ setup_compute_tools() {
 	setup_zookeeper
 	setup_spark
 
-	test_compute_tools
+	write_env_hadoop
+
 	config_compute_tools
+	test_compute_tools
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

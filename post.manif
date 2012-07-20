@@ -15,6 +15,7 @@
 ./quo_vadis
 
 ./esg-node
+./esg-functions
 ./esg-node.completion
 ./esg-bootstrap
 ./esg-autoinstall-testnode
@@ -23,6 +24,9 @@
 
 [esgf-product-server]
 ./product-server/esg-product-server
+
+[esgf-compute-tools]
+./compute-tools/esg-compute-tools
 
 [externals/bootstrap]
 ./globus/esg-globus

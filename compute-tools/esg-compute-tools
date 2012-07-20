@@ -234,7 +234,7 @@ clean_mesos() {
         	rm -rf ${mesos_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${mesos_install_dir}"
             remove_env MESOS_HOME
-            #remove_install_log_entry mesos
+            remove_install_log_entry mesos
         fi  
     fi  
 }
@@ -292,7 +292,8 @@ write_spark_install_log_entry() {
 config_spark() {	
 	doconfig="N" 
     if [ -e ${spark_install_dir} ]; then
-        read -e -p "Configure Spark Installation? [y/N]: " doconfig
+        echo
+		read -e -p "Configure Spark Installation? [y/N]: " doconfig
         
 		# Configure Spark environment, deployment, local/Mesos
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
@@ -327,7 +328,7 @@ clean_spark() {
         	rm -rf ${spark_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${spark_install_dir}"
             remove_env SPARK_HOME
-            #remove_install_log_entry spark
+            remove_install_log_entry spark
         fi  
     fi  
 }
@@ -420,47 +421,33 @@ config_hadoop() {
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
         	echo "Configuring Hadoop..."
-			
+		
+			# This configures both stand-alone and pseudo-distributed configuration files	
 			pseudo_distributed_config_setup
 
-			echo "Configuring Hadoop distribution mode for this node..."
-			
-            # TODO: Stand-alone operation doesn't really require configuration,
+			echo "Configure default Hadoop distribution mode for this node:"
+            # Stand-alone operation doesn't really require configuration,
             # as Hadoop just runs as a .jar file. Some examples may require an 
             # input and output directory, but it is probably overkill to configure 
             # that here. Configuring Hadoop to run local should be enough.
-            echo "[1] Stand-alone operation configuration complete."
-			
-			
-				
-			echo "[2] Pseudo-distributed operation on local"
-
-			read -e -p "(Default: Stand-Alone Operation [1]): " distribution_mode
+            echo "[1] Stand-alone operation (good for debugging)"
+			echo "[2] Pseudo-distributed operation on local node"
+			read -e -p "(Default: Stand-Alone Operation [2]): " distribution_mode
 
 			# Pseudo-Distributed Local Operation
             if [ "$distribution_mode" = "2" ]; then
 				# To learn more about Pseudo-Distributed operation or to fine-tune your configuration,
 				# check out the Hadoop documentation here: 
                 # http://hadoop.apache.org/common/docs/r0.20.2/quickstart.html#PseudoDistributed	
-                echo "Hadoop: Configuring Pseudo-Distributed operation"
 			
-           		    	 	
-
-				# TODO: Call pseudo-distributed operation test here
+				# TODO: Write configuration to hadoop-config in esg-env here...
 				echo "Hadoop: Psuedo-Distributed operation is now default for this node."
             
 			# Standalone Local Operation
 			else
-
-				# TODO: Stand-alone operation doesn't really require configuration,
-				# as Hadoop just runs as a .jar file. Some examples may require an 
-				# input and output directory, but it is probably overkill to configure 
-				# that here. Configuring Hadoop to run local should be enough.
-							
-                # TODO: Maybe call stand-alone Hadoop test method here to ensure properly working config.
+                
+				# TODO: Set standalone as default mode in ESG configuration for hadoop
                 echo "Hadoop: Stand-Alone Hadoop Operation is now default for this node."
-				
-				# TODO: Need to reconfigure to stand-alone if previous default was pseudo-distributed
             fi	
 		
 		# Inform user of skipped configuration step
@@ -468,6 +455,17 @@ config_hadoop() {
 			echo "Skipping Hadoop Configuration..."
 		fi
 	fi  
+}
+
+start_hadoop_local_distributed() {
+    # TODO Start Hadoop with configuration files from ESG configuration directory
+    echo "Hadoop: Starting hadoop in local distributed mode..."
+    ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+}
+	
+stop_hadoop_local_distributed() {
+	echo "Hadoop: Shutting down namenode and jobtracker..."
+    ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null	
 }
 
 pseudo_distributed_config_setup() {
@@ -516,12 +514,6 @@ pseudo_distributed_config_setup() {
     </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/mapred-site.xml
 }
 
-run_hadoop() {
-	# TODO: How this is implemented will depend on how we decide to switch between
-	# single stand-alone, locally distributed, and fully distributed modes...	
-	echo
-}
-
 test_hadoop() {
     # Hadoop Test - Local (Standalone) Mode
     test_hadoop_standalone
@@ -561,19 +553,23 @@ test_hadoop_pseudo_distributed() {
 	# Generate temporary ssh keys
 	hadoop_temp_local_ssh
 
-	echo -n "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
+	echo "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
     if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
 		#${hadoop_install_dir}/bin/hadoop namenode -format
-		${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+		start_hadoop_local_distributed
+
 		${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
 		${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
 		# Fix hard-coding yo...
 		${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
+		echo -n "Testing Hadoop - Pseudo-Distributed Mode...   "
 		[ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
 		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
-		${hadoop_install_dir}/bin/stop-all.sh >& /dev/null
-    else
+    
+		stop_hadoop_local_distributed
+
+	else
 		echo
         echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
     fi
@@ -588,7 +584,7 @@ clean_hadoop() {
         	rm -rf ${hadoop_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
             remove_env HADOOP_HOME
-            #remove_install_log_entry hadoop
+            remove_install_log_entry hadoop
         fi  
     fi  
 }
@@ -660,7 +656,8 @@ write_zookeeper_install_log_entry() {
 config_zookeeper() {
 	doconfig="N" 
     if [ -e ${zookeeper_install_dir} ]; then
-        read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
+        echo
+		read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
@@ -696,7 +693,7 @@ clean_zookeeper() {
         	rm -rf ${zookeeper_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${zookeeper_install_dir}"
             remove_env ZOOKEEPER_HOME
-            #remove_install_log_entry hadoop
+            remove_install_log_entry zookeeper
         fi  
     fi  
 }

@@ -153,7 +153,6 @@ setup_mesos() {
 		if [ ! -e ${mesos_install_dir}/configure ]; then
 			(cd ${mesos_install_dir} && ./bootstrap)
 		fi
-		# TODO Maybe rebuild Mesos method would be useful
 
 		local mesos_current_version=`${mesos_install_dir}/configure -version | head -1 | awk '{print $3}'`
 		check_version_helper $mesos_current_version ${mesos_min_version} 
@@ -172,15 +171,10 @@ setup_mesos() {
 	# Retrieve Mesos Source and build after configuration for ESGF tools
 	# Uses: Hadoop, Zookeeper, Java, Python
 	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	pushd ${mesos_install_dir} >& /dev/null
-	./bootstrap
-	./configure --with-zookeeper=${zookeeper_install_dir}
-	make
-	make install
-	popd >& /dev/null
+	(cd ${mesos_install_dir} && ./bootstrap && ./configure && make)
+	# TODO let's make this config tastier...
 
 	# TODO make check hangs on zookeeper install
-	# TODO Check download errors (git failure)
 	# Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
 	# TODO Mesos /usr/local configuration
 	# TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
@@ -188,10 +182,6 @@ setup_mesos() {
 	# Add Mesos home to environment and install manifest
 	write_env_mesos
 	write_mesos_install_log_entry
-}
-
-reinstall_mesos () {
-	echo
 }
 
 write_env_mesos() {
@@ -763,6 +753,7 @@ setup_compute_tools() {
 	
 	setup_hadoop
 	setup_zookeeper
+	setup_mesos
 	setup_spark
 
 	config_compute_tools

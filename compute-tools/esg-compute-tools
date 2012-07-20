@@ -96,6 +96,7 @@ envfile="/etc/esg.env"
 esg_functions_file=./esgf-functions
 esg_compute_languages_file=./esg-compute-languages
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
+# esg_config_dir, create directory called esg_config_compute in esg_config_dir
 
 #--------------------------------
 # External programs' versions
@@ -432,8 +433,10 @@ config_hadoop() {
 			
 				
 			echo "[2] Pseudo-distributed operation on local"
+
 			read -e -p "(Default: Stand-Alone Operation [1]): " distribution_mode
 
+			# Pseudo-Distributed Local Operation
             if [ "$distribution_mode" = "2" ]; then
 				# To learn more about Pseudo-Distributed operation or to fine-tune your configuration,
 				# check out the Hadoop documentation here: 
@@ -445,6 +448,7 @@ config_hadoop() {
 				# TODO: Call pseudo-distributed operation test here
 				echo "Hadoop: Psuedo-Distributed operation is now default for this node."
             
+			# Standalone Local Operation
 			else
 
 				# TODO: Stand-alone operation doesn't really require configuration,
@@ -916,12 +920,11 @@ setup_compute_tools() {
 	# Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 	
 	setup_hadoop
-	#setup_zookeeper
-	#setup_spark
-	config_hadoop
-	test_hadoop
-	#config_compute_tools
-	#test_compute_tools
+	setup_zookeeper
+	setup_spark
+
+	config_compute_tools
+	test_compute_tools
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

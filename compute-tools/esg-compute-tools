@@ -93,7 +93,7 @@ java_placeholder="$install_prefix/java"
 java_install_path_config_param="--with-java-home=$java_placeholder/bin/java"
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
 envfile="/etc/esg.env"
-esg_functions_file=./esgf-functions
+esg_functions_file=./esg-functions
 esg_compute_languages_file=./esg-compute-languages
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 # esg_config_dir, create directory called esg_config_compute in esg_config_dir
@@ -137,7 +137,8 @@ zookeeper_workdir=${workdir}/zookeeper
 date_format="+%Y_%m_%d_%H%M%S"
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
-[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n" || \
+    (echo "ERROR: Cannot locate functions file ${esg_functions_file}" && exit 1)
 
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)

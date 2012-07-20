@@ -105,10 +105,13 @@ esg_functions_file=./esg-functions
 #--------------
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
-[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
 init() {
     debug_print "esg-node initilizing..."
+    if [ ! -e ${esg_functions_file} ]; then
+        checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/${esg_functions_file} $((force_install))
+    fi
+    [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
     if [ -e /etc/esg.install_log ] && [ ! -e "${install_manifest}" ]; then
         echo "migrating install manifest to new location"
@@ -5396,16 +5399,6 @@ _readlinkf() {
     CURRENT_DIR=`pwd -P`
     echo "${CURRENT_DIR}/${FILE}"
     cd $START_DIR
-}
-
-_trimline() {
-    # Strips leading and trailing whitespace even if IFS is set, also
-    # removing the final newline on every line of input (i.e. the
-    # result of using this on a multi-line string will be a
-    # single-line string with no space between the last word on one
-    # line and the first word on the next, with no leading or trailing
-    # whitespace)
-    echo "$@" | perl -p -e 's/^\s+|\s+$//g';
 }
 
 _verify() {

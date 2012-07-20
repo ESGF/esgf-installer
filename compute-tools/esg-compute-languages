@@ -83,7 +83,7 @@ VERBOSE=${VERBOSE:-0}
 devel=${devel:-0}
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar|.zip"
 envfile="/etc/esg.env"
-esg_functions_file=./esgf-functions
+esg_functions_file=./esg-functions
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 
 #--------------------------------
@@ -110,7 +110,8 @@ date_format="+%Y_%m_%d_%H%M%S"
 
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
-[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n" || \
+    (echo "ERROR: Cannot locate functions file ${esg_functions_file}" && exit 1)
 
 #####
 # Clojure (a powerful dialect of Lisp that supports multicore computing on the JVM and a number
@@ -260,7 +261,7 @@ setup_scala() {
 
 write_scala_env() {
 	echo "export SCALA_HOME=${scala_install_dir}" >> ${envfile}
-	# TODO Add prefix_to_path to esgf-functions
+	# TODO Add prefix_to_path to esg-functions
 	# prefix_to_path PATH ${scala_install_dir}/bin >> ${envfile}
 	dedup ${envfile} && source ${envfile}
 	return 0

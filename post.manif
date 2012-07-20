@@ -15,6 +15,7 @@
 ./quo_vadis
 
 ./esg-node
+./esg-functions
 ./esg-node.completion
 ./esg-bootstrap
 ./esg-autoinstall-testnode

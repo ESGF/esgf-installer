@@ -82,7 +82,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v0.0.0"
+script_version="v0.0.0-devel"
 script_release="Flatbush"
 envfile="/etc/esg.env"
 
@@ -109,7 +109,8 @@ esg_functions_file=./esg-functions
 init() {
     debug_print "esg-node initilizing..."
     if [ ! -e ${esg_functions_file} ]; then
-        checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/${esg_functions_file} $((force_install))
+        checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/${esg_functions_file##*/} $((force_install))
+	(( $(stat -c%s ${esg_functions_file}) == 0 )) && rm ${esg_functions_file}
     fi
     [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 

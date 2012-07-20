@@ -145,7 +145,6 @@ date_format="+%Y_%m_%d_%H%M%S"
 #####
 setup_mesos() {
 	# Checking Mesos Version
-	echo
 	echo -n "Checking for Mesos >= ${mesos_min_version}"
 	if [ -e ${mesos_install_dir} ]; then
 		
@@ -236,7 +235,6 @@ clean_mesos() {
 
 setup_spark() {
 	# Checking for Spark Version
-	echo
 	echo -n "Checking for Spark >= ${spark_min_version}"
 	if [ -e ${spark_install_dir} ]; then
 		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
@@ -282,7 +280,6 @@ write_spark_install_log_entry() {
 config_spark() {	
 	doconfig="N" 
     if [ -e ${spark_install_dir} ]; then
-        echo
 		read -e -p "Configure Spark Installation? [y/N]: " doconfig
         
 		# Configure Spark environment, deployment, local/Mesos
@@ -303,10 +300,6 @@ test_spark() {
 	echo -n "Testing Spark - Local...   "
 	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
 	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-}
-
-run_spark() {
-	echo
 }
 
 clean_spark() {
@@ -585,7 +578,6 @@ clean_hadoop() {
 
 setup_zookeeper() {
 	# Check ZooKeeper Version
-	echo
 	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
 	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then	
 	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
@@ -598,7 +590,7 @@ setup_zookeeper() {
 
     echo
     echo "*****************************"
-    echo "Setting up Zookeeper ${hadoop_version}"
+    echo "Setting up Zookeeper ${zookeeper_version}"
     echo "*****************************"
     echo
 
@@ -646,7 +638,6 @@ write_zookeeper_install_log_entry() {
 config_zookeeper() {
 	doconfig="N" 
     if [ -e ${zookeeper_install_dir} ]; then
-        echo
 		read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
 		# Configure Hadoop modes, HDFS, configuration
@@ -719,6 +710,7 @@ test_compute_tools() {
 	test_zookeeper
 
 	# Test Mesos Local placeholder
+	# test_mesos
 
 	# Test Spark Local
 	test_spark
@@ -735,29 +727,58 @@ config_compute_tools() {
 
 	config_hadoop
 	config_zookeeper
+	#config_mesos
 	config_spark
 }
 
 setup_compute_tools() {
 	echo
 	echo "-------------------------------------------------------------"
-	echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Spark}"
+	echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Mesos, Spark}"
 	echo "-------------------------------------------------------------"
-	echo
 
 	# The optimal install order, as below, depends on the following:
 	# 1. Hadoop
 	# 2. Zookeeper
-	# 3. Spark (Requires Mesos for distributed computation)
+	# 3. Mesos
+	# 4. Spark (Requires Mesos for distributed computation)
 	# Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
-	
-	setup_hadoop
-	setup_zookeeper
-	setup_mesos
-	setup_spark
 
-	config_compute_tools
-	test_compute_tools
+	echo
+	echo "---------------------------------"
+	echo " Installing Hadoop"
+	echo "---------------------------------"
+	echo
+	setup_hadoop
+	config_hadoop	
+	test_hadoop
+
+	echo
+	echo "---------------------------------"
+	echo " Installing Zookeeper"
+	echo "---------------------------------"
+	echo
+	setup_zookeeper
+	config_zookeeper
+	test_zookeeper
+
+	echo
+	echo "---------------------------------"
+	echo " Installing Mesos"
+	echo "---------------------------------"
+	echo
+	setup_mesos
+	#config_mesos
+	#test_mesos
+
+	echo
+	echo "---------------------------------"
+	echo " Installing Spark"
+	echo "---------------------------------"
+	echo
+	setup_spark
+	config_spark
+	test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

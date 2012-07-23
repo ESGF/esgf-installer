@@ -145,7 +145,6 @@ date_format="+%Y_%m_%d_%H%M%S"
 #####
 setup_mesos() {
 	# Checking Mesos Version
-	echo
 	echo -n "Checking for Mesos >= ${mesos_min_version}"
 	if [ -e ${mesos_install_dir} ]; then
 		
@@ -153,7 +152,6 @@ setup_mesos() {
 		if [ ! -e ${mesos_install_dir}/configure ]; then
 			(cd ${mesos_install_dir} && ./bootstrap)
 		fi
-		# TODO Maybe rebuild Mesos method would be useful
 
 		local mesos_current_version=`${mesos_install_dir}/configure -version | head -1 | awk '{print $3}'`
 		check_version_helper $mesos_current_version ${mesos_min_version} 
@@ -172,15 +170,10 @@ setup_mesos() {
 	# Retrieve Mesos Source and build after configuration for ESGF tools
 	# Uses: Hadoop, Zookeeper, Java, Python
 	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	pushd ${mesos_install_dir} >& /dev/null
-	./bootstrap
-	./configure --with-zookeeper=${zookeeper_install_dir}
-	make
-	make install
-	popd >& /dev/null
+	(cd ${mesos_install_dir} && ./bootstrap && ./configure && make)
+	# TODO let's make this config tastier...
 
 	# TODO make check hangs on zookeeper install
-	# TODO Check download errors (git failure)
 	# Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
 	# TODO Mesos /usr/local configuration
 	# TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
@@ -188,10 +181,6 @@ setup_mesos() {
 	# Add Mesos home to environment and install manifest
 	write_env_mesos
 	write_mesos_install_log_entry
-}
-
-reinstall_mesos () {
-	echo
 }
 
 write_env_mesos() {
@@ -234,7 +223,7 @@ clean_mesos() {
         	rm -rf ${mesos_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${mesos_install_dir}"
             remove_env MESOS_HOME
-            #remove_install_log_entry mesos
+            remove_install_log_entry mesos
         fi  
     fi  
 }
@@ -246,7 +235,6 @@ clean_mesos() {
 
 setup_spark() {
 	# Checking for Spark Version
-	echo
 	echo -n "Checking for Spark >= ${spark_min_version}"
 	if [ -e ${spark_install_dir} ]; then
 		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
@@ -292,7 +280,7 @@ write_spark_install_log_entry() {
 config_spark() {	
 	doconfig="N" 
     if [ -e ${spark_install_dir} ]; then
-        read -e -p "Configure Spark Installation? [y/N]: " doconfig
+		read -e -p "Configure Spark Installation? [y/N]: " doconfig
         
 		# Configure Spark environment, deployment, local/Mesos
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
@@ -314,10 +302,6 @@ test_spark() {
 	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 }
 
-run_spark() {
-	echo
-}
-
 clean_spark() {
 	doit="N"
     if [ -e ${spark_install_dir} ]; then
@@ -327,7 +311,7 @@ clean_spark() {
         	rm -rf ${spark_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${spark_install_dir}"
             remove_env SPARK_HOME
-            #remove_install_log_entry spark
+            remove_install_log_entry spark
         fi  
     fi  
 }
@@ -420,47 +404,33 @@ config_hadoop() {
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
         	echo "Configuring Hadoop..."
-			
+		
+			# This configures both stand-alone and pseudo-distributed configuration files	
 			pseudo_distributed_config_setup
 
-			echo "Configuring Hadoop distribution mode for this node..."
-			
-            # TODO: Stand-alone operation doesn't really require configuration,
+			echo "Configure default Hadoop distribution mode for this node:"
+            # Stand-alone operation doesn't really require configuration,
             # as Hadoop just runs as a .jar file. Some examples may require an 
             # input and output directory, but it is probably overkill to configure 
             # that here. Configuring Hadoop to run local should be enough.
-            echo "[1] Stand-alone operation configuration complete."
-			
-			
-				
-			echo "[2] Pseudo-distributed operation on local"
-
-			read -e -p "(Default: Stand-Alone Operation [1]): " distribution_mode
+            echo "[1] Stand-alone operation (good for debugging)"
+			echo "[2] Pseudo-distributed operation on local node"
+			read -e -p "(Default: Stand-Alone Operation [2]): " distribution_mode
 
 			# Pseudo-Distributed Local Operation
             if [ "$distribution_mode" = "2" ]; then
 				# To learn more about Pseudo-Distributed operation or to fine-tune your configuration,
 				# check out the Hadoop documentation here: 
                 # http://hadoop.apache.org/common/docs/r0.20.2/quickstart.html#PseudoDistributed	
-                echo "Hadoop: Configuring Pseudo-Distributed operation"
 			
-           		    	 	
-
-				# TODO: Call pseudo-distributed operation test here
+				# TODO: Write configuration to hadoop-config in esg-env here...
 				echo "Hadoop: Psuedo-Distributed operation is now default for this node."
             
 			# Standalone Local Operation
 			else
-
-				# TODO: Stand-alone operation doesn't really require configuration,
-				# as Hadoop just runs as a .jar file. Some examples may require an 
-				# input and output directory, but it is probably overkill to configure 
-				# that here. Configuring Hadoop to run local should be enough.
-							
-                # TODO: Maybe call stand-alone Hadoop test method here to ensure properly working config.
+                
+				# TODO: Set standalone as default mode in ESG configuration for hadoop
                 echo "Hadoop: Stand-Alone Hadoop Operation is now default for this node."
-				
-				# TODO: Need to reconfigure to stand-alone if previous default was pseudo-distributed
             fi	
 		
 		# Inform user of skipped configuration step
@@ -468,6 +438,17 @@ config_hadoop() {
 			echo "Skipping Hadoop Configuration..."
 		fi
 	fi  
+}
+
+start_hadoop_local_distributed() {
+    # TODO Start Hadoop with configuration files from ESG configuration directory
+    echo "Hadoop: Starting hadoop in local distributed mode..."
+    ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+}
+	
+stop_hadoop_local_distributed() {
+	echo "Hadoop: Shutting down namenode and jobtracker..."
+    ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null	
 }
 
 pseudo_distributed_config_setup() {
@@ -516,12 +497,6 @@ pseudo_distributed_config_setup() {
     </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/mapred-site.xml
 }
 
-run_hadoop() {
-	# TODO: How this is implemented will depend on how we decide to switch between
-	# single stand-alone, locally distributed, and fully distributed modes...	
-	echo
-}
-
 test_hadoop() {
     # Hadoop Test - Local (Standalone) Mode
     test_hadoop_standalone
@@ -561,19 +536,23 @@ test_hadoop_pseudo_distributed() {
 	# Generate temporary ssh keys
 	hadoop_temp_local_ssh
 
-	echo -n "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
+	echo "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
     if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
 		#${hadoop_install_dir}/bin/hadoop namenode -format
-		${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+		start_hadoop_local_distributed
+
 		${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
 		${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
 		# Fix hard-coding yo...
 		${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
+		echo -n "Testing Hadoop - Pseudo-Distributed Mode...   "
 		[ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
 		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
-		${hadoop_install_dir}/bin/stop-all.sh >& /dev/null
-    else
+    
+		stop_hadoop_local_distributed
+
+	else
 		echo
         echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
     fi
@@ -588,7 +567,7 @@ clean_hadoop() {
         	rm -rf ${hadoop_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
             remove_env HADOOP_HOME
-            #remove_install_log_entry hadoop
+            remove_install_log_entry hadoop
         fi  
     fi  
 }
@@ -599,7 +578,6 @@ clean_hadoop() {
 
 setup_zookeeper() {
 	# Check ZooKeeper Version
-	echo
 	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
 	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then	
 	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
@@ -612,7 +590,7 @@ setup_zookeeper() {
 
     echo
     echo "*****************************"
-    echo "Setting up Zookeeper ${hadoop_version}"
+    echo "Setting up Zookeeper ${zookeeper_version}"
     echo "*****************************"
     echo
 
@@ -660,7 +638,7 @@ write_zookeeper_install_log_entry() {
 config_zookeeper() {
 	doconfig="N" 
     if [ -e ${zookeeper_install_dir} ]; then
-        read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
+		read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
@@ -696,166 +674,10 @@ clean_zookeeper() {
         	rm -rf ${zookeeper_install_dir}
         	[ $? != 0 ] && echo "ERROR: Unable to remove ${zookeeper_install_dir}"
             remove_env ZOOKEEPER_HOME
-            #remove_install_log_entry hadoop
+            remove_install_log_entry zookeeper
         fi  
     fi  
 }
-
-: << '--COMMENT--'
-zookeeper_workdir=${workdir}/zookeeper
-zookeeper_data_dir=${esg_root_dir}/zookeeper
-
-setup_zookeeper() {
-    
-	mkdir -p ${zookeeper_workdir}
-    pushd ${zookeeper_workdir} >& /dev/null
-
-    local zookeeper_dist_file=${zookeeper_dist_url##*/}
-    local zookeeper_dist_dir=$(echo ${zookeeper_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    #There is this pesky case of having a zero sized dist file... WTF!?
-    if [ -e ${zookeeper_dist_file} ]; then
-        ls -l ${zookeeper_dist_file}
-        local size=$(stat -c%s ${zookeeper_dist_file})
-        (( size == 0 )) && rm -v ${zookeeper_dist_file}
-    fi
-
-    #Check to see if we already have a zookeeper distribution directory
-    if [ ! -e ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ]; then
-        echo "Don't see zookeeper distribution dir ${zookeeper_install_dir%/*}/${zookeeper_dist_dir}"
-        if [ ! -e ${zookeeper_dist_file} ]; then
-            echo "Don't see zookeeper distribution file $(pwd)/${zookeeper_dist_file} either"
-            echo "Downloading zookeeper from ${zookeeper_dist_url}"
-            #NOTE: this should be a checked_get call!
-            #When I do the refactoring of some of the functions, then I can source that functions file and use checked_get.
-            #For now just fetch it.
-            wget -O ${zookeeper_dist_file} ${zookeeper_dist_url}
-            [ $? != 0 ] && echo " ERROR: Could not download zookeeper ${zookeeper_dist_file}" && popd && checked_done 1
-            echo "unpacking ${zookeeper_dist_file}... into ${zookeeper_install_dir%/*}"
-            tar xzf ${zookeeper_dist_file} -C ${zookeeper_install_dir%/*}
-            [ $? != 0 ] && echo " ERROR: Could not extract zookeeper :-( " && popd && checked_done 1
-        fi
-    fi
-    
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it and go from there....
-    if [ -e ${zookeeper_dist_file} ] && [ ! -e ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ]; then
-        echo "unpacking* ${zookeeper_dist_file} into ${zookeeper_install_dir%/*}"
-        tar xzf ${zookeeper_dist_file} -C ${zookeeper_install_dir%/*}
-        [ $? != 0 ] && echo " ERROR: Could not extract zookeeper :-( " && popd && checked_done 1
-    fi
-
-    if [ ! -e ${zookeeper_install_dir} ]; then
-        ln -s ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ${zookeeper_install_dir}
-        [ $? != 0 ] && \
-            echo " ERROR: Could not create sym link ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} -> ${zookeeper_install_dir}" && popd && checked_done 1
-    else
-        unlink ${zookeeper_install_dir}
-        [ $? != 0 ] && mv ${zookeeper_install_dir} ${zookeeper_install_dir}.$(date ${date_format}).bak
-        
-        ln -s ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} ${zookeeper_install_dir}
-        [ $? != 0 ] && \
-            echo " ERROR*: Could not create sym link ${zookeeper_install_dir%/*}/${zookeeper_dist_dir} -> ${zookeeper_install_dir}" && popd && checked_done 1
-    fi
-    (($DEBUG)) && echo "chown -R ${installer_uid}:${installer_gid} ${zookeeper_install_dir}"
-    chown    ${installer_uid}:${installer_gid} ${zookeeper_install_dir}
-    chown -R ${installer_uid}:${installer_gid} $(readlink -f ${zookeeper_install_dir})
-    
-    popd >& /dev/null
-    echo "zookeeper setup [OK]"
-    return 0
-}
-
-configure_zookeeper() {
-    echo -n "Configuring zookeeper... $@"
-    pushd ${zookeeper_install_dir} >& /dev/null
-    [ $? != 0 ] && echo " ERROR: Unable to peform configuration: no such dir ${zookeeper_install_dir}" && checked_done 1
-
-    #new hotness....
-    local config_file="${zookeeper_install_dir}/conf/zoo.cfg"
-    local config_info=""
-    local key="${1:-dataDir}"
-    local value="${2:-${zookeeper_data_dir}}"
-
-    #Look for the local config file first.  If it is there and the key is present then do a local replacement of the value with ${zookeeper_data_dir}
-    #If the file is not there OR this particular key is not present, pull the distribution config file down and to the replacement based on that content.
-
-    if [ -f "${config_file}" ] && (grep "${key}" "${config_file}" >& /dev/null) && (( ! $force_install )); then
-        config_info=$(cat "${config_file}")
-    else 
-        echo "fetching base config file ${config_file##*/} from distribution server..."
-        config_info=$(curl -s -L --insecure ${esg_dist_url}/esg-search/zookeeper/${config_file##*/})
-        (($force_install)) && cp ${config_file} ${config_file}.last
-    fi
-    
-    (($DEBUG)) && echo "(pre) Configuration Infos:" && echo "${config_info}"
-
-    #Now, do the value replacement based on matching against the KEY not the VALUE! (more flexible and robust)
-    sed 's#\('${key}'=\)\(.*\)#\1'${value}'#g'  <(echo "${config_info}") >> ${config_file}
-
-    #dedup the configuration file
-    local tmp=$(tac ${config_file} | awk 'BEGIN {FS="="} !($1 in a) {a[$1];print $0}' | sort -k1,1)
-    echo "$tmp" > ${config_file}
-
-    
-    (($DEBUG)) && echo "(post) Configuration Info:" && cat ${config_file}
-    #-------------
-
-    #Set this node's zookeeper ID
-    mkdir -p ${zookeeper_data_dir}
-    get_node_id > ${zookeeper_data_dir}/myid
-    chown    ${installer_uid}:${installer_gid} ${zookeeper_data_dir}
-    chown -R ${installer_uid}:${installer_gid} $(readlink -f ${zookeeper_data_dir})
-    echo -n "zookeeper id: $(cat ${zookeeper_data_dir}/myid)"
-    popd >& /dev/null
-    echo " [OK]"
-    return 0
-}
-
-start_zookeeper() {
-
-    check_zookeeper_process && return 1
-    echo "Starting zookeeper server on port ${zookeeper_client_port}"
-
-    ${zookeeper_install_dir}/bin/zkServer.sh start
-
-    #-----
-    #NOTE: (potential timing issue)
-    #Luca: the wait is because Solr, on startup, needs to send information to Zookeeper
-    #  not sure if it is enough to wait for the client port to be accessible, we'll test
-    #-----
-
-    #Don't wait 10 seconds if you don't have to...
-    #just check every second up till 10 seconds (or <= 10x)
-    local wait_time=10
-    local ret=1
-    while [[ $wait_time > 0 ]]; do
-        netstat -na | grep -i ${zookeeper_client_port}
-        ret=$?
-        [ $ret == 0 ] && break
-        sleep 1
-        ((wait_time--))
-        echo -n "."
-    done
-    [ $ret == 0 ] && echo " [OK]" || echo " [FAIL]"
-    return $ret
-}
-
-stop_zookeeper() {
-    echo "Stopping zookeeper..."
-    ${zookeeper_install_dir}/bin/zkServer.sh stop
-    local ret=$?
-    [ ${ret} == 0 ] && echo " [OK]" || echo " [FAIL]"
-    return ${ret}
-}
-
-#status
-check_zookeeper_process() {
-    local pid=`lsof -i:${zookeeper_client_port} | grep -i java | awk '{print $2}'`
-    [ -n "$pid" ] && echo " Zookeeper process running on port [${zookeeper_client_port}]... " && return 0
-}
-
---COMMENT--
 
 #####
 # Core Methods
@@ -888,6 +710,7 @@ test_compute_tools() {
 	test_zookeeper
 
 	# Test Mesos Local placeholder
+	# test_mesos
 
 	# Test Spark Local
 	test_spark
@@ -904,28 +727,58 @@ config_compute_tools() {
 
 	config_hadoop
 	config_zookeeper
+	#config_mesos
 	config_spark
 }
 
 setup_compute_tools() {
 	echo
 	echo "-------------------------------------------------------------"
-	echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Spark}"
+	echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Mesos, Spark}"
 	echo "-------------------------------------------------------------"
-	echo
 
 	# The optimal install order, as below, depends on the following:
 	# 1. Hadoop
 	# 2. Zookeeper
-	# 3. Spark (Requires Mesos for distributed computation)
+	# 3. Mesos
+	# 4. Spark (Requires Mesos for distributed computation)
 	# Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
-	
-	setup_hadoop
-	setup_zookeeper
-	setup_spark
 
-	config_compute_tools
-	test_compute_tools
+	echo
+	echo "---------------------------------"
+	echo " Installing Hadoop"
+	echo "---------------------------------"
+	echo
+	setup_hadoop
+	config_hadoop	
+	test_hadoop
+
+	echo
+	echo "---------------------------------"
+	echo " Installing Zookeeper"
+	echo "---------------------------------"
+	echo
+	setup_zookeeper
+	config_zookeeper
+	test_zookeeper
+
+	echo
+	echo "---------------------------------"
+	echo " Installing Mesos"
+	echo "---------------------------------"
+	echo
+	setup_mesos
+	#config_mesos
+	#test_mesos
+
+	echo
+	echo "---------------------------------"
+	echo " Installing Spark"
+	echo "---------------------------------"
+	echo
+	setup_spark
+	config_spark
+	test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

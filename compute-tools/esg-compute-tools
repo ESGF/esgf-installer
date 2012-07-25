@@ -115,6 +115,7 @@ hadoop_max_version=${hadoop_max_version:="1.0.4"}
 #--------------------------------
 mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
+mesos_build_dir=${MESOS_BUILD_HOME:-${install_prefx}/mesos} # TODO /mesos/build...
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
@@ -141,6 +142,8 @@ date_format="+%Y_%m_%d_%H%M%S"
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
 setup_mesos() {
+	# TODO Build mesos in build directory on install tree
+
 	# Checking Mesos Version
 	echo
     echo -n "Checking for Mesos >= ${mesos_min_version}"
@@ -195,7 +198,18 @@ write_mesos_install_log_entry() {
 }
 
 config_mesos() {
-    echo
+    # The most efficient way to start and stop mesos is with built-in deploy scripts, which
+	# require some configuration.
+	# [TODO] 
+	# 	List of Mesos hosts and slaves
+	# 
+	# [TODO] 
+	#   LIBPROCESS_IP in MESOS_HOME/deploy/mesos-env.sh
+	#
+	# [TODO] Zookeeper URL Configuration for Mesos master running
+	#   Required for fault tolerance mode
+
+	echo	
 }
 
 test_mesos() {
@@ -210,8 +224,24 @@ test_mesos() {
 
 }
 
-run_mesos() {
-	echo
+run_mesos_start_master() {
+	# TODO Start with Zookeeper URL, ESGF IP address
+	${mesos_build_dir}/bin/mesos-master.sh	
+}
+
+run_mesos_stop_master() {
+	pkill mesos-master
+}
+
+run_mesos_stop_slave() {
+	pkill mesos-slave
+}
+
+run_mesos_start_slave() {
+	# TODO Run with ESGF Ip address for mesos master url
+	# TODO figure out correct memory resources
+	local $mesos_master_url=$(get_config_ip eth0)
+	${mesos_build_dir}/bin/mesos-slave.sh "--master=$mesos_master_url:5050" "\"--resources=cpus:2;mem:1024\""
 }
 
 clean_mesos() {
@@ -712,16 +742,9 @@ test_compute_tools() {
 	echo "---------------------------------"
 	echo
 
-	# Test Hadoop Single-node
 	test_hadoop
-
-	# Test Zookeeper Local
 	test_zookeeper
-
-	# Test Mesos Local placeholder
-	# test_mesos
-
-	# Test Spark Local
+	test_mesos
 	test_spark
 }
 
@@ -736,7 +759,7 @@ config_compute_tools() {
 
 	config_hadoop
 	config_zookeeper
-	#config_mesos
+	config_mesos
 	config_spark
 }
 
@@ -774,7 +797,7 @@ setup_compute_tools() {
 	echo " Installing Mesos"
 	echo "---------------------------------"
 	setup_mesos
-	#config_mesos
+	config_mesos
 	test_mesos
 
 	echo

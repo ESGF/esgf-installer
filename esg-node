@@ -7159,6 +7159,21 @@ main() {
 		    ((DEBUG))&& echo "parsed from commandline - index_config is [${index_config}]"
 		    unset tmpargs
 		    ;;
+                --check-shards)
+                    shift
+                    [ -e source ${scripts_dir}/esg-search ] && (source ${scripts_dir}/esg-search >& /dev/null && check_shards $@) || echo "flag not supported"
+                    exit $?
+                    ;;
+                --add-replica-shard) #expecting <hostname>:<solr port> | master | slave
+                    shift
+                    [ -e source ${scripts_dir}/esg-search ] && (source ${scripts_dir}/esg-search >& /dev/null && add_shard $@) || echo "flag not supported"
+                    exit $?
+                    ;;
+                --remove-replica-shard)
+                    shift
+                    [ -e source ${scripts_dir}/esg-search ] && (source ${scripts_dir}/esg-search >& /dev/null && remove_shard $@) || echo "flag not supported"
+                    exit $?
+                    ;;
 		--myproxy)
 		    (( (sel & IDP_BIT) == 0 )) && echo "Sorry, the --myproxy flag may only be used for \"idp\" type commands" && exit 1
 		#acceptable args:  [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]

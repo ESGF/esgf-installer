@@ -79,8 +79,6 @@
 # uses: git, tar, wget
 #####
 
-# TODO When missing variables, add them as "use defaults" below --v
-
 #--------------
 # User Defined / Settable (public)
 #--------------
@@ -137,15 +135,15 @@ zookeeper_workdir=${workdir}/zookeeper
 date_format="+%Y_%m_%d_%H%M%S"
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
-[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n" || \
-    (echo "ERROR: Cannot locate functions file ${esg_functions_file}" && exit 1)
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
 setup_mesos() {
 	# Checking Mesos Version
-	echo -n "Checking for Mesos >= ${mesos_min_version}"
+	echo
+    echo -n "Checking for Mesos >= ${mesos_min_version}"
 	if [ -e ${mesos_install_dir} ]; then
 		
 		# Unconfigured Mesos will not be able to check its version
@@ -201,13 +199,15 @@ config_mesos() {
 }
 
 test_mesos() {
-	# Test the installation of Mesos
-	echo "Testing Mesos configuration... "
-	local mesosTestConfiguration=$(cd ${mesos_install_dir} && make check && echo $?)
-	echo $mesosTestConfiguration
+	# At this time, Mesos and Zookeeper have some incompatibilities for the testing mechanism.
+	# This Mesos Test ensures that Spark and Hadoop can run locally on Mesos. 
+	# Future TODO: Language-specific test frameworks
 
-	# Test the language-specific test frameworks
-	# Test Hadoop and Spark
+	# Test the installation of Mesos
+	echo
+    echo "Testing Mesos configuration... "
+
+
 }
 
 run_mesos() {
@@ -235,6 +235,7 @@ clean_mesos() {
 
 setup_spark() {
 	# Checking for Spark Version
+	echo
 	echo -n "Checking for Spark >= ${spark_min_version}"
 	if [ -e ${spark_install_dir} ]; then
 		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
@@ -278,7 +279,8 @@ write_spark_install_log_entry() {
 }
 
 config_spark() {	
-	doconfig="N" 
+	echo
+    doconfig="N" 
     if [ -e ${spark_install_dir} ]; then
 		read -e -p "Configure Spark Installation? [y/N]: " doconfig
         
@@ -297,6 +299,7 @@ config_spark() {
 
 test_spark() {
 	# Test 1: Running a "local" version of Spark with 2 cores
+	echo
 	echo -n "Testing Spark - Local...   "
 	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
 	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
@@ -320,6 +323,7 @@ clean_spark() {
 # Hadoop (MapReduce distributed computing on HDFS)
 #####
 setup_hadoop() {
+	echo
 	# Check Hadoop Version
 	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
 	if [ -e ${hadoop_install_dir} ]; then
@@ -397,6 +401,7 @@ config_hadoop() {
 	# http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html	
 
 	# Initialize configuration
+	echo
 	local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
         read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
@@ -498,7 +503,8 @@ pseudo_distributed_config_setup() {
 }
 
 test_hadoop() {
-    # Hadoop Test - Local (Standalone) Mode
+	echo    
+	# Hadoop Test - Local (Standalone) Mode
     test_hadoop_standalone
 	
     # Hadoop Test 2 - Local Psuedo-Distributed
@@ -578,7 +584,8 @@ clean_hadoop() {
 
 setup_zookeeper() {
 	# Check ZooKeeper Version
-	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
+	echo
+    echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
 	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then	
 	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
 		check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
@@ -636,7 +643,8 @@ write_zookeeper_install_log_entry() {
 }
 
 config_zookeeper() {
-	doconfig="N" 
+	echo
+    doconfig="N" 
     if [ -e ${zookeeper_install_dir} ]; then
 		read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
@@ -655,7 +663,8 @@ config_zookeeper() {
 
 test_zookeeper() {
 	# Basic zookeeper test for client connection	
-	echo -n "Testing Zookeeper client connection...   "
+	echo
+    echo -n "Testing Zookeeper client connection...   "
 
 	${zookeeper_install_dir}/bin/zkServer.sh start >& /dev/null
     ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
@@ -748,7 +757,6 @@ setup_compute_tools() {
 	echo "---------------------------------"
 	echo " Installing Hadoop"
 	echo "---------------------------------"
-	echo
 	setup_hadoop
 	config_hadoop	
 	test_hadoop
@@ -757,7 +765,6 @@ setup_compute_tools() {
 	echo "---------------------------------"
 	echo " Installing Zookeeper"
 	echo "---------------------------------"
-	echo
 	setup_zookeeper
 	config_zookeeper
 	test_zookeeper
@@ -766,16 +773,14 @@ setup_compute_tools() {
 	echo "---------------------------------"
 	echo " Installing Mesos"
 	echo "---------------------------------"
-	echo
 	setup_mesos
 	#config_mesos
-	#test_mesos
+	test_mesos
 
 	echo
 	echo "---------------------------------"
 	echo " Installing Spark"
 	echo "---------------------------------"
-	echo
 	setup_spark
 	config_spark
 	test_spark
@@ -783,7 +788,5 @@ setup_compute_tools() {
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
-	echo
-	echo "----- Setting Up Compute Tools -----"
 	setup_compute_tools
 fi

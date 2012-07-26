@@ -6457,6 +6457,11 @@ usage() {
 	Index (search) Utils...
 	-------------------------------
         --optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
+        --check-shards  - Checks the configuration for local replica indexes
+        --add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
+        --remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
+        --list-replica-shards - shows list of registered local replica indexes
+        --init-shards - adds all shards listed in the replica shard configuration file
 
         -------------------------------
 	Publication Endpoint Setting (Index Peer/Gateway)
@@ -7179,6 +7184,10 @@ main() {
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && list_local_shards) || echo "flag not supported"
                     exit $?
                     ;;
+                --init-shards)
+                    shift
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && init_all_shards) || echo "flag not supported"
+                    exit $?
 		--myproxy)
 		    (( (sel & IDP_BIT) == 0 )) && echo "Sorry, the --myproxy flag may only be used for \"idp\" type commands" && exit 1
 		#acceptable args:  [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]

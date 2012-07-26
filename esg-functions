@@ -499,3 +499,10 @@ dedup_properties() {
     echo "$tmp" > ${infile}
 }
 
+#####
+# Get Current IP Address - Needed (at least temporarily) for Mesos Master
+####
+
+get_config_ip() { 
+	/sbin/ifconfig $1 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'; 
+}

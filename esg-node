@@ -6737,17 +6737,22 @@ main() {
 		    ;;
                 --check-shards)
                     shift
-                    [ -e source ${scripts_dir}/esg-search ] && (source ${scripts_dir}/esg-search >& /dev/null && check_shards $@) || echo "flag not supported"
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && check_shards $@) || echo "flag not supported"
                     exit $?
                     ;;
                 --add-replica-shard) #expecting <hostname>:<solr port> | master | slave
                     shift
-                    [ -e source ${scripts_dir}/esg-search ] && (source ${scripts_dir}/esg-search >& /dev/null && add_shard $@) || echo "flag not supported"
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && add_shard $@) || echo "flag not supported"
                     exit $?
                     ;;
                 --remove-replica-shard)
                     shift
-                    [ -e source ${scripts_dir}/esg-search ] && (source ${scripts_dir}/esg-search >& /dev/null && remove_shard $@) || echo "flag not supported"
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && remove_shard $@) || echo "flag not supported"
+                    exit $?
+                    ;;
+                --list-replica-shards)
+                    shift
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && list_local_shards) || echo "flag not supported"
                     exit $?
                     ;;
 		--myproxy)

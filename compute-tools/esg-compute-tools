@@ -79,8 +79,6 @@
 # uses: git, tar, wget
 #####
 
-# TODO When missing variables, add them as "use defaults" below --v
-
 #--------------
 # User Defined / Settable (public)
 #--------------
@@ -117,6 +115,7 @@ hadoop_max_version=${hadoop_max_version:="1.0.4"}
 #--------------------------------
 mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
+mesos_build_dir=${MESOS_BUILD_HOME:-${install_prefix}/mesos} # TODO /mesos/build...
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
@@ -137,15 +136,17 @@ zookeeper_workdir=${workdir}/zookeeper
 date_format="+%Y_%m_%d_%H%M%S"
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
-[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n" || \
-    (echo "ERROR: Cannot locate functions file ${esg_functions_file}" && exit 1)
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
 #####
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
 setup_mesos() {
+	# TODO Build mesos in build directory on install tree
+
 	# Checking Mesos Version
-	echo -n "Checking for Mesos >= ${mesos_min_version}"
+	echo
+    echo -n "Checking for Mesos >= ${mesos_min_version}"
 	if [ -e ${mesos_install_dir} ]; then
 		
 		# Unconfigured Mesos will not be able to check its version
@@ -197,21 +198,67 @@ write_mesos_install_log_entry() {
 }
 
 config_mesos() {
-    echo
+    # The most efficient way to start and stop mesos is with built-in deploy scripts, which
+	# require some configuration.
+	# [TODO] 
+	# 	List of Mesos hosts and slaves
+	# 
+	# [TODO] 
+	#   LIBPROCESS_IP in MESOS_HOME/deploy/mesos-env.sh
+	#
+	# [TODO] Zookeeper URL Configuration for Mesos master running
+	#   Required for fault tolerance mode
+	echo
 }
 
 test_mesos() {
-	# Test the installation of Mesos
-	echo "Testing Mesos configuration... "
-	local mesosTestConfiguration=$(cd ${mesos_install_dir} && make check && echo $?)
-	echo $mesosTestConfiguration
+	# Currently running Mesos + Zookeeper with custom deploy methods, tested here.
+	# Test 1: Mesos + Spark
+	# Test 2: Mesos + Hadoop
+	# Test 3: Mesos + Hadoop + Spark
+	# TODO Add Zookeeper functionality
+	
+	echo
+	echo "Test 1: Mesos with Spark Framework, [TODO Zookeeper Quorum Management]"
+	# TODO Starts Zookeeper
+	run_mesos_start_master && run_mesos_start_slave
+	local mesos_master_url=$(get_config_ip eth0) # Move me to a method TODO
+	local sparkResult=$(${spark_install_dir}/run spark.examples.SparkPi "$mesos_master_url:5050" >& /dev/null && echo $?) 	
+	echo -n "Tested Mesos Local Cluster with Spark...   "
+	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+	run_mesos_stop_slave && run_mesos_stop_master
+	# TODO Clear termination output?
 
-	# Test the language-specific test frameworks
-	# Test Hadoop and Spark
+	echo "Test 2: Mesos with Hadoop Framework, [TODO Zookeeper Quorum Management]"
+	# Starts Zookeeper, starts Mesos, runs Hadoop pseudo-distributed test job on Mesos
+	echo -n "Tested Mesos Local Cluster with Spark...   "
+	echo "[ TBD ]"
+
+	echo "Test 3: Mesos with Hadoop, Spark, and [TODO Zookeeper Quorum Management]"
+	# Starts Zookeeper, starts Mesos, runs Spark job and Hadoop job on mesos
+	echo -n "Tested Mesos Local Cluster with Spark...   "
+	echo "[ TBD ]"
+
 }
 
-run_mesos() {
-	echo
+run_mesos_start_master() {
+	# TODO Start with Zookeeper URL, ESGF IP address
+	${mesos_build_dir}/bin/mesos-master.sh --quiet &	
+}
+
+run_mesos_stop_master() {
+	pkill mesos-master
+}
+
+run_mesos_stop_slave() {
+	pkill mesos-slave
+}
+
+run_mesos_start_slave() {
+	# TODO Run with ESGF Ip address for mesos master url
+	# TODO figure out correct memory resources
+	local mesos_master_url=$(get_config_ip eth0)
+	${mesos_build_dir}/bin/mesos-slave.sh --quiet "--master=$mesos_master_url:5050" "--resources=cpus:2;mem:1024" &
 }
 
 clean_mesos() {
@@ -235,6 +282,7 @@ clean_mesos() {
 
 setup_spark() {
 	# Checking for Spark Version
+	echo
 	echo -n "Checking for Spark >= ${spark_min_version}"
 	if [ -e ${spark_install_dir} ]; then
 		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
@@ -278,7 +326,8 @@ write_spark_install_log_entry() {
 }
 
 config_spark() {	
-	doconfig="N" 
+	echo
+    doconfig="N" 
     if [ -e ${spark_install_dir} ]; then
 		read -e -p "Configure Spark Installation? [y/N]: " doconfig
         
@@ -297,6 +346,7 @@ config_spark() {
 
 test_spark() {
 	# Test 1: Running a "local" version of Spark with 2 cores
+	echo
 	echo -n "Testing Spark - Local...   "
 	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
 	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
@@ -320,6 +370,7 @@ clean_spark() {
 # Hadoop (MapReduce distributed computing on HDFS)
 #####
 setup_hadoop() {
+	echo
 	# Check Hadoop Version
 	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
 	if [ -e ${hadoop_install_dir} ]; then
@@ -397,6 +448,7 @@ config_hadoop() {
 	# http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html	
 
 	# Initialize configuration
+	echo
 	local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
         read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
@@ -498,7 +550,8 @@ pseudo_distributed_config_setup() {
 }
 
 test_hadoop() {
-    # Hadoop Test - Local (Standalone) Mode
+	echo    
+	# Hadoop Test - Local (Standalone) Mode
     test_hadoop_standalone
 	
     # Hadoop Test 2 - Local Psuedo-Distributed
@@ -578,7 +631,8 @@ clean_hadoop() {
 
 setup_zookeeper() {
 	# Check ZooKeeper Version
-	echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
+	echo
+    echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
 	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then	
 	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
 		check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
@@ -636,7 +690,8 @@ write_zookeeper_install_log_entry() {
 }
 
 config_zookeeper() {
-	doconfig="N" 
+	echo
+    doconfig="N" 
     if [ -e ${zookeeper_install_dir} ]; then
 		read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
@@ -655,7 +710,8 @@ config_zookeeper() {
 
 test_zookeeper() {
 	# Basic zookeeper test for client connection	
-	echo -n "Testing Zookeeper client connection...   "
+	echo
+    echo -n "Testing Zookeeper client connection...   "
 
 	${zookeeper_install_dir}/bin/zkServer.sh start >& /dev/null
     ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
@@ -703,16 +759,9 @@ test_compute_tools() {
 	echo "---------------------------------"
 	echo
 
-	# Test Hadoop Single-node
 	test_hadoop
-
-	# Test Zookeeper Local
 	test_zookeeper
-
-	# Test Mesos Local placeholder
-	# test_mesos
-
-	# Test Spark Local
+	test_mesos
 	test_spark
 }
 
@@ -727,7 +776,7 @@ config_compute_tools() {
 
 	config_hadoop
 	config_zookeeper
-	#config_mesos
+	config_mesos
 	config_spark
 }
 
@@ -748,7 +797,6 @@ setup_compute_tools() {
 	echo "---------------------------------"
 	echo " Installing Hadoop"
 	echo "---------------------------------"
-	echo
 	setup_hadoop
 	config_hadoop	
 	test_hadoop
@@ -757,7 +805,6 @@ setup_compute_tools() {
 	echo "---------------------------------"
 	echo " Installing Zookeeper"
 	echo "---------------------------------"
-	echo
 	setup_zookeeper
 	config_zookeeper
 	test_zookeeper
@@ -766,16 +813,14 @@ setup_compute_tools() {
 	echo "---------------------------------"
 	echo " Installing Mesos"
 	echo "---------------------------------"
-	echo
 	setup_mesos
-	#config_mesos
-	#test_mesos
+	config_mesos
+	test_mesos
 
 	echo
 	echo "---------------------------------"
 	echo " Installing Spark"
 	echo "---------------------------------"
-	echo
 	setup_spark
 	config_spark
 	test_spark
@@ -783,7 +828,5 @@ setup_compute_tools() {
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
-	echo
-	echo "----- Setting Up Compute Tools -----"
 	setup_compute_tools
 fi

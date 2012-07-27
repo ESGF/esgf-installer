@@ -7179,7 +7179,7 @@ main() {
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && remove_shard $@) || echo "flag not supported"
                     exit $?
                     ;;
-                --list-replica-shards)
+                --list-shards)
                     shift
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && list_local_shards) || echo "flag not supported"
                     exit $?

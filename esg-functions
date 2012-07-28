@@ -611,30 +611,31 @@ _readlinkf() {
     # Loop detection exists, but only as an abort after passing a
     # maximum length.
 
-    START_DIR=`pwd`
-    FILE=$1
-    cd `dirname $FILE`
-    FILE=`basename $FILE`
+    local start_dir=$(pwd)
+    local file=${1}
+    cd $(dirname ${file})
+    file=$(basename ${file})
 
     # Iterate down symlinks.  If we exceed a maximum number symlinks, assume that
     # we're looped and die horribly.
-    MAXLINKS=20
-    COUNT=0
-    while [ -L "$FILE" ] ; do
-        FILE=`readlink $FILE`
-        cd `dirname $FILE`
-        FILE=`basename $FILE`
-        let "COUNT += 1"
-        if [ $COUNT -gt $MAXLINKS ] ; then
-            CURRENT_DIR=`pwd -P`
-            echo "CRITICAL FAILURE: symlink loop detected on ${CURRENT_DIR}/${FILE}"
-            cd $START_DIR
-            exit $COUNT
+    local maxlinks=20
+    local count=0
+    local current_dir
+    while [ -L "${file}" ] ; do
+        file=$(readlink ${file})
+        cd $(dirname ${file})
+        file=$(basename ${file})
+        ((count++))
+        if (( count > maxlinks )) ; then
+            current_dir=$(pwd -P)
+            echo "CRITICAL FAILURE: symlink loop detected on ${current_dir}/${file}"
+            cd ${start_dir}
+            exit ${count}
         fi
     done
-    CURRENT_DIR=`pwd -P`
-    echo "${CURRENT_DIR}/${FILE}"
-    cd $START_DIR
+    current_dir=$(pwd -P)
+    echo "${current_dir}/${file}"
+    cd ${start_dir}
 }
 
 #----------------------------------------------------------

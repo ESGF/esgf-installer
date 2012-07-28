@@ -5889,18 +5889,18 @@ done_remark() {
 #---------------
 # s'all about the bits... :-)
 #---------------
-INSTALL_BIT=1
-TEST_BIT=2
-DATA_BIT=4
-INDEX_BIT=8
-IDP_BIT=16
-COMPUTE_BIT=32
-WRITE_ENV_BIT=64
-#PRIVATE_BIT=128
+declare -r INSTALL_BIT=1
+declare -r TEST_BIT=2
+declare -r DATA_BIT=4
+declare -r INDEX_BIT=8
+declare -r IDP_BIT=16
+declare -r COMPUTE_BIT=32
+declare -r WRITE_ENV_BIT=64
+#declare -r PRIVATE_BIT=128
 #NOTE: remember to adjust (below) when adding new bits!!
-MIN_BIT=4
-MAX_BIT=64
-ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT))
+declare -r MIN_BIT=4
+declare -r MAX_BIT=64
+declare -r ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT))
 #---------------
 
 show_type() {

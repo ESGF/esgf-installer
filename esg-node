@@ -162,7 +162,7 @@ init() {
     ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"6.0.35"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
-    tds_version=${tds_version:-"4.2.20100908.2246"} ; tds_min_version=${tds_min_version:-"4.2.20100908.2246"}
+    tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
     las_version=${las_version:-"7.3.9"}; las_min_version=${las_min_version:-"7.3.9"}
 
     python_version=${python_version:-"2.6"}
@@ -292,8 +292,8 @@ init() {
     tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
     utils_url=${esg_dist_url}/utils
-    thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/$(echo ${tds_version} | sed	 -n 's/\(.*\).201[0-9]*.[0-9]*/\1/p')/thredds.war
-    thredds_esg_dist_url=${esg_dist_url}/thredds/$(echo ${tds_version} | sed  -n 's/\(.*\).201[0-9]*.[0-9]*/\1/p')/thredds.war
+    thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war
+    thredds_esg_dist_url=${esg_dist_url}/thredds/${tds_version%.*}/${tds_version}/thredds.war
     thredds_content_dir=${thredds_content_dir:-${esg_root_dir}/content}
     #NOTE: This root dir should match a root set in the thredds setup
     thredds_root_dir=${esg_root_dir}/data

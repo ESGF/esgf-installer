@@ -6036,7 +6036,7 @@ usage() {
         --check-shards  - Checks the configuration for local replica indexes
         --add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
         --remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
-        --list-replica-shards - shows list of registered local replica indexes
+        --list-shards - shows list of registered local replica indexes
         --init-shards - adds all shards listed in the replica shard configuration file
 
         -------------------------------

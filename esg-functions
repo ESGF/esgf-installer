@@ -505,7 +505,7 @@ dedup_properties() {
 #Takes a single interface value
 # "eth0" or "lo", etc...
 get_config_ip() { 
-	/sbin/ifconfig $1 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'; 
+    ifconfig $1 | grep "inet[^6]" | awk '{ gsub (" *inet [^:]*:",""); print $1}'
 }
 
 #----------------------------------------------------------

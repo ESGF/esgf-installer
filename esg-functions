@@ -195,6 +195,20 @@ _version_segment_cmp() {
 #-------------------------------
 # Version Checking Utility Functions
 #-------------------------------
+checked_done() {
+    if (($1)); then
+	echo ""
+	echo "Sorry..."
+	echo "This action did not complete successfully"
+	echo "Please re-run this task until successful before continuing further"
+	echo ""
+	echo "Also please review the installation FAQ it may assist you"
+	echo "http://esgf.org/wiki/ESGFNode/FAQ"
+	echo ""
+	exit 1
+    fi
+    return 0
+}
 
 check_version_atleast() {
     # Takes the following arguments:

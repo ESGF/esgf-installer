@@ -506,3 +506,74 @@ dedup_properties() {
 get_config_ip() { 
 	/sbin/ifconfig $1 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'; 
 }
+
+#----------------------------------------------------------
+# Process Launching and Checking...
+#----------------------------------------------------------
+#This function is for repeatedly running a function until it returns
+#true and/or the number of iterations have been reached.  The format of
+#the args for this call are as follows:
+#
+# pcheck <num_of_iterations> <wait_time_in_seconds> <return_on_true> -- [function name] <args...>
+# The default operation is the run the function once a scecond for 5 seconds or until it returns true
+# The default value of iterations is 5
+# The default value of wait time is  1 (second)
+# The default value of return on true is 1 (no more iterations after function/command succeeds)
+# the "--" is a literal argument that MUST precede the function or command you wish to call
+#
+# Ex:
+# Run a function or command foo 3x waiting 2 seconds between and returning after function/command success
+# pcheck 3 2 1 -- foo arg1 arg2
+# Run a function or command foo using defaults
+# pcheck -- foo arg1 arg2
+#
+# Returns the value from the final execution of the function or command.
+pcheck() {
+    debug_print "pcheck $@"
+    #initial default values
+    local iterations=5
+    local wait_time=1
+    local return_on_true=1
+    local task_function=""
+
+    local_vars=(iterations wait_time return_on_true)
+    local i=0
+    while [[ -n "$1" ]]; do
+	if [ "$1" == "--" ] ; then
+	    shift
+	    task_function=$1
+	    shift
+	    break
+	fi
+	eval local ${local_vars[((i++))]}=$1
+	shift
+    done
+    debug_print "iterations = ${iterations}"
+    debug_print "wait_time = ${wait_time}"
+    debug_print "return_on_true = ${return_on_true}"
+    debug_print "task_function = ${task_function}"
+    debug_print "args = [$@]"
+
+    local ret=1
+    while [[ $iterations > 0 ]]; do
+	echo -n "."
+	eval ${task_function} $@
+	ret=$?
+	((return_on_true)) && [ $ret == 0 ] && break
+	((iterations != 1)) && sleep ${wait_time}
+	: $((iterations--))
+    done
+    [ $ret == 0 ] && printf "\n${task_function} [OK]\n" || printf "\n${task_function} [FAIL]\n"
+    return $ret
+}
+
+#Utility function, wraps md5sum so it may be used on either mac or
+#linux machines
+md5sum_() {
+    hash -r
+    if type md5sum >& /dev/null; then
+        echo $(md5sum $@)
+    else
+        echo $(md5 $@ | sed -n 's/MD5[ ]*\(.*\)[^=]*=[ ]*\(.*$\)/\2 \1/p')
+    fi
+}

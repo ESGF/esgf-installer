@@ -101,7 +101,7 @@ ks_secret_file=${esg_config_dir}/.esg_keystore_pass
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 install_logfile=${install_manifest}
 logfile=${logfile:-"/tmp/${_t##*/}.out"}
-esg_functions_file=./esg-functions
+esg_functions_file=${install_prefix}/bin/esg-functions
 #--------------
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
@@ -110,7 +110,7 @@ init() {
     debug_print "esg-node initilizing..."
     if [ ! -e ${esg_functions_file} ]; then
         checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/${esg_functions_file##*/} $((force_install))
-	(( $(stat -c%s ${esg_functions_file}) == 0 )) && rm ${esg_functions_file}
+        [ ! -s "${esg_functions_file}" ] && rm ${esg_functions_file}
     fi
     [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
@@ -4798,10 +4798,10 @@ checked_get() {
 	exit 1
     fi
 
-    if (_is_in_git "${local_file}") ; then
-        printf "${local_file} is controlled by Git, not updating"
-        return 0
-    fi
+    #if (_is_in_git "${local_file}") ; then
+    #    printf "${local_file} is controlled by Git, not updating"
+    #    return 0
+    #fi
 
     if ((use_local_files)) && [ -e "${local_file}" ]; then
         printf "

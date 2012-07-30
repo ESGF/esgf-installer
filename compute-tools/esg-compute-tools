@@ -171,7 +171,7 @@ setup_mesos() {
 	# Retrieve Mesos Source and build after configuration for ESGF tools
 	# Uses: Hadoop, Zookeeper, Java, Python
 	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	(cd ${mesos_install_dir} && ./bootstrap && ./configure && make)
+	(cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java-home && make)
 	# TODO let's make this config tastier...
 
 	# TODO make check hangs on zookeeper install
@@ -200,6 +200,9 @@ write_mesos_install_log_entry() {
 config_mesos() {
     # The most efficient way to start and stop mesos is with built-in deploy scripts, which
 	# require some configuration.
+	# [TODO]
+	#   Mesos and Hadoop config 
+	#
 	# [TODO] 
 	# 	List of Mesos hosts and slaves
 	# 
@@ -208,7 +211,11 @@ config_mesos() {
 	#
 	# [TODO] Zookeeper URL Configuration for Mesos master running
 	#   Required for fault tolerance mode
-	echo
+	
+	# First we check for Hadoop configuration - if it exists, request reconfigure, if not, 
+	# proceed automatically.
+	# TODO Check existence of Hadoop relevant files
+echo	
 }
 
 test_mesos() {

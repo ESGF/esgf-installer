@@ -517,15 +517,20 @@ pseudo_distributed_config_setup() {
 	# For now we destroy them first.
 	rm -rf ${hadoop_install_dir}/conf/standalone
 	rm -rf ${hadoop_install_dir}/conf/local_distributed
+    rm -rf ${hadoop_install_dir}/conf/managed_cluster
 	mkdir ${hadoop_install_dir}/conf/standalone 
 	mkdir ${hadoop_install_dir}/conf/local_distributed
+    mkdir ${hadoop_install_dir}/conf/managed_cluster
 
-	# Copy default example config files to new directory for standalone	
+	# Copy default example config files to new configuration directories	
 	cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/standalone/
 	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/standalone/hadoop-env.sh
 	cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/standalone/slaves
 	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/local_distributed/hadoop-env.sh
 	cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/local_distributed/slaves
+	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/managed_cluster/hadoop-env.sh
+    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/managed_cluster/
+    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/managed_cluster/slaves
 
 	# Create configuration files for pseudo-distributed mode
 	echo '<?xml version="1.0"?>

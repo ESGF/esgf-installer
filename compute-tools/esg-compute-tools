@@ -143,159 +143,159 @@ date_format="+%Y_%m_%d_%H%M%S"
 # Mesos (Cluster manager for resource sharing across distirbuted applications)
 #####
 setup_mesos() {
-	# TODO Build mesos in build directory on install tree
+    # TODO Build mesos in build directory on install tree
 
-	# Checking Mesos Version
-	echo
+    # Checking Mesos Version
+    echo
     echo -n "Checking for Mesos >= ${mesos_min_version}"
-	if [ -e ${mesos_install_dir} ]; then
-		
-		# Unconfigured Mesos will not be able to check its version
-		if [ ! -e ${mesos_install_dir}/configure ]; then
-			(cd ${mesos_install_dir} && ./bootstrap)
-		fi
+    if [ -e ${mesos_install_dir} ]; then
+        
+        # Unconfigured Mesos will not be able to check its version
+        if [ ! -e ${mesos_install_dir}/configure ]; then
+            (cd ${mesos_install_dir} && ./bootstrap)
+        fi
 
-		local mesos_current_version=`${mesos_install_dir}/configure -version | head -1 | awk '{print $3}'`
-		check_version_helper $mesos_current_version ${mesos_min_version} 
-		[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-	else
-		echo
-		echo "No Mesos installation detected"
-	fi
+        local mesos_current_version=`${mesos_install_dir}/configure -version | head -1 | awk '{print $3}'`
+        check_version_helper $mesos_current_version ${mesos_min_version} 
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    else
+        echo
+        echo "No Mesos installation detected"
+    fi
 
-	echo
-	echo "**********************************"
-	echo "Setting Up Mesos ${mesos_version}"
-	echo "**********************************"
-	echo 
+    echo
+    echo "**********************************"
+    echo "Setting Up Mesos ${mesos_version}"
+    echo "**********************************"
+    echo 
 
-	# Retrieve Mesos Source and build after configuration for ESGF tools
-	# Uses: Hadoop, Zookeeper, Java, Python
-	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	(cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java=/usr/local/java --disable-python --disable-webui && make)
-	# TODO let's make this config tastier...
+    # Retrieve Mesos Source and build after configuration for ESGF tools
+    # Uses: Hadoop, Zookeeper, Java, Python
+    git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
+    (cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java=/usr/local/java --disable-python --disable-webui && make)
+    # TODO let's make this config tastier...
 
-	# TODO make check hangs on zookeeper install
-	# Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
-	# TODO Mesos /usr/local configuration
-	# TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
+    # TODO make check hangs on zookeeper install
+    # Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
+    # TODO Mesos /usr/local configuration
+    # TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
     
-	# Add Mesos home to environment and install manifest
-	write_env_mesos
-	write_mesos_install_log_entry
+    # Add Mesos home to environment and install manifest
+    write_env_mesos
+    write_mesos_install_log_entry
 }
 
 write_env_mesos() {
-	echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
-	dedup ${envfile} && source ${envfile}
-	return 0
+    echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
 }
 
-write_mesos_install_log_entry() {	
+write_mesos_install_log_entry() {   
     local entry="$(date ${date_format}) esg-compute-tools:mesos=${mesos_version} ${mesos_install_dir}"
     echo ${entry} >> ${install_manifest}
-	dedup ${install_manifest}
-	return 0
+    dedup ${install_manifest}
+    return 0
 }
 
 config_mesos() {
     # The most efficient way to start and stop mesos is with built-in deploy scripts, which
-	# require some configuration.
-	# [TODO]
-	#   Mesos and Hadoop config 
-	#
-	# [TODO] 
-	# 	List of Mesos hosts and slaves
-	# 
-	# [TODO] 
-	#   LIBPROCESS_IP in MESOS_HOME/deploy/mesos-env.sh
-	#
-	# [TODO] Zookeeper URL Configuration for Mesos master running
-	#   Required for fault tolerance mode
-	
-	# First we check for Hadoop configuration - if it exists, request reconfigure, if not, 
-	# proceed automatically.
-	# TODO Check existence of Hadoop relevant files
+    # require some configuration.
+    # [TODO]
+    #   Mesos and Hadoop config 
+    #
+    # [TODO] 
+    #   List of Mesos hosts and slaves
+    # 
+    # [TODO] 
+    #   LIBPROCESS_IP in MESOS_HOME/deploy/mesos-env.sh
+    #
+    # [TODO] Zookeeper URL Configuration for Mesos master running
+    #   Required for fault tolerance mode
+    
+    # First we check for Hadoop configuration - if it exists, request reconfigure, if not, 
+    # proceed automatically.
+    # TODO Check existence of Hadoop relevant files
 
     # The following is a bit of a hack, but in polite terms, a "work in progress".
-	echo
+    echo
     doconfig="N" 
     if [ -e ${mesos_install_dir/hadoop} ]; then
-		read -e -p "Configure Mesos-Compatible Hadoop Installation? [y/N]: " doconfig
+        read -e -p "Configure Mesos-Compatible Hadoop Installation? [y/N]: " doconfig
 
-		# Configure Hadoop environment for Mesos
-		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
-        	echo "Configuring Hadoop for Mesos..."
+        # Configure Hadoop environment for Mesos
+        if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+            echo "Configuring Hadoop for Mesos..."
             
             # 
        
-		# Inform user of skipped configuration step
-		else
-			echo "Skipping Mesos Hadoop Configuration..."
-		fi
+        # Inform user of skipped configuration step
+        else
+            echo "Skipping Mesos Hadoop Configuration..."
+        fi
     fi
 }
 
 test_mesos() {
-	# Currently running Mesos + Zookeeper with custom deploy methods, tested here.
-	# Test 1: Mesos + Spark
-	# Test 2: Mesos + Hadoop
-	# Test 3: Mesos + Hadoop + Spark
-	# TODO Add Zookeeper functionality
-	
-	echo
-	echo "Test 1: Mesos with Spark Framework, [TODO Zookeeper Quorum Management]"
-	# TODO Starts Zookeeper
-	run_mesos_start_master && run_mesos_start_slave
-	local mesos_master_url=$(get_config_ip eth0) # Move me to a method TODO
-	local sparkResult=$(${spark_install_dir}/run spark.examples.SparkPi "$mesos_master_url:5050" >& /dev/null && echo $?) 	
-	echo -n "Tested Mesos Local Cluster with Spark...   "
-	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-	run_mesos_stop_slave && run_mesos_stop_master
-	# TODO Clear termination output?
+    # Currently running Mesos + Zookeeper with custom deploy methods, tested here.
+    # Test 1: Mesos + Spark
+    # Test 2: Mesos + Hadoop
+    # Test 3: Mesos + Hadoop + Spark
+    # TODO Add Zookeeper functionality
+    
+    echo
+    echo "Test 1: Mesos with Spark Framework, [TODO Zookeeper Quorum Management]"
+    # TODO Starts Zookeeper
+    run_mesos_start_master && run_mesos_start_slave
+    local mesos_master_url=$(get_config_ip eth0) # Move me to a method TODO
+    local sparkResult=$(${spark_install_dir}/run spark.examples.SparkPi "$mesos_master_url:5050" >& /dev/null && echo $?)   
+    echo -n "Tested Mesos Local Cluster with Spark...   "
+    [ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+    run_mesos_stop_slave && run_mesos_stop_master
+    # TODO Clear termination output?
 
-	echo "Test 2: Mesos with Hadoop Framework, [TODO Zookeeper Quorum Management]"
-	# Starts Zookeeper, starts Mesos, runs Hadoop pseudo-distributed test job on Mesos
+    echo "Test 2: Mesos with Hadoop Framework, [TODO Zookeeper Quorum Management]"
+    # Starts Zookeeper, starts Mesos, runs Hadoop pseudo-distributed test job on Mesos
     # TODO Starts Zookeeper
     
 
-	echo -n "Tested Mesos Local Cluster with Legacy Hadoop...   "
+    echo -n "Tested Mesos Local Cluster with Legacy Hadoop...   "
 
-	echo "Test 3: Mesos with Hadoop, Spark, and [TODO Zookeeper Quorum Management]"
-	# Starts Zookeeper, starts Mesos, runs Spark job and Hadoop job on mesos
-	echo -n "Tested Mesos Local Cluster with Hadoop, Spark...   "
-	echo "[ TBD ]"
+    echo "Test 3: Mesos with Hadoop, Spark, and [TODO Zookeeper Quorum Management]"
+    # Starts Zookeeper, starts Mesos, runs Spark job and Hadoop job on mesos
+    echo -n "Tested Mesos Local Cluster with Hadoop, Spark...   "
+    echo "[ TBD ]"
 
 }
 
 run_mesos_start_master() {
-	# TODO Start with Zookeeper URL, ESGF IP address
-	${mesos_build_dir}/bin/mesos-master.sh --quiet &	
+    # TODO Start with Zookeeper URL, ESGF IP address
+    ${mesos_build_dir}/bin/mesos-master.sh --quiet &    
 }
 
 run_mesos_stop_master() {
-	pkill mesos-master
+    pkill mesos-master
 }
 
 run_mesos_stop_slave() {
-	pkill mesos-slave
+    pkill mesos-slave
 }
 
 run_mesos_start_slave() {
-	# TODO Run with ESGF Ip address for mesos master url
-	# TODO figure out correct memory resources
-	local mesos_master_url=$(get_config_ip eth0)
-	${mesos_build_dir}/bin/mesos-slave.sh --quiet "--master=$mesos_master_url:5050" "--resources=cpus:2;mem:1024" &
+    # TODO Run with ESGF Ip address for mesos master url
+    # TODO figure out correct memory resources
+    local mesos_master_url=$(get_config_ip eth0)
+    ${mesos_build_dir}/bin/mesos-slave.sh --quiet "--master=$mesos_master_url:5050" "--resources=cpus:2;mem:1024" &
 }
 
 clean_mesos() {
-	doit="N"
+    doit="N"
     if [ -e ${mesos_install_dir} ]; then
         read -e -p "remove cluster management framework Mesos? (${mesos_install_dir}) [y/N]: " doit
         if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-        	echo "removing ${mesos_install_dir}"
-        	rm -rf ${mesos_install_dir}
-        	[ $? != 0 ] && echo "ERROR: Unable to remove ${mesos_install_dir}"
+            echo "removing ${mesos_install_dir}"
+            rm -rf ${mesos_install_dir}
+            [ $? != 0 ] && echo "ERROR: Unable to remove ${mesos_install_dir}"
             remove_env MESOS_HOME
             remove_install_log_entry mesos
         fi  
@@ -308,85 +308,85 @@ clean_mesos() {
 #####
 
 setup_spark() {
-	# Checking for Spark Version
-	echo
-	echo -n "Checking for Spark >= ${spark_min_version}"
-	if [ -e ${spark_install_dir} ]; then
-		local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
-		check_version_helper $spark_current_version ${spark_min_version}
-		[ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 
-	else
-		echo
-		echo "No Spark installation detected"
-	fi
+    # Checking for Spark Version
+    echo
+    echo -n "Checking for Spark >= ${spark_min_version}"
+    if [ -e ${spark_install_dir} ]; then
+        local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
+        check_version_helper $spark_current_version ${spark_min_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 
+    else
+        echo
+        echo "No Spark installation detected"
+    fi
 
     echo
-	echo "*****************************"
-	echo "Setting Up Spark ${spark_version}"
-	echo "*****************************"
-	echo
+    echo "*****************************"
+    echo "Setting Up Spark ${spark_version}"
+    echo "*****************************"
+    echo
 
-	# Retrieve and build Spark
-	git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
-	echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
-	# TODO Spark Java environment configuration
-	(cd ${spark_install_dir} && sbt/sbt compile)
-	
-	# TODO check for download errors or git failures
-	
-	# Add Spark home to environment and install manifest
-	write_env_spark
-	write_spark_install_log_entry
+    # Retrieve and build Spark
+    git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
+    echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
+    # TODO Spark Java environment configuration
+    (cd ${spark_install_dir} && sbt/sbt compile)
+    
+    # TODO check for download errors or git failures
+    
+    # Add Spark home to environment and install manifest
+    write_env_spark
+    write_spark_install_log_entry
 }
 
 write_env_spark() {
-	echo "export SPARK_HOME=${spark_install_dir}" >> ${envfile}	
-	dedup ${envfile} && source ${envfile}
-	return 0
+    echo "export SPARK_HOME=${spark_install_dir}" >> ${envfile} 
+    dedup ${envfile} && source ${envfile}
+    return 0
 }
 
 write_spark_install_log_entry() {
     local entry="$(date ${date_format}) esg-compute-tools:spark=${spark_version} ${spark_install_dir}"
     echo ${entry} >> ${install_manifest}
-	dedup ${install_manifest}
-	return 0
+    dedup ${install_manifest}
+    return 0
 }
 
-config_spark() {	
-	echo
+config_spark() {    
+    echo
     doconfig="N" 
     if [ -e ${spark_install_dir} ]; then
-		read -e -p "Configure Spark Installation? [y/N]: " doconfig
+        read -e -p "Configure Spark Installation? [y/N]: " doconfig
         
-		# Configure Spark environment, deployment, local/Mesos
-		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
-        	echo "Configuring Spark..."
+        # Configure Spark environment, deployment, local/Mesos
+        if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+            echo "Configuring Spark..."
        
-			# TODO Configure Spark here 
-		
-		# Inform user of skipped configuration step
-		else
-			echo "Skipping Spark Configuration..."
-		fi
-	fi  
+            # TODO Configure Spark here 
+        
+        # Inform user of skipped configuration step
+        else
+            echo "Skipping Spark Configuration..."
+        fi
+    fi  
 }
 
 test_spark() {
-	# Test 1: Running a "local" version of Spark with 2 cores
-	echo
-	echo -n "Testing Spark - Local...   "
-	local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
-	[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+    # Test 1: Running a "local" version of Spark with 2 cores
+    echo
+    echo -n "Testing Spark - Local...   "
+    local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
+    [ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 }
 
 clean_spark() {
-	doit="N"
+    doit="N"
     if [ -e ${spark_install_dir} ]; then
         read -e -p "remove iterative computation framework Spark? (${spark_install_dir}) [y/N]: " doit
         if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-        	echo "removing ${spark_install_dir}"
-        	rm -rf ${spark_install_dir}
-        	[ $? != 0 ] && echo "ERROR: Unable to remove ${spark_install_dir}"
+            echo "removing ${spark_install_dir}"
+            rm -rf ${spark_install_dir}
+            [ $? != 0 ] && echo "ERROR: Unable to remove ${spark_install_dir}"
             remove_env SPARK_HOME
             remove_install_log_entry spark
         fi  
@@ -397,18 +397,18 @@ clean_spark() {
 # Hadoop (MapReduce distributed computing on HDFS)
 #####
 setup_hadoop() {
-	echo
-	# Check Hadoop Version
-	echo -n "Checking for Hadoop >= ${hadoop_min_version}"
-	if [ -e ${hadoop_install_dir} ]; then
+    echo
+    # Check Hadoop Version
+    echo -n "Checking for Hadoop >= ${hadoop_min_version}"
+    if [ -e ${hadoop_install_dir} ]; then
         local hadoop_current_version=$(export HADOOP_HOME_WARN_SUPPRESS="TRUE" && \
-			${hadoop_install_dir}/bin/hadoop version | head -1 | awk '{print $2}')
-		local hadoop_version_number=${hadoop_current_version%-*}
-		check_version_helper $hadoop_version_number ${hadoop_min_version} ${hadoop_max_version}
+            ${hadoop_install_dir}/bin/hadoop version | head -1 | awk '{print $2}')
+        local hadoop_version_number=${hadoop_current_version%-*}
+        check_version_helper $hadoop_version_number ${hadoop_min_version} ${hadoop_max_version}
         [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
     else
-    	echo
-    	echo "No Hadoop installation detected"
+        echo
+        echo "No Hadoop installation detected"
     fi 
 
     echo
@@ -417,106 +417,106 @@ setup_hadoop() {
     echo "*****************************"
     echo
 
-	# Retrieve Hadoop Distribution File
-	local hadoop_dist_file=${hadoop_dist_url##*/}
-	local hadoop_dist_dir=$(echo ${hadoop_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+    # Retrieve Hadoop Distribution File
+    local hadoop_dist_file=${hadoop_dist_url##*/}
+    local hadoop_dist_dir=$(echo ${hadoop_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
 
-	# Check for empty distribution file (size 0)
-	# TODO
+    # Check for empty distribution file (size 0)
+    # TODO
 
-	if [ ! -e ${hadoop_dist_dir} ]; then
-		echo "Don't see Hadoop distribution directory ${hadoop_dist_dir}"
-		wget -O "${install_prefix}/${hadoop_dist_file}" ${hadoop_dist_url}
-		[ $? != 0 ] && echo " ERROR: Could not download Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
-		echo "Unpacking ${hadoop_dist_file}..."
-		tar xzf ${install_prefix}/${hadoop_dist_file} -C ${install_prefix}
-		mv "${install_prefix}/${hadoop_dist_dir}" ${hadoop_install_dir}
-		mkdir $
-		[ $? != 0 ] && echo " ERROR: Could not extract Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
-	fi
+    if [ ! -e ${hadoop_dist_dir} ]; then
+        echo "Don't see Hadoop distribution directory ${hadoop_dist_dir}"
+        wget -O "${install_prefix}/${hadoop_dist_file}" ${hadoop_dist_url}
+        [ $? != 0 ] && echo " ERROR: Could not download Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
+        echo "Unpacking ${hadoop_dist_file}..."
+        tar xzf ${install_prefix}/${hadoop_dist_file} -C ${install_prefix}
+        mv "${install_prefix}/${hadoop_dist_dir}" ${hadoop_install_dir}
+        mkdir $
+        [ $? != 0 ] && echo " ERROR: Could not extract Hadoop: ${hadoop_dist_file}" && popd && checked_done 1
+    fi
 
     # Add Hadoop home to environment and install manifest
-	write_env_hadoop
-	write_hadoop_install_log_entry
+    write_env_hadoop
+    write_hadoop_install_log_entry
 
     # Remove Hadoop Distribution File
     if [ -e "${install_prefix}/${hadoop_dist_file}" ]; then
         rm "${install_prefix}/${hadoop_dist_file}"
     fi
 
-	# Create working diretory
-	if [ ! -e ${hadoop_work_dir} ]; then
-		mkdir ${hadoop_work_dir}
-	fi
+    # Create working diretory
+    if [ ! -e ${hadoop_work_dir} ]; then
+        mkdir ${hadoop_work_dir}
+    fi
 }
 
 write_env_hadoop() {
-	echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
-	echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
-	echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_install_dir}/conf/hadoop-env.sh
-	dedup ${envfile} && source ${envfile}
-	return 0
+    echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
+    echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+    echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_install_dir}/conf/hadoop-env.sh
+    dedup ${envfile} && source ${envfile}
+    return 0
 }
 
-write_hadoop_install_log_entry() {	
+write_hadoop_install_log_entry() {  
     local entry="$(date ${date_format}) esg-compute-tools:hadoop=${hadoop_version} ${hadoop_install_dir}"
     echo ${entry} >> ${install_manifest}
-	dedup ${install_manifest}
-	return 0
+    dedup ${install_manifest}
+    return 0
 }
 
 config_hadoop() {
-	# This configuration method should prompt the user to enter settings pertaining to the type
-	# of Hadoop distribution (local, semi-distributed, cluster distributed). 
-	# There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
+    # This configuration method should prompt the user to enter settings pertaining to the type
+    # of Hadoop distribution (local, semi-distributed, cluster distributed). 
+    # There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
 
-	# TODO Fully distributed operation requires a pretty hefty amount of configuration. Using the defaults
-	# Hadoop provides is probably best. This configuration guide will be used for fully distributed configuration:
-	# http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html	
+    # TODO Fully distributed operation requires a pretty hefty amount of configuration. Using the defaults
+    # Hadoop provides is probably best. This configuration guide will be used for fully distributed configuration:
+    # http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html   
 
-	# Initialize configuration
-	echo
-	local doconfig="N" 
+    # Initialize configuration
+    echo
+    local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
         read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
         
-		# Configure Hadoop modes, HDFS, configuration
-		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
-        	echo "Configuring Hadoop..."
-		
-			# This configures both stand-alone and pseudo-distributed configuration files	
-			pseudo_distributed_config_setup
+        # Configure Hadoop modes, HDFS, configuration
+        if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+            echo "Configuring Hadoop..."
+        
+            # This configures both stand-alone and pseudo-distributed configuration files   
+            pseudo_distributed_config_setup
 
-			echo "Configure default Hadoop distribution mode for this node:"
+            echo "Configure default Hadoop distribution mode for this node:"
             # Stand-alone operation doesn't really require configuration,
             # as Hadoop just runs as a .jar file. Some examples may require an 
             # input and output directory, but it is probably overkill to configure 
             # that here. Configuring Hadoop to run local should be enough.
             echo "[1] Stand-alone operation (good for debugging)"
-			echo "[2] Pseudo-distributed operation on local node"
-			read -e -p "(Default: Stand-Alone Operation [2]): " distribution_mode
+            echo "[2] Pseudo-distributed operation on local node"
+            read -e -p "(Default: Stand-Alone Operation [2]): " distribution_mode
 
-			# Pseudo-Distributed Local Operation
+            # Pseudo-Distributed Local Operation
             if [ "$distribution_mode" = "2" ]; then
-				# To learn more about Pseudo-Distributed operation or to fine-tune your configuration,
-				# check out the Hadoop documentation here: 
-                # http://hadoop.apache.org/common/docs/r0.20.2/quickstart.html#PseudoDistributed	
-			
-				# TODO: Write configuration to hadoop-config in esg-env here...
-				echo "Hadoop: Psuedo-Distributed operation is now default for this node."
+                # To learn more about Pseudo-Distributed operation or to fine-tune your configuration,
+                # check out the Hadoop documentation here: 
+                # http://hadoop.apache.org/common/docs/r0.20.2/quickstart.html#PseudoDistributed    
             
-			# Standalone Local Operation
-			else
+                # TODO: Write configuration to hadoop-config in esg-env here...
+                echo "Hadoop: Psuedo-Distributed operation is now default for this node."
+            
+            # Standalone Local Operation
+            else
                 
-				# TODO: Set standalone as default mode in ESG configuration for hadoop
+                # TODO: Set standalone as default mode in ESG configuration for hadoop
                 echo "Hadoop: Stand-Alone Hadoop Operation is now default for this node."
-            fi	
-		
-		# Inform user of skipped configuration step
-		else
-			echo "Skipping Hadoop Configuration..."
-		fi
-	fi  
+            fi  
+        
+        # Inform user of skipped configuration step
+        else
+            echo "Skipping Hadoop Configuration..."
+        fi
+    fi  
 }
 
 start_hadoop_local_distributed() {
@@ -524,56 +524,56 @@ start_hadoop_local_distributed() {
     echo "Hadoop: Starting hadoop in local distributed mode..."
     ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
 }
-	
+    
 stop_hadoop_local_distributed() {
-	echo "Hadoop: Shutting down namenode and jobtracker..."
-    ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null	
+    echo "Hadoop: Shutting down namenode and jobtracker..."
+    ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null  
 }
 
 pseudo_distributed_config_setup() {
 
-	# TODO Best practice would be to not keep these guys in Hadoop's install tree...
-	# Create directories for standalone, local_distributed configuration
-	# For now we destroy them first.
-	rm -rf ${hadoop_install_dir}/conf/standalone
-	rm -rf ${hadoop_install_dir}/conf/local_distributed
+    # TODO Best practice would be to not keep these guys in Hadoop's install tree...
+    # Create directories for standalone, local_distributed configuration
+    # For now we destroy them first.
+    rm -rf ${hadoop_install_dir}/conf/standalone
+    rm -rf ${hadoop_install_dir}/conf/local_distributed
     rm -rf ${hadoop_install_dir}/conf/managed_cluster
-	mkdir ${hadoop_install_dir}/conf/standalone 
-	mkdir ${hadoop_install_dir}/conf/local_distributed
+    mkdir ${hadoop_install_dir}/conf/standalone 
+    mkdir ${hadoop_install_dir}/conf/local_distributed
     mkdir ${hadoop_install_dir}/conf/managed_cluster
 
-	# Copy default example config files to new configuration directories	
-	cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/standalone/
-	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/standalone/hadoop-env.sh
-	cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/standalone/slaves
-	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/local_distributed/hadoop-env.sh
-	cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/local_distributed/slaves
-	cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/managed_cluster/hadoop-env.sh
+    # Copy default example config files to new configuration directories    
+    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/standalone/
+    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/standalone/hadoop-env.sh
+    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/standalone/slaves
+    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/local_distributed/hadoop-env.sh
+    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/local_distributed/slaves
+    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/managed_cluster/hadoop-env.sh
     cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/managed_cluster/
     cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/managed_cluster/slaves
 
-	# Create configuration files for pseudo-distributed mode
-	echo '<?xml version="1.0"?>
-	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-	<configuration>
-	<property>
-	<name>fs.default.name</name>
-	<value>hdfs://localhost:9000</value>
-	</property>
-	</configuration>' >> ${hadoop_install_dir}/conf/local_distributed/core-site.xml
-
-	echo '<?xml version="1.0"?>
-	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+    # Create configuration files for pseudo-distributed mode
+    echo '<?xml version="1.0"?>
+    <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
     <configuration>
-	<property>
+    <property>
+    <name>fs.default.name</name>
+    <value>hdfs://localhost:9000</value>
+    </property>
+    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/core-site.xml
+
+    echo '<?xml version="1.0"?>
+    <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+    <configuration>
+    <property>
     <name>dfs.replication</name>
     <value>1</value>
     </property>
     </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/hdfs-site.xml
 
-	echo '<?xml version="1.0"?>
-	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-	<configuration>
+    echo '<?xml version="1.0"?>
+    <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+    <configuration>
     <property>
     <name>mapred.job.tracker</name>
     <value>localhost:9001</value>
@@ -582,75 +582,75 @@ pseudo_distributed_config_setup() {
 }
 
 test_hadoop() {
-	echo    
-	# Hadoop Test - Local (Standalone) Mode
+    echo    
+    # Hadoop Test - Local (Standalone) Mode
     test_hadoop_standalone
-	
+    
     # Hadoop Test 2 - Local Psuedo-Distributed
-	test_hadoop_pseudo_distributed
+    test_hadoop_pseudo_distributed
 }
 
 test_hadoop_standalone() {
 
-	# Hadoop Test - Local (Standalone) Mode, with wordcount example
-	echo -n "Testing Hadoop - Local (Standalone) Mode...   "
-	
-	mkdir ${hadoop_install_dir}/sandbox
-	pushd ${hadoop_install_dir} >& /dev/null
-	
-	mkdir sandbox/input
-	cp conf/*.xml sandbox/input
-	bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+' >& /dev/null
-	[ -e sandbox/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-	
-	popd >& /dev/null
-	rm -rf ${hadoop_install_dir}/sandbox
+    # Hadoop Test - Local (Standalone) Mode, with wordcount example
+    echo -n "Testing Hadoop - Local (Standalone) Mode...   "
+    
+    mkdir ${hadoop_install_dir}/sandbox
+    pushd ${hadoop_install_dir} >& /dev/null
+    
+    mkdir sandbox/input
+    cp conf/*.xml sandbox/input
+    bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+' >& /dev/null
+    [ -e sandbox/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+    
+    popd >& /dev/null
+    rm -rf ${hadoop_install_dir}/sandbox
 }
 
 hadoop_temp_local_ssh () {
-	# Setup a local ssh: this functionality is duplicated elsewhere in esg-node
-	# installer but is needed temporarily for hadoop pseudo-distribution
-	if [ ! -e ~/.ssh/id_dsa ]; then
-		ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa
-		cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
-	fi
+    # Setup a local ssh: this functionality is duplicated elsewhere in esg-node
+    # installer but is needed temporarily for hadoop pseudo-distribution
+    if [ ! -e ~/.ssh/id_dsa ]; then
+        ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa
+        cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+    fi
 }
 
 test_hadoop_pseudo_distributed() {
-	
-	# Generate temporary ssh keys
-	hadoop_temp_local_ssh
-
-	echo "Begin Testing Hadoop - Pseudo-Distributed Mode...   "	
-    if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
-		#${hadoop_install_dir}/bin/hadoop namenode -format
-		start_hadoop_local_distributed
-
-		${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
-		${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
-		# Fix hard-coding yo...
-		${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
-		echo -n "Testing Hadoop - Pseudo-Distributed Mode...   "
-		[ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
-		${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
     
-		stop_hadoop_local_distributed
+    # Generate temporary ssh keys
+    hadoop_temp_local_ssh
 
-	else
-		echo
+    echo "Begin Testing Hadoop - Pseudo-Distributed Mode...   " 
+    if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
+        #${hadoop_install_dir}/bin/hadoop namenode -format
+        start_hadoop_local_distributed
+
+        ${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
+        ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
+        # Fix hard-coding yo...
+        ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
+        echo -n "Testing Hadoop - Pseudo-Distributed Mode...   "
+        [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+        ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
+        ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
+    
+        stop_hadoop_local_distributed
+
+    else
+        echo
         echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
     fi
 }
 
 clean_hadoop() {
-	doit="N"
+    doit="N"
     if [ -e ${hadoop_install_dir} ]; then
         read -e -p "remove mapreduce framework Hadoop? (${hadoop_install_dir}) [y/N]: " doit
         if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-        	echo "removing ${hadoop_install_dir}"
-        	rm -rf ${hadoop_install_dir}
-        	[ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
+            echo "removing ${hadoop_install_dir}"
+            rm -rf ${hadoop_install_dir}
+            [ $? != 0 ] && echo "ERROR: Unable to remove ${hadoop_install_dir}"
             remove_env HADOOP_HOME
             remove_install_log_entry hadoop
         fi  
@@ -662,17 +662,17 @@ clean_hadoop() {
 #####
 
 setup_zookeeper() {
-	# Check ZooKeeper Version
-	echo
+    # Check ZooKeeper Version
+    echo
     echo -n "Checking for Zookeeper >= ${zookeeper_min_version}"
-	if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then	
-	    local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
-		check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
+    if [ -e ${zookeeper_install_dir} ] && [ -x ${zookeeper_install_dir}/bin/zkServer.sh ]; then 
+        local zookeeper_current_version=$(/bin/ls ${zookeeper_install_dir} | egrep '^zookeeper.*jar$' | sed 's/[^0-9.]*\([0-9.]*\)\..*/\1/')
+        check_version_helper $zookeeper_current_version ${zookeeper_min_version} ${zookeeper_max_version}
         [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-	else
-		echo
-		echo "No Zookeeper installation detected"
-	fi
+    else
+        echo
+        echo "No Zookeeper installation detected"
+    fi
 
     echo
     echo "*****************************"
@@ -680,39 +680,39 @@ setup_zookeeper() {
     echo "*****************************"
     echo
 
-	# Retrieve Zookeeper Distribution File
-	local zookeeper_dist_file=${zookeeper_dist_url##*/}
-	local zookeeper_dist_dir=$(echo ${zookeeper_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+    # Retrieve Zookeeper Distribution File
+    local zookeeper_dist_file=${zookeeper_dist_url##*/}
+    local zookeeper_dist_dir=$(echo ${zookeeper_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
 
-	# Check for empty distribution file (size 0)
-	# TODO
+    # Check for empty distribution file (size 0)
+    # TODO
 
-	if [ ! -e ${zookeeper_dist_dir} ]; then
-		echo "Don't see Zookeeper distribution directory ${zookeeper_dist_dir}"
-		wget -O "${install_prefix}/${zookeeper_dist_file}" ${zookeeper_dist_url}
-		[ $? != 0 ] && echo " ERROR: Could not download Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
-		echo "Unpacking ${zookeeper_dist_file}..."
-		tar xzf ${install_prefix}/${zookeeper_dist_file} -C ${install_prefix}
-		mv "${install_prefix}/${zookeeper_dist_dir}" ${zookeeper_install_dir}
-		[ $? != 0 ] && echo " ERROR: Could not extract Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
-	fi
+    if [ ! -e ${zookeeper_dist_dir} ]; then
+        echo "Don't see Zookeeper distribution directory ${zookeeper_dist_dir}"
+        wget -O "${install_prefix}/${zookeeper_dist_file}" ${zookeeper_dist_url}
+        [ $? != 0 ] && echo " ERROR: Could not download Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
+        echo "Unpacking ${zookeeper_dist_file}..."
+        tar xzf ${install_prefix}/${zookeeper_dist_file} -C ${install_prefix}
+        mv "${install_prefix}/${zookeeper_dist_dir}" ${zookeeper_install_dir}
+        [ $? != 0 ] && echo " ERROR: Could not extract Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
+    fi
 
     # Add Zookeeper home to environment and install manifest
-	write_env_zookeeper
-	write_zookeeper_install_log_entry
+    write_env_zookeeper
+    write_zookeeper_install_log_entry
 }
 
-write_env_zookeeper() {	
-	echo "export ZOOKEEPER_HOME=${zookeeper_install_dir}" >> ${envfile}
-	dedup ${envfile} && source ${envfile}
-	return 0
+write_env_zookeeper() { 
+    echo "export ZOOKEEPER_HOME=${zookeeper_install_dir}" >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
 }
 
 write_zookeeper_install_log_entry() {
     local entry="$(date ${date_format}) esg-compute-tools:zookeeper=${zookeeper_version} ${zookeeper_install_dir}"
     echo ${entry} >> ${install_manifest}
-	dedup ${install_manifest}
-	return 0
+    dedup ${install_manifest}
+    return 0
 }
 
 config_zookeeper() {
@@ -824,13 +824,13 @@ stop_zookeeper() {
 }
 
 clean_zookeeper() {
-	doit="N"
+    doit="N"
     if [ -e ${zookeeper_install_dir} ]; then
         read -e -p "remove cluster management tool Zookeeper? (${zookeeper_install_dir}) [y/N]: " doit
         if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-        	echo "removing ${zookeeper_install_dir}"
-        	rm -rf ${zookeeper_install_dir}
-        	[ $? != 0 ] && echo "ERROR: Unable to remove ${zookeeper_install_dir}"
+            echo "removing ${zookeeper_install_dir}"
+            rm -rf ${zookeeper_install_dir}
+            [ $? != 0 ] && echo "ERROR: Unable to remove ${zookeeper_install_dir}"
             remove_env ZOOKEEPER_HOME
             remove_install_log_entry zookeeper
         fi  
@@ -842,93 +842,93 @@ clean_zookeeper() {
 #####
 
 clean_compute_tools() {
-	# TODO: A few of these computation frameworks rely on one another,
-	# so uninstalling portions of this suite may leave parts unstable. Some
-	# sort of sanity check would be useful here.
+    # TODO: A few of these computation frameworks rely on one another,
+    # so uninstalling portions of this suite may leave parts unstable. Some
+    # sort of sanity check would be useful here.
 
-	clean_spark
-	clean_mesos
-	clean_hadoop
-	clean_zookeeper
+    clean_spark
+    clean_mesos
+    clean_hadoop
+    clean_zookeeper
 }
 
 test_compute_tools() {
-	# Method to run test suites of all compute tools.
+    # Method to run test suites of all compute tools.
 
-	echo
-	echo "---------------------------------"
-	echo " Testing ESGF Node Compute Tools "
-	echo "---------------------------------"
-	echo
+    echo
+    echo "---------------------------------"
+    echo " Testing ESGF Node Compute Tools "
+    echo "---------------------------------"
+    echo
 
-	test_hadoop
-	test_zookeeper
-	test_mesos
-	test_spark
+    test_hadoop
+    test_zookeeper
+    test_mesos
+    test_spark
 }
 
 config_compute_tools() {
-	# Method to run configuration methods of all compute tools.
-	
-	echo
-	echo "---------------------------------"
-	echo " Configuring ESGF Node Compute Tools "
-	echo "---------------------------------"
-	echo
+    # Method to run configuration methods of all compute tools.
+    
+    echo
+    echo "---------------------------------"
+    echo " Configuring ESGF Node Compute Tools "
+    echo "---------------------------------"
+    echo
 
-	config_hadoop
-	config_zookeeper
-	config_mesos
-	config_spark
+    config_hadoop
+    config_zookeeper
+    config_mesos
+    config_spark
 }
 
 setup_compute_tools() {
-	echo
-	echo "-------------------------------------------------------------"
-	echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Mesos, Spark}"
-	echo "-------------------------------------------------------------"
+    echo
+    echo "-------------------------------------------------------------"
+    echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Mesos, Spark}"
+    echo "-------------------------------------------------------------"
 
-	# The optimal install order, as below, depends on the following:
-	# 1. Hadoop
-	# 2. Zookeeper
-	# 3. Mesos
-	# 4. Spark (Requires Mesos for distributed computation)
-	# Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
+    # The optimal install order, as below, depends on the following:
+    # 1. Hadoop
+    # 2. Zookeeper
+    # 3. Mesos
+    # 4. Spark (Requires Mesos for distributed computation)
+    # Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 
-	echo
-	echo "---------------------------------"
-	echo " Installing Hadoop - Latest Stable Version"
-	echo "---------------------------------"
-	setup_hadoop
-	config_hadoop	
-	test_hadoop
+    echo
+    echo "---------------------------------"
+    echo " Installing Hadoop - Latest Stable Version"
+    echo "---------------------------------"
+    setup_hadoop
+    config_hadoop   
+    test_hadoop
 
-	echo
-	echo "---------------------------------"
-	echo " Installing Zookeeper"
-	echo "---------------------------------"
-	setup_zookeeper
-	config_zookeeper
-	test_zookeeper
+    echo
+    echo "---------------------------------"
+    echo " Installing Zookeeper"
+    echo "---------------------------------"
+    setup_zookeeper
+    config_zookeeper
+    test_zookeeper
 
-	echo
-	echo "---------------------------------"
-	echo " Installing Mesos and Mesos-Compatible Hadoop"
-	echo "---------------------------------"
-	setup_mesos
-	config_mesos
-	test_mesos
+    echo
+    echo "---------------------------------"
+    echo " Installing Mesos and Mesos-Compatible Hadoop"
+    echo "---------------------------------"
+    setup_mesos
+    config_mesos
+    test_mesos
 
-	echo
-	echo "---------------------------------"
-	echo " Installing Spark"
-	echo "---------------------------------"
-	setup_spark
-	config_spark
-	test_spark
+    echo
+    echo "---------------------------------"
+    echo " Installing Spark"
+    echo "---------------------------------"
+    setup_spark
+    config_spark
+    test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
-	setup_compute_tools
+    setup_compute_tools
 fi

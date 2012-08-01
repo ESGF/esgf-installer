@@ -1262,7 +1262,7 @@ write_postgress_install_log() {
 
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 start_postgress() {
-    _is_managed_db && echo "Please be sure externally managed database is running at this point..." && return 0
+    _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
 
     check_postgress_process && return 1
 
@@ -1281,7 +1281,7 @@ start_postgress() {
 
 stop_postgress() {
 
-    _is_managed_db && echo "Please be sure externally managed database is NOT running at this point..." && return 0
+    _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
 
     sleep 1
     #Stop the database
@@ -5491,7 +5491,7 @@ initial_setup_questionnaire() {
         _is_managed_db
         _get_db_conn_str_questionnaire
     else
-        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [externally managed = ${db_managed}]"
+        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [external = ${db_managed}]"
     fi
 
     #--------------------------------

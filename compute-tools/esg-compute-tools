@@ -171,7 +171,7 @@ setup_mesos() {
 	# Retrieve Mesos Source and build after configuration for ESGF tools
 	# Uses: Hadoop, Zookeeper, Java, Python
 	git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-	(cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java-home && make)
+	(cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java=/usr/local/java --disable-python --disable-webui && make)
 	# TODO let's make this config tastier...
 
 	# TODO make check hangs on zookeeper install
@@ -215,7 +215,24 @@ config_mesos() {
 	# First we check for Hadoop configuration - if it exists, request reconfigure, if not, 
 	# proceed automatically.
 	# TODO Check existence of Hadoop relevant files
-echo	
+
+    # The following is a bit of a hack, but in polite terms, a "work in progress".
+	echo
+    doconfig="N" 
+    if [ -e ${mesos_install_dir/hadoop} ]; then
+		read -e -p "Configure Mesos-Compatible Hadoop Installation? [y/N]: " doconfig
+
+		# Configure Hadoop environment for Mesos
+		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+        	echo "Configuring Hadoop for Mesos..."
+            
+            # 
+       
+		# Inform user of skipped configuration step
+		else
+			echo "Skipping Mesos Hadoop Configuration..."
+		fi
+    fi
 }
 
 test_mesos() {
@@ -238,12 +255,14 @@ test_mesos() {
 
 	echo "Test 2: Mesos with Hadoop Framework, [TODO Zookeeper Quorum Management]"
 	# Starts Zookeeper, starts Mesos, runs Hadoop pseudo-distributed test job on Mesos
-	echo -n "Tested Mesos Local Cluster with Spark...   "
-	echo "[ TBD ]"
+    # TODO Starts Zookeeper
+    
+
+	echo -n "Tested Mesos Local Cluster with Legacy Hadoop...   "
 
 	echo "Test 3: Mesos with Hadoop, Spark, and [TODO Zookeeper Quorum Management]"
 	# Starts Zookeeper, starts Mesos, runs Spark job and Hadoop job on mesos
-	echo -n "Tested Mesos Local Cluster with Spark...   "
+	echo -n "Tested Mesos Local Cluster with Hadoop, Spark...   "
 	echo "[ TBD ]"
 
 }
@@ -709,10 +728,8 @@ config_zookeeper() {
         
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
-        	echo "Configuring Zookeeper..."
        
-			# TODO Configure Zookeeper here 
-		
+	        echo	
 		# Inform user of skipped configuration step
 		else
 			echo "Skipping Zookeeper Configuration..."
@@ -807,7 +824,7 @@ setup_compute_tools() {
 
 	echo
 	echo "---------------------------------"
-	echo " Installing Hadoop"
+	echo " Installing Hadoop - Latest Stable Version"
 	echo "---------------------------------"
 	setup_hadoop
 	config_hadoop	
@@ -823,7 +840,7 @@ setup_compute_tools() {
 
 	echo
 	echo "---------------------------------"
-	echo " Installing Mesos"
+	echo " Installing Mesos and Mesos-Compatible Hadoop"
 	echo "---------------------------------"
 	setup_mesos
 	config_mesos

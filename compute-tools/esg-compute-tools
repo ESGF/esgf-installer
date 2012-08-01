@@ -696,12 +696,6 @@ setup_zookeeper() {
 		[ $? != 0 ] && echo " ERROR: Could not extract Zookeeper: ${zookeeper_dist_file}" && popd && checked_done 1
 	fi
 
-	# Configure Zookeeper environment (this is temporary)
-	mkdir ${zookeeper_install_dir}/zookeeper_working_sandbox 
-	echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo.cfg
-	echo "dataDir=${zookeeper_install_dir}/zookeeper_working_sandbox" >> ${zookeeper_install_dir}/conf/zoo.cfg
-	echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo.cfg
-
     # Add Zookeeper home to environment and install manifest
 	write_env_zookeeper
 	write_zookeeper_install_log_entry
@@ -729,9 +723,63 @@ config_zookeeper() {
 		# Configure Hadoop modes, HDFS, configuration
 		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
        
-	        echo	
-		# Inform user of skipped configuration step
-		else
+            echo "Creating Zookeeper working directories..."
+            rm -r ${zookeeper_install_dir}/zookeeper_working            
+            mkdir ${zookeeper_install_dir}/zookeeper_working
+            mkdir ${zookeeper_install_dir}/zookeeper_working/standalone
+            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication
+            mkdir ${zookeeper_install_dir}/zookeeper_working/cluster_replication
+
+	        echo "Configuring Zookeeper for standalone local operation..."
+        	echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_standalone.cfg
+	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/standalone" >> ${zookeeper_install_dir}/conf/zoo_standalone.cfg
+	        echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo_standalone.cfg
+
+            # This is a bit wordy...but what else to do? Engage beast mode!
+            echo "Configuring Zookeeper for locally replicated operation..."
+
+            # We also need a separate configuration for each locally replicated zookeeper configuration...
+        	echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_1" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+	        echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+            echo "localhost.1=zoo1:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+            echo "localhost.2=zoo2:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+            echo "localhost.3=zoo3:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
+        	
+            echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+	        echo "clientPort=2182" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+            echo "localhost.1=zoo1:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+            echo "localhost.2=zoo2:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+            echo "localhost.3=zoo3:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+        	
+            echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_3" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+	        echo "clientPort=2183" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+            echo "localhost.1=zoo1:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+            echo "localhost.2=zoo2:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+            echo "localhost.3=zoo3:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
+            
+            # Now we create a myid file for each Zookeeper server in its data directory. This line just contains
+            # a single character for each server's id
+            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_1
+            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_2
+            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_3
+            echo "1" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_1/myid
+            echo "2" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_2/myid
+            echo "3" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_3/myid
+
+            # TODO echo Configuring Zookeeper for cluster operation
+            # This will be a lot like local distributed except with fancier servers
+		
+        else
+            # Inform user of skipped configuration step
 			echo "Skipping Zookeeper Configuration..."
 		fi
 	fi  

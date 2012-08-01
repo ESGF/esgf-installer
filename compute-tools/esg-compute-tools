@@ -128,7 +128,8 @@ hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
 # External programs' configuration variables
 #-------------------------------
 zookeeper_client_port=2181
-zookeeper_workdir=${workdir}/zookeeper
+zookeeper_workdir=${zookeeper_install_dir}/zookeeper_working
+zookeeper_confdir=${zookeeper_install_dir}/conf
 
 #-------------------------------
 # Internal script variables
@@ -715,94 +716,96 @@ write_zookeeper_install_log_entry() {
 }
 
 config_zookeeper() {
-	echo
+    echo
     doconfig="N" 
     if [ -e ${zookeeper_install_dir} ]; then
-		read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
+        read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
-		# Configure Hadoop modes, HDFS, configuration
-		if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+    if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
        
             echo "Creating Zookeeper working directories..."
-            rm -r ${zookeeper_install_dir}/zookeeper_working            
-            mkdir ${zookeeper_install_dir}/zookeeper_working
-            mkdir ${zookeeper_install_dir}/zookeeper_working/standalone
-            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication
-            mkdir ${zookeeper_install_dir}/zookeeper_working/cluster_replication
+            if [ -e ${zookeeper_workdir} ]; then
+                rm -rf ${zookeeper_workdir}         
+            fi    
+            mkdir ${zookeeper_workdir}
+            mkdir ${zookeeper_workdir}/standalone
+            mkdir ${zookeeper_workdir}/local_replication
+            mkdir ${zookeeper_workdir}/cluster_replication
 
-	        echo "Configuring Zookeeper for standalone local operation..."
-        	echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_standalone.cfg
-	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/standalone" >> ${zookeeper_install_dir}/conf/zoo_standalone.cfg
-	        echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo_standalone.cfg
+            echo "Configuring Zookeeper for standalone local operation..."
+            echo "tickTime=2000" >> ${zookeeper_confdir}/zoo_standalone.cfg
+            echo "dataDir=${zookeeper_workdir}/standalone" \
+             >> ${zookeeper_confdir}/zoo_standalone.cfg
+            echo "clientPort=$zookeeper_client_port" \
+             >> ${zookeeper_confdir}/zoo_standalone.cfg
 
-            # This is a bit wordy...but what else to do? Engage beast mode!
+            # This is a bit wordy...but what else to do? Engage beast mode! We
+            # need a separate configuration for each locally replicated 
+            # zookeeper configuration. For now, just create 5 local replicas,
+            # though TODO make this a user provided configuration value later.
+            # 5 is a good number for zookeeper replications because it is 
+            # greater than 3 (magic number), providing outliers; also, it is 
+            # because Zookeeper only supports failures that can result in a
+            # majority. A 6-member quorum can only support 2 failures, as
+            # 3 failures would result in a lack of majority. A 5-replica local
+            # Zookeeper can support two failures, as three live instances still
+            # provide a majority.
+            
             echo "Configuring Zookeeper for locally replicated operation..."
+            local default_client_port=$zookeeper_client_port
+            local start_host=2888
+            local end_host=3888
+            local quorum_size=5
+            local zk_replicated_config=${zookeeper_confdir}/zoo_local_replicated
+            local zk_datadir=${zookeeper_workdir}/local_replication/local
 
-            # We also need a separate configuration for each locally replicated zookeeper configuration...
-        	echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_1" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-	        echo "clientPort=2181" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            echo "server.1=localhost:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            echo "server.2=localhost:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            echo "server.3=localhost:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            echo "server.4=localhost:2891:3891" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_1.cfg
-            
-            echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-	        echo "clientPort=2182" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-            echo "server.1=localhost:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-            echo "server.2=localhost:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-            echo "server.3=localhost:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
-            echo "server.4=localhost:2891:3891" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_2.cfg
+            for (( n=1; n <= $quorum_size; n++ ))
+            do
+                # Generate configuration file for this server instance
+                local nth_zk_replicated_config=${zk_replicated_config}_$n.cfg
+                local nth_zk_datadir=${zk_datadir}_$n
+                local nth_client_port=$((default_client_port++))
 
-            echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_3" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-	        echo "clientPort=2183" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            echo "server.1=localhost:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            echo "server.2=localhost:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            echo "server.3=localhost:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            echo "server.4=localhost:2891:3891" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_3.cfg
-            
-            echo "tickTime=2000" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-	        echo "dataDir=${zookeeper_install_dir}/zookeeper_working/local_replication/local_4" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-	        echo "clientPort=2184" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            echo "initLimit=5" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            echo "syncLimit=2" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            echo "server.1=localhost:2888:3888" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            echo "server.2=localhost:2889:3889" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            echo "server.3=localhost:2890:3890" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            echo "server.4=localhost:2891:3891" >> ${zookeeper_install_dir}/conf/zoo_local_replicated_4.cfg
-            
-            # Now we create a myid file for each Zookeeper server in its data directory. This line just contains
-            # a single character for each server's id
-            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_1
-            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_2
-            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_3
-            mkdir ${zookeeper_install_dir}/zookeeper_working/local_replication/local_4
-            echo "1" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_1/myid
-            echo "2" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_2/myid
-            echo "3" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_3/myid
-            echo "4" >> ${zookeeper_install_dir}/zookeeper_working/local_replication/local_4/myid
+                # Create a data directory for this server instance, and a myid
+                # file to identify it in runtime. The file contains a single
+                # ASCII character for the server's id
+                mkdir $nth_zk_datadir
+                echo "$n" >> $nth_zk_datadir/myid
 
+                echo "tickTime=2000" >> $nth_zk_replicated_config
+                echo "dataDir=$nth_zk_datadir" >> $nth_zk_replicated_config
+                echo "clientPort=$nth_client_port" >> $nth_zk_replicated_config
+                echo "initLimit=5" >> $nth_zk_replicated_config
+                echo "syncLimit=2" >> $nth_zk_replicated_config
+                
+                # Every Zookeeper instance must be aware of its fellow servers.
+                # This coordination is achieved by writing a server:host line
+                # to each server's configuration.
+
+                local zhost_1=$start_host
+                local zhost_2=$end_host
+                for (( zk=1; zk <= $quorum_size; zk++ ))
+                do
+                    echo "server.$zk=localhost:$((zhost_1++)):$((zhost_2++))" \
+                     >> $nth_zk_replicated_config
+                done
+            
+            done
+            
             # TODO echo Configuring Zookeeper for cluster operation
-            # This will be a lot like local distributed except with fancier servers
-		
+            # This will be a lot like local replicated setup, except across
+            # the cluster. More testing will be needed for that.
+
         else
             # Inform user of skipped configuration step
-			echo "Skipping Zookeeper Configuration..."
-		fi
-	fi  
+            echo "Skipping Zookeeper Configuration..."
+        fi
+    fi  
 }
 
 test_zookeeper() {
-	# Basic zookeeper test for client connection	
-	echo
+    # Basic zookeeper test for client connection
+    echo
     echo "Zookeeper Test 1: Standalone Local Server/Client Connection"
     ${zookeeper_install_dir}/bin/zkServer.sh start ${zookeeper_install_dir}/conf/zoo_standalone.cfg
     ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit

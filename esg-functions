@@ -1,19 +1,20 @@
 #!/bin/bash
 
 #####
-# esgf-functions: ESGF Node Application Stack functions
+# esg-functions: ESGF Node Application Stack Functions
+# description: Installer Functions for the ESGF Node application stack
 #
 #****************************************************************************
 #*                                                                          *
 #*  Organization: Lawrence Livermore National Lab (LLNL)                    *
 #*   Directorate: Computation                                               *
 #*    Department: Computing Applications and Research                       *
-#*	Division: S&T Global Security					    *
-#*	  Matrix: Atmospheric, Earth and Energy Division		    *
-#*	 Program: PCMDI							    *
-#*	 Project: Earth Systems Grid Fed (ESGF) Node Software Stack	    *
-#*  First Author: Gavin M. Bell (gavin@llnl.gov)			    *
-#*									    *
+#*      Division: S&T Global Security                                       *
+#*        Matrix: Atmospheric, Earth and Energy Division                    *
+#*       Program: PCMDI                                                     *
+#*       Project: Earth Systems Grid Fed (ESGF) Node Software Stack         *
+#*  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
+#*                                                                          *
 #****************************************************************************
 #*                                                                          *
 #*   Copyright (c) 2009, Lawrence Livermore National Security, LLC.         *
@@ -29,7 +30,7 @@
 #*    http://esgf.org/LICENSE                                               *
 #*                                                                          *
 #*   * Redistribution and use in source and binary forms, with or           *
-#*   without modification, are permitted provided that the following	    *
+#*   without modification, are permitted provided that the following        *
 #*   conditions are met:                                                    *
 #*                                                                          *
 #*   * Redistributions of source code must retain the above copyright       *
@@ -37,25 +38,25 @@
 #*                                                                          *
 #*   * Redistributions in binary form must reproduce the above copyright    *
 #*   notice, this list of conditions and the disclaimer (as noted below)    *
-#*   in the documentation and/or other materials provided with the	        *
+#*   in the documentation and/or other materials provided with the          *
 #*   distribution.                                                          *
 #*                                                                          *
 #*   Neither the name of the LLNS/LLNL nor the names of its contributors    *
-#*   may be used to endorse or promote products derived from this           * 
+#*   may be used to endorse or promote products derived from this           *
 #*   software without specific prior written permission.                    *
 #*                                                                          *
 #*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    *
-#*   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT	    *
-#*   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS	    *
+#*   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      *
+#*   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS      *
 #*   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE    *
-#*   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR	    *
+#*   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR     *
 #*   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,           *
-#*   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT	    *
-#*   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF	    *
+#*   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       *
+#*   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF       *
 #*   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND    *
-#*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	    *
-#*   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT	    *
-#*   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF	    *
+#*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,     *
+#*   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT     *
+#*   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     *
 #*   SUCH DAMAGE.                                                           *
 #*                                                                          *
 #****************************************************************************
@@ -73,13 +74,13 @@ verbose_print() { ((VERBOSE)) && echo $@; return 0; }
 debug_print() { ((DEBUG)) && echo -e $@ >&2; return 0; }
 
 _trimline() {
-	# Strips leading and trailing whitespace even if IFS is set, also
-	# removing the final newline on every line of input (i.e. the
-	# result of using this on a multi-line string will be a
-	# single-line string with no space between the last word on one
-	# line and the first word on the next, with no leading or trailing
-	# whitespace)
-	echo "$@" | perl -p -e 's/^\s+|\s+$//g';
+        # Strips leading and trailing whitespace even if IFS is set, also
+        # removing the final newline on every line of input (i.e. the
+        # result of using this on a multi-line string will be a
+        # single-line string with no space between the last word on one
+        # line and the first word on the next, with no leading or trailing
+        # whitespace)
+    echo "$@" | perl -p -e 's/^\s+|\s+$//g';
 }
 
 _version_cmp() {
@@ -169,7 +170,7 @@ _version_segment_cmp() {
 
     for index in `seq 1 $VERSIONLENGTH` ; do
         if ( [ -z ${VERSIONA[$index]##*[!0-9]*} ] ||
-             [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
+                [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
             # Non-numeric comparison
             if [[ ${VERSIONA[$index]} > ${VERSIONB[$index]} ]] ; then
                 echo "1"
@@ -195,6 +196,20 @@ _version_segment_cmp() {
 #-------------------------------
 # Version Checking Utility Functions
 #-------------------------------
+checked_done() {
+    if (($1)); then
+        echo ""
+        echo "Sorry..."
+        echo "This action did not complete successfully"
+        echo "Please re-run this task until successful before continuing further"
+        echo ""
+        echo "Also please review the installation FAQ it may assist you"
+        echo "http://esgf.org/wiki/ESGFNode/FAQ"
+        echo ""
+        exit 1
+    fi
+    return 0
+}
 
 check_version_atleast() {
     # Takes the following arguments:
@@ -205,15 +220,15 @@ check_version_atleast() {
     # second and 1 otherwise.
     #
     # Returns 255 if called with less than two arguments.
-
+    
     debug_print "DEBUG: check_version_atleast \$1='$1'  \$2='$2'"
-
+    
     if [[ -z "${1}" || -z "${2}" ]] ; then
         echo "CRITICAL FAILURE: check_version_atleast called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2')" >&2
         return 255
     fi
-
+    
     if [ "$(_version_cmp ${1} ${2})" -ge 0 ] ; then return 0 ; fi
     return 1;
 }
@@ -231,13 +246,13 @@ check_version_between() {
     # Returns 255 if called with less than three arguments.
 
     debug_print "DEBUG: check_version_between \$1='$1'  \$2='$2'  \$3='$3'"
-
+    
     if [[ -z "${1}" || -z "${2}" || -z "${3}" ]] ; then
         echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
     fi
-
+    
     if [ "$(_version_cmp ${1} ${2})" -ge 0 ] \
         && [ "$(_version_cmp ${1} ${3})" -le 0 ] ; then
         return 0 ;
@@ -268,7 +283,7 @@ check_version_helper() {
 
     # Split a lone argument
     [[ $# == 1 ]] && set -- $1
-
+    
     # Spit out a nasty error message and return with 255 if there are
     # insufficient arguments (this causes the version check to fail,
     # but does NOT abort the script -- watch for the CRITICAL FAILURE
@@ -278,7 +293,7 @@ check_version_helper() {
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
     fi   
-
+    
     if [ -z "${3}" ] ; then 
         # Only two arguments, check for a minimum version
         check_version_atleast ${1} ${2} 
@@ -374,7 +389,7 @@ check_version_with() {
     [ -z "${3}" ] && return 0
 
     local current_version=$(eval ${version_command})
-    if [ -z "${current_version}" ] || [ $? != 0 ] ; then
+    if [ $? != 0 ] ; then
         echo " WARNING: Could not detect version of ${app_name##*/}"
         return 2
     fi
@@ -455,7 +470,7 @@ check_app_version() {
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
-
+    
     printf "\nSorry, the detected version of ${app_dir##*/} [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
@@ -464,10 +479,10 @@ check_app_version() {
 # Environment Management Utility Functions
 #----------------------------------------------------------
 remove_env() {
-	local key=${1}
-	((DEBUG)) && echo "removing ${key}'s environment from ${envfile}"
-	sed -i '/'${key}'/d' ${envfile}
-	return $?
+    local key=${1}
+    ((DEBUG)) && echo "removing ${key}'s environment from ${envfile}"
+    sed -i '/'${key}'/d' ${envfile}
+    return $?
 }
 
 remove_install_log_entry() {
@@ -499,3 +514,348 @@ dedup_properties() {
     echo "$tmp" > ${infile}
 }
 
+#####
+# Get Current IP Address - Needed (at least temporarily) for Mesos Master
+####
+#Takes a single interface value
+# "eth0" or "lo", etc...
+get_config_ip() { 
+    ifconfig $1 | grep "inet[^6]" | awk '{ gsub (" *inet [^:]*:",""); print $1}'
+}
+
+#----------------------------------------------------------
+# Process Launching and Checking...
+#----------------------------------------------------------
+#This function is for repeatedly running a function until it returns
+#true and/or the number of iterations have been reached.  The format of
+#the args for this call are as follows:
+#
+# pcheck <num_of_iterations> <wait_time_in_seconds> <return_on_true> -- [function name] <args...>
+# The default operation is the run the function once a scecond for 5 seconds or until it returns true
+# The default value of iterations is 5
+# The default value of wait time is  1 (second)
+# The default value of return on true is 1 (no more iterations after function/command succeeds)
+# the "--" is a literal argument that MUST precede the function or command you wish to call
+#
+# Ex:
+# Run a function or command foo 3x waiting 2 seconds between and returning after function/command success
+# pcheck 3 2 1 -- foo arg1 arg2
+# Run a function or command foo using defaults
+# pcheck -- foo arg1 arg2
+#
+# Returns the value from the final execution of the function or command.
+pcheck() {
+    debug_print "pcheck $@"
+    #initial default values
+    local iterations=5
+    local wait_time=1
+    local return_on_true=1
+    local task_function=""
+
+    local_vars=(iterations wait_time return_on_true)
+    local i=0
+    while [[ -n "$1" ]]; do
+        if [ "$1" == "--" ] ; then
+            shift
+            task_function=$1
+            shift
+            break
+        fi
+        eval local ${local_vars[((i++))]}=$1
+        shift
+    done
+    debug_print "iterations = ${iterations}"
+    debug_print "wait_time = ${wait_time}"
+    debug_print "return_on_true = ${return_on_true}"
+    debug_print "task_function = ${task_function}"
+    debug_print "args = [$@]"
+
+    local ret=1
+    while [[ $iterations > 0 ]]; do
+        echo -n "."
+        eval ${task_function} $@
+        ret=$?
+        ((return_on_true)) && [ $ret == 0 ] && break
+        ((iterations != 1)) && sleep ${wait_time}
+        : $((iterations--))
+    done
+    [ $ret == 0 ] && printf "\n${task_function} [OK]\n" || printf "\n${task_function} [FAIL]\n"
+    return $ret
+}
+
+#Utility function, wraps md5sum so it may be used on either mac or
+#linux machines
+md5sum_() {
+    hash -r
+    if type md5sum >& /dev/null; then
+        echo $(md5sum $@)
+    else
+        echo $(md5 $@ | sed -n 's/MD5[ ]*\(.*\)[^=]*=[ ]*\(.*$\)/\2 \1/p')
+    fi
+}
+
+#----------------------------------------------------------
+# Path munging...
+#----------------------------------------------------------
+_path_unique() {
+# Prints a unique path string
+#
+# The first (leftmost) instance of a path entry will be the one that
+# is preserved.
+#
+# If $1 is specified, it will be taken as the string to deduplicate,
+# otherwise $PATH is used.
+#
+# If $2 is specified, it will be taken as the path separator, which
+# otherwise defaults to ':'
+#
+    local path_string=${1:-${PATH}}
+    local pathsep=${2:-":"}
+
+    echo -n ${path_string} | tr "${pathsep}" '\n' \
+        | perl -e 'while (<>) { print $_ unless $s{$_}++; }' \
+        | tr '\n' "${pathsep}"
+}
+
+_readlinkf() {
+    # This is a portable implementation of GNU's "readlink -f" in
+    # bash/zsh, following symlinks recursively until they end in a
+    # file, and will print the full dereferenced path of the specified
+    # file even if the file isn't a symlink.
+    #
+    # Loop detection exists, but only as an abort after passing a
+    # maximum length.
+
+    local start_dir=$(pwd)
+    local file=${1}
+    cd $(dirname ${file})
+    file=$(basename ${file})
+
+    # Iterate down symlinks.  If we exceed a maximum number symlinks, assume that
+    # we're looped and die horribly.
+    local maxlinks=20
+    local count=0
+    local current_dir
+    while [ -L "${file}" ] ; do
+        file=$(readlink ${file})
+        cd $(dirname ${file})
+        file=$(basename ${file})
+        ((count++))
+        if (( count > maxlinks )) ; then
+            current_dir=$(pwd -P)
+            echo "CRITICAL FAILURE: symlink loop detected on ${current_dir}/${file}"
+            cd ${start_dir}
+            exit ${count}
+        fi
+    done
+    current_dir=$(pwd -P)
+    echo "${current_dir}/${file}"
+    cd ${start_dir}
+}
+
+#----------------------------------------------------------
+# Property reading and writing...
+#----------------------------------------------------------
+#Load properties from a java-style property file
+#providing them as script variables in this context
+#arg 1 - optional property file (default is ${config_file})
+load_properties() {
+    ((DEBUG)) && echo "load properties(): "
+    local property_file=${1:-${config_file}}
+    [ ! -r "${property_file}" ] && return 1
+    dedup_properties ${property_file}
+    IFS="="
+    local count=0
+    while read key value; do
+        local key=$(echo $key |sed 's/\./_/g')
+        [ -z "${key}" ] && continue
+        ((DEBUG)) && echo -n "loading... "
+        ((DEBUG)) && echo -n "[${key}] -> "
+        ((DEBUG)) && echo "[${value}]"
+        eval "${key}=\"${value}\""
+        ((count++))
+    done < ${property_file}
+    echo "Loaded (imported) ${count} properties from ${property_file}"
+    unset IFS
+    return 0
+}
+
+#Gets a single property from a string arg and turns it into a shell var
+#arg 1 - the string that you wish to get the property of (and make a variable)
+#arg 2 - optional default value to set
+get_property() {
+    ((DEBUG)) && echo -n "get_property(): "
+    local in_key=$1
+    ((DEBUG)) && echo -n "[${in_key}] -> "
+    local default=$2
+    local prop_key=$(echo ${in_key} |sed 's/_/\./g')
+    #dedup_properties ${config_file}
+    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
+    [ -z "${value}" ] && [ -n "${default}" ] && value="${default}"
+    ((DEBUG)) && echo "[${value}]"
+    eval "${in_key}=\"${value}\""
+    return 0
+}
+
+#Gets a single property from the arg string and turns the alias into a
+#shell var assigned to the value fetched.
+#arg 1 - the string that you wish to get the property of (and make a variable)
+#arg 2 - the alias string value of the variable you wish to create and assign
+#arg 3 - the optional default value if no value is found for arg 1
+get_property_as() {
+    ((DEBUG)) && echo -n "get_property_as(): "
+    local in_key=$1
+    ((DEBUG)) && echo -n "[${in_key}] -> "
+    local alias=$2
+    ((DEBUG)) && echo -n "[${alias}] -> "
+    local default=$3
+    local prop_key=$(echo ${in_key} |sed 's/_/\./g')
+    #dedup_properties ${config_file}
+    local value=$(cat ${config_file} | sed -n 's/^\('${prop_key}'\)=\(.*$\)/\2/p' | xargs)
+    [ -z "${value}" ] && [ -n "${default}" ] && value=${default}
+    ((DEBUG)) && echo "[${value}]"
+    eval "${alias}=\"${value}\""
+    return 0
+}
+
+#Removes a given variable's property representation from the property file
+remove_property() {
+    ((DEBUG)) && echo "removing $1's property from ${config_file}"
+    local key=$(echo $1 |sed 's/_/\./g')
+    sed -i '/'${key}'/d' ${config_file}
+}
+
+#Writes variable out to property file as java-stye property
+#I am replacing all bash-style "_"s with java-style "."s
+#arg 1 - The string of the variable you wish to write as property to property file
+#arg 2 - The value to set the variable to (default: the value of arg1)
+write_as_property() {
+    ((DEBUG)) && echo -n "write_as_property(): "
+    local key=$(echo $1 |sed 's/_/\./g')
+    local value=${2:-${!1}}
+    ((DEBUG)) && echo -n "[${key}] -> "
+    ((DEBUG)) && echo "[${value}]"
+    [ -z "${value}" ] && return 1
+    cat >> ${config_file} <<EOF
+${key}=${value}
+EOF
+    dedup_properties
+    return 0
+}
+
+append_to_path() {
+    # Appends path components to a variable, deduplicates the list,
+    # then prints to stdout the export command required to append that
+    # list to that variable
+    #
+    # Takes as arguments first a variable containing a colon-separated
+    # path to append to, then a space-separated collection of paths to
+    # append -- these path components MUST NOT contain spaces.
+    #
+    # If insufficient arguments are present, a warning message is
+    # printed to stderr and nothing is printed to stdout.
+    #
+    # Example:
+    #   append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    local sep=':'
+    local var="${1}"
+    shift
+    local appendage=$(echo "$@" | tr ' ' "${sep}")
+
+    if [ -z "${var}" ] ; then
+        echo "WARNING: append_to_path() called with no arguments!" >&2
+        return
+    fi
+    if [ -z "${appendage}" ] ; then
+        echo "WARNING: append_to_path() called with no path to append!" >&2
+        return
+    fi
+    export ${var}=$(_path_unique \$${var}:${!var}:${appendage})
+    echo "export ${var}=${!var}"
+}
+
+prefix_to_path() {
+    # Prepends path components to a variable, deduplicates the list,
+    # then prints to stdout the export command required to prepend
+    # that list to that variable.
+    #
+    # Takes as arguments first a variable containing a colon-separated
+    # path to prepend to, then a space-separated collection of paths to
+    # prepend -- these path components MUST NOT contain spaces.
+    #
+    # If insufficient arguments are present, a warning message is
+    # printed to stderr and nothing is printed to stdout.
+    #
+    # Example:
+    #   prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    local sep=':'
+    local var="${1}"
+    shift
+    local appendage=$(echo "$@" | tr ' ' "${sep}")
+
+    if [ -z "${var}" ] ; then
+        echo "WARNING: prefix_to_path() called with no arguments!" >&2
+        return
+    fi
+    if [ -z "${appendage}" ] ; then
+        echo "WARNING: prefix_to_path() called with no path to prepend!" >&2
+        return
+    fi
+    export ${var}=$(_path_unique ${appendage}:${!var}:\$${var})
+    echo "export ${var}=${!var}"
+}
+
+#Given a directory the contents of the directory is backed up as a tar.gz file in 
+#arg1 - a filesystem path
+#arg2 - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
+#arg3 - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
+backup() {
+    [ -z "$1" ] && echo "backup - source must be provided as arg1" && return 1
+    [ ! -d "$1" ] && echo "backup - must take a directory! $1 not a directory" && return 1
+    local source="$(readlink -f $1)"
+    local backup_dir=${2:-${esg_backup_dir:-"/esg/backups"}}
+    local num_backups_to_keep=${3:-${num_backups_to_keep:-7}}
+    
+    echo "Backup - Creating a backup archive of ${source}"
+    pushd ${source%/*} >& /dev/null
+    mkdir -p ${backup_dir} >& /dev/null
+    local backup_filename=$(readlink -f ${backup_dir})/${source##*/}.$(date ${date_format}).tgz
+    tar czf ${backup_filename} ${source##*/}
+    [ $? != 0 ] && echo " ERROR: Problem with creating backup archive: ${backup_filename}" && popd >& /dev/null && return 1
+    if [ -e ${backup_filename} ]; then
+        echo "Created backup: ${backup_filename}"
+    else
+        echo "Could not locate backup file ${backup_filename}"
+        popd >& /dev/null
+        return 1
+    fi
+    
+    
+    #-------------
+    #keep only the last num_backups_to_keep files
+    pushd ${backup_dir} >& /dev/null
+    local files=(`ls -t | grep ${source##*/}.\*.tgz | tail -n +$((${num_backups_to_keep}+1)) | xargs`)
+    if (( ${#files[@]} > 0 )); then
+        echo "Tidying up a bit..."
+        echo "${#files[@]} old backup files to remove: ${files[@]}"
+        rm -v ${files[@]}
+    fi
+    popd >& /dev/null
+    #-------------
+    
+    popd >& /dev/null
+    return 0
+}
+
+#Get (or generate) the id suitable for use in the context of zookeeper
+#and thus the sharded solr install.  If this variable is not set then
+#an ID is generated, unique to this host.
+#NOTE: A lot of things rely on this ID so at the moment it is okay to
+#provide a simple way to be able to determine an id externally... but
+#this is only something for the testing phase for the most part.
+get_node_id() {
+    esgf_node_id=${esgf_node_id:-$(sha1sum <(echo esgf$(hostname -i)) | awk '{print $1}')}
+    echo ${esgf_node_id}
+}

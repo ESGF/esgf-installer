@@ -791,6 +791,8 @@ config_zookeeper() {
                 done
             
             done
+
+            # TODO Configure Zookeeper file for Mesos here
             
             # TODO echo Configuring Zookeeper for cluster operation
             # This will be a lot like local replicated setup, except across
@@ -807,20 +809,35 @@ test_zookeeper() {
     # Basic zookeeper test for client connection
     echo
     echo "Zookeeper Test 1: Standalone Local Server/Client Connection"
-    ${zookeeper_install_dir}/bin/zkServer.sh start ${zookeeper_install_dir}/conf/zoo_standalone.cfg
-    ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit
+    start_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
+    ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
+    zkret=$?
     echo -n "Tested Zookeeper local standalone configuration...   "
-    [ $? == 0 ] && echo " [ PASSED ]" || echo " [ FAILED ]"
-    stop_zookeeper "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
+    [ $zkret == 0 ] && echo " [ PASSED ]" || echo " [ FAILED ]"
+    stop_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
    
     # Zookeeper test for locally replicated cluster 
     echo
-    echo 
+    echo "Zookeeper Test 2: Local Replication Test"
+
+    echo -n "Tested Zookeeper Local Replication with N Quorum Members"
+    echo "[ TBD ]"
+
+    # TODO Cluster replication test
 }
 
-stop_zookeeper() {
-    # TODO use command `ps -elfwww | grep -i zookeeper` to parse out currently running configuration files
+start_zookeeper_server() {
+    # Starts Zookeeper server with a given configuration file
+    ${zookeeper_install_dir}/bin/zkServer.sh start $1 >& /dev/null
+    # TODO Check here for any issues with starting server
+}
+
+stop_zookeeper_server() {
+    # TODO use command `ps -elfwww | grep -i zookeeper` to parse out currently 
+    # running configuration files
     ${zookeeper_install_dir}/bin/zkServer.sh stop $1
+    [ $? == 0 ] && echo "[Stopping Zookeeper ... STOPPED]" \
+     || echo "[Stopping Zookeeper ... FAILED, check your configuration]"
 }
 
 clean_zookeeper() {

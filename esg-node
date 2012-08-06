@@ -133,7 +133,7 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.2.1"}
+    esgf_security_version=${esgf_security_version:-"2.2.3"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
@@ -143,10 +143,10 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.1.6"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.2.0"}
+    esg_search_version=${esg_search_version:-"3.3.3"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.1.12"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.2.2"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.2.1"}
@@ -1262,7 +1262,7 @@ write_postgress_install_log() {
 
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 start_postgress() {
-    _is_managed_db && echo "Please be sure externally managed database is running at this point..." && return 0
+    _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
 
     check_postgress_process && return 1
 
@@ -1281,7 +1281,7 @@ start_postgress() {
 
 stop_postgress() {
 
-    _is_managed_db && echo "Please be sure externally managed database is NOT running at this point..." && return 0
+    _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
 
     sleep 1
     #Stop the database
@@ -5491,7 +5491,7 @@ initial_setup_questionnaire() {
         _is_managed_db
         _get_db_conn_str_questionnaire
     else
-        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [externally managed = ${db_managed}]"
+        echo "db connection string = [postgresql://${db_user}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}] [external = ${db_managed}]"
     fi
 
     #--------------------------------
@@ -6615,7 +6615,7 @@ main() {
     # Compute type install...
     #---------------------------------------
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server $@
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem compute-tools esgf-compute-tools $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem compute-tools esgf-compute-tools $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "access logging filter subsystem (COMPUTE)"  && service_name="las" extensions="ProductServer.do" setup_subsystem access-logging-filter filters $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)" && service_name="las" setup_subsystem security-tokenless-filters filters $@
 

@@ -848,3 +848,14 @@ backup() {
     popd >& /dev/null
     return 0
 }
+
+#Get (or generate) the id suitable for use in the context of zookeeper
+#and thus the sharded solr install.  If this variable is not set then
+#an ID is generated, unique to this host.
+#NOTE: A lot of things rely on this ID so at the moment it is okay to
+#provide a simple way to be able to determine an id externally... but
+#this is only something for the testing phase for the most part.
+get_node_id() {
+    esgf_node_id=${esgf_node_id:-$(sha1sum <(echo esgf$(hostname -i)) | awk '{print $1}')}
+    echo ${esgf_node_id}
+}

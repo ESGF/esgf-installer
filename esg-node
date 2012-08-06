@@ -152,6 +152,9 @@ init() {
     esgf_dashboard_version=${esgf_dashboard_version:-"1.2.1"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
 
+    #see esgf-desktop project:
+    esgf_desktop_version=${esgf_desktop_version:-"0.0.1"}
+
     #--------------------------------
     # External programs' versions
     #--------------------------------
@@ -4476,6 +4479,7 @@ uninstall() {
         (source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem)
         (source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem)
         (source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation)
+        (source ${scripts_dir}/esg-desktop >& /dev/null && clean_desktop_webapp_subsystem)
         (source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
         (source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
 
@@ -5220,6 +5224,7 @@ run_startup_hooks() {
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
+    (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
 
     #------------------------------------------
     #When starting up pull down necessary federation certificates
@@ -5846,9 +5851,11 @@ done_remark() {
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/"
     echo "http://${esgf_host}/esgf-node-manager"
+    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
+        echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/esgf-web-fe"
@@ -6560,6 +6567,7 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
         # Compute Languages and Tools Setup
         #[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_languages

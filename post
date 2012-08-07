@@ -128,7 +128,7 @@ good=0
 total=0
 
 script_version=$(git describe)-${my_current_branch}
-script_release=$(git tag | sed -ne 's/\(v[0-9]*\.[0-9]*\.[0-9]*\)-\([a-zA-Z0-9_-]*\)-release.*$/\2/p' | sort -k1,1 | tail -n 1)
+script_release=$(git tag | sed -ne 's/\(v[0-9]*\.[0-9]*\.[0-9]*\)-\([a-zA-Z0-9_-]*\)-release.*$/\1 \2/p' | sort -n -k1,1 | awk '{print $2}')
 
 
 while read file dest_dir; do

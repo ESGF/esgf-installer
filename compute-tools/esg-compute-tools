@@ -135,6 +135,8 @@ zookeeper_confdir=${zookeeper_install_dir}/conf
 # Internal script variables
 #-------------------------------
 date_format="+%Y_%m_%d_%H%M%S"
+bold_text=`tput bold`
+normal_text=`tput sgr0`
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -242,7 +244,7 @@ test_mesos() {
     # Test 2: Mesos + Spark with Quorum Management
      
     echo
-    echo "Test 1: Mesos with Spark Framework, Standalone (Fault-Tolerance Mode Disabled)"
+    echo "${bold_text}Test 1: Mesos with Spark Framework, Standalone (Fault-Tolerance Mode Disabled)${normal_text}"
     run_mesos_start_master --port=5050
     local standaloneMesosMasterURL=$(get_config_ip eth0):5050
     run_mesos_start_slave $standaloneMesosMasterURL
@@ -252,7 +254,7 @@ test_mesos() {
     [ $sparkOnMesosStandalone == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 
     echo
-    echo "Test 2: Mesos with Spark Framework, Fault Tolerance via Single Zookeeper Instance"
+    echo "${bold_text}Test 2: Mesos with Spark Framework, Fault Tolerance via Single Zookeeper Instance${normal_text}"
     start_zookeeper_server ${zookeeper_confdir}/zoo_standalone.cfg
     run_mesos_start_master --port=5050 --zk=zk://localhost:2181/znode
     run_mesos_start_slave zk://localhost:2181/znode
@@ -442,7 +444,7 @@ config_spark() {
 test_spark() {
     # Test 1: Running a "local" version of Spark with 2 cores
     echo
-    echo -n "Testing Spark - Local...   "
+    echo -n "${bold_text}Test 1: Testing Spark in Local Standalone Mode${normal_text}"
     local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
     [ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
 }
@@ -661,7 +663,7 @@ test_hadoop() {
 test_hadoop_standalone() {
 
     # Hadoop Test - Local (Standalone) Mode, with wordcount example
-    echo -n "Testing Hadoop - Local (Standalone) Mode...   "
+    echo -n "${bold_text}Testing Hadoop - Local (Standalone) Mode...   ${normal_text}"
     
     mkdir ${hadoop_install_dir}/sandbox
     pushd ${hadoop_install_dir} >& /dev/null
@@ -689,7 +691,7 @@ test_hadoop_pseudo_distributed() {
     # Generate temporary ssh keys
     hadoop_temp_local_ssh
 
-    echo "Begin Testing Hadoop - Pseudo-Distributed Mode...   " 
+    echo "${bold_text}Testing Hadoop - Locally Pseudo-Distributed Mode...   ${normal_text}" 
     if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
         #${hadoop_install_dir}/bin/hadoop namenode -format
         start_hadoop_local_distributed
@@ -698,7 +700,7 @@ test_hadoop_pseudo_distributed() {
         ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
         # Fix hard-coding yo...
         ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
-        echo -n "Testing Hadoop - Pseudo-Distributed Mode...   "
+        echo -n "Tested Hadoop - Pseudo-Distributed Mode...   "
         [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
@@ -876,7 +878,7 @@ config_zookeeper() {
 test_zookeeper() {
     # Basic zookeeper test for client connection
     echo
-    echo "Zookeeper Test 1: Standalone Local Server/Client Connection"
+    echo "${bold_text}Zookeeper Test 1: Standalone Local Server/Client Connection${normal_text}"
     start_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
     ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
     zkret=$?
@@ -886,7 +888,7 @@ test_zookeeper() {
    
     # Zookeeper test for locally replicated cluster 
     echo
-    echo "Zookeeper Test 2: Local Replication Test"
+    echo "${bold_text}Zookeeper Test 2: Local Replication Test${normal_text}"
 
     echo -n "Tested Zookeeper Local Replication with N Quorum Members"
     echo "[ TBD ]"

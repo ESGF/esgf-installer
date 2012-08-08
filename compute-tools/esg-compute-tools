@@ -796,11 +796,17 @@ config_zookeeper() {
             echo "Creating Zookeeper working directories..."
             if [ -e ${zookeeper_workdir} ]; then
                 rm -rf ${zookeeper_workdir}         
-            fi    
+            fi
             mkdir ${zookeeper_workdir}
             mkdir ${zookeeper_workdir}/standalone
             mkdir ${zookeeper_workdir}/local_replication
             mkdir ${zookeeper_workdir}/cluster_replication
+
+            # Master URL file for replicated, standalone modes
+            local replicated_master_url_file=${zookeeper_confdir}/zoo_url_local_replicated.cfg
+            local standalone_master_url_file=${zookeeper_confdir}/zoo_url_standalone.cfg
+            rm $replicated_master_url_file
+            rm $standalone_master_url_file
 
             echo "Configuring Zookeeper for standalone local operation..."
             echo "tickTime=2000" >> ${zookeeper_confdir}/zoo_standalone.cfg
@@ -808,6 +814,8 @@ config_zookeeper() {
              >> ${zookeeper_confdir}/zoo_standalone.cfg
             echo "clientPort=$zookeeper_client_port" \
              >> ${zookeeper_confdir}/zoo_standalone.cfg
+            echo "zk://localhost:$zookeeper_client_port/znode" \
+             >> $standalone_master_url_file
 
             # This is a bit wordy...but what else to do? Engage beast mode! We
             # need a separate configuration for each locally replicated 
@@ -828,6 +836,9 @@ config_zookeeper() {
             local quorum_size=5
             local zk_replicated_config=${zookeeper_confdir}/zoo_local_replicated
             local zk_datadir=${zookeeper_workdir}/local_replication/local
+
+            # Initialize local replicated master url file
+            echo -n "zk://" >> $replicated_master_url_file
 
             for (( n=1; n <= $quorum_size; n++ ))
             do
@@ -860,10 +871,16 @@ config_zookeeper() {
                      >> $nth_zk_replicated_config
                 done
             
+                # Add instance to replicated master URL file
+                echo -n "localhost:$nth_client_port" >> $replicated_master_url_file
+                if [ $n -lt $quorum_size ]; then
+                    echo -n "," >> $replicated_master_url_file
+                fi
             done
 
-            # TODO Configure Zookeeper file for Mesos here
-            
+            # Add znode to Zookeeper file for local replicated Mesos here
+            echo "/znode" >> $replicated_master_url_file
+
             # TODO echo Configuring Zookeeper for cluster operation
             # This will be a lot like local replicated setup, except across
             # the cluster. More testing will be needed for that.
@@ -995,9 +1012,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    #setup_zookeeper
-    #config_zookeeper
-    #test_zookeeper
+    setup_zookeeper
+    config_zookeeper
+    test_zookeeper
 
     echo
     echo "---------------------------------"
@@ -1011,9 +1028,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    #setup_spark
-    #config_spark
-    #test_spark
+    setup_spark
+    config_spark
+    test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

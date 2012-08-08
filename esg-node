@@ -5718,6 +5718,7 @@ usage() {
         --remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
         --list-shards - shows list of registered local replica indexes
         --init-shards - adds all shards listed in the replica shard configuration file
+        --time-shards - cycles through all known index shards providing query times for each
 
         -------------------------------
         Publication Endpoint Setting (Index Peer/Gateway)

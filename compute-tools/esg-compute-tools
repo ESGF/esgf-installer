@@ -998,17 +998,17 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    #setup_hadoop
-    #config_hadoop   
-    #test_hadoop
+    setup_hadoop
+    config_hadoop   
+    test_hadoop
 
     echo
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    #setup_zookeeper
-    #config_zookeeper
-    #test_zookeeper
+    setup_zookeeper
+    config_zookeeper
+    test_zookeeper
 
     echo
     echo "---------------------------------"
@@ -1022,9 +1022,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    #setup_spark
-    #config_spark
-    #test_spark
+    setup_spark
+    config_spark
+    test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

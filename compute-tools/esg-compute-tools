@@ -116,6 +116,7 @@ hadoop_max_version=${hadoop_max_version:="1.0.4"}
 mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
 mesos_build_dir=${MESOS_BUILD_HOME:-${install_prefix}/mesos} # TODO /mesos/build...
+mesos_compat_framework_dir=${MESOS_COMPAT_FRAMEWORKS:-${install_prefix}/mesos_compat}
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
@@ -183,6 +184,11 @@ setup_mesos() {
     # Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
     # TODO Mesos /usr/local configuration
     # TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
+   
+    # Create directory for Mesos-Compatible Frameworks
+    if [ ! -e ${mesos_compat_framework_dir} ]; then
+        mkdir ${mesos_compat_framework_dir} 
+    fi
     
     # Add Mesos home to environment and install manifest
     write_env_mesos
@@ -191,6 +197,7 @@ setup_mesos() {
 
 write_env_mesos() {
     echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
+    echo "export MESOS_COMPAT_FRAMEWORKS_HOME=${mesos_compat_framework_dir}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -229,15 +236,34 @@ config_mesos() {
 
         # Configure Hadoop environment for Mesos
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
-            echo "Configuring Hadoop for Mesos..."
             
-            # 
+            # First we check if a the Mesos-Compatible-Frameworks home directory exists
+            echo "Configuring Mesos: Checking for Mesos-Compatible-Frameworks Home"
+            if [ ! -e ${mesos_compat_framework_dir} ]; then
+                mkdir ${mesos_compat_framework_dir}
+                write_env_mesos
+            fi
+            # TODO Not sure if we need error checking here, I doubt it though
+            # Mesos compatible framework home is where Mesos-Compatible Legacy Hadoop will live,
+            # perhaps others as we find them. 
+            
+            echo "Configuring Hadoop for Mesos..."
+            # Step 0: Check if a Mesos-Compatible, working Hadoop configuration exists        
+
+            # Otherwise....
+            # Step 1: Download Mesos Compatible Hadoop
+           
+            # Step 2: Configure Mesos Compatible Hadoop with Mesos
        
         # Inform user of skipped configuration step
         else
             echo "Skipping Mesos Hadoop Configuration..."
         fi
     fi
+}
+
+test_mesos_compatible_hadoop() {
+    echo 
 }
 
 test_mesos() {

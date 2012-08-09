@@ -270,6 +270,10 @@ test_mesos() {
     echo -n "${bold_text}Tested Mesos + Spark on Standalone Zookeeper instance...${normal_text}"
     [ $sparkOnMesosSingleZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
 
+    #echo
+    #echo "${bold_text}Test 3: Mesos with Spark Framework, Faulter Tolerance via Replicated Zookeeper [Quorum Size: 5]${normal_text}"
+    # Start 
+
     #local zkflag_spark=zk://localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185/znode 
     #local sparkResult=$(${spark_install_dir}/run spark.examples.SparkPi $zkflag_spark) # >& /dev/null && echo $?)   
     #echo -n "Tested Mesos Local Cluster with Spark...   "

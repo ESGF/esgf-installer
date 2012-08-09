@@ -270,62 +270,27 @@ test_mesos() {
     echo -n "${bold_text}Tested Mesos + Spark on Standalone Zookeeper instance...${normal_text}"
     [ $sparkOnMesosSingleZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
 
-    #echo
-    #echo "${bold_text}Test 3: Mesos with Spark Framework, Faulter Tolerance via Replicated Zookeeper [Quorum Size: 5]${normal_text}"
-    # Start 
-
-    #local zkflag_spark=zk://localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185/znode 
-    #local sparkResult=$(${spark_install_dir}/run spark.examples.SparkPi $zkflag_spark) # >& /dev/null && echo $?)   
-    #echo -n "Tested Mesos Local Cluster with Spark...   "
-    #[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-    
-    #run_mesos_stop_cluster
-    #stop_mesos_zookeeper
-
-    #echo
-    #echo "Test 2: Mesos with Hadoop Framework, [TODO Zookeeper Quorum Management]"
-    # Starts Zookeeper, starts Mesos, runs Hadoop pseudo-distributed test job on Mesos
-    # TODO Starts Zookeeper
-    #echo -n "Tested Mesos Local Cluster with Legacy Hadoop...   "
-    #echo "[ TBD ]"
-
-    #echo
-    #echo "Test 3: Mesos with Hadoop, Spark, and [TODO Zookeeper Quorum Management]"
-    # Starts Zookeeper, starts Mesos, runs Spark job and Hadoop job on mesos
-    #echo -n "Tested Mesos Local Cluster with Hadoop, Spark...   "
-    #echo "[ TBD ]"
-
+    echo
+    echo "${bold_text}Test 3: Mesos with Spark Framework, Faulter Tolerance via Replicated Zookeeper [Quorum Size: 5]${normal_text}"
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    echo "Testing Spark on Mesos with Local Replicated Zookeeper Quorum..."
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_replicated_master_url_file` && local mesosOnReplicatedZookeeper=$? && run_mesos_stop_cluster && run_zookeeper_stop_local_replicated_servers
+    echo -n "${bold_text}Tested Mesos + Spark on Local Replicated Zookeeper Server [Quorum Size: 5]...   ${normal_text}"
+    [ $mesosOnReplicatedZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
 }
 
-start_mesos_zookeeper() {
-    # Start Zookeeper Locally replicated server
-    local quorum=5
-    for (( n=1; n <= $quorum; n++ ))
-    do
-        run_zookeeper_start_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
-    done 
-
-    # Start Mesos Master on locally replicated server+port
-    local zkport=2181
-    local mesosport=5050
+run_mesos_start_local_replicated_masters() {
+    # TODO: Check to make sure Zookeeper is running before we do anything
+    # zkStatus would be good here
+    local zkport=2181 # TODO this is already defined somewhere...
+    local mesosport=5050 # TODO make this Mesos default port
+    local quorum=5 # TODO This should also be a default wtf
     for (( p=1; p <= $quorum; p++ ))
     do
-        # TODO This should be written to a file in Zookeeper's configuration...
-        local flag="--zk=zk://localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185/znode --port=$((mesosport++))"
-        run_mesos_start_master $flag
+        run_mesos_start_master --zk=file://$zookeeper_replicated_master_url_file --port=$((mesosport++))
     done
-
-    # Start Zookeeper Slaves
-    
-}
-
-stop_mesos_zookeeper() {
-    local quorum=5
-    for (( n=1; n <= $quorum; n++ ))
-    do
-        run_zookeeper_stop_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg 
-    done
-    run_zookeeper_stop_server ${zookeeper_confdir}/zoo_standalone.cfg
 }
 
 run_mesos_start_master() {
@@ -941,6 +906,22 @@ run_zookeeper_stop_server() {
      || echo "[Stopping Zookeeper ... FAILED, check your configuration]"
 }
 
+run_zookeeper_start_local_replicated_servers() {
+    local quorum=5
+    for (( n=1; n <= $quorum; n++ ))
+    do
+        run_zookeeper_start_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
+    done 
+}
+
+run_zookeeper_stop_local_replicated_servers() {
+    local quorum=5
+    for (( n=1; n <= $quorum; n++ ))
+    do  
+        run_zookeeper_stop_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
+    done
+}
+
 clean_zookeeper() {
     doit="N"
     if [ -e ${zookeeper_install_dir} ]; then
@@ -1017,17 +998,17 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    setup_hadoop
-    config_hadoop   
-    test_hadoop
+    #setup_hadoop
+    #config_hadoop   
+    #test_hadoop
 
     echo
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    setup_zookeeper
-    config_zookeeper
-    test_zookeeper
+    #setup_zookeeper
+    #config_zookeeper
+    #test_zookeeper
 
     echo
     echo "---------------------------------"
@@ -1041,9 +1022,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    setup_spark
-    config_spark
-    test_spark
+    #setup_spark
+    #config_spark
+    #test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

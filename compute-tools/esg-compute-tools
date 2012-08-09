@@ -258,11 +258,11 @@ test_mesos() {
 
     echo
     echo "${bold_text}Test 2: Mesos with Spark Framework, Fault Tolerance via Single Zookeeper Instance${normal_text}"
-    start_zookeeper_server ${zookeeper_confdir}/zoo_standalone.cfg
+    run_zookeeper_start_server ${zookeeper_confdir}/zoo_standalone.cfg
     run_mesos_start_master --port=5050 --zk=file://$zookeeper_standalone_master_url_file
     run_mesos_start_slave file://$zookeeper_standalone_master_url_file
     echo "Testing Spark on Mesos with Single Zookeeper Instance for fault tolerance...   "
-    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_standalone_master_url_file` && local sparkOnMesosSingleZookeeper=$? && run_mesos_stop_cluster && stop_zookeeper_server ${zookeeper_confdir}/zoo_standalone.cfg
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_standalone_master_url_file` && local sparkOnMesosSingleZookeeper=$? && run_mesos_stop_cluster && run_zookeeper_stop_server ${zookeeper_confdir}/zoo_standalone.cfg
     echo -n "${bold_text}Tested Mesos + Spark on Standalone Zookeeper instance...${normal_text}"
     [ $sparkOnMesosSingleZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
 
@@ -294,7 +294,7 @@ start_mesos_zookeeper() {
     local quorum=5
     for (( n=1; n <= $quorum; n++ ))
     do
-        start_zookeeper_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
+        run_zookeeper_start_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
     done 
 
     # Start Mesos Master on locally replicated server+port
@@ -315,9 +315,9 @@ stop_mesos_zookeeper() {
     local quorum=5
     for (( n=1; n <= $quorum; n++ ))
     do
-        stop_zookeeper_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg 
+        run_zookeeper_stop_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg 
     done
-    stop_zookeeper_server ${zookeeper_confdir}/zoo_standalone.cfg
+    run_zookeeper_stop_server ${zookeeper_confdir}/zoo_standalone.cfg
 }
 
 run_mesos_start_master() {
@@ -592,13 +592,13 @@ config_hadoop() {
     fi  
 }
 
-start_hadoop_local_distributed() {
+run_hadoop_start_local_distributed() {
     # TODO Start Hadoop with configuration files from ESG configuration directory
     echo "Hadoop: Starting hadoop in local distributed mode..."
     ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
 }
     
-stop_hadoop_local_distributed() {
+run_hadoop_stop_local_distributed() {
     echo "Hadoop: Shutting down namenode and jobtracker..."
     ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null  
 }
@@ -697,7 +697,7 @@ test_hadoop_pseudo_distributed() {
     echo "${bold_text}Testing Hadoop - Locally Pseudo-Distributed Mode...   ${normal_text}" 
     if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
         #${hadoop_install_dir}/bin/hadoop namenode -format
-        start_hadoop_local_distributed
+        run_hadoop_start_local_distributed
 
         ${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
@@ -708,7 +708,7 @@ test_hadoop_pseudo_distributed() {
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
     
-        stop_hadoop_local_distributed
+        run_hadoop_stop_local_distributed 
 
     else
         echo
@@ -901,10 +901,10 @@ test_zookeeper() {
     # Basic zookeeper test for client connection
     echo
     echo "${bold_text}Zookeeper Test 1: Standalone Local Server/Client Connection${normal_text}"
-    start_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
+    run_zookeeper_start_server ${zookeeper_install_dir}/conf/zoo_standalone.cfg
     ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
     zkret=$?
-    stop_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
+    run_zookeeper_stop_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
     echo -n "${bold_text}Tested Zookeeper local standalone configuration...   ${normal_text}"
     [ $zkret == 0 ] && echo "${bold_text} [ PASSED ]${normal_text}" || echo "${bold_text} [ FAILED ]${normal_text}"
    
@@ -917,14 +917,14 @@ test_zookeeper() {
     # TODO Cluster replication test
 }
 
-start_zookeeper_server() {
+run_zookeeper_start_server() {
     # Starts Zookeeper server with a given configuration file
     echo "[ Starting Zookeeper... ]"
     ${zookeeper_install_dir}/bin/zkServer.sh start $1 >& /dev/null
     [ $? == 0 ] && echo "[ Zookeeper running from configuration: $1 ]" || echo "[Zookeeper failed to run, see configuration: $1 ]"
 }
 
-stop_zookeeper_server() {
+run_zookeeper_stop_server() {
     # TODO use command `ps -elfwww | grep -i zookeeper` to parse out currently 
     # running configuration files
     ${zookeeper_install_dir}/bin/zkServer.sh stop $1 >& /dev/null

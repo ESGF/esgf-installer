@@ -243,7 +243,11 @@ config_mesos() {
 test_mesos() {
     # Currently running Mesos + Zookeeper with custom deploy methods, tested here.
     # Test 1: Mesos + Spark, Standalone 
-    # Test 2: Mesos + Spark with Quorum Management
+    # Test 2: Mesos + Spark with Single Instance Zookeeper
+    # Test 3: Mesos + Spark, Clustered Zookeeper
+    # Test 4: Mesos + Hadoop, Single-Node Zookeeper
+    # Test 5: Mesos + Hadoop, Clustered, ...
+    # Test 5: Mesos + Hadoop and Spark, Clustered Zookeeper
    
     #$zookeeper_replicated_master_url_file     
     echo
@@ -447,8 +451,9 @@ config_spark() {
 test_spark() {
     # Test 1: Running a "local" version of Spark with 2 cores
     echo
-    echo -n "${bold_text}Test 1: Testing Spark in Local Standalone Mode...   ${normal_text}"
-    local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
+    echo "${bold_text}Test 1: Testing Spark in Local Standalone Mode   ${normal_text}"
+    ${spark_install_dir}/run spark.examples.SparkLR local[2] && local sparkResult=$?
+    echo -n "${bold_text}Tested Spark in Local Standalone Mode, 2 Cores...   ${normal_text}"
     [ $sparkResult == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
 }
 

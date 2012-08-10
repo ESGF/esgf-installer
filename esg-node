@@ -129,7 +129,7 @@ init() {
     esgcet_version=${esgcet_version:-"2.10.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.11"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.12"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
@@ -140,7 +140,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"2.1.11"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.1.6"}
+    esgf_idp_version=${esgf_idp_version:-"2.1.7"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"3.3.5"}
@@ -5770,10 +5770,13 @@ usage() {
         -------------------------------
         --config-db    - provides database only configuration to support based on note type (see --get-type)
         --backup-db    - creates a backup of node database to file
-                         the prefix for all schemas provided is \"esgf_\"  -s foo will reference schema esgf_foo
-                         [-s|--schema] <schema suffix> [-db|--database] <database name>
+                         the prefix for all schemas provided is \"esgf_\" Ex: -s foo will reference schema esgf_foo
+                         [-s|--schema] <schema suffix> 
+                         [-db|--database] <database name>
         --restore-db   - restores from (nth) backup of database
-                         [-s|--schema] <schema suffix> [-db|--database] <database name> -n <reverse backup order>
+                         [-n] <the nth backup> (default is n=1 or the last / most recent backup, 1 <= n <= 7)
+                         [-s|--schema] <schema suffix> 
+                         [-db|--database] <database name>
 
         -------------------------------
         Trouble Shooting

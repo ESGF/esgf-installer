@@ -5713,12 +5713,12 @@ usage() {
         Index (search) Utils...
         -------------------------------
         --optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
-        --check-shards  - Checks the configuration for local replica indexes
         --add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
         --remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
-        --list-shards - shows list of registered local replica indexes
-        --init-shards - adds all shards listed in the replica shard configuration file
-        --time-shards - cycles through all known index shards providing query times for each
+        --list-shards  - shows list of registered local replica indexes
+        --init-shards  - adds all shards listed in the replica shard configuration file
+        --check-shards - checks the configuration for local replica indexes
+        --time-shards  - cycles through all known index shards providing query times for each
 
         -------------------------------
         Publication Endpoint Setting (Index Peer/Gateway)

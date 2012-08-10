@@ -229,6 +229,12 @@ config_mesos() {
                 mkdir ${mesos_compat_framework_dir}
                 write_env_mesos
             fi
+
+            # Create a directory to store configurations, for now
+            if [ ! -e ${mesos_compat_framework_dir}/mesos_compat_conf ]; then
+                mkdir ${mesos_compat_framework_dir}/mesos_compat_conf
+            fi
+
             # Mesos compatible framework home is where Mesos-Compatible Legacy Hadoop will live,
             # perhaps other frameworks as we find them and they need mesos assistance 
             
@@ -264,13 +270,25 @@ config_mesos() {
                 (cd ${hadoop_mesos_compat_dir} && ant && patch -p1 <$mesos_install_dir/hadoop/mapred-site.xml.patch && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0_hadoop-env.sh.patch) 
             
                 # Now that we have a patched hadoop, we still need to add configurations for standalone and replicated mesos.
-                # sed -rin 's#(<value>)local(</value>)#\1'$MESOS_MASTER_URL'\2#g' conf/mapred-site.xml
-            
+                # These configurations should also sit separately from the Hadoop itself, for good practice. We will use the
+                # Mesos-compat configuratioin directory for now
+                if [ ! -e ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf ]; then
+                    mkdir ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf
+                fi
+                rm -rf ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/*
+                mkdir ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone
+                mkdir ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_zookeeper_replicated        
+                
+                # Update configurations for Mesos-compatible hadoop
+                echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_mesos_compat_dir}/conf/hadoop-env.sh        
+                local hadoop_mesos_master_url=$(get_config_ip eth0):5050
+                local hadoop_mesos_zookeeper_url=`cat $zookeeper_replicated_master_url_file`
+                cp ${hadoop_mesos_compat_dir}/conf/* ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/
+                cp ${hadoop_mesos_compat_dir}/conf/* ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_zookeeper_replicated/         
+                sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_master_url'\2#g' ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/mapred-site.xml
+                sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_zookeeper_url'\2#g' ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_zookeeper_replicated/mapred-site.xml
             fi
 
-            # Assuming all steps go as planned, we can test mesos-compatible hadoop with mesos.
-            test_mesos_compatible_hadoop_standalone      
-       
         # Inform user of skipped configuration step
         else
             echo "Skipping Mesos Hadoop Configuration..."

@@ -6456,6 +6456,11 @@ main() {
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && time_shards)
                     exit $?
                     ;;
+                --shell)
+                    shift
+                    [ -e "${scripts_dir}/esgf-sh" ] && (${scripts_dir}/esgf-sh) || echo "Sorry, this option not supported :-("
+                    exit $?
+                    ;;
                 --myproxy)
                     (( (sel & IDP_BIT) == 0 )) && echo "Sorry, the --myproxy flag may only be used for \"idp\" type commands" && exit 1
                 #acceptable args:  [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]

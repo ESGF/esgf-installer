@@ -5713,6 +5713,7 @@ usage() {
         Index (search) Utils...
         -------------------------------
         --optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
+        --crawl - ingest remote catalogs and their descendants into local index for searching.
         --add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
         --remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
         --list-shards  - shows list of registered local replica indexes
@@ -6253,6 +6254,11 @@ main() {
                     (source ${scripts_dir}/esgf-optimize-index $*)
                     [ $? != 0 ] && echo "The flag --optimize-index is not enabled..." && exit 1
                     exit 0
+                    ;;
+                --crawl)
+                    shift
+                    [ -e "${scripts_dir}/esgf-crawl" ] && (${scripts_dir}/esgf-crawl $@) || echo "Sorry, this option not supported :-("
+                    exit $?
                     ;;
                 --policy-check)
                     shift

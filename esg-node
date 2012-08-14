@@ -5720,6 +5720,8 @@ usage() {
         --init-shards  - adds all shards listed in the replica shard configuration file
         --check-shards - checks the configuration for local replica indexes
         --time-shards  - cycles through all known index shards providing query times for each
+                         [-show-local] will show timing information for locally replicated shards
+                         [-timeout <seconds>] will set the connection timeout value (in seconds)
 
         -------------------------------
         Publication Endpoint Setting (Index Peer/Gateway)

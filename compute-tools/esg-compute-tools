@@ -296,19 +296,32 @@ config_mesos() {
     fi
 }
 
-test_mesos_compatible_hadoop_standalone() {
-    # Only run test if Mesos-Compatible Hadoop is configured
+test_mesos_compat_hadoop_on_mesos_standalone() {
+    echo "${bold_text}Testing Mesos-compatible Hadoop on Standalone Mesos${normal_text}"
     if [ -e ${hadoop_mesos_compat_dir} ]; then
-        echo
-    else
-        echo "Mesos-Compatible Hadoop not configured."
-        echo "Skipping Hadoop (Mesos-compatible) standalone test"
-    fi
-}
-
-test_mesos_compat_hadoop_on_mesos() {
-    if [ -e ${hadoop_mesos_compat_dir} ]; then
-        echo
+        # Initialization
+        if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+            rm -rf ${mesos_compat_framework_dir}/sandbox 
+        fi
+        mkdir ${mesos_compat_framework_dir}/sandbox
+        mkdir ${mesos_compat_framework_dir}/sandbox/input
+        cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+        local standaloneMesosMasterURL=$(get_config_ip eth0):5050
+        
+        # Running
+        run_mesos_start_master --port=5050
+        sleep 5
+        run_mesos_start_slave $standaloneMesosMasterURL
+        sleep 5
+        run_mesos_start_compat_hadoop_standalone
+        sleep 5
+        (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
+        run_mesos_stop_compat_hadoop_standalone
+        run_mesos_stop_cluster
+        [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local mesosHadoopCompatResult=0 || local mesosHadoopCompatResult=1
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+        echo -n "${bold_text}Tested Mesos-compatible Hadoop on Mesos (Standalone, non-fault-tolerant)...   ${normal_text}" 
+        [ $mesosHadoopCompatResult == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}" 
     else
         echo "Mesos-Compatible Hadoop not configured."
         echo "Skipping Hadoop (Mesos-Compatible) non-replicated Mesos test."
@@ -324,7 +337,6 @@ test_mesos() {
     # Test 5: Mesos + Hadoop, Clustered, ...
     # Test 5: Mesos + Hadoop and Spark, Clustered Zookeeper
    
-    #$zookeeper_replicated_master_url_file     
     echo
     echo "${bold_text}Test 1: Mesos with Spark Framework, Standalone (Fault-Tolerance Mode Disabled)${normal_text}"
     run_mesos_start_master --port=5050
@@ -356,8 +368,26 @@ test_mesos() {
     [ $mesosOnReplicatedZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
 
     echo
-    echo "${bold_text}Test 4: Mesos, non-Fault-Tolerant mode, with Hadoop-Compatible Mesos${normal_text}"
-    test_mesos_compat_hadoop_on_mesos
+    echo -n "${bold_text}Test 4: ${normal_text}"
+    test_mesos_compat_hadoop_on_mesos_standalone
+}
+
+run_mesos_start_compat_hadoop_standalone() {
+    echo -n "Starting Mesos framework Hadoop...   "
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop --config ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/ jobtracker & >& /dev/null) 
+    [ $? == 0 ] && echo "[ Now running Mesos-Hadoop ]" || echo "[ Mesos-Hadoop failed to run ]"
+}
+
+run_mesos_stop_compat_hadoop_standalone() {
+    echo -n "Stopping Mesos framework Hadoop...   "
+    local runningHadoopPid=$(pgrep -f ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/)
+    if [ $? == 0 ]; then
+        kill $runningHadoopPid
+        wait $runningHadoopPid 2>/dev/null
+        echo "[ Stopped ]"
+    else
+        echo "Not Currently Running"
+    fi
 }
 
 run_mesos_start_local_replicated_masters() {
@@ -383,8 +413,7 @@ run_mesos_start_master() {
 run_mesos_start_slave() {
     # TODO Run with ESGF Ip address for mesos master url
     # TODO figure out correct memory resources
-    echo "Starting Mesos Slave"
-    local mesos_master_url=$(get_config_ip eth0)
+    echo "Starting Mesos Slave..."
     ${mesos_build_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &
     [ $? == 0 ] && echo "[ Mesos Slave now running ]" || echo "[ Mesos Slave failed to run ]" 
 }
@@ -1099,7 +1128,7 @@ setup_compute_tools() {
     echo "---------------------------------"
     setup_mesos
     config_mesos
-    #test_mesos
+    test_mesos
 
     echo
     echo "---------------------------------"

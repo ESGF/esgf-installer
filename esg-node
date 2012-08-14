@@ -6464,7 +6464,7 @@ main() {
                     ;;
                 --time-shards)
                     shift
-                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && time_shards)
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && time_shards $@)
                     exit $?
                     ;;
                 --shell)

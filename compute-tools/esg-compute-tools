@@ -742,27 +742,33 @@ pseudo_distributed_config_setup() {
 
 test_hadoop() {
     echo    
-    # Hadoop Test - Local (Standalone) Mode
-    test_hadoop_standalone
     
+    # Hadoop Test - Local (Standalone) Mode
+    echo -n "${bold_text}Hadoop Test 1: ${normal_text}"
+    test_hadoop_standalone
+   
     # Hadoop Test 2 - Local Psuedo-Distributed
+    echo
+    echo -n "${bold_text}Hadoop Test 2: ${normal_text}"
     test_hadoop_pseudo_distributed
 }
 
 test_hadoop_standalone() {
 
     # Hadoop Test - Local (Standalone) Mode, with wordcount example
-    echo -n "${bold_text}Testing Hadoop - Local (Standalone) Mode...   ${normal_text}"
+    echo "${bold_text}Testing Hadoop - Local (Standalone) Mode   ${normal_text}"
     
+    # Initialize Sandbox directory
     mkdir ${hadoop_install_dir}/sandbox
-    pushd ${hadoop_install_dir} >& /dev/null
+    mkdir ${hadoop_install_dir}/sandbox/input
+    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/sandbox/input
+
+    # Run Hadoop Test
+    (cd ${hadoop_install_dir} && bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+')
+    echo -n "${bold_text}Tested Hadoop v${hadoop_version} - Local (Standalone) Mode...  ${normal_text}"
+    [ -e ${hadoop_install_dir}/sandbox/output/_SUCCESS ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
     
-    mkdir sandbox/input
-    cp conf/*.xml sandbox/input
-    bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+' >& /dev/null
-    [ -e sandbox/output/_SUCCESS ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
-    
-    popd >& /dev/null
+    # Destroy Sandbox directory
     rm -rf ${hadoop_install_dir}/sandbox
 }
 
@@ -780,7 +786,7 @@ test_hadoop_pseudo_distributed() {
     # Generate temporary ssh keys
     hadoop_temp_local_ssh
 
-    echo "${bold_text}Testing Hadoop - Locally Pseudo-Distributed Mode...   ${normal_text}" 
+    echo "${bold_text}Testing Hadoop - Locally Pseudo-Distributed Mode ${normal_text}" 
     if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
         #${hadoop_install_dir}/bin/hadoop namenode -format
         run_hadoop_start_local_distributed
@@ -788,7 +794,7 @@ test_hadoop_pseudo_distributed() {
         ${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
         # Fix hard-coding yo...
-        ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
+        ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+'
         echo -n "${bold_text}Tested Hadoop - Pseudo-Distributed Mode...   ${normal_text}"
         [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
@@ -1110,17 +1116,17 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    #setup_hadoop
-    #config_hadoop   
-    #test_hadoop
+    setup_hadoop
+    config_hadoop   
+    test_hadoop
 
     echo
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    #setup_zookeeper
-    #config_zookeeper
-    #test_zookeeper
+    setup_zookeeper
+    config_zookeeper
+    test_zookeeper
 
     echo
     echo "---------------------------------"
@@ -1134,9 +1140,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    #setup_spark
-    #config_spark
-    #test_spark
+    setup_spark
+    config_spark
+    test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

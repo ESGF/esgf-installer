@@ -5784,6 +5784,11 @@ usage() {
         --verify-thredds-credentials - if there is a thredds/publisher \"re-init\" issue this will fix it
 
         -------------------------------
+        Other
+        -------------------------------
+        --shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node
+
+        -------------------------------
         Node Life Cycle Flags:
         -------------------------------
         start   - start the node's services

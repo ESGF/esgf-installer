@@ -125,7 +125,6 @@ zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
 hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
-hadoop_mesos_compat_dir=${hadoop_mesos_compat_dir:-${mesos_compat_framework_dir}/hadoop_mesos_compat}
 hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
 
 #-------------------------------
@@ -136,13 +135,25 @@ zookeeper_workdir=${zookeeper_install_dir}/zookeeper_working
 zookeeper_confdir=${zookeeper_install_dir}/conf
 zookeeper_replicated_master_url_file=${zookeeper_confdir}/zoo_url_local_replicated.cfg
 zookeeper_standalone_master_url_file=${zookeeper_confdir}/zoo_url_standalone.cfg
+zookeeper_standalone_config_file=${zookeeper_confdir}/zoo_standalone.cfg
+zookeeper_quorum_size=5
+mesos_compat_config_dir=${mesos_compat_config_dir:-${mesos_compat_framework_dir}/mesos_compat_conf}
+hadoop_mesos_compat_dir=${hadoop_mesos_compat_dir:-${mesos_compat_framework_dir}/hadoop_mesos_compat}
+hadoop_mesos_compat_config_dir=${hadoop_mesos_compat_config_dir:-${mesos_compat_config_dir}/hadoop_conf}
+hadoop_mesos_config_standalone_mesos=${hadoop_mesos_config_standalone_mesos:-${hadoop_mesos_compat_config_dir}/mesos_standalone}
+hadoop_mesos_config_single_zookeeper=${hadoop_mesos_config_single_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_single}
+hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_replicated}
+mesos_master_port=5050
 
 #-------------------------------
 # Internal script variables
 #-------------------------------
 date_format="+%Y_%m_%d_%H%M%S"
-bold_text=`tput bold`
-normal_text=`tput sgr0`
+bold_text=$(tput bold)
+normal_text=$(tput sgr0)
+green_text=$(tput setaf 2; tput bold)
+red_text=$(tput setaf 1; tput bold)
+
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -231,8 +242,8 @@ config_mesos() {
             fi
 
             # Create a directory to store configurations, for now
-            if [ ! -e ${mesos_compat_framework_dir}/mesos_compat_conf ]; then
-                mkdir ${mesos_compat_framework_dir}/mesos_compat_conf
+            if [ ! -e ${mesos_compat_config_dir} ]; then
+                mkdir ${mesos_compat_config_dir}
             fi
 
             # Mesos compatible framework home is where Mesos-Compatible Legacy Hadoop will live,
@@ -247,10 +258,11 @@ config_mesos() {
                 local hadoop_mesos_dist_file=${hadoop_mesos_compat_dist_url##*/}
                 local hadoop_mesos_dist_dir=$(echo ${hadoop_mesos_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
                 local system_platform=`uname -si | sed -e 's/ /-/g'`
-               
+              
+                rm -rf ${mesos_compat_framework_dir}/*.tar.gz 
                 wget -O ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file $hadoop_mesos_compat_dist_url
                 echo "Unpacking ${hadoop_mesos_dist_file}..."
-                tar -xzf ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file -C ${mesos_compat_framework_dir}
+                tar -zxf ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file -C ${mesos_compat_framework_dir}
                 mv ${mesos_compat_framework_dir}/${hadoop_mesos_dist_dir} ${hadoop_mesos_compat_dir}
                 
                 # Attempt to patch hadoop with latest mesos compatibility fixes
@@ -269,24 +281,31 @@ config_mesos() {
                 # Rebuild and repatch
                 (cd ${hadoop_mesos_compat_dir} && ant && patch -p1 <$mesos_install_dir/hadoop/mapred-site.xml.patch && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0_hadoop-env.sh.patch) 
             
-                # Now that we have a patched hadoop, we still need to add configurations for standalone and replicated mesos.
-                # These configurations should also sit separately from the Hadoop itself, for good practice. We will use the
-                # Mesos-compat configuratioin directory for now
-                if [ ! -e ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf ]; then
-                    mkdir ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf
+                # Now that we have a patched hadoop, we still need to add 
+                # configurations for standalone and replicated mesos with
+                # zookeeper. These configurations should also sit separately 
+                # from the Hadoop install itself, for good practice.
+
+                if [ ! -e ${hadoop_mesos_compat_config_dir} ]; then
+                    mkdir ${hadoop_mesos_compat_config_dir}
                 fi
-                rm -rf ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/*
-                mkdir ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone
-                mkdir ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_zookeeper_replicated        
+                rm -rf ${hadoop_mesos_compat_config_dir}/*
+                mkdir ${hadoop_mesos_config_standalone_mesos}
+                mkdir ${hadoop_mesos_config_single_zookeeper}
+                mkdir ${hadoop_mesos_config_replicated_zookeeper}
                 
                 # Update configurations for Mesos-compatible hadoop
                 echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_mesos_compat_dir}/conf/hadoop-env.sh        
-                local hadoop_mesos_master_url=$(get_config_ip eth0):5050
+                local hadoop_mesos_master_url=$(get_config_ip eth0):$mesos_master_port
                 local hadoop_mesos_zookeeper_url=`cat $zookeeper_replicated_master_url_file`
-                cp ${hadoop_mesos_compat_dir}/conf/* ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/
-                cp ${hadoop_mesos_compat_dir}/conf/* ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_zookeeper_replicated/         
-                sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_master_url'\2#g' ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/mapred-site.xml
-                sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_zookeeper_url'\2#g' ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_zookeeper_replicated/mapred-site.xml
+                cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_standalone_mesos}
+                cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_single_zookeeper}
+                cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_replicated_zookeeper}
+
+                sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_master_url'\2#g' ${hadoop_mesos_config_standalone_mesos}/mapred-site.xml
+                sed -rin 's#(<value>)local(</value>)#\1'file://$zookeeper_standalone_master_url_file'\2#g' ${hadoop_mesos_config_single_zookeeper}/mapred-site.xml
+                sed -rin 's#(<value>)local(</value>)#\1'file://$hadoop_mesos_zookeeper_url'\2#g' ${hadoop_mesos_config_replicated_zookeeper}/mapred-site.xml
+
             fi
 
         # Inform user of skipped configuration step
@@ -296,7 +315,60 @@ config_mesos() {
     fi
 }
 
-test_mesos_compat_hadoop_on_mesos_standalone() {
+test_mesos_spark_mesos_standalone() {
+    echo "${bold_text}Mesos with Spark Framework, Standalone Mesos (Fault-Tolerance Mode Disabled)${normal_text}"
+
+    # Run Mesos Framework
+    run_mesos_start_master --port=$mesos_master_port
+    local standaloneMesosMasterURL=$(get_config_ip eth0):$mesos_master_port
+    run_mesos_start_slave $standaloneMesosMasterURL
+
+    # Run Spark Test
+    ${spark_install_dir}/run spark.examples.SparkPi $standaloneMesosMasterURL
+    local sparkOnMesosStandalone=$?
+    run_mesos_stop_cluster
+    echo -n "${bold_text}Tested Mesos (non-fault-tolerant) with Spark...   ${normal_text}"
+    [ $sparkOnMesosStandalone == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+
+}
+
+test_mesos_spark_single_zookeeper() {
+    echo "${bold_text}Mesos with Spark Framework, Fault Tolerance via Single Zookeeper Instance${normal_text}"
+
+    # Run Zookeeper, Mesos
+    run_zookeeper_start_server $zookeeper_standalone_config_file
+    run_mesos_start_master --port=$mesos_master_port --zk=file://$zookeeper_standalone_master_url_file
+    run_mesos_start_slave file://$zookeeper_standalone_master_url_file
+
+    # Run Spark Test    
+    echo "Testing Spark on Mesos with Single Zookeeper Instance for fault tolerance...   "
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_standalone_master_url_file`
+    local sparkOnMesosSingleZookeeper=$?
+    run_mesos_stop_cluster
+    run_zookeeper_stop_server $zookeeper_standalone_config_file
+    echo -n "${bold_text}Tested Mesos + Spark on Standalone Zookeeper instance...${normal_text}"
+    [ $sparkOnMesosSingleZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+}
+
+test_mesos_spark_replicated_zookeeper() {
+    echo "${bold_text}Mesos with Spark Framework, Fault Tolerance via Replicated Zookeeper [Quorum Size: $zookeeper_quorum_size]${normal_text}"
+   
+    # Run Zookeeper, Mesos
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    
+    # Run Spark Test
+    echo "Testing Spark on Mesos with Local Replicated Zookeeper Quorum..."
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_replicated_master_url_file`
+    local mesosOnReplicatedZookeeper=$?
+    run_mesos_stop_cluster
+    run_zookeeper_stop_local_replicated_servers
+    echo -n "${bold_text}Tested Mesos + Spark on Local Replicated Zookeeper Server [Quorum Size: $zookeeper_quorum_size]...   ${normal_text}"
+    [ $mesosOnReplicatedZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+}
+
+test_mesos_compat_hadoop_mesos_standalone() {
     echo "${bold_text}Testing Mesos-compatible Hadoop on Standalone Mesos${normal_text}"
     if [ -e ${hadoop_mesos_compat_dir} ]; then
         # Initialization
@@ -306,96 +378,162 @@ test_mesos_compat_hadoop_on_mesos_standalone() {
         mkdir ${mesos_compat_framework_dir}/sandbox
         mkdir ${mesos_compat_framework_dir}/sandbox/input
         cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
-        local standaloneMesosMasterURL=$(get_config_ip eth0):5050
+        local standaloneMesosMasterURL=$(get_config_ip eth0):$mesos_master_port
         
-        # Running
-        run_mesos_start_master --port=5050
-        sleep 5
+        # Run Hadoop Test
+        run_mesos_start_master --port=$mesos_master_port
         run_mesos_start_slave $standaloneMesosMasterURL
-        sleep 5
-        run_mesos_start_compat_hadoop_standalone
-        sleep 5
+        run_mesos_start_compat_hadoop_jobtracker ${hadoop_mesos_config_standalone_mesos}
         (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
-        run_mesos_stop_compat_hadoop_standalone
+        run_mesos_stop_compat_hadoop
         run_mesos_stop_cluster
         [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local mesosHadoopCompatResult=0 || local mesosHadoopCompatResult=1
         rm -rf ${mesos_compat_framework_dir}/sandbox 
         echo -n "${bold_text}Tested Mesos-compatible Hadoop on Mesos (Standalone, non-fault-tolerant)...   ${normal_text}" 
-        [ $mesosHadoopCompatResult == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}" 
+        [ $mesosHadoopCompatResult == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}" 
     else
         echo "Mesos-Compatible Hadoop not configured."
         echo "Skipping Hadoop (Mesos-Compatible) non-replicated Mesos test."
     fi
 }
 
+test_mesos_compat_hadoop_single_zookeeper() {
+    echo "${bold_text}Testing Mesos with Compatible Hadoop, Single Zookeeper Instance${normal_text}"
+    
+    # Initialize Hadoop Working Directory
+    if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+    fi
+    mkdir ${mesos_compat_framework_dir}/sandbox
+    mkdir ${mesos_compat_framework_dir}/sandbox/input
+    cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+    
+    # Run Zookeeper, Mesos, Frameworks
+    run_zookeeper_start_server $zookeeper_standalone_config_file
+    run_mesos_start_master --port=$mesos_master_port --zk=file://$zookeeper_standalone_master_url_file
+    run_mesos_start_slave file://$zookeeper_standalone_master_url_file
+    run_mesos_start_compat_hadoop_jobtracker ${hadoop_mesos_config_single_zookeeper}
+
+    # Run Framework Tests
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/inp     ut ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+') 
+    [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local hadoopOnMesosSingleZookeeper=0 || local hadoopOnMesosSingleZookeeper=1
+
+    # Remove working directory, shut down clusters
+    run_mesos_stop_compat_hadoop
+    run_mesos_stop_cluster
+    run_zookeeper_stop_server $zookeeper_standalone_config_file
+    rm -rf ${mesos_compat_framework_dir}/sandbox
+    
+    # Provide Test Results    
+    echo -n "${bold_text}Tested Mesos + Mesos-Compatible Hadoop on Standalone Zookeeper instance...   ${normal_text}"
+    [ $hadoopOnMesosSingleZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+}
+
+test_mesos_compat_hadoop_replicated_zookeeper() {
+    echo "${bold_text}Testing Mesos with Compatible Hadoop, Replicated Zookeeper${normal_text}"
+    
+    # Initialize Hadoop Working Directory
+    if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+    fi
+    mkdir ${mesos_compat_framework_dir}/sandbox
+    mkdir ${mesos_compat_framework_dir}/sandbox/input
+    cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+    
+    # Zookeeper
+    # Mesos
+    # Hadoop
+    # Test
+    
+    # Remove working directory
+    rm -rf ${mesos_compat_framework_dir}/sandbox
+}
+
+test_mesos_multi_framework_replicated_zookeeper() {
+    echo "${bold_text}Testing Mesos with Spark, Compatible Hadoop, Replicated Zookeeper${normal_text}"
+    
+    # Initialize Hadoop Working Directory
+    if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+    fi
+    mkdir ${mesos_compat_framework_dir}/sandbox
+    mkdir ${mesos_compat_framework_dir}/sandbox/input
+    cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+    
+    # Zookeeper
+    # Mesos
+    # Hadoop
+    # Test
+    
+    # Remove working directory
+    rm -rf ${mesos_compat_framework_dir}/sandbox
+}
+
 test_mesos() {
     # Currently running Mesos + Zookeeper with custom deploy methods, tested here.
-    # Test 1: Mesos + Spark, Standalone 
+    # Test 1: Mesos + Spark, Standalone Mesos
     # Test 2: Mesos + Spark with Single Instance Zookeeper
-    # Test 3: Mesos + Spark, Clustered Zookeeper
-    # Test 4: Mesos + Hadoop, Single-Node Zookeeper
-    # Test 5: Mesos + Hadoop, Clustered, ...
-    # Test 5: Mesos + Hadoop and Spark, Clustered Zookeeper
+    # Test 3: Mesos + Spark, Replicated Zookeeper
+    # Test 4: Mesos + Hadoop, Standalone Mesos
+    # Test 5: Mesos + Hadoop, Single-Node Zookeeper
+    # Test 6: Mesos + Hadoop, Replicated Zookeeper
+    # Test 7: Mesos + Hadoop + Spark, Clustered Zookeeper
    
     echo
-    echo "${bold_text}Test 1: Mesos with Spark Framework, Standalone (Fault-Tolerance Mode Disabled)${normal_text}"
-    run_mesos_start_master --port=5050
-    local standaloneMesosMasterURL=$(get_config_ip eth0):5050
-    run_mesos_start_slave $standaloneMesosMasterURL
-    echo "Testing Spark on Mesos..."
-    ${spark_install_dir}/run spark.examples.SparkPi $standaloneMesosMasterURL && local sparkOnMesosStandalone=$? && run_mesos_stop_cluster
-    echo -n "${bold_text}Tested Mesos (non-fault-tolerant) with Spark...   ${normal_text}"
-    [ $sparkOnMesosStandalone == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
+    echo -n "${bold_text}Test 1: ${normal_text}"
+    test_mesos_spark_mesos_standalone
 
     echo
-    echo "${bold_text}Test 2: Mesos with Spark Framework, Fault Tolerance via Single Zookeeper Instance${normal_text}"
-    run_zookeeper_start_server ${zookeeper_confdir}/zoo_standalone.cfg
-    run_mesos_start_master --port=5050 --zk=file://$zookeeper_standalone_master_url_file
-    run_mesos_start_slave file://$zookeeper_standalone_master_url_file
-    echo "Testing Spark on Mesos with Single Zookeeper Instance for fault tolerance...   "
-    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_standalone_master_url_file` && local sparkOnMesosSingleZookeeper=$? && run_mesos_stop_cluster && run_zookeeper_stop_server ${zookeeper_confdir}/zoo_standalone.cfg
-    echo -n "${bold_text}Tested Mesos + Spark on Standalone Zookeeper instance...${normal_text}"
-    [ $sparkOnMesosSingleZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
+    echo -n "${bold_text}Test 2: ${normal_text}"
+    test_mesos_spark_single_zookeeper
 
     echo
-    echo "${bold_text}Test 3: Mesos with Spark Framework, Fault Tolerance via Replicated Zookeeper [Quorum Size: 5]${normal_text}"
-    run_zookeeper_start_local_replicated_servers
-    run_mesos_start_local_replicated_masters
-    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
-    echo "Testing Spark on Mesos with Local Replicated Zookeeper Quorum..."
-    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_replicated_master_url_file` && local mesosOnReplicatedZookeeper=$? && run_mesos_stop_cluster && run_zookeeper_stop_local_replicated_servers
-    echo -n "${bold_text}Tested Mesos + Spark on Local Replicated Zookeeper Server [Quorum Size: 5]...   ${normal_text}"
-    [ $mesosOnReplicatedZookeeper == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
+    echo -n "${bold_text}Test 3: ${normal_text}"
+    test_mesos_spark_replicated_zookeeper
 
     echo
-    echo -n "${bold_text}Test 4: ${normal_text}"
-    test_mesos_compat_hadoop_on_mesos_standalone
+    echo -n "${bold_text}Mesos Test 4: ${normal_text}"
+    test_mesos_compat_hadoop_mesos_standalone
+
+    echo
+    echo -n "${bold_text}Mesos Test 5: ${normal_text}"
+    #test_mesos_compat_hadoop_single_zookeeper
+
+    echo
+    echo -n "${bold_text}Mesos Test 6: ${normal_text}"
+    #test_mesos_compat_hadoop_replicated_zookeeper
+
+    echo
+    echo -n "${bold_text}Mesos Test 7: ${normal_text}"
+    #test_mesos_multi_framework_replicated_zookeeper
 }
 
-run_mesos_start_compat_hadoop_standalone() {
-    echo -n "Starting Mesos framework Hadoop...   "
-    (cd ${hadoop_mesos_compat_dir} && bin/hadoop --config ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/ jobtracker & >& /dev/null) 
-    [ $? == 0 ] && echo "[ Now running Mesos-Hadoop ]" || echo "[ Mesos-Hadoop failed to run ]"
+run_mesos_start_compat_hadoop_jobtracker() {
+    echo -n "Starting Mesos framework-compatible Hadoop with configuration $1"
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop --config $1 jobtracker & >& /dev/null)
+    [ $? == 0 ] && echo "[ Now running Mesos-Hadoop, configured with $1 ]" || echo "[ Mesos-Hadoop (configuration $1) failed to run ]"
 }
 
-run_mesos_stop_compat_hadoop_standalone() {
+run_mesos_stop_compat_hadoop() {
     echo -n "Stopping Mesos framework Hadoop...   "
-    local runningHadoopPid=$(pgrep -f ${mesos_compat_framework_dir}/mesos_compat_conf/hadoop_conf/mesos_standalone/)
+    local runningHadoopPid=$(pgrep -f jobtracker)
+    # TODO: Case where Hadoop had failed to run should fail, but
+    # Hadoop in general should be fine if it ran
     if [ $? == 0 ]; then
         kill $runningHadoopPid
         wait $runningHadoopPid 2>/dev/null
         echo "[ Stopped ]"
     else
-        echo "Not Currently Running"
+        echo "Mesos-Compatible Framework Hadoop not Currently Running"
     fi
 }
 
 run_mesos_start_local_replicated_masters() {
     # TODO: Check to make sure Zookeeper is running before we do anything
     # zkStatus would be good here
-    local zkport=2181 # TODO this is already defined somewhere...
-    local mesosport=5050 # TODO make this Mesos default port
-    local quorum=5 # TODO This should also be a default wtf
+    local zkport=$zookeeper_client_port
+    local mesosport=$mesos_master_port
+    local quorum=$zookeeper_quorum_size
     for (( p=1; p <= $quorum; p++ ))
     do
         run_mesos_start_master --zk=file://$zookeeper_replicated_master_url_file --port=$((mesosport++))
@@ -535,7 +673,7 @@ test_spark() {
     echo "${bold_text}Test 1: Testing Spark in Local Standalone Mode   ${normal_text}"
     ${spark_install_dir}/run spark.examples.SparkLR local[2] && local sparkResult=$?
     echo -n "${bold_text}Tested Spark in Local Standalone Mode, 2 Cores...   ${normal_text}"
-    [ $sparkResult == 0 ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
+    [ $sparkResult == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
 }
 
 clean_spark() {
@@ -766,7 +904,7 @@ test_hadoop_standalone() {
     # Run Hadoop Test
     (cd ${hadoop_install_dir} && bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+')
     echo -n "${bold_text}Tested Hadoop v${hadoop_version} - Local (Standalone) Mode...  ${normal_text}"
-    [ -e ${hadoop_install_dir}/sandbox/output/_SUCCESS ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
+    [ -e ${hadoop_install_dir}/sandbox/output/_SUCCESS ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
     
     # Destroy Sandbox directory
     rm -rf ${hadoop_install_dir}/sandbox
@@ -796,7 +934,7 @@ test_hadoop_pseudo_distributed() {
         # Fix hard-coding yo...
         ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+'
         echo -n "${bold_text}Tested Hadoop - Pseudo-Distributed Mode...   ${normal_text}"
-        [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "${bold_text}[ PASSED ]${normal_text}" || echo "${bold_text}[ FAILED ]${normal_text}"
+        [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
     
@@ -906,11 +1044,11 @@ config_zookeeper() {
             fi
 
             echo "Configuring Zookeeper for standalone local operation..."
-            echo "tickTime=2000" >> ${zookeeper_confdir}/zoo_standalone.cfg
+            echo "tickTime=2000" >> $zookeeper_standalone_config_file
             echo "dataDir=${zookeeper_workdir}/standalone" \
-             >> ${zookeeper_confdir}/zoo_standalone.cfg
+             >> $zookeeper_standalone_config_file
             echo "clientPort=$zookeeper_client_port" \
-             >> ${zookeeper_confdir}/zoo_standalone.cfg
+             >> $zookeeper_standalone_config_file
             echo "zk://localhost:$zookeeper_client_port/znode" \
              >> $zookeeper_standalone_master_url_file
 
@@ -930,7 +1068,7 @@ config_zookeeper() {
             local default_client_port=$zookeeper_client_port
             local start_host=2888
             local end_host=3888
-            local quorum_size=5
+            local quorum_size=$zookeeper_quorum_size
             local zk_replicated_config=${zookeeper_confdir}/zoo_local_replicated
             local zk_datadir=${zookeeper_workdir}/local_replication/local
 
@@ -993,20 +1131,12 @@ test_zookeeper() {
     # Basic zookeeper test for client connection
     echo
     echo "${bold_text}Zookeeper Test 1: Standalone Local Server/Client Connection${normal_text}"
-    run_zookeeper_start_server ${zookeeper_install_dir}/conf/zoo_standalone.cfg
-    ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
+    run_zookeeper_start_server $zookeeper_standalone_config_file
+    ${zookeeper_install_dir}/bin/zkCli.sh -server localhost:$zookeeper_client_port ls / quit >& /dev/null
     zkret=$?
-    run_zookeeper_stop_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
+    run_zookeeper_stop_server $zookeeper_standalone_config_file
     echo -n "${bold_text}Tested Zookeeper local standalone configuration...   ${normal_text}"
-    [ $zkret == 0 ] && echo "${bold_text} [ PASSED ]${normal_text}" || echo "${bold_text} [ FAILED ]${normal_text}"
-   
-    # TODO Zookeeper test for locally replicated cluster 
-    #echo
-    #echo "${bold_text}Zookeeper Test 2: Local Replication Test${normal_text}"
-    #echo -n "Tested Zookeeper Local Replication with N Quorum Members"
-    #echo "[ TBD ]"
-
-    # TODO Cluster replication test
+    [ $zkret == 0 ] && echo "${green_text} [ PASSED ]${normal_text}" || echo "${red_text} [ FAILED ]${normal_text}"   
 }
 
 run_zookeeper_start_server() {
@@ -1025,7 +1155,7 @@ run_zookeeper_stop_server() {
 }
 
 run_zookeeper_start_local_replicated_servers() {
-    local quorum=5
+    local quorum=$zookeeper_quorum_size
     for (( n=1; n <= $quorum; n++ ))
     do
         run_zookeeper_start_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
@@ -1033,7 +1163,7 @@ run_zookeeper_start_local_replicated_servers() {
 }
 
 run_zookeeper_stop_local_replicated_servers() {
-    local quorum=5
+    local quorum=$zookeeper_quorum_size
     for (( n=1; n <= $quorum; n++ ))
     do  
         run_zookeeper_stop_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
@@ -1116,17 +1246,17 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    setup_hadoop
-    config_hadoop   
-    test_hadoop
+    #setup_hadoop
+    #config_hadoop   
+    #test_hadoop
 
     echo
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    setup_zookeeper
-    config_zookeeper
-    test_zookeeper
+    #setup_zookeeper
+    #config_zookeeper
+    #test_zookeeper
 
     echo
     echo "---------------------------------"
@@ -1140,9 +1270,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    setup_spark
-    config_spark
-    test_spark
+    #setup_spark
+    #config_spark
+    #test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

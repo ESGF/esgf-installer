@@ -301,10 +301,9 @@ config_mesos() {
                 cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_standalone_mesos}
                 cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_single_zookeeper}
                 cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_replicated_zookeeper}
-
                 sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_master_url'\2#g' ${hadoop_mesos_config_standalone_mesos}/mapred-site.xml
                 sed -rin 's#(<value>)local(</value>)#\1'file://$zookeeper_standalone_master_url_file'\2#g' ${hadoop_mesos_config_single_zookeeper}/mapred-site.xml
-                sed -rin 's#(<value>)local(</value>)#\1'file://$hadoop_mesos_zookeeper_url'\2#g' ${hadoop_mesos_config_replicated_zookeeper}/mapred-site.xml
+                sed -rin 's#(<value>)local(</value>)#\1'file://$zookeeper_replicated_master_url_file'\2#g' ${hadoop_mesos_config_replicated_zookeeper}/mapred-site.xml
 
             fi
 
@@ -386,6 +385,7 @@ test_mesos_compat_hadoop_mesos_standalone() {
         run_mesos_start_compat_hadoop_jobtracker ${hadoop_mesos_config_standalone_mesos}
         (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
         run_mesos_stop_compat_hadoop
+        sleep 5
         run_mesos_stop_cluster
         [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local mesosHadoopCompatResult=0 || local mesosHadoopCompatResult=1
         rm -rf ${mesos_compat_framework_dir}/sandbox 
@@ -413,9 +413,9 @@ test_mesos_compat_hadoop_single_zookeeper() {
     run_mesos_start_master --port=$mesos_master_port --zk=file://$zookeeper_standalone_master_url_file
     run_mesos_start_slave file://$zookeeper_standalone_master_url_file
     run_mesos_start_compat_hadoop_jobtracker ${hadoop_mesos_config_single_zookeeper}
-
+    
     # Run Framework Tests
-    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/inp     ut ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+') 
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+') 
     [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local hadoopOnMesosSingleZookeeper=0 || local hadoopOnMesosSingleZookeeper=1
 
     # Remove working directory, shut down clusters
@@ -440,13 +440,26 @@ test_mesos_compat_hadoop_replicated_zookeeper() {
     mkdir ${mesos_compat_framework_dir}/sandbox/input
     cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
     
-    # Zookeeper
-    # Mesos
-    # Hadoop
-    # Test
-    
-    # Remove working directory
+    # Run Zookeeper, Mesos, Frameworks
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    run_mesos_start_compat_hadoop_jobtracker $hadoop_mesos_config_replicated_zookeeper
+
+    # Run Framework Tests 
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
+    [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local hadoopOnMesosReplicatedZookeeper=0 || local hadoopOnMesosReplicatedZookeeper=1
+
+    # Remove working directory, shut down support frameworks
     rm -rf ${mesos_compat_framework_dir}/sandbox
+    run_mesos_stop_compat_hadoop
+    run_mesos_stop_cluster
+    run_zookeeper_stop_local_replicated_servers
+
+    # Provide Test Results
+    echo -n "${bold_text}Tested Mesos + Mesos-Compatible Hadoop on Local Replicated Zookeeper...   ${normal_text}"
+    [ $hadoopOnMesosReplicatedZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+     
 }
 
 test_mesos_multi_framework_replicated_zookeeper() {
@@ -460,13 +473,32 @@ test_mesos_multi_framework_replicated_zookeeper() {
     mkdir ${mesos_compat_framework_dir}/sandbox/input
     cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
     
-    # Zookeeper
-    # Mesos
-    # Hadoop
-    # Test
-    
-    # Remove working directory
+    # Run Zookeeper, Mesos, Frameworks
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    run_mesos_start_compat_hadoop_jobtracker $hadoop_mesos_config_replicated_zookeeper
+
+    # Run Framework Tests 
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_replicated_master_url_file`
+    local sparkFrameworkResult=$?
+    if [ $sparkFrameworkResult == 0 ] && [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ]; then
+        local multiFrameworkMesosReplicatedZookeeper=0
+    else
+        local multiFrameworkMesosReplicatedZookeeper=1
+    fi
+
+    # Remove working directory, shut down support frameworks
     rm -rf ${mesos_compat_framework_dir}/sandbox
+    run_mesos_stop_compat_hadoop
+    run_mesos_stop_cluster
+    run_zookeeper_stop_local_replicated_servers
+
+    # Provide Test Results
+    echo -n "${bold_text}Tested Spark + Mesos-Compatible Hadoop on Mesos, Local Replicated Zookeeper...   ${normal_text}"
+    [ $multiFrameworkMesosReplicatedZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+     
 }
 
 test_mesos() {
@@ -497,29 +529,27 @@ test_mesos() {
 
     echo
     echo -n "${bold_text}Mesos Test 5: ${normal_text}"
-    #test_mesos_compat_hadoop_single_zookeeper
+    test_mesos_compat_hadoop_single_zookeeper
 
     echo
     echo -n "${bold_text}Mesos Test 6: ${normal_text}"
-    #test_mesos_compat_hadoop_replicated_zookeeper
+    test_mesos_compat_hadoop_replicated_zookeeper
 
     echo
     echo -n "${bold_text}Mesos Test 7: ${normal_text}"
-    #test_mesos_multi_framework_replicated_zookeeper
+    test_mesos_multi_framework_replicated_zookeeper
 }
 
 run_mesos_start_compat_hadoop_jobtracker() {
-    echo -n "Starting Mesos framework-compatible Hadoop with configuration $1"
-    (cd ${hadoop_mesos_compat_dir} && bin/hadoop --config $1 jobtracker & >& /dev/null)
+    echo "Starting Mesos framework-compatible Hadoop..."
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop --config $1 jobtracker &) >& /dev/null &
     [ $? == 0 ] && echo "[ Now running Mesos-Hadoop, configured with $1 ]" || echo "[ Mesos-Hadoop (configuration $1) failed to run ]"
 }
 
 run_mesos_stop_compat_hadoop() {
     echo -n "Stopping Mesos framework Hadoop...   "
     local runningHadoopPid=$(pgrep -f jobtracker)
-    # TODO: Case where Hadoop had failed to run should fail, but
-    # Hadoop in general should be fine if it ran
-    if [ $? == 0 ]; then
+    if [ $? == 0 ] && [ $runningHadoopPid ] && [ -n $runningHadoopPid ]; then
         kill $runningHadoopPid
         wait $runningHadoopPid 2>/dev/null
         echo "[ Stopped ]"
@@ -551,14 +581,14 @@ run_mesos_start_master() {
 run_mesos_start_slave() {
     # TODO Run with ESGF Ip address for mesos master url
     # TODO figure out correct memory resources
-    echo "Starting Mesos Slave..."
+    echo "Starting Mesos Slave"
     ${mesos_build_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &
     [ $? == 0 ] && echo "[ Mesos Slave now running ]" || echo "[ Mesos Slave failed to run ]" 
 }
 
 run_mesos_stop_cluster() {
     # Stop Master without parent shell termination notification
-    master_pid=$(pgrep mesos-master)
+    local master_pid=$(pgrep mesos-master)
     if [ $? == 0 ]; then
         echo -n "Stopping Mesos Master ..."
         kill $master_pid
@@ -569,7 +599,7 @@ run_mesos_stop_cluster() {
     fi
 
     # Stop Slaves
-    slave_pid=$(pgrep mesos-slave)
+    local slave_pid=$(pgrep mesos-slave)
     if [ $? == 0 ]; then
         echo -n "Stopping Mesos Slaves ..."
         kill $slave_pid
@@ -1246,17 +1276,17 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    #setup_hadoop
-    #config_hadoop   
-    #test_hadoop
+    setup_hadoop
+    config_hadoop   
+    test_hadoop
 
     echo
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    #setup_zookeeper
-    #config_zookeeper
-    #test_zookeeper
+    setup_zookeeper
+    config_zookeeper
+    test_zookeeper
 
     echo
     echo "---------------------------------"
@@ -1270,9 +1300,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    #setup_spark
-    #config_spark
-    #test_spark
+    setup_spark
+    config_spark
+    test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

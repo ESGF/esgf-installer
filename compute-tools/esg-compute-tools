@@ -778,9 +778,18 @@ setup_hadoop() {
 }
 
 write_env_hadoop() {
+    # Hadoop will comment on its configuration even when Hadoop home is defined
+    # correctly. The possible fail conditions are managed in our test cases, so
+    # it is fine to supress this warning in our configuration.
     echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
+    
+    # ESGF will know the "modern" Hadoop as Hadoop home, there is also a legacy
+    # Hadoop (0.20.205) for operation with Mesos.
     echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+
+    # Hadoop will not operate if it does not know Java's location.
     echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_install_dir}/conf/hadoop-env.sh
+    
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -793,12 +802,14 @@ write_hadoop_install_log_entry() {
 }
 
 config_hadoop() {
-    # This configuration method should prompt the user to enter settings pertaining to the type
-    # of Hadoop distribution (local, semi-distributed, cluster distributed). 
-    # There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
+    # This configuration method should prompt the user to enter settings
+    # pertaining to the type of Hadoop distribution (local, semi-distributed, 
+    # cluster distributed). There is some info on getting Hadoop setup here:
+    # http://hadoop.apache.org/common/#Getting+Started
 
-    # TODO Fully distributed operation requires a pretty hefty amount of configuration. Using the defaults
-    # Hadoop provides is probably best. This configuration guide will be used for fully distributed configuration:
+    # TODO Fully distributed operation requires a pretty hefty amount of
+    # configuration. This configuration guide will be used as a basis
+    # for fully distributed configuration:
     # http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html   
 
     # Initialize configuration
@@ -847,21 +858,35 @@ config_hadoop() {
 }
 
 run_hadoop_start_local_distributed() {
+    # Hadoop: Latest
+    # Operation Mode: Pseudo-Distributed
+    # This method assumes that Hadoop has been configured correctly in this
+    # mode, which requires overwriting some configuration files. Note that
+    # the start script can be passed any config directoy with the --config
+    # flag, in case the user wants to define their own.
+    
     # TODO Start Hadoop with configuration files from ESG configuration directory
     echo "Hadoop: Starting hadoop in local distributed mode..."
     ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
 }
     
 run_hadoop_stop_local_distributed() {
+    # Hadoop: Latest
+    # Operation Mode: Pseudo-Distributed
+    # Stops all running namenodes, trackers, and data nodes. Does not need to
+    # be passed a configuration file.
+
     echo "Hadoop: Shutting down namenode and jobtracker..."
     ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null  
 }
 
 pseudo_distributed_config_setup() {
-
-    # TODO Best practice would be to not keep these guys in Hadoop's install tree...
+    # Hadoop: Latest
+    # Operation: Pseudo-Distributed
+    # TODO Best practice would be to not keep configuration file in Hadoop's 
+    # install tree. These will end up in a separate configuration directory
+    # for compute languages and tools.
     # Create directories for standalone, local_distributed configuration
-    # For now we destroy them first.
     rm -rf ${hadoop_install_dir}/conf/standalone
     rm -rf ${hadoop_install_dir}/conf/local_distributed
     rm -rf ${hadoop_install_dir}/conf/managed_cluster
@@ -963,13 +988,13 @@ test_hadoop_pseudo_distributed() {
         ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
         # Fix hard-coding yo...
         ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+'
+        
+        run_hadoop_stop_local_distributed 
         echo -n "${bold_text}Tested Hadoop - Pseudo-Distributed Mode...   ${normal_text}"
         [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+        
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
-    
-        run_hadoop_stop_local_distributed 
-
     else
         echo
         echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
@@ -1284,25 +1309,25 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    setup_zookeeper
-    config_zookeeper
-    test_zookeeper
+    #setup_zookeeper
+    #config_zookeeper
+    #test_zookeeper
 
     echo
     echo "---------------------------------"
     echo " Installing Mesos and Mesos-Compatible Hadoop"
     echo "---------------------------------"
-    setup_mesos
-    config_mesos
-    test_mesos
+    #setup_mesos
+    #config_mesos
+    #test_mesos
 
     echo
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    setup_spark
-    config_spark
-    test_spark
+    #setup_spark
+    #config_spark
+    #test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

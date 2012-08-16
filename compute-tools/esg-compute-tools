@@ -1301,9 +1301,9 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    #setup_hadoop
-    #config_hadoop   
-    #test_hadoop
+    setup_hadoop
+    config_hadoop   
+    test_hadoop
 
     echo
     echo "---------------------------------"
@@ -1317,17 +1317,17 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Mesos and Mesos-Compatible Hadoop"
     echo "---------------------------------"
-    #setup_mesos
-    #config_mesos
-    #test_mesos
+    setup_mesos
+    config_mesos
+    test_mesos
 
     echo
     echo "---------------------------------"
     echo " Installing Spark"
     echo "---------------------------------"
-    #setup_spark
-    #config_spark
-    #test_spark
+    setup_spark
+    config_spark
+    test_spark
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

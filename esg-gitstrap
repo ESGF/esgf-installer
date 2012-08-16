@@ -86,7 +86,7 @@ my %opt = (
 
 GetOptions(
     \%opt,
-    'debug',
+    'debug|v',
     'prefix=s',
     'bindir=s',
     'configdir=s',

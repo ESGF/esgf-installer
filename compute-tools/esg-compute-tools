@@ -270,13 +270,13 @@ config_mesos() {
                 cp -r $mesos_install_dir/hadoop/mesos ${hadoop_mesos_compat_dir}/src/contrib
                 cp -p $mesos_install_dir/hadoop/mesos-executor ${hadoop_mesos_compat_dir}/bin
                 (cd ${hadoop_mesos_compat_dir} && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0_mesos.patch)
-                cp $mesos_install_dir/protobuf-*.jar ${hadoop_mesos_compat_dir}/lib
-                cp $mesos_install_dir/src/mesos-*.jar ${hadoop_mesos_compat_dir}/lib
+                cp $mesos_build_dir/protobuf-*.jar ${hadoop_mesos_compat_dir}/lib
+                cp $mesos_build_dir/src/mesos-*.jar ${hadoop_mesos_compat_dir}/lib
                 mkdir -p ${hadoop_mesos_compat_dir}/lib/native/$system_platform    
-                cp $mesos_install_dir/src/.libs/libmesos.so ${hadoop_mesos_compat_dir}/lib/native/$system_platform
-                cp $mesos_install_dir/protobuf-*.jar ${hadoop_mesos_compat_dir}/share/hadoop/lib
-                cp $mesos_install_dir/src/mesos-*.jar ${hadoop_mesos_compat_dir}/share/hadoop/lib
-                cp $mesos_install_dir/src/.libs/libmesos.so ${hadoop_mesos_compat_dir}/lib
+                cp $mesos_build_dir/src/.libs/libmesos.so ${hadoop_mesos_compat_dir}/lib/native/$system_platform
+                cp $mesos_build_dir/protobuf-*.jar ${hadoop_mesos_compat_dir}/share/hadoop/lib
+                cp $mesos_build_dir/src/mesos-*.jar ${hadoop_mesos_compat_dir}/share/hadoop/lib
+                cp $mesos_build_dir/src/.libs/libmesos.so ${hadoop_mesos_compat_dir}/lib
                
                 # Rebuild and repatch
                 (cd ${hadoop_mesos_compat_dir} && ant && patch -p1 <$mesos_install_dir/hadoop/mapred-site.xml.patch && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0_hadoop-env.sh.patch) 
@@ -1318,7 +1318,7 @@ setup_compute_tools() {
     echo " Installing Mesos and Mesos-Compatible Hadoop"
     echo "---------------------------------"
     setup_mesos
-    #config_mesos
+    config_mesos
     #test_mesos
 
     echo

@@ -115,7 +115,7 @@ hadoop_max_version=${hadoop_max_version:="1.0.4"}
 #--------------------------------
 mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
-mesos_build_dir=${MESOS_BUILD_HOME:-${mesos_install_dir}/build} 
+mesos_build_dir=${MESOS_BUILD_HOME:-$mesos_install_dir} 
 mesos_compat_framework_dir=${MESOS_COMPAT_FRAMEWORKS:-${install_prefix}/mesos_compat}
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
@@ -209,8 +209,8 @@ setup_mesos() {
 }
 
 write_env_mesos() {
-    echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
-    echo "export MESOS_BUILD_HOME=${mesos_build_dir}" >> ${envfile}
+    echo "export MESOS_INSTALL_HOME=${mesos_install_dir}" >> ${envfile}
+    echo "export MESOS_HOME=${mesos_build_dir}" >> ${envfile}
     echo "export MESOS_COMPAT_FRAMEWORKS_HOME=${mesos_compat_framework_dir}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
@@ -240,6 +240,11 @@ config_mesos() {
                 mkdir ${mesos_compat_framework_dir}
                 write_env_mesos
             fi
+
+            # TODO Move me...
+            #if [ -e ${spark_install_dir} ]; then
+             #   echo "MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
+            #fi
 
             # Create a directory to store configurations, for now
             if [ ! -e ${mesos_compat_config_dir} ]; then
@@ -323,7 +328,7 @@ test_mesos_spark_mesos_standalone() {
     run_mesos_start_slave $standaloneMesosMasterURL
 
     # Run Spark Test
-    ${spark_install_dir}/run spark.examples.SparkPi $standaloneMesosMasterURL
+    ${spark_install_dir}/run spark.examples.SparkLR $standaloneMesosMasterURL
     local sparkOnMesosStandalone=$?
     run_mesos_stop_cluster
     echo -n "${bold_text}Tested Mesos (non-fault-tolerant) with Spark...   ${normal_text}"
@@ -610,10 +615,6 @@ run_mesos_stop_cluster() {
     fi
 }
 
-run_mesos_compatible_hadoop() {
-    echo
-}
-
 clean_mesos() {
     doit="N"
     if [ -e ${mesos_install_dir} ]; then
@@ -655,7 +656,8 @@ setup_spark() {
     # Retrieve and build Spark
     git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
     echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
-    # TODO Spark Java environment configuration
+    echo "export SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
+    echo "export MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
     (cd ${spark_install_dir} && sbt/sbt compile)
     
     # TODO check for download errors or git failures
@@ -687,9 +689,6 @@ config_spark() {
         # Configure Spark environment, deployment, local/Mesos
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
             echo "Configuring Spark..."
-       
-            # TODO Configure Spark here 
-        
         # Inform user of skipped configuration step
         else
             echo "Skipping Spark Configuration..."
@@ -1301,33 +1300,33 @@ setup_compute_tools() {
     echo "---------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
     echo "---------------------------------"
-    #setup_hadoop
-    #config_hadoop   
-    #test_hadoop
+    setup_hadoop
+    config_hadoop   
+    test_hadoop
 
     echo
     echo "---------------------------------"
     echo " Installing Zookeeper"
     echo "---------------------------------"
-    #setup_zookeeper
-    #config_zookeeper
-    #test_zookeeper
-
+    setup_zookeeper
+    config_zookeeper
+    test_zookeeper
+    
+    echo
+    echo "---------------------------------"
+    echo " Installing Spark"
+    echo "---------------------------------"
+    setup_spark
+    config_spark
+    test_spark
+    
     echo
     echo "---------------------------------"
     echo " Installing Mesos and Mesos-Compatible Hadoop"
     echo "---------------------------------"
     setup_mesos
     config_mesos
-    #test_mesos
-
-    echo
-    echo "---------------------------------"
-    echo " Installing Spark"
-    echo "---------------------------------"
-    #setup_spark
-    #config_spark
-    #test_spark
+    test_mesos
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

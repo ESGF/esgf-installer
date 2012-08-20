@@ -72,15 +72,43 @@
 # Authors: Eugenia Gabrielova {gabrielov1@llnl.gov, genia.likes.science@gmail.com}
 ####
 
+install_prefix=${install_prefix:-"/usr/local"}
+leiningen_git_url=git://github.com/technomancy/leiningen.git
+leiningen_dir=${install_prefix}/leiningen
+
 #####
-# uses: git
+# uses: git, wget
 #####
+
+#####
+# Leiningen is a dependency manager for Clojure projects
+# http://www.leiningen.org/
+setup_leiningen() {
+    # SETUP NOTE: Traditionally, Leiningen is set up in a local directory on
+    # the path. Some special steps are required to make this work correctly
+    # with the ESGF installer setup.
+
+    # Check for an existing version of Leiningen (TODO)
+
+
+    # Fresh Leiningen Install:
+    # Step 1: Clone repository
+    git clone git://github.com/technomancy/leiningen.git ${install_prefix}/leiningen-source
+
+    # Set LEIN_ROOT environment variable to allow install from root
+    export LEIN_ROOT=true
+    
+    # There is a certificate issue with retrieiving Leiningen
+    export HTTP_CLIENT="wget --no-check-certificate -O"
+}
 
 setup_compute_tools_extras() {
     echo
     echo "-------------------------------------------------------------------"
-    echo " Installing ESG Node Compute Tools - Extras (Cascalog, Scoobi)"
+    echo " Installing ESG Node Compute Tools - Extras (Leiningen, Cascalog, Scoobi)"
     echo "-------------------------------------------------------------------"
+    
+    setup_leiningen
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]

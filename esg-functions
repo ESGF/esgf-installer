@@ -530,6 +530,18 @@ get_config_ip() {
 # These functions require that Postgresql be already installed and
 # running correctly.
 #----------------------------------------------------------
+postgres_create_db() {
+    # Creates a database if it does not already exist
+    if [ -z "$(postgres_list_dbs ${1})" ] ; then
+        #Create the database...
+        echo "Creating ESGF database: [${1}]"
+        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} createdb ${1} >& /dev/null
+        (( $? > 1 )) && echo " ERROR: Could not create esgf node database: ${node_db_name}" && return $?
+    else
+        echo "ESGF database [${1}] already exists, not creating."
+    fi
+}
+
 postgres_list_db_schemas() {
     # This prints a list of all schemas known to postgres.
     # If $1 is specified, it is used an awk filter
@@ -543,6 +555,7 @@ postgres_list_db_schemas() {
         awk '/'${1:-"."}'/ {print $1}' | \
         grep -Ev "^pg_.*")
 }
+
 postgres_list_schemas_tables() {
     # List all Postgres tables in all schemas, in the schemaname.tablename
     # format, in the ESGF database

@@ -584,6 +584,25 @@ postgres_list_dbs() {
         grep -Ev "^(template[0-9]|postgres)$" | grep ${1:-"."})
 }
 
+postgres_clean_schema_migration() {
+    # Removes entries from the esgf_migrate_version table if any exist
+    # where repository_id matches an SQL LIKE to the first argument
+    #
+    # The SQL LIKE strings are generally defined in
+    # "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
+    # each relevant repository.
+    if [ -n "$(postgres_list_schemas_tables public.esgf_migrate_version)" ] ; then
+        if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} \
+            psql -U ${postgress_user} ${node_db_name} \
+            -c "select count(*) from esgf_migrate_version where repository_id LIKE '%${1}%'" \
+            | tail -n +3 | head -n 1) > 0 )); then
+            echo "cleaning out schema migration bookeeping for esgf_node_manager..."
+            $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} \
+                psql -U ${postgress_user} ${node_db_name} \
+                -c "delete from esgf_migrate_version where repository_id LIKE '%${1}%'" >& /dev/null)
+        fi
+    fi
+}
 
 #----------------------------------------------------------
 # Process Launching and Checking...

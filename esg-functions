@@ -424,6 +424,18 @@ check_module_version() {
     return 1
 }
 
+get_current_esgf_library_version() {
+    # Some ESGF components, such as esgf-security, don't actually
+    # install a webapp or anything that carries an independent
+    # manifest or version command to check, so they must be checked
+    # against the ESGF install manifest instead.
+    [ ! -f "/esg/esgf-install-manifest" ] && return 0
+    local library_name=${1}
+    local v=$(grep library:${1} /esg/esgf-install-manifest | cut -d= -f2)
+    echo $v
+    [ -n "${v}" ] && return 0 || return 1
+}
+
 get_current_webapp_version() {
     local webapp_name=$1
     local version_property=${2:-"Version"}

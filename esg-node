@@ -4778,10 +4778,10 @@ checked_get() {
         exit 1
     fi
 
-    #if (_is_in_git "${local_file}") ; then
-    #    printf "${local_file} is controlled by Git, not updating"
-    #    return 0
-    #fi
+    if (_is_in_git "${local_file}") ; then
+        printf "${local_file} is controlled by Git, not updating"
+        return 0
+    fi
 
     if ((use_local_files)) && [ -e "${local_file}" ]; then
         printf "

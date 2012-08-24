@@ -423,7 +423,7 @@ get_las() {
 
 	echo "wget -O '${las_dist_file}' '${las_tar_url}'"
 	wget -O "${las_dist_file}" "${las_tar_url}"
-	[ $? != 0 ] && echo " ERROR: Could not download LAS:${las_dist_file}" && popd && checked_done 1
+	[ $? != 0 ] && echo " ERROR: Could not download LAS:${las_dist_file}" && popd >/dev/null && checked_done 1
     fi
     popd >& /dev/null
     return 0

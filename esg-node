@@ -418,7 +418,7 @@ write_paths() {
 #that we are not going to install or be responsible for
 check_prerequisites() {
 
-printf"
+printf "
 
   EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
   E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F

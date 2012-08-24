@@ -417,6 +417,27 @@ write_paths() {
 #checking for what we expect to be on the system a-priori
 #that we are not going to install or be responsible for
 check_prerequisites() {
+
+printf"
+
+  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF
+    E:::::E             S:::::S            G:::::G                F:::::F             
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF   
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F   
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F   
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF   
+    E:::::E                         S:::::SG:::::G        G::::G  F:::::F             
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F             
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF  
+
+"
     printf "Checking that you have root privs on $(hostname)... "
     id | grep root >& /dev/null
     [ $? != 0 ] && printf "[FAIL] \n\tMust run this program with root's effective UID\n\n" && return 1
@@ -5605,13 +5626,13 @@ esgf_node_info() {
     printf "
 
      The goal of this script is to automate as many tasks as possible
-     regarding the installation and maintenance of the ESGF software
-     stack that is know as the \"ESGF Node\".  A software stack is a
-     collection of tools that work in concert to perform a particular
-     task or set of tasks that are semantically united. The software
-     stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL,
-     MyProxy, and several ESGF.org custom software applications
-     running on a LINUX (RedHat/CentOS) operating system.
+     regarding the installation, maintenance and use of the ESGF
+     software stack that is know as the \"ESGF Node\".  A software
+     stack is a collection of tools that work in concert to perform a
+     particular task or set of tasks that are semantically united. The
+     software stack is comprised of: Tomcat, Thredds, CDAT & CDMS,
+     PostgreSQL, MyProxy, and several ESGF.org custom software
+     applications running on a LINUX (RedHat/CentOS) operating system.
 
      Through the installation process there are different accounts
      that are created that facilitate the communication between the
@@ -5653,6 +5674,24 @@ esgf_node_info() {
       ---------                                                   ---------
 
      (Visit http://esgf.org , http://esgf.org/wiki for more information)
+
+                                                                                    
+  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF
+    E:::::E             S:::::S            G:::::G                F:::::F             
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF   
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F   
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F   
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF   
+    E:::::E                         S:::::SG:::::G        G::::G  F:::::F             
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F             
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF  
 
      -ESGF.org \n\n"
 
@@ -5852,6 +5891,11 @@ usage() {
         Test Publish : esg-node --test-pub
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
+
+         ___ ___  ___ ___ 
+        | __/ __|/ __| __|
+        | _|\__ \ (_ | _| 
+        |___|___/\___|_|  
 
 "
     exit 0

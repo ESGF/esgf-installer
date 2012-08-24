@@ -5991,7 +5991,7 @@ main() {
                     (( (sel & TEST_BIT) == 0 )) && ((sel+=TEST_BIT))
                     debug_print "sel = $sel "
                     ;;
-                --type | -t)
+                --type | -t | --flavor)
                 #TODO: look for next arg if "data" node or if "index" node set the selection bit accordingly
                 #This also means that I can nott use 1 for basic install will have to use 1 for prerequisite
                 #and then another bit for "data" node vs "index" node

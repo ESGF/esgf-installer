@@ -124,7 +124,10 @@ zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
 hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
-hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+hadoop_mesos_compat_dist_url=http://mirrors.ibiblio.org/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+#hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+monit_dist_url=http://mmonit.com/monit/dist/monit-5.4.tar.gz
+monit_install_dir=${MONIT_HOME:-${install_refix}/monit}
 
 #-------------------------------
 # External programs' configuration variables
@@ -189,9 +192,10 @@ setup_mesos() {
     # Retrieve Mesos Source and build after configuration for ESGF tools
     # Uses: Hadoop, Zookeeper, Java, Python
     git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
+    env PATH=$CDAT_HOME/bin:${PATH} PYTHON_REFIX=$CDAT_HOME
     mkdir $mesos_build_dir
     (cd ${mesos_install_dir} && ./bootstrap)
-    (cd ${mesos_build_dir} && ../configure --with-java=$JAVA_HOME --disable-python --disable-webui && make)
+    (cd ${mesos_build_dir} && ./configure --with-java=$JAVA_HOME --enable-python=yes LDFLAGS=-L$CDAT_HOME/lib && make)
 
     # TODO make check hangs on zookeeper install
     # Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
@@ -236,15 +240,11 @@ config_mesos() {
             
             # First we check if a the Mesos-Compatible-Frameworks home directory exists
             echo "Configuring Mesos: Checking for Mesos-Compatible-Frameworks Home"
+            rm -rf ${mesos_compat_framework_dir}
             if [ ! -e ${mesos_compat_framework_dir} ]; then
                 mkdir ${mesos_compat_framework_dir}
                 write_env_mesos
             fi
-
-            # TODO Move me...
-            #if [ -e ${spark_install_dir} ]; then
-             #   echo "MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
-            #fi
 
             # Create a directory to store configurations, for now
             if [ ! -e ${mesos_compat_config_dir} ]; then
@@ -265,9 +265,12 @@ config_mesos() {
                 local system_platform=`uname -si | sed -e 's/ /-/g'`
               
                 rm -rf ${mesos_compat_framework_dir}/*.tar.gz 
+                
+                # This is a common point of failure for some reason...
                 wget -O ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file $hadoop_mesos_compat_dist_url
                 echo "Unpacking ${hadoop_mesos_dist_file}..."
                 tar -zxf ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file -C ${mesos_compat_framework_dir}
+
                 mv ${mesos_compat_framework_dir}/${hadoop_mesos_dist_dir} ${hadoop_mesos_compat_dir}
                 
                 # Attempt to patch hadoop with latest mesos compatibility fixes

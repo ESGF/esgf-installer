@@ -68,12 +68,12 @@
 # Implemented Tools:
 # * Cascalog, Clojure-based query library for Hadoop
 # * Scoobi, Scala-based query library for Hadoop
-
+#
 # Authors: Eugenia Gabrielova {gabrielov1@llnl.gov, genia.likes.science@gmail.com}
 ####
 
 install_prefix=${install_prefix:-"/usr/local"}
-leiningen_git_url=git://github.com/technomancy/leiningen.git
+leiningen_runner_url=https://raw.github.com/technomancy/leiningen/preview/bin/lein
 leiningen_dir=${install_prefix}/leiningen
 
 #####
@@ -88,21 +88,24 @@ setup_leiningen() {
     # the path. Some special steps are required to make this work correctly
     # with the ESGF installer setup.
 
-    # Check for an existing version of Leiningen (TODO)
+    if [ ! -e ${leiningen_dir}/lein ] || [ ! -e /bin/lein ]; then
+        if [ ! -e ${leiningen_dir} ]; then
+            mkdir ${leiningen_dir}
+        fi
+        wget --no-check-certificate -O ${leiningen_dir}/lein $leiningen_runner_url
+        ln -s ${leiningen_dir}/lein /bin/lein
+        chmod 755 /bin/lein
 
-
-    # Fresh Leiningen Install:
-    # Step 1: Clone repository
-    git clone git://github.com/technomancy/leiningen.git ${install_prefix}/leiningen-source
-
-    # Set LEIN_ROOT environment variable to allow install from root
-    export LEIN_ROOT=true
+        export HTTP_CLIENT="wget --no-check-certificate -O"
+        export LEIN_ROOT=true
     
-    # There is a certificate issue with retrieiving Leiningen
-    export HTTP_CLIENT="wget --no-check-certificate -O"
+        #/bin/lein self-install
+    else
+        echo "Leiningen setup already complete"
+    fi
 }
 
-setup_compute_tools_extras() {
+setup_compute_dev_tools() {
     echo
     echo "-------------------------------------------------------------------"
     echo " Installing ESG Node Compute Tools - Extras (Leiningen, Cascalog, Scoobi)"
@@ -113,5 +116,5 @@ setup_compute_tools_extras() {
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
-    setup_compute_tools_extras
+    setup_compute_dev_tools
 fi

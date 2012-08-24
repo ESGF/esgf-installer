@@ -109,6 +109,8 @@ spark_min_version=${spark_min_version:="0.5.0"}
 hadoop_version=${hadoop_version:="1.0.3"}
 hadoop_min_version=${hadoop_min_version:="1.0.1"}
 hadoop_max_version=${hadoop_max_version:="1.0.4"}
+monit_min_version=${monit_min_version:="5.4"}
+monit_version=${monit_version:="5.4"}
 
 #--------------------------------
 # External programs' script variables
@@ -723,6 +725,74 @@ clean_spark() {
 }
 
 #####
+# Monit - Standalone tool for machine monitoring
+#####
+
+setup_monit() {
+    
+    # Checking for Monit Version
+    echo
+    echo -n "Checking for Monit >= Versin${monit_min_version}"
+    #if [ -e ${spark_install_dir} ]; then
+     #   local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
+     #   check_version_helper $spark_current_version ${spark_min_version}
+     #   [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 
+    #else
+     #   echo
+     #   echo "No Spark installation detected"
+    #fi
+
+    echo
+    echo "*****************************"
+    echo "Setting Up Monit ${monit_version}"
+    echo "*****************************"
+    echo
+
+    # Retrieve, configure, and install Monit
+
+    # Retrieve and build Spark
+    #git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
+    #echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
+    #echo "export SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
+    #echo "export MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
+    #(cd ${spark_install_dir} && sbt/sbt compile)
+    
+    # TODO check for download errors or git failures
+    
+    # Add Spark home to environment and install manifest
+    write_env_spark
+    write_spark_install_log_entry
+}
+
+write_env_monit() {
+    echo
+}
+
+write_spark_install_log_entry() {
+    echo
+}
+
+config_monit() {
+    echo
+}
+
+run_monit() {
+    echo
+}
+
+stop_monit() {
+    echo
+}
+
+test_monit() {
+    echo
+}
+
+clean_monit() {
+    echo
+}
+
+#####
 # Hadoop (MapReduce distributed computing on HDFS)
 #####
 setup_hadoop() {
@@ -1254,6 +1324,7 @@ clean_compute_tools() {
     clean_mesos
     clean_hadoop
     clean_zookeeper
+    clean_monit
 }
 
 test_compute_tools() {
@@ -1269,6 +1340,7 @@ test_compute_tools() {
     test_zookeeper
     test_mesos
     test_spark
+    test_monit
 }
 
 config_compute_tools() {
@@ -1284,6 +1356,7 @@ config_compute_tools() {
     config_zookeeper
     config_mesos
     config_spark
+    config_monit
 }
 
 setup_compute_tools() {
@@ -1305,39 +1378,48 @@ setup_compute_tools() {
     # Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 
     echo
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
     setup_hadoop
     config_hadoop   
     test_hadoop
 
     echo
-    echo "---------------------------------"
-    echo " Installing Zookeeper"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
+    echo " Installing Zookeeper node management"
+    echo "-------------------------------------------------"
     setup_zookeeper
     config_zookeeper
     test_zookeeper
     
     echo
-    echo "---------------------------------"
-    echo " Installing Spark"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
+    echo " Installing Spark, iterative MapReduce framework"
+    echo "-------------------------------------------------"
     setup_spark
     config_spark
     test_spark
     
     echo
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
     echo " Installing Mesos and Mesos-Compatible Hadoop"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
     setup_mesos
     config_mesos
     test_mesos
+
+    echo
+    echo "-------------------------------------------------"
+    echo " Installing Monit - System Monitoring Tool"
+    echo "-------------------------------------------------"
+    setup_monit
+    config_monit
+    test_monit
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
-    setup_compute_tools
+    #setup_compute_tools
+    setup_monit
 fi

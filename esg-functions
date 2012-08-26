@@ -952,3 +952,67 @@ get_node_id() {
     esgf_node_id=${esgf_node_id:-$(sha1sum <(echo esgf$(hostname -i)) | awk '{print $1}')}
     echo ${esgf_node_id}
 }
+
+
+git-tagrelease() {
+    # Makes a commit to the current git repository updating the
+    # release version string and codename, tags that commit with the
+    # version string, and then immediately makes another commit
+    # appending "-devel" to the version string.
+    #
+    # This is to prepare for a release merge.  Note that the tag will
+    # not be against the correct revision after a merge to the release
+    # branch if it was not a fast-forward merge, so ensure that there
+    # are no unmerged changes from the release branch before using.
+    #
+    # If that happens, delete the tag, issue a git reset --hard
+    # against the last commit before the tag, merge the release
+    # branch, and try again.
+    #
+    # Arguments:
+    # $1: the release version string (mandatory)
+    # $2: the release codename (optional)
+    #
+    # Examples:
+    #   git-tagrelease v4.5.6 AuthenticGreekPizzaEdition
+    # or just
+    #   git-tagrelease v4.5.6
+
+    # The file containing the release variables that needs to be modified
+    RELEASEFILE="esg-node"
+
+    # The strings that will be matched (against the beginning of a
+    # line) for version and codename.  The values in ${1} and ${2}
+    # will be wrapped in double-quotes and appended, replacing
+    # whatever followed previously.
+    VERSIONSTRING="script_version="
+    CODENAMESTRING="script_release="
+
+    if [ ! -f ${RELEASEFILE} ] ; then
+        echo "The release file ('${RELEASEFILE}') was not found!"
+        echo "Are you sure you're in the right repository and directory?"
+        return 1
+    fi
+
+    if [ X"${1}" = "X" ] ; then
+        echo "You didn't specify a release version!"
+        return 2
+    fi
+
+    perl -p -i -e "s#^${VERSIONSTRING}.*#${VERSIONSTRING}\"${1}\"#" ${RELEASEFILE}
+
+    COMMITSTRING="Update release version to ${1}"
+    if [ X"${2}" != "X" ] ; then
+        perl -p -i -e "s#^${CODENAMESTRING}.*#${CODENAMESTRING}\"${2}\"#" ${RELEASEFILE}
+        COMMITSTRING="Update release version to ${1}, ${2}"
+    fi
+
+    git add ${RELEASEFILE}
+    git commit -m "${COMMITSTRING}"
+    git tag ${1}
+
+    # Immediately set version "-devel" to distinguish further development
+    perl -p -i -e "s#^${VERSIONSTRING}.*#${VERSIONSTRING}\"${1}-devel\"#" ${RELEASEFILE}
+    git add ${RELEASEFILE}
+    git commit -m "Update development version string to ${1}-devel"
+}

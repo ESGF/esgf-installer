@@ -128,8 +128,8 @@ hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${ha
 hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
 hadoop_mesos_compat_dist_url=http://mirrors.ibiblio.org/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
 #hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
-monit_dist_url=http://mmonit.com/monit/dist/monit-5.4.tar.gz
-monit_install_dir=${MONIT_HOME:-${install_refix}/monit}
+monit_dist_url=http://mmonit.com/monit/dist/monit-$monit_version.tar.gz
+monit_install_dir=${MONIT_HOME:-${install_prefix}/monit}
 
 #-------------------------------
 # External programs' configuration variables
@@ -222,7 +222,7 @@ write_env_mesos() {
     return 0
 }
 
-write_mesos_install_log_entry() {   
+write_mesos_install_log_entry() {
     local entry="$(date ${date_format}) esg-compute-tools:mesos=${mesos_version} ${mesos_install_dir}"
     echo ${entry} >> ${install_manifest}
     dedup ${install_manifest}
@@ -733,15 +733,15 @@ setup_monit() {
     # Checking for Monit Version
     echo
     echo -n "Checking for Monit >= Versin${monit_min_version}"
-    #if [ -e ${spark_install_dir} ]; then
-     #   local spark_current_version=$(cd ${spark_install_dir} && sbt/sbt version | awk 'NR==5{split($3,array,"-")} END{print array[1]}' )
-     #   check_version_helper $spark_current_version ${spark_min_version}
-     #   [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 
-    #else
-     #   echo
-     #   echo "No Spark installation detected"
-    #fi
-
+    if [ -e ${monit_install_dir} ]; then
+        local monit_current_version=${monit_version} #TODO
+        check_version_helper $monit_current_version ${monit_min_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return
+    else
+        echo
+        echo "No Monit installation detected"
+    fi
+    
     echo
     echo "*****************************"
     echo "Setting Up Monit ${monit_version}"
@@ -749,27 +749,36 @@ setup_monit() {
     echo
 
     # Retrieve, configure, and install Monit
-
-    # Retrieve and build Spark
-    #git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
-    #echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
-    #echo "export SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
-    #echo "export MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
-    #(cd ${spark_install_dir} && sbt/sbt compile)
-    
-    # TODO check for download errors or git failures
-    
-    # Add Spark home to environment and install manifest
-    write_env_spark
-    write_spark_install_log_entry
+    local monit_dist_file=${monit_dist_url##*/}
+    local monit_dist_dir=$(echo ${monit_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+    rm -rf ${monit_dist_dir}
+    if [ ! -e ${monit_dist_dir} ]; then
+        echo "Don't see Monit distribution directiory ${monit_dist_dir}"
+        wget -O "${install_prefix}/${monit_dist_file}" ${monit_dist_url}
+        [ $? != 0 ] && echo " ERROR: Could not download Monit: ${monit_dist_file}"
+        echo "Unpacking ${monit_dist_file}..."
+        tar zxf ${install_prefix}/${monit_dist_file} -C ${install_prefix}
+        mv ${install_prefix}/${monit_dist_dir} ${monit_install_dir}
+        (cd ${monit_install_dir} && ./configure && make && make install)
+        rm ${install_prefix}/${monit_dist_file}
+    fi
+     
+    # Add Monit home to environment and install manifest
+    write_env_monit
+    write_monit_install_log_entry
 }
 
 write_env_monit() {
-    echo
+    echo "export MONIT_HOME=${monit_install_dir}" >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
 }
 
-write_spark_install_log_entry() {
-    echo
+write_monit_install_log_entry() {
+    local entry="$(date ${date_format}) esg-compute-tools:monit=${monit_version} ${monit_install_dir}"
+    echo ${entry} >> ${install_manifest}
+    dedup ${install_manifest}
+    return 0
 }
 
 config_monit() {
@@ -1371,11 +1380,19 @@ setup_compute_tools() {
     echo "-------------------------------------------------------------"
 
     # The optimal install order, as below, depends on the following:
+    # 0. Monit
     # 1. Hadoop
     # 2. Zookeeper
-    # 3. Mesos
+    # 3. Mesos (Requires Zookeeper for fault tolerance)
     # 4. Spark (Requires Mesos for distributed computation)
-    # Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
+
+    echo
+    echo "-------------------------------------------------"
+    echo "Installing Monit - System Monitoring Tool"
+    echo "-------------------------------------------------"
+    setup_monit
+    config_monit
+    test_monit
 
     echo
     echo "-------------------------------------------------"
@@ -1408,18 +1425,9 @@ setup_compute_tools() {
     setup_mesos
     config_mesos
     test_mesos
-
-    echo
-    echo "-------------------------------------------------"
-    echo " Installing Monit - System Monitoring Tool"
-    echo "-------------------------------------------------"
-    setup_monit
-    config_monit
-    test_monit
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
-    #setup_compute_tools
-    setup_monit
+    setup_compute_tools
 fi

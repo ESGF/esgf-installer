@@ -149,6 +149,11 @@ hadoop_mesos_config_standalone_mesos=${hadoop_mesos_config_standalone_mesos:-${h
 hadoop_mesos_config_single_zookeeper=${hadoop_mesos_config_single_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_single}
 hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_replicated}
 mesos_master_port=5050
+monit_config_dir=${esg_compute_config}/monit
+spark_config_dir=${esg_compute_config}/spark
+# zookeeper_config_dir
+# mesos_config_dir
+hadoop_config_dir=${esg_compute_config}/hadoop
 
 #-------------------------------
 # Internal script variables
@@ -787,13 +792,13 @@ config_monit() {
     # Monitrc should be configured to the user's system. It is probably best
     # if this configuration is the same across all machines in the system.
     # Using default monitrc for now
-    if [ ! -e ${esg_compute_config}/monit ]; then
-        mkdir ${esg_compute_config}/monit
+    if [ ! -e ${monit_config_dir} ]; then
+        mkdir ${monit_config_dir}
     fi
-    if [ ! -e ${esg_compute_config}/monit/esgf_monitrc ]; then
-        cp ${monit_install_dir}/monitrc ${esg_compute_config}/monit/esgf_monitrc
+    if [ ! -e ${monit_config_dir}/esgf_monitrc ]; then
+        cp ${monit_install_dir}/monitrc ${monit_config_dir}/esgf_monitrc
     fi
-    chmod 0700 ${esg_compute_config}/monit/esgf_monitrc
+    chmod 0700 ${monit_config_dir}/esgf_monitrc
 }
 
 run_monit() {
@@ -922,6 +927,10 @@ config_hadoop() {
     # http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html   
 
     # Initialize configuration
+    if [ ! -e ${hadoop_config_dir} ]; then
+        mkdir ${hadoop_config_dir}
+    fi
+
     echo
     local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
@@ -976,7 +985,7 @@ run_hadoop_start_local_distributed() {
     
     # TODO Start Hadoop with configuration files from ESG configuration directory
     echo "Hadoop: Starting hadoop in local distributed mode..."
-    ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+    ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_config_dir}/local_distributed >& /dev/null
 }
     
 run_hadoop_stop_local_distributed() {
@@ -996,23 +1005,18 @@ pseudo_distributed_config_setup() {
     # install tree. These will end up in a separate configuration directory
     # for compute languages and tools.
     # Create directories for standalone, local_distributed configuration
-    rm -rf ${hadoop_install_dir}/conf/standalone
-    rm -rf ${hadoop_install_dir}/conf/local_distributed
-    rm -rf ${hadoop_install_dir}/conf/managed_cluster
-    mkdir ${hadoop_install_dir}/conf/standalone 
-    mkdir ${hadoop_install_dir}/conf/local_distributed
-    mkdir ${hadoop_install_dir}/conf/managed_cluster
+    rm -rf ${hadoop_config_dir}/standalone
+    rm -rf ${hadoop_config_dir}/local_distributed
+    rm -rf ${hadoop_config_dir}/managed_cluster
+    mkdir ${hadoop_config_dir}/standalone
+    mkdir ${hadoop_config_dir}/local_distributed
+    mkdir ${hadoop_config_dir}/managed_cluster
 
     # Copy default example config files to new configuration directories    
-    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/standalone/
-    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/standalone/hadoop-env.sh
-    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/standalone/slaves
-    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/local_distributed/hadoop-env.sh
-    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/local_distributed/slaves
-    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/managed_cluster/hadoop-env.sh
-    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/managed_cluster/
-    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/managed_cluster/slaves
-
+    cp ${hadoop_install_dir}/conf/* ${hadoop_config_dir}/standalone/
+    cp ${hadoop_install_dir}/conf/* ${hadoop_config_dir}/local_distributed/
+    cp ${hadoop_install_dir}/conf/* ${hadoop_config_dir}/managed_cluster/
+    
     # Create configuration files for pseudo-distributed mode
     echo '<?xml version="1.0"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -1021,7 +1025,7 @@ pseudo_distributed_config_setup() {
     <name>fs.default.name</name>
     <value>hdfs://localhost:9000</value>
     </property>
-    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/core-site.xml
+    </configuration>' > ${hadoop_config_dir}/local_distributed/core-site.xml
 
     echo '<?xml version="1.0"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -1030,7 +1034,7 @@ pseudo_distributed_config_setup() {
     <name>dfs.replication</name>
     <value>1</value>
     </property>
-    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/hdfs-site.xml
+    </configuration>' > ${hadoop_config_dir}/local_distributed/hdfs-site.xml
 
     echo '<?xml version="1.0"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -1039,7 +1043,7 @@ pseudo_distributed_config_setup() {
     <name>mapred.job.tracker</name>
     <value>localhost:9001</value>
     </property>
-    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/mapred-site.xml
+    </configuration>' > ${hadoop_config_dir}/local_distributed/mapred-site.xml
 }
 
 test_hadoop() {
@@ -1089,13 +1093,12 @@ test_hadoop_pseudo_distributed() {
     hadoop_temp_local_ssh
 
     echo "${bold_text}Testing Hadoop - Locally Pseudo-Distributed Mode ${normal_text}" 
-    if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
+    if [ -e ${hadoop_config_dir}/local_distributed ]; then
         #${hadoop_install_dir}/bin/hadoop namenode -format
         run_hadoop_start_local_distributed
 
         ${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
-        ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
-        # Fix hard-coding yo...
+        ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_config_dir}/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+'
         
         run_hadoop_stop_local_distributed 

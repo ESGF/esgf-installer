@@ -137,10 +137,10 @@ monit_install_dir=${MONIT_HOME:-${install_prefix}/monit}
 #-------------------------------
 zookeeper_client_port=2181
 zookeeper_workdir=${zookeeper_install_dir}/zookeeper_working
-zookeeper_confdir=${zookeeper_install_dir}/conf
-zookeeper_replicated_master_url_file=${zookeeper_confdir}/zoo_url_local_replicated.cfg
-zookeeper_standalone_master_url_file=${zookeeper_confdir}/zoo_url_standalone.cfg
-zookeeper_standalone_config_file=${zookeeper_confdir}/zoo_standalone.cfg
+zookeeper_config_dir=${esg_compute_config}/zookeeper
+zookeeper_replicated_master_url_file=${zookeeper_config_dir}/zoo_url_local_replicated.cfg
+zookeeper_standalone_master_url_file=${zookeeper_config_dir}/zoo_url_standalone.cfg
+zookeeper_standalone_config_file=${zookeeper_config_dir}/zoo_standalone.cfg
 zookeeper_quorum_size=5
 mesos_compat_config_dir=${mesos_compat_config_dir:-${mesos_compat_framework_dir}/mesos_compat_conf}
 hadoop_mesos_compat_dir=${hadoop_mesos_compat_dir:-${mesos_compat_framework_dir}/hadoop_mesos_compat}
@@ -151,9 +151,9 @@ hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookee
 mesos_master_port=5050
 monit_config_dir=${esg_compute_config}/monit
 spark_config_dir=${esg_compute_config}/spark
-# zookeeper_config_dir
 # mesos_config_dir
 hadoop_config_dir=${esg_compute_config}/hadoop
+zookeeper_config_dir=${esg_compute_config}/zookeeper
 
 #-------------------------------
 # Internal script variables
@@ -1187,7 +1187,12 @@ write_zookeeper_install_log_entry() {
 
 config_zookeeper() {
     echo
-    doconfig="N" 
+    doconfig="N"
+    
+    if [ ! -e ${zookeeper_config_dir} ]; then
+        mkdir ${zookeeper_config_dir}
+    fi
+     
     if [ -e ${zookeeper_install_dir} ]; then
         read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
@@ -1236,7 +1241,7 @@ config_zookeeper() {
             local start_host=2888
             local end_host=3888
             local quorum_size=$zookeeper_quorum_size
-            local zk_replicated_config=${zookeeper_confdir}/zoo_local_replicated
+            local zk_replicated_config=${zookeeper_config_dir}/zoo_local_replicated
             local zk_datadir=${zookeeper_workdir}/local_replication/local
 
             # Initialize local replicated master url file
@@ -1325,7 +1330,7 @@ run_zookeeper_start_local_replicated_servers() {
     local quorum=$zookeeper_quorum_size
     for (( n=1; n <= $quorum; n++ ))
     do
-        run_zookeeper_start_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
+        run_zookeeper_start_server ${zookeeper_config_dir}/zoo_local_replicated_$n.cfg
     done 
 }
 
@@ -1333,7 +1338,7 @@ run_zookeeper_stop_local_replicated_servers() {
     local quorum=$zookeeper_quorum_size
     for (( n=1; n <= $quorum; n++ ))
     do  
-        run_zookeeper_stop_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
+        run_zookeeper_stop_server ${zookeeper_config_dir}/zoo_local_replicated_$n.cfg
     done
 }
 

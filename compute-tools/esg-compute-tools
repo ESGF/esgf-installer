@@ -142,18 +142,17 @@ zookeeper_replicated_master_url_file=${zookeeper_config_dir}/zoo_url_local_repli
 zookeeper_standalone_master_url_file=${zookeeper_config_dir}/zoo_url_standalone.cfg
 zookeeper_standalone_config_file=${zookeeper_config_dir}/zoo_standalone.cfg
 zookeeper_quorum_size=5
-mesos_compat_config_dir=${mesos_compat_config_dir:-${mesos_compat_framework_dir}/mesos_compat_conf}
+mesos_config_dir=${esg_compute_config}/mesos
+mesos_compat_config_dir=${mesos_compat_config_dir:-${mesos_config_dir}/mesos_compat}
 hadoop_mesos_compat_dir=${hadoop_mesos_compat_dir:-${mesos_compat_framework_dir}/hadoop_mesos_compat}
-hadoop_mesos_compat_config_dir=${hadoop_mesos_compat_config_dir:-${mesos_compat_config_dir}/hadoop_conf}
+hadoop_mesos_compat_config_dir=${hadoop_mesos_compat_config_dir:-${mesos_compat_config_dir}/hadoop}
 hadoop_mesos_config_standalone_mesos=${hadoop_mesos_config_standalone_mesos:-${hadoop_mesos_compat_config_dir}/mesos_standalone}
 hadoop_mesos_config_single_zookeeper=${hadoop_mesos_config_single_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_single}
 hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_replicated}
 mesos_master_port=5050
 monit_config_dir=${esg_compute_config}/monit
 spark_config_dir=${esg_compute_config}/spark
-# mesos_config_dir
 hadoop_config_dir=${esg_compute_config}/hadoop
-zookeeper_config_dir=${esg_compute_config}/zookeeper
 
 #-------------------------------
 # Internal script variables
@@ -238,6 +237,10 @@ write_mesos_install_log_entry() {
 config_mesos() {
     # The most efficient way to start and stop mesos is with built-in deploy scripts, which
     # require some configuration.
+    if [ ! -e ${mesos_config_dir} ]; then
+        mkdir ${mesos_config_dir}
+    fi
+    
     echo
     doconfig="N" 
     if [ -e ${mesos_install_dir/hadoop} ]; then
@@ -1196,7 +1199,7 @@ config_zookeeper() {
     if [ -e ${zookeeper_install_dir} ]; then
         read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
-    if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+        if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
        
             echo "Creating Zookeeper working directories..."
             if [ -e ${zookeeper_workdir} ]; then

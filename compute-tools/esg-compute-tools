@@ -94,7 +94,8 @@ envfile="/etc/esg.env"
 esg_functions_file=./esg-functions
 esg_compute_languages_file=./esg-compute-languages
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
-# esg_config_dir, create directory called esg_config_compute in esg_config_dir
+esg_config_dir=${esg_root_dir}/config
+esg_compute_config=${esg_config_dir}/compute
 
 #--------------------------------
 # External programs' versions
@@ -732,11 +733,11 @@ setup_monit() {
     
     # Checking for Monit Version
     echo
-    echo -n "Checking for Monit >= Versin${monit_min_version}"
+    echo -n "Checking for Monit >= version ${monit_min_version}"
     if [ -e ${monit_install_dir} ]; then
-        local monit_current_version=${monit_version} #TODO
+        local monit_current_version=`${monit_install_dir}/monit -V | head -1 | awk '{print $5}'`
         check_version_helper $monit_current_version ${monit_min_version}
-        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
     else
         echo
         echo "No Monit installation detected"
@@ -782,23 +783,50 @@ write_monit_install_log_entry() {
 }
 
 config_monit() {
-    echo
+    # TODO: Placeholder
+    # Monitrc should be configured to the user's system. It is probably best
+    # if this configuration is the same across all machines in the system.
+    # Using default monitrc for now
+    if [ ! -e ${esg_compute_config}/monit ]; then
+        mkdir ${esg_compute_config}/monit
+    fi
+    if [ ! -e ${esg_compute_config}/monit/esgf_monitrc ]; then
+        cp ${monit_install_dir}/monitrc ${esg_compute_config}/monit/esgf_monitrc
+    fi
+    chmod 0700 ${esg_compute_config}/monit/esgf_monitrc
 }
 
 run_monit() {
-    echo
+   (cd ${monit_install_dir} && ./monit -c ${esg_compute_config}/monit/esgf_monitrc) 
 }
 
 stop_monit() {
-    echo
+    echo "${bold_text}Stopping Monit...${normal_text}"
+    (cd ${monit_install_dir} && monit -c ${esg_compute_config}/monit/esgf_monitrc quit >& /dev/null)
 }
 
 test_monit() {
     echo
+    echo -n "${bold_text}Monit Test Run: ${normal_text}"
+    local docontinue="Y"
+    run_monit
+    echo "Monitor your system with monit at http://127.0.0.1/2812"
+    read -e -p "${bold_text}Press any key to continue: ${normal_text}" 
+    stop_monit
 }
 
 clean_monit() {
-    echo
+    doit="N"
+    if [ -e ${monit_install_dir} ]; then
+        read -e -p "remove network monitor tool Monit? (${monit_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+            echo "removing ${monit_install_dir}"
+            rm -rf ${monit_install_dir}
+            [ $? != 0 ] && echo "ERROR: Unable to remove ${monit_install_dir}"
+            remove_env MONIT_HOME
+            remove_install_log_entry monit
+        fi  
+    fi  
 }
 
 #####
@@ -1429,5 +1457,8 @@ setup_compute_tools() {
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
+    if [ ! -e ${esg_compute_config} ]; then
+        mkdir ${esg_compute_config}
+    fi
     setup_compute_tools
 fi

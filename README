@@ -149,16 +149,16 @@ hostname -s, hostname --domain and hostname --fqdn.
 
 
 8) Join the appropriate mailing list...
-   End Users : esg-node-user@lists.llnl.gov
-   Developers: esg-node-dev@lists.llnl.gov
+   End Users : esgf-user@lists.llnl.gov
+   Developers: esgf-devel@lists.llnl.gov
    
    Send an email to majordomo@lists.llnl.gov with the BODY:
    subscribe <list-name>
 
    Ex:
-   subscribe esg-node-user
+   subscribe esgf-user
    and/or
-   subscribe esg-node-dev
+   subscribe esgf-devel
 
 9) Subscribe to the ESGF Blog
    Keep in the loop with the ESGF.org effort!

@@ -1,0 +1,120 @@
+#!/bin/bash
+
+#####
+# esg-compute-tools: ESGF Node Application Stack - Compute Tools
+# description: Compute tools installer for the ESGF Node application stack
+#
+#****************************************************************************
+#*                                                                          *
+#*    Organization: Lawrence Livermore National Lab (LLNL)                  *
+#*    Directorate: Computation                                              *
+#*    Department: Computing Applications and Research                       *
+#*    Division: S&T Global Security                                         *
+#*    Matrix: Atmospheric, Earth and Energy Division                        *
+#*    Program: PCMDI                                                        *
+#*    Project: Earth Systems Grid Fed (ESGF) Node Software Stack            *
+#*    First Author: Eugenia Gabrielova (gabrielov1@llnl.gov)                *
+#*                                                                          *
+#****************************************************************************
+#*                                                                          *
+#*   Copyright (c) 2009, Lawrence Livermore National Security, LLC.         *
+#*   Produced at the Lawrence Livermore National Laboratory                 *
+#*   Written by: Gavin M. Bell (gavin@llnl.gov),                            * 
+#*               Eugenia Gabrielova (gabrielov1@llnl.gov)                   *
+#*   LLNL-CODE-420962                                                       *
+#*                                                                          *
+#*   All rights reserved. This file is part of the:                         *
+#*   Earth System Grid Fed (ESGF) Node Software Stack, Version 1.0          *
+#*                                                                          *
+#*   For details, see http://esgf.org/                                      *
+#*   Please also read this link                                             *
+#*    http://esgf.org/LICENSE                                               *
+#*                                                                          *
+#*   * Redistribution and use in source and binary forms, with or           *
+#*   without modification, are permitted provided that the following        *
+#*   conditions are met:                                                    *
+#*                                                                          *
+#*   * Redistributions of source code must retain the above copyright       *
+#*   notice, this list of conditions and the disclaimer below.              *
+#*                                                                          *
+#*   * Redistributions in binary form must reproduce the above copyright    *
+#*   notice, this list of conditions and the disclaimer (as noted below)    *
+#*   in the documentation and/or other materials provided with the          *
+#*   distribution.                                                          *
+#*                                                                          *
+#*   Neither the name of the LLNS/LLNL nor the names of its contributors    *
+#*   may be used to endorse or promote products derived from this           *
+#*   software without specific prior written permission.                    *
+#*                                                                          *
+#*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    *
+#*   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      *
+#*   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS      *
+#*   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE    *
+#*   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR     *
+#*   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,           *
+#*   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       *
+#*   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF       *
+#*   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND    *
+#*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,     *
+#*   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT     *
+#*   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     *
+#*   SUCH DAMAGE.                                                           *
+#*                                                                          *
+#****************************************************************************
+#####
+
+#####
+# Description: Installer for ESG Compute Tools - Extras
+# Implemented Tools:
+# * Cascalog, Clojure-based query library for Hadoop
+# * Scoobi, Scala-based query library for Hadoop
+#
+# Authors: Eugenia Gabrielova {gabrielov1@llnl.gov, genia.likes.science@gmail.com}
+####
+
+install_prefix=${install_prefix:-"/usr/local"}
+leiningen_runner_url=https://raw.github.com/technomancy/leiningen/preview/bin/lein
+leiningen_dir=${install_prefix}/leiningen
+
+#####
+# uses: git, wget
+#####
+
+#####
+# Leiningen is a dependency manager for Clojure projects
+# http://www.leiningen.org/
+setup_leiningen() {
+    # SETUP NOTE: Traditionally, Leiningen is set up in a local directory on
+    # the path. Some special steps are required to make this work correctly
+    # with the ESGF installer setup.
+
+    if [ ! -e ${leiningen_dir}/lein ] || [ ! -e /bin/lein ]; then
+        if [ ! -e ${leiningen_dir} ]; then
+            mkdir ${leiningen_dir}
+        fi
+        wget --no-check-certificate -O ${leiningen_dir}/lein $leiningen_runner_url
+        ln -s ${leiningen_dir}/lein /bin/lein
+        chmod 755 /bin/lein
+
+        export HTTP_CLIENT="wget --no-check-certificate -O"
+        export LEIN_ROOT=true
+    
+        #/bin/lein self-install
+    else
+        echo "Leiningen setup already complete"
+    fi
+}
+
+setup_compute_dev_tools() {
+    echo
+    echo "-------------------------------------------------------------------"
+    echo " Installing ESG Node Compute Tools - Extras (Leiningen, Cascalog, Scoobi)"
+    echo "-------------------------------------------------------------------"
+    
+    setup_leiningen
+}
+
+if [[ "$BASH_SOURCE" == "$0" ]]
+then
+    setup_compute_dev_tools
+fi

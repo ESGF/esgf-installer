@@ -94,7 +94,8 @@ envfile="/etc/esg.env"
 esg_functions_file=./esg-functions
 esg_compute_languages_file=./esg-compute-languages
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
-# esg_config_dir, create directory called esg_config_compute in esg_config_dir
+esg_config_dir=${esg_root_dir}/config
+esg_compute_config=${esg_config_dir}/compute
 
 #--------------------------------
 # External programs' versions
@@ -109,13 +110,16 @@ spark_min_version=${spark_min_version:="0.5.0"}
 hadoop_version=${hadoop_version:="1.0.3"}
 hadoop_min_version=${hadoop_min_version:="1.0.1"}
 hadoop_max_version=${hadoop_max_version:="1.0.4"}
+monit_min_version=${monit_min_version:="5.4"}
+monit_version=${monit_version:="5.4"}
 
 #--------------------------------
 # External programs' script variables
 #--------------------------------
 mesos_install_dir=${MESOS_HOME:-${install_prefix}/mesos}
 mesos_git_url="git://git.apache.org/mesos.git"
-mesos_build_dir=${MESOS_BUILD_HOME:-${install_prefix}/mesos} # TODO /mesos/build...
+mesos_build_dir=${MESOS_BUILD_HOME:-$mesos_install_dir} 
+mesos_compat_framework_dir=${MESOS_COMPAT_FRAMEWORKS:-${install_prefix}/mesos_compat}
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
 spark_git_url="git://github.com/mesos/spark.git"
 zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
@@ -123,18 +127,41 @@ zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
 hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
+hadoop_mesos_compat_dist_url=http://mirrors.ibiblio.org/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+#hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+monit_dist_url=http://mmonit.com/monit/dist/monit-$monit_version.tar.gz
+monit_install_dir=${MONIT_HOME:-${install_prefix}/monit}
 
 #-------------------------------
 # External programs' configuration variables
 #-------------------------------
 zookeeper_client_port=2181
 zookeeper_workdir=${zookeeper_install_dir}/zookeeper_working
-zookeeper_confdir=${zookeeper_install_dir}/conf
+zookeeper_config_dir=${esg_compute_config}/zookeeper
+zookeeper_replicated_master_url_file=${zookeeper_config_dir}/zoo_url_local_replicated.cfg
+zookeeper_standalone_master_url_file=${zookeeper_config_dir}/zoo_url_standalone.cfg
+zookeeper_standalone_config_file=${zookeeper_config_dir}/zoo_standalone.cfg
+zookeeper_quorum_size=5
+mesos_config_dir=${esg_compute_config}/mesos
+mesos_compat_config_dir=${mesos_compat_config_dir:-${mesos_config_dir}/mesos_compat}
+hadoop_mesos_compat_dir=${hadoop_mesos_compat_dir:-${mesos_compat_framework_dir}/hadoop_mesos_compat}
+hadoop_mesos_compat_config_dir=${hadoop_mesos_compat_config_dir:-${mesos_compat_config_dir}/hadoop}
+hadoop_mesos_config_standalone_mesos=${hadoop_mesos_config_standalone_mesos:-${hadoop_mesos_compat_config_dir}/mesos_standalone}
+hadoop_mesos_config_single_zookeeper=${hadoop_mesos_config_single_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_single}
+hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_replicated}
+mesos_master_port=5050
+monit_config_dir=${esg_compute_config}/monit
+spark_config_dir=${esg_compute_config}/spark
+hadoop_config_dir=${esg_compute_config}/hadoop
 
 #-------------------------------
 # Internal script variables
 #-------------------------------
 date_format="+%Y_%m_%d_%H%M%S"
+bold_text=$(tput bold)
+normal_text=$(tput sgr0)
+green_text=$(tput setaf 2; tput bold)
+red_text=$(tput setaf 1; tput bold)
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -148,7 +175,7 @@ setup_mesos() {
     # Checking Mesos Version
     echo
     echo -n "Checking for Mesos >= ${mesos_min_version}"
-    if [ -e ${mesos_install_dir} ]; then
+    if [ -e ${mesos_install_dir} ] && [ -e ${mesos_build_dir} ]; then
         
         # Unconfigured Mesos will not be able to check its version
         if [ ! -e ${mesos_install_dir}/configure ]; then
@@ -172,13 +199,20 @@ setup_mesos() {
     # Retrieve Mesos Source and build after configuration for ESGF tools
     # Uses: Hadoop, Zookeeper, Java, Python
     git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-    (cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java=/usr/local/java --disable-python --disable-webui && make)
-    # TODO let's make this config tastier...
+    env PATH=$CDAT_HOME/bin:${PATH} PYTHON_REFIX=$CDAT_HOME
+    mkdir $mesos_build_dir
+    (cd ${mesos_install_dir} && ./bootstrap)
+    (cd ${mesos_build_dir} && ./configure --with-java=$JAVA_HOME --enable-python=yes LDFLAGS=-L$CDAT_HOME/lib && make)
 
     # TODO make check hangs on zookeeper install
     # Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
     # TODO Mesos /usr/local configuration
     # TODO ./configure with Hadoop, Zookeeper, Java, Python from /usr/local
+   
+    # Create directory for Mesos-Compatible Frameworks
+    if [ ! -e ${mesos_compat_framework_dir} ]; then
+        mkdir ${mesos_compat_framework_dir} 
+    fi
     
     # Add Mesos home to environment and install manifest
     write_env_mesos
@@ -186,12 +220,14 @@ setup_mesos() {
 }
 
 write_env_mesos() {
-    echo "export MESOS_HOME=${mesos_install_dir}" >> ${envfile}
+    echo "export MESOS_INSTALL_HOME=${mesos_install_dir}" >> ${envfile}
+    echo "export MESOS_HOME=${mesos_build_dir}" >> ${envfile}
+    echo "export MESOS_COMPAT_FRAMEWORKS_HOME=${mesos_compat_framework_dir}" >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
 
-write_mesos_install_log_entry() {   
+write_mesos_install_log_entry() {
     local entry="$(date ${date_format}) esg-compute-tools:mesos=${mesos_version} ${mesos_install_dir}"
     echo ${entry} >> ${install_manifest}
     dedup ${install_manifest}
@@ -201,23 +237,10 @@ write_mesos_install_log_entry() {
 config_mesos() {
     # The most efficient way to start and stop mesos is with built-in deploy scripts, which
     # require some configuration.
-    # [TODO]
-    #   Mesos and Hadoop config 
-    #
-    # [TODO] 
-    #   List of Mesos hosts and slaves
-    # 
-    # [TODO] 
-    #   LIBPROCESS_IP in MESOS_HOME/deploy/mesos-env.sh
-    #
-    # [TODO] Zookeeper URL Configuration for Mesos master running
-    #   Required for fault tolerance mode
+    if [ ! -e ${mesos_config_dir} ]; then
+        mkdir ${mesos_config_dir}
+    fi
     
-    # First we check for Hadoop configuration - if it exists, request reconfigure, if not, 
-    # proceed automatically.
-    # TODO Check existence of Hadoop relevant files
-
-    # The following is a bit of a hack, but in polite terms, a "work in progress".
     echo
     doconfig="N" 
     if [ -e ${mesos_install_dir/hadoop} ]; then
@@ -225,10 +248,84 @@ config_mesos() {
 
         # Configure Hadoop environment for Mesos
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
-            echo "Configuring Hadoop for Mesos..."
             
-            # 
-       
+            # First we check if a the Mesos-Compatible-Frameworks home directory exists
+            echo "Configuring Mesos: Checking for Mesos-Compatible-Frameworks Home"
+            rm -rf ${mesos_compat_framework_dir}
+            if [ ! -e ${mesos_compat_framework_dir} ]; then
+                mkdir ${mesos_compat_framework_dir}
+                write_env_mesos
+            fi
+
+            # Create a directory to store configurations, for now
+            if [ ! -e ${mesos_compat_config_dir} ]; then
+                mkdir ${mesos_compat_config_dir}
+            fi
+
+            # Mesos compatible framework home is where Mesos-Compatible Legacy Hadoop will live,
+            # perhaps other frameworks as we find them and they need mesos assistance 
+            
+            # Check if a Mesos-Compatible, working Hadoop configuration exists        
+            echo "Configuring Mesos-Hadoop for compatibility..."
+            rm -rf ${hadoop_mesos_compat_dir} # TODO Temporary measure to test configuration steps
+            if [ ! -e ${hadoop_mesos_compat_dir} ]; then
+                
+                # Obtain/extract hadoop file #TODO Needs error checking, variables for version, etc
+                local hadoop_mesos_dist_file=${hadoop_mesos_compat_dist_url##*/}
+                local hadoop_mesos_dist_dir=$(echo ${hadoop_mesos_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+                local system_platform=`uname -si | sed -e 's/ /-/g'`
+              
+                rm -rf ${mesos_compat_framework_dir}/*.tar.gz 
+                
+                # This is a common point of failure for some reason...
+                wget -O ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file $hadoop_mesos_compat_dist_url
+                echo "Unpacking ${hadoop_mesos_dist_file}..."
+                tar -zxf ${mesos_compat_framework_dir}/$hadoop_mesos_dist_file -C ${mesos_compat_framework_dir}
+
+                mv ${mesos_compat_framework_dir}/${hadoop_mesos_dist_dir} ${hadoop_mesos_compat_dir}
+                
+                # Attempt to patch hadoop with latest mesos compatibility fixes
+                (cd ${hadoop_mesos_compat_dir} && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0.patch)
+                cp -r $mesos_install_dir/hadoop/mesos ${hadoop_mesos_compat_dir}/src/contrib
+                cp -p $mesos_install_dir/hadoop/mesos-executor ${hadoop_mesos_compat_dir}/bin
+                (cd ${hadoop_mesos_compat_dir} && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0_mesos.patch)
+                cp $mesos_build_dir/protobuf-*.jar ${hadoop_mesos_compat_dir}/lib
+                cp $mesos_build_dir/src/mesos-*.jar ${hadoop_mesos_compat_dir}/lib
+                mkdir -p ${hadoop_mesos_compat_dir}/lib/native/$system_platform    
+                cp $mesos_build_dir/src/.libs/libmesos.so ${hadoop_mesos_compat_dir}/lib/native/$system_platform
+                cp $mesos_build_dir/protobuf-*.jar ${hadoop_mesos_compat_dir}/share/hadoop/lib
+                cp $mesos_build_dir/src/mesos-*.jar ${hadoop_mesos_compat_dir}/share/hadoop/lib
+                cp $mesos_build_dir/src/.libs/libmesos.so ${hadoop_mesos_compat_dir}/lib
+               
+                # Rebuild and repatch
+                (cd ${hadoop_mesos_compat_dir} && ant && patch -p1 <$mesos_install_dir/hadoop/mapred-site.xml.patch && patch -p1 <$mesos_install_dir/hadoop/hadoop-0.20.205.0_hadoop-env.sh.patch) 
+            
+                # Now that we have a patched hadoop, we still need to add 
+                # configurations for standalone and replicated mesos with
+                # zookeeper. These configurations should also sit separately 
+                # from the Hadoop install itself, for good practice.
+
+                if [ ! -e ${hadoop_mesos_compat_config_dir} ]; then
+                    mkdir ${hadoop_mesos_compat_config_dir}
+                fi
+                rm -rf ${hadoop_mesos_compat_config_dir}/*
+                mkdir ${hadoop_mesos_config_standalone_mesos}
+                mkdir ${hadoop_mesos_config_single_zookeeper}
+                mkdir ${hadoop_mesos_config_replicated_zookeeper}
+                
+                # Update configurations for Mesos-compatible hadoop
+                echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_mesos_compat_dir}/conf/hadoop-env.sh        
+                local hadoop_mesos_master_url=$(get_config_ip eth0):$mesos_master_port
+                local hadoop_mesos_zookeeper_url=`cat $zookeeper_replicated_master_url_file`
+                cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_standalone_mesos}
+                cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_single_zookeeper}
+                cp ${hadoop_mesos_compat_dir}/conf/* ${hadoop_mesos_config_replicated_zookeeper}
+                sed -rin 's#(<value>)local(</value>)#\1'$hadoop_mesos_master_url'\2#g' ${hadoop_mesos_config_standalone_mesos}/mapred-site.xml
+                sed -rin 's#(<value>)local(</value>)#\1'file://$zookeeper_standalone_master_url_file'\2#g' ${hadoop_mesos_config_single_zookeeper}/mapred-site.xml
+                sed -rin 's#(<value>)local(</value>)#\1'file://$zookeeper_replicated_master_url_file'\2#g' ${hadoop_mesos_config_replicated_zookeeper}/mapred-site.xml
+
+            fi
+
         # Inform user of skipped configuration step
         else
             echo "Skipping Mesos Hadoop Configuration..."
@@ -236,71 +333,260 @@ config_mesos() {
     fi
 }
 
+test_mesos_spark_mesos_standalone() {
+    echo "${bold_text}Mesos with Spark Framework, Standalone Mesos (Fault-Tolerance Mode Disabled)${normal_text}"
+
+    # Run Mesos Framework
+    run_mesos_start_master --port=$mesos_master_port
+    local standaloneMesosMasterURL=$(get_config_ip eth0):$mesos_master_port
+    run_mesos_start_slave $standaloneMesosMasterURL
+
+    # Run Spark Test
+    ${spark_install_dir}/run spark.examples.SparkLR $standaloneMesosMasterURL
+    local sparkOnMesosStandalone=$?
+    run_mesos_stop_cluster
+    echo -n "${bold_text}Tested Mesos (non-fault-tolerant) with Spark...   ${normal_text}"
+    [ $sparkOnMesosStandalone == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+
+}
+
+test_mesos_spark_single_zookeeper() {
+    echo "${bold_text}Mesos with Spark Framework, Fault Tolerance via Single Zookeeper Instance${normal_text}"
+
+    # Run Zookeeper, Mesos
+    run_zookeeper_start_server $zookeeper_standalone_config_file
+    run_mesos_start_master --port=$mesos_master_port --zk=file://$zookeeper_standalone_master_url_file
+    run_mesos_start_slave file://$zookeeper_standalone_master_url_file
+
+    # Run Spark Test    
+    echo "Testing Spark on Mesos with Single Zookeeper Instance for fault tolerance...   "
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_standalone_master_url_file`
+    local sparkOnMesosSingleZookeeper=$?
+    run_mesos_stop_cluster
+    run_zookeeper_stop_server $zookeeper_standalone_config_file
+    echo -n "${bold_text}Tested Mesos + Spark on Standalone Zookeeper instance...${normal_text}"
+    [ $sparkOnMesosSingleZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+}
+
+test_mesos_spark_replicated_zookeeper() {
+    echo "${bold_text}Mesos with Spark Framework, Fault Tolerance via Replicated Zookeeper [Quorum Size: $zookeeper_quorum_size]${normal_text}"
+   
+    # Run Zookeeper, Mesos
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    
+    # Run Spark Test
+    echo "Testing Spark on Mesos with Local Replicated Zookeeper Quorum..."
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_replicated_master_url_file`
+    local mesosOnReplicatedZookeeper=$?
+    run_mesos_stop_cluster
+    run_zookeeper_stop_local_replicated_servers
+    echo -n "${bold_text}Tested Mesos + Spark on Local Replicated Zookeeper Server [Quorum Size: $zookeeper_quorum_size]...   ${normal_text}"
+    [ $mesosOnReplicatedZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+}
+
+test_mesos_compat_hadoop_mesos_standalone() {
+    echo "${bold_text}Testing Mesos-compatible Hadoop on Standalone Mesos${normal_text}"
+    if [ -e ${hadoop_mesos_compat_dir} ]; then
+        # Initialization
+        if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+            rm -rf ${mesos_compat_framework_dir}/sandbox 
+        fi
+        mkdir ${mesos_compat_framework_dir}/sandbox
+        mkdir ${mesos_compat_framework_dir}/sandbox/input
+        cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+        local standaloneMesosMasterURL=$(get_config_ip eth0):$mesos_master_port
+        
+        # Run Hadoop Test
+        run_mesos_start_master --port=$mesos_master_port
+        run_mesos_start_slave $standaloneMesosMasterURL
+        run_mesos_start_compat_hadoop_jobtracker ${hadoop_mesos_config_standalone_mesos}
+        (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
+        run_mesos_stop_compat_hadoop
+        sleep 5
+        run_mesos_stop_cluster
+        [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local mesosHadoopCompatResult=0 || local mesosHadoopCompatResult=1
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+        echo -n "${bold_text}Tested Mesos-compatible Hadoop on Mesos (Standalone, non-fault-tolerant)...   ${normal_text}" 
+        [ $mesosHadoopCompatResult == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}" 
+    else
+        echo "Mesos-Compatible Hadoop not configured."
+        echo "Skipping Hadoop (Mesos-Compatible) non-replicated Mesos test."
+    fi
+}
+
+test_mesos_compat_hadoop_single_zookeeper() {
+    echo "${bold_text}Testing Mesos with Compatible Hadoop, Single Zookeeper Instance${normal_text}"
+    
+    # Initialize Hadoop Working Directory
+    if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+    fi
+    mkdir ${mesos_compat_framework_dir}/sandbox
+    mkdir ${mesos_compat_framework_dir}/sandbox/input
+    cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+    
+    # Run Zookeeper, Mesos, Frameworks
+    run_zookeeper_start_server $zookeeper_standalone_config_file
+    run_mesos_start_master --port=$mesos_master_port --zk=file://$zookeeper_standalone_master_url_file
+    run_mesos_start_slave file://$zookeeper_standalone_master_url_file
+    run_mesos_start_compat_hadoop_jobtracker ${hadoop_mesos_config_single_zookeeper}
+    
+    # Run Framework Tests
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+') 
+    [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local hadoopOnMesosSingleZookeeper=0 || local hadoopOnMesosSingleZookeeper=1
+
+    # Remove working directory, shut down clusters
+    run_mesos_stop_compat_hadoop
+    run_mesos_stop_cluster
+    run_zookeeper_stop_server $zookeeper_standalone_config_file
+    rm -rf ${mesos_compat_framework_dir}/sandbox
+    
+    # Provide Test Results    
+    echo -n "${bold_text}Tested Mesos + Mesos-Compatible Hadoop on Standalone Zookeeper instance...   ${normal_text}"
+    [ $hadoopOnMesosSingleZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+}
+
+test_mesos_compat_hadoop_replicated_zookeeper() {
+    echo "${bold_text}Testing Mesos with Compatible Hadoop, Replicated Zookeeper${normal_text}"
+    
+    # Initialize Hadoop Working Directory
+    if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+    fi
+    mkdir ${mesos_compat_framework_dir}/sandbox
+    mkdir ${mesos_compat_framework_dir}/sandbox/input
+    cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+    
+    # Run Zookeeper, Mesos, Frameworks
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    run_mesos_start_compat_hadoop_jobtracker $hadoop_mesos_config_replicated_zookeeper
+
+    # Run Framework Tests 
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
+    [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ] && local hadoopOnMesosReplicatedZookeeper=0 || local hadoopOnMesosReplicatedZookeeper=1
+
+    # Remove working directory, shut down support frameworks
+    rm -rf ${mesos_compat_framework_dir}/sandbox
+    run_mesos_stop_compat_hadoop
+    run_mesos_stop_cluster
+    run_zookeeper_stop_local_replicated_servers
+
+    # Provide Test Results
+    echo -n "${bold_text}Tested Mesos + Mesos-Compatible Hadoop on Local Replicated Zookeeper...   ${normal_text}"
+    [ $hadoopOnMesosReplicatedZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+     
+}
+
+test_mesos_multi_framework_replicated_zookeeper() {
+    echo "${bold_text}Testing Mesos with Spark, Compatible Hadoop, Replicated Zookeeper${normal_text}"
+    
+    # Initialize Hadoop Working Directory
+    if [ -e ${mesos_compat_framework_dir}/sandbox ]; then
+        rm -rf ${mesos_compat_framework_dir}/sandbox 
+    fi
+    mkdir ${mesos_compat_framework_dir}/sandbox
+    mkdir ${mesos_compat_framework_dir}/sandbox/input
+    cp ${hadoop_mesos_compat_dir}/conf/*.xml ${mesos_compat_framework_dir}/sandbox/input/
+    
+    # Run Zookeeper, Mesos, Frameworks
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+    run_mesos_start_compat_hadoop_jobtracker $hadoop_mesos_config_replicated_zookeeper
+
+    # Run Framework Tests 
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop jar ${hadoop_mesos_compat_dir}/hadoop-examples-*.jar grep ${mesos_compat_framework_dir}/sandbox/input ${mesos_compat_framework_dir}/sandbox/output 'dfs[a-z.]+')
+    ${spark_install_dir}/run spark.examples.SparkPi `cat $zookeeper_replicated_master_url_file`
+    local sparkFrameworkResult=$?
+    if [ $sparkFrameworkResult == 0 ] && [ -e ${mesos_compat_framework_dir}/sandbox/output/_SUCCESS ]; then
+        local multiFrameworkMesosReplicatedZookeeper=0
+    else
+        local multiFrameworkMesosReplicatedZookeeper=1
+    fi
+
+    # Remove working directory, shut down support frameworks
+    rm -rf ${mesos_compat_framework_dir}/sandbox
+    run_mesos_stop_compat_hadoop
+    run_mesos_stop_cluster
+    run_zookeeper_stop_local_replicated_servers
+
+    # Provide Test Results
+    echo -n "${bold_text}Tested Spark + Mesos-Compatible Hadoop on Mesos, Local Replicated Zookeeper...   ${normal_text}"
+    [ $multiFrameworkMesosReplicatedZookeeper == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+     
+}
+
 test_mesos() {
     # Currently running Mesos + Zookeeper with custom deploy methods, tested here.
-    # Test 1: Mesos + Spark
-    # Test 2: Mesos + Hadoop
-    # Test 3: Mesos + Hadoop + Spark
-    
+    # Test 1: Mesos + Spark, Standalone Mesos
+    # Test 2: Mesos + Spark with Single Instance Zookeeper
+    # Test 3: Mesos + Spark, Replicated Zookeeper
+    # Test 4: Mesos + Hadoop, Standalone Mesos
+    # Test 5: Mesos + Hadoop, Single-Node Zookeeper
+    # Test 6: Mesos + Hadoop, Replicated Zookeeper
+    # Test 7: Mesos + Hadoop + Spark, Clustered Zookeeper
+   
     echo
-    echo "Test 1: Mesos with Spark Framework, [TODO Zookeeper Quorum Management]"
-    run_mesos_stop_cluster
-    stop_mesos_zookeeper
-    start_mesos_zookeeper
-    
-    # TODO Yuck hard-coding
-    #local zkflag_spark=zk://localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185/znode 
-    #local sparkResult=$(${spark_install_dir}/run spark.examples.SparkPi $zkflag_spark) # >& /dev/null && echo $?)   
-    #echo -n "Tested Mesos Local Cluster with Spark...   "
-    #[ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-    
-    run_mesos_stop_cluster
-    stop_mesos_zookeeper
+    echo -n "${bold_text}Test 1: ${normal_text}"
+    test_mesos_spark_mesos_standalone
 
     echo
-    echo "Test 2: Mesos with Hadoop Framework, [TODO Zookeeper Quorum Management]"
-    # Starts Zookeeper, starts Mesos, runs Hadoop pseudo-distributed test job on Mesos
-    # TODO Starts Zookeeper
-    echo -n "Tested Mesos Local Cluster with Legacy Hadoop...   "
-    echo "[ TBD ]"
+    echo -n "${bold_text}Test 2: ${normal_text}"
+    test_mesos_spark_single_zookeeper
 
     echo
-    echo "Test 3: Mesos with Hadoop, Spark, and [TODO Zookeeper Quorum Management]"
-    # Starts Zookeeper, starts Mesos, runs Spark job and Hadoop job on mesos
-    echo -n "Tested Mesos Local Cluster with Hadoop, Spark...   "
-    echo "[ TBD ]"
+    echo -n "${bold_text}Test 3: ${normal_text}"
+    test_mesos_spark_replicated_zookeeper
 
+    echo
+    echo -n "${bold_text}Mesos Test 4: ${normal_text}"
+    test_mesos_compat_hadoop_mesos_standalone
+
+    echo
+    echo -n "${bold_text}Mesos Test 5: ${normal_text}"
+    test_mesos_compat_hadoop_single_zookeeper
+
+    echo
+    echo -n "${bold_text}Mesos Test 6: ${normal_text}"
+    test_mesos_compat_hadoop_replicated_zookeeper
+
+    echo
+    echo -n "${bold_text}Mesos Test 7: ${normal_text}"
+    test_mesos_multi_framework_replicated_zookeeper
 }
 
-start_mesos_zookeeper() {
-    # Start Zookeeper Locally replicated server
-    local quorum=5
-    for (( n=1; n <= $quorum; n++ ))
-    do
-        start_zookeeper_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg
-    done 
+run_mesos_start_compat_hadoop_jobtracker() {
+    echo "Starting Mesos framework-compatible Hadoop..."
+    (cd ${hadoop_mesos_compat_dir} && bin/hadoop --config $1 jobtracker &) >& /dev/null &
+    [ $? == 0 ] && echo "[ Now running Mesos-Hadoop, configured with $1 ]" || echo "[ Mesos-Hadoop (configuration $1) failed to run ]"
+}
 
-    # Start Mesos Master on locally replicated server+port
-    local zkport=2181
-    local mesosport=5050
+run_mesos_stop_compat_hadoop() {
+    echo -n "Stopping Mesos framework Hadoop...   "
+    local runningHadoopPid=$(pgrep -f jobtracker)
+    if [ $? == 0 ] && [ $runningHadoopPid ] && [ -n $runningHadoopPid ]; then
+        kill $runningHadoopPid
+        wait $runningHadoopPid 2>/dev/null
+        echo "[ Stopped ]"
+    else
+        echo "Mesos-Compatible Framework Hadoop not Currently Running"
+    fi
+}
+
+run_mesos_start_local_replicated_masters() {
+    # TODO: Check to make sure Zookeeper is running before we do anything
+    # zkStatus would be good here
+    local zkport=$zookeeper_client_port
+    local mesosport=$mesos_master_port
+    local quorum=$zookeeper_quorum_size
     for (( p=1; p <= $quorum; p++ ))
     do
-        # TODO This should be written to a file in Zookeeper's configuration...
-        local flag="--zk=zk://localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185/znode --port=$((mesosport++))"
-        run_mesos_start_master $flag
+        run_mesos_start_master --zk=file://$zookeeper_replicated_master_url_file --port=$((mesosport++))
     done
-
-    # Start Zookeeper Slaves
-    
-}
-
-stop_mesos_zookeeper() {
-    local quorum=5
-    for (( n=1; n <= $quorum; n++ ))
-    do
-        stop_zookeeper_server ${zookeeper_confdir}/zoo_local_replicated_$n.cfg 
-    done
-    stop_zookeeper_server ${zookeeper_confdir}/zoo_standalone.cfg
 }
 
 run_mesos_start_master() {
@@ -308,20 +594,20 @@ run_mesos_start_master() {
     # TODO Start with Zookeeper URL, ESGF IP address
     echo "Starting Mesos Master"
     ${mesos_build_dir}/bin/mesos-master.sh --quiet $@ &
-    [ $? == 0 ] && echo "[ Mesos Master now running ]" || echo "[Mesos Master failed to run]"  
+    [ $? == 0 ] && echo "[ Mesos Master now running ]" || echo "[ Mesos Master failed to run ]"  
 }
 
 run_mesos_start_slave() {
     # TODO Run with ESGF Ip address for mesos master url
     # TODO figure out correct memory resources
     echo "Starting Mesos Slave"
-    local mesos_master_url=$(get_config_ip eth0)
-    ${mesos_build_dir}/bin/mesos-slave.sh "--master=$1" "--resources=cpus:2;mem:1024" &
+    ${mesos_build_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &
+    [ $? == 0 ] && echo "[ Mesos Slave now running ]" || echo "[ Mesos Slave failed to run ]" 
 }
 
 run_mesos_stop_cluster() {
     # Stop Master without parent shell termination notification
-    master_pid=$(pgrep mesos-master)
+    local master_pid=$(pgrep mesos-master)
     if [ $? == 0 ]; then
         echo -n "Stopping Mesos Master ..."
         kill $master_pid
@@ -332,7 +618,7 @@ run_mesos_stop_cluster() {
     fi
 
     # Stop Slaves
-    slave_pid=$(pgrep mesos-slave)
+    local slave_pid=$(pgrep mesos-slave)
     if [ $? == 0 ]; then
         echo -n "Stopping Mesos Slaves ..."
         kill $slave_pid
@@ -384,7 +670,8 @@ setup_spark() {
     # Retrieve and build Spark
     git ${git_exec_path_param} clone ${spark_git_url} ${spark_install_dir}
     echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
-    # TODO Spark Java environment configuration
+    echo "export SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
+    echo "export MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
     (cd ${spark_install_dir} && sbt/sbt compile)
     
     # TODO check for download errors or git failures
@@ -416,9 +703,6 @@ config_spark() {
         # Configure Spark environment, deployment, local/Mesos
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
             echo "Configuring Spark..."
-       
-            # TODO Configure Spark here 
-        
         # Inform user of skipped configuration step
         else
             echo "Skipping Spark Configuration..."
@@ -429,9 +713,10 @@ config_spark() {
 test_spark() {
     # Test 1: Running a "local" version of Spark with 2 cores
     echo
-    echo -n "Testing Spark - Local...   "
-    local sparkResult=$(cd ${spark_install_dir} && ./run spark.examples.SparkLR local[2] >& /dev/null && echo $?) 
-    [ $sparkResult == 0 ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+    echo "${bold_text}Test 1: Testing Spark in Local Standalone Mode   ${normal_text}"
+    ${spark_install_dir}/run spark.examples.SparkLR local[2] && local sparkResult=$?
+    echo -n "${bold_text}Tested Spark in Local Standalone Mode, 2 Cores...   ${normal_text}"
+    [ $sparkResult == 0 ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
 }
 
 clean_spark() {
@@ -444,6 +729,110 @@ clean_spark() {
             [ $? != 0 ] && echo "ERROR: Unable to remove ${spark_install_dir}"
             remove_env SPARK_HOME
             remove_install_log_entry spark
+        fi  
+    fi  
+}
+
+#####
+# Monit - Standalone tool for machine monitoring
+#####
+
+setup_monit() {
+    
+    # Checking for Monit Version
+    echo
+    echo -n "Checking for Monit >= version ${monit_min_version}"
+    if [ -e ${monit_install_dir} ]; then
+        local monit_current_version=`${monit_install_dir}/monit -V | head -1 | awk '{print $5}'`
+        check_version_helper $monit_current_version ${monit_min_version}
+        [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    else
+        echo
+        echo "No Monit installation detected"
+    fi
+    
+    echo
+    echo "*****************************"
+    echo "Setting Up Monit ${monit_version}"
+    echo "*****************************"
+    echo
+
+    # Retrieve, configure, and install Monit
+    local monit_dist_file=${monit_dist_url##*/}
+    local monit_dist_dir=$(echo ${monit_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+    rm -rf ${monit_dist_dir}
+    if [ ! -e ${monit_dist_dir} ]; then
+        echo "Don't see Monit distribution directiory ${monit_dist_dir}"
+        wget -O "${install_prefix}/${monit_dist_file}" ${monit_dist_url}
+        [ $? != 0 ] && echo " ERROR: Could not download Monit: ${monit_dist_file}"
+        echo "Unpacking ${monit_dist_file}..."
+        tar zxf ${install_prefix}/${monit_dist_file} -C ${install_prefix}
+        mv ${install_prefix}/${monit_dist_dir} ${monit_install_dir}
+        (cd ${monit_install_dir} && ./configure && make && make install)
+        rm ${install_prefix}/${monit_dist_file}
+    fi
+     
+    # Add Monit home to environment and install manifest
+    write_env_monit
+    write_monit_install_log_entry
+}
+
+write_env_monit() {
+    echo "export MONIT_HOME=${monit_install_dir}" >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
+}
+
+write_monit_install_log_entry() {
+    local entry="$(date ${date_format}) esg-compute-tools:monit=${monit_version} ${monit_install_dir}"
+    echo ${entry} >> ${install_manifest}
+    dedup ${install_manifest}
+    return 0
+}
+
+config_monit() {
+    # TODO: Placeholder
+    # Monitrc should be configured to the user's system. It is probably best
+    # if this configuration is the same across all machines in the system.
+    # Using default monitrc for now
+    if [ ! -e ${monit_config_dir} ]; then
+        mkdir ${monit_config_dir}
+    fi
+    if [ ! -e ${monit_config_dir}/esgf_monitrc ]; then
+        cp ${monit_install_dir}/monitrc ${monit_config_dir}/esgf_monitrc
+    fi
+    chmod 0700 ${monit_config_dir}/esgf_monitrc
+}
+
+run_monit() {
+   (cd ${monit_install_dir} && ./monit -c ${esg_compute_config}/monit/esgf_monitrc) 
+}
+
+stop_monit() {
+    echo "${bold_text}Stopping Monit...${normal_text}"
+    (cd ${monit_install_dir} && monit -c ${esg_compute_config}/monit/esgf_monitrc quit >& /dev/null)
+}
+
+test_monit() {
+    echo
+    echo -n "${bold_text}Monit Test Run: ${normal_text}"
+    local docontinue="Y"
+    run_monit
+    echo "Monitor your system with monit at http://127.0.0.1/2812"
+    read -e -p "${bold_text}Press any key to continue: ${normal_text}" 
+    stop_monit
+}
+
+clean_monit() {
+    doit="N"
+    if [ -e ${monit_install_dir} ]; then
+        read -e -p "remove network monitor tool Monit? (${monit_install_dir}) [y/N]: " doit
+        if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
+            echo "removing ${monit_install_dir}"
+            rm -rf ${monit_install_dir}
+            [ $? != 0 ] && echo "ERROR: Unable to remove ${monit_install_dir}"
+            remove_env MONIT_HOME
+            remove_install_log_entry monit
         fi  
     fi  
 }
@@ -506,9 +895,18 @@ setup_hadoop() {
 }
 
 write_env_hadoop() {
+    # Hadoop will comment on its configuration even when Hadoop home is defined
+    # correctly. The possible fail conditions are managed in our test cases, so
+    # it is fine to supress this warning in our configuration.
     echo "export HADOOP_HOME_WARN_SUPPRESS=\"TRUE\"" >> ${envfile}
+    
+    # ESGF will know the "modern" Hadoop as Hadoop home, there is also a legacy
+    # Hadoop (0.20.205) for operation with Mesos.
     echo "export HADOOP_HOME=${hadoop_install_dir}" >> ${envfile}
+
+    # Hadoop will not operate if it does not know Java's location.
     echo "export JAVA_HOME=${install_prefix}/java" >> ${hadoop_install_dir}/conf/hadoop-env.sh
+    
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -521,15 +919,21 @@ write_hadoop_install_log_entry() {
 }
 
 config_hadoop() {
-    # This configuration method should prompt the user to enter settings pertaining to the type
-    # of Hadoop distribution (local, semi-distributed, cluster distributed). 
-    # There is some info on getting Hadoop setup here: http://hadoop.apache.org/common/#Getting+Started
+    # This configuration method should prompt the user to enter settings
+    # pertaining to the type of Hadoop distribution (local, semi-distributed, 
+    # cluster distributed). There is some info on getting Hadoop setup here:
+    # http://hadoop.apache.org/common/#Getting+Started
 
-    # TODO Fully distributed operation requires a pretty hefty amount of configuration. Using the defaults
-    # Hadoop provides is probably best. This configuration guide will be used for fully distributed configuration:
+    # TODO Fully distributed operation requires a pretty hefty amount of
+    # configuration. This configuration guide will be used as a basis
+    # for fully distributed configuration:
     # http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html   
 
     # Initialize configuration
+    if [ ! -e ${hadoop_config_dir} ]; then
+        mkdir ${hadoop_config_dir}
+    fi
+
     echo
     local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
@@ -574,39 +978,48 @@ config_hadoop() {
     fi  
 }
 
-start_hadoop_local_distributed() {
+run_hadoop_start_local_distributed() {
+    # Hadoop: Latest
+    # Operation Mode: Pseudo-Distributed
+    # This method assumes that Hadoop has been configured correctly in this
+    # mode, which requires overwriting some configuration files. Note that
+    # the start script can be passed any config directoy with the --config
+    # flag, in case the user wants to define their own.
+    
     # TODO Start Hadoop with configuration files from ESG configuration directory
     echo "Hadoop: Starting hadoop in local distributed mode..."
-    ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_install_dir}/conf/local_distributed >& /dev/null
+    ${hadoop_install_dir}/bin/start-all.sh --config ${hadoop_config_dir}/local_distributed >& /dev/null
 }
     
-stop_hadoop_local_distributed() {
+run_hadoop_stop_local_distributed() {
+    # Hadoop: Latest
+    # Operation Mode: Pseudo-Distributed
+    # Stops all running namenodes, trackers, and data nodes. Does not need to
+    # be passed a configuration file.
+
     echo "Hadoop: Shutting down namenode and jobtracker..."
     ${hadoop_install_dir}/bin/stop-all.sh >& /dev/null  
 }
 
 pseudo_distributed_config_setup() {
-
-    # TODO Best practice would be to not keep these guys in Hadoop's install tree...
+    # Hadoop: Latest
+    # Operation: Pseudo-Distributed
+    # TODO Best practice would be to not keep configuration file in Hadoop's 
+    # install tree. These will end up in a separate configuration directory
+    # for compute languages and tools.
     # Create directories for standalone, local_distributed configuration
-    # For now we destroy them first.
-    rm -rf ${hadoop_install_dir}/conf/standalone
-    rm -rf ${hadoop_install_dir}/conf/local_distributed
-    rm -rf ${hadoop_install_dir}/conf/managed_cluster
-    mkdir ${hadoop_install_dir}/conf/standalone 
-    mkdir ${hadoop_install_dir}/conf/local_distributed
-    mkdir ${hadoop_install_dir}/conf/managed_cluster
+    rm -rf ${hadoop_config_dir}/standalone
+    rm -rf ${hadoop_config_dir}/local_distributed
+    rm -rf ${hadoop_config_dir}/managed_cluster
+    mkdir ${hadoop_config_dir}/standalone
+    mkdir ${hadoop_config_dir}/local_distributed
+    mkdir ${hadoop_config_dir}/managed_cluster
 
     # Copy default example config files to new configuration directories    
-    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/standalone/
-    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/standalone/hadoop-env.sh
-    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/standalone/slaves
-    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/local_distributed/hadoop-env.sh
-    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/local_distributed/slaves
-    cp ${hadoop_install_dir}/conf/hadoop-env.sh ${hadoop_install_dir}/conf/managed_cluster/hadoop-env.sh
-    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/conf/managed_cluster/
-    cp ${hadoop_install_dir}/conf/slaves ${hadoop_install_dir}/conf/managed_cluster/slaves
-
+    cp ${hadoop_install_dir}/conf/* ${hadoop_config_dir}/standalone/
+    cp ${hadoop_install_dir}/conf/* ${hadoop_config_dir}/local_distributed/
+    cp ${hadoop_install_dir}/conf/* ${hadoop_config_dir}/managed_cluster/
+    
     # Create configuration files for pseudo-distributed mode
     echo '<?xml version="1.0"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -615,7 +1028,7 @@ pseudo_distributed_config_setup() {
     <name>fs.default.name</name>
     <value>hdfs://localhost:9000</value>
     </property>
-    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/core-site.xml
+    </configuration>' > ${hadoop_config_dir}/local_distributed/core-site.xml
 
     echo '<?xml version="1.0"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -624,7 +1037,7 @@ pseudo_distributed_config_setup() {
     <name>dfs.replication</name>
     <value>1</value>
     </property>
-    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/hdfs-site.xml
+    </configuration>' > ${hadoop_config_dir}/local_distributed/hdfs-site.xml
 
     echo '<?xml version="1.0"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -633,32 +1046,38 @@ pseudo_distributed_config_setup() {
     <name>mapred.job.tracker</name>
     <value>localhost:9001</value>
     </property>
-    </configuration>' >> ${hadoop_install_dir}/conf/local_distributed/mapred-site.xml
+    </configuration>' > ${hadoop_config_dir}/local_distributed/mapred-site.xml
 }
 
 test_hadoop() {
     echo    
-    # Hadoop Test - Local (Standalone) Mode
-    test_hadoop_standalone
     
+    # Hadoop Test - Local (Standalone) Mode
+    echo -n "${bold_text}Hadoop Test 1: ${normal_text}"
+    test_hadoop_standalone
+   
     # Hadoop Test 2 - Local Psuedo-Distributed
+    echo
+    echo -n "${bold_text}Hadoop Test 2: ${normal_text}"
     test_hadoop_pseudo_distributed
 }
 
 test_hadoop_standalone() {
 
     # Hadoop Test - Local (Standalone) Mode, with wordcount example
-    echo -n "Testing Hadoop - Local (Standalone) Mode...   "
+    echo "${bold_text}Testing Hadoop - Local (Standalone) Mode   ${normal_text}"
     
+    # Initialize Sandbox directory
     mkdir ${hadoop_install_dir}/sandbox
-    pushd ${hadoop_install_dir} >& /dev/null
+    mkdir ${hadoop_install_dir}/sandbox/input
+    cp ${hadoop_install_dir}/conf/*.xml ${hadoop_install_dir}/sandbox/input
+
+    # Run Hadoop Test
+    (cd ${hadoop_install_dir} && bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+')
+    echo -n "${bold_text}Tested Hadoop v${hadoop_version} - Local (Standalone) Mode...  ${normal_text}"
+    [ -e ${hadoop_install_dir}/sandbox/output/_SUCCESS ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
     
-    mkdir sandbox/input
-    cp conf/*.xml sandbox/input
-    bin/hadoop jar hadoop-examples-*.jar grep sandbox/input sandbox/output 'dfs[a-z.]+' >& /dev/null
-    [ -e sandbox/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
-    
-    popd >& /dev/null
+    # Destroy Sandbox directory
     rm -rf ${hadoop_install_dir}/sandbox
 }
 
@@ -676,22 +1095,21 @@ test_hadoop_pseudo_distributed() {
     # Generate temporary ssh keys
     hadoop_temp_local_ssh
 
-    echo "Begin Testing Hadoop - Pseudo-Distributed Mode...   " 
-    if [ -e ${hadoop_install_dir}/conf/local_distributed ]; then
+    echo "${bold_text}Testing Hadoop - Locally Pseudo-Distributed Mode ${normal_text}" 
+    if [ -e ${hadoop_config_dir}/local_distributed ]; then
         #${hadoop_install_dir}/bin/hadoop namenode -format
-        start_hadoop_local_distributed
+        run_hadoop_start_local_distributed
 
         ${hadoop_install_dir}/bin/hadoop fs -mkdir ${hadoop_work_dir}/input >& /dev/null
-        ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_install_dir}/conf/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
-        # Fix hard-coding yo...
-        ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+' >& /dev/null
-        echo -n "Testing Hadoop - Pseudo-Distributed Mode...   "
-        [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "[ PASSED ]" || echo "[ FAILED ]"
+        ${hadoop_install_dir}/bin/hadoop fs -put ${hadoop_config_dir}/local_distributed/* ${hadoop_work_dir}/input >& /dev/null
+        ${hadoop_install_dir}/bin/hadoop jar ${hadoop_install_dir}/hadoop-examples-*.jar grep ${hadoop_work_dir}/input ${hadoop_work_dir}/output 'dfs[a-z.]+'
+        
+        run_hadoop_stop_local_distributed 
+        echo -n "${bold_text}Tested Hadoop - Pseudo-Distributed Mode...   ${normal_text}"
+        [ -e ${hadoop_work_dir}/output/_SUCCESS ] && echo "${green_text}[ PASSED ]${normal_text}" || echo "${red_text}[ FAILED ]${normal_text}"
+        
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/input >& /dev/null
         ${hadoop_install_dir}/bin/hadoop fs -rmr ${hadoop_work_dir}/output >& /dev/null
-    
-        stop_hadoop_local_distributed
-
     else
         echo
         echo "Hadoop not configured for Pseudo-distributed mode. Skipping test."
@@ -772,27 +1190,42 @@ write_zookeeper_install_log_entry() {
 
 config_zookeeper() {
     echo
-    doconfig="N" 
+    doconfig="N"
+    
+    if [ ! -e ${zookeeper_config_dir} ]; then
+        mkdir ${zookeeper_config_dir}
+    fi
+     
     if [ -e ${zookeeper_install_dir} ]; then
         read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
         
-    if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
+        if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
        
             echo "Creating Zookeeper working directories..."
             if [ -e ${zookeeper_workdir} ]; then
                 rm -rf ${zookeeper_workdir}         
-            fi    
+            fi
             mkdir ${zookeeper_workdir}
             mkdir ${zookeeper_workdir}/standalone
             mkdir ${zookeeper_workdir}/local_replication
             mkdir ${zookeeper_workdir}/cluster_replication
 
+            # Master URL file for replicated, standalone modes
+            if [ -e ${zookeeper_replicated_master_url_file} ]; then
+                rm $zookeeper_replicated_master_url_file
+            fi
+            if [ -e ${zookeeper_standalone_master_url_file} ]; then
+                rm $zookeeper_standalone_master_url_file
+            fi
+
             echo "Configuring Zookeeper for standalone local operation..."
-            echo "tickTime=2000" >> ${zookeeper_confdir}/zoo_standalone.cfg
+            echo "tickTime=2000" >> $zookeeper_standalone_config_file
             echo "dataDir=${zookeeper_workdir}/standalone" \
-             >> ${zookeeper_confdir}/zoo_standalone.cfg
+             >> $zookeeper_standalone_config_file
             echo "clientPort=$zookeeper_client_port" \
-             >> ${zookeeper_confdir}/zoo_standalone.cfg
+             >> $zookeeper_standalone_config_file
+            echo "zk://localhost:$zookeeper_client_port/znode" \
+             >> $zookeeper_standalone_master_url_file
 
             # This is a bit wordy...but what else to do? Engage beast mode! We
             # need a separate configuration for each locally replicated 
@@ -810,9 +1243,12 @@ config_zookeeper() {
             local default_client_port=$zookeeper_client_port
             local start_host=2888
             local end_host=3888
-            local quorum_size=5
-            local zk_replicated_config=${zookeeper_confdir}/zoo_local_replicated
+            local quorum_size=$zookeeper_quorum_size
+            local zk_replicated_config=${zookeeper_config_dir}/zoo_local_replicated
             local zk_datadir=${zookeeper_workdir}/local_replication/local
+
+            # Initialize local replicated master url file
+            echo -n "zk://" >> $zookeeper_replicated_master_url_file
 
             for (( n=1; n <= $quorum_size; n++ ))
             do
@@ -845,10 +1281,16 @@ config_zookeeper() {
                      >> $nth_zk_replicated_config
                 done
             
+                # Add instance to replicated master URL file
+                echo -n "localhost:$nth_client_port" >> $zookeeper_replicated_master_url_file
+                if [ $n -lt $quorum_size ]; then
+                    echo -n "," >> $zookeeper_replicated_master_url_file
+                fi
             done
 
-            # TODO Configure Zookeeper file for Mesos here
-            
+            # Add znode to Zookeeper file for local replicated Mesos here
+            echo "/znode" >> $zookeeper_replicated_master_url_file
+
             # TODO echo Configuring Zookeeper for cluster operation
             # This will be a lot like local replicated setup, except across
             # the cluster. More testing will be needed for that.
@@ -863,37 +1305,44 @@ config_zookeeper() {
 test_zookeeper() {
     # Basic zookeeper test for client connection
     echo
-    echo "Zookeeper Test 1: Standalone Local Server/Client Connection"
-    start_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
-    ${zookeeper_install_dir}/bin/zkCli.sh -server 127.0.0.1:2181 ls / quit >& /dev/null
+    echo "${bold_text}Zookeeper Test 1: Standalone Local Server/Client Connection${normal_text}"
+    run_zookeeper_start_server $zookeeper_standalone_config_file
+    ${zookeeper_install_dir}/bin/zkCli.sh -server localhost:$zookeeper_client_port ls / quit >& /dev/null
     zkret=$?
-    echo -n "Tested Zookeeper local standalone configuration...   "
-    [ $zkret == 0 ] && echo " [ PASSED ]" || echo " [ FAILED ]"
-    stop_zookeeper_server "${zookeeper_install_dir}/conf/zoo_standalone.cfg"
-   
-    # Zookeeper test for locally replicated cluster 
-    echo
-    echo "Zookeeper Test 2: Local Replication Test"
-
-    echo -n "Tested Zookeeper Local Replication with N Quorum Members"
-    echo "[ TBD ]"
-
-    # TODO Cluster replication test
+    run_zookeeper_stop_server $zookeeper_standalone_config_file
+    echo -n "${bold_text}Tested Zookeeper local standalone configuration...   ${normal_text}"
+    [ $zkret == 0 ] && echo "${green_text} [ PASSED ]${normal_text}" || echo "${red_text} [ FAILED ]${normal_text}"   
 }
 
-start_zookeeper_server() {
+run_zookeeper_start_server() {
     # Starts Zookeeper server with a given configuration file
     echo "[ Starting Zookeeper... ]"
     ${zookeeper_install_dir}/bin/zkServer.sh start $1 >& /dev/null
     [ $? == 0 ] && echo "[ Zookeeper running from configuration: $1 ]" || echo "[Zookeeper failed to run, see configuration: $1 ]"
 }
 
-stop_zookeeper_server() {
+run_zookeeper_stop_server() {
     # TODO use command `ps -elfwww | grep -i zookeeper` to parse out currently 
     # running configuration files
     ${zookeeper_install_dir}/bin/zkServer.sh stop $1 >& /dev/null
     [ $? == 0 ] && echo "[Stopping Zookeeper ... STOPPED]" \
      || echo "[Stopping Zookeeper ... FAILED, check your configuration]"
+}
+
+run_zookeeper_start_local_replicated_servers() {
+    local quorum=$zookeeper_quorum_size
+    for (( n=1; n <= $quorum; n++ ))
+    do
+        run_zookeeper_start_server ${zookeeper_config_dir}/zoo_local_replicated_$n.cfg
+    done 
+}
+
+run_zookeeper_stop_local_replicated_servers() {
+    local quorum=$zookeeper_quorum_size
+    for (( n=1; n <= $quorum; n++ ))
+    do  
+        run_zookeeper_stop_server ${zookeeper_config_dir}/zoo_local_replicated_$n.cfg
+    done
 }
 
 clean_zookeeper() {
@@ -923,6 +1372,7 @@ clean_compute_tools() {
     clean_mesos
     clean_hadoop
     clean_zookeeper
+    clean_monit
 }
 
 test_compute_tools() {
@@ -938,6 +1388,7 @@ test_compute_tools() {
     test_zookeeper
     test_mesos
     test_spark
+    test_monit
 }
 
 config_compute_tools() {
@@ -953,55 +1404,72 @@ config_compute_tools() {
     config_zookeeper
     config_mesos
     config_spark
+    config_monit
 }
 
 setup_compute_tools() {
+   echo " ___ ___  ___ ___    ___ ___  __  __ ___ _   _ _____ ___ "
+   echo "| __/ __|/ __| __|  / __/ _ \|  \/  | _ \ | | |_   _| __|"
+   echo "| _|\__ \ (_ | _|  | (_| (_) | |\/| |  _/ |_| | | | | _| "
+   echo "|___|___/\___|_|    \___\___/|_|  |_|_|  \___/  |_| |___|"
+                                                                 
     echo
     echo "-------------------------------------------------------------"
     echo "Installing ESGF Node Compute Tools {Hadoop, Zookeeper, Mesos, Spark}"
     echo "-------------------------------------------------------------"
 
     # The optimal install order, as below, depends on the following:
+    # 0. Monit
     # 1. Hadoop
     # 2. Zookeeper
-    # 3. Mesos
+    # 3. Mesos (Requires Zookeeper for fault tolerance)
     # 4. Spark (Requires Mesos for distributed computation)
-    # Future: Mesos, Yarn (currently on Hadoop Master), Cascalog (Clojure query language for Hadoop)
 
     echo
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
+    echo "Installing Monit - System Monitoring Tool"
+    echo "-------------------------------------------------"
+    setup_monit
+    config_monit
+    test_monit
+
+    echo
+    echo "-------------------------------------------------"
     echo " Installing Hadoop - Latest Stable Version"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
     setup_hadoop
     config_hadoop   
     test_hadoop
 
     echo
-    echo "---------------------------------"
-    echo " Installing Zookeeper"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
+    echo " Installing Zookeeper node management"
+    echo "-------------------------------------------------"
     setup_zookeeper
     config_zookeeper
     test_zookeeper
-
+    
     echo
-    echo "---------------------------------"
-    echo " Installing Mesos and Mesos-Compatible Hadoop"
-    echo "---------------------------------"
-    setup_mesos
-    config_mesos
-    test_mesos
-
-    echo
-    echo "---------------------------------"
-    echo " Installing Spark"
-    echo "---------------------------------"
+    echo "-------------------------------------------------"
+    echo " Installing Spark, iterative MapReduce framework"
+    echo "-------------------------------------------------"
     setup_spark
     config_spark
     test_spark
+    
+    echo
+    echo "-------------------------------------------------"
+    echo " Installing Mesos and Mesos-Compatible Hadoop"
+    echo "-------------------------------------------------"
+    setup_mesos
+    config_mesos
+    test_mesos
 }
 
 if [[ "$BASH_SOURCE" == "$0" ]]
 then
+    if [ ! -e ${esg_compute_config} ]; then
+        mkdir ${esg_compute_config}
+    fi
     setup_compute_tools
 fi

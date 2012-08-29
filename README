@@ -1,0 +1,191 @@
+
+Hello, 
+
+The following describes how to get started with installing the ESGF
+Node.  The installation scripts may be in flux, as we continuously
+improve the process. Please provide us with your input regarding your
+installation experience.
+
+
+The bootstrap script can be fetched from our website at:
+http://rainbow.llnl.gov/dist/esgf-installer/esg-bootstrap
+
+Follow the instructions below describing how to run the bootstrap script.
+       
+The update and install scripts is written in bash and is intended to
+be run on CentOS/RedHat Linux distributions as *root* or a root
+effective user via "sudo -s" (IMPORTANT: Do not run scripts directly
+with sudo.  Straight sudo filters out needed environment variables!).  
+
+I suggest taking all the defaults presented and reading and following
+the script's suggestions.
+
+To help manage your expectations of the installation process, the
+following should give you a ballpark idea:
+
+The entire process takes approximately, a bit under, an hour.  There
+are about a 20 prompts for user input - almost all of which have
+resonable defaults (you can just hit enter - recommended).  The lion's
+share of the time is spent building the various tools and executibles
+(heads up: globus and python take a relatively long time to build :-\).
+We have worked hard to make the installation of the ESGF Node rather
+painless.
+
+Thank you for your participation!
+
+
+*************
+Instructions:
+*************
+- Before you do any installation REGISTER (get an account) at the
+index node you intend to connect to:
+        Ex: (ESG-PCMDI-9) http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
+
+- Be sure the machine you are installing on is a CentOS/Redhat linux
+family distribution.
+
+- Be sure the machine has a fully qualified hostname and responds to
+hostname -s, hostname --domain and hostname --fqdn.
+
+- Install all the prerequisites!!!!
+  http://esgf.org/wiki/ESGFNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F
+
+- The machine should have all development headers installed.
+
+- The installation user must have root (or sudo) privileges.
+
+- Make sure there is NO WEB CACHING for this node either
+  locally or from your institution!!!
+
+- If you intend to publish from your node ("data" configuration type)
+  * Be sure that your node or institution is NOT performing web caching for this node!!!
+  * Be sure that your node is visible from the outside, i.e. can accept inbound external connections!!!
+
+0) We HIGHLY recommend creating a separate installation user account
+   (Ex: esg-user) and give that user the ability to use sudo
+   (i.e. create an appropriate entry in /etc/sudoers). If not there
+   maybe undesirable results.  In general it is a good idea to use the
+   operating system mechanisms to help sequester an installation such
+   as this.
+
+
+1) LOGIN as the installation user
+
+
+2) From the installation user become root or root equiv....
+   
+   % sudo -s  
+   
+   (use -s : do not run the script directly from sudo because sudo filters env vars)
+
+
+3) Download the "bootstrap" script to /usr/local/bin on the target machine
+   % cd /usr/local/bin
+   % wget -O esg-bootstrap http://198.128.245.140/dist/esgf-installer/esg-bootstrap
+
+
+4) MAKE SURE YOU MANUALLY CHECK THE MD5 CHECKSUM!
+   (We don't want to run just any ol' script as root!!! :-)
+
+   % diff <(md5sum esg-bootstrap | tr -s " " | cut -d " " -f 1) <(curl -s http://198.128.245.140/dist/esgf-installer/esg-bootstrap.md5 | tr -s " " | cut -d " " -f 1)
+   
+   (there should be NO difference! i.e. the command returns you back to your prompt)
+
+   Besides the manual check the script is "self verifying".
+   If the script has been tampered with in any way, it will indicate
+   this and NOT RUN. At which point you must fetch the file from the
+   distribution site again. - step 3
+
+
+5) % chmod 555 esg-bootstrap
+
+   You only need to run esg-bootstrap initially to get the primary
+   install script.  You may also run it in the future to subsequently
+   to get the latest revisions of install script.
+   
+
+6) Fetch the latest node installation script 
+   
+   (MD5 verification is done within the scripts from now on, so make
+   sure it always says "[VERIFIED]" after a file is fetched)
+   
+   % esg-bootstrap
+   
+   This downloads the main installation script "esg-node".
+
+7) Run the installation script "esg-node" (read prompts and instructions carefully...)
+   
+   Note on prompts...
+        [y/N] means "N" is the default, you may just hit return
+        Default values appear in "[]" brackets, hitting return uses them.
+
+   There is NO default type, so it *must* be specified (if in doubt use "data")
+
+   % esg-node --type data --install --verify
+
+   With the --verify flag verification tests are run throughout the
+   installation procedure.  Also, the last verification step of the
+   installation will perform a test publish to the chosen index node
+   (default: ESGF-PCMDI-9)
+
+   After the initial installation you may subsequently perform test
+   publications independently by using the --test-pub flag.
+
+   % esg-node --test-pub
+
+   #--------- Trouble Shooting TIP ------------
+   If the installation does not properly go through and for some
+   reason ends prematurely please run the script again.  There may be
+   situations where enough of a component was installed such that it
+   is detected and skipped.  Do not proceed to the next installation
+   phase.  Instead stop the script (ctrl-c) and then use the "--force"
+   flag to make the installation require your input to continue for
+   each component.  For those that have successfully been installe you
+   may skip them until you get to the 'problem' component's section
+   and which point you may attempt another reinstall of it [Y].
+   
+   % esg-node --force --install
+   #-------------------------------------------
+
+
+8) Join the appropriate mailing list...
+   End Users : esg-node-user@lists.llnl.gov
+   Developers: esg-node-dev@lists.llnl.gov
+   
+   Send an email to majordomo@lists.llnl.gov with the BODY:
+   subscribe <list-name>
+
+   Ex:
+   subscribe esg-node-user
+   and/or
+   subscribe esg-node-dev
+
+9) Subscribe to the ESGF Blog
+   Keep in the loop with the ESGF.org effort!
+
+   RSS: http://esgf.org/blog/?feed=rss2
+   
+   and check the web site
+   http://esgf.org
+
+Thank you.
+   
+:-)
+
+********
+Note:
+Errant key strokes are picked up, so please be careful.
+
+As mentioned the script is in bash, so if you are so inclined, feel
+free to read it. However, do NOT modify the script, that would void
+the support contract ;-).
+
+If you have any questions... 
+1) Read the FAQ - http://esgf.org/wiki/ESGFNode/FAQ
+2) Post to the mailing list
+3) Contact me - Gavin (gavin@llnl.gov), or Bob or Dean. 
+   My number is +1-925-422-7436.
+
+Enjoy!
+
+-ESGF Node Team

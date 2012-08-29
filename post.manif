@@ -8,6 +8,7 @@
 
 [esgf-installer]
 
+./README
 ./HOWTO
 ./INSTALL
 ./TODO

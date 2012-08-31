@@ -435,7 +435,7 @@ printf "
   EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
   E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
   E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
-  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF  
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
 
 "
     printf "Checking that you have root privs on $(hostname)... "
@@ -5667,7 +5667,7 @@ esgf_node_info() {
   EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
   E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
   E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
-  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF  
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
 
      -ESGF.org \n\n"
 
@@ -6129,7 +6129,7 @@ main() {
                     exit 0
                     ;;
                 --info)
-                    info
+                    esgf_node_info
                     exit 0
                     ;;
                 --check)

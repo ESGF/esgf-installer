@@ -127,8 +127,8 @@ zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
 hadoop_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-${hadoop_version}/hadoop-${hadoop_version}.tar.gz
 hadoop_work_dir=${hadoop_work_dir:-${install_prefix}/hadoop_working}
-hadoop_mesos_compat_dist_url=http://mirrors.ibiblio.org/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
-#hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+#hadoop_mesos_compat_dist_url=http://mirrors.ibiblio.org/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
+hadoop_mesos_compat_dist_url=http://www.gtlib.gatech.edu/pub/apache/hadoop/common/hadoop-0.20.205.0/hadoop-0.20.205.0.tar.gz
 monit_dist_url=http://mmonit.com/monit/dist/monit-$monit_version.tar.gz
 monit_install_dir=${MONIT_HOME:-${install_prefix}/monit}
 
@@ -150,6 +150,7 @@ hadoop_mesos_config_standalone_mesos=${hadoop_mesos_config_standalone_mesos:-${h
 hadoop_mesos_config_single_zookeeper=${hadoop_mesos_config_single_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_single}
 hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_replicated}
 mesos_master_port=5050
+mesos_stable_version=273a438881688a711ffe16e7b77b105a6a4a5a7f
 monit_config_dir=${esg_compute_config}/monit
 spark_config_dir=${esg_compute_config}/spark
 hadoop_config_dir=${esg_compute_config}/hadoop
@@ -199,10 +200,11 @@ setup_mesos() {
     # Retrieve Mesos Source and build after configuration for ESGF tools
     # Uses: Hadoop, Zookeeper, Java, Python
     git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-    env PATH=$CDAT_HOME/bin:${PATH} PYTHON_REFIX=$CDAT_HOME
-    mkdir $mesos_build_dir
-    (cd ${mesos_install_dir} && ./bootstrap)
-    (cd ${mesos_build_dir} && ./configure --with-java=$JAVA_HOME --enable-python=yes LDFLAGS=-L$CDAT_HOME/lib && make)
+    #env PATH=$CDAT_HOME/bin:${PATH} PYTHON_REFIX=$CDAT_HOME
+    #export PYTHON_HOME=$CDAT_HOME/lib
+    (cd ${mesos_install_dir} && git checkout $mesos_stable_version)
+    #(cd ${mesos_install_dir} && curl -s https://reviews.apache.org/media/uploaded/files/2012/08/30/linux_build_fix.patch | git apply --binary && ./bootstrap)
+    (cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java=$JAVA_HOME --enable-python=yes LDFLAGS=-L$CDAT_HOME/lib && make)
 
     # TODO make check hangs on zookeeper install
     # Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
@@ -237,14 +239,15 @@ write_mesos_install_log_entry() {
 config_mesos() {
     # The most efficient way to start and stop mesos is with built-in deploy scripts, which
     # require some configuration.
-    if [ ! -e ${mesos_config_dir} ]; then
-        mkdir ${mesos_config_dir}
-    fi
-    
     echo
     doconfig="N" 
     if [ -e ${mesos_install_dir/hadoop} ]; then
-        read -e -p "Configure Mesos-Compatible Hadoop Installation? [y/N]: " doconfig
+        if [ -e ${mesos_config_dir} ]; then
+            read -e -p "Configure Mesos-Compatible Hadoop Installation? [y/N]: " doconfig
+        else
+            echo "Configuring Mesos..."
+            doconfig="Y"
+        fi
 
         # Configure Hadoop environment for Mesos
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
@@ -258,6 +261,12 @@ config_mesos() {
             fi
 
             # Create a directory to store configurations, for now
+            if [ ! -e ${mesos_config_dir} ]; then
+                mkdir ${mesos_config_dir}
+            else
+                rm -rf ${mesos_config_dir}/*
+            fi
+            
             if [ ! -e ${mesos_compat_config_dir} ]; then
                 mkdir ${mesos_compat_config_dir}
             fi
@@ -929,16 +938,17 @@ config_hadoop() {
     # for fully distributed configuration:
     # http://hadoop.apache.org/common/docs/r0.20.2/cluster_setup.html   
 
-    # Initialize configuration
-    if [ ! -e ${hadoop_config_dir} ]; then
-        mkdir ${hadoop_config_dir}
-    fi
-
     echo
     local doconfig="N" 
     if [ -e ${hadoop_install_dir} ]; then
-        read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
-        
+        if [ -e ${hadoop_config_dir} ]; then
+            read -e -p "Configure Hadoop Installation? [y/N]: " doconfig
+        else
+            echo "Configuring Hadoop..."
+            mkdir ${hadoop_config_dir}
+            doconfig="Y"
+        fi 
+
         # Configure Hadoop modes, HDFS, configuration
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
             echo "Configuring Hadoop..."
@@ -1191,32 +1201,41 @@ write_zookeeper_install_log_entry() {
 config_zookeeper() {
     echo
     doconfig="N"
-    
-    if [ ! -e ${zookeeper_config_dir} ]; then
-        mkdir ${zookeeper_config_dir}
-    fi
      
     if [ -e ${zookeeper_install_dir} ]; then
-        read -e -p "Configure Zookeeper Installation? [y/N]: " doconfig
-        
+        if [ -e ${zookeeper_config_dir} ]; then 
+            read -e -p "Reconfigure Zookeeper Installation? [y/N]: " doconfig
+        else
+            echo "Configuring Compute Stack Zookeeper..."
+            doconfig="Y"
+        fi
+
         if [ "$doconfig" = "Y" ] || [ "$doconfig" = "y" ]; then
        
             echo "Creating Zookeeper working directories..."
-            if [ -e ${zookeeper_workdir} ]; then
-                rm -rf ${zookeeper_workdir}         
+            
+            # Initialize an empty zookeeper configuration directory,
+            # to avoid corruption from previous configurations
+            if [ ! -e ${zookeeper_config_dir} ]; then
+                mkdir ${zookeeper_config_dir}
+            else
+                rm -rf ${zookeeper_config_dir}/*
             fi
-            mkdir ${zookeeper_workdir}
+
+            # Clear out Zookeeper Working directory, initialize sub-directories
+            # for each type of configuration
+            if [ ! -e ${zookeeper_workdir} ]; then
+                mkdir ${zookeeper_workdir}
+            else           
+                rm -rf ${zookeeper_workdir}/*
+            fi       
             mkdir ${zookeeper_workdir}/standalone
             mkdir ${zookeeper_workdir}/local_replication
             mkdir ${zookeeper_workdir}/cluster_replication
 
             # Master URL file for replicated, standalone modes
-            if [ -e ${zookeeper_replicated_master_url_file} ]; then
-                rm $zookeeper_replicated_master_url_file
-            fi
-            if [ -e ${zookeeper_standalone_master_url_file} ]; then
-                rm $zookeeper_standalone_master_url_file
-            fi
+            rm -f $zookeeper_replicated_master_url_file
+            rm -f $zookeeper_standalone_master_url_file
 
             echo "Configuring Zookeeper for standalone local operation..."
             echo "tickTime=2000" >> $zookeeper_standalone_config_file
@@ -1317,14 +1336,14 @@ test_zookeeper() {
 run_zookeeper_start_server() {
     # Starts Zookeeper server with a given configuration file
     echo "[ Starting Zookeeper... ]"
-    ${zookeeper_install_dir}/bin/zkServer.sh start $1 >& /dev/null
+    ${zookeeper_install_dir}/bin/zkServer.sh start $1
     [ $? == 0 ] && echo "[ Zookeeper running from configuration: $1 ]" || echo "[Zookeeper failed to run, see configuration: $1 ]"
 }
 
 run_zookeeper_stop_server() {
     # TODO use command `ps -elfwww | grep -i zookeeper` to parse out currently 
     # running configuration files
-    ${zookeeper_install_dir}/bin/zkServer.sh stop $1 >& /dev/null
+    ${zookeeper_install_dir}/bin/zkServer.sh stop $1
     [ $? == 0 ] && echo "[Stopping Zookeeper ... STOPPED]" \
      || echo "[Stopping Zookeeper ... FAILED, check your configuration]"
 }

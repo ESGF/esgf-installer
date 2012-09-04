@@ -1381,7 +1381,6 @@ clean_zookeeper() {
 #####
 # Core Methods
 #####
-
 clean_compute_tools() {
     # TODO: A few of these computation frameworks rely on one another,
     # so uninstalling portions of this suite may leave parts unstable. Some

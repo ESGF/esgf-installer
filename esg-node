@@ -2612,6 +2612,16 @@ setup_tds() {
     fi
     #--------
 
+    #Here we want to make sure that there is the file - Ex: /esg/content/thredds/threddsConfig.xml exists.
+    #If not go get it... (needed, since if the file is not there then re-init will not work - apparently)
+    local thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
+    local thredds_config_file_template=${thredds_config_file_template_url##*/}
+    local thredds_config_file=${thredds_config_file_template%.*}
+    if [ ! -e ${thredds_config_file} ]; then
+        mkdir -p ${thredds_content_dir}/thredds
+        checked_get ${thredds_content_dir}/thredds/${thredds_config_file} ${thredds_config_file_template_url} $((force_install))
+    fi
+
     #restart tomcat to put modifications in effect.
     stop_tomcat
     start_tomcat

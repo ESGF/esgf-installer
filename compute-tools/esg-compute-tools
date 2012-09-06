@@ -200,11 +200,8 @@ setup_mesos() {
     # Retrieve Mesos Source and build after configuration for ESGF tools
     # Uses: Hadoop, Zookeeper, Java, Python
     git ${git_exec_path_param} clone ${mesos_git_url} ${mesos_install_dir}
-    #env PATH=$CDAT_HOME/bin:${PATH} PYTHON_REFIX=$CDAT_HOME
-    #export PYTHON_HOME=$CDAT_HOME/lib
     (cd ${mesos_install_dir} && git checkout $mesos_stable_version)
-    #(cd ${mesos_install_dir} && curl -s https://reviews.apache.org/media/uploaded/files/2012/08/30/linux_build_fix.patch | git apply --binary && ./bootstrap)
-    (cd ${mesos_install_dir} && ./bootstrap && ./configure --with-java=$JAVA_HOME --enable-python=yes LDFLAGS=-L$CDAT_HOME/lib && make)
+    (cd ${mesos_install_dir} && ./bootstrap && ./configure LDFLAGS=-L$CDAT_HOME/lib PYTHON=$CDAT_HOME/bin/python2.6 && make)
 
     # TODO make check hangs on zookeeper install
     # Boilerplate: [ $? != 0 ] && echo " ERROR: Could not clone Mesos: ${mesos_git_url}" && popd && checked_done 1
@@ -681,7 +678,7 @@ setup_spark() {
     echo "source ${envfile}" >> ${spark_install_dir}/conf/spark-env.sh
     echo "export SCALA_HOME=/usr/local/scala" >> ${spark_install_dir}/conf/spark-env.sh
     echo "export MESOS_NATIVE_LIBRARY=${mesos_build_dir}/src/.libs/libmesos.so" >> ${spark_install_dir}/conf/spark-env.sh
-    (cd ${spark_install_dir} && sbt/sbt compile)
+    (cd ${spark_install_dir} && sbt/sbt package)
     
     # TODO check for download errors or git failures
     
@@ -1376,6 +1373,32 @@ clean_zookeeper() {
             remove_install_log_entry zookeeper
         fi  
     fi  
+}
+
+#####
+# Deployment Methods - Local and Cluster
+#####
+start_compute_services_local() {
+    # Step 1: Start monitoring with Monit
+    # Step 2: Start master node management with Zookeeper
+    # Step 2: Start Mesos resource management layer
+    echo
+}
+
+start_compute_services_cluster() {
+    echo
+}
+
+stop_compute_services_local() {
+    # Step 1: Stop any running frameworks
+    # Step 2: Stop Mesos resource management layer
+    # Step 3: Stop Zookeeper fault tolerance / quorum management
+    # Step 4: Stop Monit monitoring
+    echo
+}
+
+stop_compute_services_cluster() {
+    echo
 }
 
 #####

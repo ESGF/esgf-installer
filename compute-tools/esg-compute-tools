@@ -1425,11 +1425,11 @@ test_compute_tools() {
     echo "---------------------------------"
     echo
 
+    test_monit
     test_hadoop
     test_zookeeper
     test_mesos
     test_spark
-    test_monit
 }
 
 config_compute_tools() {
@@ -1512,5 +1512,10 @@ then
     if [ ! -e ${esg_compute_config} ]; then
         mkdir ${esg_compute_config}
     fi
-    setup_compute_tools
+
+    if [ $1 = 'test-only' ]; then
+        test_compute_tools
+    else
+        setup_compute_tools
+    fi
 fi

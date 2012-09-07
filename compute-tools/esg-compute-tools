@@ -121,7 +121,7 @@ mesos_git_url="git://git.apache.org/mesos.git"
 mesos_build_dir=${MESOS_BUILD_HOME:-$mesos_install_dir} 
 mesos_compat_framework_dir=${MESOS_COMPAT_FRAMEWORKS:-${install_prefix}/mesos_compat}
 spark_install_dir=${SPARK_HOME:-${install_prefix}/spark}
-spark_git_url="git://github.com/mesos/spark.git"
+spark_git_url=http://github.com/mesos/spark.git
 zookeeper_install_dir=${ZOOKEEPER_HOME:-${install_prefix}/zookeeper}
 zookeeper_dist_url=http://www.gtlib.gatech.edu/pub/apache/zookeeper/zookeeper-${zookeeper_version}/zookeeper-${zookeeper_version}.tar.gz
 hadoop_install_dir=${HADOOP_HOME:-${install_prefix}/hadoop}
@@ -535,7 +535,8 @@ test_mesos() {
     # Test 5: Mesos + Hadoop, Single-Node Zookeeper
     # Test 6: Mesos + Hadoop, Replicated Zookeeper
     # Test 7: Mesos + Hadoop + Spark, Clustered Zookeeper
-   
+
+    # Stop any running services, as they will interfere with tests...
     echo
     echo -n "${bold_text}Test 1: ${normal_text}"
     test_mesos_spark_mesos_standalone
@@ -1428,8 +1429,8 @@ test_compute_tools() {
     test_monit
     test_hadoop
     test_zookeeper
-    test_mesos
     test_spark
+    test_mesos
 }
 
 config_compute_tools() {
@@ -1513,7 +1514,7 @@ then
         mkdir ${esg_compute_config}
     fi
 
-    if [ $1 = 'test-only' ]; then
+    if [ $1 ] && [ $1 = 'test-only' ]; then
         test_compute_tools
     else
         setup_compute_tools

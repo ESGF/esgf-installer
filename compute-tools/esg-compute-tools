@@ -1417,6 +1417,21 @@ clean_compute_tools() {
     clean_monit
 }
 
+write_compute_tools() {
+    # This method is mainly to write environments/install logs for when files have to be manually downloaded.
+
+    write_env_hadoop
+    write_hadoop_install_log_entry
+    write_env_monit
+    write_monit_install_log_entry
+    write_env_zookeeper
+    write_zookeeper_install_log_entry
+    #write_env_spark
+    #write_spark_install_log_entry
+    #write_env_mesos
+    #write_mesos_install_log_entry
+}
+
 test_compute_tools() {
     # Method to run test suites of all compute tools.
 
@@ -1514,8 +1529,13 @@ then
         mkdir ${esg_compute_config}
     fi
 
-    if [ $1 ] && [ $1 = 'test-only' ]; then
-        test_compute_tools
+    if [ $1 ]; then
+        if [ $1 = 'test-only' ]; then
+            test_compute_tools
+        fi
+        if [ $1 = 'write-only' ]; then
+            write_compute_tools
+        fi
     else
         setup_compute_tools
     fi

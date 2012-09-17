@@ -1,9 +1,7 @@
 #!/bin/bash
 
 #####
-# esg-compute-languages: ESGF Node Application Stack - Compute Languages
-# description: Computation languages installer for the ESGF Node application 
-# stack
+# deploy-compute-stack: Deploy script for ESGF Node Compute Stack 
 #
 #****************************************************************************
 #*                                                                          *

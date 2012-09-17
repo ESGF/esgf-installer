@@ -150,6 +150,7 @@ hadoop_mesos_config_standalone_mesos=${hadoop_mesos_config_standalone_mesos:-${h
 hadoop_mesos_config_single_zookeeper=${hadoop_mesos_config_single_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_single}
 hadoop_mesos_config_replicated_zookeeper=${hadoop_mesos_config_replicated_zookeeper:-${hadoop_mesos_compat_config_dir}/mesos_zookeeper_replicated}
 mesos_master_port=5050
+mesos_default_webui_port=8080
 mesos_stable_version=273a438881688a711ffe16e7b77b105a6a4a5a7f
 monit_config_dir=${esg_compute_config}/monit
 spark_config_dir=${esg_compute_config}/spark
@@ -588,11 +589,12 @@ run_mesos_start_local_replicated_masters() {
     # TODO: Check to make sure Zookeeper is running before we do anything
     # zkStatus would be good here
     local zkport=$zookeeper_client_port
+    local webui_port=$mesos_default_webui_port + 1
     local mesosport=$mesos_master_port
     local quorum=$zookeeper_quorum_size
     for (( p=1; p <= $quorum; p++ ))
     do
-        run_mesos_start_master --zk=file://$zookeeper_replicated_master_url_file --port=$((mesosport++))
+        run_mesos_start_master --zk=file://$zookeeper_replicated_master_url_file --port=$((mesosport++)) --webui_port=$((webui_port++))
     done
 }
 

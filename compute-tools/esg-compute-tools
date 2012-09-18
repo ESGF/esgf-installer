@@ -602,7 +602,7 @@ run_mesos_start_master() {
     # Takes as input any flags (besides quiet) to pass to the master
     # TODO Start with Zookeeper URL, ESGF IP address
     echo "Starting Mesos Master"
-    ${mesos_build_dir}/bin/mesos-master.sh --quiet $@ &
+    ${mesos_install_dir}/bin/mesos-master.sh --quiet $@ &
     [ $? == 0 ] && echo "[ Mesos Master now running ]" || echo "[ Mesos Master failed to run ]"  
 }
 
@@ -610,7 +610,7 @@ run_mesos_start_slave() {
     # TODO Run with ESGF Ip address for mesos master url
     # TODO figure out correct memory resources
     echo "Starting Mesos Slave"
-    ${mesos_build_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &
+    ${mesos_install_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &
     [ $? == 0 ] && echo "[ Mesos Slave now running ]" || echo "[ Mesos Slave failed to run ]" 
 }
 

@@ -78,6 +78,8 @@ compute_tools_file=esg-compute-tools
 [ -e ${envfile} ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 [ -e ${compute_tools_file} ] && source ${compute_tools_file} && ((VERBOSE)) && printf "sourcing from: ${compute_tools_file} \n"
+# DEBUG
+source ../esg-functions
 
 ########################
 # Compute Stack        #
@@ -85,10 +87,16 @@ compute_tools_file=esg-compute-tools
 
 deploy_local_standalone_stack() {
     run_monit
+    run_mesos_start_master --port=$mesos_master_port
+    local standaloneMesosMasterURL=$(get_config_ip eth0):$mesos_master_port
+    run_mesos_start_slave $standaloneMesosMasterURL
 }
 
 deploy_local_replicated_stack() {
     run_monit
+    run_zookeeper_start_local_replicated_servers
+    run_mesos_start_local_replicated_masters
+    run_mesos_start_slave file://$zookeeper_replicated_master_url_file
 }
 
 deploy_cluster_stack() {

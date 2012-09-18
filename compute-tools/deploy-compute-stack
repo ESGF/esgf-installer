@@ -67,10 +67,107 @@
 # Authors: Eugenia Gabrielova <genia.likes.science@gmail.com>
 #####
 
-# Source ESG-Compute-Tools...
+# Internal Variables
+preview_mode=0
+
+# Source ESG-Compute-Tools
+envfile=/etc/esg.env
+esg_functions_file=esg-functions
+compute_tools_file=esg-compute-tools
+
+[ -e ${envfile} ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+[ -e ${compute_tools_file} ] && source ${compute_tools_file} && ((VERBOSE)) && printf "sourcing from: ${compute_tools_file} \n"
+
+########################
+# Compute Stack        #
+########################
+
+deploy_local_standalone_stack() {
+    run_monit
+}
+
+deploy_local_replicated_stack() {
+    run_monit
+}
+
+deploy_cluster_stack() {
+    echo "Under construction D: So lonely..."
+}
 
 deploy_compute_tools() {
+
     echo "Deploying ESG Compute Stack..."
-    # Start monitoring with Monit...
-    # Start compute stack services
+    echo
+    echo "Please select a distribution level for the compute stack: "
+    echo "  [1] Standalone -    No replication. Good for basic debugging.
+                        Single instances of Mesos, monitoring with Monit
+                        Run jobs locally with Spark, Hadoop, MPI"
+    echo "  [2] Local Cluster - Local replication. Good for small-scale distribution.
+                        Multiple local Mesos Master nodes, managed with Zookeeper. 
+                        Run jobs locally with Spark, Hadoop, MPI.
+                        Monitoring with Monit."
+    echo "  [3] Cluster -       Replicate stack on multiple machines. Production mode.
+                        Node quorum management with Zookeeper.
+                        Run jobs on Spark, Hadoop, MPI on cluster.
+                        Monitoring with Monit."
+    echo -n "Please select a mode [default = 1]: " 
+    read stackClusterLevel
+
+    if [ ! $stackClusterLevel ]; then
+        # If there is no argument, we default to 1: Local Standalone"
+        deploy_local_standalone_stack
+
+    elif [ $stackClusterLevel == 1 ]; then
+        deploy_local_standalone_stack
+
+    elif [ $stackClusterLevel == 2 ]; then
+        deploy_local_replicated_stack
+
+    elif [ $stackClusterLevel == 3 ]; then
+        deploy_cluster_stack
+    else
+        echo "Invalid selection. Please run deploy script again."
+        return 1
+    fi
 }
+
+########################
+# Deploy Options       #
+########################
+activate_preview_mode() {
+    echo "Activating Preview Mode..."
+    local hasLynx=$(which lynx >& /dev/null)
+    if [ $hasLynx ] && [ $hasLynx == 0 ]; then
+        echo "Preview Mode: On"
+        preview_mode=1
+    else
+        echo "Activation failed: Missing Lynx"
+        echo "To start compute stack in Preview Mode, "
+        echo "please install Lynx (http://lynx.isc.org/)."
+        echo
+    fi
+}   
+
+show_help_menu() {
+    echo
+    echo "--help [-h]           Display this help menu."
+    echo "--preview-mode [-p]   Run with previews of monitoring for stack tools."
+    echo
+}
+
+if [[ "$BASH_SOURCE" == "$0" ]]
+then
+    # Placeholder: Sanity checks
+
+    if [ $1 ]; then 
+        if [ $1 = '--preview-mode' ] || [ $1 = '-p' ]; then 
+            activate_preview_mode 
+        fi
+        if [ $1 = '--help' ] || [ $1 == '-h' ]; then
+            show_help_menu
+            exit
+        fi
+    fi   
+    deploy_compute_tools   
+fi

@@ -90,7 +90,7 @@ git_exec_path_param="--exec-path=$git_placeholder/libexec/git-core"
 java_placeholder="$install_prefix/java"
 java_install_path_config_param="--with-java-home=$java_placeholder/bin/java"
 compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
-envfile="/etc/esg.env"
+envfile=/etc/esg.env
 esg_functions_file=./esg-functions
 esg_compute_languages_file=./esg-compute-languages
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
@@ -165,7 +165,7 @@ normal_text=$(tput sgr0)
 green_text=$(tput setaf 2; tput bold)
 red_text=$(tput setaf 1; tput bold)
 
-[ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
+[ -e ${envfile} ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
 #####

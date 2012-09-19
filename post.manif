@@ -8,7 +8,7 @@
 
 [esgf-installer]
 
-./HOWTO
+./README
 ./INSTALL
 ./TODO
 ./LICENSE

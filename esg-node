@@ -129,7 +129,7 @@ init() {
     esgcet_version=${esgcet_version:-"2.10.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.11"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.12"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
@@ -137,20 +137,23 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.1.11"}
+    esg_orp_version=${esg_orp_version:-"2.2.0"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.1.6"}
+    esgf_idp_version=${esgf_idp_version:-"2.2.0"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.3.3"}
+    esg_search_version=${esg_search_version:-"3.4.0"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.2.2"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.2.6"}
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.2.1"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.1"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
+
+    #see esgf-desktop project:
+    esgf_desktop_version=${esgf_desktop_version:-"0.0.1"}
 
     #--------------------------------
     # External programs' versions
@@ -414,6 +417,27 @@ write_paths() {
 #checking for what we expect to be on the system a-priori
 #that we are not going to install or be responsible for
 check_prerequisites() {
+
+printf "
+
+  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF
+    E:::::E             S:::::S            G:::::G                F:::::F             
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF   
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F   
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F   
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF   
+    E:::::E                         S:::::SG:::::G        G::::G  F:::::F             
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F             
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
+
+"
     printf "Checking that you have root privs on $(hostname)... "
     id | grep root >& /dev/null
     [ $? != 0 ] && printf "[FAIL] \n\tMust run this program with root's effective UID\n\n" && return 1
@@ -1321,30 +1345,6 @@ test_postgress() {
     checked_done 0
 }
 
-postgres_list_db_schemas() {
-    # This prints a list of all schemas known to postgres.
-    # If $1 is specified, it is used an awk filter
-    # Returns the return value of the matches
-    #
-    # 'psql' must be in the path for this to work
-    #
-    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
-        psql -U ${postgress_user} ${db_database} -qt -c "\dn;" | \
-        awk '/'${1:-"."}'/ {print $1}' | \
-        grep -Ev "^pg_.*")
-}
-
-postgres_list_dbs() {
-    # This prints a list of all databases known to postgres.
-    # If $1 is specified, it is used a grep filter
-    # Returns the return value of the final grep
-    #
-    # 'psql' must be in the path for this to work
-    #
-    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
-        psql -lat -U ${postgress_user} | cut -d' ' -f2 | \
-        grep -Ev "^(template[0-9]|postgres)$" | grep ${1:-"."})
-}
 
 #####
 # Python/CDMS
@@ -2611,6 +2611,16 @@ setup_tds() {
         created_brand_new_thredds_content_dir=1
     fi
     #--------
+
+    #Here we want to make sure that there is the file - Ex: /esg/content/thredds/threddsConfig.xml exists.
+    #If not go get it... (needed, since if the file is not there then re-init will not work - apparently)
+    local thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
+    local thredds_config_file_template=${thredds_config_file_template_url##*/}
+    local thredds_config_file=${thredds_config_file_template%.*}
+    if [ ! -e ${thredds_config_file} ]; then
+        mkdir -p ${thredds_content_dir}/thredds
+        checked_get ${thredds_content_dir}/thredds/${thredds_config_file} ${thredds_config_file_template_url} $((force_install))
+    fi
 
     #restart tomcat to put modifications in effect.
     stop_tomcat
@@ -4476,6 +4486,7 @@ uninstall() {
         (source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem)
         (source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem)
         (source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation)
+        (source ${scripts_dir}/esg-desktop >& /dev/null && clean_desktop_webapp_subsystem)
         (source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
         (source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
 
@@ -4798,10 +4809,10 @@ checked_get() {
         exit 1
     fi
 
-    #if (_is_in_git "${local_file}") ; then
-    #    printf "${local_file} is controlled by Git, not updating"
-    #    return 0
-    #fi
+    if (_is_in_git "${local_file}") ; then
+        printf "${local_file} is controlled by Git, not updating"
+        return 0
+    fi
 
     if ((use_local_files)) && [ -e "${local_file}" ]; then
         printf "
@@ -5220,6 +5231,7 @@ run_startup_hooks() {
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
+    (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
 
     #------------------------------------------
     #When starting up pull down necessary federation certificates
@@ -5600,13 +5612,13 @@ esgf_node_info() {
     printf "
 
      The goal of this script is to automate as many tasks as possible
-     regarding the installation and maintenance of the ESGF software
-     stack that is know as the \"ESGF Node\".  A software stack is a
-     collection of tools that work in concert to perform a particular
-     task or set of tasks that are semantically united. The software
-     stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL,
-     MyProxy, and several ESGF.org custom software applications
-     running on a LINUX (RedHat/CentOS) operating system.
+     regarding the installation, maintenance and use of the ESGF
+     software stack that is know as the \"ESGF Node\".  A software
+     stack is a collection of tools that work in concert to perform a
+     particular task or set of tasks that are semantically united. The
+     software stack is comprised of: Tomcat, Thredds, CDAT & CDMS,
+     PostgreSQL, MyProxy, and several ESGF.org custom software
+     applications running on a LINUX (RedHat/CentOS) operating system.
 
      Through the installation process there are different accounts
      that are created that facilitate the communication between the
@@ -5648,6 +5660,24 @@ esgf_node_info() {
       ---------                                                   ---------
 
      (Visit http://esgf.org , http://esgf.org/wiki for more information)
+
+                                                                                    
+  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF
+    E:::::E             S:::::S            G:::::G                F:::::F             
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF   
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F   
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F   
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF   
+    E:::::E                         S:::::SG:::::G        G::::G  F:::::F             
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F             
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
 
      -ESGF.org \n\n"
 
@@ -5708,11 +5738,15 @@ usage() {
         Index (search) Utils...
         -------------------------------
         --optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
-        --check-shards  - Checks the configuration for local replica indexes
+        --crawl - ingest remote catalogs and their descendants into local index for searching.
         --add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
         --remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
-        --list-shards - shows list of registered local replica indexes
-        --init-shards - adds all shards listed in the replica shard configuration file
+        --list-shards  - shows list of registered local replica indexes
+        --init-shards  - adds all shards listed in the replica shard configuration file
+        --check-shards - checks the configuration for local replica indexes
+        --time-shards  - cycles through all known index shards providing query times for each
+                         [-show-local] will show timing information for locally replicated shards
+                         [-timeout <seconds>] will set the connection timeout value (in seconds)
 
         -------------------------------
         Publication Endpoint Setting (Index Peer/Gateway)
@@ -5764,15 +5798,23 @@ usage() {
         -------------------------------
         --config-db    - provides database only configuration to support based on note type (see --get-type)
         --backup-db    - creates a backup of node database to file
-                         the prefix for all schemas provided is \"esgf_\"  -s foo will reference schema esgf_foo
-                         [-s|--schema] <schema suffix> [-db|--database] <database name>
+                         the prefix for all schemas provided is \"esgf_\" Ex: -s foo will reference schema esgf_foo
+                         [-s|--schema] <schema suffix> 
+                         [-db|--database] <database name>
         --restore-db   - restores from (nth) backup of database
-                         [-s|--schema] <schema suffix> [-db|--database] <database name> -n <reverse backup order>
+                         [-n] <the nth backup> (default is n=1 or the last / most recent backup, 1 <= n <= 7)
+                         [-s|--schema] <schema suffix> 
+                         [-db|--database] <database name>
 
         -------------------------------
         Trouble Shooting
         -------------------------------
         --verify-thredds-credentials - if there is a thredds/publisher \"re-init\" issue this will fix it
+
+        -------------------------------
+        Other
+        -------------------------------
+        --shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node
 
         -------------------------------
         Node Life Cycle Flags:
@@ -5836,6 +5878,11 @@ usage() {
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
 
+         ___ ___  ___ ___ 
+        | __/ __|/ __| __|
+        | _|\__ \ (_ | _| 
+        |___|___/\___|_|  
+
 "
     exit 0
 }
@@ -5846,9 +5893,11 @@ done_remark() {
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/"
     echo "http://${esgf_host}/esgf-node-manager"
+    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
+        echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/esgf-web-fe"
@@ -5928,7 +5977,7 @@ main() {
                     (( (sel & TEST_BIT) == 0 )) && ((sel+=TEST_BIT))
                     debug_print "sel = $sel "
                     ;;
-                --type | -t)
+                --type | -t | --flavor)
                 #TODO: look for next arg if "data" node or if "index" node set the selection bit accordingly
                 #This also means that I can nott use 1 for basic install will have to use 1 for prerequisite
                 #and then another bit for "data" node vs "index" node
@@ -6090,7 +6139,7 @@ main() {
                     exit 0
                     ;;
                 --info)
-                    info
+                    esgf_node_info
                     exit 0
                     ;;
                 --check)
@@ -6237,6 +6286,11 @@ main() {
                     (source ${scripts_dir}/esgf-optimize-index $*)
                     [ $? != 0 ] && echo "The flag --optimize-index is not enabled..." && exit 1
                     exit 0
+                    ;;
+                --crawl)
+                    shift
+                    [ -e "${scripts_dir}/esgf-crawl" ] && (${scripts_dir}/esgf-crawl $@) || echo "Sorry, this option not supported :-("
+                    exit $?
                     ;;
                 --policy-check)
                     shift
@@ -6440,6 +6494,16 @@ main() {
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && init_all_shards)
                     exit $?
                     ;;
+                --time-shards)
+                    shift
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && time_shards $@)
+                    exit $?
+                    ;;
+                --shell)
+                    shift
+                    [ -e "${scripts_dir}/esgf-sh" ] && (${scripts_dir}/esgf-sh) || echo "Sorry, this option not supported :-("
+                    exit $?
+                    ;;
                 --myproxy)
                     (( (sel & IDP_BIT) == 0 )) && echo "Sorry, the --myproxy flag may only be used for \"idp\" type commands" && exit 1
                 #acceptable args:  [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
@@ -6560,6 +6624,7 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
         # Compute Languages and Tools Setup
         #[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_languages

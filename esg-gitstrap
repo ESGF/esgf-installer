@@ -86,7 +86,7 @@ my %opt = (
 
 GetOptions(
     \%opt,
-    'debug',
+    'debug|v',
     'prefix=s',
     'bindir=s',
     'configdir=s',
@@ -148,7 +148,8 @@ my %repoinfo = (
             'devel'      => 'devel',
             'experiment' => 'experiment',
         },
-        'binlinks' => [ "esg-gitstrap",
+        'binlinks' => [ "esg-functions",
+                        "esg-gitstrap",
                         "esg-node",
                         "filters/esg-access-logging-filter",
                         "filters/esg-security-las-ip-filter",

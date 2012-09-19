@@ -21,12 +21,12 @@ I suggest taking all the defaults presented and reading and following
 the script's suggestions.
 
 To help manage your expectations of the installation process, the
-following should give you a ballpark idea:
+following should give you a ball park idea:
 
 The entire process takes approximately, a bit under, an hour.  There
 are about a 20 prompts for user input - almost all of which have
-resonable defaults (you can just hit enter - recommended).  The lion's
-share of the time is spent building the various tools and executibles
+reasonable defaults (you can just hit enter - recommended).  The lion's
+share of the time is spent building the various tools and executables
 (heads up: globus and python take a relatively long time to build :-\).
 We have worked hard to make the installation of the ESGF Node rather
 painless.
@@ -59,7 +59,7 @@ hostname -s, hostname --domain and hostname --fqdn.
 
 - If you intend to publish from your node ("data" configuration type)
   * Be sure that your node or institution is NOT performing web caching for this node!!!
-  * Be sure that your node is visible from the outside, i.e. can accept inbound external connections!!!
+  * Be sure that your node is visible from the outside, i.e. can accept in bound external connections!!!
 
 0) We HIGHLY recommend creating a separate installation user account
    (Ex: esg-user) and give that user the ability to use sudo
@@ -140,7 +140,7 @@ hostname -s, hostname --domain and hostname --fqdn.
    is detected and skipped.  Do not proceed to the next installation
    phase.  Instead stop the script (ctrl-c) and then use the "--force"
    flag to make the installation require your input to continue for
-   each component.  For those that have successfully been installe you
+   each component.  For those that have successfully been installed you
    may skip them until you get to the 'problem' component's section
    and which point you may attempt another reinstall of it [Y].
    
@@ -149,16 +149,16 @@ hostname -s, hostname --domain and hostname --fqdn.
 
 
 8) Join the appropriate mailing list...
-   End Users : esg-node-user@lists.llnl.gov
-   Developers: esg-node-dev@lists.llnl.gov
+   End Users : esgf-user@lists.llnl.gov
+   Developers: esgf-devel@lists.llnl.gov
    
    Send an email to majordomo@lists.llnl.gov with the BODY:
    subscribe <list-name>
 
    Ex:
-   subscribe esg-node-user
+   subscribe esgf-user
    and/or
-   subscribe esg-node-dev
+   subscribe esgf-devel
 
 9) Subscribe to the ESGF Blog
    Keep in the loop with the ESGF.org effort!

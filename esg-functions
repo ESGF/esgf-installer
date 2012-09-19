@@ -220,15 +220,15 @@ check_version_atleast() {
     # second and 1 otherwise.
     #
     # Returns 255 if called with less than two arguments.
-    
+
     debug_print "DEBUG: check_version_atleast \$1='$1'  \$2='$2'"
-    
+
     if [[ -z "${1}" || -z "${2}" ]] ; then
         echo "CRITICAL FAILURE: check_version_atleast called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2')" >&2
         return 255
     fi
-    
+
     if [ "$(_version_cmp ${1} ${2})" -ge 0 ] ; then return 0 ; fi
     return 1;
 }
@@ -246,13 +246,13 @@ check_version_between() {
     # Returns 255 if called with less than three arguments.
 
     debug_print "DEBUG: check_version_between \$1='$1'  \$2='$2'  \$3='$3'"
-    
+
     if [[ -z "${1}" || -z "${2}" || -z "${3}" ]] ; then
         echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
     fi
-    
+
     if [ "$(_version_cmp ${1} ${2})" -ge 0 ] \
         && [ "$(_version_cmp ${1} ${3})" -le 0 ] ; then
         return 0 ;
@@ -264,18 +264,18 @@ check_version_helper() {
     # Primary helper method for verifying version constraints,
     # automatically detecting by argument count whether to check for a
     # minimum version or a range.
-    #    
+    #
     # Takes the following arguments:
     #   $1: a string containing the version to test
     #   $2: the minimum acceptable version
     #   $3 (optional): the maximum acceptable version
-    #    
+    #
     # If called with only one argument, the function will attempt to
     # split it on spaces into multiple arguments automatically, and
     # then follow the above argument logic.
-    #    
+    #
     # Returns 0 if the tested version is in the acceptable range
-    #    
+    #
     # Returns 255 if less than two arguments are detected after
     # automatic argument splitting.
 
@@ -283,23 +283,23 @@ check_version_helper() {
 
     # Split a lone argument
     [[ $# == 1 ]] && set -- $1
-    
+
     # Spit out a nasty error message and return with 255 if there are
     # insufficient arguments (this causes the version check to fail,
     # but does NOT abort the script -- watch for the CRITICAL FAILURE
     # string in your output)
-    if [[  -z "${1}" || -z "${2}"  ]]; then 
+    if [[  -z "${1}" || -z "${2}"  ]]; then
         echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
-    fi   
-    
-    if [ -z "${3}" ] ; then 
+    fi
+
+    if [ -z "${3}" ] ; then
         # Only two arguments, check for a minimum version
-        check_version_atleast ${1} ${2} 
+        check_version_atleast ${1} ${2}
         return $?
-    fi   
-    check_version_between ${1} ${2} ${3} 
+    fi
+    check_version_between ${1} ${2} ${3}
     return $?
 }
 
@@ -424,6 +424,18 @@ check_module_version() {
     return 1
 }
 
+get_current_esgf_library_version() {
+    # Some ESGF components, such as esgf-security, don't actually
+    # install a webapp or anything that carries an independent
+    # manifest or version command to check, so they must be checked
+    # against the ESGF install manifest instead.
+    [ ! -f "/esg/esgf-install-manifest" ] && return 0
+    local library_name=${1}
+    local v=$(grep library:${1} /esg/esgf-install-manifest | cut -d= -f2)
+    echo $v
+    [ -n "${v}" ] && return 0 || return 1
+}
+
 get_current_webapp_version() {
     local webapp_name=$1
     local version_property=${2:-"Version"}
@@ -470,7 +482,7 @@ check_app_version() {
     local ret=$?
     debug_print " The return value from the call to helper function check_version_ is $ret"
     [ $ret == 0 ] && return 0
-    
+
     printf "\nSorry, the detected version of ${app_dir##*/} [${current_version}] is older than required minimum version [${min_version}] \n"
     return 1
 }
@@ -519,8 +531,89 @@ dedup_properties() {
 ####
 #Takes a single interface value
 # "eth0" or "lo", etc...
-get_config_ip() { 
+get_config_ip() {
     ifconfig $1 | grep "inet[^6]" | awk '{ gsub (" *inet [^:]*:",""); print $1}'
+}
+
+
+#----------------------------------------------------------
+# Postgresql informational functions
+#
+# These functions require that Postgresql be already installed and
+# running correctly.
+#----------------------------------------------------------
+postgres_create_db() {
+    # Creates a database if it does not already exist
+    if [ -z "$(postgres_list_dbs ${1})" ] ; then
+        #Create the database...
+        echo "Creating ESGF database: [${1}]"
+        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} createdb ${1} >& /dev/null
+        (( $? > 1 )) && echo " ERROR: Could not create esgf node database: ${node_db_name}" && return $?
+    else
+        echo "ESGF database [${1}] already exists, not creating."
+    fi
+}
+
+postgres_list_db_schemas() {
+    # This prints a list of all schemas known to postgres.
+    # If $1 is specified, it is used an awk filter
+    # Returns the return value of the matches
+    #
+    # 'psql' must be in the path for this to work
+    #
+    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
+        psql -U ${postgress_user:-"dbsuper"} ${db_database:-"esgcet"} \
+             -qt -c "\dn;" | \
+        awk '/'${1:-"."}'/ {print $1}' | \
+        grep -Ev "^pg_.*")
+}
+
+postgres_list_schemas_tables() {
+    # List all Postgres tables in all schemas, in the schemaname.tablename
+    # format, in the ESGF database
+    # If $1 is specified, it is used as a grep filter
+    # Returns the return value of the final grep
+    #
+    # 'psql' must be in the path for this to work
+    #
+    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
+        echo "SELECT schemaname,relname FROM pg_stat_user_tables;" \
+        | psql -U ${postgress_user:-"dbsuper"} \
+               ${db_database:-"esgcet"} -At \
+        | tr '|' '.' \
+        | grep ${1:-'.'})
+}
+
+postgres_list_dbs() {
+    # This prints a list of all databases known to postgres.
+    # If $1 is specified, it is used a grep filter
+    # Returns the return value of the final grep
+    #
+    # 'psql' must be in the path for this to work
+    #
+    (PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} \
+        psql -lat -U ${postgress_user:-"dbsuper"} | cut -d' ' -f2 | \
+        grep -Ev "^(template[0-9]|postgres)$" | grep ${1:-"."})
+}
+
+postgres_clean_schema_migration() {
+    # Removes entries from the esgf_migrate_version table if any exist
+    # where repository_id matches an SQL LIKE to the first argument
+    #
+    # The SQL LIKE strings are generally defined in
+    # "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
+    # each relevant repository.
+    if [ -n "$(postgres_list_schemas_tables public.esgf_migrate_version)" ] ; then
+        if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} \
+            psql -U ${postgress_user} ${node_db_name} \
+            -c "select count(*) from esgf_migrate_version where repository_id LIKE '%${1}%'" \
+            | tail -n +3 | head -n 1) > 0 )); then
+            echo "cleaning out schema migration bookeeping for esgf_node_manager..."
+            $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} \
+                psql -U ${postgress_user} ${node_db_name} \
+                -c "delete from esgf_migrate_version where repository_id LIKE '%${1}%'" >& /dev/null)
+        fi
+    fi
 }
 
 #----------------------------------------------------------
@@ -807,7 +900,7 @@ prefix_to_path() {
     echo "export ${var}=${!var}"
 }
 
-#Given a directory the contents of the directory is backed up as a tar.gz file in 
+#Given a directory the contents of the directory is backed up as a tar.gz file in
 #arg1 - a filesystem path
 #arg2 - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
 #arg3 - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
@@ -817,7 +910,7 @@ backup() {
     local source="$(readlink -f $1)"
     local backup_dir=${2:-${esg_backup_dir:-"/esg/backups"}}
     local num_backups_to_keep=${3:-${num_backups_to_keep:-7}}
-    
+
     echo "Backup - Creating a backup archive of ${source}"
     pushd ${source%/*} >& /dev/null
     mkdir -p ${backup_dir} >& /dev/null
@@ -831,8 +924,8 @@ backup() {
         popd >& /dev/null
         return 1
     fi
-    
-    
+
+
     #-------------
     #keep only the last num_backups_to_keep files
     pushd ${backup_dir} >& /dev/null
@@ -844,7 +937,7 @@ backup() {
     fi
     popd >& /dev/null
     #-------------
-    
+
     popd >& /dev/null
     return 0
 }
@@ -858,4 +951,68 @@ backup() {
 get_node_id() {
     esgf_node_id=${esgf_node_id:-$(sha1sum <(echo esgf$(hostname -i)) | awk '{print $1}')}
     echo ${esgf_node_id}
+}
+
+
+git-tagrelease() {
+    # Makes a commit to the current git repository updating the
+    # release version string and codename, tags that commit with the
+    # version string, and then immediately makes another commit
+    # appending "-devel" to the version string.
+    #
+    # This is to prepare for a release merge.  Note that the tag will
+    # not be against the correct revision after a merge to the release
+    # branch if it was not a fast-forward merge, so ensure that there
+    # are no unmerged changes from the release branch before using.
+    #
+    # If that happens, delete the tag, issue a git reset --hard
+    # against the last commit before the tag, merge the release
+    # branch, and try again.
+    #
+    # Arguments:
+    # $1: the release version string (mandatory)
+    # $2: the release codename (optional)
+    #
+    # Examples:
+    #   git-tagrelease v4.5.6 AuthenticGreekPizzaEdition
+    # or just
+    #   git-tagrelease v4.5.6
+
+    # The file containing the release variables that needs to be modified
+    RELEASEFILE="esg-node"
+
+    # The strings that will be matched (against the beginning of a
+    # line) for version and codename.  The values in ${1} and ${2}
+    # will be wrapped in double-quotes and appended, replacing
+    # whatever followed previously.
+    VERSIONSTRING="script_version="
+    CODENAMESTRING="script_release="
+
+    if [ ! -f ${RELEASEFILE} ] ; then
+        echo "The release file ('${RELEASEFILE}') was not found!"
+        echo "Are you sure you're in the right repository and directory?"
+        return 1
+    fi
+
+    if [ X"${1}" = "X" ] ; then
+        echo "You didn't specify a release version!"
+        return 2
+    fi
+
+    perl -p -i -e "s#^${VERSIONSTRING}.*#${VERSIONSTRING}\"${1}\"#" ${RELEASEFILE}
+
+    COMMITSTRING="Update release version to ${1}"
+    if [ X"${2}" != "X" ] ; then
+        perl -p -i -e "s#^${CODENAMESTRING}.*#${CODENAMESTRING}\"${2}\"#" ${RELEASEFILE}
+        COMMITSTRING="Update release version to ${1}, ${2}"
+    fi
+
+    git add ${RELEASEFILE}
+    git commit -m "${COMMITSTRING}"
+    git tag ${1}
+
+    # Immediately set version "-devel" to distinguish further development
+    perl -p -i -e "s#^${VERSIONSTRING}.*#${VERSIONSTRING}\"${1}-devel\"#" ${RELEASEFILE}
+    git add ${RELEASEFILE}
+    git commit -m "Update development version string to ${1}-devel"
 }

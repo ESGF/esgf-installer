@@ -164,6 +164,7 @@ bold_text=$(tput bold)
 normal_text=$(tput sgr0)
 green_text=$(tput setaf 2; tput bold)
 red_text=$(tput setaf 1; tput bold)
+preview_mode=0
 
 [ -e ${envfile} ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
@@ -602,7 +603,7 @@ run_mesos_start_master() {
     # Takes as input any flags (besides quiet) to pass to the master
     # TODO Start with Zookeeper URL, ESGF IP address
     echo "Starting Mesos Master"
-    ${mesos_install_dir}/bin/mesos-master.sh --quiet $@ &
+    (${mesos_install_dir}/bin/mesos-master.sh --quiet $@ & ) >& /dev/null
     [ $? == 0 ] && echo "[ Mesos Master now running ]" || echo "[ Mesos Master failed to run ]"  
 }
 
@@ -610,7 +611,7 @@ run_mesos_start_slave() {
     # TODO Run with ESGF Ip address for mesos master url
     # TODO figure out correct memory resources
     echo "Starting Mesos Slave"
-    ${mesos_install_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &
+    (${mesos_install_dir}/bin/mesos-slave.sh --quiet --master=$1 "--resources=cpus:2;mem:1024" &) >& /dev/null
     [ $? == 0 ] && echo "[ Mesos Slave now running ]" || echo "[ Mesos Slave failed to run ]" 
 }
 
@@ -1336,14 +1337,14 @@ test_zookeeper() {
 run_zookeeper_start_server() {
     # Starts Zookeeper server with a given configuration file
     echo "[ Starting Zookeeper... ]"
-    ${zookeeper_install_dir}/bin/zkServer.sh start $1
+    (${zookeeper_install_dir}/bin/zkServer.sh start $1) >& /dev/null
     [ $? == 0 ] && echo "[ Zookeeper running from configuration: $1 ]" || echo "[Zookeeper failed to run, see configuration: $1 ]"
 }
 
 run_zookeeper_stop_server() {
     # TODO use command `ps -elfwww | grep -i zookeeper` to parse out currently 
     # running configuration files
-    ${zookeeper_install_dir}/bin/zkServer.sh stop $1
+    (${zookeeper_install_dir}/bin/zkServer.sh stop $1) >& /dev/null
     [ $? == 0 ] && echo "[Stopping Zookeeper ... STOPPED]" \
      || echo "[Stopping Zookeeper ... FAILED, check your configuration]"
 }
@@ -1378,30 +1379,130 @@ clean_zookeeper() {
     fi  
 }
 
+###################
+# Testing Methods #
+###################
+assert ()                
+{                       
+    # If a condition is false, exit from script with appropriate error.  
+    # Usage example:
+    # assert "1 -lt 2" $LINENO "Hello, I am a failing test"
+    
+    E_PARAM_ERR=98
+    E_ASSERT_FAILED=99
+
+    if [ -z "$2" ]          #  Not enough parameters passed
+    then                    #+ to assert() function.
+        return $E_PARAM_ERR   #  No damage done.
+    fi  
+
+    lineno=$2
+
+    if [ ! $1 ] 
+    then
+        echo "Assertion failed:  \"$1\""
+        echo "File \"$0\", line $lineno"    # Give name of file and line number.
+        if [ $3 ]; then
+            echo"Test Summary: $3"
+        fi
+        echo
+        exit $E_ASSERT_FAILED
+    else
+        echo "Assertion passed:  \"$1\""
+        if [ $3 ]; then
+            echo "Test: $3"        
+        fi 
+    fi  
+}
+
 #####
 # Deployment Methods - Local and Cluster
 #####
-start_compute_services_local() {
-    # Step 1: Start monitoring with Monit
-    # Step 2: Start master node management with Zookeeper
-    # Step 2: Start Mesos resource management layer
+start_compute_stack() {
+
+    echo "Deploying ESG Compute Stack..."
+    echo
+    echo "Please select a distribution level for the compute stack: "
+    echo "  [1] Standalone -    No replication. Good for basic debugging.
+                        Single instances of Mesos, monitoring with Monit
+                        Run jobs locally with Spark, Hadoop, MPI"
+    echo "  [2] Local Cluster - Local replication. Good for small-scale distribution.
+                        Multiple local Mesos Master nodes, managed with Zookeeper. 
+                        Run jobs locally with Spark, Hadoop, MPI.
+                        Monitoring with Monit."
+    echo "  [3] Cluster -       Replicate stack on multiple machines. Production mode.
+                        Node quorum management with Zookeeper.
+                        Run jobs on Spark, Hadoop, MPI on cluster.
+                        Monitoring with Monit."
+    echo -n "Please select a mode [default = 1]: " 
+    read stackClusterLevel
+
+    if [ ! $stackClusterLevel ]; then
+        # If there is no argument, we default to 1: Local Standalone"
+        start_local_standalone_stack
+
+    elif [ $stackClusterLevel == 1 ]; then
+        start_local_standalone_stack
+
+    elif [ $stackClusterLevel == 2 ]; then
+        start_local_replicated_stack
+
+    elif [ $stackClusterLevel == 3 ]; then
+        start_cluster_compute_stack
+    
+    else
+        echo "Invalid selection. Please run deploy script again."
+        return 1
+    fi
+}
+
+start_local_standalone_stack() {
+    # Deploys a stack without fault-tolerance.
+    run_monit
+    local standaloneMesosMasterURL=$(get_config_ip eth0):$mesos_master_port
+    run_mesos_start_master --port=$mesos_master_port && run_mesos_start_slave $standaloneMesosMasterURL
+}
+
+start_local_replicated_stack() {
+    # Starts an instance of the compute stack with five (magical number) locally configured Mesos masters
+    # using Zookeeper for Quorum management
+    run_monit && run_zookeeper_start_local_replicated_servers && run_mesos_start_local_replicated_masters && run_mesos_start_slave file://$zookeeper_replicated_master_url_file
+}
+
+start_cluster_compute_stack () {
+    # Initializes a cluster at this node. Dispatches messages via node manager
+    # to other participating nodes based on the configuration files.
+    echo "Under construction."
+}
+
+join_cluster_compute_stack () {
+    # Placeholder method
+    # If this is *not* the first node in the cluster
+    # to enter a cluster configuration, there may be some additional
+    # logical legwork required. 
     echo
 }
 
-start_compute_services_cluster() {
-    echo
+stop_compute_stack() {
+    # Stops compute services on this node
+    # TODO: Currently stops all of them. This level of scripted sledgehammer is excessive.
+    run_zookeeper_stop_server $zookeeper_standalone_config_file    
+    run_zookeeper_stop_local_replicated_servers    
+    run_mesos_stop_cluster
+    stop_monit
 }
 
-stop_compute_services_local() {
-    # Step 1: Stop any running frameworks
-    # Step 2: Stop Mesos resource management layer
-    # Step 3: Stop Zookeeper fault tolerance / quorum management
-    # Step 4: Stop Monit monitoring
+show_help_menu() {
+    echo "Usage: esg-compute-tools [command]. To see this menu:"
+    echo "$> esg-compute-tools help"
+    echo "Command options:"
     echo
-}
-
-stop_compute_services_cluster() {
-    echo
+    echo "help [or no command]          Display this help menu."
+    echo "start                         Start compute stack on this node" 
+    echo "stop                          Stop compute stack on this node"
+    echo "setup                         Setup or reconfigure compute stack on this node"
+    echo "test-only                     Run framework tests"
+    echo "write-only                    Update environment. Useful for debugging."
 }
 
 #####
@@ -1532,13 +1633,34 @@ then
     fi
 
     if [ $1 ]; then
-        if [ $1 = 'test-only' ]; then
+
+        if [ $1 = 'help' ]; then
+            # Show help/usage dialogue, then exit
+            show_help_menu
+        
+        elif [ $1 = 'start' ]; then
+            start_compute_stack
+        
+        elif [ $1 = 'stop' ]; then
+            stop_compute_stack
+
+        elif [ $1 = 'setup' ]; then
+            # Run setup (also also reconfig) for compute stack
+            setup_compute_tools
+
+        elif [ $1 = 'test-only' ]; then
+            # Run in test-only mode
             test_compute_tools
-        fi
-        if [ $1 = 'write-only' ]; then
+        
+        elif [ $1 = 'write-only' ]; then
+            # Run in environment write-only mode
             write_compute_tools
+
         fi
+
     else
-        setup_compute_tools
+        show_help_menu
     fi
+
+
 fi

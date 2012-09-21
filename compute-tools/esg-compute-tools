@@ -590,7 +590,7 @@ run_mesos_start_local_replicated_masters() {
     # TODO: Check to make sure Zookeeper is running before we do anything
     # zkStatus would be good here
     local zkport=$zookeeper_client_port
-    local webui_port=$mesos_default_webui_port + 1
+    local webui_port=$((mesos_default_webui_port++))
     local mesosport=$mesos_master_port
     local quorum=$zookeeper_quorum_size
     for (( p=1; p <= $quorum; p++ ))
@@ -1502,7 +1502,8 @@ show_help_menu() {
     echo "stop                          Stop compute stack on this node"
     echo "setup                         Setup or reconfigure compute stack on this node"
     echo "test-only                     Run framework tests"
-    echo "write-only                    Update environment. Useful for debugging."
+    echo "configure                     Update environment. Useful for debugging."
+    echo "clean                         Uninstall compute stack"
 }
 
 #####
@@ -1652,10 +1653,13 @@ then
             # Run in test-only mode
             test_compute_tools
         
-        elif [ $1 = 'write-only' ]; then
-            # Run in environment write-only mode
-            write_compute_tools
+        elif [ $1 = 'configure' ]; then
+            # Run in environment write-only / reconfigure mode
+            config_compute_tools
 
+        elif [ $1 = 'clean' ]; then
+            # Clean compute tools
+            clean_compute_tools
         fi
 
     else

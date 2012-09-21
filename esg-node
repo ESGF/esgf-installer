@@ -5133,7 +5133,7 @@ self_verify() {
                 echo "Updating local script with script from distribution server..."
                 /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
                 local update_ret=$?
-                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/esg-functions && echo "(w/ functions file)"
+                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/${esg_functions_file##*/} && echo "(w/ functions file)"
                 echo "Please re-run this updated script $0"
                 echo
                 exit $update_ret

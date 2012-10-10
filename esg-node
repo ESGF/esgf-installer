@@ -3456,6 +3456,12 @@ generate_ssl_key_and_csr() {
     echo
 }
 
+check_certificates() {
+    #TODO (zoiks) Fill me in!!!!
+    #(source ${scripts_dir}/esg-globus && globus_check_certificates $@)
+}
+
+
 ###########################
 # A Note on DNs (order is important)
 # What we assert in this script as standard is:
@@ -6354,6 +6360,17 @@ main() {
                     #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/hostkey.pem /usr/local/tomcat/conf/<yourhost>-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
                     generate_ssl_key_and_csr $@
                     exit $?
+                    ;;
+                --generate-globus-ssl-key-and-csr)
+                    self_verify
+                    shift
+                    (source ${scripts_dir}/esg-globus && generate_globus_ssl_key_and_csr $@)
+                    exit $?
+                    ;;
+                --check-certs)
+                    self_verify
+                    shift
+                    check_certificates $@
                     ;;
                 --install-keypair)
                     self_verify

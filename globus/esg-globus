@@ -1471,6 +1471,33 @@ upgrade_myproxy_server() {
     checked_done 0
 }
 
+generate_globus_ssl_key_and_csr() {
+    debug_print "generate_globus_ssl_key_and_csr( $@ )"
+    echo "Generating (globus) private host key... "
+    local gendir=${1:-gen-self-cert}
+    mkdir -p ${gendir}
+    rm -v -rf ${gendir}/hostkey*.pem
+    rm -v -rf ${gendir}/hostcert*.pem
+
+    #-----------------------------------------------------------------
+    echo "Generating (globus) Certificate Signing Request (csr)... "
+    debug_print "$GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force"
+    $GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force
+    #-----------------------------------------------------------------
+    [ $? != 0 ] && echo "oops" && return 1
+
+    echo "Placing cert and request... "
+    [ -e /etc/grid-security/hostkey.pem ] && mv /etc/grid-security/hostkey.pem /etc/grid-security/hostkey.pem.bak
+    cp -f -v ${gendir}/hostkey.pem  /etc/grid-security/hostkey.pem
+    cp -f -v ${gendir}/hostcert_request.pem /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
+    
+    chmod 600 /etc/grid-security/hostkey.pem
+    chmod 644 /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
+    
+    echo "Globus CSR Generated [/etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr] [OK] "
+    return 0
+}
+
 #Generates certs from this machine's simpleCA keys
 generate_self_cert() {
     echo "generate_self_cert( $@ )"
@@ -1478,27 +1505,25 @@ generate_self_cert() {
     mkdir -p ${gendir}
     rm -v -rf ${gendir}/host*.pem
 
-    echo "$GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir}"
-    $GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir}
-    [ $? != 0 ] && echo "oops" && return 1
-    echo "$GLOBUS_LOCATION/bin/grid-ca-sign -in ${gendir}/hostcert_request.pem -out ${gendir}/hostsigned.pem"
-    $GLOBUS_LOCATION/bin/grid-ca-sign -in ${gendir}/hostcert_request.pem -out ${gendir}/hostsigned.pem
-    [ $? != 0 ] && echo "ooops" && return 1
+    ! generate_globus_ssl_key_and_csr && echo "ERROR: Could not perform generation" && return 1
 
-    mv -v ${gendir}/hostsigned.pem ${gendir}/hostcert.pem
-
-    [ -e /etc/grid-security/hostcert.pem ] && mv /etc/grid-security/hostcert.pem /etc/grid-security/hostcert.pem.bak
-    [ -e /etc/grid-security/hostkey.pem ] && mv /etc/grid-security/hostkey.pem /etc/grid-security/hostkey.pem.bak
-
-    cp -f -v ${gendir}/hostcert.pem /etc/grid-security/hostcert.pem
-    cp -f -v ${gendir}/hostcert_request.pem /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
-    cp -f -v ${gendir}/hostkey.pem  /etc/grid-security/hostkey.pem
+    local my_cert=/etc/grid-security/hostcert.pem
+    local my_key=/etc/grid-security/hostkey.pem
+    local my_csr=/etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
     
-    chmod 644 /etc/grid-security/hostcert.pem
-    chmod 644 /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
-    chmod 600 /etc/grid-security/hostkey.pem
-    
-    echo "self signed key generation is complete..."
+    [ ! -e "${my_csr}" ] && echo "ERROR: Must first have a csr file to sign :-(" && return 2
+    [ ! -e "${my_key}" ] && echo "ERROR: Must first have a key file to sign :-(" && return 3
+    [ -e "${my_cert}" ] && mv -v ${my_cert}{,.bak}
+
+    #-----------------------------------------------------------------
+    echo "$GLOBUS_LOCATION/bin/grid-ca-sign -in ${my_csr} -out ${my_cert}"
+    $GLOBUS_LOCATION/bin/grid-ca-sign -in ${my_csr} -out ${my_cert}
+    #-----------------------------------------------------------------
+    [ $? != 0 ] && echo "ooops" && mv -v ${my_cert}{.bak,} && return 3
+
+    chmod 644 ${my_cert}
+
+    echo "self signed globus key generation is complete..."
     return 0
 }
 

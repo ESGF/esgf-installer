@@ -5783,12 +5783,13 @@ usage() {
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESG-DATA-NODE/CN=<fqdn>')
 
                    Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
-
+        --generate-globus-ssl-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
         --install-keypair - takes as input private key and public cert files and installs them. <key> <cert> [<keystore> <alias> <password>]
-        --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by globus)
+        --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
         --add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
         --clear-certs - removes the user-level public certificates' directory (used by myproxy)
+        --check-certs - checks both SSL private certificate and Globus private cert for expiration
         --set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup
 
         (deprecated) --install-signed-cert - installs signed host certificate into keystore and truststore <signed PEM file>

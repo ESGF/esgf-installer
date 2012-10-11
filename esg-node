@@ -3479,7 +3479,7 @@ generate_ssl_key_and_csr() {
 check_certificates() {
     echo "check_certificates (no-op)"
     #TODO (zoiks) Fill me in!!!!
-    #(source ${scripts_dir}/esg-globus && globus_check_certificates $@)
+    (source ${scripts_dir}/esg-globus && globus_check_certificates $@)
 }
 
 

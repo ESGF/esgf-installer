@@ -1536,6 +1536,11 @@ generate_self_signed_cert() {
     return 0
 }
 
+globus_check_certificates() {
+    debug_print "globus_check_certificates"
+    #TODO (zoiks) Fill me in!!!!
+}
+
 # Note: myproxy servers live on gateway machines
 # see - http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/MyProxyWithAttributeCalloutConfig
 # arg =  "fetch-certs" -- download certificates from dist server |

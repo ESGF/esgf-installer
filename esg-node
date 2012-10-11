@@ -5804,7 +5804,7 @@ usage() {
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESG-DATA-NODE/CN=<fqdn>')
 
                    Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
-        --generate-globus-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
+
         --install-keypair - takes as input private key and public cert files and installs them. <key> <cert> [<keystore> <alias> <password>]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
@@ -5821,6 +5821,10 @@ usage() {
         --keystore-password - sets the password to use for the java keystore - default is the node password.
         --keystore-alias - the alias that is associated with the public cert in the keystore
         --keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat
+
+        (misc. globus related)
+        --generate-globus-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
+        --simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.
 
         -------------------------------
         Database Management

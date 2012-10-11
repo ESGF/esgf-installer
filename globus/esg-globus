@@ -1471,8 +1471,8 @@ upgrade_myproxy_server() {
     checked_done 0
 }
 
-generate_globus_ssl_key_and_csr() {
-    debug_print "generate_globus_ssl_key_and_csr( $@ )"
+generate_globus_key_and_csr() {
+    debug_print "generate_globus_key_and_csr( $@ )"
     echo "Generating (globus) private host key... "
     local gendir=${1:-gen-self-cert}
     mkdir -p ${gendir}
@@ -2154,6 +2154,13 @@ fetch_init_d_myproxy() {
     ((DEBUG)) && cat ${tfile}
     popd >& /dev/null
     unset tfile
+}
+
+simpleCA_relink() {
+    [[ ! ${globus_location} ]] && echo "Sorry, GLOBUS_LOCATION is not set, cannot continue. Set value and retry" && return 1
+    [[ ! -d ${dot_globus}/simpleCA ]] && "Sorry, simpleCA installation NOT detected, please (re) install simpleCA" && return 1
+    ${globus_location}/sbin/gpt-postinstall
+    ${globus_location}/setup/globus_simple_ca_$(ls ${dot_globus}/simpleCA/ | grep globus_simple_ca_* | awk -F '_' '{print $4}')_setup/setup-gsi
 }
 
 sanity_check_myproxy_configurations() {

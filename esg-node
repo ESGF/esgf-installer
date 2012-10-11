@@ -3082,6 +3082,23 @@ _relocate_n_relink_globus_certicates_conf() {
     pushd ${grid_secuirty_dir} >& /dev/null
     local globus_ca_config_files=(globus-host-ssl.conf globus-user-ssl.conf grid-security.conf)
     local link target
+    local bad_link_count
+    local file
+
+    echo "Checking for orphaned symlinks... (${#globus_ca_config_files[@]} files) "
+    for file in ${globus_ca_config_files[@]}; do
+        echo -n ${file}
+        if [[ -e ${file} ]] && [[ -h ${file} ]] && [[ -f $(readlink -f ${file}) ]] ; then
+            debug_print "$file..."
+        else
+            ((bad_link_count++))
+        fi
+        echo
+    done
+    echo
+    ((bad_link_count > 0)) && (source ${scripts_dir}/esg-globus && simpleCA_relink $@);
+    unset file
+
     for file in ${globus_ca_config_files[@]}; do
         if [ -h "${file}" ]; then
             #------
@@ -3092,12 +3109,11 @@ _relocate_n_relink_globus_certicates_conf() {
             link=${file}
             target=$(readlink ${file})
 
-            ( [ -e "./${target##*/}" ] || [ ! -e "${target}" ] ) && continue
             echo -n "Relinking... ${link} -->> ${target##*/} "
             debug_print "\nlink = $link"
             debug_print "target = $target"
             debug_print "\cp ${target} ${grid_security_dir}/${target##*/}"
-            \cp ${target} ${grid_security_dir}/${target##*/}
+            \cp ${target} ${grid_security_dir}/${target##*/} >& /dev/null
             debug_print "ln -sf ${target##*/} ${link} "
             ln -sf ${target##*/} ${link}
             [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
@@ -3457,6 +3473,7 @@ generate_ssl_key_and_csr() {
 }
 
 check_certificates() {
+    echo "check_certificates (no-op)"
     #TODO (zoiks) Fill me in!!!!
     #(source ${scripts_dir}/esg-globus && globus_check_certificates $@)
 }
@@ -6362,10 +6379,22 @@ main() {
                     generate_ssl_key_and_csr $@
                     exit $?
                     ;;
-                --generate-globus-ssl-key-and-csr)
+                --generate-globus-key-and-csr)
                     self_verify
                     shift
-                    (source ${scripts_dir}/esg-globus && generate_globus_ssl_key_and_csr $@)
+                    (source ${scripts_dir}/esg-globus && generate_globus_key_and_csr $@)
+                    exit $?
+                    ;;
+                --simpleCA-relink | --simpleca-relink)
+                    self_verify
+                    shift
+                    (source ${scripts_dir}/esg-globus && simpleCA_relink $@)
+                    exit $?
+                    ;;
+                --myproxy-sanity-check)
+                    self_verify
+                    shift
+                    (source ${scripts_dir}/esg-globus && sanity_check_myproxy_configurations $@)
                     exit $?
                     ;;
                 --check-certs)

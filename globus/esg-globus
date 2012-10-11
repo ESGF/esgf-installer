@@ -375,7 +375,7 @@ setup_globus_services() {
         local ret=1
         if [ "$1" = "gen-self-cert" ]; then
             shift
-            generate_self_cert $@
+            generate_self_signed_cert $@
             [ $? != 0 ] && return 1
         elif [ "$1" = "regen-simpleca" ]; then
             echo "Following directive to Regenerate SimpleCA only..."
@@ -1508,13 +1508,13 @@ generate_globus_key_and_csr() {
 }
 
 #Generates certs from this machine's simpleCA keys
-generate_self_cert() {
-    echo "generate_self_cert( $@ )"
+generate_self_signed_cert() {
+    echo "generate_self_signed_cert( $@ )"
     local gendir=${1:-gen-self-cert}
     mkdir -p ${gendir}
     rm -v -rf ${gendir}/host*.pem
 
-    ! generate_globus_ssl_key_and_csr && echo "ERROR: Could not perform generation" && return 1
+    ! generate_globus_key_and_csr && echo "ERROR: Could not perform generation" && return 1
 
     local my_cert=/etc/grid-security/hostcert.pem
     local my_key=/etc/grid-security/hostkey.pem
@@ -1770,8 +1770,8 @@ config_myproxy_server() {
         [ -e "${keyfile}" ] && chmod 600 ${keyfile}
         popd >& /dev/null
     elif ((gen_self_certs)); then
-        echo "Generating cert and key...(pwd = $(pwd))"
-        generate_self_cert
+        echo "Generating self signed cert and key...(pwd = $(pwd))"
+        generate_self_signed_cert
     elif ((keep_certs)); then
         echo "Will keep the current keypair... (/etc/grid-security/host[cert,key].pem files)"
     else

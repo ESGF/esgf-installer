@@ -3078,6 +3078,8 @@ write_env() {
 ############################################
 
 _relocate_n_relink_globus_certicates_conf() {
+    (( (sel & IDP_BIT) != 0 )) && echo "Peforming additional checks (IDP node presumes simpleCA installation and configuration)" || return 0
+
     local grid_security_dir=${globus_global_certs_dir%/*}
     pushd ${grid_secuirty_dir} >& /dev/null
     local globus_ca_config_files=(globus-host-ssl.conf globus-user-ssl.conf grid-security.conf)
@@ -3109,7 +3111,9 @@ _relocate_n_relink_globus_certicates_conf() {
             link=${file}
             target=$(readlink ${file})
 
+            ( [ -e "./${target##*/}" ] || [ ! -e "${target}" ] ) && continue
             echo -n "Relinking... ${link} -->> ${target##*/} "
+            unlink ${link}
             debug_print "\nlink = $link"
             debug_print "target = $target"
             debug_print "\cp ${target} ${grid_security_dir}/${target##*/}"
@@ -3665,7 +3669,7 @@ install_keypair() {
             local globus_signed_cert=${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem
             if [ -e "${globus_signed_cert}" ]; then
                 [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
-                cp -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
+                mv -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
                     chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
                     openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
             fi
@@ -5800,7 +5804,7 @@ usage() {
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESG-DATA-NODE/CN=<fqdn>')
 
                    Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
-        --generate-globus-ssl-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
+        --generate-globus-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
         --install-keypair - takes as input private key and public cert files and installs them. <key> <cert> [<keystore> <alias> <password>]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
@@ -6341,6 +6345,7 @@ main() {
                     ;;
                 --fetch-esgf-certs)
                     self_verify
+                    read_sel
                     shift
                     (( $# != 0 ))  && echo "error: \"--fetch-esgf-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     id | grep root >& /dev/null

@@ -69,6 +69,8 @@
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
 
+declare -r _ESG_FUNCTIONS_=1
+
 #Needed to reduce the number of commands when wanting to make a verbose conditional print
 verbose_print() { ((VERBOSE)) && echo $@; return 0; }
 debug_print() { ((DEBUG)) && echo -e $@ >&2; return 0; }
@@ -1016,3 +1018,84 @@ git-tagrelease() {
     git add ${RELEASEFILE}
     git commit -m "Update development version string to ${1}-devel"
 }
+
+#------------------------------------------
+#Certificate Gymnasitcs
+#------------------------------------------
+declare -r expired=0
+declare -r day=$((60*60*24))
+declare -r warn=$((day*7))
+declare -r info=$((day*30))
+
+print_cert() {
+    local cert=${1:?"You must provide the certificate file to print"}
+    echo "CERTIFICATE = $cert"
+    openssl x509 -noout -in $cert -subject -enddate
+}
+
+check_cert_expiry() {
+    local file=${1}
+    [ -z "${file}" ] && debug_print "skipping blank file entry" && continue
+     #skip links
+     [ -L "$file" ] && debug_print "skipping symlink" && continue
+
+     verbose_print "inspecting ${file}"
+     if ! openssl x509 -noout -in $file -checkend $info; then
+         #file will expired in the maximal amount of time
+         if ! openssl x509 -noout -in $file -checkend $expired; then
+             certs_expire=$certs_expire"$(print_cert $file)\n\n"
+             trash_expired_cert ${file}
+         elif ! openssl x509 -noout -in $file -checkend $day; then
+             certs_warn=$certs_day"$(print_cert $file)\n\n"
+         elif ! openssl x509 -noout -in $file -checkend $warn; then
+             certs_warn=$certs_warn"$(print_cert $file)\n\n"
+         else
+             certs_info=$certs_info"$(print_cert $file)\n\n"
+         fi
+     fi
+}
+
+check_cert_expiry_for_files() {
+    echo "Checking for expired certs [file(s): $@]..."
+    for file in $@
+    do
+        [ ! -e "${file}" ] && echo "no such file: ${file}, skipping... " && continue
+        check_cert_expiry ${file}
+    done
+    local message=
+    [ "$var_expire" ] && message=$message"Certificates will expire in:\n$var_expire\n"
+    [ "$certs_expire" ] && message=$message"Certificates already expired :\n$certs_expire\n"
+    [ "$certs_day" ] && message=$message"Certificates will expire within a day:\n$certs_day\n"
+    [ "$certs_warn" ] && message=$message"Certificates expiring this week:\n$certs_warn\n"
+    [ "$certs_info" ] && message=$message"Certificates expiring this month:\n$certs_info\n"
+
+    #mail -s "Certificates Expiration closes" gavin@llnl.gov < <(printf "$message")
+    printf "$message"
+}
+
+check_certs_in_dir() {
+    local my_cert_dir=${1:-${ESGF_PROJECT_ROOT:-/tmp}/esg_trusted_certificates}
+    echo "Checking for expired certs in dir: ${my_cert_dir} ..."
+    for file in $(find ${my_cert_dir} -type f -regex '.*/[a-f0-9]*\.0')
+    do
+        check_cert_expiry $file
+    done
+
+    #Build message
+    local message=
+    [ "$certs_expire" ] && message=$message"Certificates already expired :\n$certs_expire\n"
+    [ "$certs_day" ] && message=$message"Certificates will expire within a day:\n$certs_day\n"
+    [ "$certs_warn" ] && message=$message"Certificates expiring this week:\n$certs_warn\n"
+    [ "$certs_info" ] && message=$message"Certificates expiring this month:\n$certs_info\n"
+
+    #mail -s "Certificates Expiration closes" gavin@llnl.gov < <(printf "$message")
+    printf "$message"
+}
+
+trash_expired_cert() {
+    local expired_cert=${1:?"Must provide certificate to trash"}
+    mkdir -p ${ESGF_PROJECT_ROOT:-/tmp}/trash
+    mv -v ${file} ${ESGF_PROJECT_ROOT:-/tmp}/trash
+    echo "Trashed expired certificate $file"
+}
+#------------------------------------------

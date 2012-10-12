@@ -3477,8 +3477,8 @@ generate_ssl_key_and_csr() {
 }
 
 check_certificates() {
-    echo "check_certificates (no-op)"
-    #TODO (zoiks) Fill me in!!!!
+    echo "check_certificates..."
+    check_cert_expiry_for_files ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem
     (source ${scripts_dir}/esg-globus && globus_check_certificates $@)
 }
 
@@ -3660,28 +3660,7 @@ install_keypair() {
     [ $? != 0 ] && echo "ERROR: Problem with truststore generation" && mv ${truststore_name}.bak ${truststore_name} && exit 6
     #register ${esgf_idp_peer}
 
-    #--------------------------------------------------
-    #Install signed globus pem file
-    #--------------------------------------------------
-    if (( ! no_globus )); then
-        local globus_grid_security_dir=${globus_global_certs_dir%/*}
-        if [ -d  ${globus_grid_security_dir} ]; then
-            local globus_signed_cert=${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem
-            if [ -e "${globus_signed_cert}" ]; then
-                [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
-                mv -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
-                    chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-                    openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
-            fi
-        else
-            echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"
-            exit 6
-        fi
-    fi
-
     echo "Please restart this node for keys to take effect: \"$0 restart\""
-    [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
-        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "property updated [OK]"
     echo
 }
 
@@ -5824,6 +5803,7 @@ usage() {
 
         (misc. globus related)
         --generate-globus-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
+        --install-globus-keypair - installs the signed csr file and does appropriate book keeping.
         --simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.
 
         -------------------------------
@@ -6417,6 +6397,14 @@ main() {
                     id | grep root >& /dev/null
                     [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
                     install_keypair $@
+                    exit $?
+                    ;;
+                --install-globus-keypair)
+                    self_verify
+                    shift
+                    id | grep root >& /dev/null
+                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    (source ${scripts_dir}/esg-globus && install_globus_keypair $@)
                     exit $?
                     ;;
                 --dname) #In Java Style (inner -> outter, [, ] separated values)

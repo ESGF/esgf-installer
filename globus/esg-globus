@@ -68,6 +68,7 @@ DEBUG=${DEBUG:-1}
 force_install=${force_install:-0}
 workdir=${workdir:-~/workbench/esg}
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
+globus_global_certs_dir=${globus_global_certs_dir:-/etc/grid-security/certificates}
 
 #------------------------------------------------------------
 # We want globus to fully behave as though it's home is /root
@@ -1479,6 +1480,12 @@ generate_globus_key_and_csr() {
     rm -rf ${gendir}/hostkey*.pem
     rm -rf ${gendir}/hostcert*.pem
 
+    local my_cert=/etc/grid-security/hostcert.pem
+    local my_key=/etc/grid-security/hostkey.pem
+    local my_csr=/etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
+
+    #backup the last cert
+    mv -v ${my_cert}{,.bak}
     #-----------------------------------------------------------------
     echo "Generating (globus) Certificate Signing Request (csr)... "
     debug_print "$GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force"
@@ -1536,9 +1543,35 @@ generate_self_signed_cert() {
     return 0
 }
 
+install_globus_keypair() {
+    #--------------------------------------------------
+    #Install signed globus pem file
+    #--------------------------------------------------
+    local globus_grid_security_dir=${globus_global_certs_dir%/*}
+    if [ -d  ${globus_grid_security_dir} ]; then
+        local globus_signed_cert=${1:-${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem}
+        if [ -e "${globus_signed_cert}" ]; then
+            [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
+            mv -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
+                chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
+                openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
+        else
+            echo "ERROR: Could not find certificate ${globus_signed_cert}"
+        fi
+    else
+        echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"
+        exit 6
+    fi
+
+    [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
+        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "property updated [OK]"
+    echo
+}
+
 globus_check_certificates() {
-    debug_print "globus_check_certificates"
-    #TODO (zoiks) Fill me in!!!!
+    debug_print "globus_check_certificates..."
+    local my_cert=/etc/grid-security/hostcert.pem
+    check_cert_expiry_for_files ${my_cert}
 }
 
 # Note: myproxy servers live on gateway machines
@@ -1684,8 +1717,11 @@ config_myproxy_server() {
         echo "%> GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca"
 	rm -rf /tmp/root_tmp_ca_setup
 	mkdir -p ${dot_globus}/simpleCA
+
+        #---------------------------------
         GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
+        #---------------------------------
         
         # 
         # #(NOTE: The `hostname` calls are CentOS/RedHat flavored)
@@ -1760,7 +1796,9 @@ config_myproxy_server() {
         [ -e ${dot_globus}/host/hostcert.pem ] && cp -v ${dot_globus}/host/hostcert.pem ${dot_globus}/host/hostcert.pem.$(date ${date_format}).bak
         [ -e ${dot_globus}/host/hostkey.pem ] && cp -v ${dot_globus}/host/hostkey.pem ${dot_globus}/host/hostkey.pem.$(date ${date_format}).bak
         
+        #---------------------------------
         ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
+        #---------------------------------
         
     fi
     unset answer

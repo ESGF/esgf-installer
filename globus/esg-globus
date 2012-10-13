@@ -69,6 +69,7 @@ force_install=${force_install:-0}
 workdir=${workdir:-~/workbench/esg}
 install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 globus_global_certs_dir=${globus_global_certs_dir:-/etc/grid-security/certificates}
+esg_functions_file=${esg_functions_file:-${install_prefix}/bin/esg-functions}
 
 #------------------------------------------------------------
 # We want globus to fully behave as though it's home is /root
@@ -90,7 +91,7 @@ if [[ -z "$installer_uid" || -z "$installer_gid" ]]; then
     [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID && echo "SUDO_UID is deprecated, use ESG_USER_UID instead"
     [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID && echo "SUDO_GID is deprecated, use ESG_USER_GID instead"
 fi   
- 
+
 esg_root_dir=${esg_root_dir:-"/esg"}
 esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
 esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
@@ -1472,6 +1473,9 @@ upgrade_myproxy_server() {
     checked_done 0
 }
 
+#--------------------------------------------------------------
+# CERTIFICATE MANAGMENT FUNCTIONS
+#--------------------------------------------------------------
 generate_globus_key_and_csr() {
     debug_print "generate_globus_key_and_csr( $@ )"
     echo "Generating (globus) private host key... "
@@ -1486,7 +1490,7 @@ generate_globus_key_and_csr() {
 
     #backup the last cert
     mv -v ${my_cert}{,.bak}
-    #-----------------------------------------------------------------
+    #----------------------(command)----------------------------------
     echo "Generating (globus) Certificate Signing Request (csr)... "
     debug_print "$GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force"
     $GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force &> /dev/null
@@ -1495,21 +1499,32 @@ generate_globus_key_and_csr() {
 
     echo "Placing cert and request... "
     [ -e /etc/grid-security/hostkey.pem ] && mv /etc/grid-security/hostkey.pem /etc/grid-security/hostkey.pem.bak
-    cp -f -v ${gendir}/hostkey.pem  /etc/grid-security/hostkey.pem
-    cp -f -v ${gendir}/hostcert_request.pem /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
+
+    local size=$(stat -c%s ${gendir}/hostkey.pem)
+    (( size != 0 )) && cp -f -v ${gendir}/hostkey.pem /etc/grid-security/hostkey.pem || \
+        (printf "ERROR: Generated ${gendir}/hostkey.pem file is [${size}]bytes\n\n" && return 1)
+    unset size
+
+    size=$(stat -c%s ${gendir}/hostcert_request.pem)
+    (( size != 0 )) && cp -f -v ${gendir}/hostcert_request.pem /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr || \
+        (printf "ERROR: Generated ${gendir}/hostcert_request.pem file is [${size}]bytes\n\n" && return 2)
+    unset size
 
     chmod 600 /etc/grid-security/hostkey.pem
     chmod 644 /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr
 
     echo -n "Globus CSR Generated [/etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr] "
 
+    #---
     #NOTES: This is how you check that certs belong to eachother... the resulting values must all be the same
+    #---
     #openssl req  -noout -modulus -in esgf-node3.llnl.gov-esg-node-globus.csr | openssl md5
     #openssl rsa  -noout -modulus -in hostkey.pem  | openssl md5
     #openssl x509 -noout -modulus -in hostcert.pem | openssl md5
+    #---
 
     local pair_hash=($((openssl req -noout -modulus -in /etc/grid-security/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.csr | openssl md5 ; openssl rsa -noout -modulus -in /etc/grid-security/hostkey.pem | openssl md5) | uniq))
-    (( 1 == ${#pair_hash[@]} )) && printf "[OK] (${pair_hash})\n\n" && printf "Please email the generated csr to esgf-ca@lists.llnl.gov, Thank you\n\n" || (printf "[FAIL]\n\n" && return 1)
+    (( 1 == ${#pair_hash[@]} )) && printf "[OK] (${pair_hash})\n\n" && printf "Please email the generated csr to esgf-ca@lists.llnl.gov, Thank you\n\n" || (printf "[FAIL]\n\n" && return 3)
 
     return 0
 }
@@ -1531,7 +1546,7 @@ generate_self_signed_cert() {
     [ ! -e "${my_key}" ] && echo "ERROR: Must first have a key file to sign :-(" && return 3
     [ -e "${my_cert}" ] && mv -v ${my_cert}{,.bak}
 
-    #-----------------------------------------------------------------
+    #------------------------(command)--------------------------------
     echo "$GLOBUS_LOCATION/bin/grid-ca-sign -in ${my_csr} -out ${my_cert}"
     $GLOBUS_LOCATION/bin/grid-ca-sign -in ${my_csr} -out ${my_cert}
     #-----------------------------------------------------------------
@@ -1575,8 +1590,10 @@ install_globus_keypair() {
 globus_check_certificates() {
     debug_print "globus_check_certificates..."
     local my_cert=/etc/grid-security/hostcert.pem
-    check_cert_expiry_for_files ${my_cert}
+    #do this in a subshell
+    (source ${esg_functions_file} && check_cert_expiry_for_files ${my_cert})
 }
+#--------------------------------------------------------------
 
 # Note: myproxy servers live on gateway machines
 # see - http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/MyProxyWithAttributeCalloutConfig

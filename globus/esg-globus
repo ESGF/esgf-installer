@@ -1543,6 +1543,9 @@ generate_self_signed_cert() {
     return 0
 }
 
+# This function bascially copies and renames the signed cert into the right place.
+# It also does the bookkeeping needed in the overall property file to reflect the DN
+# arg (optional) -> the signed certificate (.pem) file to be installed
 install_globus_keypair() {
     #--------------------------------------------------
     #Install signed globus pem file
@@ -1557,6 +1560,7 @@ install_globus_keypair() {
                 openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
         else
             echo "ERROR: Could not find certificate ${globus_signed_cert}"
+            exit 5
         fi
     else
         echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"

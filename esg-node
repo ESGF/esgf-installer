@@ -6407,7 +6407,7 @@ main() {
                     (source ${scripts_dir}/esg-globus && install_globus_keypair $@)
                     exit $?
                     ;;
-                --dname) #In Java Style (inner -> outter, [, ] separated values)
+                --set-dname | --set-dn) #In Java Style (Ex: OU=ESGF.ORG, O=ESGF scheme using "standard2java_dn" function | micro -> macro, [, ] separated values)
                     shift
                     dname=$1
                     ;;

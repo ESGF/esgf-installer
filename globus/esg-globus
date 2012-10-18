@@ -1493,7 +1493,7 @@ generate_globus_key_and_csr() {
     #----------------------(command)----------------------------------
     echo "Generating (globus) Certificate Signing Request (csr)... "
     debug_print "$GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force"
-    $GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force &> /dev/null
+    $GLOBUS_LOCATION/bin/grid-cert-request -host ${esgf_host:-$(hostname --fqdn)} -dir ${gendir} -force &> /dev/null
     #-----------------------------------------------------------------
     [ $? != 0 ] && echo "oops" && return 1
 
@@ -1753,7 +1753,7 @@ config_myproxy_server() {
 	rm -rf /tmp/root_tmp_ca_setup
 	mkdir -p ${dot_globus}/simpleCA
 
-        #---------------------------------
+        #-----------(command)-------------
         GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         #---------------------------------
@@ -1831,7 +1831,7 @@ config_myproxy_server() {
         [ -e ${dot_globus}/host/hostcert.pem ] && cp -v ${dot_globus}/host/hostcert.pem ${dot_globus}/host/hostcert.pem.$(date ${date_format}).bak
         [ -e ${dot_globus}/host/hostkey.pem ] && cp -v ${dot_globus}/host/hostkey.pem ${dot_globus}/host/hostkey.pem.$(date ${date_format}).bak
         
-        #---------------------------------
+        #----------(command)--------------
         ${globus_location}/setup/globus_simple_ca_${ca_hash}_setup/setup-gsi -default
         #---------------------------------
         

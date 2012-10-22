@@ -2100,6 +2100,11 @@ stop_myproxy_server() {
     return $?
 }
 
+restart_myproxy_server() {
+    stop_myproxy_server
+    start_myproxy_server
+}
+
 #This function "succeeds" (is true -> returns 0)  if there *are* running processes found
 check_myproxy_process() {
     val=$(ps -elf | grep myproxy-server* | grep -v grep | awk ' END { print NR }')

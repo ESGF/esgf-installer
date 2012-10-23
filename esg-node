@@ -1876,6 +1876,57 @@ setup_tomcat() {
     return 0
 }
 
+#If there is no logrotate file ${tomcat_logrotate_file} then create one
+#default is to cut files after 512M up to 20 times (10G of logs)
+#No file older than year should be kept.
+setup_tomcat_logrotate() {
+
+    [ ! -e /usr/sbin/logrotate ] && echo "Not able to find logrotate here [/usr/local/logrotate] [FAIL]" && return 1
+
+    #TODO: Make these vars properties that can be set by user.
+    #      Check property values against values in the logrotate file values to know when to rewrite.
+    local log_rot_size="512M"
+    local log_rot_num_files="20"
+    local tomcat_logrotate_file="/etc/logrotate.d/esgf_tomcat"
+    local tomcat_install_dir=${tomcat_install_dir:="/usr/local/tomcat"}
+
+    [ ! -e "${tomcat_install_dir}/logs" ] && echo "Sorry, could not find tomcat log dir [${tomcat_install_dir}/logs]  [FAIL]" && return 2
+
+    if [ ! -e "${tomcat_logrotate_file}" ] || ((force_install)); then
+        echo "Installing tomcat log rotation... [${tomcat_logrotate_file}]"
+        cat >> ${tomcat_logrotate_file} <<EOF
+"${tomcat_install_dir}/logs/catalina.out" ${tomcat_install_dir}/logs/catalina.err {
+    copytruncate
+    size ${log_rot_size}
+    rotate ${log_rot_num_files}
+    maxage 365
+    compress
+    missingok
+    create 0644 ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+}
+EOF
+        chmod 644 ${tomcat_logrotate_file}
+        ((DEBUG)) && cat ${tomcat_logrotate_file}
+    fi
+
+    #------
+    #Create the files to be rotated if they don't already exist...
+    #------
+    [ ! -e "${tomcat_install_dir}/logs/catalina.out" ] && echo "Hmm... Don't see [${tomcat_install_dir}/logs/catalina.out], creating..." \
+        && touch ${tomcat_install_dir}/logs/catalina.out \
+        && chmod 644 ${tomcat_install_dir}/logs/catalina.out \
+        && chown ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+
+    [ ! -e "${tomcat_install_dir}/logs/catalina.err" ] && echo "Hmm... Don't see [${tomcat_install_dir}/logs/catalina.err], creating..." \
+        && touch ${tomcat_install_dir}/logs/catalina.err \
+        && chmod 644 ${tomcat_install_dir}/logs/catalina.err \
+        && chown ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+    #------
+
+    [ ! -e /etc/cron.daily/logrotate ] && echo "WARNING: Not able to find script [/etc/cron.daily/logrotate]" && return 3
+    echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && echo "[OK] " || echo "[FAIL] ")"
+}
+
 #helper function to poke at tomcat ports...
 tomcat_port_check() {
     #---
@@ -1936,6 +1987,8 @@ configure_tomcat() {
     echo "Configuring Tomcat... (for Node Manager)"
     echo "*******************************"
     echo
+
+    setup_tomcat_logrotate
 
     pushd ${tomcat_install_dir}/conf #>& /dev/null
 

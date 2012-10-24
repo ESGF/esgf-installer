@@ -226,7 +226,7 @@ check_version_atleast() {
     debug_print "DEBUG: check_version_atleast \$1='$1'  \$2='$2'"
 
     if [[ -z "${1}" || -z "${2}" ]] ; then
-        echo "CRITICAL FAILURE: check_version_atleast called with insufficient arguments" >&2
+        echo "CRITICAL FAILURE[1]: check_version_atleast called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2')" >&2
         return 255
     fi
@@ -250,7 +250,7 @@ check_version_between() {
     debug_print "DEBUG: check_version_between \$1='$1'  \$2='$2'  \$3='$3'"
 
     if [[ -z "${1}" || -z "${2}" || -z "${3}" ]] ; then
-        echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
+        echo "CRITICAL FAILURE[2]: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
     fi
@@ -291,7 +291,7 @@ check_version_helper() {
     # but does NOT abort the script -- watch for the CRITICAL FAILURE
     # string in your output)
     if [[  -z "${1}" || -z "${2}"  ]]; then
-        echo "CRITICAL FAILURE: check_version_between called with insufficient arguments" >&2
+        echo "CRITICAL FAILURE[3]: check_version_between called with insufficient arguments" >&2
         echo "  (\$1='$1'  \$2='$2'  \$3='$3')" >&2
         return 255
     fi
@@ -388,14 +388,14 @@ check_version_with() {
     debug_print "min_version = [$min_version]"
     debug_print "max_version = [$max_version]"
 
-    [ -z "${3}" ] && return 0
+    [ -z "${min_version}" ] && return 0
 
     local current_version=$(eval ${version_command})
-    if [ $? != 0 ] ; then
-        echo " WARNING: Could not detect version of ${app_name##*/}"
+    if [ $? != 0 ] || [ -z "${current_version}" ]; then
+        echo " WARNING: Could not detect version of ${app_name##*/}; Check the version command: [${version_command}]"
         return 2
     fi
-    local current_version=$(_trimline ${current_version})
+    current_version=$(_trimline ${current_version})
 
     check_version_helper "${current_version}" "${min_version}" "${max_version}"
     local ret=$?
@@ -738,7 +738,7 @@ _readlinkf() {
         ((count++))
         if (( count > maxlinks )) ; then
             current_dir=$(pwd -P)
-            echo "CRITICAL FAILURE: symlink loop detected on ${current_dir}/${file}"
+            echo "CRITICAL FAILURE[4]: symlink loop detected on ${current_dir}/${file}"
             cd ${start_dir}
             exit ${count}
         fi

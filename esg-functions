@@ -392,7 +392,7 @@ check_version_with() {
 
     local current_version=$(eval ${version_command})
     if [ $? != 0 ] || [ -z "${current_version}" ]; then
-        echo " WARNING: Could not detect version of ${app_name##*/}; Check the version command: [${version_command}]"
+        echo " WARNING: Could not detect version of ${app_name##*/}; Check the version command: [${version_command}] => value: [${current_version}]"
         return 2
     fi
     current_version=$(_trimline ${current_version})
@@ -1099,3 +1099,38 @@ trash_expired_cert() {
     echo "Trashed expired certificate $file"
 }
 #------------------------------------------
+
+set_aside_web_app() {
+    local app_home=$1
+
+    ! $(echo ${app_home} | grep -q ${tomcat_install_dir}) && echo "WARNING: Bad application home directory [${app_home}]" && checked_done 1
+
+    [ -d "${app_home}" ] && \
+        echo "Moving Previous Installation of ${app_home##*/}..." && \
+        mv -v ${app_home}{,.bak}
+}
+
+# arg1 = full path to web application
+# arg2 = 0  = sucess
+#        >0 = failure (return code style, pefect for taking "$?" of extraction command)
+set_aside_web_app_cleanup() {
+    local app_home=${1}
+    local success=${2}
+
+    ! $(echo ${app_home} | grep -q ${tomcat_install_dir}) && echo "WARNING: Bad application home directory [${app_home}]" && checked_done 1
+
+    if [ -d "${app_home}.bak" ]; then
+        if (( success == 0 )); then
+            echo -n "Removing Previous Installation of ${app_home##*/}... "
+            rm -rf "${app_home}.bak" && echo "[OK]" || echo "[FAIL]"
+        else
+            echo
+            echo "*********************************************************************"
+            echo "* WARNING: Problem with ${app_home##*/} application extraction...  *"
+            echo "* Restoring previous installation                                  *"
+            echo "*********************************************************************"
+            mv -v ${app_home}{.bak,} && echo "[OK]" || echo "[FAIL]"
+            echo
+        fi
+    fi
+}

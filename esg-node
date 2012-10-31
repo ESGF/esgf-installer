@@ -108,6 +108,7 @@ esg_functions_file=${install_prefix}/bin/esg-functions
 
 init() {
     debug_print "esg-node initilizing..."
+    ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
     if [ ! -e ${esg_functions_file} ]; then
         checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/${esg_functions_file##*/} $((force_install))
         [ ! -s "${esg_functions_file}" ] && rm ${esg_functions_file}

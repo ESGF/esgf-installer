@@ -5993,6 +5993,7 @@ main() {
                             upgrade_mode=1
                             install_mode=0
                             debug_print "UPDATE SERVICES"
+                            self_verify "update"
                         fi
                     else
                         if (( (install_mode+upgrade_mode) == 0)); then

@@ -4753,6 +4753,7 @@ check_tomcat_process() {
             echo "Tomcat (jsvc) process is running... " && return 0
         else
             echo " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [${procs}] ?? "
+            $(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'${esgf_host_ip}'\)/\0/p')
             return 3
         fi
     else

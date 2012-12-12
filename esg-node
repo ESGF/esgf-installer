@@ -4731,6 +4731,30 @@ check_for_group_intersection_with() {
     return ${ret}
 }
 
+#Will return true (0) if compute type is determined to be installed.
+#Will return false (!=0) if compute type should NOT be installed
+sanity_check_for_hints_todo_compute() {
+    debug_print "checking for compute hints..."
+    local default_answer="n"
+    local answer
+    if $(sed -n '/las_configure[ ]*=[ ]*true/p' ${esg_root_dir}/config/esgcet/esg.ini 2> /dev/null | grep -q true); then
+        echo "Detected that the publisher configuration indicates LAS functionality is needed."
+        default_answer="Y"
+        read -e -t 15 -p " Would you like to install the \"COMPUTE\" configuration to support this ? $([ ${default_answer} = "Y" ] && echo "[Y/n]" || echo "[y/N]")" answer
+        [ -z "${answer}" ] && answer=$(tr 'A-Z' 'a-z' <<< ${default_answer})
+        if [ "${answer}" != "y" ] && [ "${answer}" != "yes" ]; then
+            echo "Will NOT install \"COMPUTE\" configuration..."
+            return 1
+        else
+            echo "User wants \"COMPUTE\" node type to also be installed"
+            return 0
+        fi
+    else
+        echo "No compute configuration hints found.... continuing..."
+        return 2
+    fi
+    return 3
+}
 
 
 #-------------------------------
@@ -6745,6 +6769,10 @@ main() {
     #---------------------------------------
     # Compute type install...
     #---------------------------------------
+        #Do a quick check to see if the compute bit should be turned on.... If so then turn on that switch and keep going...
+        if [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) == 0 ] && sanity_check_for_hints_todo_compute; then
+            sel+=COMPUTE_BIT
+        fi
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem compute-tools esgf-compute-tools $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "access logging filter subsystem (COMPUTE)"  && service_name="las" extensions="ProductServer.do" setup_subsystem access-logging-filter filters $@

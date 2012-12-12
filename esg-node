@@ -6771,7 +6771,7 @@ main() {
     #---------------------------------------
         #Do a quick check to see if the compute bit should be turned on.... If so then turn on that switch and keep going...
         if [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) == 0 ] && sanity_check_for_hints_todo_compute; then
-            sel+=COMPUTE_BIT
+            ((sel+=COMPUTE_BIT))
         fi
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem compute-tools esgf-compute-tools $@

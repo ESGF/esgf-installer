@@ -94,10 +94,4 @@ xFix issue with ivy having problems with resolving "javamail" to fetch
     postgresql-8.3-603.jdbc3.jar
     servlet-api.jar
 
-xFind out how to put fetched jars in a separate lib subdirectory
- "fetched" so we can seperate the two types of libs and then have git
- be able to ignore the fetched ones and remove that directory on
- cleanup with ant.
-
-
 ---

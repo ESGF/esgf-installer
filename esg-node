@@ -4740,7 +4740,7 @@ sanity_check_for_hints_todo_compute() {
     if $(sed -n '/las_configure[ ]*=[ ]*true/p' ${esg_root_dir}/config/esgcet/esg.ini 2> /dev/null | grep -q true); then
         echo "Detected that the publisher configuration indicates LAS functionality is needed."
         default_answer="Y"
-        read -e -t 15 -p " Would you like to install the \"COMPUTE\" configuration to support this ? $([ ${default_answer} = "Y" ] && echo "[Y/n]" || echo "[y/N]")" answer
+        read -e -t 120 -p " Would you like to install the \"COMPUTE\" configuration to support this ? $([ ${default_answer} = "Y" ] && echo "[Y/n]" || echo "[y/N]")" answer
         [ -z "${answer}" ] && answer=$(tr 'A-Z' 'a-z' <<< ${default_answer})
         if [ "${answer}" != "y" ] && [ "${answer}" != "yes" ]; then
             echo "Will NOT install \"COMPUTE\" configuration..."

@@ -6435,6 +6435,7 @@ main() {
                     self_verify
                     shift
                     check_certificates $@
+                    exit $?
                     ;;
                 --install-keypair)
                     self_verify

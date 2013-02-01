@@ -3639,8 +3639,8 @@ standard2java_dn() {
 #arg 4 -> alias
 #arg 5 -> password (The value you want *set* for the keystore and internal private key)
 install_keypair() {
-    local private_key=${1:-${tomcat_conf_dir}/"hostkey.pem"}
-    local public_cert=${2:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
+    local public_cert=${1:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
+    local private_key=${2:-${tomcat_conf_dir}/"hostkey.pem"}
     local keystore_name=${3:-${keystore_file}}
     local keystore_alias=${4:-${keystore_alias}}
     local store_password=${5}
@@ -3696,6 +3696,9 @@ install_keypair() {
         mv ${keystore_name}.bak ${keystore_name}
         exit 5
     fi
+
+    [ "$(readlink -f ${public_cert})" -nt "$(readlink -f ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem)" ] && mv -v ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem{,.old}
+    [ "$(readlink -f ${public_cert})" != "$(readlink -f ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem)" ] && cp -v ${public_cert} ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem
 
     ##Transform the keypair into the DER format understood by Java's keystore
     ##And generate a new keystore from that pair.
@@ -5823,12 +5826,12 @@ usage() {
         Key Management Flags:
         -------------------------------
         --register    - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
-        --generate-ssl-key-and-csr - generate new key and cert request files <key file> <cert file> [<dn>]
+        --generate-ssl-key-and-csr - generate new key and cert request files <priv_key file> <pub_cert file> [<dn>]
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESG-DATA-NODE/CN=<fqdn>')
 
                    Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
 
-        --install-keypair - takes as input private key and public cert files and installs them. <key> <cert> [<keystore> <alias> <password>]
+        --install-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
         --add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
@@ -5847,7 +5850,7 @@ usage() {
 
         (misc. globus related)
         --generate-globus-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
-        --install-globus-keypair - installs the signed csr file and does appropriate book keeping.
+        --install-globus-keypair - installs the signed csr file and does appropriate book keeping. <globus_pub_cert>
         --simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.
 
         -------------------------------

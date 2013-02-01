@@ -2076,7 +2076,7 @@ configure_tomcat() {
         #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
                 local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
                 sleep 1
-                generate_ssl_key_and_csr ${dn} ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem
+                generate_ssl_key_and_csr ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem ${dn}
                 if [ $? != 0 ]; then
                     echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
                 else
@@ -3466,12 +3466,12 @@ add_my_cert_to_truststore() {
 #---
 #Original command instructions can be found here:
 #http://www.sial.org/howto/openssl/csr/
-#arg 1 -> what we want the DN to be for public cert
-#arg 2 -> what we want to name the public cert
-#arg 3 -> what we want to name the private key
+#arg 1 -> what we want to name the public cert
+#arg 2 -> what we want to name the private key
+#arg 3 -> what we want the DN to be for public cert
 generate_ssl_key_and_csr() {
     echo "Generating private host key... "
-    local private_key=${3:-${tomcat_conf_dir}/hostkey.pem}
+    local private_key=${2:-${tomcat_conf_dir}/hostkey.pem}
     openssl genrsa -out ${private_key} 1024
     [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
     chmod 400 ${private_key}
@@ -3479,8 +3479,8 @@ generate_ssl_key_and_csr() {
     #NOTE: To include DN at the command line
     #openssl req -new -nodes -subj '/O=ESGF/OU=ESGF.ORG/CN=esg-test1.llnl.gov' -key hostkey.pem -out esg-test1.llnl.gov-esg-node.csr
     echo "Generating Certificate Signing Request (csr)... "
-    local public_cert_req=${2:-${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr}
-    local public_cert_dn=${1:-$(extract_keystore_dn ${keystore_file})}
+    local public_cert_req=${1:-${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr}
+    local public_cert_dn=${3:-$(extract_keystore_dn ${keystore_file})}
 
     echo "Using DN = [${public_cert_dn}]"
 
@@ -5826,10 +5826,10 @@ usage() {
         Key Management Flags:
         -------------------------------
         --register    - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
-        --generate-ssl-key-and-csr - generate new key and cert request files <priv_key file> <pub_cert file> [<dn>]
+        --generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}')
 
-                   Ex: esg-node --generate-ssl-key-and-csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)} ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem
+                   Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
 
         --install-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
@@ -6407,12 +6407,12 @@ main() {
                     shift
                     id | grep root >& /dev/null
                     [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
-                    #arg 1      -> what we want to DN to be for the public cert
-                    #arg 2      -> what we want to name the public cert
-                    #arg 3      -> what we want to name the private key
+                    #arg 1      -> what we want to name the public cert request (csr)
+                    #arg 2      -> what we want to name the private key
+                    #arg 3      -> what we want to DN to be for the public cert
                     #arg 4      -> (keystore password)
                     #(no args necessary, all args have defaults)
-                    #Ex: esg-node --generate-ssl-key-and-csr /O=ESGF/OU=ESGF.ORG/CN=<yourhost> /usr/local/tomcat/conf/<yourhost>-esg-node.csr /usr/local/tomcat/conf/hostkey.pem
+                    #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/<yourhost>-esg-node.csr /usr/local/tomcat/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
                     generate_ssl_key_and_csr $@
                     exit $?
                     ;;

@@ -3506,7 +3506,7 @@ generate_ssl_key_and_csr() {
         echo "Please re-run and be sure that the DN has been set appropriately (see below)"
         echo "The DN may be specified explicitly via the following command:"
         echo
-        echo "> ${0##*/} --generate-ssl-key-and-csr ${tomcat_conf_dir}/hostkey.pem ${public_cert_req} /O=ESGF/OU=ESGF.ORG/CN=${esgf_host}"
+        echo "> ${0##*/} --generate-ssl-key-and-csr ${public_cert_req} ${tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host}"
         echo
         echo "Please remove the faulty csr (${public_cert_req}) now, and retry"
         echo "------------------------------------------------------------------"
@@ -3525,7 +3525,7 @@ generate_ssl_key_and_csr() {
     echo "Generated private key: $(ls ${private_key})"
     echo "Generated certificate: $(ls ${public_cert_req})"
     echo "Please submit the certificate request to your Certificate Authority: (esgf-ca@lists.llnl.gov)"
-    echo "Then run %> esg-node --install-keypair <private key> <signed cert> (use --help for details)"
+    echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
     echo "--------------------------------------------------------"
     echo
 }
@@ -5831,7 +5831,7 @@ usage() {
 
                    Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
 
-        --install-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
+        --install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
         --add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
@@ -5933,7 +5933,7 @@ usage() {
 
         Installation : esg-node --install --verify
             (submit csr and get back returned cert)
-        Credentials  : esg-node --install-keypair <key> <cert>
+        Credentials  : esg-node --install-ssl-keypair <pub_cert> <priv_key>
         Test Publish : esg-node --test-pub
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
@@ -6440,7 +6440,7 @@ main() {
                     check_certificates $@
                     exit $?
                     ;;
-                --install-keypair | --install-ssl-keypair)
+                --install-ssl-keypair | --install-keypair)
                     self_verify
                     shift
                     id | grep root >& /dev/null

@@ -6456,6 +6456,20 @@ main() {
                     (source ${scripts_dir}/esg-globus && install_globus_keypair $@)
                     exit $?
                     ;;
+                --install-globus-online)
+                    self_verify
+                    shift
+                    id | grep root >& /dev/null
+                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    (cd ${scripts_dir}
+                    local fetch_file=esg-globus
+                    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}"
+                    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+                    (( $? > 1 )) && popd && return 1
+                    chmod 755 ${fetch_file})
+                    (source ${scripts_dir}/esg-globus && setup_globus_online $@)
+                    exit $?
+                    ;;
                 --set-dname | --set-dn) #In Java Style (Ex: OU=ESGF.ORG, O=ESGF scheme using "standard2java_dn" function | micro -> macro, [, ] separated values)
                     shift
                     dname=$1

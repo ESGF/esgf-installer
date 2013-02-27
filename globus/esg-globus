@@ -2302,3 +2302,62 @@ create_globus_account() {
         echo "[OK]"
     fi
 }
+
+############################################
+# Globus Online Setup
+############################################
+setup_globus_online() {
+    printf "
+    Setting up Globus Online / ESGF integration...
+
+    NOTE: You MUST have created a Globus Online account for
+    this node: In order for oAuth to work correctly such that
+    the user does not have to link their ESG credential with their
+    Globus Online account, this node must have its own account.
+
+        https://www.globusonline.org/SignUp
+
+"
+    local local=y
+    read -e -p "Continue? [Y/n] " input
+    [ "n" = "$(echo "${input}" | tr [A-Z] [a-z])" ] && return 1
+    unset input
+
+    (
+        local config_file=${esg_config_dir}/globusonline.properties
+        load_properties ${config_file}
+
+        local input
+        while [ 1 ]; do
+            read -e -p "Please enter your Globus Online ID [${GOesgfPortalID}]: " input
+            [ -n "${input}" ] && GOesgfPortalID=${input} && break
+            [ -n "${GOesgfPortalID}" ] && break
+        done
+        unset input
+        write_as_property GOesgfPortalID
+
+        while [ 1 ]; do
+            read -e -p "Please enter your Globus Online Password [$([ -n "${GOesgfPortalPassword}" ] && echo "*********")]: " input
+            [ -n "${input}" ] && GOesgfPortalPassword=${input} && break
+            [ -n "${GOesgfPortalPassword}" ] && break
+        done
+        unset input
+        write_as_property GOesgfPortalPassword
+
+        local mkproxy_dist_url="${esg_dist_url}/devel/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
+        local mkproxy_dist_file=${mkproxy_dist_url##*/}
+        pushd /tmp/
+        checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))
+        (( $? > 1 )) && echo " ERROR: Could not download Globus Online install script" && popd >& /dev/null && checked_done 1
+        tar xvzf ${mkproxy_dist_file}
+        [ $? != 0 ] && echo " ERROR: Could not extract Globus Online install script" && popd >& /dev/null && checked_done 1
+        cd mkproxy
+        make
+        cp mkproxy /usr/local/bin
+        cd ../
+        [ -e "/tmp/${mkproxy_dist_file}" ] && rm -rf mkproxy /tmp/${mkproxy_dist_file}
+        popd >& /dev/null
+        (config_file=${esg_config_dir}/searchconfig.properties write_as_property enableGlobusOnline true)
+    )
+    echo "<<<<$?>>>>"
+}

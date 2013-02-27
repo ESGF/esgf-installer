@@ -2352,10 +2352,12 @@ setup_globus_online() {
         checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))
         (( $? > 1 )) && echo " ERROR: Could not download Globus Online install script" && popd >& /dev/null && checked_done 1
         tar xvzf ${mkproxy_dist_file}
-        [ $? != 0 ] && echo " ERROR: Could not extract Globus Online install script" && popd >& /dev/null && checked_done 1
-        cd mkproxy
+        [ $? != 0 ] && echo " WARNING: Could not extract Globus Online install script (properly)" && popd >& /dev/null #&& checked_done 1
+        cd /tmp/mkproxy
+        [ $? != 0 ] && echo " ERROR: Could not Chang to mkproxy directory" && popd >& /dev/null && checked_done 1
         make
-        cp mkproxy /usr/local/bin
+        [ $? != 0 ] && echo " ERROR: Could not build mkproxy program" && popd >& /dev/null && checked_done 1
+        cp -v /tmp/mkproxy/mkproxy /usr/local/bin
         cd ../
         [ -e "/tmp/${mkproxy_dist_file}" ] && rm -rf mkproxy /tmp/${mkproxy_dist_file}
         popd >& /dev/null

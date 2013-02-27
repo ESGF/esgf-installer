@@ -2131,7 +2131,7 @@ edit_myproxy_server_config() {
     while [ 1 ]; do
 	local input
         read -s -p "Enter (simple) CA's certificate password - (use same password used in setup-gsi): $([ -n "${cert_password}" ] && echo [****] || echo "[]") " input
-	[ -n "${input}" ] && cert_password=${input}  && unset input && break
+	[ -n "${input}" ] && cert_password="${input}"  && unset input && break
     done
     
     local myproxy_config_dir=${esg_config_dir}/myproxy
@@ -2144,7 +2144,7 @@ edit_myproxy_server_config() {
         esgf_home=${ESGF_HOME:-"/esg"}
     fi
 
-    eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/${cert_password}/g' ${tfile}"
+    eval "perl -p -i -e 's/\\@\\@PASSWORD\\@\\@/\"${cert_password}\"/g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@myproxy_config_dir\\@\\@#${myproxy_config_dir}#g' ${tfile}"
     echo -n "*"

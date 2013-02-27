@@ -2346,7 +2346,7 @@ setup_globus_online() {
 
         chmod 600 ${config_file}
 
-        local mkproxy_dist_url="${esg_dist_url}/devel/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
+        local mkproxy_dist_url="${esg_dist_url}/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
         local mkproxy_dist_file=${mkproxy_dist_url##*/}
         pushd /tmp/
         checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))

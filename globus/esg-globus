@@ -2344,6 +2344,8 @@ setup_globus_online() {
         unset input
         write_as_property GOesgfPortalPassword
 
+        chmod 600 ${config_file}
+
         local mkproxy_dist_url="${esg_dist_url}/devel/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
         local mkproxy_dist_file=${mkproxy_dist_url##*/}
         pushd /tmp/
@@ -2357,7 +2359,7 @@ setup_globus_online() {
         cd ../
         [ -e "/tmp/${mkproxy_dist_file}" ] && rm -rf mkproxy /tmp/${mkproxy_dist_file}
         popd >& /dev/null
-        (config_file=${esg_config_dir}/searchconfig.properties write_as_property enableGlobusOnline true)
+        (config_file=${esg_config_dir}/searchconfig.properties write_as_property enableGlobusOnline true && chmod 600 ${config_file})
     )
     echo "<<<<$?>>>>"
 }

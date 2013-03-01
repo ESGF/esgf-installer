@@ -29,6 +29,7 @@
 
 [externals/bootstrap]
 ./globus/esg-globus
+./globus/mkproxy-10-15-2012.tar.gz
 
 [filters]
 ./filters/esg-security-las-ip-filter

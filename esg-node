@@ -108,6 +108,7 @@ esg_functions_file=${install_prefix}/bin/esg-functions
 
 init() {
     debug_print "esg-node initilizing..."
+    ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
     if [ ! -e ${esg_functions_file} ]; then
         checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/${esg_functions_file##*/} $((force_install))
         [ ! -s "${esg_functions_file}" ] && rm ${esg_functions_file}
@@ -126,27 +127,27 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"esgf-v0.0.1"}
-    esgcet_version=${esgcet_version:-"2.11.0"}
+    esgcet_version=${esgcet_version:-"2.11.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.13"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.14"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.2.4"}
+    esgf_security_version=${esgf_security_version:-"2.2.5"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.2.0"}
+    esg_orp_version=${esg_orp_version:-"2.3.0"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.2.0"}
+    esgf_idp_version=${esgf_idp_version:-"2.3.0"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.4.0"}
+    esg_search_version=${esg_search_version:-"3.6.0"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.2.7"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.3.4"}
 
     #see esgf-dashboard project:
     esgf_dashboard_version=${esgf_dashboard_version:-"1.3.1"}
@@ -164,7 +165,7 @@ init() {
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"6.0.35"} ; tomcat_min_version=${tomcat_min_version:-"6.0.29"}
+    tomcat_version=${tomcat_version:-"6.0.36"} ; tomcat_min_version=${tomcat_min_version:-"6.0.36"}
     tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
     las_version=${las_version:-"7.3.9"}; las_min_version=${las_min_version:-"7.3.9"}
 
@@ -1294,7 +1295,7 @@ start_postgress() {
     check_shmmax
     echo "su $pg_sys_acct -c \"$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start\""
     PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
-    [ $? != 0 ] && echo " ERROR: Could not start database!" && popd && return 1
+    [ $? != 0 ] && echo " ERROR: Could not start database!" && return 1
 
     #NOTE: How long does it take for the database to come up? Set sleep appropriately
     echo "Giving database time to startup... (3 seconds) "
@@ -1876,6 +1877,57 @@ setup_tomcat() {
     return 0
 }
 
+#If there is no logrotate file ${tomcat_logrotate_file} then create one
+#default is to cut files after 512M up to 20 times (10G of logs)
+#No file older than year should be kept.
+setup_tomcat_logrotate() {
+
+    [ ! -e /usr/sbin/logrotate ] && echo "Not able to find logrotate here [/usr/local/logrotate] [FAIL]" && return 1
+
+    #TODO: Make these vars properties that can be set by user.
+    #      Check property values against values in the logrotate file values to know when to rewrite.
+    local log_rot_size="512M"
+    local log_rot_num_files="20"
+    local tomcat_logrotate_file="/etc/logrotate.d/esgf_tomcat"
+    local tomcat_install_dir=${tomcat_install_dir:="/usr/local/tomcat"}
+
+    [ ! -e "${tomcat_install_dir}/logs" ] && echo "Sorry, could not find tomcat log dir [${tomcat_install_dir}/logs]  [FAIL]" && return 2
+
+    if [ ! -e "${tomcat_logrotate_file}" ] || ((force_install)); then
+        echo "Installing tomcat log rotation... [${tomcat_logrotate_file}]"
+        cat >> ${tomcat_logrotate_file} <<EOF
+"${tomcat_install_dir}/logs/catalina.out" ${tomcat_install_dir}/logs/catalina.err {
+    copytruncate
+    size ${log_rot_size}
+    rotate ${log_rot_num_files}
+    maxage 365
+    compress
+    missingok
+    create 0644 ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+}
+EOF
+        chmod 644 ${tomcat_logrotate_file}
+        ((DEBUG)) && cat ${tomcat_logrotate_file}
+    fi
+
+    #------
+    #Create the files to be rotated if they don't already exist...
+    #------
+    [ ! -e "${tomcat_install_dir}/logs/catalina.out" ] && echo "Hmm... Don't see [${tomcat_install_dir}/logs/catalina.out], creating..." \
+        && touch ${tomcat_install_dir}/logs/catalina.out \
+        && chmod 644 ${tomcat_install_dir}/logs/catalina.out \
+        && chown ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+
+    [ ! -e "${tomcat_install_dir}/logs/catalina.err" ] && echo "Hmm... Don't see [${tomcat_install_dir}/logs/catalina.err], creating..." \
+        && touch ${tomcat_install_dir}/logs/catalina.err \
+        && chmod 644 ${tomcat_install_dir}/logs/catalina.err \
+        && chown ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+    #------
+
+    [ ! -e /etc/cron.daily/logrotate ] && echo "WARNING: Not able to find script [/etc/cron.daily/logrotate]" && return 3
+    echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && echo "[OK] " || echo "[FAIL] ")"
+}
+
 #helper function to poke at tomcat ports...
 tomcat_port_check() {
     #---
@@ -1936,6 +1988,8 @@ configure_tomcat() {
     echo "Configuring Tomcat... (for Node Manager)"
     echo "*******************************"
     echo
+
+    setup_tomcat_logrotate
 
     pushd ${tomcat_install_dir}/conf #>& /dev/null
 
@@ -2022,7 +2076,7 @@ configure_tomcat() {
         #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
                 local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
                 sleep 1
-                generate_ssl_key_and_csr ${tomcat_conf_dir}/hostkey.pem ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${dn}
+                generate_ssl_key_and_csr ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem ${dn}
                 if [ $? != 0 ]; then
                     echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
                 else
@@ -3078,10 +3132,29 @@ write_env() {
 ############################################
 
 _relocate_n_relink_globus_certicates_conf() {
+    (( (sel & IDP_BIT) != 0 )) && echo "Peforming additional checks (IDP node presumes simpleCA installation and configuration)" || return 0
+
     local grid_security_dir=${globus_global_certs_dir%/*}
     pushd ${grid_secuirty_dir} >& /dev/null
     local globus_ca_config_files=(globus-host-ssl.conf globus-user-ssl.conf grid-security.conf)
     local link target
+    local bad_link_count
+    local file
+
+    echo "Checking for orphaned symlinks... (${#globus_ca_config_files[@]} files) "
+    for file in ${globus_ca_config_files[@]}; do
+        echo -n ${file}
+        if [[ -e ${file} ]] && [[ -h ${file} ]] && [[ -f $(readlink -f ${file}) ]] ; then
+            debug_print "$file..."
+        else
+            ((bad_link_count++))
+        fi
+        echo
+    done
+    echo
+    ((bad_link_count > 0)) && (source ${scripts_dir}/esg-globus && simpleCA_relink $@);
+    unset file
+
     for file in ${globus_ca_config_files[@]}; do
         if [ -h "${file}" ]; then
             #------
@@ -3094,10 +3167,11 @@ _relocate_n_relink_globus_certicates_conf() {
 
             ( [ -e "./${target##*/}" ] || [ ! -e "${target}" ] ) && continue
             echo -n "Relinking... ${link} -->> ${target##*/} "
+            unlink ${link}
             debug_print "\nlink = $link"
             debug_print "target = $target"
             debug_print "\cp ${target} ${grid_security_dir}/${target##*/}"
-            \cp ${target} ${grid_security_dir}/${target##*/}
+            \cp ${target} ${grid_security_dir}/${target##*/} >& /dev/null
             debug_print "ln -sf ${target##*/} ${link} "
             ln -sf ${target##*/} ${link}
             [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
@@ -3392,12 +3466,12 @@ add_my_cert_to_truststore() {
 #---
 #Original command instructions can be found here:
 #http://www.sial.org/howto/openssl/csr/
-#arg 1 -> what we want to name the private key
-#arg 2 -> what we want to name the public cert
+#arg 1 -> what we want to name the public cert
+#arg 2 -> what we want to name the private key
 #arg 3 -> what we want the DN to be for public cert
 generate_ssl_key_and_csr() {
     echo "Generating private host key... "
-    local private_key=${1:-${tomcat_conf_dir}/hostkey.pem}
+    local private_key=${2:-${tomcat_conf_dir}/hostkey.pem}
     openssl genrsa -out ${private_key} 1024
     [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
     chmod 400 ${private_key}
@@ -3405,7 +3479,7 @@ generate_ssl_key_and_csr() {
     #NOTE: To include DN at the command line
     #openssl req -new -nodes -subj '/O=ESGF/OU=ESGF.ORG/CN=esg-test1.llnl.gov' -key hostkey.pem -out esg-test1.llnl.gov-esg-node.csr
     echo "Generating Certificate Signing Request (csr)... "
-    local public_cert_req=${2:-${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr}
+    local public_cert_req=${1:-${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr}
     local public_cert_dn=${3:-$(extract_keystore_dn ${keystore_file})}
 
     echo "Using DN = [${public_cert_dn}]"
@@ -3432,7 +3506,7 @@ generate_ssl_key_and_csr() {
         echo "Please re-run and be sure that the DN has been set appropriately (see below)"
         echo "The DN may be specified explicitly via the following command:"
         echo
-        echo "> ${0##*/} --generate-ssl-key-and-csr ${tomcat_conf_dir}/hostkey.pem ${public_cert_req} /O=ESGF/OU=ESGF.ORG/CN=${esgf_host}"
+        echo "> ${0##*/} --generate-ssl-key-and-csr ${public_cert_req} ${tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host}"
         echo
         echo "Please remove the faulty csr (${public_cert_req}) now, and retry"
         echo "------------------------------------------------------------------"
@@ -3451,10 +3525,17 @@ generate_ssl_key_and_csr() {
     echo "Generated private key: $(ls ${private_key})"
     echo "Generated certificate: $(ls ${public_cert_req})"
     echo "Please submit the certificate request to your Certificate Authority: (esgf-ca@lists.llnl.gov)"
-    echo "Then run %> esg-node --install-keypair <private key> <signed cert> (use --help for details)"
+    echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
     echo "--------------------------------------------------------"
     echo
 }
+
+check_certificates() {
+    echo "check_certificates..."
+    check_cert_expiry_for_files ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem
+    (source ${scripts_dir}/esg-globus && globus_check_certificates $@)
+}
+
 
 ###########################
 # A Note on DNs (order is important)
@@ -3558,8 +3639,8 @@ standard2java_dn() {
 #arg 4 -> alias
 #arg 5 -> password (The value you want *set* for the keystore and internal private key)
 install_keypair() {
-    local private_key=${1:-${tomcat_conf_dir}/"hostkey.pem"}
-    local public_cert=${2:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
+    local public_cert=${1:-${tomcat_conf_dir}/"${esgf_host:-$(hostname --fqdn)}-esg-node.pem"}
+    local private_key=${2:-${tomcat_conf_dir}/"hostkey.pem"}
     local keystore_name=${3:-${keystore_file}}
     local keystore_alias=${4:-${keystore_alias}}
     local store_password=${5}
@@ -3616,6 +3697,9 @@ install_keypair() {
         exit 5
     fi
 
+    [ "$(readlink -f ${public_cert})" -nt "$(readlink -f ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem)" ] && mv -v ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem{,.old}
+    [ "$(readlink -f ${public_cert})" != "$(readlink -f ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem)" ] && cp -v ${public_cert} ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem
+
     ##Transform the keypair into the DER format understood by Java's keystore
     ##And generate a new keystore from that pair.
     #[ -e "${keystore_name}" ] && mv ${keystore_name} ${keystore_name}.bak
@@ -3633,28 +3717,7 @@ install_keypair() {
     [ $? != 0 ] && echo "ERROR: Problem with truststore generation" && mv ${truststore_name}.bak ${truststore_name} && exit 6
     #register ${esgf_idp_peer}
 
-    #--------------------------------------------------
-    #Install signed globus pem file
-    #--------------------------------------------------
-    if (( ! no_globus )); then
-        local globus_grid_security_dir=${globus_global_certs_dir%/*}
-        if [ -d  ${globus_grid_security_dir} ]; then
-            local globus_signed_cert=${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem
-            if [ -e "${globus_signed_cert}" ]; then
-                [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
-                cp -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
-                    chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-                    openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
-            fi
-        else
-            echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"
-            exit 6
-        fi
-    fi
-
     echo "Please restart this node for keys to take effect: \"$0 restart\""
-    [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
-        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "property updated [OK]"
     echo
 }
 
@@ -4583,41 +4646,6 @@ set_classpath() {
     return 0;
 }
 
-set_aside_web_app() {
-    local app_home=$1
-
-    ! $(echo ${app_home} | grep -q ${tomcat_install_dir}) && echo "WARNING: Bad application home directory [${app_home}]" && checked_done 1
-
-    [ -d "${app_home}" ] && \
-        echo "Moving Previous Installation of ${app_home##*/}..." && \
-        mv -v ${app_home}{,.bak}
-}
-
-# arg1 = full path to web application
-# arg2 = 0  = sucess
-#        >0 = failure (return code style, pefect for taking "$?" of extraction command)
-set_aside_web_app_cleanup() {
-    local app_home=${1}
-    local success=${2}
-
-    ! $(echo ${app_home} | grep -q ${tomcat_install_dir}) && echo "WARNING: Bad application home directory [${app_home}]" && checked_done 1
-
-    if [ -d "${app_home}.bak" ]; then
-        if (( success == 0 )); then
-            echo -n "Removing Previous Installation of ${app_home##*/}... "
-            rm -rf "${app_home}.bak" && echo "[OK]" || echo "[FAIL]"
-        else
-            echo
-            echo "*********************************************************************"
-            echo "* WARNING: Problem with ${app_home##*/} application extraction...  *"
-            echo "* Restoring previous installation                                  *"
-            echo "*********************************************************************"
-            mv -v ${app_home}{.bak,} && echo "[OK]" || echo "[FAIL]"
-            echo
-        fi
-    fi
-}
-
 install_bash_completion_file() {
     if (type rpm >& /dev/null) && [ ! -e "/etc/bash_completion" ]; then
         debug_print "Oh you should have bash completions... :-) "
@@ -4706,6 +4734,30 @@ check_for_group_intersection_with() {
     return ${ret}
 }
 
+#Will return true (0) if compute type is determined to be installed.
+#Will return false (!=0) if compute type should NOT be installed
+sanity_check_for_hints_todo_compute() {
+    debug_print "checking for compute hints..."
+    local default_answer="n"
+    local answer
+    if $(sed -n '/las_configure[ ]*=[ ]*true/p' ${esg_root_dir}/config/esgcet/esg.ini 2> /dev/null | grep -q true); then
+        echo "Detected that the publisher configuration indicates LAS functionality is needed."
+        default_answer="Y"
+        read -e -t 120 -p " Would you like to install the \"COMPUTE\" configuration to support this ? $([ ${default_answer} = "Y" ] && echo "[Y/n]" || echo "[y/N]")" answer
+        [ -z "${answer}" ] && answer=$(tr 'A-Z' 'a-z' <<< ${default_answer})
+        if [ "${answer}" != "y" ] && [ "${answer}" != "yes" ]; then
+            echo "Will NOT install \"COMPUTE\" configuration..."
+            return 1
+        else
+            echo "User wants \"COMPUTE\" node type to also be installed"
+            return 0
+        fi
+    else
+        echo "No compute configuration hints found.... continuing..."
+        return 2
+    fi
+    return 3
+}
 
 
 #-------------------------------
@@ -4728,6 +4780,7 @@ check_tomcat_process() {
             echo "Tomcat (jsvc) process is running... " && return 0
         else
             echo " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [${procs}] ?? "
+            lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'${esgf_host_ip}'\)/\0/p'
             return 3
         fi
     else
@@ -5568,7 +5621,7 @@ _get_db_conn_str_questionnaire() {
         if [ -z "${connstring_}" ] && [ "${db_managed}" != "yes" ] && ((! force_install)) ; then
             connstring_="dbsuper@localhost:5432/esgcet"
         fi
-        read -e -p "What is the database connection string? [${connstring_}]: postgresql://" input
+        read -e -p "What is the database connection string? [postgresql://${connstring_}]: postgresql://" input
         [ -z "${input}" ] && input="${connstring_}"
         echo "entered: postgresql://${input}"
         [ -z "${input}" ] && continue
@@ -5773,16 +5826,17 @@ usage() {
         Key Management Flags:
         -------------------------------
         --register    - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
-        --generate-ssl-key-and-csr - generate new key and cert request files <key file> <cert file> [<dn>]
-                                     (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESG-DATA-NODE/CN=<fqdn>')
+        --generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
+                                     (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}')
 
-                   Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
+                   Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
 
-        --install-keypair - takes as input private key and public cert files and installs them. <key> <cert> [<keystore> <alias> <password>]
-        --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by globus)
+        --install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
+        --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
         --add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
         --clear-certs - removes the user-level public certificates' directory (used by myproxy)
+        --check-certs - checks both SSL private certificate and Globus private cert for expiration
         --set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup
 
         (deprecated) --install-signed-cert - installs signed host certificate into keystore and truststore <signed PEM file>
@@ -5793,6 +5847,11 @@ usage() {
         --keystore-password - sets the password to use for the java keystore - default is the node password.
         --keystore-alias - the alias that is associated with the public cert in the keystore
         --keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat
+
+        (misc. globus related)
+        --generate-globus-key-and-csr - generate new key and cert request for globus (no args - filenames are fixed)
+        --install-globus-keypair - installs the signed csr file and does appropriate book keeping. <globus_pub_cert>
+        --simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.
 
         -------------------------------
         Database Management
@@ -5874,7 +5933,7 @@ usage() {
 
         Installation : esg-node --install --verify
             (submit csr and get back returned cert)
-        Credentials  : esg-node --install-keypair <key> <cert>
+        Credentials  : esg-node --install-ssl-keypair <pub_cert> <priv_key>
         Test Publish : esg-node --test-pub
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
@@ -5963,6 +6022,7 @@ main() {
                             upgrade_mode=1
                             install_mode=0
                             debug_print "UPDATE SERVICES"
+                            self_verify "update"
                         fi
                     else
                         if (( (install_mode+upgrade_mode) == 0)); then
@@ -6317,6 +6377,7 @@ main() {
                     ;;
                 --fetch-esgf-certs)
                     self_verify
+                    read_sel
                     shift
                     (( $# != 0 ))  && echo "error: \"--fetch-esgf-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     id | grep root >& /dev/null
@@ -6346,16 +6407,40 @@ main() {
                     shift
                     id | grep root >& /dev/null
                     [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
-                    #arg 1      -> what we want to name the private key
-                    #arg 2      -> what we want to name the public cert
-                    #arg 3      -> (what we want to DN to be for the public cert)
+                    #arg 1      -> what we want to name the public cert request (csr)
+                    #arg 2      -> what we want to name the private key
+                    #arg 3      -> what we want to DN to be for the public cert
                     #arg 4      -> (keystore password)
                     #(no args necessary, all args have defaults)
-                    #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/hostkey.pem /usr/local/tomcat/conf/<yourhost>-esg-node.csr /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
+                    #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/<yourhost>-esg-node.csr /usr/local/tomcat/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
                     generate_ssl_key_and_csr $@
                     exit $?
                     ;;
-                --install-keypair)
+                --generate-globus-key-and-csr)
+                    self_verify
+                    shift
+                    (source ${scripts_dir}/esg-globus && generate_globus_key_and_csr $@)
+                    exit $?
+                    ;;
+                --simpleCA-relink | --simpleca-relink)
+                    self_verify
+                    shift
+                    (source ${scripts_dir}/esg-globus && simpleCA_relink $@)
+                    exit $?
+                    ;;
+                --myproxy-sanity-check)
+                    self_verify
+                    shift
+                    (source ${scripts_dir}/esg-globus && sanity_check_myproxy_configurations $@)
+                    exit $?
+                    ;;
+                --check-certs)
+                    self_verify
+                    shift
+                    check_certificates $@
+                    exit $?
+                    ;;
+                --install-ssl-keypair | --install-keypair)
                     self_verify
                     shift
                     id | grep root >& /dev/null
@@ -6363,7 +6448,29 @@ main() {
                     install_keypair $@
                     exit $?
                     ;;
-                --dname) #In Java Style (inner -> outter, [, ] separated values)
+                --install-globus-keypair)
+                    self_verify
+                    shift
+                    id | grep root >& /dev/null
+                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    (source ${scripts_dir}/esg-globus && install_globus_keypair $@)
+                    exit $?
+                    ;;
+                --install-globus-online)
+                    self_verify
+                    shift
+                    id | grep root >& /dev/null
+                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    (cd ${scripts_dir}
+                    local fetch_file=esg-globus
+                    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}"
+                    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+                    (( $? > 1 )) && popd && return 1
+                    chmod 755 ${fetch_file})
+                    (source ${scripts_dir}/esg-globus && setup_globus_online $@)
+                    exit $?
+                    ;;
+                --set-dname | --set-dn) #In Java Style (Ex: OU=ESGF.ORG, O=ESGF scheme using "standard2java_dn" function | micro -> macro, [, ] separated values)
                     shift
                     dname=$1
                     ;;
@@ -6680,6 +6787,10 @@ main() {
     #---------------------------------------
     # Compute type install...
     #---------------------------------------
+        #Do a quick check to see if the compute bit should be turned on.... If so then turn on that switch and keep going...
+        if [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) == 0 ] && sanity_check_for_hints_todo_compute; then
+            ((sel+=COMPUTE_BIT))
+        fi
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem product-server esgf-product-server $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem compute-tools esgf-compute-tools $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "access logging filter subsystem (COMPUTE)"  && service_name="las" extensions="ProductServer.do" setup_subsystem access-logging-filter filters $@

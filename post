@@ -66,6 +66,11 @@
 
 #uses: egrep, rsync (and thus ssh)
 
+__on_mac=$(uname -a | grep -q Darwin && echo 1 || echo 0)
+__md5sum_() {
+    ((__on_mac)) && md5 $@ | sed -n 's/MD5 (\([^)]*\))[ ]*=[ ]*\(.*\)/\2 \1/p' || md5sum $@
+}
+
 devel=${devel:-0}
 verbose=${verbose:-0}
 debug=${debug:-0}
@@ -162,7 +167,7 @@ while read file dest_dir; do
     sed 's#\(script_version=\)"\(.*\)".*$#\1"'${script_version}'"#' ${file} > ${tmp_file}_
     ((debug)) && echo "sed 's#\(script_release=\)"\(.*\)".*$#\1"'${script_release}'"#' ${tmp_file}_ > ${tmp_file}"
     sed 's#\(script_release=\)"\(.*\)".*$#\1"'${script_release}'"#' ${tmp_file}_ > ${tmp_file}
-    ((!noop))  && md5sum ${tmp_file} > ${file}.md5
+    ((!noop))  && __md5sum_ ${tmp_file} | sed -n 's/_[0-9]*//p' > ${file}.md5
     ((!noop))  && rsync -c ${file}.md5 ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/}.md5 >& /dev/null
     echo -n "-"
     ((!noop))  && rsync -c ${tmp_file} ${xfer_user}${esg_dist_url}/${dest_dir}/${file##*/} >& /dev/null
@@ -180,4 +185,5 @@ done < $manifest_file
 echo 
 echo total=${total} good=${good} fail=${fail}
 echo "done."
+unset __on_mac
 exit 0

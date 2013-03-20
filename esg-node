@@ -5801,6 +5801,7 @@ usage() {
         --time-shards  - cycles through all known index shards providing query times for each
                          [-show-local] will show timing information for locally replicated shards
                          [-timeout <seconds>] will set the connection timeout value (in seconds)
+        --update-publisher-resources - update local repository of publication schemas et al.
 
         -------------------------------
         Publication Endpoint Setting (Index Peer/Gateway)
@@ -6605,6 +6606,11 @@ main() {
                 --time-shards)
                     shift
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && time_shards $@)
+                    exit $?
+                    ;;
+                --update-publisher-resources)
+                    shift
+                    [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && setup_publisher_resources $@)
                     exit $?
                     ;;
                 --shell)

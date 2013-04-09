@@ -188,7 +188,7 @@ init() {
     unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
-    cdat_home=${CDAT_HOME:-${install_prefix}/cdat}
+    cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat}
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
@@ -1377,16 +1377,18 @@ setup_cdat() {
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
+    local cdat_git_protocol="git://"
     if [ ! -d ${workdir}/uvcdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
         git clone ${cdat_repo} uvcdat
         if [ ! -d ${workdir}/uvcdat/.git ]; then
+            cdat_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            git clone ${cdat_repo_http}
+            git clone ${cdat_repo_http} uvcdat
             [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
-    cd cdat >& /dev/null
+    cd uvcdat >& /dev/null
     git checkout ${cdat_version}
     [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
 
@@ -1398,20 +1400,28 @@ setup_cdat() {
     #$postgress_install_dir/bin.  This location is created and added
     #to the executable PATH by the 'setup_postgress' function.
 
-    local workdir_build=${workdir}/uvcdat_build
-    mkdir -p ${workdir_build}
-    pushd ${workdir_build}
-    cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF ${workdir}/uvcdat
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
-    cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF ${workdir}/uvcdat
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
-    cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF ${workdir}/uvcdat
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
+    (
+        unset LD_LIBRARY_PATH
+        unset PYTHONPATH
 
-    make -j ${num_cpus}
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
-    
-    popd >& /dev/null
+        local workdir_build=${workdir}/uvcdat_build
+        mkdir -p ${workdir_build}
+        pushd ${workdir_build}
+
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
+
+        #make -j ${num_cpus}
+        make
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (4)" && popd && checked_done 1
+
+        popd >& /dev/null
+    )
+    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1

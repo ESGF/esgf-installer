@@ -126,7 +126,8 @@ init() {
 
     #NOTE: esg-dist = v1.0.6
 
-    cdat_version=${cdat_version:-"esgf-v0.0.1"}
+    #cdat_version=${cdat_version:-"esgf-v0.0.1"}
+    cdat_version=${cdat_version:-"master"}
     esgcet_version=${esgcet_version:-"2.11.1"}
 
     #see esgf-node-manager project:
@@ -289,8 +290,8 @@ init() {
     postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
-    cdat_repo=git://uv-cdat.llnl.gov/cdat.git
-    cdat_repo_http=http://uv-cdat.llnl.gov/git/cdat.git
+    cdat_repo=git://github.com/UV-CDAT/uvcdat-devel.git
+    cdat_repo_http=http://github.com/UV-CDAT/uvcdat-devel.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
     tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
@@ -1376,13 +1377,13 @@ setup_cdat() {
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
-    if [ ! -d ${workdir}/cdat ]; then
+    if [ ! -d ${workdir}/uvcdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
-        git clone ${cdat_repo}
-        if [ ! -d ${workdir}/cdat/.git ]; then
+        git clone ${cdat_repo} uvcdat
+        if [ ! -d ${workdir}/uvcdat/.git ]; then
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
             git clone ${cdat_repo_http}
-            [ ! -d ${workdir}/cdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
     cd cdat >& /dev/null
@@ -1397,11 +1398,20 @@ setup_cdat() {
     #$postgress_install_dir/bin.  This location is created and added
     #to the executable PATH by the 'setup_postgress' function.
 
-    echo "./configure --prefix=$cdat_home --enable-esg --with-cpus=${num_cpus} $([ -d "${openssl_install_dir}" ] && echo "--with-openssl=${openssl_install_dir}")"
-    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus} $([ -d "${openssl_install_dir}" ] && echo "--with-openssl=${openssl_install_dir}")
-    [ $? != 0 ] && echo " ERROR: Configure did not complete successfully" && popd && checked_done 1
-    make
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
+    local workdir_build=${workdir}/uvcdat_build
+    mkdir -p ${workdir_build}
+    pushd ${workdir_build}
+    cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF ${workdir}/uvcdat
+    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
+    cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF ${workdir}/uvcdat
+    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
+    cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF ${workdir}/uvcdat
+    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
+
+    make -j ${num_cpus}
+    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
+    
+    popd >& /dev/null
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1

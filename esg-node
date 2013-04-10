@@ -1403,11 +1403,12 @@ setup_cdat() {
     (
         unset LD_LIBRARY_PATH
         unset PYTHONPATH
+	unset CFLAGS
+	unset LDFLAGS
 
         local workdir_build=${workdir}/uvcdat_build
         mkdir -p ${workdir_build}
         pushd ${workdir_build}
-
         cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
         cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
@@ -1415,8 +1416,7 @@ setup_cdat() {
         cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
 
-        #make -j ${num_cpus}
-        make
+        make -j ${num_cpus}
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (4)" && popd && checked_done 1
 
         popd >& /dev/null

@@ -1400,9 +1400,6 @@ setup_cdat() {
     git checkout ${cdat_version}
     [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
 
-    echo "cleaning things out"
-    ./clean_script
-
     #NOTE:
     #cdms configuration with --enable-esg flag looks for pg_config in
     #$postgress_install_dir/bin.  This location is created and added
@@ -1436,9 +1433,11 @@ setup_cdat() {
 
     popd >& /dev/null
     echo
+
+    #NOTE: order is important in next three calls...
+    _housekeeping_cdat_to_uvcdat
     write_cdat_env
     write_cdat_install_log
-    _housekeeping_cdat_to_uvcdat
     checked_done 0
 }
 
@@ -1475,8 +1474,14 @@ _housekeeping_cdat_to_uvcdat() {
     #(NOTE: Whatever the resulting path is, it must contain the string "cdat")
     local cdat_installed_dir=$(sed -nre 's/.*[^v]cdat=([^ ]*)([^ ]*.*cdat)/\2/p' ${install_manifest} | tr -d " ")
     [[ ${cdat_installed_dir} ]] && backup ${cdat_installed_dir} && rm -rf ${cdat_installed_dir}
+
     #Remove all cdat install manifest entries from install manifest (NOTE: Not touching new uvcdat entries)
     sed -ire '/[^v]cdat/d' ${install_manifest}
+
+    #reset library path to point to new uvcdat location
+    myLD_LIBRARY_PATH=$(perl -pe 's/(?<!uv)cdat/uvcdat/' <<<${myLD_LIBRARY_PATH})
+    export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
+    dedup ${envfile} && source ${envfile}
 }
 
 

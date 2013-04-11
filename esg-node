@@ -1409,11 +1409,11 @@ setup_cdat() {
         local workdir_build=${workdir}/uvcdat_build
         mkdir -p ${workdir_build}
         pushd ${workdir_build}
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_GRAPHICS=OFF -DGIT_PROTOCOL="${cdat_git_protocol}" -DCDAT_BUILD_ESMF=OFF -DCDAT_BUILD_PARALLEL=OFF -DCDAT_DOWNLOAD_SAMPLE_DATA=OFF ${workdir}/uvcdat
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
 
         make -j ${num_cpus}

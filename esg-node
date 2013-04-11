@@ -1352,7 +1352,15 @@ test_postgress() {
 # Python/CDMS
 #####
 setup_cdat() {
-    echo -n "Checking for CDAT (Python+CDMS) ${cdat_version}"
+    echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version}"
+
+    #-----------CDAT -> UVCDAT Migration------------------
+    #rewrite cdat_home to new uvcdat location
+    #-----------------------------------------------------
+    cdat_home=$(perl -pe 's/(?<!uv)cdat/uvcdat/' <<<${cdat_home})
+    CDAT_HOME=${cdat_home}
+    #-----------------------------------------------------
+
     check_version_with "cdat" '${cdat_home}/bin/python -c "import cdat_info; print cdat_info.Version"' ${cdat_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
@@ -1430,6 +1438,7 @@ setup_cdat() {
     echo
     write_cdat_env
     write_cdat_install_log
+    _housekeeping_cdat_to_uvcdat
     checked_done 0
 }
 
@@ -1444,17 +1453,30 @@ write_cdat_env() {
 }
 
 write_cdat_install_log() {
-    echo "$(date ${date_format}) cdat=${cdat_version} ${cdat_home}" >> ${install_manifest}
+    echo "$(date ${date_format}) uvcdat=${cdat_version} ${cdat_home}" >> ${install_manifest}
 
     #Parse the cdat installation config.log file and entries to the install log
-    if [ -e ${workdir}/cdat/config.log ]; then
-        awk '/building/ {print "'"$(date ${date_format})"' cdat->"$(NF-1)":"$2"="$NF" '"${cdat_home}"'"}' ${workdir}/cdat/config.log >> ${install_manifest}
+    local build_log=${workdir}/uvcdat_build/build_info.txt
+    if [ -e "${build_log}" ]; then
+        awk '{print "'"$(date ${date_format})"' uvcdat->"$1"="$2" '"${cdat_home}"'"}' ${build_log} | sed '$d' >> ${install_manifest}
     else
-        echo " WARNING: Could not find cdat config.log file [${workdir}/cdat/config.log] installation log entries could not be generated!"
+        echo " WARNING: Could not find cdat build logfile [${build_log}], installation log entries could not be generated!"
     fi
 
     dedup ${install_manifest}
     return 0
+}
+
+#------------------------------------------------------------
+#Special function for the upgrade scenario (cdat -> uvcdat)
+#------------------------------------------------------------#
+_housekeeping_cdat_to_uvcdat() {
+    #Determine the install directory for cdat from the install_manifest 
+    #(NOTE: Whatever the resulting path is, it must contain the string "cdat")
+    local cdat_installed_dir=$(sed -nre 's/.*[^v]cdat=([^ ]*)([^ ]*.*cdat)/\2/p' ${install_manifest} | tr -d " ")
+    [[ ${cdat_installed_dir} ]] && backup ${cdat_installed_dir} && rm -rf ${cdat_installed_dir}
+    #Remove all cdat install manifest entries from install manifest (NOTE: Not touching new uvcdat entries)
+    sed -ire '/[^v]cdat/d' ${install_manifest}
 }
 
 

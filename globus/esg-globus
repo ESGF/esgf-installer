@@ -1492,7 +1492,7 @@ generate_globus_key_and_csr() {
     mv -v ${my_cert}{,.bak}
     #----------------------(command)----------------------------------
     echo "Generating (globus) Certificate Signing Request (csr)... "
-    debug_print "$GLOBUS_LOCATION/bin/grid-cert-request -host `hostname --fqdn` -dir ${gendir} -force"
+    debug_print "$GLOBUS_LOCATION/bin/grid-cert-request -host ${esgf_host:-$(hostname --fqdn)} -dir ${gendir} -force"
     $GLOBUS_LOCATION/bin/grid-cert-request -host ${esgf_host:-$(hostname --fqdn)} -dir ${gendir} -force &> /dev/null
     #-----------------------------------------------------------------
     [ $? != 0 ] && echo "oops" && return 1

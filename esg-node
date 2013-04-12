@@ -1391,6 +1391,10 @@ setup_cmake() {
     fi
 
     (
+        unset LD_LIBRARY_PATH
+	unset CFLAGS
+	unset LDFLAGS
+
         ((DEBUG)) && printf "\n-----\n cd ${cmake_workdir} \n-----\n"
         cd ${cmake_workdir}
 
@@ -1410,10 +1414,11 @@ setup_cmake() {
         make install
         [ $? != 0 ] && echo "ERROR: Could not install  CMake successfully" && checked_done 5
     )
-    [ $? != 0 ] && echo "ERROR: Could not setup CMake successfully aborting... " && checked_done 1
+    echo "returning from build subshell with code: [$?]"
+    (( $? > 1 )) && echo "ERROR: Could not setup CMake successfully aborting... " && checked_done 1
 
     cmake_version=$(${cmake_install_dir}/bin/cmake --version | awk '{print $3}' | sed -re 's/([^-]*)-.*/\1/')
-    echo "installed CMake version = ${cmake_version}"
+    printf "\ninstalled CMake version = ${cmake_version}\n\n"
 
     write_cmake_env
     write_cmake_install_log
@@ -1436,7 +1441,7 @@ write_cmake_install_log() {
 
 
 #####
-# Python/CDMS
+# CDAT = Python+CDMS
 #####
 setup_cdat() {
     echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version}"

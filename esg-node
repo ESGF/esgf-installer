@@ -1388,10 +1388,12 @@ setup_cdat() {
     local cdat_git_protocol="git://"
     if [ ! -d ${workdir}/uvcdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
+        ((DEBUG)) && echo "${cdat_repo}"
         git clone ${cdat_repo} uvcdat
         if [ ! -d ${workdir}/uvcdat/.git ]; then
             cdat_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
+            ((DEBUG)) && echo "${cdat_repo_http}"
             git clone ${cdat_repo_http} uvcdat
             [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
@@ -1446,7 +1448,7 @@ write_cdat_env() {
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
     prefix_to_path PATH ${cdat_home}/bin >> ${envfile}
     prefix_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
-    prefix_to_path LD_LIBRARY_PATH ${cdat_home}Externals/lib >> ${envfile}
+    prefix_to_path LD_LIBRARY_PATH ${cdat_home}/Externals/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }

@@ -1356,7 +1356,7 @@ test_postgress() {
 #Needed for UV-CDAT build...
 setup_cmake() {
 
-    echo -n "Checking for CMake >=  {cmake_min_version} "
+    echo -n "Checking for CMake >=  ${cmake_min_version} "
     check_version_with cmake "cmake --version | awk '{print \$3}' | sed -re 's/([^-]*)-.*/\1/'" ${cmake_min_version} ${cmake_max_version}
     [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -1384,24 +1384,29 @@ setup_cmake() {
     mkdir -p ${cmake_workdir%/*}
     chmod a+rw ${cmake_workdir%/*}
 
-    if [ ! "${cmake_workdir}" ]; then
-        git clone git://cmake.org/cmake.git ${cmake_workdir}
+    if [ ! -d "${cmake_workdir}" ]; then
+        echo "Cloning CMake repository ${cmake_repo}..."
+        git clone ${cmake_repo} ${cmake_workdir}
         [ $? != 0 ] && echo "ERROR: Could not clone CMake repository" && checked_done 1
     fi
 
     (
+        ((DEBUG)) && printf "\n-----\n cd ${cmake_workdir} \n-----\n"
         cd ${cmake_workdir}
 
+        ((DEBUG)) && printf "\n-----\n git checkout v${cmake_version} \n-----\n"
         git checkout v${cmake_version}
         [ $? != 0 ] && echo "ERROR: Could not checkout CMake @ v${cmake_version}" && checked_done 2
 
-       #configure --parallel=16 --prefix=/usr/local/cmake
-        configure --parallel=16 --prefix=${cmake_install_dir}
+        ((DEBUG)) && printf "\n-----\n ./configure --parallel=${num_cpus} --prefix=${cmake_install_dir} \n-----\n"
+        ./configure --parallel=${num_cpus} --prefix=${cmake_install_dir}
         [ $? != 0 ] && echo "ERROR: Could not configure CMake successfully" && checked_done 3
 
+        ((DEBUG)) && printf "\n-----\n make -j ${num_cpus} \n-----\n"
         make -j ${num_cpus}
         [ $? != 0 ] && echo "ERROR: Could not make  CMake successfully" && checked_done 4
 
+        ((DEBUG)) && printf "\n-----\n make install \n-----\n"
         make install
         [ $? != 0 ] && echo "ERROR: Could not install  CMake successfully" && checked_done 5
     )

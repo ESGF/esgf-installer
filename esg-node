@@ -166,6 +166,7 @@ init() {
     java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
     ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
+    cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
     tomcat_version=${tomcat_version:-"6.0.36"} ; tomcat_min_version=${tomcat_min_version:-"6.0.36"}
     tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
@@ -188,6 +189,7 @@ init() {
     unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
+    cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
     cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat}
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
@@ -218,6 +220,7 @@ init() {
     export PGUSER=${postgress_user}
     export PGHOST=${postgress_host}
     export PGPORT=${postgress_port}
+    export CMAKE_HOME=${cmake_install_dir}
     export CDAT_HOME=${cdat_home}
     export JAVA_HOME=${java_install_dir}
     export JAVA_OPTS=${java_opts}
@@ -227,7 +230,7 @@ init() {
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
 
-    myPATH=${install_prefix}/bin:$OPENSSL_HOME/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
+    myPATH=${install_prefix}/bin:$OPENSSL_HOME/bin:$CURL_HOME/bin:$CMAKE_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:/bin:/sbin:/usr/bin:/usr/sbin
     myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
     export PATH=$(_path_unique $myPATH:$PATH)
     export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
@@ -290,6 +293,8 @@ init() {
     postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
+    cmake_workdir=${workdir}/cmake
+    cmake_repo=git://cmake.org/cmake.git
     cdat_repo=git://github.com/UV-CDAT/uvcdat-devel.git
     cdat_repo_http=http://github.com/UV-CDAT/uvcdat-devel.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
@@ -1345,6 +1350,83 @@ test_postgress() {
     ((ret == 0)) && echo " ERROR: Could not verify database installation! (perhaps \"pg_sys_acct_passwd\"  was not set correctly?)" && checked_done 1
     echo "[OK]"
     checked_done 0
+}
+
+
+#Needed for UV-CDAT build...
+setup_cmake() {
+
+    echo -n "Checking for CMake >=  {cmake_min_version} "
+    check_version_with cmake "cmake --version | awk '{print \$3}' | sed -re 's/([^-]*)-.*/\1/'" ${cmake_min_version} ${cmake_max_version}
+    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+
+    echo
+    echo "*******************************"
+    echo "Setting up CMake ${cmake_version}"
+    echo "*******************************"
+    echo
+
+    local default="Y"
+    ((force_install)) && default="N"
+    local dosetup
+    if [ -x ${cmake_install_dir}/bin/cmake ]; then
+        echo "Detected an existing CMAKE installation..."
+        read -e -p "Do you want to continue with CMAKE installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+        [ -z ${dosetup} ] && dosetup=${default}
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping CMAKE installation and setup - will assume CMAKE is setup properly"
+            return 0
+        fi
+        echo
+    fi
+
+    #make top level directory for cmake repo clone
+    mkdir -p ${cmake_workdir%/*}
+    chmod a+rw ${cmake_workdir%/*}
+
+    if [ ! "${cmake_workdir}" ]; then
+        git clone git://cmake.org/cmake.git ${cmake_workdir}
+        [ $? != 0 ] && echo "ERROR: Could not clone CMake repository" && checked_done 1
+    fi
+
+    (
+        cd ${cmake_workdir}
+
+        git checkout v${cmake_version}
+        [ $? != 0 ] && echo "ERROR: Could not checkout CMake @ v${cmake_version}" && checked_done 2
+
+       #configure --parallel=16 --prefix=/usr/local/cmake
+        configure --parallel=16 --prefix=${cmake_install_dir}
+        [ $? != 0 ] && echo "ERROR: Could not configure CMake successfully" && checked_done 3
+
+        make -j ${num_cpus}
+        [ $? != 0 ] && echo "ERROR: Could not make  CMake successfully" && checked_done 4
+
+        make install
+        [ $? != 0 ] && echo "ERROR: Could not install  CMake successfully" && checked_done 5
+    )
+    [ $? != 0 ] && echo "ERROR: Could not setup CMake successfully aborting... " && checked_done 1
+
+    cmake_version=$(${cmake_install_dir}/bin/cmake --version | awk '{print $3}' | sed -re 's/([^-]*)-.*/\1/')
+    echo "installed CMake version = ${cmake_version}"
+
+    write_cmake_env
+    write_cmake_install_log
+    checked_done 0
+}
+
+write_cmake_env() {
+    ((show_summary_latch++))
+    echo "export CMAKE_HOME=${cmake_install_dir}" >> ${envfile}
+    prefix_to_path PATH ${cmake_install_dir}/bin >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
+}
+
+write_cmake_install_log() {
+    echo "$(date ${date_format}) cmake=${cmake_version} ${cmake_install_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
+    return 0
 }
 
 
@@ -6778,6 +6860,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
         [ $((sel & TEST_BIT))    != 0 ] && test_postgress
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_cmake
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet

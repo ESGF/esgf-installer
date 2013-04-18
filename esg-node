@@ -5265,7 +5265,8 @@ show_svc_list() {
     echo "---------------------------"
     echo "Running Node Services... "; ((sel != 0)) && show_type || echo ""
     echo "---------------------------"
-    lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy'
+    local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)")"
+    eval ${command}
     local dashboard_pid=$(pgrep dashboard)
     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
     echo "---------------------------"

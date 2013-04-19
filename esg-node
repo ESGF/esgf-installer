@@ -295,8 +295,8 @@ init() {
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     cmake_workdir=${workdir}/cmake
     cmake_repo=git://cmake.org/cmake.git
-    cdat_repo=git://github.com/UV-CDAT/uvcdat-devel.git
-    cdat_repo_http=http://github.com/UV-CDAT/uvcdat-devel.git
+    cdat_repo=git://github.com/UV-CDAT/uvcdat.git
+    cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
     tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
@@ -1508,11 +1508,13 @@ setup_cdat() {
         local workdir_build=${workdir}/uvcdat_build
         mkdir -p ${workdir_build}
         pushd ${workdir_build}
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
+        #(zlib patch value has to be 3,5,7 - default is 5)
+        local zlib_value=$(pkg-config --modversion zlib | sed -n -re 's/(.)*/\1/p' | sed -n -re '/(3|5|7)/p') ; [[ ! ${zlib_value} ]] && zlib_value=3
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
 
         make -j ${num_cpus}

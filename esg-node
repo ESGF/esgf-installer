@@ -192,7 +192,7 @@ init() {
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
     tomcat_install_dir=${CATALINA_HOME:-${install_prefix}/tomcat}
-    tomcat_conf_dir=${tomcat_install_dir}/conf
+    tomcat_conf_dir=${esg_config_dir}/tomcat
     #tomcat_conf_dir=${esg_root_dir}/config/tomcat
     tomcat_opts=${CATALINA_OPTS}
     tomcat_user=${tomcat_user:-tomcat}

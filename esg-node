@@ -1999,11 +1999,32 @@ configure_tomcat() {
 
     pushd ${tomcat_install_dir}/conf #>& /dev/null
 
+    #Move selected config files into esgf tomcat's config dir (certificate et al)
+    #Ex: /esg/config/tomcat
+    #-rw-r--r-- 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
+    #-r-------- 1 tomcat tomcat    887 Apr 22 19:32 hostkey.pem
+    #-rw-r--r-- 1 tomcat tomcat   1276 Apr 22 19:32 keystore-tomcat
+    #-rw-r--r-- 1 tomcat tomcat    590 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.csr
+    #-rw-r--r-- 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
+    #-rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
+
+    #Only called when migration conditions are present.
+    if [ "${tomcat_install_dir}/conf" = "${tomcat_conf_dir}" ]; then
+        ((DEBUG)) && echo "Moving credentials into node's tomcat configuration dir: ${tomcat_conf_dir}"
+        [ -e ${tomcat_install_dir}/conf/esg-truststore.ts ] && [ ! -e ${tomcat_conf_dir}/esg-truststore.ts ] && mv -v ${tomcat_install_dir}/conf/esg-truststore.ts ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/hostkey.pem ]       && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/keystore-tomcat ]   && [ ! -e ${tomcat_conf_dir}/keystore-tomcat ] && mv -v ${tomcat_install_dir}/conf/keystore-tomcat ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/tomcat-users.xml ]  && [ ! -e ${tomcat_conf_dir}/tomcat-users.xml ] && mv -v ${tomcat_install_dir}/conf/tomcat-users.xml ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/
+        chown -R ${tomcat_user}.${tomcat_group} ${tomcat_conf_dir}
+    fi
+
     local fetch_file
     local genreq=N
 
     fetch_file=server.xml
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file} $((force_install))
+    checked_get ${tomcat_install_dir}/conf/${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chmod 600 ${fetch_file}
 

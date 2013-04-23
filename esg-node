@@ -1781,7 +1781,12 @@ setup_tomcat() {
     #build jsvc (if necessary)
     #----------
     echo -n "Checking for jsvc... "
+    (
     pushd ./bin >& /dev/null
+
+    #https://issues.apache.org/jira/browse/DAEMON-246
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib${word_size}
+
     if [ -e ./jsvc ] && [ -x ./jsvc ]; then
         echo "[OK]"
     else
@@ -1811,6 +1816,7 @@ setup_tomcat() {
         [ -x ./jsvc ] && cp ./jsvc ${tomcat_install_dir}/bin
     fi
     popd >& /dev/null
+    )
     #----------
 
     #----------------------------------

@@ -2131,17 +2131,17 @@ configure_tomcat() {
     #NOTE: The truststore uses the java default password: "changeit"
 
     #Edit the server.xml file to contain proper location of certificates
-            eval "perl -p -i -e 's#\\@\\@tomcat_users_file\\@\\@#${tomcat_users_file}#g' server.xml"
+            eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' server.xml"
             echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@truststore_file\\@\\@#${truststore_file}#g' server.xml"
+            eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' server.xml"
             echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@truststore_password\\@\\@#${truststore_password}#g' server.xml"
+            eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' server.xml"
             echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@keystore_file\\@\\@#${keystore_file}#g' server.xml"
+            eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' server.xml"
             echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@keystore_password\\@\\@#${store_password}#g' server.xml"
+            eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password}\"#g' server.xml"
             echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@keystore_alias\\@\\@#${keystore_alias}#g' server.xml"
+            eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' server.xml"
             echo "*"
 
             add_my_cert_to_truststore --keystore-pass ${store_password}

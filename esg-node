@@ -3439,6 +3439,9 @@ add_my_cert_to_truststore() {
             echo
             read -e -s -p "Please re-enter the password for this keystore: " verify_password
             if [ "${store_password}" = "${verify_password}" ] ; then
+
+                $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${store_password} >& /dev/null
+                [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} with provided password. Try again..." && continue;
                 keystore_password_=${store_password}
                 echo
                 break
@@ -3456,14 +3459,24 @@ add_my_cert_to_truststore() {
 
 
     if ((do_checks == 1)); then
-        debug_print "Peforming checks against configured values..."
-        debug_print "[$(md5sum <(echo "${keystore_password}") | awk '{print $1}')] == [$(md5sum <(echo "${keystore_password_}") | awk '{print $1}')]"
-        [ "${keystore_password}" != "${keystore_password_}" ] && echo "WARNING: password entered does not match what's in the configuration file"
-
         #only making this call to test password
         $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${keystore_password_} >& /dev/null
-        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_}" && return 1;
+        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} (re-run --add-my-cert-to-truststore)" && return 1;
         echo "[OK]"
+
+        debug_print "Peforming checks against configured values..."
+        debug_print "[$(md5sum <(echo "${keystore_password}") | awk '{print $1}')] == [$(md5sum <(echo "${keystore_password_}") | awk '{print $1}')]"
+        if [ "${keystore_password}" != "${keystore_password_}" ]; then
+            printf "\nWARNING: password entered does not match what's in the app server's configuration file\n"
+            [[ ${keystore_password_} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${keystore_password_}\"#g' ${tomcat_install_dir}/conf/server.xml" && \
+                echo -n "  Adjusted app server's config file... "
+            (
+                local value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
+                [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
+                [ "${keystore_password}" = "${keystore_password_}" ] && echo " [OK] " || echo " [FAIL] "
+                unset value
+            )
+        fi
     fi
 
     #----------------------------------------------------------------
@@ -3726,7 +3739,7 @@ install_keypair() {
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
     if [ $? != 0 ]; then
         echo "ERROR: Problem with key generation and/or keystore construction"
-        mv ${keystore_name}.bak ${keystore_name}
+        mv ${keystore_name}{.bak,}
         exit 5
     fi
 
@@ -5869,7 +5882,13 @@ usage() {
         --install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
-        --add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
+        --add-my-cert-to-truststore - adds public cert from keystore to truststore:
+                             (secondary flags for this option)
+                             --keystore | -ks <keystore file>
+                             --keystore-pass | -kpass <keystore password>
+                             --alias | -a <keystore alias>
+                             --truststore | -ts <truststore file>
+                             --truststore-pass | tpass <truststore password>
         --clear-certs - removes the user-level public certificates' directory (used by myproxy)
         --check-certs - checks both SSL private certificate and Globus private cert for expiration
         --set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup

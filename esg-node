@@ -195,7 +195,7 @@ init() {
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
     tomcat_install_dir=${CATALINA_HOME:-${install_prefix}/tomcat}
-    tomcat_conf_dir=${tomcat_install_dir}/conf
+    tomcat_conf_dir=${esg_config_dir}/tomcat
     #tomcat_conf_dir=${esg_root_dir}/config/tomcat
     tomcat_opts=${CATALINA_OPTS}
     tomcat_user=${tomcat_user:-tomcat}
@@ -1924,7 +1924,12 @@ setup_tomcat() {
     #build jsvc (if necessary)
     #----------
     echo -n "Checking for jsvc... "
+    (
     pushd ./bin >& /dev/null
+
+    #https://issues.apache.org/jira/browse/DAEMON-246
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib${word_size}
+
     if [ -e ./jsvc ] && [ -x ./jsvc ]; then
         echo "[OK]"
     else
@@ -1954,6 +1959,7 @@ setup_tomcat() {
         [ -x ./jsvc ] && cp ./jsvc ${tomcat_install_dir}/bin
     fi
     popd >& /dev/null
+    )
     #----------
 
     #----------------------------------
@@ -2121,6 +2127,39 @@ write_tomcat_install_log() {
     return 0
 }
 
+_migrate_tomcat_credentials_to_esgf() {
+    #Move selected config files into esgf tomcat's config dir (certificate et al)
+    #Ex: /esg/config/tomcat
+    #-rw-r--r-- 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
+    #-r-------- 1 tomcat tomcat    887 Apr 22 19:32 hostkey.pem
+    #-rw-r--r-- 1 tomcat tomcat   1276 Apr 22 19:32 keystore-tomcat
+    #-rw-r--r-- 1 tomcat tomcat    590 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.csr
+    #-rw-r--r-- 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
+    #-rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
+
+    #Only called when migration conditions are present.
+    if [ "${tomcat_install_dir}/conf" != "${tomcat_conf_dir}" ]; then
+        ((DEBUG)) && echo "Moving credentials into node's tomcat configuration dir: ${tomcat_conf_dir}"
+        [ -e ${tomcat_install_dir}/conf/esg-truststore.ts ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/esg-truststore.ts ${truststore_file}
+        [ -e ${tomcat_install_dir}/conf/keystore-tomcat ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/keystore-tomcat ${keystore_file}
+        [ -e ${tomcat_install_dir}/conf/tomcat-users.xml ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/tomcat-users.xml ${tomcat_users_file}
+
+        [ -e ${tomcat_install_dir}/conf/hostkey.pem ]       && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/
+        chown -R ${tomcat_user}.${tomcat_group} ${tomcat_conf_dir}
+
+        #Edit the server.xml file to contain proper location of certificates
+        [[ ${tomcat_users_file} ]]   && eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${truststore_file} ]]     && eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${truststore_password} ]] && eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${keystore_file} ]]       && eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${store_password} ]]      && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${keystore_alias} ]]      && eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo "*"
+    fi
+
+}
+
 configure_tomcat() {
     #----------------------------
     # TOMCAT Configuration...
@@ -2140,7 +2179,7 @@ configure_tomcat() {
     local genreq=N
 
     fetch_file=server.xml
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file} $((force_install))
+    checked_get ${tomcat_install_dir}/conf/${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
     chmod 600 ${fetch_file}
 
@@ -2247,18 +2286,12 @@ configure_tomcat() {
     #NOTE: The truststore uses the java default password: "changeit"
 
     #Edit the server.xml file to contain proper location of certificates
-            eval "perl -p -i -e 's#\\@\\@tomcat_users_file\\@\\@#${tomcat_users_file}#g' server.xml"
-            echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@truststore_file\\@\\@#${truststore_file}#g' server.xml"
-            echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@truststore_password\\@\\@#${truststore_password}#g' server.xml"
-            echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@keystore_file\\@\\@#${keystore_file}#g' server.xml"
-            echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@keystore_password\\@\\@#${store_password}#g' server.xml"
-            echo -n "*"
-            eval "perl -p -i -e 's#\\@\\@keystore_alias\\@\\@#${keystore_alias}#g' server.xml"
-            echo "*"
+            eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' server.xml"; echo -n "*"
+            eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' server.xml"; echo -n "*"
+            eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' server.xml"; echo -n "*"
+            eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' server.xml"; echo -n "*"
+            eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password}\"#g' server.xml"; echo -n "*"
+            eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' server.xml"; echo "*"
 
             add_my_cert_to_truststore --keystore-pass ${store_password}
 
@@ -3549,6 +3582,9 @@ add_my_cert_to_truststore() {
             echo
             read -e -s -p "Please re-enter the password for this keystore: " verify_password
             if [ "${store_password}" = "${verify_password}" ] ; then
+
+                $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${store_password} >& /dev/null
+                [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} with provided password. Try again..." && continue;
                 keystore_password_=${store_password}
                 echo
                 break
@@ -3566,14 +3602,24 @@ add_my_cert_to_truststore() {
 
 
     if ((do_checks == 1)); then
-        debug_print "Peforming checks against configured values..."
-        debug_print "[$(md5sum <(echo "${keystore_password}") | awk '{print $1}')] == [$(md5sum <(echo "${keystore_password_}") | awk '{print $1}')]"
-        [ "${keystore_password}" != "${keystore_password_}" ] && echo "WARNING: password entered does not match what's in the configuration file"
-
         #only making this call to test password
         $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${keystore_password_} >& /dev/null
-        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_}" && return 1;
+        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} (re-run --add-my-cert-to-truststore)" && return 1;
         echo "[OK]"
+
+        debug_print "Peforming checks against configured values..."
+        debug_print "[$(md5sum <(echo "${keystore_password}") | awk '{print $1}')] == [$(md5sum <(echo "${keystore_password_}") | awk '{print $1}')]"
+        if [ "${keystore_password}" != "${keystore_password_}" ]; then
+            printf "\nWARNING: password entered does not match what's in the app server's configuration file\n"
+            [[ ${keystore_password_} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${keystore_password_}\"#g' ${tomcat_install_dir}/conf/server.xml" && \
+                echo -n "  Adjusted app server's config file... "
+            (
+                local value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
+                [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
+                [ "${keystore_password}" = "${keystore_password_}" ] && echo " [OK] " || echo " [FAIL] "
+                unset value
+            )
+        fi
     fi
 
     #----------------------------------------------------------------
@@ -3836,7 +3882,7 @@ install_keypair() {
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
     if [ $? != 0 ]; then
         echo "ERROR: Problem with key generation and/or keystore construction"
-        mv ${keystore_name}.bak ${keystore_name}
+        mv ${keystore_name}{.bak,}
         exit 5
     fi
 
@@ -5979,7 +6025,13 @@ usage() {
         --install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
         --rebuild-truststore - converts globus' (public) ca certificates into a truststore.
-        --add-my-cert-to-truststore - adds public cert from keystore to truststore: <keystore password>
+        --add-my-cert-to-truststore - adds public cert from keystore to truststore:
+                             (secondary flags for this option)
+                             --keystore | -ks <keystore file>
+                             --keystore-pass | -kpass <keystore password>
+                             --alias | -a <keystore alias>
+                             --truststore | -ts <truststore file>
+                             --truststore-pass | tpass <truststore password>
         --clear-certs - removes the user-level public certificates' directory (used by myproxy)
         --check-certs - checks both SSL private certificate and Globus private cert for expiration
         --set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup

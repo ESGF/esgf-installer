@@ -1996,6 +1996,7 @@ migrate_tomcat_credentials_to_esgf() {
 
     #Only called when migration conditions are present.
     if [ "${tomcat_install_dir}/conf" != "${tomcat_conf_dir}" ]; then
+        [ ! -e ${tomcat_conf_dir} ] && mkdir -p ${tomcat_conf_dir}
         ((DEBUG)) && echo "Moving credentials into node's tomcat configuration dir: ${tomcat_conf_dir}"
         [ -e ${tomcat_install_dir}/conf/esg-truststore.ts ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/esg-truststore.ts ${truststore_file}
         [ -e ${tomcat_install_dir}/conf/keystore-tomcat ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/keystore-tomcat ${keystore_file}

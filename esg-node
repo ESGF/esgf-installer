@@ -2477,7 +2477,10 @@ sanity_check_web_xmls() {
     #----
     #Editing web.xml files for projects who use the authorizationService
     #----
-    echo "updating webapps' web.xml files accordingly..."
+    echo "sanity checking webapps' web.xml files accordingly... "
+    echo "  setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
+    find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | chown ${tomcat_user}.${tomcat_group}
+    echo "  inspecting web.xml files for proper authorization service assignment... "
     local web_xml_files=($(find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
     sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'${esgf_host}'\2@g' ${web_xml_files[@]}
     local instruct_to_reboot=0
@@ -6884,6 +6887,7 @@ main() {
     #---------------------------------------
     #System Launch...
     #---------------------------------------
+        sanity_check_web_xmls
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
         start ${sel}

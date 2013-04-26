@@ -268,7 +268,7 @@ init() {
     certificate_extensions="pem|crt|cert|key"
 
     openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
-    java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
+    java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
     openssl_workdir=${workdir}/openssl
     esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip

@@ -2127,7 +2127,7 @@ write_tomcat_install_log() {
     return 0
 }
 
-_migrate_tomcat_credentials_to_esgf() {
+migrate_tomcat_credentials_to_esgf() {
     #Move selected config files into esgf tomcat's config dir (certificate et al)
     #Ex: /esg/config/tomcat
     #-rw-r--r-- 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
@@ -6017,6 +6017,7 @@ usage() {
         Key Management Flags:
         -------------------------------
         --register    - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
+        --migrate-tomcat-credentials-to-esgf - moves credentials and supporting security files under ${esg_config_dir}
         --generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}')
 
@@ -6611,6 +6612,11 @@ main() {
                     #(no args necessary, all args have defaults)
                     #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/<yourhost>-esg-node.csr /usr/local/tomcat/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
                     generate_ssl_key_and_csr $@
+                    exit $?
+                    ;;
+                --migrate-tomcat-credentials-to-esgf)
+                    shift
+                    migrate_tomcat_credentials_to_esgf
                     exit $?
                     ;;
                 --generate-globus-key-and-csr)

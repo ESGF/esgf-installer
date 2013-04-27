@@ -2499,10 +2499,12 @@ sanity_check_web_xmls() {
     local instruct_to_reboot=0
     local ret=0;
     for((i=0;i<${#web_xml_files[@]};i++)); do
+        ((DEBUG)) && echo -n " inspecting $(readlink -f ${web_xml_files[i]}) "
         diff ${web_xml_files[${i}]}{,.bak} >& /dev/null
         ret=$?
         ((instruct_to_reboot+=$ret))
         ((ret > 0)) && echo -n "-" || echo -n "*"
+        ((DEBUG)) && echo
     done
     ((instruct_to_reboot)) && \
         printf "

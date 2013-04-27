@@ -2489,10 +2489,20 @@ sanity_check_web_xmls() {
     echo " |--inspecting web.xml files for proper authorization service assignment... "
     local web_xml_files=($(find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
     sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'${esgf_host}'\2@g' ${web_xml_files[@]}
+
+    #-----check that all trustoreFile params are set appropriately-------
+    local param=trustoreFile
+    local pname=${truststore_file}
+    sed -i.bak '/<param-name>[ ]*'${param}'[ ]*/,/<\/param-value>/ s#\(<param-value>\)[ ]*[^<]*[ ]*\(</param-value>\)#\1'${pname}'\2#' ${web_xml_files[@]}
+    #--------------------------------------------------------------------
+
     local instruct_to_reboot=0
+    local ret=0;
     for((i=0;i<${#web_xml_files[@]};i++)); do
         diff ${web_xml_files[${i}]}{,.bak} >& /dev/null
-        ((instruct_to_reboot+=$?))
+        ret=$?
+        ((instruct_to_reboot+=$ret))
+        ((ret > 0)) && echo -n "-" || echo -n "*"
     done
     ((instruct_to_reboot)) && \
         printf "
@@ -2502,7 +2512,7 @@ sanity_check_web_xmls() {
         (esg-node restart)
         -------------------------------------------------------------------------------------------------
 
-"
+" || echo
 }
 
 #####
@@ -6483,6 +6493,7 @@ main() {
                 --migrate-tomcat-credentials-to-esgf)
                     shift
                     migrate_tomcat_credentials_to_esgf
+                    sanity_check_web_xmls
                     exit $?
                     ;;
                 --generate-globus-key-and-csr)

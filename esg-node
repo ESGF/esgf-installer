@@ -193,7 +193,6 @@ init() {
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
     tomcat_install_dir=${CATALINA_HOME:-${install_prefix}/tomcat}
     tomcat_conf_dir=${esg_config_dir}/tomcat
-    #tomcat_conf_dir=${esg_root_dir}/config/tomcat
     tomcat_opts=${CATALINA_OPTS}
     tomcat_user=${tomcat_user:-tomcat}
     tomcat_group=${tomcat_group:-$tomcat_user}
@@ -4381,7 +4380,7 @@ verify_thredds_credentials() {
     echo "Sorry, your credentials are not valid..."
 
     local answer="N"
-    read -e -p "Would you like to reset the credentials? [y/N]: " doreset
+    read -e -p "Would you like to reset the app server's credentials accordingly? [y/N]: " doreset
     [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
 
     local security_admin_password=""

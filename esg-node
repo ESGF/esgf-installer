@@ -1997,18 +1997,27 @@ migrate_tomcat_credentials_to_esgf() {
     #Only called when migration conditions are present.
     if [ "${tomcat_install_dir}/conf" != "${tomcat_conf_dir}" ]; then
         [ ! -e ${tomcat_conf_dir} ] && mkdir -p ${tomcat_conf_dir}
-        ((DEBUG)) && echo "Moving credentials into node's tomcat configuration dir: ${tomcat_conf_dir}"
+        ((DEBUG)) && echo "Moving credential files into node's tomcat configuration dir: ${tomcat_conf_dir}"
         [ -e ${tomcat_install_dir}/conf/${truststore_file##*/} ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/${truststore_file##*/} ${truststore_file} && echo -n "+"
         [ -e ${tomcat_install_dir}/conf/${keystore_file##*/} ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/${keystore_file##*/} ${keystore_file} && echo -n "+"
         [ -e ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ${tomcat_users_file} && echo -n "+"
 
-        [ -e ${tomcat_install_dir}/conf/hostkey.pem ]       && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/ && echo -n "+"
-        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
-        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/hostkey.pem ]    && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
         chown -R ${tomcat_user}.${tomcat_group} ${tomcat_conf_dir}
         echo
 
+        #Be sure that the server.xml file contains the explicit Realm specification needed.
+        if ! egrep -q '<Realm.*MemoryRealm.*pathname=' ${tomcat_install_dir}/conf/server.xml; then
+            checked_get ${tomcat_install_dir}/conf/server.xml ${esg_dist_url}/externals/bootstrap/node.server.xml $((force_install))
+            (( $? > 1 )) && popd && checked_done 1
+            chmod 600 ${tomcat_install_dir}/conf/server.xml
+            chown ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/conf/server.xml
+        fi
+
         #Edit the server.xml file to contain proper location of certificates
+        ((DEBUG)) && echo "Editing ${tomcat_install_dir}/conf/server.xml accordingly..."
         [[ ${tomcat_users_file} ]]   && eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_file} ]]     && eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_password} ]] && eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"

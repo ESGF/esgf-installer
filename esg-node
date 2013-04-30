@@ -1998,7 +1998,7 @@ migrate_tomcat_credentials_to_esgf() {
     if [ "${tomcat_install_dir}/conf" != "${tomcat_conf_dir}" ]; then
         [ ! -e ${tomcat_conf_dir} ] && mkdir -p ${tomcat_conf_dir}
         ((DEBUG)) && echo "Moving credentials into node's tomcat configuration dir: ${tomcat_conf_dir}"
-        [ -e ${tomcat_install_dir}/conf/${truststore_file##*/} ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/${truststosre_file##*/} ${truststore_file} && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${truststore_file##*/} ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/${truststore_file##*/} ${truststore_file} && echo -n "+"
         [ -e ${tomcat_install_dir}/conf/${keystore_file##*/} ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/${keystore_file##*/} ${keystore_file} && echo -n "+"
         [ -e ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ${tomcat_users_file} && echo -n "+"
 

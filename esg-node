@@ -163,7 +163,7 @@ init() {
     openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
     curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
     git_version=${git_version:="1.7.3"} ; git_min_version=${git_min_version:="1.7.1"}
-    java_version=${java_version:-"1.6.0_23"} ; java_min_version=${java_min_version:-"1.6.0_23"}
+    java_version=${java_version:-"1.6.0_45"} ; java_min_version=${java_min_version:-"1.6.0_45"}
     ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
@@ -196,7 +196,6 @@ init() {
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
     tomcat_install_dir=${CATALINA_HOME:-${install_prefix}/tomcat}
     tomcat_conf_dir=${esg_config_dir}/tomcat
-    #tomcat_conf_dir=${esg_root_dir}/config/tomcat
     tomcat_opts=${CATALINA_OPTS}
     tomcat_user=${tomcat_user:-tomcat}
     tomcat_group=${tomcat_group:-$tomcat_user}
@@ -272,7 +271,7 @@ init() {
     certificate_extensions="pem|crt|cert|key"
 
     openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
-    java_dist_url=${esg_dist_url}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
+    java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
     ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
     openssl_workdir=${workdir}/openssl
     esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
@@ -2012,7 +2011,8 @@ setup_tomcat() {
 
     checked_get ${tomcat_install_dir}/webapps/ROOT/robots.txt  ${esg_dist_url}/robots.txt  $((force_install))
     checked_get ${tomcat_install_dir}/webapps/ROOT/favicon.ico ${esg_dist_url}/favicon.ico $((force_install))
-
+    migrate_tomcat_credentials_to_esgf
+    sleep 2
     start_tomcat
 
     tomcat_port_check && echo "Tomcat ports checkout [OK]" || (echo "[FAILED]" && popd && checked_done 1)
@@ -2139,22 +2139,35 @@ migrate_tomcat_credentials_to_esgf() {
 
     #Only called when migration conditions are present.
     if [ "${tomcat_install_dir}/conf" != "${tomcat_conf_dir}" ]; then
-        ((DEBUG)) && echo "Moving credentials into node's tomcat configuration dir: ${tomcat_conf_dir}"
-        [ -e ${tomcat_install_dir}/conf/esg-truststore.ts ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/esg-truststore.ts ${truststore_file}
-        [ -e ${tomcat_install_dir}/conf/keystore-tomcat ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/keystore-tomcat ${keystore_file}
-        [ -e ${tomcat_install_dir}/conf/tomcat-users.xml ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/tomcat-users.xml ${tomcat_users_file}
+        [ ! -e ${tomcat_conf_dir} ] && mkdir -p ${tomcat_conf_dir}
+        ((DEBUG)) && echo "Moving credential files into node's tomcat configuration dir: ${tomcat_conf_dir}"
+        [ -e ${tomcat_install_dir}/conf/${truststore_file##*/} ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/${truststore_file##*/} ${truststore_file} && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${keystore_file##*/} ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/${keystore_file##*/} ${keystore_file} && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ${tomcat_users_file} && echo -n "+"
 
-        [ -e ${tomcat_install_dir}/conf/hostkey.pem ]       && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/
-        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/
-        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ]    && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/
+        [ -e ${tomcat_install_dir}/conf/hostkey.pem ]    && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
         chown -R ${tomcat_user}.${tomcat_group} ${tomcat_conf_dir}
+        echo
 
-        #Edit the server.xml file to contain proper location of certificates
+        #Be sure that the server.xml file contains the explicit Realm specification needed.
+        if ! egrep -q '<Realm.*MemoryRealm.*pathname=' ${tomcat_install_dir}/conf/server.xml; then
+            checked_get ${tomcat_install_dir}/conf/server.xml ${esg_dist_url}/externals/bootstrap/node.server.xml $((force_install))
+            (( $? > 1 )) && popd && checked_done 1
+            chmod 600 ${tomcat_install_dir}/conf/server.xml
+            chown ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/conf/server.xml
+
+            local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
+        fi
+
+        #SET the server.xml variables to contain proper values
+        ((DEBUG)) && echo "Editing ${tomcat_install_dir}/conf/server.xml accordingly..."
         [[ ${tomcat_users_file} ]]   && eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_file} ]]     && eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_password} ]] && eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${keystore_file} ]]       && eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
-        [[ ${store_password} ]]      && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${keystore_password:-${ks_secret}} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${keystore_password:-${ks_secret}}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${keystore_alias} ]]      && eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo "*"
     fi
 
@@ -2352,27 +2365,27 @@ _glean_keystore_info() {
         debug_print "inspecting tomcat config file "
         echo -n "O"
         local value=""
-        value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "o" || echo -n "x"
+        value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n "o" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_file=${value}
         debug_print "keystore_file=${value}"
         unset value
 
-        value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
+        value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n "." || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
         debug_print "keystore_password=$(md5sum <(echo "${value}") | awk '{print $1}')"
         unset value
 
-        value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ":" || echo -n "x"
+        value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n ":" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_alias=${value}
         debug_print "keystore_alias=${value}"
         unset value
 
-        value=$(sed -n 's#.*truststoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "-" || echo -n "x"
+        value=$(sed -n 's#.*truststoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n "-" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_file=${value}
         debug_print "truststore_file=${value}"
         unset value
 
-        value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ")" || echo -n "x"
+        value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n ")" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_password=${value}
         debug_print "truststore_password=$(md5sum <(echo "${value}") | awk '{print $1}')"
         unset value
@@ -2391,6 +2404,11 @@ start_tomcat() {
     ((ret == 3)) && echo "Please resolve this issue before starting tomcat!" && checked_done $ret
 
     echo "Starting Tomcat (jsvc)..."
+
+    mkdir -p ${tomcat_install_dir}/work/Catalina
+    chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
+    chmod 755 ${tomcat_install_dir}/work
+    chmod 755 ${tomcat_install_dir}/work/Catalina
 
     pushd $tomcat_install_dir >& /dev/null
     [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -Xms1024m -XX:MaxPermSize=512m $java_opts"
@@ -2621,15 +2639,27 @@ sanity_check_web_xmls() {
     #Editing web.xml files for projects who use the authorizationService
     #----
     echo "sanity checking webapps' web.xml files accordingly... "
-    echo "  setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
-    find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | chown ${tomcat_user}.${tomcat_group}
-    echo "  inspecting web.xml files for proper authorization service assignment... "
+    echo " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
+    find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs chown ${tomcat_user}.${tomcat_group}
+    echo " |--inspecting web.xml files for proper authorization service assignment... "
     local web_xml_files=($(find ${tomcat_install_dir}/webapps | egrep -e '/web.xml$' | xargs grep /saml/soap/secure/authorizationService.htm | awk '{print $1}' | sort -u | sed 's@:@@'))
     sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'${esgf_host}'\2@g' ${web_xml_files[@]}
+
+    #-----check that all trustoreFile params are set appropriately-------
+    local param=trustoreFile
+    local pname=${truststore_file}
+    sed -i.bak '/<param-name>[ ]*'${param}'[ ]*/,/<\/param-value>/ s#\(<param-value>\)[ ]*[^<]*[ ]*\(</param-value>\)#\1'${pname}'\2#' ${web_xml_files[@]}
+    #--------------------------------------------------------------------
+
     local instruct_to_reboot=0
+    local ret=0;
     for((i=0;i<${#web_xml_files[@]};i++)); do
+        ((DEBUG)) && echo -n " inspecting $(readlink -f ${web_xml_files[i]}) "
         diff ${web_xml_files[${i}]}{,.bak} >& /dev/null
-        ((instruct_to_reboot+=$?))
+        ret=$?
+        ((instruct_to_reboot+=$ret))
+        ((ret > 0)) && echo -n "-" || echo -n "*"
+        ((DEBUG)) && echo
     done
     ((instruct_to_reboot)) && \
         printf "
@@ -2639,7 +2669,7 @@ sanity_check_web_xmls() {
         (esg-node restart)
         -------------------------------------------------------------------------------------------------
 
-"
+" || echo
 }
 
 #####
@@ -4506,7 +4536,7 @@ verify_thredds_credentials() {
     echo "Sorry, your credentials are not valid..."
 
     local answer="N"
-    read -e -p "Would you like to reset the credentials? [y/N]: " doreset
+    read -e -p "Would you like to reset the app server's credentials accordingly? [y/N]: " doreset
     [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
 
     local security_admin_password=""
@@ -5457,7 +5487,7 @@ show_svc_list() {
     echo "---------------------------"
     echo "Running Node Services... "; ((sel != 0)) && show_type || echo ""
     echo "---------------------------"
-    local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)")"
+    local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)")"
     eval ${command}
     local dashboard_pid=$(pgrep dashboard)
     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
@@ -6620,6 +6650,7 @@ main() {
                 --migrate-tomcat-credentials-to-esgf)
                     shift
                     migrate_tomcat_credentials_to_esgf
+                    sanity_check_web_xmls
                     exit $?
                     ;;
                 --generate-globus-key-and-csr)

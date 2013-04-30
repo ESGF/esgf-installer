@@ -2018,13 +2018,13 @@ migrate_tomcat_credentials_to_esgf() {
             local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
         fi
 
-        #Edit the server.xml file to contain proper location of certificates
+        #SET the server.xml variables to contain proper values
         ((DEBUG)) && echo "Editing ${tomcat_install_dir}/conf/server.xml accordingly..."
         [[ ${tomcat_users_file} ]]   && eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_file} ]]     && eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_password} ]] && eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${keystore_file} ]]       && eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
-        [[ ${store_password:-${ks_secret}} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password:-${ks_secret}}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${keystore_password:-${ks_secret}} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${keystore_password:-${ks_secret}}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${keystore_alias} ]]      && eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo "*"
     fi
 
@@ -2222,27 +2222,27 @@ _glean_keystore_info() {
         debug_print "inspecting tomcat config file "
         echo -n "O"
         local value=""
-        value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "o" || echo -n "x"
+        value=$(sed -n 's#.*keystoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n "o" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_file=${value}
         debug_print "keystore_file=${value}"
         unset value
 
-        value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
+        value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n "." || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
         debug_print "keystore_password=$(md5sum <(echo "${value}") | awk '{print $1}')"
         unset value
 
-        value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ":" || echo -n "x"
+        value=$(sed -n 's#.*keyAlias="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n ":" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && keystore_alias=${value}
         debug_print "keystore_alias=${value}"
         unset value
 
-        value=$(sed -n 's#.*truststoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "-" || echo -n "x"
+        value=$(sed -n 's#.*truststoreFile="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n "-" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_file=${value}
         debug_print "truststore_file=${value}"
         unset value
 
-        value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n ")" || echo -n "x"
+        value=$(sed -n 's#.*truststorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null | egrep -v '@@') && echo -n ")" || echo -n "x"
         [ $? == 0 ] && [ -n "${value}" ] && truststore_password=${value}
         debug_print "truststore_password=$(md5sum <(echo "${value}") | awk '{print $1}')"
         unset value

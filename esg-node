@@ -2024,7 +2024,7 @@ migrate_tomcat_credentials_to_esgf() {
         [[ ${truststore_file} ]]     && eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${truststore_password} ]] && eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${keystore_file} ]]       && eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
-        [[ ${store_password} ]]      && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password:-${ks_secret}}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+        [[ ${store_password:-${ks_secret}} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password:-${ks_secret}}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
         [[ ${keystore_alias} ]]      && eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo "*"
     fi
 

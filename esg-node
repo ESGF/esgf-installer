@@ -2004,8 +2004,8 @@ migrate_tomcat_credentials_to_esgf() {
         [ -e ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ${tomcat_users_file} && echo -n "+"
 
         [ -e ${tomcat_install_dir}/conf/hostkey.pem ]    && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/ && echo -n "+"
-        [ -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ] && [ ! -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
-        [ -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ] && [ ! -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ] && [ ! -e ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ] && [ ! -e ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
         chown -R ${tomcat_user}.${tomcat_group} ${tomcat_conf_dir}
         echo
 

@@ -130,7 +130,7 @@ init() {
     esgcet_version=${esgcet_version:-"2.11.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.14"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.15"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
@@ -165,7 +165,7 @@ init() {
     java_version=${java_version:-"1.6.0_45"} ; java_min_version=${java_min_version:-"1.6.0_45"}
     ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"6.0.36"} ; tomcat_min_version=${tomcat_min_version:-"6.0.36"}
+    tomcat_version=${tomcat_version:-"7.0.39"} ; tomcat_min_version=${tomcat_min_version:-"7.0.39"}
     tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
 
@@ -292,7 +292,7 @@ init() {
     cdat_repo_http=http://uv-cdat.llnl.gov/git/cdat.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
-    tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-6/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-7/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
     utils_url=${esg_dist_url}/utils
     thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war

@@ -2140,14 +2140,15 @@ migrate_tomcat_credentials_to_esgf() {
     #Only called when migration conditions are present.
     if [ "${tomcat_install_dir}/conf" != "${tomcat_conf_dir}" ]; then
         [ ! -e ${tomcat_conf_dir} ] && mkdir -p ${tomcat_conf_dir}
+        backup ${tomcat_install_dir}/conf
         ((DEBUG)) && echo "Moving credential files into node's tomcat configuration dir: ${tomcat_conf_dir}"
         [ -e ${tomcat_install_dir}/conf/${truststore_file##*/} ] && [ ! -e ${truststore_file} ] && mv -v ${tomcat_install_dir}/conf/${truststore_file##*/} ${truststore_file} && echo -n "+"
         [ -e ${tomcat_install_dir}/conf/${keystore_file##*/} ]   && [ ! -e ${keystore_file} ] && mv -v ${tomcat_install_dir}/conf/${keystore_file##*/} ${keystore_file} && echo -n "+"
         [ -e ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ]  && [ ! -e ${tomcat_users_file} ] && mv -v ${tomcat_install_dir}/conf/${tomcat_users_file##*/} ${tomcat_users_file} && echo -n "+"
 
         [ -e ${tomcat_install_dir}/conf/hostkey.pem ]    && [ ! -e ${tomcat_conf_dir}/hostkey.pem ] && mv -v ${tomcat_install_dir}/conf/hostkey.pem ${tomcat_conf_dir}/ && echo -n "+"
-        [ -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
-        [ -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && [ ! -e ${tomcat_install_dir}/conf/*-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/*-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ] && [ ! -e ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ] && mv -v ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/ && echo -n "+"
+        [ -e ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ] && [ ! -e ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ] && mv -v ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.pem ${tomcat_conf_dir}/ && echo -n "+"
         chown -R ${tomcat_user}.${tomcat_group} ${tomcat_conf_dir}
         echo
 

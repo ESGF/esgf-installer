@@ -2345,6 +2345,7 @@ setup_globus_online() {
         write_as_property GOesgfPortalPassword
 
         chmod 600 ${config_file}
+        chown ${tomcat_user:-tomcat}.${tomcat_group:-tomcat} ${config_file}
 
         local mkproxy_dist_url="${esg_dist_url}/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
         local mkproxy_dist_file=${mkproxy_dist_url##*/}

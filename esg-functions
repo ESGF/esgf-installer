@@ -208,7 +208,7 @@ checked_done() {
         echo "Also please review the installation FAQ it may assist you"
         echo "http://esgf.org/wiki/ESGFNode/FAQ"
         echo ""
-        exit 1
+        exit $1
     fi
     return 0
 }

@@ -126,7 +126,8 @@ init() {
 
     #NOTE: esg-dist = v1.0.6
 
-    cdat_version=${cdat_version:-"esgf-v0.0.1"}
+    #cdat_version=${cdat_version:-"esgf-v0.0.1"}
+    cdat_version=${cdat_version:-"1.3.1"}
     esgcet_version=${esgcet_version:-"2.11.1"}
 
     #see esgf-node-manager project:
@@ -166,6 +167,7 @@ init() {
     ant_version=${ant_version:-"1.8.3"} ; ant_min_version=${ant_min_version:-"1.8.3"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"7.0.39"} ; tomcat_min_version=${tomcat_min_version:-"7.0.39"}
+    cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
     tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
 
@@ -187,7 +189,8 @@ init() {
     unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
-    cdat_home=${CDAT_HOME:-${install_prefix}/cdat}
+    cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
+    cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
@@ -216,6 +219,7 @@ init() {
     export PGUSER=${postgress_user}
     export PGHOST=${postgress_host}
     export PGPORT=${postgress_port}
+    export CMAKE_HOME=${cmake_install_dir}
     export CDAT_HOME=${cdat_home}
     export JAVA_HOME=${java_install_dir}
     export JAVA_OPTS=${java_opts}
@@ -225,7 +229,7 @@ init() {
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
 
-    myPATH=$OPENSSL_HOME/bin:$CURL_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
+    myPATH=$OPENSSL_HOME/bin:$CURL_HOME/bin:$CMAKE_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
     myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
     export PATH=$(_path_unique $myPATH:$PATH)
     export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
@@ -288,8 +292,10 @@ init() {
     postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
-    cdat_repo=git://uv-cdat.llnl.gov/cdat.git
-    cdat_repo_http=http://uv-cdat.llnl.gov/git/cdat.git
+    cmake_workdir=${workdir}/cmake
+    cmake_repo=git://cmake.org/cmake.git
+    cdat_repo=git://github.com/UV-CDAT/uvcdat.git
+    cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
     tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
@@ -1346,12 +1352,107 @@ test_postgress() {
 }
 
 
+#Needed for UV-CDAT build...
+setup_cmake() {
+
+    echo -n "Checking for CMake >=  ${cmake_min_version} "
+    check_version_with cmake "cmake --version | awk '{print \$3}' | sed -re 's/([^-]*)-.*/\1/'" ${cmake_min_version} ${cmake_max_version}
+    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+
+    echo
+    echo "*******************************"
+    echo "Setting up CMake ${cmake_version}"
+    echo "*******************************"
+    echo
+
+    local default="Y"
+    ((force_install)) && default="N"
+    local dosetup
+    if [ -x ${cmake_install_dir}/bin/cmake ]; then
+        echo "Detected an existing CMAKE installation..."
+        read -e -p "Do you want to continue with CMAKE installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+        [ -z ${dosetup} ] && dosetup=${default}
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping CMAKE installation and setup - will assume CMAKE is setup properly"
+            return 0
+        fi
+        echo
+    fi
+
+    #make top level directory for cmake repo clone
+    mkdir -p ${cmake_workdir%/*}
+    chmod a+rw ${cmake_workdir%/*}
+
+    if [ ! -d "${cmake_workdir}" ]; then
+        echo "Cloning CMake repository ${cmake_repo}..."
+        git clone ${cmake_repo} ${cmake_workdir}
+        [ $? != 0 ] && echo "ERROR: Could not clone CMake repository" && checked_done 1
+    fi
+
+    (
+        unset LD_LIBRARY_PATH
+	unset CFLAGS
+	unset LDFLAGS
+
+        ((DEBUG)) && printf "\n-----\n cd ${cmake_workdir} \n-----\n"
+        cd ${cmake_workdir}
+
+        ((DEBUG)) && printf "\n-----\n git checkout v${cmake_version} \n-----\n"
+        git checkout v${cmake_version}
+        [ $? != 0 ] && echo "ERROR: Could not checkout CMake @ v${cmake_version}" && checked_done 2
+
+        ((DEBUG)) && printf "\n-----\n ./configure --parallel=${num_cpus} --prefix=${cmake_install_dir} \n-----\n"
+        ./configure --parallel=${num_cpus} --prefix=${cmake_install_dir}
+        [ $? != 0 ] && echo "ERROR: Could not configure CMake successfully" && checked_done 3
+
+        ((DEBUG)) && printf "\n-----\n make -j ${num_cpus} \n-----\n"
+        make -j ${num_cpus}
+        [ $? != 0 ] && echo "ERROR: Could not make  CMake successfully" && checked_done 4
+
+        ((DEBUG)) && printf "\n-----\n make install \n-----\n"
+        make install
+        [ $? != 0 ] && echo "ERROR: Could not install  CMake successfully" && checked_done 5
+    )
+    echo "returning from build subshell with code: [$?]"
+    (( $? > 1 )) && echo "ERROR: Could not setup CMake successfully aborting... " && checked_done 1
+
+    cmake_version=$(${cmake_install_dir}/bin/cmake --version | awk '{print $3}' | sed -re 's/([^-]*)-.*/\1/')
+    printf "\ninstalled CMake version = ${cmake_version}\n\n"
+
+    write_cmake_env
+    write_cmake_install_log
+    checked_done 0
+}
+
+write_cmake_env() {
+    ((show_summary_latch++))
+    echo "export CMAKE_HOME=${cmake_install_dir}" >> ${envfile}
+    prefix_to_path PATH ${cmake_install_dir}/bin >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+    return 0
+}
+
+write_cmake_install_log() {
+    echo "$(date ${date_format}) cmake=${cmake_version} ${cmake_install_dir}" >> ${install_manifest}
+    dedup ${install_manifest}
+    return 0
+}
+
+
 #####
-# Python/CDMS
+# CDAT = Python+CDMS
 #####
 setup_cdat() {
-    echo -n "Checking for CDAT (Python+CDMS) ${cdat_version}"
-    check_version_with "cdat" '${cdat_home}/bin/python -c "import cdat_info; print cdat_info.Version"' ${cdat_version}
+    echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version}"
+
+    #-----------CDAT -> UVCDAT Migration------------------
+    #rewrite cdat_home to new uvcdat location
+    #-----------------------------------------------------
+    cdat_home=$(perl -pe 's/(?<!uv)cdat/uvcdat/' <<<${cdat_home})
+    CDAT_HOME=${cdat_home}
+    #-----------------------------------------------------
+
+    check_version_with "cdat" "${cdat_home}/bin/python -c \"import cdat_info; print cdat_info.Version\"" ${cdat_version} 2> /dev/null
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -1375,31 +1476,51 @@ setup_cdat() {
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
-    if [ ! -d ${workdir}/cdat ]; then
+    local cdat_git_protocol="git://"
+    if [ ! -d ${workdir}/uvcdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
-        git clone ${cdat_repo}
-        if [ ! -d ${workdir}/cdat/.git ]; then
+        ((DEBUG)) && echo "${cdat_repo}"
+        git clone ${cdat_repo} uvcdat
+        if [ ! -d ${workdir}/uvcdat/.git ]; then
+            cdat_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            git clone ${cdat_repo_http}
-            [ ! -d ${workdir}/cdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            ((DEBUG)) && echo "${cdat_repo_http}"
+            git clone ${cdat_repo_http} uvcdat
+            [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
-    cd cdat >& /dev/null
+    cd uvcdat >& /dev/null
     git checkout ${cdat_version}
     [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
-
-    echo "cleaning things out"
-    ./clean_script
 
     #NOTE:
     #cdms configuration with --enable-esg flag looks for pg_config in
     #$postgress_install_dir/bin.  This location is created and added
     #to the executable PATH by the 'setup_postgress' function.
 
-    echo "./configure --prefix=$cdat_home --enable-esg --with-cpus=${num_cpus} $([ -d "${openssl_install_dir}" ] && echo "--with-openssl=${openssl_install_dir}")"
-    ./configure --prefix=${cdat_home} --enable-esg --with-cpus=${num_cpus} $([ -d "${openssl_install_dir}" ] && echo "--with-openssl=${openssl_install_dir}")
-    [ $? != 0 ] && echo " ERROR: Configure did not complete successfully" && popd && checked_done 1
-    make
+    (
+        unset LD_LIBRARY_PATH
+        unset PYTHONPATH
+	unset CFLAGS
+	unset LDFLAGS
+
+        local workdir_build=${workdir}/uvcdat_build
+        mkdir -p ${workdir_build}
+        pushd ${workdir_build}
+        #(zlib patch value has to be 3,5,7 - default is 3)
+        local zlib_value=$(pkg-config --modversion zlib | sed -n -re 's/(.)*/\1/p' | sed -n -re '/(3|5|7)/p') ; [[ ! ${zlib_value} ]] && zlib_value=3
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
+        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
+
+        make -j ${num_cpus}
+        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (4)" && popd && checked_done 1
+
+        popd >& /dev/null
+    )
     [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
@@ -1407,6 +1528,9 @@ setup_cdat() {
 
     popd >& /dev/null
     echo
+
+    #NOTE: order is important in next three calls...
+    _housekeeping_cdat_to_uvcdat
     write_cdat_env
     write_cdat_install_log
     checked_done 0
@@ -1417,23 +1541,42 @@ write_cdat_env() {
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
     prefix_to_path PATH ${cdat_home}/bin >> ${envfile}
     prefix_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
-    prefix_to_path LD_LIBRARY_PATH ${cdat_home}Externals/lib >> ${envfile}
+    prefix_to_path LD_LIBRARY_PATH ${cdat_home}/Externals/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
 
 write_cdat_install_log() {
-    echo "$(date ${date_format}) cdat=${cdat_version} ${cdat_home}" >> ${install_manifest}
+    echo "$(date ${date_format}) uvcdat=${cdat_version} ${cdat_home}" >> ${install_manifest}
 
     #Parse the cdat installation config.log file and entries to the install log
-    if [ -e ${workdir}/cdat/config.log ]; then
-        awk '/building/ {print "'"$(date ${date_format})"' cdat->"$(NF-1)":"$2"="$NF" '"${cdat_home}"'"}' ${workdir}/cdat/config.log >> ${install_manifest}
+    local build_log=${workdir}/uvcdat_build/build_info.txt
+    if [ -e "${build_log}" ]; then
+        awk '{print "'"$(date ${date_format})"' uvcdat->"$1"="$2" '"${cdat_home}"'"}' ${build_log} | sed '$d' >> ${install_manifest}
     else
-        echo " WARNING: Could not find cdat config.log file [${workdir}/cdat/config.log] installation log entries could not be generated!"
+        echo " WARNING: Could not find cdat build logfile [${build_log}], installation log entries could not be generated!"
     fi
 
     dedup ${install_manifest}
     return 0
+}
+
+#------------------------------------------------------------
+#Special function for the upgrade scenario (cdat -> uvcdat)
+#------------------------------------------------------------#
+_housekeeping_cdat_to_uvcdat() {
+    #Determine the install directory for cdat from the install_manifest 
+    #(NOTE: Whatever the resulting path is, it must contain the string "cdat")
+    local cdat_installed_dir=$(sed -nre 's/.*[^v]cdat=([^ ]*)([^ ]*.*cdat)/\2/p' ${install_manifest} | tr -d " ")
+    [[ ${cdat_installed_dir} ]] && backup ${cdat_installed_dir} && rm -rf ${cdat_installed_dir}
+
+    #Remove all cdat install manifest entries from install manifest (NOTE: Not touching new uvcdat entries)
+    sed -ire '/[^v]cdat/d' ${install_manifest}
+
+    #reset library path to point to new uvcdat location
+    myLD_LIBRARY_PATH=$(perl -pe 's/(?<!uv)cdat/uvcdat/' <<<${myLD_LIBRARY_PATH})
+    export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
+    dedup ${envfile} && source ${envfile}
 }
 
 
@@ -6825,6 +6968,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
         [ $((sel & TEST_BIT))    != 0 ] && test_postgress
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_cmake
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet

@@ -171,7 +171,7 @@ init() {
     tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
 
-    python_version=${python_version:-"2.6"}
+    python_version=${python_version:-"2.7"}
 
     #--------------------------------
     # Script vars (~external)

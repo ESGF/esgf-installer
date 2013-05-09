@@ -1957,7 +1957,7 @@ setup_tomcat() {
         make -j ${num_cpus}
         [ -x ./jsvc ] && cp ./jsvc ${tomcat_install_dir}/bin
     fi
-    [ ! -e /usr/lib/libcap.so ] && [ -e ln -s /lib${word_size}/libcap.so ] && ln -s /lib64/libcap.so /usr/lib/libcap.so >& /dev/null
+    [ ! -e /usr/lib/libcap.so ] && [ -e /lib${word_size}/libcap.so ] && ln -s /lib${word_size}/libcap.so /usr/lib/libcap.so >& /dev/null
     popd >& /dev/null
     )
     #----------

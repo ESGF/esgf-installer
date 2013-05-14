@@ -1462,7 +1462,7 @@ setup_cdat() {
     echo "*******************************"
     echo
 
-    local dosetup
+    local dosetup="N"
     if [ -x ${cdat_home}/bin/cdat ]; then
         echo "Detected an existing CDAT installation..."
         read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
@@ -1505,6 +1505,7 @@ setup_cdat() {
 	unset CFLAGS
 	unset LDFLAGS
 
+        [ -d ${workdir_build} ] && rm -rf ${workdir_build}
         mkdir -p ${workdir_build}
         pushd ${workdir_build}
         #(zlib patch value has to be 3,5,7 - default is 3)
@@ -1533,7 +1534,6 @@ setup_cdat() {
     _housekeeping_cdat_to_uvcdat
     write_cdat_env
     write_cdat_install_log
-    rm -rf ${workdir_build}
     checked_done 0
 }
 
@@ -1748,7 +1748,12 @@ setup_esgcet() {
 
     if [ "${mode}" = "I" ]; then
 
-        echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+        if ((DEBUG)); then
+            echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+        else
+            echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
+        fi
+
         ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${publisher_db_user_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
         [ $? != 0 ] && popd && checked_done 1
     fi

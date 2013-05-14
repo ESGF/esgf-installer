@@ -853,6 +853,12 @@ append_to_path() {
     # Example:
     #   append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
     #
+    #   Would result in the entry:
+    #     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/foo/lib:/bar/lib
+    #
+    # NOTE: In the context of system setup this is usually
+    #       NOT WHAT YOU WANT - use prefix_to_path (below)
+    #
     local sep=':'
     local var="${1}"
     shift
@@ -884,6 +890,12 @@ prefix_to_path() {
     #
     # Example:
     #   prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+    #
+    #   Would result in the entry:
+    #     export LD_LIBRARY_PATH=/foo/lib:/bar/lib:$LD_LIBRARY_PATH
+    #
+    # NOTE: In the context of system setup this is usually
+    #       WHAT YOU WANT; that your libs are found before any user libs are
     #
     local sep=':'
     local var="${1}"

@@ -220,8 +220,8 @@ export GLOBUS_SYS_ACCT=${globus_sys_acct}  #TODO: why is this an exported var?
 #      pull test_publication into separate test publication script?
 #      Hmmmm.... No harm in doubling up, but come back and make crispy
 #      and clean later
-append_to_path LD_LIBRARY_PATH $GLOBUS_LOCATION/lib >> ${envfile}
-append_to_path PATH $GLOBUS_LOCATION/bin >> ${envfile}
+prefix_to_path LD_LIBRARY_PATH $GLOBUS_LOCATION/lib >> ${envfile}
+prefix_to_path PATH $GLOBUS_LOCATION/bin >> ${envfile}
 dedup ${envfile} && source ${envfile}
 
 

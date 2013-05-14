@@ -1498,13 +1498,13 @@ setup_cdat() {
     #$postgress_install_dir/bin.  This location is created and added
     #to the executable PATH by the 'setup_postgress' function.
 
+    local workdir_build=${workdir}/uvcdat_build
     (
         unset LD_LIBRARY_PATH
         unset PYTHONPATH
 	unset CFLAGS
 	unset LDFLAGS
 
-        local workdir_build=${workdir}/uvcdat_build
         mkdir -p ${workdir_build}
         pushd ${workdir_build}
         #(zlib patch value has to be 3,5,7 - default is 3)
@@ -1533,6 +1533,7 @@ setup_cdat() {
     _housekeeping_cdat_to_uvcdat
     write_cdat_env
     write_cdat_install_log
+    rm -rf ${workdir_build}
     checked_done 0
 }
 
@@ -1559,6 +1560,11 @@ write_cdat_install_log() {
 
     dedup ${install_manifest}
     return 0
+}
+
+test_cdat() {
+    echo -n "Checking for cdms2 module... "
+    python -c "import cdms2" >& /dev/null && echo "[OK]" || echo "[FALSE]"
 }
 
 #------------------------------------------------------------
@@ -6970,6 +6976,7 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && test_postgress
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_cmake
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
+        [ $((sel & TEST_BIT))    != 0 ] && test_cdat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}

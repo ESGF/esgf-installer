@@ -5524,6 +5524,7 @@ run_startup_hooks() {
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
     (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
+    (source ${scripts_dir}/esg-search >& /dev/null && search_startup_hook)
 
     #------------------------------------------
     #When starting up pull down necessary federation certificates

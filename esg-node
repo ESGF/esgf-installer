@@ -2077,12 +2077,12 @@ EOF
     [ ! -e "${tomcat_install_dir}/logs/catalina.out" ] && echo "Hmm... Don't see [${tomcat_install_dir}/logs/catalina.out], creating..." \
         && touch ${tomcat_install_dir}/logs/catalina.out \
         && chmod 644 ${tomcat_install_dir}/logs/catalina.out \
-        && chown ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+        && chown ${tomcat_user:-"tomcat"}:${tomcat_group:-"tomcat"} ${tomcat_install_dir}/logs/catalina.out
 
     [ ! -e "${tomcat_install_dir}/logs/catalina.err" ] && echo "Hmm... Don't see [${tomcat_install_dir}/logs/catalina.err], creating..." \
         && touch ${tomcat_install_dir}/logs/catalina.err \
         && chmod 644 ${tomcat_install_dir}/logs/catalina.err \
-        && chown ${tomcat_user:-"tomcat"} ${tomcat_group:-"tomcat"}
+        && chown ${tomcat_user:-"tomcat"}:${tomcat_group:-"tomcat"} ${tomcat_install_dir}/logs/catalina.err
     #------
 
     [ ! -e /etc/cron.daily/logrotate ] && echo "WARNING: Not able to find script [/etc/cron.daily/logrotate]" && return 3

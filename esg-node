@@ -2205,9 +2205,10 @@ configure_tomcat() {
     local genreq=N
 
     fetch_file=server.xml
-    checked_get ${tomcat_install_dir}/conf/${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file} $((force_install))
+    checked_get ${tomcat_install_dir}/conf/${fetch_file} ${esg_dist_url}/externals/bootstrap/node.${fetch_file}-v${tomcat_version%%.*} $((force_install))
     (( $? > 1 )) && popd && checked_done 1
-    chmod 600 ${fetch_file}
+    chmod 600 ${tomcat_install_dir}/conf/${fetch_file}
+    chown ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/conf/${fetch_file}
 
     #Create a keystore in $tomcat_conf_dir
     echo "Keystore setup: "
@@ -2312,12 +2313,13 @@ configure_tomcat() {
     #NOTE: The truststore uses the java default password: "changeit"
 
     #Edit the server.xml file to contain proper location of certificates
-            eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' server.xml"; echo -n "*"
-            eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' server.xml"; echo -n "*"
-            eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' server.xml"; echo -n "*"
-            eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' server.xml"; echo -n "*"
-            eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${store_password}\"#g' server.xml"; echo -n "*"
-            eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' server.xml"; echo "*"
+            ((DEBUG)) && echo "Editing ${tomcat_install_dir}/conf/server.xml accordingly..."
+            [[ ${tomcat_users_file} ]]   && eval "perl -p -i -e 's#(?<=pathname=)\"([^\"]*)\"#\"${tomcat_users_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+            [[ ${truststore_file} ]]     && eval "perl -p -i -e 's#(?<=truststoreFile=)\"([^\"]*)\"#\"${truststore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+            [[ ${truststore_password} ]] && eval "perl -p -i -e 's#(?<=truststorePass=)\"([^\"]*)\"#\"${truststore_password}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+            [[ ${keystore_file} ]]       && eval "perl -p -i -e 's#(?<=keystoreFile=)\"([^\"]*)\"#\"${keystore_file}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+            [[ ${keystore_password:-${ks_secret}} ]] && eval "perl -p -i -e 's#(?<=keystorePass=)\"([^\"]*)\"#\"${keystore_password:-${ks_secret}}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo -n "*"
+            [[ ${keystore_alias} ]]      && eval "perl -p -i -e 's#(?<=keyAlias=)\"([^\"]*)\"#\"${keystore_alias}\"#g' ${tomcat_install_dir}/conf/server.xml"; echo "*"
 
             add_my_cert_to_truststore --keystore-pass ${store_password}
 

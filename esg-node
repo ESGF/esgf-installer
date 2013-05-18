@@ -2428,7 +2428,7 @@ start_tomcat() {
     chmod 755 ${tomcat_install_dir}/work/Catalina
 
     pushd $tomcat_install_dir >& /dev/null
-    [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -Xms1024m -XX:MaxPermSize=512m $java_opts"
+    [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -server -Xms1024m -XX:MaxPermSize=512m $java_opts"
     jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
     echo "$jsvc_launch_command"
     JAVA_HOME=${java_install_dir} ./bin/jsvc \

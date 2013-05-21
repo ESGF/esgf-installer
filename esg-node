@@ -168,7 +168,7 @@ init() {
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"7.0.39"} ; tomcat_min_version=${tomcat_min_version:-"7.0.39"}
     cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
-    tds_version=${tds_version:-"4.2.10"} ; tds_min_version=${tds_min_version:-"4.2.10"}
+    tds_version=${tds_version:-"4.3.16"} ; tds_min_version=${tds_min_version:-"4.3.16"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
 
     python_version=${python_version:-"2.7"}
@@ -2438,7 +2438,7 @@ start_tomcat() {
     chmod 755 ${tomcat_install_dir}/work/Catalina
 
     pushd $tomcat_install_dir >& /dev/null
-    [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -Xms1024m -XX:MaxPermSize=512m $java_opts"
+    [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -server -Xms1024m -XX:MaxPermSize=512m $java_opts"
     jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
     echo "$jsvc_launch_command"
     JAVA_HOME=${java_install_dir} ./bin/jsvc \

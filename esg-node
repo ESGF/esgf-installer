@@ -1994,7 +1994,7 @@ setup_tomcat() {
 
         echo "upgrade migration complete"
     else
-        configure_tomcat ${keystore_password:-${security_admin_password}}
+        configure_tomcat ${keystore_password:-${security_admin_password:-$(cat ${ks_secret_file} 2> /dev/null)}}
     fi
     #----------------------------------
 
@@ -2186,6 +2186,15 @@ migrate_tomcat_credentials_to_esgf() {
 
 }
 
+#Utility function to check that a given password is valid for the global scoped ${keystore_file}
+_check_keystore_password() {
+    local store_password=${1}
+    [ ! -e ${keystore_file} ] && echo "[FAIL] No keystore file present [${keystore_file}]" && return 1
+    $java_install_dir/bin/keytool -list -keystore ${keystore_file} -storepass ${store_password} >& /dev/null
+    [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} with provided password. Try again..." && return 2
+    return 0
+}
+
 configure_tomcat() {
     #----------------------------
     # TOMCAT Configuration...
@@ -2212,7 +2221,8 @@ configure_tomcat() {
 
     #Create a keystore in $tomcat_conf_dir
     echo "Keystore setup: "
-    local store_password=${1}
+    local store_password=${1:-$(cat ${ks_secret_file} 2> /dev/null)}
+
     if [ ! -e ${keystore_file} ]; then
         echo "Launching Java's keytool:"
 

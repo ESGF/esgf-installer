@@ -2152,6 +2152,8 @@ edit_myproxy_server_config() {
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@esgf_home\\@\\@#${esgf_home}#g' ${tfile}"
     echo -n "*"
+    sed  -i -r 's/(.*certificate_issuer_key_passphrase)[ ]*([^"].*[^"])[ ]*$/\1 "\2"/' ${tfile}
+    echo -n "<+>"
     echo " [OK]"
     
     chmod 600 ${tfile}

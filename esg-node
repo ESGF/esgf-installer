@@ -2214,6 +2214,7 @@ configure_tomcat() {
     chmod 600 ${tomcat_install_dir}/conf/${fetch_file}
     chown ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/conf/${fetch_file}
 
+    echo "Looking for keystore [${keystore_file}]... $([ -e ${keystore_file} ] && echo "(found it)" || echo "(don't see one)... ")"
     #Create a keystore in $tomcat_conf_dir
     echo "Keystore setup: "
     local store_password=${1:-$(cat ${ks_secret_file} 2> /dev/null)}

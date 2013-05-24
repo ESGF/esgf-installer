@@ -3587,7 +3587,7 @@ add_my_cert_to_truststore() {
             --keystore | -ks)
                 shift
                 keystore_file_=$1
-                debug_print "keystore_password = [${keystore_password_}]"
+                debug_print "keystore_file = [${keystore_file_}]"
                 ;;
             --keystore-pass | -kpass)
                 shift
@@ -3628,7 +3628,7 @@ add_my_cert_to_truststore() {
 
 
     local store_password
-    if [ "${keystore_password}" != "${keystore_password_}" ]; then
+    if [ "${keystore_password:=$(cat ${ks_secret_file} 2> /dev/null)}" != "${keystore_password_}" ]; then
         local verify_password
         while [ 1 ]; do
             echo
@@ -3639,7 +3639,7 @@ add_my_cert_to_truststore() {
             read -e -s -p "Please re-enter the password for this keystore: " verify_password
             if [ "${store_password}" = "${verify_password}" ] ; then
 
-                $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${store_password} >& /dev/null
+                $java_install_dir/bin/keytool -list -keystore ${keystore_file_} -storepass ${store_password} >& /dev/null
                 [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} with provided password. Try again..." && continue;
                 keystore_password_=${store_password}
                 echo

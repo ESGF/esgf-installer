@@ -2279,16 +2279,16 @@ configure_tomcat() {
     read -e -p "Do you wish to generate a Certificate Signing Request at this time? $([ $genreq = "Y" ] && echo "[Y/n]" || echo "[y/N]") " answer
             [ -n "${answer}" ] && genreq=${answer}
             unset answer
-            echo " -> [${genreq}]"
+            ((DEBUG)) && echo " -> [${genreq}]"
             if [ "${genreq}" == "Y" ] || [ "${genreq}" == "y" ]; then
                 echo "Generating Certificate Signing Request..."
-        #-------------------------------------------------
-        #Previous way, when we were generating the request directly from the keystore via keytool
-        #${java_install_dir}/bin/keytool -certreq -alias ${keystore_alias} -keystore ${keystore_file} -file ${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr
-        #[ $? != 0 ] && echo " ERROR: keytool certreq command failed"
-        #-------------------------------------------------
+                #-------------------------------------------------
+                #Previous way, when we were generating the request directly from the keystore via keytool
+                #${java_install_dir}/bin/keytool -certreq -alias ${keystore_alias} -keystore ${keystore_file} -file ${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr
+                #[ $? != 0 ] && echo " ERROR: keytool certreq command failed"
+                #-------------------------------------------------
 
-        #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
+                #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
                 local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
                 sleep 1
                 generate_ssl_key_and_csr ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem ${dn}

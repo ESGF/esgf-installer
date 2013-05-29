@@ -203,10 +203,13 @@ get_orp_libs() {
     xercesImpl_version=${xercesImpl_version:-"2.9.1"}
     xml_apis_version=${xml_apis_version:-"1.3.04"}
     xmlsec_version=${xmlsec_version:-"1.4.2"}
-    joda_version=${joda_version:-"1.6"}
-    slf4j_version="1.6.1"
+    joda_version=${joda_version:-"2.0"}
+    commons_io_version=${commons_io_version:-"2.4"}
+    slf4j_version="1.6.4"
 
-    spring_version=${spring_version:-"2.5"}
+    spring_version=${spring_version:-"3.1.1.RELEASE"}
+    saxon_dom_version=${saxon_dom_version:-"8"}
+    saxon_version=${saxon_version:-"8.5.1"}
 
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
@@ -225,11 +228,14 @@ get_orp_libs() {
     xml_apis_jar=xml-apis-${xml_apis_version}.jar
     xmlsec_jar=xmlsec-${xmlsec_version}.jar
     joda_time_jar=joda-time-${joda_version}.jar
+    commons_io_jar=commons-io-${commons_io_version}.jar
     slf4j_api_jar=slf4j-api-${slf4j_version}.jar
     slf4j_log4j_jar=slf4j-log4j12-${slf4j_version}.jar
 
-    spring_jar=spring-${spring_version}.jar
+    spring_jar=spring-core-${spring_version}.jar
     spring_webmvc_jar=spring-webmvc-${spring_version}.jar
+    saxon_dom_jar=saxon${saxon_dom_version}-dom.jar
+    saxon_jar=saxon-${saxon_version}.jar
 
     if [ -d ${dest_dir} ]; then
         #move over SAML libraries...
@@ -249,6 +255,7 @@ get_orp_libs() {
         [ ! -e ${dest_dir}/${xml_apis_jar} ]   && cp -v ${src_dir}/${xml_apis_jar}   ${dest_dir}
         [ ! -e ${dest_dir}/${xmlsec_jar} ]     && cp -v ${src_dir}/${xmlsec_jar}     ${dest_dir}
         [ ! -e ${dest_dir}/${joda_time_jar} ]  && cp -v ${src_dir}/${joda_time_jar}  ${dest_dir}
+        [ ! -e ${dest_dir}/${commons_io_jar} ] && cp -v ${src_dir}/${commons_io_jar}  ${dest_dir}
         [ ! -e ${dest_dir}/${slf4j_api_jar} ]  && cp -v ${src_dir}/${slf4j_api_jar}  ${dest_dir}
         [ ! -e ${dest_dir}/${slf4j_log4j12_jar} ] && cp -v ${src_dir}/${slf4j_log4j12_jar} ${dest_dir}
 
@@ -267,6 +274,8 @@ get_orp_libs() {
         local make_backup_file=0 #Do NOT make backup file
         checked_get ${dest_dir}/${spring_jar} ${esg_dist_url}/filters/${spring_jar} $((force_install)) $((make_backup_file))
         checked_get ${dest_dir}/${spring_webmvc_jar} ${esg_dist_url}/filters/${spring_webmvc_jar} $((force_install)) $((make_backup_file))
+        checked_get ${dest_dir}/${saxon_dom_jar} ${esg_dist_url}/filters/${saxon_dom_jar} $((force_install)) $((make_backup_file))
+        checked_get ${dest_dir}/${saxon_jar} ${esg_dist_url}/filters/${saxon_jar} $((force_install)) $((make_backup_file))
 
         checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
         checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
@@ -276,6 +285,9 @@ get_orp_libs() {
         echo "cleaning up (removing) other, unnecessary, orp/security project jars from ${dest_dir} ..."
         rm -vf $(/bin/ls ${dest_dir}/${esg_orp_jar%-*}-*.jar | grep -v ${esg_orp_version})
         rm -vf $(/bin/ls ${dest_dir}/${esgf_security_jar%-*}-*.jar | grep -v ${esgf_security_version})
+        #---
+        #for saxon-8.5.1.jar - to make sure remove all other versions present...
+        rm -vf $(/bin/ls ${dest_dir}/${saxon_jar%-*}-*.jar | grep -v ${saxon_jar_version})
         #---
 
         chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}

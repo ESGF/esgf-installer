@@ -274,8 +274,8 @@ get_orp_libs() {
         local make_backup_file=0 #Do NOT make backup file
         checked_get ${dest_dir}/${spring_jar} ${esg_dist_url}/filters/${spring_jar} $((force_install)) $((make_backup_file))
         checked_get ${dest_dir}/${spring_webmvc_jar} ${esg_dist_url}/filters/${spring_webmvc_jar} $((force_install)) $((make_backup_file))
-        checked_get ${dest_dir}/${saxon_dom_jar} ${esg_dist_url}/filters/${saxon_dom_jar} $((force_install)) $((make_backup_file))
-        checked_get ${dest_dir}/${saxon_jar} ${esg_dist_url}/filters/${saxon_jar} $((force_install)) $((make_backup_file))
+        #checked_get ${dest_dir}/${saxon_dom_jar} ${esg_dist_url}/filters/${saxon_dom_jar} $((force_install)) $((make_backup_file))
+        #checked_get ${dest_dir}/${saxon_jar} ${esg_dist_url}/filters/${saxon_jar} $((force_install)) $((make_backup_file))
 
         checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
         checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
@@ -287,7 +287,7 @@ get_orp_libs() {
         rm -vf $(/bin/ls ${dest_dir}/${esgf_security_jar%-*}-*.jar | grep -v ${esgf_security_version})
         #---
         #for saxon-8.5.1.jar - to make sure remove all other versions present...
-        rm -vf $(/bin/ls ${dest_dir}/${saxon_jar%-*}-*.jar | grep -v ${saxon_version})
+        #rm -vf $(/bin/ls ${dest_dir}/${saxon_jar%-*}-*.jar | grep -v ${saxon_version})
         #---
 
         chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}

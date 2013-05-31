@@ -1825,7 +1825,7 @@ test_esgcet() {
     checked_done 0
 }
 
-esgcet_setup_hook() {
+esgcet_startup_hook() {
     echo -n "ESGCET (Publisher) Startup Hook: Setting perms... "
     [ ! -e ${publisher_home}/${publisher_config} ] && echo " Could not find publisher configuration file [${publisher_home}/${publisher_config}] :-(" && return 1
     chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 755 ${HOME}
@@ -5544,7 +5544,7 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo "Running startup hooks..."
-    ( escet_setup_hook )
+    ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)

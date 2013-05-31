@@ -2355,7 +2355,7 @@ configure_tomcat() {
 
 setup_root_app() {
 
-    [ -d "${tomcat_install_dir}/webapps/ROOT" ] && $(grep -q REFRESH index.html >& /dev/null) && echo "ROOT app in place... [OK]" && return 0
+    [ -d "${tomcat_install_dir}/webapps/ROOT" ] && $(grep -q REFRESH ${tomcat_install_dir}/webapps/ROOT/index.html >& /dev/null) && echo "ROOT app in place... [OK]" && return 0
     echo "Oops, Don't see ESGF ROOT web application"
 
     [ -d "${tomcat_install_dir}/webapps/ROOT" ] && backup ${tomcat_install_dir}/webapps/ROOT

@@ -1828,7 +1828,7 @@ test_esgcet() {
 esgcet_startup_hook() {
     echo -n "ESGCET (Publisher) Startup Hook: Setting perms... "
     [ ! -e ${publisher_home}/${publisher_config} ] && echo " Could not find publisher configuration file [${publisher_home}/${publisher_config}] :-(" && return 1
-    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 755 ${HOME}
+    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 755 ${HOME} && echo ":-)"
     [ $? != 0 ] && echo ":-/" && return 2
 }
 

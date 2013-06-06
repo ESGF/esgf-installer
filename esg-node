@@ -65,6 +65,9 @@
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
 
+#note on getting bash version...
+#bash --version | head -n +1 |  sed -n -e 's/.*version[ ]*\([^(-]*\).*/\1/p'
+
 export LANG=POSIX
 umask 022
 
@@ -345,7 +348,7 @@ init_structure() {
     if [ ! -e ${tomcat_conf_dir} ]; then mkdir -p ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
     if [ ! -e ${config_file} ]; then touch ${config_file} && ((config_check--)); else ((config_check--)); fi
     debug_print ${config_check}
-    ((config_check != 0 )) && echo "ERROR: checklist incomplete [FAIL]" && checked_done 1 || verbose_print "checklist [OK]"
+    ((config_check != 0 )) && echo "ERROR: checklist incomplete $([FAIL])" && checked_done 1 || verbose_print "checklist $([OK])"
     #--------------
 
     chmod 777 ${esg_etc_dir} 2> /dev/null
@@ -420,41 +423,41 @@ write_paths() {
 check_prerequisites() {
 
 printf "
-
+\033[01;31m
   EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
   E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
   E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
   EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
-    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF
-    E:::::E             S:::::S            G:::::G                F:::::F             
-    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF   
-    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F   
-    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F   
-    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF   
-    E:::::E                         S:::::SG:::::G        G::::G  F:::::F             
-    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F             
-  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
-  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
-  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+\033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+\033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
   EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
-
+\033[0m
 "
     printf "Checking that you have root privs on $(hostname)... "
     id | grep root >& /dev/null
-    [ $? != 0 ] && printf "[FAIL] \n\tMust run this program with root's effective UID\n\n" && return 1
-    echo "[OK]"
+    [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
+    [OK]
 
     #----------------------------------------
     echo "Checking requisites... "
 
     verbose_print -n "Checking for gcc or g++... "
-    gcc --version >& /dev/null || gg++ --version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
+    gcc --version >& /dev/null || gg++ --version >& /dev/null && verbose_print "$([OK])" || (verbose_print "$([FAIL])" && return 1)
 
     verbose_print -n "Checking for gmake... "
-    gmake --version >& /dev/null && verbose_print "[OK]" || (verbose_print "[FAIL]" && return 1)
+    gmake --version >& /dev/null && verbose_print "$([OK])" || (verbose_print "$([FAIL])" && return 1)
 
     verbose_print -n "Checking for X11 libs... "
-    Xorg -version >& /dev/null && verbose_print "[OK]" || verbose_print "[WARNING] X11 is needed for publisher UI..."
+    Xorg -version >& /dev/null && verbose_print "$([OK])" || verbose_print "$(echo_fail "[WARNING] X11 is needed for publisher UI...")"
     #----------------------------------------
 
     echo
@@ -466,9 +469,9 @@ printf "
 #####
 setup_openssl() {
 
-    echo -n "Checking for openssl between ${openssl_min_version} and ${openssl_max_version}"
+    echo -n "Checking for openssl between ${openssl_min_version} and ${openssl_max_version} "
     check_version_with openssl "openssl version | perl -p -e 's/OpenSSL ?(\d+\.\d+\.\d+[a-z]?).*/\1/'" ${openssl_min_version} ${openssl_max_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -528,7 +531,7 @@ setup_openssl() {
     fi
 
     pushd ${openssl_dist_dir}
-    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && echo "[OK]" || echo "[FAIL]")
+    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && [OK] || [FAIL])
     echo "./Configure --prefix=${openssl_install_dir} linux-generic${word_size}"
     if ./Configure --prefix=${openssl_install_dir} shared linux-generic${word_size} \
         && gmake all \
@@ -593,7 +596,7 @@ setup_curl() {
 
     echo -n "Checking for curl >= ${curl_min_version} "
     check_version curl ${curl_min_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -697,9 +700,9 @@ write_curl_install_log() {
 #####
 setup_git() {
 
-    echo -n "Checking for git >= ${git_min_version}"
+    echo -n "Checking for git >= ${git_min_version} "
     check_version git ${git_min_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -804,7 +807,7 @@ setup_java() {
 
     echo -n "Checking for java >= ${java_min_version} and valid JAVA_HOME... "
     [ -e ${java_install_dir} ] && check_version $java_install_dir/bin/java ${java_min_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -919,9 +922,9 @@ write_java_install_log() {
 #####
 setup_ant() {
 
-    echo -n "Checking for ant >= ${ant_min_version}"
+    echo -n "Checking for ant >= ${ant_min_version} "
     [ -e ${ant_install_dir} ] &&  check_version ${ant_install_dir}/bin/ant ${ant_min_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -1023,11 +1026,11 @@ setup_postgress() {
     debug_print "DEBUG: entering setup_postgress()"
     _is_managed_db && return 0
 
-    echo -n "Checking for postgresql >= ${postgress_min_version}"
+    echo -n "Checking for postgresql >= ${postgress_min_version} "
     check_version ${install_prefix}/pgsql/bin/psql ${postgress_min_version}
     local ret=$?
     if [ $ret == 0 ] ; then
-        (( ! force_install )) && echo " [OK]" && return 0
+        (( ! force_install )) && [OK] && return 0
     fi
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
@@ -1165,7 +1168,7 @@ setup_postgress() {
             echo "Noticed that the existing postgres user [${pg_sys_acct}] does not have the bash shell... Hmmm... making it so "
             sed -i 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd
             echo "grep '${pg_sys_acct}': /etc/passwd"
-            [ "$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)" = "/bin/bash" ] && echo "[OK]" || echo "[FAIL]"
+            [ "$(sed -n 's#\('${pg_sys_acct}'.*:\)\(.*\)$#\2#p' /etc/passwd)" = "/bin/bash" ] && [OK] || [FAIL]
         fi
     fi
     [ -e "${pg_secret_file}" ] && chmod 640 ${pg_secret_file} && chown ${installer_uid}:${tomcat_group} ${pg_secret_file}
@@ -1249,11 +1252,11 @@ setup_postgress() {
     [ ! -z "${input}" ] && postgress_port=${input}
     printf "\nSetting Postgress Port: ${postgress_port} "
     eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${fetch_file}"
-    [ $? == 0 ] && printf "[OK]\n" || printf "[FAIL]\n"
+    [ $? == 0 ] && [OK] || [FAIL]
 
     printf "Setting Postgress Log Dir: ${postgress_install_dir} "
     eval "perl -p -i -e 's#\\@\\@postgress_install_dir\\@\\@#${postgress_install_dir}#g' ${fetch_file}"
-    [ $? == 0 ] && printf "[OK]\n" || printf "[FAIL]\n"
+    [ $? == 0 ] && [OK] || [FAIL]
 
     chown -R $pg_sys_acct $postgress_install_dir
     chgrp -R $pg_sys_acct_group $postgress_install_dir
@@ -1342,7 +1345,7 @@ test_postgress() {
     start_postgress
     local ret=$(PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -qt -c "select table_name from information_schema.tables;" postgres ${postgress_user} | grep -v ^$ | wc -l)
     ((ret == 0)) && echo " ERROR: Could not verify database installation! (perhaps \"pg_sys_acct_passwd\"  was not set correctly?)" && checked_done 1
-    echo "[OK]"
+    [OK]
     checked_done 0
 }
 
@@ -1352,7 +1355,7 @@ setup_cmake() {
 
     echo -n "Checking for CMake >=  ${cmake_min_version} "
     check_version_with cmake "cmake --version | awk '{print \$3}' | sed -re 's/([^-]*)-.*/\1/'" ${cmake_min_version} ${cmake_max_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -1438,7 +1441,7 @@ write_cmake_install_log() {
 # CDAT = Python+CDMS
 #####
 setup_cdat() {
-    echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version}"
+    echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version} "
 
     #-----------CDAT -> UVCDAT Migration------------------
     #rewrite cdat_home to new uvcdat location
@@ -1449,7 +1452,7 @@ setup_cdat() {
 
     check_version_with "cdat" "${cdat_home}/bin/python -c \"import cdat_info; print cdat_info.Version\"" ${cdat_version} 2> /dev/null
     local ret=$?
-    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+    ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -1559,7 +1562,7 @@ write_cdat_install_log() {
 
 test_cdat() {
     echo -n "Checking for cdms2 module... "
-    python -c "import cdms2" >& /dev/null && echo "[OK]" || echo "[FALSE]"
+    python -c "import cdms2" >& /dev/null && [OK] || [FAIL]
 }
 
 #------------------------------------------------------------
@@ -1586,7 +1589,7 @@ _housekeeping_cdat_to_uvcdat() {
 #####
 setup_esgcet() {
 
-    echo -n "Checking for esgcet (publisher) ${esgcet_version}"
+    echo -n "Checking for esgcet (publisher) ${esgcet_version} "
     check_module_version esgcet ${esgcet_version}
     local ret=$?
 
@@ -1601,7 +1604,7 @@ setup_esgcet() {
             printf " Attempting to address the issue... "
             if [ "$(sed -e 's#\(postgresql://.*@\)\([^:]*\)\(.*\)#\1localhost\3#' <<< ${esgini_dburl})" != "${db_connect_str}" ]; then
                 trap - INT TERM
-                printf " Sorry, [FAILED]\n"
+                printf " $(echo_fail "Sorry, [FAILED]")\n"
                 exit 1
             fi
             printf "Editing esg.ini accordingly... "
@@ -1613,7 +1616,7 @@ setup_esgcet() {
     fi
     #-------
 
-    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+    ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     local upgrade=${1:-${ret}}
 
@@ -1827,9 +1830,9 @@ test_esgcet() {
 
 esgcet_startup_hook() {
     echo -n "ESGCET (Publisher) Startup Hook: Setting perms... "
-    [ ! -e ${publisher_home}/${publisher_config} ] && echo " Could not find publisher configuration file [${publisher_home}/${publisher_config}] :-(" && return 1
-    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 755 ${HOME} && echo ":-)"
-    [ $? != 0 ] && echo ":-/" && return 2
+    [ ! -e ${publisher_home}/${publisher_config} ] && echo_fail" Could not find publisher configuration file [${publisher_home}/${publisher_config}] :-(" && return 1
+    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 755 ${HOME} && echo_ok ":-)"
+    [ $? != 0 ] && echo_fail ":-/" && return 2
 }
 
 #####
@@ -1837,10 +1840,10 @@ esgcet_startup_hook() {
 # arg 1 -> The password for the current keystore
 #####
 setup_tomcat() {
-    echo -n "Checking for tomcat >= ${tomcat_min_version}"
+    echo -n "Checking for tomcat >= ${tomcat_min_version} "
     check_app_version ${tomcat_install_dir} ${tomcat_min_version}
     local ret=$?
-    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+    ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -1943,7 +1946,7 @@ setup_tomcat() {
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib${word_size}
 
     if [ -e ./jsvc ] && [ -x ./jsvc ]; then
-        echo "[OK]"
+        [OK]
     else
         echo "[NOT PRESENT]"
         stop_tomcat
@@ -1984,15 +1987,15 @@ setup_tomcat() {
 
         echo -n "copying webapps... "
         cp -R ${last_install}/webapps ${tomcat_install_dir}/
-        [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+        [ $? == 0 ] && [OK] || [FAIL]
 
         echo -n "copying configuration... "
         cp -R ${last_install}/conf ${tomcat_install_dir}/
-        [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+        [ $? == 0 ] && [OK] || [FAIL]
 
         echo -n "copying logs... "
         cp -R ${last_install}/logs ${tomcat_install_dir}/
-        [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+        [ $? == 0 ] && [OK] || [FAIL]
 
         echo "upgrade migration complete"
     else
@@ -2029,7 +2032,7 @@ setup_tomcat() {
     sleep 2
     start_tomcat
 
-    tomcat_port_check && echo "Tomcat ports checkout [OK]" || (echo "[FAILED]" && popd && checked_done 1)
+    tomcat_port_check && echo "Tomcat ports checkout $([OK])" || ([FAIL] && popd && checked_done 1)
 
     echo
     popd >& /dev/null
@@ -2045,7 +2048,7 @@ setup_tomcat() {
 #No file older than year should be kept.
 setup_tomcat_logrotate() {
 
-    [ ! -e /usr/sbin/logrotate ] && echo "Not able to find logrotate here [/usr/local/logrotate] [FAIL]" && return 1
+    [ ! -e /usr/sbin/logrotate ] && echo "Not able to find logrotate here [/usr/local/logrotate] $([FAIL])" && return 1
 
     #TODO: Make these vars properties that can be set by user.
     #      Check property values against values in the logrotate file values to know when to rewrite.
@@ -2054,7 +2057,7 @@ setup_tomcat_logrotate() {
     local tomcat_logrotate_file="/etc/logrotate.d/esgf_tomcat"
     local tomcat_install_dir=${tomcat_install_dir:="/usr/local/tomcat"}
 
-    [ ! -e "${tomcat_install_dir}/logs" ] && echo "Sorry, could not find tomcat log dir [${tomcat_install_dir}/logs]  [FAIL]" && return 2
+    [ ! -e "${tomcat_install_dir}/logs" ] && echo "Sorry, could not find tomcat log dir [${tomcat_install_dir}/logs]  $([FAIL])" && return 2
 
     if [ ! -e "${tomcat_logrotate_file}" ] || ((force_install)); then
         echo "Installing tomcat log rotation... [${tomcat_logrotate_file}]"
@@ -2088,7 +2091,7 @@ EOF
     #------
 
     [ ! -e /etc/cron.daily/logrotate ] && echo "WARNING: Not able to find script [/etc/cron.daily/logrotate]" && return 3
-    echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && echo "[OK] " || echo "[FAIL] ")"
+    echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
 #helper function to poke at tomcat ports...
@@ -2110,7 +2113,7 @@ tomcat_port_check() {
             : $((wait_time--))
             echo -n "."
         done
-        [ $ret == 0 ] && echo " [OK]" || echo " [FAIL]"
+        [ $ret == 0 ] && [OK] || [FAIL]
 
         #We only care about reporting a failure for ports below 1024
         #specifically 80 (http) and 443 (https)
@@ -2191,9 +2194,9 @@ migrate_tomcat_credentials_to_esgf() {
 #Utility function to check that a given password is valid for the global scoped ${keystore_file}
 _check_keystore_password() {
     local store_password=${1}
-    [ ! -e ${keystore_file} ] && echo "[FAIL] No keystore file present [${keystore_file}]" && return 1
+    [ ! -e ${keystore_file} ] && echo "$([FAIL]) No keystore file present [${keystore_file}]" && return 1
     $java_install_dir/bin/keytool -list -keystore ${keystore_file} -storepass ${store_password} >& /dev/null
-    [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} with provided password. Try again..." && return 2
+    [ $? != 0 ] && echo "$([FAIL]) Could not access private keystore ${keystore_file_} with provided password. Try again..." && return 2
     return 0
 }
 
@@ -2355,7 +2358,7 @@ configure_tomcat() {
 
 setup_root_app() {
 
-    [ -d "${tomcat_install_dir}/webapps/ROOT" ] && $(grep -q REFRESH ${tomcat_install_dir}/webapps/ROOT/index.html >& /dev/null) && echo "ROOT app in place... [OK]" && return 0
+    [ -d "${tomcat_install_dir}/webapps/ROOT" ] && $(grep -q REFRESH ${tomcat_install_dir}/webapps/ROOT/index.html >& /dev/null) && echo "ROOT app in place... $([OK])" && return 0
     echo "Oops, Don't see ESGF ROOT web application"
 
     [ -d "${tomcat_install_dir}/webapps/ROOT" ] && backup ${tomcat_install_dir}/webapps/ROOT
@@ -2508,7 +2511,7 @@ test_tomcat() {
     echo "----------------------------"
     echo
     start_tomcat
-    tomcat_port_check && echo "Tomcat ports checkout [OK]" || (echo "[FAILED]" && popd && checked_done 1)
+    tomcat_port_check && echo "Tomcat ports checkout $([OK])" || ([FAIL] && popd && checked_done 1)
     checked_done 0
 }
 
@@ -2706,10 +2709,10 @@ sanity_check_web_xmls() {
 # THREDDS Data Server
 #####
 setup_tds() {
-    echo -n "Checking for thredds (tds) >= ${tds_min_version}"
+    echo -n "Checking for thredds (tds) >= ${tds_min_version} "
     check_webapp_version "thredds" ${tds_min_version} "Implementation-Version"
     local ret=$?
-    ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
+    ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -2787,7 +2790,7 @@ setup_tds() {
     if ((upgrade)) ; then
         local version_property="Implementation-Version"
         local current_version=$(sed -n '/^'${version_property}':[ ]*\(.*\)/p' ${tomcat_install_dir}/webapps/thredds/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null)
-        cp -v ${webapp_config_file}.saved ${webapp_config_file} && echo "Thredds upgraded to ${current_version} [OK]" && popd >& /dev/null && return 0
+        cp -v ${webapp_config_file}.saved ${webapp_config_file} && echo "Thredds upgraded to ${current_version} $([OK])" && popd >& /dev/null && return 0
     fi
     popd >& /dev/null
     #-------------------------------------------
@@ -2961,8 +2964,8 @@ setup_tds() {
     #Move over XSLT files... (see Nicolas' email(ncarenton...fr) subj="ESGF1.5.0 TDS4.3.16" date:"5/27/13 8:30 AM PDT")
     cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/xsl/ncssGrid* ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/resources/xsl/
 
-    [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
-    echo "[OK]"
+    [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
+    [OK]
     write_tds_env
     write_tds_install_log
     checked_done 0
@@ -3002,13 +3005,13 @@ test_tds() {
 
     echo "$cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds"
     $cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
-    [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
+    [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
     echo "curl http://${esgf_host_ip}/thredds"
     curl http://${esgf_host_ip}/thredds
-    [ $? != 0 ] && echo "[FAILED]" && echo " ERROR: Not able to contact thredds page on this server" && popd && checked_done 1
+    [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to contact thredds page on this server" && popd && checked_done 1
 
-    echo "[OK]"
+    [OK]
     popd >& /dev/null
     echo
     echo
@@ -3018,8 +3021,8 @@ test_tds() {
 tds_startup_hook() {
     echo -n "TDS (THREDDS) Startup Hook: Setting perms... "
     chown -R ${tomcat_user} ${thredds_content_dir}
-    [ $? != 0 ] && echo ":-(" && return 1
-    echo ":-)"
+    [ $? != 0 ] && echo_fail ":-(" && return 1
+    echo_ok ":-)"
 }
 
 #####
@@ -3422,7 +3425,7 @@ _relocate_n_relink_globus_certicates_conf() {
             \cp ${target} ${grid_security_dir}/${target##*/} >& /dev/null
             debug_print "ln -sf ${target##*/} ${link} "
             ln -sf ${target##*/} ${link}
-            [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
+            [ $? == 0 ] && [OK] || [FAIL]
         fi
     done
     popd >& /dev/null
@@ -3451,7 +3454,7 @@ fetch_esgf_certificates() {
     if [ -n "${simpleCA_cert}" ]; then
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
-        [ -e "${globus_global_certs_dir}/${simpleCA_cert_hash}.0" ] && ((!force_install)) && echo "Local CA cert file detected.... [OK]" && return 0
+        [ -e "${globus_global_certs_dir}/${simpleCA_cert_hash}.0" ] && ((!force_install)) && echo "Local CA cert file detected.... $([OK])" && return 0
         echo "Integrating in local simpleCA_cert... "
 
         debug_print "Local SimpleCA Root Cert: ${simpleCA_cert}"
@@ -3462,9 +3465,9 @@ fetch_esgf_certificates() {
             [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -hash -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
             echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
-                echo "[OK]") || echo "[FAIL]"
+                [OK]) || [FAIL]
         #zoiks
-        #write_as_property node_dn $(extract_openssl_dn ${simpleCA_cert}) && echo "property updated [OK]"
+        #write_as_property node_dn $(extract_openssl_dn ${simpleCA_cert}) && echo "property updated $([OK])"
 
         printf "
     ----------------------------------------------------------------------
@@ -3497,7 +3500,7 @@ fetch_esgf_truststore() {
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
     checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
-    (( $? > 1 )) && echo "[FAIL]" && mv -v ${truststore_file_}{.bak,} || echo "[OK]"
+    (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
     if [ -e /etc/myproxy-server.config ] ; then
@@ -3574,7 +3577,7 @@ _insert_cert_into_truststore() {
     [ $? == 0 ] && echo -n "+ " || echo -n "  "
     $java_install_dir/bin/keytool -import -alias ${cert_hash} -file ${der_file} -keystore ${truststore_file_} \
         -storepass ${truststore_password} -noprompt
-    [ $? != 0 ] && echo " [FAILED]"
+    [ $? != 0 ] && [FAIL]
 
     rm -f ${der_file}
     return 0
@@ -3656,7 +3659,7 @@ add_my_cert_to_truststore() {
             if [ "${store_password}" = "${verify_password}" ] ; then
 
                 $java_install_dir/bin/keytool -list -keystore ${keystore_file_} -storepass ${store_password} >& /dev/null
-                [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} with provided password. Try again..." && continue;
+                [ $? != 0 ] && echo "$([FAIL]) Could not access private keystore ${keystore_file_} with provided password. Try again..." && continue;
                 keystore_password_=${store_password}
                 echo
                 break
@@ -3676,8 +3679,8 @@ add_my_cert_to_truststore() {
     if ((do_checks == 1)); then
         #only making this call to test password
         $java_install_dir/bin/keytool -v -list -keystore ${keystore_file_} -storepass ${keystore_password_} >& /dev/null
-        [ $? != 0 ] && echo "[FAIL] Could not access private keystore ${keystore_file_} (re-run --add-my-cert-to-truststore)" && return 1;
-        echo "[OK]"
+        [ $? != 0 ] && echo "$([FAIL]) Could not access private keystore ${keystore_file_} (re-run --add-my-cert-to-truststore)" && return 1;
+        [OK]
 
         debug_print "Peforming checks against configured values..."
         debug_print "[$(md5sum <(echo "${keystore_password}") | awk '{print $1}')] == [$(md5sum <(echo "${keystore_password_}") | awk '{print $1}')]"
@@ -3688,7 +3691,7 @@ add_my_cert_to_truststore() {
             (
                 local value=$(sed -n 's#.*keystorePass="\([^ "]*\)".*$#\1#p' ${tomcat_install_dir}/conf/server.xml 2> /dev/null) && echo -n "." || echo -n "x"
                 [ $? == 0 ] && [ -n "${value}" ] && keystore_password=${value}
-                [ "${keystore_password}" = "${keystore_password_}" ] && echo " [OK] " || echo " [FAIL] "
+                [ "${keystore_password}" = "${keystore_password_}" ] && echo " $([OK]) " || echo " $([FAIL]) "
                 unset value
             )
         fi
@@ -3701,7 +3704,7 @@ add_my_cert_to_truststore() {
         echo "Re-Integrating keystore's certificate into truststore.... "
         echo -n "Extracting keystore's certificate... "
         $java_install_dir/bin/keytool -export -alias ${keystore_alias_} -file ${keystore_file_}.cer -keystore ${keystore_file_} -storepass ${keystore_password_}
-        [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
+        [ $? == 0 ] && [OK] || ([FAIL] && exit 1)
 
         debug_print "keytool -v -list -keystore ${truststore_file_} -storepass $(md5sum <(echo "${truststore_password_}") | awk '{print $1}') | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias}'$'"
         $java_install_dir/bin/keytool -v -list -keystore ${truststore_file_} -storepass ${truststore_password_} | egrep -i '^Alias[ ]+name:[ ]+'${keystore_alias_}'$'
@@ -3713,11 +3716,11 @@ add_my_cert_to_truststore() {
 
         echo "Importing keystore's certificate into truststore... "
         $java_install_dir/bin/keytool -import -v -trustcacerts -alias ${keystore_alias_} -keypass ${keystore_password_} -file ${keystore_file_}.cer -keystore ${truststore_file_} -storepass ${truststore_password_} -noprompt
-        [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && exit 1)
+        [ $? == 0 ] && [OK] || ([FAIL] && exit 1)
         sync_with_java_truststore ${truststore_file_}
         echo -n "cleaning up after ourselves... "
         rm -v ${keystore_file_}.cer
-        [ $? == 0 ] && echo "[OK]" || echo "[FAILED]"
+        [ $? == 0 ] && [OK] || [FAIL]
     fi
     chown ${tomcat_user}:${tomcat_group} ${truststore_file_}
     #----------------------------------------------------------------
@@ -3734,7 +3737,7 @@ generate_ssl_key_and_csr() {
     echo "Generating private host key... "
     local private_key=${2:-${tomcat_conf_dir}/hostkey.pem}
     openssl genrsa -out ${private_key} 1024
-    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
+    [ $? == 0 ] && [OK] || ([FAIL] && return 1)
     chmod 400 ${private_key}
 
     #NOTE: To include DN at the command line
@@ -3750,13 +3753,13 @@ generate_ssl_key_and_csr() {
     if [ -z "${public_cert_dn}" ]; then
         echo "openssl req -new -nodes -key ${private_key} -out ${public_cert_req}"
         openssl req -new -nodes -key ${private_key} -out ${public_cert_req}
-        [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 2)
+        [ $? == 0 ] && [OK] || ([FAIL] && return 2)
     else
         #Or, there was indeed an extraction of the DN from the keytool or I manually provided the DN
         #So then generate the request with the DN...
         echo "openssl req -new -nodes -subj ${public_cert_dn} -key ${private_key} -out ${public_cert_req}"
         openssl req -new -nodes -subj "${public_cert_dn}" -key ${private_key} -out ${public_cert_req}
-        [ $? == 0 ] && echo "[OK]*" || (echo "[FAILED]*" && return 2)
+        [ $? == 0 ] && echo "$([OK])*" || (echo "$([FAIL])*" && return 2)
     fi
     chmod 644 ${public_cert_req} >& /dev/null
 
@@ -3777,7 +3780,7 @@ generate_ssl_key_and_csr() {
 
     echo "Generating 30 day temporary self-signed certificate... "
     openssl x509 -req -days 30 -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
-    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 3)
+    [ $? == 0 ] && [OK] || ([FAIL] && return 3)
     openssl x509 -noout -text -in ${public_cert_req%.*}.pem
 
     echo
@@ -4045,7 +4048,7 @@ make_fresh_keystore() {
             echo "  Signed Cert -------> ${certfiles[i]}"
             echo "${certfiles[i]}" | egrep '^http'
             if [ $? == 0 ]; then
-                curl -s -k ${certfiles[i]} > ${certbundle} && echo "[OK]"
+                curl -s -k ${certfiles[i]} > ${certbundle} && [OK]
                 skip_check=1
             else
                 cat ${certfiles[i]} > ${certbundle}
@@ -4065,7 +4068,7 @@ make_fresh_keystore() {
 
                 echo "$content" >> ${certbundle} && \
                     echo "$content" >> ${ca_chain_bundle} && \
-                    echo "[OK]"
+                    [OK]
                 skip_check=1
             else
                 cat ${certfiles[i]} >> ${certbundle}
@@ -4085,7 +4088,7 @@ make_fresh_keystore() {
 
                 echo "$content" >> ${certbundle} && \
                     echo "$content" >> ${ca_chain_bundle} && \
-                    echo "[OK]"
+                    [OK]
                 skip_check=1
             else
                 cat ${certfiles[i]} >> ${certbundle}
@@ -4108,7 +4111,7 @@ make_fresh_keystore() {
     echo
     echo -n "checking that key pair is congruent... "
     local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5) | uniq))
-    (( 1 == ${#pair_hash[@]} )) && printf "[OK] ${pair_hash}\n\n" || (printf "[FAIL]\n\n" && return 1)
+    (( 1 == ${#pair_hash[@]} )) && printf "$([OK]) ${pair_hash}\n\n" || (printf "$([FAIL])\n\n" && return 1)
 
 
     #-------------
@@ -4134,12 +4137,12 @@ make_fresh_keystore() {
         -validity 360 \
         -dname "${dname}" \
         -noprompt
-    [ $? != 0 ] && (echo "Problem with generating initial keystore... [FAIL]" && return 1) || echo "[OK] "
+    [ $? != 0 ] && (echo "Problem with generating initial keystore... $([FAIL])" && return 1) || [OK]
 
     echo -n "clearing keystore... "
     #delete the cert
     $java_install_dir/bin/keytool -delete -alias "${keystore_alias}" -keystore "${keystore_name}" -storepass "${store_password}"
-    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
+    [ $? != 0 ] && (echo "Problem with preparing initial keystore... $([FAIL])" && return 1) || [OK]
 
     #-------------
     #Convert your private key into from PEM to DER format that java likes
@@ -4147,7 +4150,7 @@ make_fresh_keystore() {
     echo -n "converting private key... "
     debug_print -n "openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey} "
     openssl pkcs8 -topk8 -nocrypt -inform PEM -in ${private_key} -outform DER -out ${derkey}
-    [ $? != 0 ] && (echo "Problem with preparing initial keystore... [FAIL]" && return 1) || echo "[OK] "
+    [ $? != 0 ] && (echo "Problem with preparing initial keystore... $([FAIL])" && return 1) || [OK]
 
     #-------------
     #Now we gather up all the other keys in the key chain...
@@ -4157,9 +4160,9 @@ make_fresh_keystore() {
         debug_print -n "openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} "
         local chain_check=$(openssl verify -CAfile ${ca_chain_bundle} ${ca_chain_bundle} | grep -i error)
         if [ -z "${chain_check}" ]; then
-            printf "[OK]\n\n"
+            printf "$([OK])\n\n"
         else
-            printf "[FAIL]\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"
+            printf "$([FAIL])\n ${chain_check}\n(hint: did you include the root cert for the chain :-)\n"
             return 1
         fi
     else
@@ -4185,8 +4188,8 @@ make_fresh_keystore() {
         local ret=$?
     fi
 
-    [ ${ret} != 0 ] && echo "Problem with running extkeytool :-(" && return 1
-    [ ${ret} == 0 ] && echo "[OK]"
+    [ ${ret} != 0 ] && echo "$([FAIL]) Problem with running extkeytool :-(" && return 1
+    [ ${ret} == 0 ] && [OK]
 
     echo
     echo "How do things look?"
@@ -4226,13 +4229,13 @@ convert_keys() {
     local private_key=${1:-"hostkey.pem"}
     [ ! -e ${private_key} ] && echo "Sorry, cannot find ${private_key}" && return 2
     openssl pkcs8 -topk8 -nocrypt -in ${private_key} -inform PEM -out ${private_key%.*}.der -outform DER
-    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
+    [ $? == 0 ] && [OK] || ([FAIL] && return 1)
 
     echo -n "Converting public cert from PEM -> DER format... "
     local public_cert=${2:-${esgf_host:-$(hostname --fqdn)}-esg-node.pem}
     [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
     openssl x509 -in ${public_cert} -inform PEM -out ${public_cert%.*}.der -outform DER
-    [ $? == 0 ] && echo "[OK]" || (echo "[FAILED]" && return 1)
+    [ $? == 0 ] && [OK] || ([FAIL] && return 1)
 
     echo
     pwd
@@ -4270,7 +4273,7 @@ create_keystore() {
     [ ! -e ${public_cert} ] && echo "Sorry, cannot find ${public_cert}" && return 2
 
     CLASSPATH=. java -Dkeystore=${keystore_name} ImportKey ${private_key} ${public_cert} ${key_alias} ${password}
-    [ $? != 0 ] && echo "[FAILED] Could not execute keystore generator" && return 1
+    [ $? != 0 ] && echo "$([FAIL]) Could not execute keystore generator" && return 1
     echo
     $java_install_dir/bin/keytool -list -v -keystore ${keystore_name} -storepass ${password}
     return 0
@@ -4338,9 +4341,9 @@ install_signed_certificate() {
     $java_install_dir/bin/keytool -import -trustcacerts -alias root -file ${signed_cert_file} -keystore ${keystore_file} -storepass ${store_password}
     local ret=$?
     if [ $ret == 0 ]; then
-        echo "[OK]"
+        [OK]
     else
-        echo "[FAILED]"
+        [FAIL]
         echo "(Restoring original keystore)"
         cp -v ${keystore_file}.bak ${keystore_file}
         return $ret
@@ -4405,7 +4408,7 @@ export_keystore_as_globus_hostkeys() {
         printf "\n${JAVA_HOME}/bin/java -classpath ${CP} ExportPriv ${keystore_file} ${keystore_alias} ************* > ${globus_global_certs_dir%/*}/hostkey.pem\n"
     ${JAVA_HOME}/bin/java -classpath ${CP} ExportPriv ${keystore_file} ${keystore_alias} ${store_password} > ${globus_global_certs_dir%/*}/hostkey.pem
     local ret=$?
-    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
+    [ $ret == 0 ] && [OK] || [FAIL]
     chmod 600 ${globus_global_certs_dir%/*}/hostkey.pem
     #--------------
 
@@ -4426,12 +4429,12 @@ export_keystore_as_globus_hostkeys() {
         printf "\nkeytool -export -alias ${keystore_alias} -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass *************\n"
     $java_install_dir/bin/keytool -export -alias root -file ${globus_global_certs_dir%/*}/hostcert.der -keystore ${keystore_file} -storepass ${store_password}
     ret=$?
-    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
+    [ $ret == 0 ] && [OK] || [FAIL]
 
     echo -n "Converting DER cert ${globus_global_certs_dir%/*}/hostcert.der to PEM format "
     openssl x509 -in ${globus_global_certs_dir%/*}/hostcert.der -inform DER -out ${globus_global_certs_dir%/*}/hostcert.pem -outform PEM
     ret=$?
-    [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
+    [ $ret == 0 ] && [OK] || [FAIL]
 
     openssl x509 -noout -text -in ${globus_global_certs_dir%/*}/hostcert.pem
 
@@ -4529,13 +4532,13 @@ sync_with_java_truststore() {
     [ ! -e "${external_truststore}" ] && echo "[FAIL]: Cannot locate ${external_truststore}" && return 1
 
     #try to not do more work (copying bits) if you don't have to...
-    diff ${external_truststore} ${java_truststore} >& /dev/null && echo "[OK]." && return 0
+    diff ${external_truststore} ${java_truststore} >& /dev/null && echo "$([OK])." && return 0
 
     [ -e "${java_truststore}" ] && cp ${java_truststore}{,.bak}
     cp ${external_truststore} ${java_truststore}
     chmod 644 ${java_truststore}
     chown -R ${installer_uid}:${installer_gid} ${java_truststore}*
-    echo "[OK]"
+    [OK]
 }
 
 verify_thredds_credentials() {
@@ -4555,18 +4558,18 @@ verify_thredds_credentials() {
     echo -n "Checking username... "
     echo -n "${tomcat_username} = ${thredds_username} "
     if [ "${tomcat_username}" = "${thredds_username}" ]; then
-        echo "[OK]"
+        [OK]
     else
-        echo "[FAIL]"
+        [FAIL]
         ((ret++))
     fi
 
     echo -n "Checking password... "
     echo -n "${tomcat_password_hash} = ${thredds_password_hash} "
     if [ "${tomcat_password_hash}" = "${thredds_password_hash}" ]; then
-        echo "[OK]"
+        [OK]
     else
-        echo "[FAIL]"
+        [FAIL]
         ((ret++))
     fi
     ((ret == 0)) && echo "Verified" && return 0
@@ -4987,7 +4990,7 @@ check_for_group_intersection_with() {
             echo
             ((ret++))
         else
-            echo "  This node shares the group(s) [$(echo ${shared_groups[@]} | sed 's# #, #g')] with ${target_node} ($( [ "${esgf_default_peer}" = "${target_node}" ] && echo "default ")$( [ "${esgf_idp_peer}" = "${target_node}" ] && echo "idp ")$( [ "${esgf_index_peer}" = "${target_node}" ] && echo "index")) [OK]"
+            echo "  This node shares the group(s) [$(echo ${shared_groups[@]} | sed 's# #, #g')] with ${target_node} ($( [ "${esgf_default_peer}" = "${target_node}" ] && echo "default ")$( [ "${esgf_idp_peer}" = "${target_node}" ] && echo "idp ")$( [ "${esgf_index_peer}" = "${target_node}" ] && echo "index")) $([OK])"
         fi
         visited=( ${visited[@]} ${target_node})
     done
@@ -5195,16 +5198,16 @@ backup_db() {
     if [ -n "${my_schema_name}" ]; then
         my_schema_name=_${my_schema_name}
         backup_file_root="${my_node_db_name}_esgf${my_schema_name}_backup"
-        echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz"
+        echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz "
         debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} | gzip > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz
-        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
+        [ $? == 0 ] && [OK] || ([FAIL] && return 1)
     else
         backup_file_root="${my_node_db_name}_backup"
-        echo "Backing up database: ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz"
+        echo "Backing up database: ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz "
         debug_print "pg_dump -U ${postgress_user} ${my_node_db_name} > ${my_node_db_name}_backup_$(date ${date_format}).sql.gz"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} ${my_node_db_name} | gzip > ${my_node_db_name}_backup_$(date ${date_format}).sql.gz
-        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
+        [ $? == 0 ] && [OK] || ([FAIL] && return 1)
     fi
 
     #-------------
@@ -5278,13 +5281,13 @@ restore_nth_db_backup() {
         echo "Restoring backup esgf schema esgf${my_schema_name} of ${my_node_db_name} <-from- ${backup_file}"
         debug_print "psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} ${my_node_db_name} < <(zcat ${backup_file})
-        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
+        [ $? == 0 ] && echo " $([OK]) " || (echo " $([FAIL]) " && return 1)
     else
         backup_file=$(ls -rt | grep ${my_node_db_name}_backup_ | tail -n ${n_recent} | head -n 1)
         echo "Restoring backup ${my_node_db_name} <-from- ${backup_file}"
         debug_print "psql -U ${postgress_user} ${my_node_db_name} < ${backup_file}"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} psql -U ${postgress_user} ${my_node_db_name} < <(zcat ${backup_file})
-        [ $? == 0 ] && echo " [OK] " || (echo " [FAIL] " && return 1)
+        [ $? == 0 ] && [OK] || ([FAIL] && return 1)
     fi
     popd >& /dev/null
     return 0
@@ -5524,7 +5527,7 @@ show_svc_list() {
     [ $? != 0 ] && echo "(display of node process list limited to root)" && return 0
     echo
     echo "---------------------------"
-    echo "Running Node Services... "; ((sel != 0)) && show_type || echo ""
+    echo "$(echo_strong Running Node Services...) "; ((sel != 0)) && show_type || echo ""
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)")"
     eval ${command}
@@ -5543,7 +5546,7 @@ show_svc_list() {
 #Here is a good place to; copy files, set configurations, etc... BEFORE you start running and need them!
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
-    echo "Running startup hooks..."
+    echo_strong "Running startup hooks..."
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
@@ -5558,8 +5561,8 @@ run_startup_hooks() {
     get_property node_auto_fetch_certs
     [ -z "${node_auto_fetch_certs}" ] && node_auto_fetch_certs="true" && write_as_property node_auto_fetch_certs
     if [ "${node_auto_fetch_certs}" = "true" ] && ! _is_no_auto_fetch_certs_file_present ; then
-        echo -n "Fetching federation certificates... " && fetch_esgf_certificates >& /dev/null && echo "[OK]" || echo "[FAILED]"
-        echo -n "Fetching federation truststore..... " && fetch_esgf_truststore >& /dev/null && echo "[OK]" || echo "[FAILED]"
+        echo -n "Fetching federation certificates... " && fetch_esgf_certificates >& /dev/null && [OK] || [FAIL]
+        echo -n "Fetching federation truststore..... " && fetch_esgf_truststore >& /dev/null && [OK] || [FAIL]
     fi
     _is_no_auto_fetch_certs_file_present && _remove_no_auto_fetch_certs_file
     #------------------------------------------
@@ -5568,7 +5571,7 @@ run_startup_hooks() {
 #Any last bits of cleanup for your module should be called here.
 #As with the startup hooks the function convention is <module>_shutdown_hook() (where module does not contain esg(f) prefix)
 run_shutdown_hooks() {
-    echo "Running shutdown hooks..."
+    echo_strong "Running shutdown hooks..."
 }
 
 #Starts the esg node
@@ -5579,7 +5582,7 @@ start() {
 
     [ $((sel & ALL_BIT)) == 0 ] && echo "Cannot Start: No Node Type Specified! (See --help for info on the --type|-t option)  :-|" && exit 1
 
-    echo "starting services... ($sel)"
+    echo "$(echo_strong "starting services...") ($sel)"
     run_startup_hooks
 
     /etc/init.d/ntpd status
@@ -5622,11 +5625,11 @@ status() {
     local ret=1
     if check_postgress_process && check_tomcat_process; then
         echo
-        echo "Node Running... (${sel})"
+        echo "$(echo_strong "Node Running...") (${sel})"
         ret=0
     else
         echo
-        echo "Stopped: No running processes detected"
+        echo "$(echo_strong "Stopped:") No running processes detected"
         ret=1
     fi
     #This is here for sanity checking...
@@ -5981,23 +5984,24 @@ esgf_node_info() {
      (Visit http://esgf.org , http://esgf.org/wiki for more information)
 
                                                                                     
+\033[01;31m
   EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
   E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
   E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
   EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
-    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF
-    E:::::E             S:::::S            G:::::G                F:::::F             
-    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF   
-    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F   
-    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F   
-    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF   
-    E:::::E                         S:::::SG:::::G        G::::G  F:::::F             
-    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F             
-  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF           
-  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF           
-  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF           
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+\033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+\033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
   EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
-
+\033[0m
      -ESGF.org \n\n"
 
 }
@@ -6268,6 +6272,14 @@ declare -r MIN_BIT=4
 declare -r MAX_BIT=64
 declare -r ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT))
 #---------------
+
+#"static" color code arrays...
+declare -ar _at_code=("00" "01" "04" "06" "07")
+declare -ar _fg_code=("00" "30" "31" "32" "33" "34" "35" "36" "37")
+declare -ar _bg_code=("00" "40" "41" "42" "43" "44" "45" "46" "47")
+_esgf_none=0; _esgf_bold=1; _esgf_underscore=2; _esgf_blink=3; _esgf_reverse=4
+_esgf_none=0; _esgf_black=1; _esgf_red=2; _esgf_green=3; _esgf_yellow=4; _esgf_blue=5; _esgf_magenta=6; _esgf_cyan=7; _esgf_white=8
+
 
 show_type() {
     [ $((sel & DATA_BIT)) != 0 ] && resolved_to+="data "
@@ -6653,7 +6665,7 @@ main() {
                     shift
                     (( $# != 0 ))  && echo "error: \"--fetch-esgf-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     fetch_esgf_certificates
                     exit $?
                     ;;
@@ -6662,7 +6674,7 @@ main() {
                     (( $# != 0 ))  && echo "error: \"--rebuild-truststore\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     self_verify
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     rebuild_truststore
                     exit $?
                     ;;
@@ -6670,7 +6682,7 @@ main() {
                     self_verify
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     add_my_cert_to_truststore $@
                     exit $?
                     ;;
@@ -6678,7 +6690,7 @@ main() {
                     self_verify
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     #arg 1      -> what we want to name the public cert request (csr)
                     #arg 2      -> what we want to name the private key
                     #arg 3      -> what we want to DN to be for the public cert
@@ -6722,7 +6734,7 @@ main() {
                     self_verify
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     install_keypair $@
                     exit $?
                     ;;
@@ -6730,7 +6742,7 @@ main() {
                     self_verify
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     (source ${scripts_dir}/esg-globus && install_globus_keypair $@)
                     exit $?
                     ;;
@@ -6738,7 +6750,7 @@ main() {
                     self_verify
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     (cd ${scripts_dir}
                     local fetch_file=esg-globus
                     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}"
@@ -6771,7 +6783,7 @@ main() {
                     self_verify
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     install_signed_certificate $@
                     exit $?
                     ;;
@@ -6781,7 +6793,7 @@ main() {
                 --export-keys-to-globus)
                     shift
                     id | grep root >& /dev/null
-                    [ $? != 0 ] && printf "[FAIL] \n\tMust be root for this option\n\n" && exit 1
+                    [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     export_keystore_as_globus_hostkeys
                     exit $?
                     ;;

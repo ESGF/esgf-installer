@@ -1146,3 +1146,74 @@ set_aside_web_app_cleanup() {
         fi
     fi
 }
+
+
+####################################################################
+# Colorizing Echo Output Strings                                   #
+####################################################################
+
+# #"static" color code arrays... (see esg-node sourcing script for active definitions - this is here for reference)
+# declare -ar _at_code=("00" "01" "04" "06" "07")
+# declare -ar _fg_code=("00" "30" "31" "32" "33" "34" "35" "36" "37")
+# declare -ar _bg_code=("00" "40" "41" "42" "43" "44" "45" "46" "47")
+# _esgf_none=0; _esgf_bold=1; _esgf_underscore=2; _esgf_blink=3; _esgf_reverse=4
+# _esgf_none=0; _esgf_black=1; _esgf_red=2; _esgf_green=3; _esgf_yellow=4; _esgf_blue=5; _esgf_magenta=6; _esgf_cyan=7; _esgf_white=8
+
+echo_c() {
+    local _DEBUG=0
+    local _arg
+    local input=""
+    local att_code
+    local text_code
+    local bg_code
+
+    while [ -n "$1" ]; do
+        case $1 in
+            --debug)
+                _DEBUG=1;
+                ;;
+            --attrib | -a | -at)
+		shift
+		_arg=_esgf_$1
+		att_code=${_at_code[${!_arg}]}
+                ;;
+            --foreground | -fg)
+		shift
+		_arg=_esgf_$1
+		text_code=${_fg_code[${!_arg}]}
+                ;;
+            --background | -bg)
+                shift
+		_arg=_esgf_$1
+                bg_code=${_bg_code[${!_arg}]}
+                ;;
+            *)
+		input=( ${input[@]} $1 )
+                ;;
+        esac
+        shift
+    done
+    _DEBUG=$((_DEBUG + ${DEBUG:-0}))
+    local code="${att_code:-00};${text_code:-00}$( [[ $bg_code ]] && echo ";${bg_code}")"
+    ((_DEBUG)) && echo "code = ${code}"
+    ((_DEBUG)) && echo "input = ${input}"
+
+    echo -e "\033[${code}m${input[@]}\033[0m"
+}
+
+[FAIL]() {
+    echo_c -fg red -at bold "[FAIL]"
+}
+[OK]() {
+    echo_c -fg green -at bold "[OK]"
+}
+echo_strong() {
+    echo_c -at bold -fg white $*
+}
+echo_fail() {
+    echo_c -fg red $*
+}
+echo_ok() {
+    echo_c -fg green -at bold $*
+}
+####################################################################

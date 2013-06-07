@@ -6242,10 +6242,10 @@ done_remark() {
         echo "http://${esgf_host}/las"
     fi
     echo
-    echo "Your peer group membership -- : [${node_peer_group}]"
-    echo "Your specified \"default\" peer : [$esgf_default_peer]"
-    echo "Your specified \"index\" peer - : [${esgf_index_peer}] (url = http://${esgf_index_peer}/)"
-    echo "Your specified \"idp\" peer --- : [${esgf_idp_peer}] (name = ${esgf_idp_peer_name})"
+    echo "Your peer group membership -- : $(echo_strong [${node_peer_group}])"
+    echo "Your specified \"default\" peer : $(echo_strong [$esgf_default_peer])"
+    echo "Your specified \"index\" peer - : $(echo_strong [${esgf_index_peer}]) (url = http://${esgf_index_peer}/)"
+    echo "Your specified \"idp\" peer --- : $(echo_strong [${esgf_idp_peer}]) (name = ${esgf_idp_peer_name})"
 
     if [ -d "${thredds_content_dir}/thredds" ]; then
         echo

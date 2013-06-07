@@ -6273,13 +6273,14 @@ declare -r MAX_BIT=64
 declare -r ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT))
 #---------------
 
-#"static" color code arrays...
+#"static" color code arrays... used by echo_c() in esg-functions
 declare -ar _at_code=("00" "01" "04" "06" "07")
 declare -ar _fg_code=("00" "30" "31" "32" "33" "34" "35" "36" "37")
 declare -ar _bg_code=("00" "40" "41" "42" "43" "44" "45" "46" "47")
-_esgf_none=0; _esgf_bold=1; _esgf_underscore=2; _esgf_blink=3; _esgf_reverse=4
-_esgf_none=0; _esgf_black=1; _esgf_red=2; _esgf_green=3; _esgf_yellow=4; _esgf_blue=5; _esgf_magenta=6; _esgf_cyan=7; _esgf_white=8
-
+declare -r _esgf_none=0; 
+declare -r _esgf_bold=1; declare -r _esgf_underscore=2; declare -r _esgf_blink=3; declare -r _esgf_reverse=4
+declare -r _esgf_black=1; declare -r _esgf_red=2; declare -r _esgf_green=3; declare -r _esgf_yellow=4; declare -r _esgf_blue=5; declare -r _esgf_magenta=6; declare -r _esgf_cyan=7; declare -r _esgf_white=8
+declare -r color_capable=$(sed -n -e '/[0-9]/p' <<< $(tput colors))
 
 show_type() {
     [ $((sel & DATA_BIT)) != 0 ] && resolved_to+="data "

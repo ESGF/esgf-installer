@@ -6915,6 +6915,7 @@ main() {
                 --fetch-static-idp-file)
                     [ -e "${scripts_dir}/esg-idp" ] && (source ${scripts_dir}/esg-idp >& /dev/null && fetch_static_idp_file $@)
                     exit $?
+                    ;;
                 --myproxy)
                     (( (sel & IDP_BIT) == 0 )) && echo "Sorry, the --myproxy flag may only be used for \"idp\" type commands" && exit 1
                 #acceptable args:  [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]

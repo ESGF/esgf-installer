@@ -6909,10 +6909,12 @@ main() {
                     exit $?
                     ;;
                 --fetch-static-shards-file)
+                    shift
                     [ -e "${scripts_dir}/esg-search" ] && (source ${scripts_dir}/esg-search >& /dev/null && fetch_static_shards_file $@)
                     exit $?
                     ;;
                 --fetch-static-idp-file)
+                    shift
                     [ -e "${scripts_dir}/esg-idp" ] && (source ${scripts_dir}/esg-idp >& /dev/null && fetch_static_idp_file $@)
                     exit $?
                     ;;

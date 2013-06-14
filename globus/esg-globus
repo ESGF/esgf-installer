@@ -2306,6 +2306,42 @@ create_globus_account() {
     fi
 }
 
+#Optionally takes expiration duration of cert in days
+#Default is 1 year
+update_simple_ca_cert() {
+    local days=${1:-365}
+    echo "Updating SimpleCA Certificate... for ${days} days"
+    local simpleCA_dir=$HOME/.globus/simpleCA
+    backup ${simpleCA_dir}
+
+    [ ! -d "${simpleCA_dir}" ] && [FAIL] && echo "Could not find simpleCA directory (${simpleCA)" && return 1
+    pushd $HOME/.globus/simpleCA >& /dev/null
+
+  # Generate CSR based on existing cert
+    openssl x509 -x509toreq -in ./cacert.pem -signkey ./private/cakey.pem -out ./renewedcacertreq.csr
+    [ $? != 0 ] && [FAIL] && echo " Could not update cert... unable to generate request" && popd >& /dev/null && return 2
+
+  # Sign the CSR
+    openssl x509 -req -days ${days} -in ./renewedcacertreq.csr -signkey ./private/cakey.pem  -out ./renewedcacert.pem -extfile ./grid-ca-ssl.conf -extensions v3_ca
+    [ $? != 0 ] && [FAIL] && echo " Could not update cert... unable to sign" && popd >& /dev/null && return 3
+
+    mv ./cacert.pem ./cacert.expired
+    mv renewedcacert.pem ./cacert.pem
+
+    openssl x509 -text -hash -in $HOME/.globus/simpleCA/cacert.pem |tee ${tomcat_install_dir}/webapps/ROOT/cacert.pem |  grep "Not After" | sed -r -n -e  's/[^:]*:(.*)/New Cert Expires: \1/p'
+    [ $? != 0 ] && [FAIL] && echo " Could not update cert... unable to post cacert" && popd >& /dev/null && return 4
+
+    local pair_hash=($((openssl x509 -noout -modulus -in $HOME/.globus/simpleCA/cacert.pem | openssl md5 ; openssl x509 -noout -modulus -in ${tomcat_install_dir}/webapps/ROOT/cacert.pem | openssl md5)  | uniq))
+    if (( 1 == ${#pair_hash[@]} )); then
+        [OK]
+        printf "$([OK]) Please email the new certificate to esgf-ca@lists.llnl.gov, with subject \"NEW CA CERT for ${esgf_host:-$(hostname --fqdn)}. Thank you\n\n"
+    else
+        printf "$([FAIL]) Posted cacert doesn't match :-( \n\n"
+        return 5
+    fi
+    return 0
+}
+
 ############################################
 # Globus Online Setup
 ############################################

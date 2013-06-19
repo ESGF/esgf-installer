@@ -2313,7 +2313,7 @@ update_simple_ca_cert() {
     local simpleCA_dir=$HOME/.globus/simpleCA
     backup ${simpleCA_dir}
 
-    [ ! -d "${simpleCA_dir}" ] && [FAIL] && echo "Could not find simpleCA directory (${simpleCA)" && return 1
+    [ ! -d "${simpleCA_dir}" ] && [FAIL] && echo "Could not find simpleCA directory (${simpleCA_dir})" && return 1
     pushd $HOME/.globus/simpleCA >& /dev/null
 
   # Generate CSR based on existing cert

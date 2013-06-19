@@ -2012,17 +2012,17 @@ setup_tomcat() {
     # For Security Reasons...
     #-------------------------------
 
-    if [ -d ${tomcat_install_dir}/webapps/examples ]; then
-        local dodel="Y"
-        echo "For security reasons we recommend removing the examples web app [$(readlink -f ${tomcat_install_dir}/webapps/examples)] and docs"
-        readlink -f ${tomcat_install_dir}/webapps/examples
-        readlink -f ${tomcat_install_dir}/webapps/docs
-        ((VERBOSE)) && read -e -p "Are the directories shown above correct? [Y/n] " dodel
-        if [ "${dodel}" = "Y" ] || [ "${dodel}" = "y" ] || [ -z "${dodel}" ]; then
-            rm -rf ${tomcat_install_dir}/webapps/examples && echo "removed the examples..."
-            rm -rf ${tomcat_install_dir}/webapps/docs && echo "removed the docs..."
-        fi
-    fi
+    (
+        cd ${tomcat_install_dir} || return 1
+        echo "Checking for unnecessary webapps with dubious security implications..."
+        superfluous_dirs=(examples docs host-manager manager)
+        for superfluous_dir in ${superfluous_dirs[@]}; do
+            [ ! -e "${superfluous_dir}" ] && continue
+            local superfluous_dir=$(readlink -f ${superfluous_dir})
+            echo -n "Removing ${superfluous_dir} for security reasons... "
+            rm -rf ${superfluous_dir} && [OK] || [FAIL]
+        done
+    )
 
     setup_root_app
 

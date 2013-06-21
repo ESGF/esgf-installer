@@ -6249,9 +6249,18 @@ done_remark() {
 
     if [ -d "${thredds_content_dir}/thredds" ]; then
         echo
-        echo "(Use UNIX group permissions on ${thredds_content_dir}/thredds/esgcet to allow publisher user to publish thredds catalogs)"
+        echo "[Note: Use UNIX group permissions on ${thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]"
         echo " %> chgrp -R <appropriate unix group for publishing users> ${thredds_content_dir}/thredds"
     fi
+
+    printf "
+        -------------------------------------------------------
+        Administrators of this node should subscribe to the
+        esgf-node-admins@lists.llnl.gov by sending email to: $(echo_strong "majordomo@lists.llnl.gov")
+        with the body: $(echo_strong "subscribe esgf-node-admins")
+        -------------------------------------------------------
+"
+
     #echo "(\"Test Project\" -> pcmdi.${esg_root_id}.${node_short_name}.test.mytest)"
     echo ""
 }

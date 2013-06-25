@@ -1474,6 +1474,10 @@ setup_cdat() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
     local cdat_git_protocol="git://"
+    #---------
+    #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
+    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
+    #---------
     if [ ! -d ${workdir}/uvcdat ]; then
         echo "Fetching the cdat project from GIT Repo..."
         ((DEBUG)) && echo "${cdat_repo}"

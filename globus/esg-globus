@@ -1597,7 +1597,7 @@ install_globus_keypair() {
     fi
 
     [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
-        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "property updated [OK]"
+        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "properly updated [OK]"
     echo
 }
 

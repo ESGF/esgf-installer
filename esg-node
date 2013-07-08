@@ -88,7 +88,7 @@ envfile="/etc/esg.env"
 #User Defined / Settable (public)
 #--------------
 _t=${0%.*}
-install_prefix=${install_prefix:-"/usr/local"}
+install_prefix=${ESGF_INSTALL_PREFIX:-"/usr/local"}
 esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type
@@ -412,6 +412,7 @@ write_paths() {
     ((show_summary_latch++))
     echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
     echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
+    echo "export ESGF_INSTALL_PREFIX=${installer_prefix}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
     dedup ${envfile} && source ${envfile}

@@ -88,7 +88,7 @@ envfile="/etc/esg.env"
 #User Defined / Settable (public)
 #--------------
 _t=${0%.*}
-install_prefix=${ESGF_INSTALL_PREFIX:-"/usr/local"}
+install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
 esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
 esg_config_dir=${esg_root_dir}/config
 esg_config_type_file=${esg_config_dir}/config_type

@@ -256,7 +256,7 @@ init() {
     esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
     esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
     esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
-    workdir=${workdir:-${installer_home}/workbench/esg}
+    workdir=${workdir:-${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg}}
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
     let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
@@ -412,6 +412,7 @@ write_paths() {
     ((show_summary_latch++))
     echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
     echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
+    echo "export ESGF_INSTALL_WORKDIR=${workdir}" >> ${envfile}
     echo "export ESGF_INSTALL_PREFIX=${installer_prefix}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}

@@ -413,7 +413,7 @@ write_paths() {
     echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
     echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
     echo "export ESGF_INSTALL_WORKDIR=${workdir}" >> ${envfile}
-    echo "export ESGF_INSTALL_PREFIX=${installer_prefix}" >> ${envfile}
+    echo "export ESGF_INSTALL_PREFIX=${install_prefix}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
     dedup ${envfile} && source ${envfile}
@@ -6210,6 +6210,31 @@ usage() {
         *application stack.
 
         --------------
+        Key Environment Vars:
+        --------------
+
+        The following variables are written to the $(echo_ok /etc/esg.env) file
+        which sets up the installation environment.  The 'OFFICIAL'
+        names (not the [common_names]) should be used in that file.
+
+        (Nomenclature: OFFICIAL_ENV_VARIABLE_NAME [common_name] : either can be set; common name overrules)
+
+        $(echo_ok ESGF_HOME) [esg_root_dir]
+                    The location where configuration files are kept (the node's state)
+                    (default - /esg)
+        $(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]
+                    Top level directory where core node artifacts are installed
+                    (default - /usr/local)
+        $(echo_ok ESGF_USER_HOME) [installer_home]
+                    Directory where the installation user's home directory is.
+                    Here for historical reasons when this user's home was used to download and build artifacts.
+                    It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
+                    (default - /usr/local/src/esgf)
+        $(echo_ok ESGF_INSTALL_WORKDIR) [workdir]
+                    Top level directory where core node artifacts are downloaded and built
+                    (default - $ESGF_USER_HOME/workbench/esg)
+       
+        --------------
         Typical usage:
         --------------
 
@@ -6819,28 +6844,24 @@ main() {
                     exit $?
                     ;;
                 --prefix)
-                    local pvalue
-                    shift
-                    until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ] || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
-                        pvalue="$1"
-                        debug_print "prefix value is: $1"
-                        shift
-                    done
-                    unshift=1
-                    install_prefix=${pvalue}
-                    [ -z "${pvalue}" ] && printf "\nERROR: Did not properly set --prefix value!!!\n\n" && exit 1
+                    printf "
+    $(echo_fail DEPRECATED): The $(echo_fail $1) flag has been deprecated.
+             Instead, please use the environment variable $(echo_strong "ESGF_INSTALL_PREFIX")
+
+    Ex: bash> $(echo_strong ESGF_INSTALL_PREFIX)=/usr/local ${0} ...
+
+"
+                    exit $?
                     ;;
                 --workdir)
-                    local wvalue
-                    shift
-                    until [ $(echo $1 | egrep '^\s*--') ] || [ -z "$1" ] || [ "$1" = "stop" ] || [ "$1" = "start" ] || [ "$1" = "status" ] || [ "$1" = "restart" ]  || [ "$1" = "update" ] || [ "$1" = "upgrade" ] || [ "$1" = "install" ]; do
-                        wvalue="$1"
-                        debug_print "workdir value is: $1"
-                        shift
-                    done
-                    unshift=1
-                    workdir=${wvalue}
-                    [ -z "${wvalue}" ] && printf "\nERROR: Did not properly set --workdir value!!!\n\n" && exit 1
+                    printf "
+    $(echo_fail DEPRECATED): The $(echo_fail $1) flag has been deprecated.
+             Instead, please use the environment variable $(echo_strong "ESGF_INSTALL_WORKDIR")
+
+    Ex: bash> $(echo_strong ESGF_INSTALL_WORKDIR)=${installer_home}/workbench/esg ${0} ...
+
+"
+                    exit $?
                     ;;
                 --no-globus)
                     no_globus=1

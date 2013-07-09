@@ -6014,12 +6014,10 @@ esgf_node_info() {
 usage() {
     printf "
      usage:
-     (as root)
+     * This program must be run as root or a root equiv shell: (sudo -s)
+     * Deprecated flags are in $(echo_fail red), and followed by an \"*\".
+
      ${progname} ([--<directive>] | [start] | [stop] | [status] | [restart]
-         --prefix      - specify the top level directory for this entire installation's \"external\" tools
-                         (default:/usr/local - currently:$install_prefix)
-        --workdir     - specify the directory used by the installation to download and build esg artifacts for installation
-                        (default:~/workbench/esg - currently:$workdir)
         --install     - goes through the installation process
                         will automatically start up node services
         --verify      - runs the test code to verify installation
@@ -6032,6 +6030,13 @@ usage() {
         --upgrade|--update|update - upgrades/updates the node manager
         --force       - will allow execution of installation|update code to be executed beyond the up2date checks.
                         Basically allowing an installation|update as if starting from scratch.
+
+        $(echo_fail --prefix)*     - specify the top level directory for this entire installation's \"external\" tools
+                         (default:/usr/local - currently:$install_prefix)
+                        see: \"Key Environment Vars\" section below
+        $(echo_fail --workdir)*    - specify the directory used by the installation to download and build esg artifacts for installation
+                        (default:~/workbench/esg - currently:$workdir)
+                        see: \"Key Environment Vars\" section below
 
         -------------------------------
         Configuration Type Selection
@@ -6104,7 +6109,7 @@ usage() {
         --generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}')
 
-                   Ex: esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}
+                   Ex: $(echo_strong esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)})
 
         --install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
@@ -6120,8 +6125,8 @@ usage() {
         --check-certs - checks both SSL private certificate and Globus private cert for expiration
         --set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup
 
-        (deprecated) --install-signed-cert - installs signed host certificate into keystore and truststore <signed PEM file>
-        (deprecated) --export-keys-to-globus  - exports keystore certificates to globus host{cert,key}.pem files.
+        $(echo_fail --install-signed-cert)* - installs signed host certificate into keystore and truststore <signed PEM file>
+        $(echo_fail --export-keys-to-globus)*  - exports keystore certificates to globus host{cert,key}.pem files.
 
         --dname - specify the certificate distinguished name to be used when creating certificates
                   (the DN value is of the form: \"CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
@@ -6221,19 +6226,19 @@ usage() {
 
         $(echo_ok ESGF_HOME) [esg_root_dir]
                     The location where configuration files are kept (the node's state)
-                    (default - /esg)
+                    (default - /esg  currently:$esg_root_dir)
         $(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]
                     Top level directory where core node artifacts are installed
-                    (default - /usr/local)
+                    (default - /usr/local - currently:$install_prefix)
         $(echo_ok ESGF_INSTALL_WORKDIR) [workdir]
                     Top level directory where core node artifacts are downloaded and built
-                    (default - \$ESGF_USER_HOME/workbench/esg)
+                    (default - \$ESGF_USER_HOME/workbench/esg  - currently:$workdir)
 
         $(echo_strong ESGF_USER_HOME) [installer_home]
                     Directory where the installation user's home directory is.
                     Here for historical reasons when this user's home was used to download and build artifacts.
                     It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
-                    (default - /usr/local/src/esgf)
+                    (default - /usr/local/src/esgf  - currently:$installer_home)
        
         --------------
         Typical usage:

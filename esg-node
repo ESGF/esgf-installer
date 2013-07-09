@@ -6225,14 +6225,15 @@ usage() {
         $(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]
                     Top level directory where core node artifacts are installed
                     (default - /usr/local)
-        $(echo_ok ESGF_USER_HOME) [installer_home]
+        $(echo_ok ESGF_INSTALL_WORKDIR) [workdir]
+                    Top level directory where core node artifacts are downloaded and built
+                    (default - \$ESGF_USER_HOME/workbench/esg)
+
+        $(echo_strong ESGF_USER_HOME) [installer_home]
                     Directory where the installation user's home directory is.
                     Here for historical reasons when this user's home was used to download and build artifacts.
                     It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
                     (default - /usr/local/src/esgf)
-        $(echo_ok ESGF_INSTALL_WORKDIR) [workdir]
-                    Top level directory where core node artifacts are downloaded and built
-                    (default - $ESGF_USER_HOME/workbench/esg)
        
         --------------
         Typical usage:

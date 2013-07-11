@@ -1209,7 +1209,7 @@ echo_c() {
     echo_c -fg green -at bold "[OK]"
 }
 echo_strong() {
-    echo_c -at bold -fg white $*
+    echo_c -at bold -fg magenta $*
 }
 echo_fail() {
     echo_c -fg red $*

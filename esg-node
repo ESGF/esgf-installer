@@ -7215,4 +7215,3 @@ main() {
 
 #clear system traps
     trap - INT TERM
-

@@ -6109,7 +6109,7 @@ usage() {
         --generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
                                      (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}')
 
-           command> $(echo_c -fg magenta "esg-node --generate-ssl-key-and-csr ${tomcat_install_dir}/conf/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_install_dir}/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}")
+           command> $(echo_c -fg magenta "esg-node --generate-ssl-key-and-csr ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=${esgf_host:-$(hostname --fqdn)}")
 
         --install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
         --fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)

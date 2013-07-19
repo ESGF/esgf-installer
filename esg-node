@@ -5619,9 +5619,9 @@ stop() {
     (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
-    show_svc_list
 
     run_shutdown_hooks
+    show_svc_list
 }
 
 #Displays the status of the node...

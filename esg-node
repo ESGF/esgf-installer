@@ -6701,6 +6701,10 @@ main() {
                     [ $? == 0 ] && _set_no_auto_fetch_file
                     exit $?
                     ;;
+                --no-auto-fetch-certs)
+                    _set_no_auto_fetch_file
+                    node_auto_fetch_certs=false
+                    ;;
                 --set-auto-fetch-certs)
                     shift
                     [ "$1" = "off" ] || [ "$1" = "false" ] && node_auto_fetch_certs=false || node_auto_fetch_certs=true

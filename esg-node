@@ -7034,7 +7034,7 @@ main() {
     the value is used for subsequent launches so the type value does not have to be
     always specified.  A simple \"esg-node start\" will launch with the last type used
     that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-    (more documentation available at http://esgf.org/esgf-installer-site/)\n\n"
+    (more documentation available at http://esgf.org/esgf-installer/)\n\n"
 
             exit 1
         fi

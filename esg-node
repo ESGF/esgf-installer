@@ -5987,7 +5987,7 @@ esgf_node_info() {
      |---------|                                                 |---------|
       ---------                                                   ---------
 
-     (Visit http://esgf.org , http://esgf.org/wiki for more information)
+     (Visit http://esgf.org , http://devel.esgf.org/wiki for more information)
 
                                                                                     
 \033[01;31m
@@ -7034,7 +7034,7 @@ main() {
     the value is used for subsequent launches so the type value does not have to be
     always specified.  A simple \"esg-node start\" will launch with the last type used
     that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-    (more documentation available at http://esgf.org/esgf-installer-site/)\n\n"
+    (more documentation available at http://esgf.org/esgf-installer/)\n\n"
 
             exit 1
         fi
@@ -7045,11 +7045,11 @@ main() {
         echo "     ----------------------------------------------------------"
         echo "     Please make sure you have installed ALL the prerequisites"
         echo "     Please read the prerequisite list here:"
-        echo "     http://esgf.org/wiki/ESGFNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
+        echo "     http://devel.esgf.org/wiki/ESGFNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
         echo "     Before continuing make sure they are ALL present on this system!!!!!!"
         if [ $((sel & DATA_BIT)) != 0 ]; then
             echo "         If you intend on publishing from this node please check the publishing network prerequisites"
-            echo "         http://esgf.org/wiki/ESGFNode/FAQ#PREREQUISITES"
+            echo "         http://devel.esgf.org/wiki/ESGFNode/FAQ#PREREQUISITES"
         fi
         echo "     ----------------------------------------------------------"
         echo

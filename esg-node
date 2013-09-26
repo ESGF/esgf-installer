@@ -1513,12 +1513,13 @@ setup_cdat() {
         pushd ${workdir_build}
         #(zlib patch value has to be 3,5,7 - default is 3)
         local zlib_value=$(pkg-config --modversion zlib | sed -n -re 's/(.)*/\1/p' | sed -n -re '/(3|5|7)/p') ; [[ ! ${zlib_value} ]] && zlib_value=3
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DCDAT_ANONYMOUS_LOG=OFF -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
-        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (1)" && popd && checked_done 1
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DCDAT_ANONYMOUS_LOG=OFF -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
-        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (2)" && popd && checked_done 1
-        cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DCDAT_ANONYMOUS_LOG=OFF -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL="${cdat_git_protocol}" ${workdir}/uvcdat
-        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (3)" && popd && checked_done 1
+        local command="cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DUVCDAT_ANONYMOUS_LOG=OFF -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL=${cdat_git_protocol} ${workdir}/uvcdat"
+
+        for ((i=0;i<3;i++)); do
+            ((DEBUG)) && echo "command [${i}] = ${command}"
+            ${command}
+            [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (${i})" && popd && checked_done 1
+        done
 
         make -j ${num_cpus}
         [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (4)" && popd && checked_done 1

@@ -1493,6 +1493,7 @@ setup_cdat() {
         fi
     fi
     cd uvcdat >& /dev/null
+    git pull
     git checkout ${cdat_version}
     [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
 
@@ -1528,7 +1529,7 @@ setup_cdat() {
     )
     [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
 
-    ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
+    UVCDAT_ANONYMOUS_LOG=OFF ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
 
     popd >& /dev/null
@@ -1544,6 +1545,7 @@ setup_cdat() {
 write_cdat_env() {
     ((show_summary_latch++))
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
+    echo "export UVCDAT_ANONYMOUS_LOG=OFF" >> ${envfile}
     prefix_to_path PATH ${cdat_home}/bin >> ${envfile}
     prefix_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
     prefix_to_path LD_LIBRARY_PATH ${cdat_home}/Externals/lib >> ${envfile}

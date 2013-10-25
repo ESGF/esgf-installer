@@ -961,7 +961,7 @@ setup_gridftp_jail() {
             echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'
             return 999
         fi
-        local chroot_mount=($(mount -l | grep ${mount_dir} | awk '{print $3}' | sort -u))
+        local chroot_mount=($(mount -l | grep ^${mount_dir}' ' | awk '{print $3}' | sort -u))
         if (( ${#chroot_mount[@]} == 0 )); then
             [ ! -e ${gridftp_chroot_jail}/${mount_name##*/} ] && mkdir -p ${gridftp_chroot_jail}/${mount_name##*/}
             ((DEBUG)) && echo "mount --bind ${mount_dir} ${gridftp_chroot_jail}/${mount_name##*/}"

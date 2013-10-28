@@ -2533,7 +2533,7 @@ select_idp_peer() {
 
     #just to be sure it's clear (though it should be)
     unset input
-    read -e -p "Please Enter the IP address of this host [${esgf_host_ip}]:> " input
+    read -e -p "Please Enter the public IP address of this host [${esgf_host_ip}]:> " input
     [ ! -z "${input}" ] && esgf_host_ip=${input}
     printf "\nUsing IP: ${esgf_host_ip}\n"
     unset input

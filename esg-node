@@ -102,6 +102,8 @@ logfile=${logfile:-"/tmp/${_t##*/}.out"}
 esg_functions_file=${install_prefix}/bin/esg-functions
 #--------------
 
+UVCDAT_ANONYMOUS_LOG=OFF
+
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
 init() {

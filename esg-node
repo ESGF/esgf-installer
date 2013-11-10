@@ -3956,7 +3956,7 @@ install_keypair() {
 
     local certfiles=()
     local certfile_entry
-    echo "Please enter your Certificate Athority's certificate chain file(s): "
+    echo "Please enter your Certificate Athority's certificate chain file(s): [if in doubt: http://pcmdi6.llnl.gov/cacert.pem] "
     echo " [enter each cert file/url press return, press return with blank entry when done]"
     echo
     while [ 1 ]; do

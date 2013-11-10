@@ -277,8 +277,8 @@ init() {
     curl_workdir=${workdir}/curl
     curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
     git_workdir=${workdir}/git
-    #git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-    git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
+    git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
+    #git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
     bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
     db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
     node_db_name=${db_database}

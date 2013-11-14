@@ -1540,6 +1540,27 @@ setup_cdat() {
     #NOTE: order is important in next three calls...
     _housekeeping_cdat_to_uvcdat
     write_cdat_env
+
+    #----------------
+    #BIG HACK....
+    #----------------
+    #First let me explain...  this is regarding git or any program that
+    #dynamically loads the libz library. If it gets the lib from CDAT's
+    #installed/built libz (as posted in the LD_LIBRARY_PATH, written to
+    #etc/esg.env and sourced at the top of this script) it will result
+    #in the following warning:
+    #
+    #/usr/local/uvcdat/Externals/lib/libz.so.1: no version information available (required by git)
+    #
+    #The easiest and least invasive thing to do is to remove or rename
+    #CDAT's libz.  So that is what we are doing here.  CDAT should not
+    #have built its own libz in the first place, if there is libz
+    #already on the system.  So this bit of hacking in most clean
+    #install scenarios is moot (though it in-turn means you have to
+    #install libz on your system to get past, at least git building).
+    [[ ${cdat_home} ]] && [ -d ${cdat_home} ] && [  $(ls libz.* 2> /dev/null | wc -l) -gt 0 ] && tar cvzf ${cdat_home}/Externals/lib/libz.tgz ${cdat_home}/Externals/lib/libz.* && rm ${cdat_home}/Externals/lib/libz.*
+    #----------------
+
     write_cdat_install_log
     checked_done 0
 }

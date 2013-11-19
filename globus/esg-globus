@@ -220,8 +220,8 @@ export GLOBUS_SYS_ACCT=${globus_sys_acct}  #TODO: why is this an exported var?
 #      pull test_publication into separate test publication script?
 #      Hmmmm.... No harm in doubling up, but come back and make crispy
 #      and clean later
-append_to_path LD_LIBRARY_PATH $GLOBUS_LOCATION/lib >> ${envfile}
-append_to_path PATH $GLOBUS_LOCATION/bin >> ${envfile}
+prefix_to_path LD_LIBRARY_PATH $GLOBUS_LOCATION/lib >> ${envfile}
+prefix_to_path PATH $GLOBUS_LOCATION/bin >> ${envfile}
 dedup ${envfile} && source ${envfile}
 
 
@@ -961,7 +961,7 @@ setup_gridftp_jail() {
             echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'
             return 999
         fi
-        local chroot_mount=($(mount -l | grep ${mount_dir} | awk '{print $3}' | sort -u))
+        local chroot_mount=($(mount -l | grep ^${mount_dir}' ' | awk '{print $3}' | sort -u))
         if (( ${#chroot_mount[@]} == 0 )); then
             [ ! -e ${gridftp_chroot_jail}/${mount_name##*/} ] && mkdir -p ${gridftp_chroot_jail}/${mount_name##*/}
             ((DEBUG)) && echo "mount --bind ${mount_dir} ${gridftp_chroot_jail}/${mount_name##*/}"
@@ -1597,7 +1597,7 @@ install_globus_keypair() {
     fi
 
     [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
-        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "property updated [OK]"
+        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "properly updated [OK]"
     echo
 }
 
@@ -1754,7 +1754,7 @@ config_myproxy_server() {
 	mkdir -p ${dot_globus}/simpleCA
 
         #-----------(command)-------------
-        GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca -subject "O=ESGF, OU=ESGF.ORG, OU=ESGF-${esgf_host:-$(hostname --fqdn)}, CN=ESGF CA" | tee /tmp/globus_simpleca.log #> output
+        GRID_CA_DIR=${dot_globus}/simpleCA ${globus_location}/setup/globus/setup-simple-ca -subject "CN=ESGF CA, OU=ESGF-${esgf_host:-$(hostname --fqdn)}, OU=ESGF.ORG, O=ESGF" -days 1825 | tee /tmp/globus_simpleca.log #> output
         [ $? != 0 ] && echo "May have to remove offending dir" && popd && return 1
         #---------------------------------
         
@@ -2152,6 +2152,8 @@ edit_myproxy_server_config() {
     echo -n "*"
     eval "perl -p -i -e 's#\\@\\@esgf_home\\@\\@#${esgf_home}#g' ${tfile}"
     echo -n "*"
+    sed  -i -r 's/(.*certificate_issuer_key_passphrase)[ ]*([^"].*[^"])[ ]*$/\1 "\2"/' ${tfile}
+    echo -n "<+>"
     echo " [OK]"
     
     chmod 600 ${tfile}
@@ -2301,6 +2303,42 @@ create_globus_account() {
     else
         echo "[OK]"
     fi
+}
+
+#Optionally takes expiration duration of cert in days
+#Default is 1 year
+update_simple_ca_cert() {
+    local days=${1:-365}
+    echo "Updating SimpleCA Certificate... for ${days} days"
+    local simpleCA_dir=$HOME/.globus/simpleCA
+    backup ${simpleCA_dir}
+
+    [ ! -d "${simpleCA_dir}" ] && [FAIL] && echo "Could not find simpleCA directory (${simpleCA_dir})" && return 1
+    pushd $HOME/.globus/simpleCA >& /dev/null
+
+  # Generate CSR based on existing cert
+    openssl x509 -x509toreq -in ./cacert.pem -signkey ./private/cakey.pem -out ./renewedcacertreq.csr
+    [ $? != 0 ] && [FAIL] && echo " Could not update cert... unable to generate request" && popd >& /dev/null && return 2
+
+  # Sign the CSR
+    openssl x509 -req -days ${days} -in ./renewedcacertreq.csr -signkey ./private/cakey.pem  -out ./renewedcacert.pem -extfile ./grid-ca-ssl.conf -extensions v3_ca
+    [ $? != 0 ] && [FAIL] && echo " Could not update cert... unable to sign" && popd >& /dev/null && return 3
+
+    mv ./cacert.pem ./cacert.expired
+    mv renewedcacert.pem ./cacert.pem
+
+    openssl x509 -text -hash -in $HOME/.globus/simpleCA/cacert.pem |tee ${tomcat_install_dir}/webapps/ROOT/cacert.pem |  grep "Not After" | sed -r -n -e  's/[^:]*:(.*)/New Cert Expires: \1/p'
+    [ $? != 0 ] && [FAIL] && echo " Could not update cert... unable to post cacert" && popd >& /dev/null && return 4
+
+    local pair_hash=($((openssl x509 -noout -modulus -in $HOME/.globus/simpleCA/cacert.pem | openssl md5 ; openssl x509 -noout -modulus -in ${tomcat_install_dir}/webapps/ROOT/cacert.pem | openssl md5)  | uniq))
+    if (( 1 == ${#pair_hash[@]} )); then
+        [OK]
+        printf "$([OK]) Please email the new certificate to esgf-ca@lists.llnl.gov, with subject \"NEW CA CERT for ${esgf_host:-$(hostname --fqdn)}. Thank you\n\n"
+    else
+        printf "$([FAIL]) Posted cacert doesn't match :-( \n\n"
+        return 5
+    fi
+    return 0
 }
 
 ############################################

@@ -71,6 +71,8 @@
 workdir=${workdir:-${installer_home}/workbench/esg}
 service_name=${service_name:-"thredds"}
 extensions=${extensions:-".nc"}
+exempt_extensions=${exempt_extensions:-".xml"}
+exempt_services=${exempt_services:-"x"}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 
@@ -158,6 +160,8 @@ install_access_logging_filter() {
     #Edit the web.xml file for ${service_name} to include these token replacement values
     echo -n "Replacing tokens... "
     eval "perl -p -i -e 's/\\@service.name\\@/${service_name}/g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's/\\@exempt_extensions\\@/${exempt_extensions}/g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's#\\@exempt_services\\@#${exempt_services}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's/\\@extensions\\@/${extensions}/g' ${target_file}"; echo -n "*"
     echo " [OK]"
     popd >& /dev/null

@@ -18,12 +18,10 @@
 TODO:
 
 overall:
--set new header for all files
--untabify all files (use only spaces)
--Put in MORE JUnit testing.
--Write test cases for codebase.
+-Put in MORE UNIT TESTING!!
+-Write test cases for codebase and installed items!!!!
 -Install BDM client and simple sanity check call(s)
--Build Shell
+-Build Shell (REPL)
 
 core:
 Metrics & Monitoring
@@ -41,57 +39,9 @@ screw things up?
 
       hessian-3.0.20.jar ->? hessian-3.1.5.jar
 
--Install and setup database version control like LiquiBase, for DNM managed tables
-
-DONE:
-xClean up InstallCert Blurting out exception stack trace simply because
- you don't have the key.  (that's the point - you're trying to get it :-)
-
-esg-node:
-xInspect the "dedup" function to work with install_log as well
-xPut in better software version string checking in check_version()
-xGIT - put in fix to update an existing git fetching for cdat upgraded versions
-
-
-libs: (todo's and issues)
-xWhen cut over to ivy make sure to get rid of [jsr173] api jar since the
-xtansient dependency [stax] api jar is fetched.  Also the [jaxb1-impl.jar]
-xmay be removed since ivy pulls down the transient dependency
-[jaxb-impl.jar] that replaces it.
-
-	git rm jsr173 api use fetched stax api
-	git rm jaxb1-impl use fetched jaxb-impl
-
-xRoll back log4j from 1.2.15 to 1.2.14 to avoid ivy repo fetch failure
-issue.
-
-	git rm log4j-1.2.15.jar use fetched log4j-1.2.14.jar
-
-
-xFix issue with ivy having problems with resolving "javamail" to fetch
- mailapi.jar and smtp.jar
-
--Keep only:
-       ivy-2.1.0.jar
-       [hessian-3.0.20.jar] ? Test that still wire compatible with python version.
- x     [javamail = mail.jar, smtp.jar] ? working on resoving ivy repo failure
-       (everything else we fetch via ivy)
-
-(jars that will be fetched by ivy that can be removed)
-
-    activation.jar
-    commons-dbcp-1.2.2.jar
-    commons-dbutils-1.3.jar
-    commons-logging-1.1.1.jar
-    commons-pool-1.5.4.jar
-    jaxb-api.jar
-    jaxb-impl.jar
-    jaxb-xjc.jar
-    jaxb1-impl.jar
-    jsr173_1.0_api.jar
-    junit-4.8.2.jar
-    log4j-1.2.15.jar
-    postgresql-8.3-603.jdbc3.jar
-    servlet-api.jar
+(Note: we will move away from hessian to use RESTful - http calls.
+       I [gavin] believe that using a binary protocol is more compact
+       and the right thing to do - but... seems like if everyone jumps
+       off the bridge... Geronimo... ;-) )
 
 ---

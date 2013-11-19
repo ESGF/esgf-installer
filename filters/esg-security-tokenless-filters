@@ -79,8 +79,8 @@ if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); 
 
 esg_security_filters_dist_url=${esg_dist_url}/filters
 
-esg_orp_version=${esg_orp_version:-"1.2.6"}
-esgf_security_version=${esgf_security_version:-"1.5.1"}
+esg_orp_version=${esg_orp_version:-"2.3.5"}
+esgf_security_version=${esgf_security_version:-"2.3.15"}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 
@@ -203,10 +203,15 @@ get_orp_libs() {
     xercesImpl_version=${xercesImpl_version:-"2.9.1"}
     xml_apis_version=${xml_apis_version:-"1.3.04"}
     xmlsec_version=${xmlsec_version:-"1.4.2"}
-    joda_version=${joda_version:-"1.6"}
-    slf4j_version="1.6.1"
+    joda_version=${joda_version:-"2.0"}
+    commons_io_version=${commons_io_version:-"2.4"}
+    slf4j_version="1.6.4"
 
-    spring_version=${spring_version:-"2.5"}
+    #------------------------------------------------------------------
+    #NOTE: Make sure that this version matches the version that is in
+    #the esg-orp project!!!
+    spring_version=${spring_version:-"3.2.2.RELEASE"}
+    #------------------------------------------------------------------
 
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
@@ -225,10 +230,12 @@ get_orp_libs() {
     xml_apis_jar=xml-apis-${xml_apis_version}.jar
     xmlsec_jar=xmlsec-${xmlsec_version}.jar
     joda_time_jar=joda-time-${joda_version}.jar
+    commons_io_jar=commons-io-${commons_io_version}.jar
     slf4j_api_jar=slf4j-api-${slf4j_version}.jar
     slf4j_log4j_jar=slf4j-log4j12-${slf4j_version}.jar
 
-    spring_jar=spring-${spring_version}.jar
+    spring_jar=spring-core-${spring_version}.jar
+    spring_web_jar=spring-web-${spring_version}.jar
     spring_webmvc_jar=spring-webmvc-${spring_version}.jar
 
     if [ -d ${dest_dir} ]; then
@@ -249,6 +256,7 @@ get_orp_libs() {
         [ ! -e ${dest_dir}/${xml_apis_jar} ]   && cp -v ${src_dir}/${xml_apis_jar}   ${dest_dir}
         [ ! -e ${dest_dir}/${xmlsec_jar} ]     && cp -v ${src_dir}/${xmlsec_jar}     ${dest_dir}
         [ ! -e ${dest_dir}/${joda_time_jar} ]  && cp -v ${src_dir}/${joda_time_jar}  ${dest_dir}
+        [ ! -e ${dest_dir}/${commons_io_jar} ] && cp -v ${src_dir}/${commons_io_jar}  ${dest_dir}
         [ ! -e ${dest_dir}/${slf4j_api_jar} ]  && cp -v ${src_dir}/${slf4j_api_jar}  ${dest_dir}
         [ ! -e ${dest_dir}/${slf4j_log4j12_jar} ] && cp -v ${src_dir}/${slf4j_log4j12_jar} ${dest_dir}
 
@@ -265,14 +273,54 @@ get_orp_libs() {
 
         echo "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to ${dest_dir} ..."
         local make_backup_file=0 #Do NOT make backup file
-        checked_get ${dest_dir}/${spring_jar} ${esg_dist_url}/filters/${spring_jar} $((force_install)) $((make_backup_file))
-        checked_get ${dest_dir}/${spring_webmvc_jar} ${esg_dist_url}/filters/${spring_webmvc_jar} $((force_install)) $((make_backup_file))
 
-        checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
-        checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
+        #Trying to avoid going on the wire to fetch files... see if the ORP has it locally first.
+        if [[ ! -e "${dest_dir}/${spring_jar}" ]]; then
+            if [[ -e "${src_dir}/${spring_jar}" ]]; then
+                cp -v ${src_dir}/${spring_jar} ${dest_dir}/${spring_jar}
+            else
+                checked_get ${dest_dir}/${spring_jar} ${esg_dist_url}/filters/${spring_jar} $((force_install)) $((make_backup_file))
+            fi
+        else
+            ((DEBUG)) && echo "${dest_dir}/${spring_jar} - [OK]"
+        fi
+
+        if [[ ! -e "${dest_dir}/${spring_webmvc_jar}" ]]; then
+            if [[ -e "${src_dir}/${spring_webmvc_jar}" ]]; then
+                cp -v ${src_dir}/${spring_webmvc_jar} ${dest_dir}/${spring_webmvc_jar}
+            else
+                checked_get ${dest_dir}/${spring_webmvc_jar} ${esg_dist_url}/filters/${spring_webmvc_jar} $((force_install)) $((make_backup_file))
+            fi
+        else
+            ((DEBUG)) && echo "${dest_dir}/${spring_webmvc_jar} - [OK]"
+        fi
+
+        if [[ ! -e "${dest_dir}/${spring_web_jar}" ]]; then
+            if [[ -e "${src_dir}/${spring_web_jar}" ]]; then
+                cp -v ${src_dir}/${spring_web_jar} ${dest_dir}/${spring_web_jar}
+            else
+                checked_get ${dest_dir}/${spring_web_jar} ${esg_dist_url}/filters/${spring_web_jar} $((force_install)) $((make_backup_file))
+            fi
+        else
+            ((DEBUG)) && echo "${dest_dir}/${spring_web_jar} - [OK]"
+        fi
+
+        if [[ ! -e "${dest_dir}/${esgf_security_jar}" ]]; then
+            if [[ -e "${src_dir}/${esgf_security_jar}" ]]; then
+                cp -v ${src_dir}/${esgf_security_jar} ${dest_dir}/${esgf_security_jar}
+            else
+                checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
+            fi
+        else
+            ((DEBUG)) && echo "${dest_dir}/${esgf_security_jar} - [OK]"
+        fi
+
+        if [[ ! -e "${dest_dir}/${esg_orp_jar}" ]]; then
+            checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
+        fi
 
 
-        #remove all other node manager jars that are not what we want
+        #remove all other orp / security jar versions that we don't want
         echo "cleaning up (removing) other, unnecessary, orp/security project jars from ${dest_dir} ..."
         rm -vf $(/bin/ls ${dest_dir}/${esg_orp_jar%-*}-*.jar | grep -v ${esg_orp_version})
         rm -vf $(/bin/ls ${dest_dir}/${esgf_security_jar%-*}-*.jar | grep -v ${esgf_security_version})

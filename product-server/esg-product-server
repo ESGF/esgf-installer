@@ -86,10 +86,11 @@ thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
 las_config_file_template_url=${esg_dist_url}/esgf-product-server/las_tds.xml.tmpl
 las_config_input_file_url=${esg_dist_url}/esgf-product-server/esg-las-config
 
-las_install_dir=${las_install_dir:-/usr/local}
+las_install_dir=${las_install_dir:-${install_prefix:-/usr/local}}
 las_server_dir=${content_dir}/las #why did you decide to make it there and not /esg/content/las/[conf/server] ??
 esgcet_las_config_file="esgcet_las.xml"
 esgcet_las_sisters_file="las_servers.xml"
+esgcet_las_static_sisters_file="las_servers_static.xml"
 
 setup_product_server() {
 
@@ -571,6 +572,7 @@ integrate_into_tds() {
     fi
 
     popd >& /dev/null
+    [ ! -e "${las_xml_config_dir}/${esgcet_las_static_sisters_file}" ] && touch ${las_xml_config_dir}/${esgcet_las_static_sisters_file}
     start_tomcat
     local ret=$?
     return $((ret > 1))

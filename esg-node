@@ -102,7 +102,7 @@ logfile=${logfile:-"/tmp/${_t##*/}.out"}
 esg_functions_file=${install_prefix}/bin/esg-functions
 #--------------
 
-UVCDAT_ANONYMOUS_LOG=OFF
+export UVCDAT_ANONYMOUS_LOG=False
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
@@ -1507,10 +1507,10 @@ setup_cdat() {
 
     local workdir_build=${workdir}/uvcdat_build
     (
-        unset LD_LIBRARY_PATH
+        #unset LD_LIBRARY_PATH
         unset PYTHONPATH
-	unset CFLAGS
-	unset LDFLAGS
+	#unset CFLAGS
+	#unset LDFLAGS
 
         [ -d ${workdir_build} ] && rm -rf ${workdir_build}
         mkdir -p ${workdir_build}
@@ -1532,7 +1532,7 @@ setup_cdat() {
     )
     [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
 
-    UVCDAT_ANONYMOUS_LOG=OFF ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
+    ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
 
     popd >& /dev/null

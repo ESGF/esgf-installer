@@ -128,6 +128,7 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"1.4.0"}
+    cdat_tag="671fb68d1a83e154244da15e7ebc439993345b6a"
     esgcet_version=${esgcet_version:-"2.12.1"}
 
     #see esgf-node-manager project:
@@ -1497,7 +1498,7 @@ setup_cdat() {
     fi
     cd uvcdat >& /dev/null
     git pull
-    git checkout ${cdat_version}
+    git checkout ${cdat_tag}
     [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
 
     #NOTE:

@@ -128,7 +128,7 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"1.4.0"}
-    cdat_tag="671fb68d1a83e154244da15e7ebc439993345b6a"
+    cdat_tag="0f7c1ed5ab2bdf5e1ae9c9bac3cccf5c69f6062c"
     esgcet_version=${esgcet_version:-"2.12.1"}
 
     #see esgf-node-manager project:
@@ -1518,7 +1518,7 @@ setup_cdat() {
         pushd ${workdir_build}
         #(zlib patch value has to be 3,5,7 - default is 3)
         local zlib_value=$(pkg-config --modversion zlib | sed -n -re 's/(.)*/\1/p' | sed -n -re '/(3|5|7)/p') ; [[ ! ${zlib_value} ]] && zlib_value=3
-        local command="cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DUVCDAT_ANONYMOUS_LOG=OFF -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL=${cdat_git_protocol} ${workdir}/uvcdat"
+        local command="cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DUVCDAT_ANONYMOUS_LOG=False -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL=${cdat_git_protocol} ${workdir}/uvcdat"
 
         for ((i=0;i<3;i++)); do
             ((DEBUG)) && echo "command [${i}] = ${command}"
@@ -1570,7 +1570,7 @@ setup_cdat() {
 write_cdat_env() {
     ((show_summary_latch++))
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
-    echo "export UVCDAT_ANONYMOUS_LOG=OFF" >> ${envfile}
+    echo "export UVCDAT_ANONYMOUS_LOG=False" >> ${envfile}
     prefix_to_path PATH ${cdat_home}/bin >> ${envfile}
     prefix_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
     prefix_to_path LD_LIBRARY_PATH ${cdat_home}/Externals/lib >> ${envfile}
@@ -1690,7 +1690,7 @@ setup_esgcet() {
     #        #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
     checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
     (( $? > 1 )) && return 0
-    $cdat_home/bin/easy_install ${esgcet_egg_file}
+    $cdat_home/bin/pip install ${esgcet_egg_file}
     [ $? != 0 ] && checked_done 1
     #    elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
     #        #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet"

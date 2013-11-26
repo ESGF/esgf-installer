@@ -1683,15 +1683,6 @@ setup_esgcet() {
     [ $? != 0 ] && return 1
     pushd ${workdir} >& /dev/null
 
-    #Gives you 30 seconds to make a choice or will choose "I" by default
-    #local choice
-    #while [ 1 ]; do
-    #    read -e -t $((1*60)) -p "Is this an install or update of the esgcet module? $([ "${mode}" = "I" ] && echo "[I/u]" || echo "[i/U]"): " choice
-    #    [ -z "${choice}" ] && choice=$(echo "${mode}" | tr [a-z] [A-Z])
-    #    if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
-    #        #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
-    #        #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-
     #clone publisher
     local publisher_git_protocol="git://"
     #---------
@@ -1721,20 +1712,6 @@ setup_esgcet() {
 	$cdat_home/bin/python setup.py install
     )
     [ $? != 0 ] && checked_done 1
-
-    #    elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
-    #        #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet"
-    #        #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet
-    #        checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
-    #        (( $? > 1 )) && return 0
-    #        $cdat_home/bin/easy_install --upgrade ${esgcet_egg_file}
-    #        [ $? != 0 ] && checked_done 1
-    #    else
-    #        echo "Not a valid selection... [${choice}] try again"
-    #        continue
-    #    fi
-    #    break
-    #done
 
     if [ "${mode}" = "I" ]; then
 

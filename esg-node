@@ -128,7 +128,7 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"1.4.0"}
-    cdat_tag="0f7c1ed5ab2bdf5e1ae9c9bac3cccf5c69f6062c"
+    cdat_tag="b4d32b957f641f2b30b4fb8d9e703106b53991eb"
     esgcet_version=${esgcet_version:-"2.12.1"}
 
     #see esgf-node-manager project:

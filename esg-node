@@ -129,7 +129,8 @@ init() {
 
     cdat_version=${cdat_version:-"1.4.0"}
     cdat_tag="b4d32b957f641f2b30b4fb8d9e703106b53991eb"
-    esgcet_version=${esgcet_version:-"2.12.1"}
+    esgcet_version=${esgcet_version:-"2.11.1"}
+    publisher_tag=${publisher_tag:-"v2.11.1"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.6.19"}
@@ -297,6 +298,8 @@ init() {
     cmake_repo=git://cmake.org/cmake.git
     cdat_repo=git://github.com/UV-CDAT/uvcdat.git
     cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
+    publisher_repo=git://github.com/ESGF/esg-publisher.git
+    publisher_repo_http=http://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
     tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
@@ -1688,10 +1691,37 @@ setup_esgcet() {
     #    if [ "${choice}" = "i" ] || [ "${choice}" = "I" ]; then
     #        #echo "$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet"
     #        #$cdat_home/bin/easy_install -f ${esg_dist_url}/externals esgcet
-    checked_get ${esgcet_egg_file} ${esg_dist_url_root}/externals/${esgcet_egg_file} $((force_install))
-    (( $? > 1 )) && return 0
-    $cdat_home/bin/pip install ${esgcet_egg_file}
+
+    #clone publisher
+    local publisher_git_protocol="git://"
+    #---------
+    #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
+    ((force_install)) && [ -d ${workdir}/esg-publisher ] && \rm -rf ${workdir}/esg-publisher
+    #---------
+    if [ ! -d ${workdir}/esg-publisher ]; then
+        echo "Fetching the cdat project from GIT Repo..."
+        ((DEBUG)) && echo "${publisher_repo}"
+        git clone ${publisher_repo} esg-publisher
+        if [ ! -d ${workdir}/esg-publisher/.git ]; then
+            publisher_git_protocol="http://"
+            echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
+            ((DEBUG)) && echo "${publisher_repo_http}"
+            git clone ${publisher_repo_http} esg-publisher
+            [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+        fi
+    fi
+    cd esg-publisher >& /dev/null
+    git pull
+    git checkout ${publisher_tag}
+    [ $? != 0 ] && echo " WARNING: Problem with checking out publisher (esgcet) revision [${esgcet_version}] from repository :-("
+
+    #install publisher
+    (
+	cd src/python/esgcet
+	$cdat_home/bin/python setup.py install
+    )
     [ $? != 0 ] && checked_done 1
+
     #    elif [ "${choice}" = "u" ] || [ "${choice}" = "U" ]; then
     #        #echo "$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet"
     #        #$cdat_home/bin/easy_install --upgrade -f ${esg_dist_url_root}/externals esgcet

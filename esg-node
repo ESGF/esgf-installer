@@ -294,7 +294,7 @@ init() {
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     cmake_workdir=${workdir}/cmake
-    cmake_repo=git://cmake.org/cmake.git
+    cmake_repo=http://cmake.org/cmake.git
     cdat_repo=git://github.com/UV-CDAT/uvcdat.git
     cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg

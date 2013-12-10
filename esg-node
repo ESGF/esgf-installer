@@ -302,7 +302,7 @@ init() {
     publisher_repo_http=http://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
-    tomcat_dist_url=http://apache.mirrors.pair.com/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    tomcat_dist_url=http://www.us.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
     utils_url=${esg_dist_url}/utils
     thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war

@@ -128,7 +128,7 @@ init() {
     #NOTE: esg-dist = v1.0.6
 
     cdat_version=${cdat_version:-"1.4.0"}
-    cdat_tag="b4d32b957f641f2b30b4fb8d9e703106b53991eb"
+    cdat_tag="esgf161"
     esgcet_version=${esgcet_version:-"2.11.1"}
     publisher_tag=${publisher_tag:-"v2.11.1"}
 

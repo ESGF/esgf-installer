@@ -2039,7 +2039,11 @@ setup_tomcat() {
 
         echo "upgrade migration complete"
     else
-        configure_tomcat ${keystore_password:-${security_admin_password:-$(cat ${ks_secret_file} 2> /dev/null)}}
+	if [ -s "$ks_secret_file" ]; then
+		configure_tomcat ${keystore_password:-$(cat ${ks_secret_file} 2> /dev/null)}
+	else
+		configure_tomcat ${keystore_password:-${security_admin_password}}
+	fi
     fi
     #----------------------------------
 

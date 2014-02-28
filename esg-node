@@ -3846,6 +3846,7 @@ generate_ssl_key_and_csr() {
 
 check_certificates() {
     echo "check_certificates..."
+    source ${esg_functions_file}
     check_cert_expiry_for_files ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem
     (source ${scripts_dir}/esg-globus && globus_check_certificates $@)
 }

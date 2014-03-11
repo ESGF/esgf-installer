@@ -2062,7 +2062,7 @@ setup_tomcat() {
     #-------------------------------
 
     (
-        cd ${tomcat_install_dir} || return 1
+        cd ${tomcat_install_dir}/webapps || return 1
         echo "Checking for unnecessary webapps with dubious security implications as a precaution..."
         superfluous_dirs=(examples docs host-manager manager)
         for superfluous_dir in ${superfluous_dirs[@]}; do

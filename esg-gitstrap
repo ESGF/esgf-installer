@@ -140,7 +140,7 @@ my %packages = (
 
 my %repoinfo = (
     'esgf-installer' => {
-        'url' => 'git://esgf.org/esgf-installer.git',
+        'url' => 'git://github.com/ESGF/esgf-installer.git',
         # Alternate installer path if you want to help with experimentation
         #'url' => 'git://github.com/AZed/esgf-installer.git',
         'branch' => {
@@ -162,7 +162,7 @@ my %repoinfo = (
         'installerlinks' => [ "esg-autoinstall-testnode", "esg-purge.sh"],
     },
     'esgf-dashboard' => {
-        'url' => 'git://esgf.org/esgf-dashboard.git',
+        'url' => 'git://github.com/ESGF/esgf-dashboard.git',
         'branch' => {
             'stable'     => 'master',
             'devel'      => 'devel',
@@ -173,7 +173,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esgf-drslib' => {
-        'url' => 'git://esgf.org/esgf-drslib.git',
+        'url' => 'git://github.com/ESGF/esgf-drslib.git',
         'branch' => {
             'stable'     => 'master',
             'devel'      => 'master',
@@ -184,7 +184,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esgf-idp' => {
-        'url' => 'git://esgf.org/esgf-idp.git',
+        'url' => 'git://github.com/ESGF/esgf-idp.git',
         'branch' => {
             'stable' => 'master',
             'devel' => 'devel',
@@ -195,7 +195,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esgf-node-manager' => {
-        'url' => 'git://esgf.org/esgf-node-manager.git',
+        'url' => 'git://github.com/ESGF/esgf-node-manager.git',
         'branch' => {
             'stable' => 'master',
             'devel'  => 'devel',
@@ -206,7 +206,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esg-orp' => {
-        'url' => 'git://esgf.org/esg-orp.git',
+        'url' => 'git://github.com/ESGF/esg-orp.git',
         'branch' => {
             'stable' => 'master',
             'devel' => 'devel',
@@ -217,7 +217,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esg-search' => {
-        'url' => 'git://esgf.org/esg-search.git',
+        'url' => 'git://github.com/ESGF/esg-search.git',
         'branch' => {
             'stable' => 'master',
             'devel' => 'devel',
@@ -228,7 +228,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esgf-security' => {
-        'url' => 'git://esgf.org/esgf-security.git',
+        'url' => 'git://github.com/ESGF/esgf-security.git',
         'branch' => {
             'stable' => 'master',
             'devel' => 'devel',
@@ -239,7 +239,7 @@ my %repoinfo = (
         'installerlinks' => [],
     },
     'esgf-web-fe' => {
-        'url' => 'git://esgf.org/esgf-web-fe.git',
+        'url' => 'git://github.com/ESGF/esgf-web-fe.git',
         'branch' => {
             'stable' => 'master',
             'devel' => 'devel',

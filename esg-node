@@ -6068,7 +6068,7 @@ esgf_node_info() {
      |---------|                                                 |---------|
       ---------                                                   ---------
 
-     (Visit http://esgf.org , http://devel.esgf.org/wiki for more information)
+     (Visit http://esgf.org , http://github.com/ESGF/esgf.github.io/wiki for more information)
 
                                                                                     
 \033[01;31m
@@ -7126,11 +7126,11 @@ main() {
         echo "     ----------------------------------------------------------"
         echo "     Please make sure you have installed ALL the prerequisites"
         echo "     Please read the prerequisite list here:"
-        echo "     http://devel.esgf.org/wiki/ESGFNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F"
+        echo "     https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#what-do-i-need-on-my-system-before-i-install"
         echo "     Before continuing make sure they are ALL present on this system!!!!!!"
         if [ $((sel & DATA_BIT)) != 0 ]; then
             echo "         If you intend on publishing from this node please check the publishing network prerequisites"
-            echo "         http://devel.esgf.org/wiki/ESGFNode/FAQ#PREREQUISITES"
+            echo "         http://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#prerequisites"
         fi
         echo "     ----------------------------------------------------------"
         echo

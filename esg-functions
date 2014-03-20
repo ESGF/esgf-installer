@@ -206,7 +206,7 @@ checked_done() {
         echo "Please re-run this task until successful before continuing further"
         echo ""
         echo "Also please review the installation FAQ it may assist you"
-        echo "http://esgf.org/wiki/ESGFNode/FAQ"
+        echo "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
         echo ""
         exit $1
     fi

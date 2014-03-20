@@ -48,8 +48,7 @@ family distribution.
 hostname -s, hostname --domain and hostname --fqdn.
 
 - Install all the prerequisites!!!!
-  http://esgf.org/wiki/ESGFNode/FAQ#What_do_I_need_on_my_system_before_I_install.3F
-
+  https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#what-do-i-need-on-my-system-before-i-install
 - The machine should have all development headers installed.
 
 - The installation user must have root (or sudo) privileges.
@@ -181,9 +180,9 @@ free to read it. However, do NOT modify the script, that would void
 the support contract ;-).
 
 If you have any questions... 
-1) Read the FAQ - http://esgf.org/wiki/ESGFNode/FAQ
+1) Read the FAQ - https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ
 2) Post to the mailing list
-3) Contact me - Gavin (gavin@llnl.gov), or Bob or Dean. 
+3) Contact me - Gavin (gavin@6thcolumn.org), or Bob or Dean. 
    My number is +1-925-422-7436.
 
 Enjoy!

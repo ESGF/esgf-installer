@@ -133,31 +133,31 @@ init() {
     publisher_tag=${publisher_tag:-"v2.11.1"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.6.19"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.7.0"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.4.0"}
+    esgf_security_version=${esgf_security_version:-"2.5.0"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.3.8"}
+    esg_orp_version=${esg_orp_version:-"2.3.9"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.4.4"}
+    esgf_idp_version=${esgf_idp_version:-"2.4.5"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.7.8"}
+    esg_search_version=${esg_search_version:-"3.7.9"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.4.10"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.5.3"}
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.7"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.8"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
 
     #see esgf-desktop project:
-    esgf_desktop_version=${esgf_desktop_version:-"0.0.5"}
+    esgf_desktop_version=${esgf_desktop_version:-"0.0.6"}
 
     #--------------------------------
     # External programs' versions
@@ -168,7 +168,7 @@ init() {
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.52"} ; tomcat_min_version=${tomcat_min_version:-"7.0.52"}
+    tomcat_version=${tomcat_version:-"7.0.53"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
     cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}

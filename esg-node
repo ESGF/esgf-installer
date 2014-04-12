@@ -168,7 +168,7 @@ init() {
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.52"} ; tomcat_min_version=${tomcat_min_version:-"7.0.52"}
+    tomcat_version=${tomcat_version:-"7.0.53"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
     cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
@@ -1482,6 +1482,14 @@ setup_cdat() {
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
+    #https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz#md5=6c4fb9b1840631cff09b8229a12a9ef7
+    echo "$(pwd)"
+    if [[ ! -e lxml-3.2.5.tar.gz ]] || [[ "6c4fb9b1840631cff09b8229a12a9ef7" != "$(md5sum lxml-3.2.5.tar.gz | awk '{print $1}')" ]]; then
+        \rm lxml-3.2.5.tar.gz >& /dev/null
+        echo "wget https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz" && wget --no-check-certificate https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz
+        [ "6c4fb9b1840631cff09b8229a12a9ef7" = "$(md5sum lxml-3.2.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    fi
+    echo "${cdat_home}/bin/pip install lxml-3.2.5.tar.gz" && ${cdat_home}/bin/pip install lxml-3.2.5.tar.gz
     local cdat_git_protocol="git://"
     #---------
     #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
@@ -1683,14 +1691,6 @@ setup_esgcet() {
     [ $? != 0 ] && return 1
     pushd ${workdir} >& /dev/null
 
-    #https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz#md5=6c4fb9b1840631cff09b8229a12a9ef7
-    echo "$(pwd)"
-    if [[ ! -e lxml-3.2.5.tar.gz ]] || [[ "6c4fb9b1840631cff09b8229a12a9ef7" != "$(md5sum lxml-3.2.5.tar.gz | awk '{print $1}')" ]]; then
-        \rm lxml-3.2.5.tar.gz >& /dev/null
-        echo "wget https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz" && wget https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz
-        [ "6c4fb9b1840631cff09b8229a12a9ef7" = "$(md5sum lxml-3.2.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    fi
-    echo "${cdat_home}/bin/pip install lxml-3.2.5.tar.gz" && ${cdat_home}/bin/pip install lxml-3.2.5.tar.gz
 
     #clone publisher
     local publisher_git_protocol="git://"
@@ -2048,7 +2048,11 @@ setup_tomcat() {
 
         echo "upgrade migration complete"
     else
-        configure_tomcat ${keystore_password:-${security_admin_password:-$(cat ${ks_secret_file} 2> /dev/null)}}
+	if [ -s "$ks_secret_file" ]; then
+		configure_tomcat ${keystore_password:-$(cat ${ks_secret_file} 2> /dev/null)}
+	else
+		configure_tomcat ${keystore_password:-${security_admin_password}}
+	fi
     fi
     #----------------------------------
 
@@ -2365,7 +2369,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
                 fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-                checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
+                checked_get ${truststore_file} https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${fetch_file} $((force_install))
                 if (( $? > 1 )); then
                     echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
                     echo "(note - the truststore password will probably not match!)"
@@ -3492,8 +3496,8 @@ fetch_esgf_certificates() {
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    debug_print "curl -s -L --insecure https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    curl -s -L --insecure https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -3549,7 +3553,7 @@ fetch_esgf_truststore() {
     local truststore_file_=${1:-${truststore_file}}
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
-    checked_get ${truststore_file_} ${esg_dist_url_root}/certs/${truststore_file_##*/}
+    checked_get ${truststore_file} https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${truststore_file_##*/}
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
@@ -5511,8 +5515,8 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-    _verify http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "") >& /dev/null
-    local ret=$?
+	#_verify http://raw.github.com/ESGF/esgf-dist/master/installer$( ((devel == 1)) && echo "/devel" || echo "master") >& /dev/null
+    local ret=0
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
 

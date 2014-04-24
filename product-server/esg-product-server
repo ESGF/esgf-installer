@@ -79,7 +79,7 @@ tomcat_user=${tomcat_user:-"tomcat"}
 tomcat_group=${tomcat_group:-"tomcat_group"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
-ferret_version=${ferret_version:-"6.842"}
+ferret_version=${ferret_version:-"6.8"}
 las_version=${las_version:-"8.1"}
 
 thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl

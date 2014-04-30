@@ -2369,7 +2369,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
                 fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-                checked_get ${truststore_file} https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${fetch_file} $((force_install))
+                checked_get ${truststore_file} https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${fetch_file} $((force_install))
                 if (( $? > 1 )); then
                     echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
                     echo "(note - the truststore password will probably not match!)"
@@ -3496,8 +3496,8 @@ fetch_esgf_certificates() {
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    debug_print "curl -s -L --insecure https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    curl -s -L --insecure https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -3553,7 +3553,7 @@ fetch_esgf_truststore() {
     local truststore_file_=${1:-${truststore_file}}
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
-    checked_get ${truststore_file} https://raw.github.com/ESGF/esgf-dist/master/installer/certs/${truststore_file_##*/}
+    checked_get ${truststore_file} https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${truststore_file_##*/}
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
@@ -5208,7 +5208,7 @@ checked_get() {
     echo "Fetching file from ${remote_file} -to-> ${local_file}"
     wget --no-check-certificate --progress=bar:force -O ${local_file} ${remote_file}
     [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
-    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 |head -1| tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && echo " WARNING: Could not verify file! ${local_file}" && return 3
     echo "[VERIFIED]"
     return 0
@@ -5499,8 +5499,8 @@ _is_in_git() {
 }
 
 _verify() {
-    echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
-    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${1}/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
+    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && return 3
     echo "[VERIFIED]"
     return 0
@@ -5515,8 +5515,8 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	#_verify http://raw.github.com/ESGF/esgf-dist/master/installer$( ((devel == 1)) && echo "/devel" || echo "master") >& /dev/null
-    local ret=0
+	_verify https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer$( ((devel == 1)) && echo "/devel" || echo "master") >& /dev/null
+    local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
 

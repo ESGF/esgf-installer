@@ -5858,10 +5858,10 @@ initial_setup_questionnaire() {
 
     get_property node_peer_group
     if [ -z "${node_peer_group}" ] || ((force_install)); then
-        local node_peer_group_=${node_peer_group:-"esgf-prod"}
+        local node_peer_group_=${node_peer_group:-"esgf-test"}
         while [ 1 ]; do
             unset input
-            read -e -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input
+            read -e -p "What peer group(s) will this node participate in? (esgf-test|esgf-prod) [${node_peer_group_}]: " input
             [ -z "${input}" ] && [ -n "${node_peer_group_}" ] && write_as_property node_peer_group ${node_peer_group_} && break
             [ -n "${input}" ] && node_peer_group=${input} && write_as_property node_peer_group && break
         done
@@ -5874,8 +5874,8 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_default_peer:-'pcmdi9.llnl.gov'}
-        read -e -p "What is the default peer to this node? [${default}]: " input
+        default=${esgf_default_peer:-'vesgint-idx.ipsl.jussieu.fr'}
+        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov)[${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
     else
@@ -5888,8 +5888,8 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_index_peer:-'pcmdi9.llnl.gov'}
-        read -e -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
+        default=${esgf_index_peer:-'vesgint-idx.ipsl.jussieu.fr'}
+        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov)[${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else

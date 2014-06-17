@@ -5858,7 +5858,7 @@ initial_setup_questionnaire() {
 
     get_property node_peer_group
     if [ -z "${node_peer_group}" ] || ((force_install)); then
-        local node_peer_group_=${node_peer_group:-"esgf-test"}
+        local node_peer_group_=${node_peer_group:-"esgf-prod"}
         while [ 1 ]; do
             unset input
             read -e -p "What peer group(s) will this node participate in? (if not sure, use default) [${node_peer_group_}]: " input
@@ -5874,7 +5874,7 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_default_peer:-'esgf-node1.llnl.gov'}
+        default=${esgf_default_peer:-'pcmdi9.llnl.gov'}
         read -e -p "What is the default peer to this node? [${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
@@ -5888,7 +5888,7 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_index_peer:-'esgf-node1.llnl.gov'}
+        default=${esgf_index_peer:-'pcmdi9.llnl.gov'}
         read -e -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer

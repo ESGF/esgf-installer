@@ -8,7 +8,7 @@
 #****************************************************************************
 #*                                                                          *
 #*  Organization: Earth System Grid Federation                              *
-#*       Project: Earth Systems Grid Fed (ESGF) Node Softwareto Stack         *
+#*       Project: Earth Systems Grid Fed (ESGF) Node Software Stack         *
 #*  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
 #*                                                                          *
 #****************************************************************************
@@ -80,8 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v0.0.0-devel"
-script_release="Flatbush"
+script_version="v1.7.1-phoenix-devel"
+script_release="Phoenix"
+
 envfile="/etc/esg.env"
 
 #--------------
@@ -100,17 +101,88 @@ install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 install_logfile=${install_manifest}
 logfile=${logfile:-"/tmp/${_t##*/}.out"}
 esg_functions_file=${install_prefix}/bin/esg-functions
+esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" "dist.ceda.ac.uk/esgf/dist")
 #--------------
 
 export UVCDAT_ANONYMOUS_LOG=False
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
+get_esgf_dist_mirror() {
+
+    for m in "${esgf_dist_mirrors_list[@]}"; do
+
+    	# get host and page
+        m=${m/[hH][tT][tT][pP]:\/\//}
+	[ "${m#*\/}" == "$m" ] && page="/" || page="/${m#*\/}"
+	host="${m%%\/*}"
+
+	# start date
+	a=$(</proc/uptime)
+	a=${a%%\ *}
+	a=${a/./}
+
+	# connect to host
+	curl --silent --output /dev/null $host --connect-timeout 1 -m 2
+	[ $? != 0 ] && continue
+
+	# end date
+	b=$(</proc/uptime) &&
+	b=${b%%\ *} &&
+	b=${b/./} ||
+	echo "$(date '+%m/%d/%Y %H:%M:%S') $host" >&2
+
+	# try next if not connected within 2s
+	[ $((b-a)) -lt 0 ] && continue
+
+	# sort
+	c=$(((b-a)*100))
+
+        until [ "${slist[$c]}" == "" ]; do
+	    ((c++))
+	done
+        slist[$c]="http://$host$page"
+    done
+
+    i=1
+    for m in ${slist[@]}; do
+    	flist[$i]=$m
+	((i++))
+    done 
+
+    if [ $1 = "interactive" ]; then
+	i=1
+        printf "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
+        printf "\t-------------------------------------------\n"
+        for m in ${flist[@]}; do
+        	printf "\t [$i] $m \n"
+                ((i++))
+        done
+        printf "\t-------------------------------------------\n"
+
+        read -e -p "select [1] > " choice
+        [ -z "${choice}" ] && choice=1
+
+        echo $choice
+        esgf_dist_mirror=${flist[$choice]}
+    else
+	esgf_dist_mirror=${flist[1]}
+    fi
+    unset slist
+    unset flist
+}
+
 init() {
+
+    get_esgf_dist_mirror "fastest"
+	
+    esg_dist_url_root=${esgf_dist_mirror}
+    esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+
     debug_print "esg-node initilizing..."
     ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
     if [ ! -e ${esg_functions_file} ] || ((force_install)) || [ ${esg_functions_file} -ot $0 ]; then
-        checked_get ${esg_functions_file} http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/${esg_functions_file##*/} $((force_install))
+        checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/${esg_functions_file##*/} $((force_install))
         [ ! -s "${esg_functions_file}" ] && rm ${esg_functions_file}
         touch ${esg_functions_file}
     fi
@@ -129,8 +201,8 @@ init() {
 
     cdat_version=${cdat_version:-"1.5.0"}
     cdat_tag="1.5.1.esgf-v1.7.0"
-    esgcet_version=${esgcet_version:-"2.11.1"}
-    publisher_tag=${publisher_tag:-"v2.11.1"}
+    esgcet_version=${esgcet_version:-"2.11.2"}
+    publisher_tag=${publisher_tag:-"v2.11.2"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.7.0"}
@@ -147,7 +219,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.4.5"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.7.9"}
+    esg_search_version=${esg_search_version:-"3.8.0"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.5.3"}
@@ -168,8 +240,8 @@ init() {
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.54"} ; tomcat_min_version=${tomcat_min_version:-"7.0.54"}
-    cmake_version=${cmake_version:="2.8.10.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.10.20121119"}
+    tomcat_version=${tomcat_version:-"7.0.54"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
+    cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
 
@@ -265,8 +337,6 @@ init() {
 
     word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
     let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
-    esg_dist_url_root=http://198.128.245.140/dist
-    esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
     date_format="+%Y_%m_%d_%H%M%S"
     num_backups_to_keep=${num_backups_to_keep:-7}
     compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
@@ -336,9 +406,6 @@ init_structure() {
     #--------------
     #Prepare necessary support filesystem structure and files
     #--------------
-
-    #reset esg_dist_url if necessary...
-    esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
     (($DEBUG)) && echo "init_structure: esg_dist_url = ${esg_dist_url}"
 
@@ -450,6 +517,7 @@ printf "
   EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
 \033[0m
 "
+
     printf "Checking that you have root privs on $(hostname)... "
     id | grep root >& /dev/null
     [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
@@ -1482,14 +1550,7 @@ setup_cdat() {
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
-    #https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz#md5=6c4fb9b1840631cff09b8229a12a9ef7
-    echo "$(pwd)"
-    if [[ ! -e lxml-3.2.5.tar.gz ]] || [[ "6c4fb9b1840631cff09b8229a12a9ef7" != "$(md5sum lxml-3.2.5.tar.gz | awk '{print $1}')" ]]; then
-        \rm lxml-3.2.5.tar.gz >& /dev/null
-        echo "wget https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz" && wget --no-check-certificate https://pypi.python.org/packages/source/l/lxml/lxml-3.2.5.tar.gz
-        [ "6c4fb9b1840631cff09b8229a12a9ef7" = "$(md5sum lxml-3.2.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    fi
-    echo "${cdat_home}/bin/pip install lxml-3.2.5.tar.gz" && ${cdat_home}/bin/pip install lxml-3.2.5.tar.gz
+
     local cdat_git_protocol="git://"
     #---------
     #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
@@ -1687,10 +1748,41 @@ setup_esgcet() {
         echo
     fi
 
+    #${cdat_home}/bin/pip install lxml requests SQLAlchemy sqlalchemy-migrate psycopg2 Tempita decorator
+
     mkdir -p ${workdir}
     [ $? != 0 ] && return 1
     pushd ${workdir} >& /dev/null
 
+    echo "$(pwd)"
+
+    echo "wget $esg_dist_url/externals/lxml-3.3.5.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/lxml-3.3.5.tar.gz
+    [ "88c75f4c73fc8f59c9ebb17495044f2f" = "$(md5sum lxml-3.3.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install lxml-3.3.5.tar.gz" && ${cdat_home}/bin/pip install lxml-3.3.5.tar.gz
+
+    echo "wget $esg_dist_url/externals/requests-1.2.3.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/requests-1.2.3.tar.gz
+    [ "adbd3f18445f7fe5e77f65c502e264fb" = "$(md5sum requests-1.2.3.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install requests-1.2.3.tar.gz" && ${cdat_home}/bin/pip install requests-1.2.3.tar.gz
+
+    echo "wget $esg_dist_url/externals/SQLAlchemy-0.7.10.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/SQLAlchemy-0.7.10.tar.gz
+    [ "ecc0cd1cd906d17818a5f08fe13ae19e" = "$(md5sum SQLAlchemy-0.7.10.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install SQLAlchemy-0.7.10.tar.gz" && ${cdat_home}/bin/pip install SQLAlchemy-0.7.10.tar.gz
+
+    echo "wget $esg_dist_url/externals/sqlalchemy-migrate-0.6.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/sqlalchemy-migrate-0.6.tar.gz
+    [ "84a983d9cf15cf9bf5dd1b44785f065a" = "$(md5sum sqlalchemy-migrate-0.6.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install sqlalchemy-migrate-0.6.tar.gz" && ${cdat_home}/bin/pip install sqlalchemy-migrate-0.6.tar.gz
+
+    echo "wget $esg_dist_url/externals/psycopg2-2.5.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/psycopg2-2.5.tar.gz
+    [ "facd82faa067e99b80146a0ee2f842f6" = "$(md5sum psycopg2-2.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install psycopg2-2.5.tar.gz" && ${cdat_home}/bin/pip install psycopg2-2.5.tar.gz
+
+    echo "wget $esg_dist_url/externals/Tempita-0.5.1.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/Tempita-0.5.1.tar.gz
+    [ "f75bdfeabd2f3755f1ff32d582a574a4" = "$(md5sum Tempita-0.5.1.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install Tempita-0.5.1.tar.gz" && ${cdat_home}/bin/pip install Tempita-0.5.1.tar.gz
+
+    echo "wget $esg_dist_url/externals/decorator-3.4.0.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/decorator-3.4.0.tar.gz
+    [ "1e8756f719d746e2fc0dd28b41251356" = "$(md5sum decorator-3.4.0.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
+    echo "${cdat_home}/bin/pip install decorator-3.4.0.tar.gz" && ${cdat_home}/bin/pip install decorator-3.4.0.tar.gz
 
     #clone publisher
     local publisher_git_protocol="git://"
@@ -2369,7 +2461,7 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
                 fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
-                checked_get ${truststore_file} https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${fetch_file} $((force_install))
+                checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
                 if (( $? > 1 )); then
                     echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
                     echo "(note - the truststore password will probably not match!)"
@@ -2971,9 +3063,6 @@ setup_tds() {
         checked_get ${thredds_content_dir}/thredds/${thredds_config_file} ${thredds_config_file_template_url} $((force_install))
     fi
 
-    get_property mail_admin_address
-    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/${thredds_config_file}
-
     #restart tomcat to put modifications in effect.
     stop_tomcat
     start_tomcat
@@ -3499,8 +3588,8 @@ fetch_esgf_certificates() {
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -3556,7 +3645,7 @@ fetch_esgf_truststore() {
     local truststore_file_=${1:-${truststore_file}}
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
-    checked_get ${truststore_file} https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer/certs/${truststore_file_##*/}
+    checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
@@ -5518,7 +5607,7 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	_verify https://raw.githubusercontent.com/ESGF/esgf-dist/master/installer$( ((devel == 1)) && echo "/devel" || echo "master") >& /dev/null
+	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
@@ -5875,7 +5964,7 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
         default=${esgf_default_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov)[${default}]: " input
+        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
     else
@@ -5889,7 +5978,7 @@ initial_setup_questionnaire() {
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
         default=${esgf_index_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov)[${default}]: " input
+        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else
@@ -6452,6 +6541,7 @@ main() {
                         fi
                     fi
                     (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
+		    get_esgf_dist_mirror "interactive"
                     ;;
                 --verify | --test)
                     debug_print "VERIFY SERVICES"

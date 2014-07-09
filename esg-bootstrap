@@ -9,7 +9,7 @@
 #uses: wget
 devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
-esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
+esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
 id_check() {
     id | grep root >& /dev/null
@@ -18,7 +18,7 @@ id_check() {
 }
 
 get_latest() {
-    esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
+    esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
     script_install_dir=${install_prefix}/bin
     mkdir -p ${script_install_dir}
     #NOTE: boot script location is a RedHat/CentOS thing... to make this cross distro compatible clean this up.
@@ -32,7 +32,7 @@ get_latest() {
     checked_get ${esg_dist_url}/esgf-installer/${fetch_file} 
     ret=$?
     ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
-    ((ret == 0)) && echo "Updated ESGF Node install script from PCMDI's ESGF distribution site at LLNL"
+    ((ret == 0)) && echo "Updated ESGF Node install script from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 ${fetch_file}
     [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}
@@ -148,7 +148,7 @@ done
 
 if id_check 
 then
-    (( devel == 1 )) && echo "(Setup to pull from DEVELOPMENT tree...)" && esg_dist_url=http://198.128.245.140/dist$( ((devel == 1)) && echo "/devel" || echo "")
+    (( devel == 1 )) && echo "(Setup to pull from DEVELOPMENT tree...)" && esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
     self_verify
     (( $? > 0 )) && printf "WARNING: $0 could not be verified!! \n(This file, $(readlink -f ${0}), may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" && exit 1
     echo "checking for updates for the ESGF Node"

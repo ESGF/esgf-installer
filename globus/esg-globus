@@ -2179,6 +2179,7 @@ edit_pam_pgsql_conf() {
     eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
+    eval "perl -p -i -e 's/\\@\\@esgf_idp_peer\\@\\@/${esgf_idp_peer}/g' ${tfile}"
     echo -n "*"
     echo " [OK]"
     ((DEBUG)) && cat ${tfile}

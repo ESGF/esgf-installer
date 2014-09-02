@@ -1753,34 +1753,16 @@ setup_esgcet() {
     pushd ${workdir} >& /dev/null
 
     echo "$(pwd)"
-
-    echo "wget $esg_dist_url/externals/lxml-3.3.5.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/lxml-3.3.5.tar.gz
-    [ "88c75f4c73fc8f59c9ebb17495044f2f" = "$(md5sum lxml-3.3.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install lxml-3.3.5.tar.gz" && ${cdat_home}/bin/pip install lxml-3.3.5.tar.gz
-
-    echo "wget $esg_dist_url/externals/requests-1.2.3.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/requests-1.2.3.tar.gz
-    [ "adbd3f18445f7fe5e77f65c502e264fb" = "$(md5sum requests-1.2.3.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install requests-1.2.3.tar.gz" && ${cdat_home}/bin/pip install requests-1.2.3.tar.gz
-
-    echo "wget $esg_dist_url/externals/SQLAlchemy-0.7.10.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/SQLAlchemy-0.7.10.tar.gz
-    [ "ecc0cd1cd906d17818a5f08fe13ae19e" = "$(md5sum SQLAlchemy-0.7.10.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install SQLAlchemy-0.7.10.tar.gz" && ${cdat_home}/bin/pip install SQLAlchemy-0.7.10.tar.gz
-
-    echo "wget $esg_dist_url/externals/sqlalchemy-migrate-0.6.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/sqlalchemy-migrate-0.6.tar.gz
-    [ "84a983d9cf15cf9bf5dd1b44785f065a" = "$(md5sum sqlalchemy-migrate-0.6.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install sqlalchemy-migrate-0.6.tar.gz" && ${cdat_home}/bin/pip install sqlalchemy-migrate-0.6.tar.gz
-
-    echo "wget $esg_dist_url/externals/psycopg2-2.5.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/psycopg2-2.5.tar.gz
-    [ "facd82faa067e99b80146a0ee2f842f6" = "$(md5sum psycopg2-2.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install psycopg2-2.5.tar.gz" && ${cdat_home}/bin/pip install psycopg2-2.5.tar.gz
-
-    echo "wget $esg_dist_url/externals/Tempita-0.5.1.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/Tempita-0.5.1.tar.gz
-    [ "f75bdfeabd2f3755f1ff32d582a574a4" = "$(md5sum Tempita-0.5.1.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install Tempita-0.5.1.tar.gz" && ${cdat_home}/bin/pip install Tempita-0.5.1.tar.gz
-
-    echo "wget $esg_dist_url/externals/decorator-3.4.0.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/decorator-3.4.0.tar.gz
-    [ "1e8756f719d746e2fc0dd28b41251356" = "$(md5sum decorator-3.4.0.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install decorator-3.4.0.tar.gz" && ${cdat_home}/bin/pip install decorator-3.4.0.tar.gz
+    curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
+      echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
+      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+      if [ $? -eq 0 ]; then
+         [OK]
+         echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln
+      else
+         [FAIL]
+      fi
+    done
 
     #clone publisher
     local publisher_git_protocol="git://"

@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v1.7.1-phoenix-master"
-script_release="Phoenix"
-
+script_version="v0.0.0-devel"
+script_maj_version="1.7"
+script_release="Flatbush"
 envfile="/etc/esg.env"
 
 #--------------
@@ -112,7 +112,7 @@ get_esgf_dist_mirror() {
 
     for m in "${esgf_dist_mirrors_list[@]}"; do
 
-    	# get host and page
+        # get host and page
         m=${m/[hH][tT][tT][pP]:\/\//}
 	[ "${m#*\/}" == "$m" ] && page="/" || page="/${m#*\/}"
 	host="${m%%\/*}"
@@ -146,16 +146,16 @@ get_esgf_dist_mirror() {
 
     i=1
     for m in ${slist[@]}; do
-    	flist[$i]=$m
+       flist[$i]=$m
 	((i++))
-    done 
+    done
 
     if [ $1 = "interactive" ]; then
 	i=1
         printf "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
         printf "\t-------------------------------------------\n"
         for m in ${flist[@]}; do
-        	printf "\t [$i] $m \n"
+            printf "\t [$i] $m \n"
                 ((i++))
         done
         printf "\t-------------------------------------------\n"
@@ -175,7 +175,6 @@ get_esgf_dist_mirror() {
 init() {
 
     get_esgf_dist_mirror "fastest"
-	
     esg_dist_url_root=${esgf_dist_mirror}
     esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
@@ -240,7 +239,7 @@ init() {
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.54"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
+    tomcat_version=${tomcat_version:-"7.0.55"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
     cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
@@ -517,7 +516,6 @@ printf "
   EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
 \033[0m
 "
-
     printf "Checking that you have root privs on $(hostname)... "
     id | grep root >& /dev/null
     [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
@@ -5607,7 +5605,7 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer >& /dev/null
+	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/$script_maj_version >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"

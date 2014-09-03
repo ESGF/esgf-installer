@@ -97,7 +97,7 @@ self_verify() {
     md5sum /dev/null >& /dev/null
     [ $? != 0 ] && echo "Could not find program \"md5sum\". Please find program and put it in your path and try again, Sorry :-(" && exit 1
     #echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${esg_dist_url}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
-    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s ${esg_dist_url}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s ${esg_dist_url}/esgf-installer/$script_maj_version/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && return 3
     verbose_print "[VERIFIED]"
     return 0

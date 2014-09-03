@@ -820,7 +820,7 @@ setup_git() {
         if [ ! -e ${git_dist_file} ]; then
             echo "Don't see GIT distribution file ${git_dist_file} either"
             echo "Downloading GIT from ${git_dist_url}"
-            wget -O ${git_dist_file} ${git_dist_url}
+            wget --no-check-certificate -O ${git_dist_file} ${git_dist_url}
             [ $? != 0 ] && echo " ERROR: Could not download GIT:${git_dist_file}" && popd && checked_done 1
             echo "unpacking ${git_dist_file}..."
             tar xzf ${git_dist_file}

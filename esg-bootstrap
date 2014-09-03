@@ -9,6 +9,7 @@
 #uses: wget
 devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
+script_maj_version="1.7"
 esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
 id_check() {
@@ -29,7 +30,7 @@ get_latest() {
 
     local ret
     verbose_print "Checking...."
-    checked_get ${esg_dist_url}/esgf-installer/${fetch_file} 
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file} 
     ret=$?
     ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node install script from ESGF distribution site"

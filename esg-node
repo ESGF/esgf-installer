@@ -6493,7 +6493,7 @@ install_mode=0
 main() {
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
  
-        if [[ $1 == *install* || $1 == *update* || $1 == *upgrade* ]]; then
+        if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
        	 get_esgf_dist_mirror "interactive"
         else
        	 get_esgf_dist_mirror "fastest"

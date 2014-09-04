@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v1.7.1-phoenix-master"
-script_release="Phoenix"
-
+script_version="v0.0.0-devel"
+script_maj_version="1.7"
+script_release="Flatbush"
 envfile="/etc/esg.env"
 
 #--------------
@@ -112,7 +112,7 @@ get_esgf_dist_mirror() {
 
     for m in "${esgf_dist_mirrors_list[@]}"; do
 
-    	# get host and page
+        # get host and page
         m=${m/[hH][tT][tT][pP]:\/\//}
 	[ "${m#*\/}" == "$m" ] && page="/" || page="/${m#*\/}"
 	host="${m%%\/*}"
@@ -146,16 +146,16 @@ get_esgf_dist_mirror() {
 
     i=1
     for m in ${slist[@]}; do
-    	flist[$i]=$m
+       flist[$i]=$m
 	((i++))
-    done 
+    done
 
     if [ $1 = "interactive" ]; then
 	i=1
         printf "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
         printf "\t-------------------------------------------\n"
         for m in ${flist[@]}; do
-        	printf "\t [$i] $m \n"
+            printf "\t [$i] $m \n"
                 ((i++))
         done
         printf "\t-------------------------------------------\n"
@@ -173,12 +173,6 @@ get_esgf_dist_mirror() {
 }
 
 init() {
-
-    get_esgf_dist_mirror "fastest"
-	
-    esg_dist_url_root=${esgf_dist_mirror}
-    esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
-
     debug_print "esg-node initilizing..."
     ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
     if [ ! -e ${esg_functions_file} ] || ((force_install)) || [ ${esg_functions_file} -ot $0 ]; then
@@ -202,34 +196,34 @@ init() {
     cdat_version=${cdat_version:-"1.5.0"}
     cdat_tag="1.5.1.esgf-v1.7.0"
     esgcet_version=${esgcet_version:-"2.11.2"}
-    publisher_tag=${publisher_tag:-"v2.11.2"}
+    publisher_tag=${publisher_tag:-"v2.11.3-phoenix-1.7.2-devel"}
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.7.0"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"0.7.0-phoenix-1.7.2-devel"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.5.0"}
+    esgf_security_version=${esgf_security_version:-"2.5.0-phoenix-1.7.2-devel"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.3.9"}
+    esg_orp_version=${esg_orp_version:-"2.4.0-phoenix-1.7.2-devel"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.4.5"}
+    esgf_idp_version=${esgf_idp_version:-"2.4.5-phoenix-1.7.2-devel"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.8.0"}
+    esg_search_version=${esg_search_version:-"3.9.0"}
 
     #see esgf-web-fe project:
-    esgf_web_fe_version=${esgf_web_fe_version:-"2.5.5"}
+    esgf_web_fe_version=${esgf_web_fe_version:-"2.5.5-phoenix-1.7.2-devel"}
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.8"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.8-phoenix-1.7.2-devel"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
 
     #see esgf-desktop project:
-    esgf_desktop_version=${esgf_desktop_version:-"0.0.6"}
+    esgf_desktop_version=${esgf_desktop_version:-"0.0.6-phoenix-1.7.2-devel"}
 
     #--------------------------------
     # External programs' versions
@@ -240,7 +234,7 @@ init() {
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.54"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
+    tomcat_version=${tomcat_version:-"7.0.55"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
     cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
@@ -517,7 +511,6 @@ printf "
   EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
 \033[0m
 "
-
     printf "Checking that you have root privs on $(hostname)... "
     id | grep root >& /dev/null
     [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
@@ -822,7 +815,7 @@ setup_git() {
         if [ ! -e ${git_dist_file} ]; then
             echo "Don't see GIT distribution file ${git_dist_file} either"
             echo "Downloading GIT from ${git_dist_url}"
-            wget -O ${git_dist_file} ${git_dist_url}
+            wget --no-check-certificate -O ${git_dist_file} ${git_dist_url}
             [ $? != 0 ] && echo " ERROR: Could not download GIT:${git_dist_file}" && popd && checked_done 1
             echo "unpacking ${git_dist_file}..."
             tar xzf ${git_dist_file}
@@ -1755,34 +1748,16 @@ setup_esgcet() {
     pushd ${workdir} >& /dev/null
 
     echo "$(pwd)"
-
-    echo "wget $esg_dist_url/externals/lxml-3.3.5.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/lxml-3.3.5.tar.gz
-    [ "88c75f4c73fc8f59c9ebb17495044f2f" = "$(md5sum lxml-3.3.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install lxml-3.3.5.tar.gz" && ${cdat_home}/bin/pip install lxml-3.3.5.tar.gz
-
-    echo "wget $esg_dist_url/externals/requests-1.2.3.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/requests-1.2.3.tar.gz
-    [ "adbd3f18445f7fe5e77f65c502e264fb" = "$(md5sum requests-1.2.3.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install requests-1.2.3.tar.gz" && ${cdat_home}/bin/pip install requests-1.2.3.tar.gz
-
-    echo "wget $esg_dist_url/externals/SQLAlchemy-0.7.10.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/SQLAlchemy-0.7.10.tar.gz
-    [ "ecc0cd1cd906d17818a5f08fe13ae19e" = "$(md5sum SQLAlchemy-0.7.10.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install SQLAlchemy-0.7.10.tar.gz" && ${cdat_home}/bin/pip install SQLAlchemy-0.7.10.tar.gz
-
-    echo "wget $esg_dist_url/externals/sqlalchemy-migrate-0.6.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/sqlalchemy-migrate-0.6.tar.gz
-    [ "84a983d9cf15cf9bf5dd1b44785f065a" = "$(md5sum sqlalchemy-migrate-0.6.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install sqlalchemy-migrate-0.6.tar.gz" && ${cdat_home}/bin/pip install sqlalchemy-migrate-0.6.tar.gz
-
-    echo "wget $esg_dist_url/externals/psycopg2-2.5.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/psycopg2-2.5.tar.gz
-    [ "facd82faa067e99b80146a0ee2f842f6" = "$(md5sum psycopg2-2.5.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install psycopg2-2.5.tar.gz" && ${cdat_home}/bin/pip install psycopg2-2.5.tar.gz
-
-    echo "wget $esg_dist_url/externals/Tempita-0.5.1.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/Tempita-0.5.1.tar.gz
-    [ "f75bdfeabd2f3755f1ff32d582a574a4" = "$(md5sum Tempita-0.5.1.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install Tempita-0.5.1.tar.gz" && ${cdat_home}/bin/pip install Tempita-0.5.1.tar.gz
-
-    echo "wget $esg_dist_url/externals/decorator-3.4.0.tar.gz" && wget --no-check-certificate $esg_dist_url/externals/decorator-3.4.0.tar.gz
-    [ "1e8756f719d746e2fc0dd28b41251356" = "$(md5sum decorator-3.4.0.tar.gz | awk '{print $1}')" ] && [OK] || [FAIL]
-    echo "${cdat_home}/bin/pip install decorator-3.4.0.tar.gz" && ${cdat_home}/bin/pip install decorator-3.4.0.tar.gz
+    curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
+      echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
+      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${1}/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+      if [ $? -eq 0 ]; then
+         [OK]
+         echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln
+      else
+         [FAIL]
+      fi
+    done
 
     #clone publisher
     local publisher_git_protocol="git://"
@@ -2694,7 +2669,6 @@ select_idp_peer() {
         printf "\t [6] : ESGF-DKRZ    -> ipcc-ar5.dkrz.de\n"
         printf "\t [7] : ESGF-PNNL    -> esg1-gw.pnl.gov\n"
         printf "\t [8] : ESGF-ANL     -> dev.esg.anl.gov\n"
-        printf "\t [9] : ESGF-PCMDI-TEST3 -> esgf-node3.llnl.gov\n"
         printf "\t-------------------------------------------\n"
         printf "\t [C] : (Manual Entry)\n"
         printf "\t-------------------------------------------\n"
@@ -5607,7 +5581,7 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer >& /dev/null
+	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/$script_maj_version >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
@@ -6517,7 +6491,17 @@ show_type() {
 upgrade_mode=0
 install_mode=0
 main() {
-    [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+        [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+ 
+        if [[ $1 == *install* || $1 == *update* || $1 == *upgrade* ]]; then
+       	 get_esgf_dist_mirror "interactive"
+        else
+       	 get_esgf_dist_mirror "fastest"
+        fi
+
+        esg_dist_url_root=${esgf_dist_mirror}
+        esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+   
         init
         let sel=0
         local selection_string
@@ -6541,7 +6525,6 @@ main() {
                         fi
                     fi
                     (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
-		    get_esgf_dist_mirror "interactive"
                     ;;
                 --verify | --test)
                     debug_print "VERIFY SERVICES"

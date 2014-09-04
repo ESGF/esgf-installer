@@ -173,11 +173,6 @@ get_esgf_dist_mirror() {
 }
 
 init() {
-
-    get_esgf_dist_mirror "fastest"
-    esg_dist_url_root=${esgf_dist_mirror}
-    esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
-
     debug_print "esg-node initilizing..."
     ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
     if [ ! -e ${esg_functions_file} ] || ((force_install)) || [ ${esg_functions_file} -ot $0 ]; then
@@ -6496,7 +6491,17 @@ show_type() {
 upgrade_mode=0
 install_mode=0
 main() {
-    [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+        [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+ 
+        if [[ $1 == *install* || $1 == *update* || $1 == *upgrade* ]]; then
+       	 get_esgf_dist_mirror "interactive"
+        else
+       	 get_esgf_dist_mirror "fastest"
+        fi
+
+        esg_dist_url_root=${esgf_dist_mirror}
+        esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+   
         init
         let sel=0
         local selection_string
@@ -6520,7 +6525,6 @@ main() {
                         fi
                     fi
                     (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
-		    get_esgf_dist_mirror "interactive"
                     ;;
                 --verify | --test)
                     debug_print "VERIFY SERVICES"

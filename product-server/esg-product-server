@@ -106,8 +106,9 @@ setup_product_server() {
 
 setup_ferret() {
 
-    echo -n "Checking for Ferret v${ferret_version} of [${ferret_install_dir}/bin/ferret]"
-    check_version_with "ferret" '${ferret_install_dir}/bin/ferret -version' ${ferret_version}
+    # Reinstall ferret if LAS does not exist
+    echo -n "Checking for LAS Product Server v${las_version}"
+    check_webapp_version "las" ${las_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -118,29 +119,6 @@ setup_ferret() {
     echo
 
     local upgrade=${1:-0}
-
-    local default="Y"
-    ((force_install)) && default="N"
-    local dosetup
-    if [ -d ${ferret_install_dir} ] && [ -d ${ferret_data_dir} ]; then 
-	echo "Detected an existing ferret installation..."
-        read -p "Do you want to continue with ferret installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        [ -z "${dosetup}" ] && dosetup=${default}
-	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-	    echo "Skipping ferret installation and setup - will assume it's setup properly"
-	    return 0
-	fi
-	
-	local dobackup="N"
-	read -p "Do you want to make a back up of the existing distribution?? [y/N] " dobackup
-	if [ "${dobackup}" = "Y" ] || [ "${dobackup}" = "y" ]; then
-	    echo "Creating a backup archive of this application ${ferret_install_dir}"
-	    backup ${ferret_install_dir}
-	fi
-
-	echo
-    fi
-
 
     get_ferret
     setup_support_files

@@ -1750,7 +1750,7 @@ setup_esgcet() {
     echo "$(pwd)"
     curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
       echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
-      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure $esg_dist_url/externals${ln}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure $esg_dist_url/externals/${ln}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
       if [ $? -eq 0 ]; then
          [OK]
          echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln

@@ -1530,7 +1530,7 @@ setup_cdat() {
     echo
 
     local dosetup="N"
-    if [ -x ${cdat_home}/bin/cdat ]; then
+    if [ -x ${cdat_home}/bin/uvcdat ]; then
         echo "Detected an existing CDAT installation..."
         read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then

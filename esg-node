@@ -229,12 +229,10 @@ init() {
     # External programs' versions
     #--------------------------------
     openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
-    curl_version=${curl_version:="7.20.1"} ; curl_min_version=${curl_min_version:="7.20.1"}
-    git_version=${git_version:="1.8.4.3"} ; git_min_version=${git_min_version:="1.8.4.3"}
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.55"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
+    tomcat_version=${tomcat_version:-"7.0.56"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
     cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
     las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
@@ -245,8 +243,6 @@ init() {
     # Script vars (~external)
     #--------------------------------
     openssl_install_dir=${OPENSSL_HOME:-${install_prefix}/openssl}
-    curl_install_dir=${CURL_HOME:-${install_prefix}/curl}
-    git_install_dir=${GIT_HOME:-${install_prefix}/git}
     postgress_install_dir=${PGHOME:-${install_prefix}/pgsql}
     postgress_user=${PGUSER:-dbsuper}
     local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
@@ -281,8 +277,6 @@ init() {
     ############################################
 
     export OPENSSL_HOME=${openssl_install_dir}
-    export CURL_HOME=${curl_install_dir}
-    export GIT_HOME=${git_install_dir}
     export PGHOME=${postgress_install_dir}
     export PGUSER=${postgress_user}
     export PGHOST=${postgress_host}
@@ -297,12 +291,12 @@ init() {
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
 
-    myPATH=$OPENSSL_HOME/bin:$CURL_HOME/bin:$CMAKE_HOME/bin:$GIT_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
-    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CURL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
+    myPATH=$OPENSSL_HOME/bin:/usr/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
+    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:/usr/lib64:/usr/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib
     export PATH=$(_path_unique $myPATH:$PATH)
     export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
-    export CFLAGS="-I${OPENSSL_HOME}/include -I${CURL_HOME}/include ${CFLAGS} -fPIC"
-    export LDFLAGS="-L${OPENSSL_HOME}/lib -L${CURL_HOME}/lib -Wl,--rpath,${OPENSSL_HOME}/lib -Wl,--rpath,${CURL_HOME}/lib"
+    export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/include ${CFLAGS} -fPIC"
+    export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib -Wl,--rpath,${OPENSSL_HOME}/lib -Wl,--rpath,/usr/lib64,--rpath,/usr/lib"
 
     #--------------
     # ID Setting
@@ -341,11 +335,6 @@ init() {
     ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
     openssl_workdir=${workdir}/openssl
     esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
-    curl_workdir=${workdir}/curl
-    curl_dist_url=http://curl.haxx.se/download/curl-${curl_version}.tar.gz
-    git_workdir=${workdir}/git
-    git_dist_url=http://kernel.org/pub/software/scm/git/git-${git_version}.tar.gz
-    #git_dist_url=${esg_dist_url}/git/git-${git_version}.tar.gz
     bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
     db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
     node_db_name=${db_database}
@@ -359,7 +348,7 @@ init() {
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     cmake_workdir=${workdir}/cmake
-    cmake_repo=http://cmake.org/cmake.git
+    cmake_repo=http://www.cmake.org/cmake.git
     cdat_repo=git://github.com/UV-CDAT/uvcdat.git
     cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
     publisher_repo=git://github.com/ESGF/esg-publisher.git
@@ -655,218 +644,6 @@ write_openssl_install_log() {
 remove_openssl_install_log() {
     remove_install_log_entry openssl
     return $?
-}
-
-
-#####
-# Curl/libcurl (support library - needed to support HTTP protocol in GIT)
-#####
-setup_curl() {
-
-    echo -n "Checking for curl >= ${curl_min_version} "
-    check_version curl ${curl_min_version}
-    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
-
-    echo
-    echo "*******************************"
-    echo "Setting up Curl/Libcurl ${curl_version}"
-    echo "*******************************"
-    echo
-
-    local default="Y"
-    ((force_install)) && default="N"
-    local dosetup
-    if [ -x ${curl_install_dir}/bin/curl ]; then
-        echo "Detected an existing CURL installation..."
-        read -e -p "Do you want to continue with CURL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        [ -z ${dosetup} ] && dosetup=${default}
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-            echo "Skipping CURL installation and setup - will assume CURL is setup properly"
-            return 0
-        fi
-        echo
-    fi
-
-    mkdir -p ${curl_workdir}
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw ${curl_workdir}
-    pushd ${curl_workdir} >& /dev/null
-
-    local curl_dist_file=${curl_dist_url##*/}
-    #strip off .tar.gz at the end
-    local curl_dist_dir=$(echo ${curl_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    #There is this pesky case of having a zero sized dist file... WTF!?
-    if [ -e ${curl_dist_file} ]; then
-        ls -l ${curl_dist_file}
-        local size=$(stat -c%s ${curl_dist_file})
-        (( size == 0 )) && rm -v ${curl_dist_file}
-    fi
-
-    #Check to see if we have postgres distribution directory
-    if [ ! -e ${curl_dist_dir} ]; then
-        echo "Don't see CURL distribution dir ${curl_dist_dir}"
-        if [ ! -e ${curl_dist_file} ]; then
-            echo "Don't see CURL distribution file ${curl_dist_file} either"
-            echo "Downloading CURL from ${curl_dist_url}"
-            wget -O ${curl_dist_file} ${curl_dist_url}
-            [ $? != 0 ] && echo " ERROR: Could not download CURL:${curl_dist_file}" && popd && checked_done 1
-            echo "unpacking ${curl_dist_file}..."
-            tar xzf ${curl_dist_file}
-            [ $? != 0 ] && echo " ERROR: Could not extract CURL: ${curl_dist_file}" && popd && checked_done 1
-        fi
-    fi
-
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it and go from there....
-    if [ -e ${curl_dist_file} ] && [ ! -e ${curl_dist_dir} ]; then
-        echo "unpacking ${curl_dist_file}..."
-        tar xzf ${curl_dist_file}
-    fi
-
-    pushd ${curl_dist_dir}
-    ((force_install)) && make clean
-    echo "./configure --prefix=${curl_install_dir}"
-    if ./configure --prefix=${curl_install_dir} \
-        && gmake -j ${num_cpus} all \
-        && gmake install
-    then
-        echo "Successfully Configured and Built CURL in: ${curl_install_dir}"
-        #this is the "test"
-        ${curl_install_dir}/bin/curl --version
-        [ $? != 0 ] &&  echo" ERROR: Could NOT successfully build CURL!!" && popd >& /dev/null && checked_done 1
-    else
-        echo" ERROR: Could NOT successfully build CURL!!"
-        popd >& /dev/null
-        checked_done 1
-    fi
-
-    popd >& /dev/null
-    popd >& /dev/null
-
-    write_curl_env
-    write_curl_install_log
-    checked_done 0
-}
-
-write_curl_env() {
-    ((show_summary_latch++))
-    echo "export CURL_HOME=${curl_install_dir}" >> ${envfile}
-    prefix_to_path PATH ${curl_install_dir}/bin >> ${envfile}
-    prefix_to_path LD_LIBRARY_PATH ${curl_install_dir}/lib >> ${envfile}
-    dedup ${envfile} && source ${envfile}
-    return 0
-}
-
-write_curl_install_log() {
-    echo "$(date ${date_format}) curl=${curl_version} ${curl_install_dir}" >> ${install_manifest}
-    dedup ${install_manifest}
-    return 0
-}
-
-#####
-# GIT
-#####
-setup_git() {
-
-    echo -n "Checking for git >= ${git_min_version} "
-    check_version git ${git_min_version}
-    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
-
-    echo
-    echo "*******************************"
-    echo "Setting up GIT (dvcs) ${git_version}"
-    echo "*******************************"
-    echo
-
-    local default="Y"
-    ((force_install)) && default="N"
-    local dosetup
-    if [ -x ${git_install_dir}/bin/git ]; then
-        echo "Detected an existing GIT installation..."
-        read -e -p "Do you want to continue with GIT installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        [ -z ${dosetup} ] && dosetup=${default}
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-            echo "Skipping GIT installation and setup - will assume GIT is setup properly"
-            return 0
-        fi
-        echo
-    fi
-
-    mkdir -p ${git_workdir}
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw ${git_workdir}
-    pushd ${git_workdir} >& /dev/null
-
-    local git_dist_file=${git_dist_url##*/}
-    #strip off .tar.gz at the end, i.e. last 7 chars, to get untarred dir name
-    local git_dist_dir=$(echo ${git_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    #There is this pesky case of having a zero sized dist file... WTF!?
-    if [ -e ${git_dist_file} ]; then
-        ls -l ${git_dist_file}
-        local size=$(stat -c%s ${git_dist_file})
-        (( size == 0 )) && rm -v ${git_dist_file}
-    fi
-
-    #Check to see if we have git distribution directory
-    if [ ! -e ${git_dist_dir} ]; then
-        echo "Don't see GIT distribution dir ${git_dist_dir}"
-        if [ ! -e ${git_dist_file} ]; then
-            echo "Don't see GIT distribution file ${git_dist_file} either"
-            echo "Downloading GIT from ${git_dist_url}"
-            wget --no-check-certificate -O ${git_dist_file} ${git_dist_url}
-            [ $? != 0 ] && echo " ERROR: Could not download GIT:${git_dist_file}" && popd && checked_done 1
-            echo "unpacking ${git_dist_file}..."
-            tar xzf ${git_dist_file}
-            [ $? != 0 ] && echo " ERROR: Could not extract GIT: ${git_dist_file}" && popd && checked_done 1
-        fi
-    fi
-
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it and go from there....
-    if [ -e ${git_dist_file} ] && [ ! -e ${git_dist_dir} ]; then
-        echo "unpacking ${git_dist_file}..."
-        tar xzf ${git_dist_file}
-    fi
-
-    pushd ${git_dist_dir}
-    ((force_install)) && make clean
-    echo "./configure --prefix=${git_install_dir}"
-    if ./configure --prefix=${git_install_dir} \
-        && gmake -j ${num_cpus} all \
-        && gmake install
-    then
-        echo "Successfully Configured and Built GIT in: ${git_install_dir}"
-        #this is the "test"
-        ${git_install_dir}/bin/git --version
-        [ $? != 0 ] &&  echo" ERROR: Could NOT successfully build GIT!!" && popd >& /dev/null && checked_done 1
-    else
-        echo" ERROR: Could NOT successfully build GIT!!"
-        popd >& /dev/null
-        checked_done 1
-    fi
-
-    popd >& /dev/null
-    popd >& /dev/null
-
-    write_git_env
-    write_git_install_log
-    checked_done 0
-}
-
-write_git_env() {
-    ((show_summary_latch++))
-    echo "export GIT_HOME=${git_install_dir}" >> ${envfile}
-    prefix_to_path PATH ${git_install_dir}/bin >> ${envfile}
-    dedup ${envfile} && source ${envfile}
-    return 0
-}
-
-write_git_install_log() {
-    echo "$(date ${date_format}) git=${git_version} ${git_install_dir}" >> ${install_manifest}
-    dedup ${install_manifest}
-    return 0
 }
 
 #####
@@ -1530,7 +1307,7 @@ setup_cdat() {
     echo
 
     local dosetup="N"
-    if [ -x ${cdat_home}/bin/cdat ]; then
+    if [ -x ${cdat_home}/bin/uvcdat ]; then
         echo "Detected an existing CDAT installation..."
         read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -7236,8 +7013,6 @@ main() {
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_openssl
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_curl
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_git
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_java
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress

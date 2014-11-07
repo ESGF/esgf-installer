@@ -275,7 +275,7 @@ init() {
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
-
+    export GIT_SSL_NO_VERIFY=1
     export OPENSSL_HOME=${openssl_install_dir}
     export PGHOME=${postgress_install_dir}
     export PGUSER=${postgress_user}

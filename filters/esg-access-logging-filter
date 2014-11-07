@@ -72,7 +72,7 @@ workdir=${workdir:-${installer_home}/workbench/esg}
 service_name=${service_name:-"thredds"}
 extensions=${extensions:-".nc"}
 exempt_extensions=${exempt_extensions:-".xml"}
-exempt_services=${exempt_services:-"x"}
+exempt_services=${exempt_services:-"thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"}
 
 #arg (1) - install = 0 [default]
 #          upgrade = 1 

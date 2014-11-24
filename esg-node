@@ -101,7 +101,7 @@ install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
 install_logfile=${install_manifest}
 logfile=${logfile:-"/tmp/${_t##*/}.out"}
 esg_functions_file=${install_prefix}/bin/esg-functions
-esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" "dist.ceda.ac.uk/esgf/dist")
+esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" "dist.ceda.ac.uk/esgf/dist" "aims1.llnl.gov/esgf/dist/")
 #--------------
 
 export UVCDAT_ANONYMOUS_LOG=False

@@ -26,6 +26,12 @@
 # for the US Federal Government.  This code is in the Public Domain.
 #
 
+# Helper function for printing a version number to stdout without any
+# leading 'v'
+echoversion () {
+    echo "$@" | sed 's/^v*\(.*\)/\1/'
+}
+
 # First stage of option parsing
 # (This doesn't actually set the variables until the eval below)
 PARSED_OPTIONS=$(getopt -n "$0" -o '' --long "newversion,oldversion,installpath:" -- "$@")
@@ -74,13 +80,14 @@ done
 
 
 if [ $PRINT_NEW_VERSION ] ; then
-    echo $VERSION
+    echoversion $VERSION
     exit 0
 fi
 
 if [ $PRINT_OLD_VERSION ] ; then
     if [ -f "${INSTALLPATH}/${0}" ] ; then
-        grep '^VERSION=' "${INSTALLPATH}/${0}" | cut -d= -f2
+        OLDVERSION=$(grep '^VERSION=' "${INSTALLPATH}/${0}" | cut -d= -f2)
+        echoversion $OLDVERSION
     else
         exit 1
     fi

@@ -60,4 +60,161 @@ init() {
     #--------------------------------
     openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
-    ant_version=${ant_version:-"1.9.1"} ; ant_
+    ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
+    postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
+    tomcat_version=${tomcat_version:-"7.0.59"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
+    cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
+    tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
+
+    # Since ESGF 1.8, LAS version is declared in esg-product-server
+    #las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
+
+    python_version=${python_version:-"2.7"}
+    #--------------------------------
+    # Script vars (~external)
+    #--------------------------------
+    openssl_install_dir=${OPENSSL_HOME:-${install_prefix}/openssl}
+    postgress_install_dir=${PGHOME:-${install_prefix}/pgsql}
+    postgress_user=${PGUSER:-dbsuper}
+
+    local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
+    pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
+    unset pg_secret #only here to hold the tertiary ephemeral value from file, unset asap
+    local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
+    publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
+    unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
+    postgress_host=${PGHOST:-localhost}
+    postgress_port=${PGPORT:-5432}
+    cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
+    cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
+    java_opts=${JAVA_OPTS:-""}
+    java_install_dir=${JAVA_HOME:-${install_prefix}/java}
+    ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
+    tomcat_install_dir=${CATALINA_HOME:-${install_prefix}/tomcat}
+    tomcat_conf_dir=${esg_config_dir}/tomcat
+    tomcat_opts=${CATALINA_OPTS}
+    tomcat_user=${tomcat_user:-tomcat}
+    tomcat_group=${tomcat_group:-$tomcat_user}
+    globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
+    mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
+    mail_admin_address=${mail_admin_address}
+
+    if [ -n "${ESGINI}" ]; then
+        publisher_home=${ESGINI%/*}
+        publisher_config=${ESGINI##*/}
+    fi
+
+    ############################################
+    ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
+    ############################################
+    export GIT_SSL_NO_VERIFY=1
+    export OPENSSL_HOME=${openssl_install_dir}
+    export PGHOME=${postgress_install_dir}
+    export PGUSER=${postgress_user}
+    export PGHOST=${postgress_host}
+    export PGPORT=${postgress_port}
+    export CMAKE_HOME=${cmake_install_dir}
+    export CDAT_HOME=${cdat_home}
+    export JAVA_HOME=${java_install_dir}
+    export JAVA_OPTS=${java_opts}
+    export ANT_HOME=${ant_install_dir}
+    export CATALINA_HOME=${tomcat_install_dir}
+    export CATALINA_BASE=${CATALINA_HOME}
+    export CATALINA_OPTS=${tomcat_opts}
+    export GLOBUS_LOCATION=${globus_location}
+
+    myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGHOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
+    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$PGHOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
+    export PATH=$(_path_unique $myPATH:$PATH)
+    export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
+    export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/local/pgsql/include/ -I/usr/include ${CFLAGS} -fPIC"
+    export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/local/pgsql/lib -L/usr/lib64 -L/usr/lib -Wl,--rpath,${OPENSSL_HOME}/lib"
+
+    #--------------
+    # ID Setting
+    #--------------
+    #fix: id will always return the root id no matter what flags we use if we start this via sudo
+    installer_user=${ESG_USER:-${SUDO_USER:-$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')}}
+    installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
+    installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
+    installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
+
+    #deprecate SUDO_?ID so we only use one variable for all this
+    [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
+    [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
+
+    verbose_print "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
+
+    #--------------
+    # Script vars (internal)
+    #--------------
+    esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
+    esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
+    esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
+    esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
+    esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
+    workdir=${workdir:-${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg}}
+
+    word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
+    let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
+    date_format="+%Y_%m_%d_%H%M%S"
+    num_backups_to_keep=${num_backups_to_keep:-7}
+    compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+    certificate_extensions="pem|crt|cert|key"
+
+    openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
+    java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
+    ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
+    openssl_workdir=${workdir}/openssl
+    esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
+    bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
+    db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
+    node_db_name=${db_database}
+    postgress_workdir=${workdir}/postgress
+    postgress_jar=postgresql-8.3-603.jdbc3.jar
+    postgress_driver=org.postgresql.Driver
+    postgress_protocol=jdbc:postgresql:
+    pg_sys_acct=${pg_sys_acct:-postgres}
+    pg_sys_acct_group=${pg_sys_acct_group:-$pg_sys_acct}
+    postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
+    #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
+    #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
+    cmake_workdir=${workdir}/cmake
+    cmake_repo=http://www.cmake.org/cmake.git
+    cdat_repo=git://github.com/UV-CDAT/uvcdat.git
+    cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
+    publisher_repo=git://github.com/ESGF/esg-publisher.git
+    publisher_repo_http=http://github.com/ESGF/esg-publisher.git
+    esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
+    esg_testdir=${workdir}/../esg_test
+    tomcat_dist_url=http://www.us.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    tomcat_pid_file=/var/run/tomcat-jsvc.pid
+    utils_url=${esg_dist_url}/utils
+    thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war
+    thredds_esg_dist_url=${esg_dist_url}/thredds/${tds_version%.*}/${tds_version}/thredds.war
+    thredds_content_dir=${thredds_content_dir:-${esg_root_dir}/content}
+    #NOTE: This root dir should match a root set in the thredds setup
+    thredds_root_dir=${esg_root_dir}/data
+    thredds_replica_dir=${thredds_root_dir}/replica
+    #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
+    show_summary_latch=0
+    source_latch=0
+    scripts_dir=${install_prefix}/bin
+    esg_installarg_file=${scripts_dir}/esg-installarg
+    no_globus=${no_globus:-0}
+    force_install=${force_install:-0}
+    extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
+    tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
+    keystore_file=${tomcat_conf_dir}/keystore-tomcat
+    keystore_alias=${keystore_alias:-my_esgf_node}
+    keystore_password=${keystore_password}
+    truststore_file=${tomcat_conf_dir}/esg-truststore.ts
+    truststore_password=${truststore_password:-changeit}
+    globus_global_certs_dir=/etc/grid-security/certificates
+    #NOTE: java keystore style DN...
+    default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
+    config_file=${esg_config_dir}/esgf.properties
+    index_config="master slave"
+}
+
+init

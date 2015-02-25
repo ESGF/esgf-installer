@@ -69,7 +69,7 @@
 #note: usage of readlink not macosx friendly :-( usage of useradd /
 #      groupadd is RedHat/CentOS dependent :-(
 
-declare -r _ESG_FUNCTIONS_=1
+declare _ESG_FUNCTIONS_=1
 
 #Needed to reduce the number of commands when wanting to make a verbose conditional print
 verbose_print() { ((VERBOSE)) && echo $@; return 0; }
@@ -537,6 +537,115 @@ get_config_ip() {
     ifconfig $1 | grep "inet[^6]" | awk '{ gsub (" *inet [^:]*:",""); print $1}'
 }
 
+#----------------------------------------------------------
+# Tomcat Management Functions
+#----------------------------------------------------------
+
+start_tomcat() {
+    check_tomcat_process
+    local ret=$?
+    ((ret == 0)) && return 1
+    ((ret == 3)) && echo "Please resolve this issue before starting tomcat!" && checked_done $ret
+    
+    echo "Starting Tomcat (jsvc)..."
+
+    mkdir -p ${tomcat_install_dir}/work/Catalina
+    chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
+    chmod 755 ${tomcat_install_dir}/work
+    chmod 755 ${tomcat_install_dir}/work/Catalina
+
+    pushd $tomcat_install_dir >& /dev/null
+    [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -server -Xms1024m -XX:MaxPermSize=512m $java_opts"
+    jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
+    echo "$jsvc_launch_command"
+    JAVA_HOME=${java_install_dir} ./bin/jsvc \
+        -Djava.awt.headless=true \
+        -Dcom.sun.enterprise.server.ss.ASQuickStartup=false \
+        -Dcatalina.home=${tomcat_install_dir} \
+        -pidfile ${tomcat_pid_file} \
+        -cp $(find $(readlink -f `pwd`/bin/) | grep .jar | xargs | perl -pe 's/ /:/g') \
+        -outfile ${tomcat_install_dir}/logs/catalina.out \
+        -errfile ${tomcat_install_dir}/logs/catalina.err \
+        -user $tomcat_user \
+        $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false \
+        ${tomcat_opts} \
+        org.apache.catalina.startup.Bootstrap
+    if [ $? != 0 ]; then
+        echo " ERROR: Could not start up tomcat"
+        tail ./logs/catalina.err
+        popd >& /dev/null
+        checked_done 1
+    fi
+
+    #Don't wait forever, but give tomcat some time before it starts
+    pcheck 10 2 1 -- check_tomcat_process
+    [ $? != 0 ] && echo "Tomcat couldn't be started."
+    sleep 2
+}
+
+stop_tomcat() {
+    #
+    #Stop Tomcat
+    #% sudo /usr/local/tomcat/bin/jsvc -pidfile /var/run/tomcat-jsvc.pid -stop org.apache.catalina.startup.Boostrap
+    #
+
+    check_tomcat_process
+    [ $? != 0 ] && return 1
+
+    pushd $tomcat_install_dir >& /dev/null
+    echo
+    echo "stop tomcat: ${tomcat_install_dir}/bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap"
+    echo "(please wait)"
+    sleep 1
+    ${tomcat_install_dir}/bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap
+    if [ $? != 0 ]; then
+        local ret=0
+        echo " WARNING: Unable to stop tomcat, (nicely)"
+        echo -n " Hmmm...  okay no more mr nice guy... issuing "
+        #echo -n "\"killall jsvc\" and " && killall jsvc
+        #((ret+=$?))
+        echo -n "\"pkill -9 $(cat ${tomcat_pid_file})\"" && kill -9 $(cat ${tomcat_pid_file}) >& /dev/null
+        ((ret+=$?))
+        echo ""
+        [ "$ret" != 0 ] && echo "Hmmm... still could not shutdown... process may have already been stopped"
+    fi
+    /bin/ps -elf | grep jsvc | grep -v grep
+    popd >& /dev/null
+    return 0
+}
+
+#-------------------------------
+# Process checking utility functions
+#-------------------------------
+
+#This function "succeeds" (is true; returns 0)  if there *are* running processes found running
+check_postgress_process() {
+    su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data status"
+}
+
+
+check_tomcat_process() {
+    if [ -f ${tomcat_install_dir}/conf/server.xml ]; then
+        [ -z "${esgf_host_ip}" ] && get_property esgf_host_ip
+        local ports=$(sed -n 's/.*Connector.*port="\([0-9]*\)".*/\1/p' ${tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')
+        local procs="$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'${esgf_host_ip}'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)"
+        [ -z "${procs}" ] && return 1 #No process running on ports
+        if (( $(expr "$procs" : '.*jsvc.*') > 0)); then
+            echo "Tomcat (jsvc) process is running... " && return 0
+        else
+            echo " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [${procs}] ?? "
+            lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'${esgf_host_ip}'\)/\0/p'
+            return 3
+        fi
+    else
+        echo " Warning Cannot find ${tomcat_install_dir}/conf/server.xml file!"
+        echo " Using alternative method for checking on tomcat process..."
+        local val=$(ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }')
+        [ $(($val > 0 )) == 1 ] && echo "Tomcat (jsvc) process is running..." && return 0
+        echo " No Tomcat (jsvc) processes detected"
+        return 2
+    fi
+}
 
 #----------------------------------------------------------
 # Postgresql informational functions
@@ -747,6 +856,24 @@ _readlinkf() {
     echo "${current_dir}/${file}"
     cd ${start_dir}
 }
+
+#----------------------------------------------------------
+# File reading and writing...
+#----------------------------------------------------------
+
+insert_file_at_pattern() {
+    local target_file=$1
+    local input_file=$2
+    local pattern=$3
+
+    echo "Inserting into ${target_file} <- ${input_file} at pattern ${pattern}"
+
+    python -c "infile = '${target_file}';filterfile = '${input_file}';pattern='${pattern}';f=open(infile);s=f.read();f.close();f=open(filterfile);filter = f.read();f.close();s=s.replace(pattern,filter);f=open(infile,'w');f.write(s);f.close()"
+    ret=$?
+    [ $ret != 0 ] && echo "Problem in function insert_file_at_pattern in $0"
+    return ${ret}
+}
+
 
 #----------------------------------------------------------
 # Property reading and writing...
@@ -1034,10 +1161,10 @@ git-tagrelease() {
 #------------------------------------------
 #Certificate Gymnasitcs
 #------------------------------------------
-declare -r expired=0
-declare -r day=$((60*60*24))
-declare -r warn=$((day*7))
-declare -r info=$((day*30))
+declare  expired=0
+declare  day=$((60*60*24))
+declare  warn=$((day*7))
+declare  info=$((day*30))
 
 print_cert() {
     local cert=${1:?"You must provide the certificate file to print"}
@@ -1147,6 +1274,77 @@ set_aside_web_app_cleanup() {
     fi
 }
 
+#------------------------------------------
+#ESGF Distribution Mirrors Utilities
+#------------------------------------------
+
+esgf_dist_mirror=""
+
+get_esgf_dist_mirror() {
+
+    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" "dist.ceda.ac.uk/esgf/dist")
+
+    for m in "${esgf_dist_mirrors_list[@]}"; do
+
+        # get host and page
+        m=${m/[hH][tT][tT][pP]:\/\//}
+        [ "${m#*\/}" == "$m" ] && page="/" || page="/${m#*\/}"
+        host="${m%%\/*}"
+
+        # start date
+        a=$(</proc/uptime)
+        a=${a%%\ *}
+        a=${a/./}
+
+        # connect to host
+        curl --silent --output /dev/null $host --connect-timeout 1 -m 2
+        [ $? != 0 ] && continue
+
+        # end date
+        b=$(</proc/uptime) &&
+        b=${b%%\ *} &&
+        b=${b/./} ||
+        echo "$(date '+%m/%d/%Y %H:%M:%S') $host" >&2
+
+        # try next if not connected within 2s
+        [ $((b-a)) -lt 0 ] && continue
+
+        # sort
+        c=$(((b-a)*100))
+
+        until [ "${slist[$c]}" == "" ]; do
+            ((c++))
+        done
+        slist[$c]="http://$host$page"
+    done
+    
+    i=1
+    for m in ${slist[@]}; do
+       flist[$i]=$m
+        ((i++))
+    done
+
+    if [ $1 = "interactive" ]; then
+        i=1
+        printf "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
+        printf "\t-------------------------------------------\n"
+        for m in ${flist[@]}; do
+            printf "\t [$i] $m \n"
+                ((i++))
+        done
+        printf "\t-------------------------------------------\n"
+
+        read -e -p "select [1] > " choice
+        [ -z "${choice}" ] && choice=1
+
+        echo $choice
+        esgf_dist_mirror=${flist[$choice]}
+    else
+        esgf_dist_mirror=${flist[1]}
+    fi
+    unset slist
+    unset flist
+}
 
 ####################################################################
 # Colorizing Echo Output Strings                                   #

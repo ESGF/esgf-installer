@@ -1051,8 +1051,8 @@ setup_cdat() {
         if [ ! -d ${workdir}/uvcdat/.git ]; then
             cdat_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            ((DEBUG)) && echo "${cdat_repo_http}"
-            git clone ${cdat_repo_http} uvcdat
+            ((DEBUG)) && echo "${cdat_repo_https}"
+            git clone ${cdat_repo_https} uvcdat
             [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
@@ -1267,8 +1267,8 @@ setup_esgcet() {
         if [ ! -d ${workdir}/esg-publisher/.git ]; then
             publisher_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            ((DEBUG)) && echo "${publisher_repo_http}"
-            git clone ${publisher_repo_http} esg-publisher
+            ((DEBUG)) && echo "${publisher_repo_https}"
+            git clone ${publisher_repo_https} esg-publisher
             [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi

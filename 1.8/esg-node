@@ -177,6 +177,9 @@ init_structure() {
     publisher_home=${publisher_home}
     [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
 
+    # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
+    get_property keystore_alias ${keystore_alias}
+
     export ESGINI=${publisher_home}/${publisher_config}
     ((DEBUG)) && echo "ESGINI = ${ESGINI}"
 

@@ -2902,14 +2902,16 @@ setup_subsystem_new() {
     chmod 755 ${fetch_file}
     popd >& /dev/null
 
-    #source subsystem file and go!
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
-    debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} ${upgrade_mode} $@"
-    #(source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@ )
     
-    ${scripts_dir}/${fetch_file} 
-    
+    # Check version
+    vercomp `${scripts_dir}/${fetch_file} --newversion` `${scripts_dir}/${fetch_file} --oldversion`
+    [ $? == 0 ] || [ $? == 2 ] && (( ! force_install )) && [OK] && return 0
+
+    # Go! 
+    ${scripts_dir}/${fetch_file}
+	    
     checked_done $?
     echo "-------------------------------"
     echo

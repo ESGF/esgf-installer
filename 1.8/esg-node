@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v1.8.0-devel"
+script_version="v1.8.1-devel"
 script_maj_version="1.8"
 script_release="Griffin"
 envfile="/etc/esg.env"

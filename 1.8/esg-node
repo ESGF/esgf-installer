@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v1.8.0-devel"
+script_version="v1.8.1-devel"
 script_maj_version="1.8"
 script_release="Griffin"
 envfile="/etc/esg.env"
@@ -176,6 +176,9 @@ init_structure() {
 
     publisher_home=${publisher_home}
     [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
+
+    # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
+    get_property keystore_alias ${keystore_alias}
 
     export ESGINI=${publisher_home}/${publisher_config}
     ((DEBUG)) && echo "ESGINI = ${ESGINI}"
@@ -1051,8 +1054,8 @@ setup_cdat() {
         if [ ! -d ${workdir}/uvcdat/.git ]; then
             cdat_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            ((DEBUG)) && echo "${cdat_repo_http}"
-            git clone ${cdat_repo_http} uvcdat
+            ((DEBUG)) && echo "${cdat_repo_https}"
+            git clone ${cdat_repo_https} uvcdat
             [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
@@ -1267,8 +1270,8 @@ setup_esgcet() {
         if [ ! -d ${workdir}/esg-publisher/.git ]; then
             publisher_git_protocol="http://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            ((DEBUG)) && echo "${publisher_repo_http}"
-            git clone ${publisher_repo_http} esg-publisher
+            ((DEBUG)) && echo "${publisher_repo_https}"
+            git clone ${publisher_repo_https} esg-publisher
             [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
         fi
     fi
@@ -2899,14 +2902,16 @@ setup_subsystem_new() {
     chmod 755 ${fetch_file}
     popd >& /dev/null
 
-    #source subsystem file and go!
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
-    debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} ${upgrade_mode} $@"
-    #(source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@ )
     
-    ${scripts_dir}/${fetch_file} 
-    
+    # Check version
+    vercomp `${scripts_dir}/${fetch_file} --newversion` `${scripts_dir}/${fetch_file} --oldversion`
+    [ $? == 0 ] || [ $? == 2 ] && (( ! force_install )) && [OK] && return 0
+
+    # Go! 
+    ${scripts_dir}/${fetch_file}
+	    
     checked_done $?
     echo "-------------------------------"
     echo

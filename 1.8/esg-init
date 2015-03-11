@@ -43,7 +43,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.4.7"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.9.3"}
+    esg_search_version=${esg_search_version:-"3.9.4"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.6.0"}
@@ -182,9 +182,9 @@ init() {
     cmake_workdir=${workdir}/cmake
     cmake_repo=http://www.cmake.org/cmake.git
     cdat_repo=git://github.com/UV-CDAT/uvcdat.git
-    cdat_repo_http=http://github.com/UV-CDAT/uvcdat.git
+    cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
     publisher_repo=git://github.com/ESGF/esg-publisher.git
-    publisher_repo_http=http://github.com/ESGF/esg-publisher.git
+    publisher_repo_https=https://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
     tomcat_dist_url=http://www.us.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz

@@ -282,7 +282,7 @@ init_ferret() {
     fi
 
     # Ferret data files
-    ferret_data_url=${esg_dist_url}ferret/data/fer_dsets.tar.gz
+    ferret_data_url=${esg_dist_url}/ferret/data/fer_dsets.tar.gz
     ferret_exec_file=${ferret_workdir}/fer_executables.tar.gz
     ferret_env_file=${ferret_workdir}/fer_environment.tar.gz
     ferret_data_file=${ferret_workdir}/fer_dsets.tar.gz

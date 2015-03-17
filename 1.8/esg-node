@@ -2462,6 +2462,9 @@ setup_tds() {
         checked_get ${thredds_content_dir}/thredds/${thredds_config_file} ${thredds_config_file_template_url} $((force_install))
     fi
 
+    get_property mail_admin_address
+    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/${thredds_config_file}
+
     #restart tomcat to put modifications in effect.
     stop_tomcat
     start_tomcat

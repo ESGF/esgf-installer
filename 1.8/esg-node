@@ -2495,11 +2495,11 @@ setup_tds() {
         [ $? != 0 ] && echo "WARNING: Could not change owner successfully - this will lead to unability to create new catalogs via the publisher!"
     fi
 
-    echo "curl http://${esgf_host_ip}/thredds"
+    echo "curl http://localhost/thredds"
     local wait_time=5
     local ret=1
     while [[ $wait_time > 0 ]]; do
-        curl http://${esgf_host_ip}/thredds >& /dev/null
+        curl http://localhost/thredds >& /dev/null
         ret=$?
         [ $ret == 0 ] && break
         sleep 1

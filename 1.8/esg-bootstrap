@@ -26,17 +26,22 @@ get_latest() {
     local init_scripts_dir=/etc/rc.d/init.d
     pushd $script_install_dir >& /dev/null
     #Get files
-    local fetch_file=esg-node
 
     local ret
     verbose_print "Checking...."
-    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file} 
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-node
     ret=$?
-    ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
-    ((ret == 0)) && echo "Updated ESGF Node install script ($fetch_file) from ESGF distribution site"
+    ((ret == 1)) && echo "ESGF Node install script (esg-node) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node install script (esg-node) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
-    chmod 755 ${fetch_file}
-    [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}
+    chmod 755 esg-node
+    [ -e ${init_scripts_dir}/esg-node ] && cp -v esg-node ${init_scripts_dir}/esg-node
+
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-init
+    ((ret == 1)) && echo "ESGF Node init file (esg-init) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node init file (esg-init) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-functions
 
     checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-functions
     ((ret == 1)) && echo "ESGF Node install script (esg-functions) already up-to-date"

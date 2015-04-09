@@ -1053,10 +1053,10 @@ setup_cdat() {
         git clone ${cdat_repo} uvcdat
         if [ ! -d ${workdir}/uvcdat/.git ]; then
             cdat_git_protocol="https://"
-            echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
+            echo "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol..."
             ((DEBUG)) && echo "${cdat_repo_https}"
             git clone ${cdat_repo_https} uvcdat
-            [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor https protocol)" && checked_done 1
         fi
     fi
     cd uvcdat >& /dev/null
@@ -1268,11 +1268,11 @@ setup_esgcet() {
         ((DEBUG)) && echo "${publisher_repo}"
         git clone ${publisher_repo} esg-publisher
         if [ ! -d ${workdir}/esg-publisher/.git ]; then
-            publisher_git_protocol="http://"
-            echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
+            publisher_git_protocol="https://"
+            echo "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol..."
             ((DEBUG)) && echo "${publisher_repo_https}"
             git clone ${publisher_repo_https} esg-publisher
-            [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor https protocol)" && checked_done 1
         fi
     fi
     cd esg-publisher >& /dev/null

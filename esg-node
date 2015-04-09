@@ -1052,7 +1052,7 @@ setup_cdat() {
         ((DEBUG)) && echo "${cdat_repo}"
         git clone ${cdat_repo} uvcdat
         if [ ! -d ${workdir}/uvcdat/.git ]; then
-            cdat_git_protocol="http://"
+            cdat_git_protocol="https://"
             echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
             ((DEBUG)) && echo "${cdat_repo_https}"
             git clone ${cdat_repo_https} uvcdat

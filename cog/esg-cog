@@ -18,15 +18,18 @@ COG_DIR=${COG_DIR:-${ESGF_INSTALL_PREFIX}/cog}
 ESGF=true
 
 # the user and group running the CoG application
-USER=tomcat
-GROUP=tomcat
+USER=apache
+GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v2.9.1
+VERSION=v2.12.0
 
 # COG_TAG=master
 COG_TAG=$VERSION
+
+# must start from bare-bone Python 2.7.9 installation that contains only setup_tools, pip and virtualenv
+PATH=/opt/esgf/python/bin:$PATH
 
 #=== ESGF INSTALLATION LOGIC - DO NOT CHANGE =========
 

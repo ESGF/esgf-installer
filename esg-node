@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v1.8.1-devel"
-script_maj_version="1.8"
-script_release="Griffin"
+script_version="v2.0-RC1-devel"
+script_maj_version="2.0"
+script_release="Centaur"
 envfile="/etc/esg.env"
 
 #--------------
@@ -226,17 +226,27 @@ printf "
     [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
     [OK]
 
+
     #----------------------------------------
     echo "Checking requisites... "
 
-    verbose_print -n "Checking for gcc or g++... "
-    gcc --version >& /dev/null || gg++ --version >& /dev/null && verbose_print "$([OK])" || (verbose_print "$([FAIL])" && return 1)
+    # checking for OS, architecture, distribution and version
 
-    verbose_print -n "Checking for gmake... "
-    gmake --version >& /dev/null && verbose_print "$([OK])" || (verbose_print "$([FAIL])" && return 1)
+    OS=`uname -s`
+    MACH=`uname -m`
 
-    verbose_print -n "Checking for X11 libs... "
-    Xorg -version >& /dev/null && verbose_print "$([OK])" || verbose_print "$(echo_fail "[WARNING] X11 is needed for publisher UI...")"
+    if [ "${OS}" = "Linux" ] && [ "${MACH}" = "x86_64" ] && [ -f /etc/redhat-release ] ; then
+    	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
+    fi
+
+    if [ "${MAJREV}" = 6 ] ; then
+    	DIST=`cat /etc/redhat-release | sed s/release.*//`
+        DISTRIB=`echo $DIST`
+    fi
+
+    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
+
+
     #----------------------------------------
 
     echo
@@ -5924,11 +5934,11 @@ show_type() {
 upgrade_mode=0
 install_mode=0
 main() {
-        # Sourcing esg-init file        
-        [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
-
         # Sourcing esg-functions file
         [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+
+	# Sourcing esg-init file        
+	[ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
 
         # Initializing
         debug_print "esg-node initializing..."
@@ -6655,7 +6665,7 @@ main() {
     the value is used for subsequent launches so the type value does not have to be
     always specified.  A simple \"esg-node start\" will launch with the last type used
     that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-    (more documentation available at http://esgf.org/esgf-installer/)\n\n"
+    (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n"
 
             exit 1
         fi
@@ -6663,18 +6673,8 @@ main() {
         esgf_node_info
 
         local doit="n"
-        echo "     ----------------------------------------------------------"
-        echo "     Please make sure you have installed ALL the prerequisites"
-        echo "     Please read the prerequisite list here:"
-        echo "     https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#what-do-i-need-on-my-system-before-i-install"
-        echo "     Before continuing make sure they are ALL present on this system!!!!!!"
-        if [ $((sel & DATA_BIT)) != 0 ]; then
-            echo "         If you intend on publishing from this node please check the publishing network prerequisites"
-            echo "         http://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#prerequisites"
-        fi
-        echo "     ----------------------------------------------------------"
-        echo
-        (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
+        echo 
+	 (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
 
         read -e -p "Are you ready to begin the installation? [Y/n] " doit
         if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
@@ -6691,6 +6691,42 @@ main() {
 
         initial_setup_questionnaire
 
+    #---------------------------------------
+    #Installation of prerequisites.
+    #---------------------------------------
+
+    	echo
+    	echo "*******************************"
+	echo "Installing prerequisites"
+	echo "*******************************"
+	echo
+
+	yum -y install epel-release
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel '*ExtUtils*'
+
+    #---------------------------------------
+    #Setup ESGF RPM repository
+    #---------------------------------------
+
+        echo
+	echo "*******************************"
+	echo "Setting up ESGF RPM repository"
+	echo "*******************************"
+	echo
+
+	echo '[esgf]' > /etc/yum.repos.d/esgf.repo
+	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
+	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
+		echo "baseurl=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then 
+		echo "baseurl=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+	fi
+	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
+    	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
+    	echo 'priority=90' >> /etc/yum.repos.d/esgf.repo
+    	echo 'gpgcheck=0' >> /etc/yum.repos.d/esgf.repo
+    	echo 'proxy=_none_' >> /etc/yum.repos.d/esgf.repo 
+	
     #---------------------------------------
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)

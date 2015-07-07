@@ -62,7 +62,7 @@ init() {
     java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.59"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
+    tomcat_version=${tomcat_version:-"7.0.63"} ; tomcat_min_version=${tomcat_min_version:-"7.0.63"}
     cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
 
@@ -187,7 +187,7 @@ init() {
     publisher_repo_https=https://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
-    tomcat_dist_url=http://www.us.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    tomcat_dist_url=http://archive.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
     utils_url=${esg_dist_url}/utils
     thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war

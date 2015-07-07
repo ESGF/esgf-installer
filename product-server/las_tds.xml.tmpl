@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog name="Data from LAS"
+        xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
+        xmlns:xlink="http://www.w3.org/1999/xlink">
+
+<service name="gridded" serviceType="Compound" base="" >
+      <service name="opendap" serviceType="OpenDAP" base="/thredds/dodsC/"/>
+      <service name="wcs" serviceType="WCS" base="/thredds/wcs/"/>
+</service>
+  <datasetScan name="Data From LAS" path="las" location="@@las_server_dir@@/conf/server/data" serviceName="gridded">
+      <filter>
+         <include wildcard="*.nc"/>
+         <include wildcard="*.fds"/>
+         <include wildcard="*.jnl"/>
+      </filter>
+   </datasetScan>
+</catalog>

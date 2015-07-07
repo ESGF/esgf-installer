@@ -68,13 +68,6 @@
 #              scripts that has the definition of checked_get(),
 #              stop_tomcat(), start_tomcat(), $workdir,
 
-esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
-
-#maybe I am paranoid but I want to make sure someone can't just set
-#the environment to any place and have us just accept it and pull from
-#it -gavin
-if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); then echo "*"; else (echo "illegal distribution url: ${esg_dist_url}" && checked_done 1); fi
-
 esg_security_filters_dist_url=${esg_dist_url}/filters
 hessian_version=${hessian_version:-"3.0.20"}
 

@@ -100,11 +100,6 @@ esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
 
 esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
-#maybe I am paranoid but I want to make sure someone can't just set
-#the environment to any place and have us just accept it and pull from
-#it -gavin
-if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); then echo "*"; else (echo "illegal distribution url: ${esg_dist_url}" && checked_done 1); fi
-
 compress_extensions=${compress_extensions:-".tar.gz|.tar.bz2|.tgz|.bz2"}
 cdat_home=${cdat_home:-${install_prefix}/cdat}
 
@@ -2184,6 +2179,7 @@ edit_pam_pgsql_conf() {
     eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
     echo -n "*"
     eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
+    eval "perl -p -i -e 's/\\@\\@esgf_idp_peer\\@\\@/${esgf_idp_peer}/g' ${tfile}"
     echo -n "*"
     echo " [OK]"
     ((DEBUG)) && cat ${tfile}

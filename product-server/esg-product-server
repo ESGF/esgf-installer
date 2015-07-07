@@ -58,39 +58,59 @@
 #uses: perl, awk, ifconfig, tar, wget, curl, su, useradd, id, chmod,
 #      chown, chgrp, cut, svn, mkdir, killall, java
 
+
 DEBUG=${DEBUG:-0}
 force_install=${force_install:-0}
 compress_extensions=${compression_extensions:-".tar.gz|.tar.bz2|.tgz|.bz2|.tar"}
 word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-workdir=${workdir:-~/workbench/esg}
+workdir=${workdir:-/usr/local/src/esgf/workbench/esg}
 envfile=${envfile:-"/etc/esg.env"}
 install_logfile=${install_logfile:-"/etc/esg.install_log"}
-
-esg_dist_url=${esg_dist_url:-"http://198.128.245.140/dist"}
-
-#maybe I am paranoid but I want to make sure someone can't just set
-#the environment to any place and have us just accept it and pull from
-#it -gavin
-if $(echo "${esg_dist_url}" | grep "http://198.128.245.140/dist" >& /dev/null); then echo "*"; else (echo "illegal distribution url: ${esg_dist_url}" && checked_done 1); fi
 
 esg_root_dir=${esg_root_dir:-"/esg"}
 content_dir=${content_dir:-${esg_root_dir}/content}
 tomcat_user=${tomcat_user:-"tomcat"}
-tomcat_group=${tomcat_group:-"tomcat_group"}
+tomcat_group=${tomcat_group:-"tomcat"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
 ferret_version=${ferret_version:-"6.8"}
-las_version=${las_version:-"8.1"}
+las_version=${las_version:-"8.3"}
+VERSION=8.3
+
+esg_install_prefix=${esg_install_prefix:-"/usr/local"}
+INSTALLPATH=${esg_install_prefix}/las-esgf/$VERSION
+las_server_dir=${content_dir}/las #why did you decide to make it there and not /esg/content/las/[conf/server] ??
+
+esg_functions_file=${esg_install_prefix}/bin/esg-functions
+esg_init_file=${esg_install_prefix}/bin/esg-init
+esg_installarg_file=${esg_install_prefix}/bin/esg-installarg
+esg_node_file=${esg_install_prefix}/bin/esg-node
+
+# Sourcing esg-installarg esg-functions file and esg-init file
+[ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+[ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
+[ -e ${esg_installarg_file} ] && source ${esg_installarg_file} && ((VERBOSE)) && printf "sourcing from: ${esg_installarg_file} \n"
+
+# get esgf_host
+esgf_host=${esgf_host}
+[ -z "${esgf_host}" ] && get_property esgf_host
+
+# Determining ESGF distribution mirror
+get_esgf_dist_mirror "fastest"
+
+# Determining if devel or master directory of the ESGF distribution mirror will be usde for download of installation files
+[ -z "$(grep 'script_version=' ${esg_node_file} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
+
+# Setting esg_dist_url with previously gathered information
+esg_dist_url=${esgf_dist_mirror}$( ((devel == 1)) && echo "/devel" || echo "")
 
 thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
 las_config_file_template_url=${esg_dist_url}/esgf-product-server/las_tds.xml.tmpl
 las_config_input_file_url=${esg_dist_url}/esgf-product-server/esg-las-config
-
-las_install_dir=${las_install_dir:-${install_prefix:-/usr/local}}
-las_server_dir=${content_dir}/las #why did you decide to make it there and not /esg/content/las/[conf/server] ??
 esgcet_las_config_file="esgcet_las.xml"
 esgcet_las_sisters_file="las_servers.xml"
 esgcet_las_static_sisters_file="las_servers_static.xml"
+
 
 setup_product_server() {
 
@@ -101,9 +121,13 @@ setup_product_server() {
     echo "Starting Product Services installation (Ferret/LAS)..."
 
     get_property las_xml_config_dir ${las_server_dir}/conf/server
+
     write_as_property las_xml_config_dir
 
     init_ferret && setup_ferret && init_las && setup_las
+
+    rm -f $INSTALLPATH/$0
+    cp $0 $INSTALLPATH 
 }
 
 
@@ -113,8 +137,9 @@ setup_product_server() {
 
 setup_ferret() {
 
-    echo -n "Checking for Ferret v${ferret_version} of [${ferret_install_dir}/bin/ferret]"
-    check_version_with "ferret" '${ferret_install_dir}/bin/ferret -version' ${ferret_version}
+    # Reinstall ferret if LAS does not exist
+    echo -n "Checking for LAS Product Server v${las_version}"
+    check_webapp_version "las" ${las_version}
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && echo " [OK]" && return 0
 
@@ -125,29 +150,6 @@ setup_ferret() {
     echo
 
     local upgrade=${1:-0}
-
-    local default="Y"
-    ((force_install)) && default="N"
-    local dosetup
-    if [ -d ${ferret_install_dir} ] && [ -d ${ferret_data_dir} ]; then 
-	echo "Detected an existing ferret installation..."
-        read -p "Do you want to continue with ferret installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        [ -z "${dosetup}" ] && dosetup=${default}
-	if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-	    echo "Skipping ferret installation and setup - will assume it's setup properly"
-	    return 0
-	fi
-	
-	local dobackup="N"
-	read -p "Do you want to make a back up of the existing distribution?? [y/N] " dobackup
-	if [ "${dobackup}" = "Y" ] || [ "${dobackup}" = "y" ]; then
-	    echo "Creating a backup archive of this application ${ferret_install_dir}"
-	    backup ${ferret_install_dir}
-	fi
-
-	echo
-    fi
-
 
     get_ferret
     setup_support_files
@@ -250,29 +252,29 @@ init_ferret() {
     local redhat_ver=$(uname -a | sed -n 's/^Linux\(.*\)\.el\([^ ]\)\(.*\)/\2/p')
     if ((word_size == 32)); then
         if ((redhat_ver == 5)); then
-            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel5_32/fer_executables.tar.gz
-            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel5_32/fer_environment.tar.gz
+            ferret_exec_url=${esg_dist_url}/ferret/rhel5_32/fer_executables.tar.gz
+            ferret_env_url=${esg_dist_url}/ferret/rhel5_32/fer_environment.tar.gz
         elif ((redhat_ver == 6)); then
-            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_32/fer_executables.tar.gz
-            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_32/fer_environment.tar.gz
+            ferret_exec_url=${esg_dist_url}/ferret/rhel6_32/fer_executables.tar.gz
+            ferret_env_url=${esg_dist_url}/ferret/rhel6_32/fer_environment.tar.gz
         else
             echo "WARNING: Unsupported Operating System or Operating System version [${redhat_ver}]."
             echo "  Attempting to use the Redhat 6 binaries, but success is not guaranteed..."
-            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_32/fer_executables.tar.gz
-            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_32/fer_environment.tar.gz
+            ferret_exec_url=${esg_dist_url}/ferret/rhel6_32/fer_executables.tar.gz
+            ferret_env_url=${esg_dist_url}/ferret/rhel6_32/fer_environment.tar.gz
         fi
     elif ((word_size == 64)); then
         if ((redhat_ver == 5)); then
-            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel5_64/fer_executables.tar.gz
-            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel5_64/fer_environment.tar.gz
+            ferret_exec_url=${esg_dist_url}/ferret/rhel5_64/fer_executables.tar.gz
+            ferret_env_url=${esg_dist_url}/ferret/rhel5_64/fer_environment.tar.gz
         elif ((redhat_ver == 6)); then
-            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_64/fer_executables.tar.gz
-            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_64/fer_environment.tar.gz
+            ferret_exec_url=${esg_dist_url}/ferret/rhel6_64/fer_executables.tar.gz
+            ferret_env_url=${esg_dist_url}/ferret/rhel6_64/fer_environment.tar.gz
         else
             echo "WARNING: Unsupported Operating System or Operating System version [${redhat_ver}]."
             echo "  Attempting to use the Redhat 6 binaries, but success is not guaranteed..."
-            ferret_exec_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_64/fer_executables.tar.gz
-            ferret_env_url=ftp://ftp.pmel.noaa.gov/ferret/pub/rhel6_64/fer_environment.tar.gz
+            ferret_exec_url=${esg_dist_url}/ferret/rhel6_64/fer_executables.tar.gz
+            ferret_env_url=${esg_dist_url}/ferret/rhel6_64/fer_environment.tar.gz
         fi
     else
         echo "invalid word size: ${word_size}"
@@ -280,7 +282,7 @@ init_ferret() {
     fi
 
     # Ferret data files
-    ferret_data_url=ftp://ftp.pmel.noaa.gov/ferret/pub/data/fer_dsets.tar.gz
+    ferret_data_url=${esg_dist_url}/ferret/data/fer_dsets.tar.gz
     ferret_exec_file=${ferret_workdir}/fer_executables.tar.gz
     ferret_env_file=${ferret_workdir}/fer_environment.tar.gz
     ferret_data_file=${ferret_workdir}/fer_dsets.tar.gz
@@ -405,12 +407,13 @@ write_ferret_install_log() {
 ########
 init_las() {
     echo "init_las..."
-    las_tar_url=ftp://ftp.pmel.noaa.gov/pub/las/las-esgf-v${las_version}.tar.gz
+    las_tar_url=${esg_dist_url}/las/las-esgf-v${las_version}.tar.gz
     las_dist_file=${las_tar_url##*/}
-    las_dir=${las_install_dir}/$(echo ${las_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
+    las_dir=${INSTALLPATH}/$(echo ${las_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
     echo "las_tar_url = ${las_tar_url}"
     echo "las_dist_file = ${las_dist_file}"
     echo "las_dir = $las_dir"
+
     return 0
 }
 
@@ -447,13 +450,17 @@ install_las() {
     fi
 
     #Now we can proceed with an install
+
+    echo "creating installation directory"
+    mkdir -p $INSTALLPATH
+
     echo "untarring las distribution file..."
-    echo "tar -zxf ${ferret_workdir}/${las_dist_file} -C ${las_install_dir}"
-    tar -zxf ${ferret_workdir}/${las_dist_file} -C ${las_install_dir}
+    echo "tar -zxf ${ferret_workdir}/${las_dist_file} -C ${INSTALLPATH}"
+    tar -zxf ${ferret_workdir}/${las_dist_file} -C ${INSTALLPATH}
 
     pushd ${las_dir} >& /dev/null
     #NOTE: this bit of editing based on line numbers is brittle, maybe there is a more robust way?
-    checked_get ${ferret_workdir}/${las_config_input_file_url##*/} ${las_config_input_file_url} $((force_install))
+    wget -O ${ferret_workdir}/${las_config_input_file_url##*/} ${esg_dist_url}/esgf-product-server/esg-las-config
     sed -i '8  s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
     sed -i '12 s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
     echo "$(pwd)/configure < ${ferret_workdir}/${las_config_input_file_url##*/}"
@@ -507,6 +514,7 @@ integrate_into_tds() {
     echo "Integrating Product Server into Thredds..."
 
     stop_tomcat
+
     
     #-------------------
     #Fetch templated thredds config file and edit it by token replacement
@@ -519,11 +527,11 @@ integrate_into_tds() {
 
     
     [ -e ${thredds_config_file} ] && echo "Backing up current thredds config file..." && mv -v ${thredds_config_file} ${thredds_config_file}.bak
-    checked_get ${thredds_config_file_template} ${thredds_config_file_template_url} $((force_install))
+    wget -O ${thredds_config_file_template} ${thredds_config_file_template_url}
     cp -vf ${thredds_config_file_template} ${thredds_config_file}
 
     #The file with the insertion text (text to be inserted)
-    checked_get ${thredds_config_file}.las ${esg_dist_url}/esgf-product-server/${thredds_config_file}.las $((force_install))
+    wget -O ${thredds_config_file}.las ${esg_dist_url}/esgf-product-server/${thredds_config_file}.las
 
     local esgf_las_entry_pattern="<!--@@esgf_las_entry@@-->" 
 
@@ -542,7 +550,7 @@ integrate_into_tds() {
     local las_config_file=${las_config_file_template%.*}
     
     [ -e ${las_config_file} ] && echo "backing up current las config file..." && mv -v ${las_config_file} ${las_config_file}.bak
-    checked_get ${las_config_file_template} ${las_config_file_template_url} $((force_install))
+    wget -O ${las_config_file_template} ${las_config_file_template_url}
     cp -v ${las_config_file_template} ${las_config_file}
     
     eval "perl -p -i -e 's#\\@\\@las_server_dir\\@\\@#${las_server_dir}#g' ${las_config_file}"; echo -n "*"
@@ -612,3 +620,5 @@ setup_cdat() {
     echo "Setting up CDAT (stubbed... no-op)"
     return 0
 }
+
+setup_product_server

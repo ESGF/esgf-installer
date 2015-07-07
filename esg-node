@@ -5937,9 +5937,6 @@ main() {
         # Sourcing esg-functions file
         [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
-	# Sourcing esg-init file        
-	[ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
-
         # Initializing
         debug_print "esg-node initializing..."
         ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
@@ -5957,6 +5954,9 @@ main() {
 	# Setting esg_dist_url with previously gathered information
         esg_dist_url_root=${esgf_dist_mirror}
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+
+        # Sourcing esg-init file        
+        [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"		     
 
 	# Downloading esg-installarg file
 	if [ ! -e ${esg_installarg_file} ] || ((force_install)) || [ ${esg_installarg_file} -ot $0 ]; then

@@ -1020,8 +1020,6 @@ write_cmake_install_log() {
 setup_cdat() {
     echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version} "
 
-    #-----------CDAT -> UVCDAT Migration------------------
-    #rewrite cdat_home to new uvcdat location
     #-----------------------------------------------------
     cdat_home=$(perl -pe 's/(?<!uv)cdat/uvcdat/' <<<${cdat_home})
     CDAT_HOME=${cdat_home}
@@ -1052,59 +1050,22 @@ setup_cdat() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
 
-    local cdat_git_protocol="git://"
+# TODO - remove once this is relocated to use yum
+    uvcdat_rpm_url=http://pcmdi9.llnl.gov/rpms/UVCDAT-2.2.0-Linux.rpm
+
+    uvcdat_rpm_file=${uvcdat_rpm_url##*/}
+
     #---------
     #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
-    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
+#    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
-    if [ ! -d ${workdir}/uvcdat ]; then
-        echo "Fetching the cdat project from GIT Repo..."
-        ((DEBUG)) && echo "${cdat_repo}"
-        git clone ${cdat_repo} uvcdat
-        if [ ! -d ${workdir}/uvcdat/.git ]; then
-            cdat_git_protocol="https://"
-            echo "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol..."
-            ((DEBUG)) && echo "${cdat_repo_https}"
-            git clone ${cdat_repo_https} uvcdat
-            [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor https protocol)" && checked_done 1
-        fi
-    fi
-    cd uvcdat >& /dev/null
-    git pull
-    git checkout ${cdat_tag}
-    [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
 
-    #NOTE:
-    #cdms configuration with --enable-esg flag looks for pg_config in
-    #$postgress_install_dir/bin.  This location is created and added
-    #to the executable PATH by the 'setup_postgress' function.
 
-    local workdir_build=${workdir}/uvcdat_build
-    (
-        #unset LD_LIBRARY_PATH
-        unset PYTHONPATH
-	#unset CFLAGS
-	#unset LDFLAGS
+# TODO - this all should be handled by yum
+    yum -y install uvcdat
 
-        [ -d ${workdir_build} ] && rm -rf ${workdir_build}
-        mkdir -p ${workdir_build}
-        pushd ${workdir_build}
-        #(zlib patch value has to be 3,5,7 - default is 3)
-        local zlib_value=$(pkg-config --modversion zlib | sed -n -re 's/(.)*/\1/p' | sed -n -re '/(3|5|7)/p') ; [[ ! ${zlib_value} ]] && zlib_value=3
-        local command="cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DUVCDAT_ANONYMOUS_LOG=False -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL=${cdat_git_protocol} ${workdir}/uvcdat"
+    popd >& /dev/null
 
-        for ((i=0;i<3;i++)); do
-            ((DEBUG)) && echo "command [${i}] = ${command}"
-            ${command}
-            [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (${i})" && popd && checked_done 1
-        done
-
-        make -j ${num_cpus}
-        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (4)" && popd && checked_done 1
-
-        popd >& /dev/null
-    )
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
@@ -1113,7 +1074,8 @@ setup_cdat() {
     echo
 
     #NOTE: order is important in next three calls...
-    _housekeeping_cdat_to_uvcdat
+#    _housekeeping_cdat_to_uvcdat
+
     write_cdat_env
 
     #----------------
@@ -5955,8 +5917,10 @@ main() {
         esg_dist_url_root=${esgf_dist_mirror}
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
+
         # Sourcing esg-init file        
         [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"		     
+
 
 	# Downloading esg-installarg file
 	if [ ! -e ${esg_installarg_file} ] || ((force_install)) || [ ${esg_installarg_file} -ot $0 ]; then
@@ -6736,7 +6700,6 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
         [ $((sel & TEST_BIT))    != 0 ] && test_postgress
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_cmake
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
         [ $((sel & TEST_BIT))    != 0 ] && test_cdat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}

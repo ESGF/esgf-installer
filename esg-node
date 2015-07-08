@@ -1070,6 +1070,9 @@ setup_cdat() {
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
 
+    wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
+    ${cdat_home}/bin/python ez_setup.py
+
     popd >& /dev/null
     echo
 
@@ -1098,7 +1101,7 @@ setup_cdat() {
     [[ ${cdat_home} ]] && [ -d ${cdat_home} ] && [  $(ls libz.* 2> /dev/null | wc -l) -gt 0 ] && tar cvzf ${cdat_home}/Externals/lib/libz.tgz ${cdat_home}/Externals/lib/libz.* && rm ${cdat_home}/Externals/lib/libz.*
     #----------------
 
-    write_cdat_install_log
+#    write_cdat_install_log
     checked_done 0
 }
 

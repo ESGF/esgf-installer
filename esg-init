@@ -45,7 +45,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.4.7"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.9.6"}
+    esg_search_version=${esg_search_version:-"3.9.7"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.6.0"}
@@ -65,7 +65,7 @@ init() {
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
     tomcat_version=${tomcat_version:-"7.0.63"} ; tomcat_min_version=${tomcat_min_version:-"7.0.63"}
-    cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
+    #cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
 
     # Since ESGF 1.8, LAS version is declared in esg-product-server
@@ -87,8 +87,8 @@ init() {
     unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
-    cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
-    cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
+    #cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
+    #cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}
@@ -115,7 +115,7 @@ init() {
     export PGUSER=${postgress_user}
     export PGHOST=${postgress_host}
     export PGPORT=${postgress_port}
-    export CMAKE_HOME=${cmake_install_dir}
+    #export CMAKE_HOME=${cmake_install_dir}
     export CDAT_HOME=${cdat_home}
     export JAVA_HOME=${java_install_dir}
     export JAVA_OPTS=${java_opts}
@@ -181,10 +181,10 @@ init() {
     postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
-    cmake_workdir=${workdir}/cmake
-    cmake_repo=http://www.cmake.org/cmake.git
-    cdat_repo=git://github.com/UV-CDAT/uvcdat.git
-    cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
+    #cmake_workdir=${workdir}/cmake
+    #cmake_repo=http://www.cmake.org/cmake.git
+    #cdat_repo=git://github.com/UV-CDAT/uvcdat.git
+    #cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
     publisher_repo=git://github.com/ESGF/esg-publisher.git
     publisher_repo_https=https://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg

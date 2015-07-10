@@ -45,7 +45,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.4.7"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.9.7"}
+    esg_search_version=${esg_search_version:-"3.9.9"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.6.0"}

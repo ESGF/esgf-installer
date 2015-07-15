@@ -1072,6 +1072,8 @@ setup_cdat() {
 
     wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
     ${cdat_home}/bin/python ez_setup.py
+    ${cdat_home}/bin/easy_install pip
+    
 
     popd >& /dev/null
     echo
@@ -1101,7 +1103,7 @@ setup_cdat() {
     [[ ${cdat_home} ]] && [ -d ${cdat_home} ] && [  $(ls libz.* 2> /dev/null | wc -l) -gt 0 ] && tar cvzf ${cdat_home}/Externals/lib/libz.tgz ${cdat_home}/Externals/lib/libz.* && rm ${cdat_home}/Externals/lib/libz.*
     #----------------
 
-    write_cdat_install_log
+#    write_cdat_install_log
     checked_done 0
 }
 

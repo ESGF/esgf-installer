@@ -1319,7 +1319,7 @@ esgf_dist_mirror=""
 
 get_esgf_dist_mirror() {
 
-    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" "dist.ceda.ac.uk/esgf/dist")
+    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf" "dist.ceda.ac.uk/esgf" "aims1.llnl.gov/esgf")
 
     for m in "${esgf_dist_mirrors_list[@]}"; do
 

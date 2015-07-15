@@ -5917,7 +5917,7 @@ main() {
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Setting esg_dist_url with previously gathered information
-        esg_dist_url_root=${esgf_dist_mirror}
+        esg_dist_url_root="${esgf_dist_mirror}/dist"
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
 
@@ -6684,9 +6684,9 @@ main() {
 	echo '[esgf]' > /etc/yum.repos.d/esgf.repo
 	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
 	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
-		echo "baseurl=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
 	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then 
-		echo "baseurl=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
 	fi
 	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
     	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
@@ -6711,7 +6711,7 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
-  #      [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
 #        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
  #       [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
@@ -6795,7 +6795,7 @@ main() {
         #For the sake of the node manager registry, let's just make sure that the derivative whitelist files
         #exits and have the appropriate ownership and permissions
         #This function is defined in the esg-node-manager script, which at this point should have been already sourced!
-#        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_generated_whitelist_files)
+        (source ${scripts_dir}/esg-node-manager >& /dev/null && touch_generated_whitelist_files)
         #---
 
     #---------------------------------------
@@ -6804,6 +6804,8 @@ main() {
         sanity_check_web_xmls
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
+# Hard coded to remove node manager
+	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
         start ${sel}
         install_bash_completion_file
         done_remark
@@ -6818,6 +6820,8 @@ main() {
     esg_node_finally() {
         debug_print "(esg_datanode: cleaning up etc...)"
         chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
+
+
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid
     #rm $OUTPUT_PIPE

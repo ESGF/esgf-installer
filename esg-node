@@ -21,9 +21,9 @@
 #*   All rights reserved. This file is part of the:                         *
 #*   Earth System Grid Fed (ESGF) Node Software Stack, Version 1.0          *
 #*                                                                          *
-#*   For details, see http://esgf.org/                                      *
+#*   For details, see http://esgf.llnl.gov                                  *
 #*   Please also read this link                                             *
-#*    http://esgf.org/LICENSE                                               *
+#*    http://esgf.llnl.gov/LICENSE                                          *
 #*                                                                          *
 #*   * Redistribution and use in source and binary forms, with or           *
 #*   without modification, are permitted provided that the following        *
@@ -218,7 +218,7 @@ printf "
   EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
   E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
   E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
-  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
 \033[0m
 "
     printf "Checking that you have root privs on $(hostname)... "
@@ -5548,7 +5548,7 @@ esgf_node_info() {
      |---------|                                                 |---------|
       ---------                                                   ---------
 
-     (Visit http://esgf.org , http://github.com/ESGF/esgf.github.io/wiki for more information)
+     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
 
                                                                                     
 \033[01;31m
@@ -6063,7 +6063,7 @@ main() {
                 -v | --version)
                     echo "Version: $script_version"
                     echo "Release: $script_release"
-                    echo "Earth Systems Grid Federation (http://esgf.org)"
+                    echo "Earth Systems Grid Federation (http://esgf.llnl.gov)"
                     echo "ESGF Node Installation Script"
                     echo ""
                     exit 0

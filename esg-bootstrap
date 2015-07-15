@@ -138,7 +138,7 @@ DEBUG=0
 while [ -n "$1" ]; do 
     case $1 in 
 	-v | --version)
-	    echo "Earth Systems Grid Federation (http://esgf.org)"
+	    echo "Earth Systems Grid Federation (http://esgf.llnl.gov)"
 	    echo "ESGF Node Bootstrap Script"
 	    echo ""
 	    exit 0

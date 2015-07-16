@@ -3014,7 +3014,7 @@ fetch_esgf_certificates() {
         [ -e ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ] && rm ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz
     fi
 
-    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /esg/config/myproxy/myproxy-server.config 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
     if [ -n "${simpleCA_cert}" ]; then
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
@@ -3067,8 +3067,8 @@ fetch_esgf_truststore() {
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
-    if [ -e /etc/myproxy-server.config ] ; then
-        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    if [ -e /esg/config/myproxy/myproxy-server.config ] ; then
+        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /esg/config/myproxy/myproxy-server.config 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
     fi
@@ -6700,7 +6700,7 @@ main() {
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_openssl
+#        [ $((sel & INSTALL_BIT)) != 0 ] && setup_openssl
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_java
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress

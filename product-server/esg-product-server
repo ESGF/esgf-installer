@@ -102,7 +102,8 @@ get_esgf_dist_mirror "fastest"
 [ -z "$(grep 'script_version=' ${esg_node_file} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 # Setting esg_dist_url with previously gathered information
-esg_dist_url=${esgf_dist_mirror}$( ((devel == 1)) && echo "/devel" || echo "")
+esg_dist_url_root=${esgf_dist_mirror}/dist
+esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
 thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl
 las_config_file_template_url=${esg_dist_url}/esgf-product-server/las_tds.xml.tmpl

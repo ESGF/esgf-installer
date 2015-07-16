@@ -21,9 +21,9 @@
 #*   All rights reserved. This file is part of the:                         *
 #*   Earth System Grid Fed (ESGF) Node Software Stack, Version 1.0          *
 #*                                                                          *
-#*   For details, see http://esgf.org/                                      *
+#*   For details, see http://esgf.llnl.gov                                  *
 #*   Please also read this link                                             *
-#*    http://esgf.org/LICENSE                                               *
+#*    http://esgf.llnl.gov/LICENSE                                          *
 #*                                                                          *
 #*   * Redistribution and use in source and binary forms, with or           *
 #*   without modification, are permitted provided that the following        *
@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC1.3-devel"
+script_version="v2.0-RC1.7-devel"
 script_maj_version="2.0"
 script_release="Centaur"
 envfile="/etc/esg.env"
@@ -218,7 +218,7 @@ printf "
   EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
   E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
   E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
-  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
 \033[0m
 "
     printf "Checking that you have root privs on $(hostname)... "
@@ -1072,6 +1072,8 @@ setup_cdat() {
 
     wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
     ${cdat_home}/bin/python ez_setup.py
+    ${cdat_home}/bin/easy_install pip
+    
 
     popd >& /dev/null
     echo
@@ -1974,7 +1976,7 @@ setup_root_app() {
     tar xzf ${root_app_dist_url##*/} -C ${tomcat_install_dir}/webapps
     [ $? != 0 ] && echo " ERROR: Could not extract $(readlink -f ${root_app_dist_url##*/})" && popd && checked_done 1
 
-    [ -e ${tomcat_install_dir}/webapps/esgf-node-manager ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.nm,}
+#    [ -e ${tomcat_install_dir}/webapps/esgf-node-manager ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.nm,}
     [ -e ${tomcat_install_dir}/webapps/esgf-web-fe ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.fe,}
 
     chown -R ${tomcat_user} $(readlink -f ${tomcat_install_dir}/webapps/ROOT)
@@ -4283,7 +4285,7 @@ _is_managed_db() {
 }
 
 set_redirect() {
-    local web_app_tld=${1:-esgf-node-manager}
+#    local web_app_tld=${1:-esgf-node-manager}
     local default_answer=${2:-"Y"}
     local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
     [ ! -e ${index_file} ] && echo "Sorry, No \"ROOT\" application found!" && return 1
@@ -4376,9 +4378,9 @@ uninstall() {
         (source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem)
         (source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem)
         (source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation)
-        (source ${scripts_dir}/esg-desktop >& /dev/null && clean_desktop_webapp_subsystem)
-        (source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
-        (source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
+#        (source ${scripts_dir}/esg-desktop >& /dev/null && clean_desktop_webapp_subsystem)
+#        (source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
+#        (source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
 
         doit="N"
         if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -4535,7 +4537,7 @@ check_for_group_intersection_with() {
     local visited=()
     for target_node in ${target_nodes[@]}; do
         grep -q ${target_node} <<<${visited[@]} && debug_print "  already visited ${target_node}" && continue
-        local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
+#        local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
         if [ -z "${target_groups}" ]; then
             printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n"
             ((ret=ret+100))
@@ -4855,7 +4857,7 @@ config_db() {
 
         if (( (mysel & DATA_BIT) != 0 )); then
             echo "Setting up database for DATA node type"
-            source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
+#            source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
             ((mysel-=DATA_BIT))
         elif (( (mysel & IDP_BIT) != 0 )); then
             echo "Setting up database for IDP node type"
@@ -5096,8 +5098,8 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
-    local dashboard_pid=$(pgrep dashboard)
-    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+#    local dashboard_pid=$(pgrep dashboard)
+#    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
     echo "---------------------------"
     echo
     return 0
@@ -5117,7 +5119,7 @@ run_startup_hooks() {
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
-    (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
+#    (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
     (source ${scripts_dir}/esg-search >& /dev/null && search_startup_hook)
 
     #------------------------------------------
@@ -5157,7 +5159,7 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+#    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
@@ -5175,7 +5177,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+#    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
 
@@ -5546,7 +5548,7 @@ esgf_node_info() {
      |---------|                                                 |---------|
       ---------                                                   ---------
 
-     (Visit http://esgf.org , http://github.com/ESGF/esgf.github.io/wiki for more information)
+     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
 
                                                                                     
 \033[01;31m
@@ -5825,12 +5827,12 @@ done_remark() {
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/"
-    echo "http://${esgf_host}/esgf-node-manager"
-    echo "http://${esgf_host}/esgf-dashboard"
+#    echo "http://${esgf_host}/esgf-node-manager"
+#    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
-        echo "http://${esgf_host}/esgf-desktop"
+ #       echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/esgf-web-fe"
@@ -5917,7 +5919,7 @@ main() {
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Setting esg_dist_url with previously gathered information
-        esg_dist_url_root=${esgf_dist_mirror}
+        esg_dist_url_root="${esgf_dist_mirror}/dist"
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
 
@@ -6061,7 +6063,7 @@ main() {
                 -v | --version)
                     echo "Version: $script_version"
                     echo "Release: $script_release"
-                    echo "Earth Systems Grid Federation (http://esgf.org)"
+                    echo "Earth Systems Grid Federation (http://esgf.llnl.gov)"
                     echo "ESGF Node Installation Script"
                     echo ""
                     exit 0
@@ -6684,9 +6686,9 @@ main() {
 	echo '[esgf]' > /etc/yum.repos.d/esgf.repo
 	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
 	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
-		echo "baseurl=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
 	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then 
-		echo "baseurl=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
 	fi
 	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
     	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
@@ -6712,8 +6714,8 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
+#        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+ #       [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
         # Compute Languages and Tools Setup
         #[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_languages
@@ -6731,7 +6733,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
-        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
+#        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
 
     #---filters--------
     #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
@@ -6804,6 +6806,8 @@ main() {
         sanity_check_web_xmls
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
+# Hard coded to remove node manager
+	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
         start ${sel}
         install_bash_completion_file
         done_remark
@@ -6818,6 +6822,8 @@ main() {
     esg_node_finally() {
         debug_print "(esg_datanode: cleaning up etc...)"
         chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
+
+
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid
     #rm $OUTPUT_PIPE

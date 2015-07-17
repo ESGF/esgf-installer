@@ -3675,7 +3675,7 @@ make_fresh_keystore() {
     #-------------
     echo
     echo -n "checking that key pair is congruent... "
-    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5) | uniq))
+    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5|cut -d '=' -f2 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5|cut -d '=' -f2) | uniq))
     (( 1 == ${#pair_hash[@]} )) && printf "$([OK]) ${pair_hash}\n\n" || (printf "$([FAIL])\n\n" && return 1)
 
 

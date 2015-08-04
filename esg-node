@@ -1709,6 +1709,7 @@ setup_apache_frontend() {
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_conf_dir} <answers;
 		/etc/init.d/esgf-httpd start
+	fi
 }	
 #helper function to poke at tomcat ports...
 tomcat_port_check() {

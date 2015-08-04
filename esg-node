@@ -1691,7 +1691,7 @@ EOF
 
 setup_apache_frontend() {
 	olddir=`pwd`;
-	localworkdir=${ESGF_INSTALL_WORKDIR:-"/esg/workbench/esg"};
+	localworkdir=${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg"};
 	cd $localworkdir;
 	mkdir apache_frontend;
 	cd apache_frontend;
@@ -1707,7 +1707,7 @@ setup_apache_frontend() {
 		echo -e "$hn\ny" >answers
 		/etc/init.d/httpd stop >/dev/null;
 		chkconfig --levels 2345 httpd off
-		bash copyfiles.sh ${tomcat_conf_dir} <answers;
+		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
 		/etc/init.d/esgf-httpd start
 	fi
 }	

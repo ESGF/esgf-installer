@@ -65,7 +65,7 @@ COG_INSTALL_DIR=$INSTALLPATH/cog_install
 
 # use Python virtual environment
 cd $INSTALLPATH
-virtualenv venv
+virtualenv -p /opt/esgf/real/bin/python venv
 source venv/bin/activate
 echo 'Using Python:' `which python`
 

@@ -9,7 +9,7 @@
 #uses: wget
 devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
-script_maj_version="1.7"
+script_maj_version="2.0"
 esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
 id_check() {
@@ -33,10 +33,23 @@ get_latest() {
     checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file} 
     ret=$?
     ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
-    ((ret == 0)) && echo "Updated ESGF Node install script from ESGF distribution site"
+    ((ret == 0)) && echo "Updated ESGF Node install script ($fetch_file) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 ${fetch_file}
     [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}
+
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-functions
+    ((ret == 1)) && echo "ESGF Node install script (esg-functions) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node install script (esg-functions) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-functions
+
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-init
+    ((ret == 1)) && echo "ESGF Node install script (esg-init) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node install script (esg-init) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-init
+
     popd >& /dev/null
 }
 
@@ -125,7 +138,7 @@ DEBUG=0
 while [ -n "$1" ]; do 
     case $1 in 
 	-v | --version)
-	    echo "Earth Systems Grid Federation (http://esgf.org)"
+	    echo "Earth Systems Grid Federation (http://esgf.llnl.gov)"
 	    echo "ESGF Node Bootstrap Script"
 	    echo ""
 	    exit 0

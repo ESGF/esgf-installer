@@ -21,9 +21,9 @@
 #*   All rights reserved. This file is part of the:                         *
 #*   Earth System Grid Fed (ESGF) Node Software Stack, Version 1.0          *
 #*                                                                          *
-#*   For details, see http://esgf.org/                                      *
+#*   For details, see http://esgf.llnl.gov                                  *
 #*   Please also read this link                                             *
-#*    http://esgf.org/LICENSE                                               *
+#*    http://esgf.llnl.gov/LICENSE                                          *
 #*                                                                          *
 #*   * Redistribution and use in source and binary forms, with or           *
 #*   without modification, are permitted provided that the following        *
@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v1.8.1-devel"
-script_maj_version="1.8"
-script_release="Griffin"
+script_version="v2.0-RC1.9-devel"
+script_maj_version="2.0"
+script_release="Centaur"
 envfile="/etc/esg.env"
 
 #--------------
@@ -218,7 +218,7 @@ printf "
   EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
   E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
   E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
-  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
 \033[0m
 "
     printf "Checking that you have root privs on $(hostname)... "
@@ -226,17 +226,27 @@ printf "
     [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
     [OK]
 
+
     #----------------------------------------
     echo "Checking requisites... "
 
-    verbose_print -n "Checking for gcc or g++... "
-    gcc --version >& /dev/null || gg++ --version >& /dev/null && verbose_print "$([OK])" || (verbose_print "$([FAIL])" && return 1)
+    # checking for OS, architecture, distribution and version
 
-    verbose_print -n "Checking for gmake... "
-    gmake --version >& /dev/null && verbose_print "$([OK])" || (verbose_print "$([FAIL])" && return 1)
+    OS=`uname -s`
+    MACH=`uname -m`
 
-    verbose_print -n "Checking for X11 libs... "
-    Xorg -version >& /dev/null && verbose_print "$([OK])" || verbose_print "$(echo_fail "[WARNING] X11 is needed for publisher UI...")"
+    if [ "${OS}" = "Linux" ] && [ "${MACH}" = "x86_64" ] && [ -f /etc/redhat-release ] ; then
+    	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
+    fi
+
+    if [ "${MAJREV}" = 6 ] ; then
+    	DIST=`cat /etc/redhat-release | sed s/release.*//`
+        DISTRIB=`echo $DIST`
+    fi
+
+    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
+
+
     #----------------------------------------
 
     echo
@@ -1010,8 +1020,6 @@ write_cmake_install_log() {
 setup_cdat() {
     echo -n "Checking for *UV* CDAT (Python+CDMS) ${cdat_version} "
 
-    #-----------CDAT -> UVCDAT Migration------------------
-    #rewrite cdat_home to new uvcdat location
     #-----------------------------------------------------
     cdat_home=$(perl -pe 's/(?<!uv)cdat/uvcdat/' <<<${cdat_home})
     CDAT_HOME=${cdat_home}
@@ -1042,68 +1050,37 @@ setup_cdat() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
 
-    local cdat_git_protocol="git://"
+# TODO - remove once this is relocated to use yum
+    uvcdat_rpm_url=http://pcmdi9.llnl.gov/rpms/UVCDAT-2.2.0-Linux.rpm
+
+    uvcdat_rpm_file=${uvcdat_rpm_url##*/}
+
     #---------
     #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
-    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
+#    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
-    if [ ! -d ${workdir}/uvcdat ]; then
-        echo "Fetching the cdat project from GIT Repo..."
-        ((DEBUG)) && echo "${cdat_repo}"
-        git clone ${cdat_repo} uvcdat
-        if [ ! -d ${workdir}/uvcdat/.git ]; then
-            cdat_git_protocol="http://"
-            echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
-            ((DEBUG)) && echo "${cdat_repo_https}"
-            git clone ${cdat_repo_https} uvcdat
-            [ ! -d ${workdir}/uvcdat/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
-        fi
-    fi
-    cd uvcdat >& /dev/null
-    git pull
-    git checkout ${cdat_tag}
-    [ $? != 0 ] && echo " WARNING: Problem with checking out cdat revision [${cdat_version}] from repository :-("
 
-    #NOTE:
-    #cdms configuration with --enable-esg flag looks for pg_config in
-    #$postgress_install_dir/bin.  This location is created and added
-    #to the executable PATH by the 'setup_postgress' function.
 
-    local workdir_build=${workdir}/uvcdat_build
-    (
-        #unset LD_LIBRARY_PATH
-        unset PYTHONPATH
-	#unset CFLAGS
-	#unset LDFLAGS
+# TODO - this all should be handled by yum
+    yum -y install uvcdat
 
-        [ -d ${workdir_build} ] && rm -rf ${workdir_build}
-        mkdir -p ${workdir_build}
-        pushd ${workdir_build}
-        #(zlib patch value has to be 3,5,7 - default is 3)
-        local zlib_value=$(pkg-config --modversion zlib | sed -n -re 's/(.)*/\1/p' | sed -n -re '/(3|5|7)/p') ; [[ ! ${zlib_value} ]] && zlib_value=3
-        local command="cmake -DCMAKE_INSTALL_PREFIX=${cdat_home} -DZLIB_PATCH_SRC=${zlib_value} -DCDAT_BUILD_ESGF=ON -DUVCDAT_ANONYMOUS_LOG=False -DCDAT_USE_SYSTEM_ZLIB=ON -DGIT_PROTOCOL=${cdat_git_protocol} ${workdir}/uvcdat"
+    popd >& /dev/null
 
-        for ((i=0;i<3;i++)); do
-            ((DEBUG)) && echo "command [${i}] = ${command}"
-            ${command}
-            [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (${i})" && popd && checked_done 1
-        done
-
-        make -j ${num_cpus}
-        [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code (4)" && popd && checked_done 1
-
-        popd >& /dev/null
-    )
-    [ $? != 0 ] && echo " ERROR: Could not compile (make) cdat code" && popd && checked_done 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
+
+    wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
+    ${cdat_home}/bin/python ez_setup.py
+    ${cdat_home}/bin/easy_install pip
+    
 
     popd >& /dev/null
     echo
 
     #NOTE: order is important in next three calls...
-    _housekeeping_cdat_to_uvcdat
+#    _housekeeping_cdat_to_uvcdat
+
     write_cdat_env
 
     #----------------
@@ -1126,7 +1103,7 @@ setup_cdat() {
     [[ ${cdat_home} ]] && [ -d ${cdat_home} ] && [  $(ls libz.* 2> /dev/null | wc -l) -gt 0 ] && tar cvzf ${cdat_home}/Externals/lib/libz.tgz ${cdat_home}/Externals/lib/libz.* && rm ${cdat_home}/Externals/lib/libz.*
     #----------------
 
-    write_cdat_install_log
+#    write_cdat_install_log
     checked_done 0
 }
 
@@ -1268,11 +1245,11 @@ setup_esgcet() {
         ((DEBUG)) && echo "${publisher_repo}"
         git clone ${publisher_repo} esg-publisher
         if [ ! -d ${workdir}/esg-publisher/.git ]; then
-            publisher_git_protocol="http://"
-            echo "Apparently was not able to fetch from GIT repo using git protocol... trying http protocol..."
+            publisher_git_protocol="https://"
+            echo "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol..."
             ((DEBUG)) && echo "${publisher_repo_https}"
             git clone ${publisher_repo_https} esg-publisher
-            [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor http protocol)" && checked_done 1
+            [ ! -d ${workdir}/esg-publisher/.git ] && echo "Could not fetch from cdat's repo (with git nor https protocol)" && checked_done 1
         fi
     fi
     cd esg-publisher >& /dev/null
@@ -1712,6 +1689,28 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+setup_apache_frontend() {
+	olddir=`pwd`;
+	localworkdir=${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg"};
+	cd $localworkdir;
+	mkdir apache_frontend;
+	cd apache_frontend;
+	git clone ${apache_frontend_repo}
+	if [ $? -eq 0 ]; then
+		cd apache-frontend;
+		if [ $devel -eq 1 ]; then
+			git checkout devel;
+			else
+			git checkout master;
+		fi
+		hn=${esgf_host:-`hostname -f`}
+		echo -e "$hn\ny" >answers
+		/etc/init.d/httpd stop >/dev/null;
+		chkconfig --levels 2345 httpd off
+		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
+		/etc/init.d/esgf-httpd start
+	fi
+}	
 #helper function to poke at tomcat ports...
 tomcat_port_check() {
     #---
@@ -2462,6 +2461,9 @@ setup_tds() {
         checked_get ${thredds_content_dir}/thredds/${thredds_config_file} ${thredds_config_file_template_url} $((force_install))
     fi
 
+    get_property mail_admin_address
+    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/${thredds_config_file}
+
     #restart tomcat to put modifications in effect.
     stop_tomcat
     start_tomcat
@@ -2492,11 +2494,11 @@ setup_tds() {
         [ $? != 0 ] && echo "WARNING: Could not change owner successfully - this will lead to unability to create new catalogs via the publisher!"
     fi
 
-    echo "curl http://${esgf_host_ip}/thredds"
+    echo "curl http://localhost/thredds"
     local wait_time=5
     local ret=1
     while [[ $wait_time > 0 ]]; do
-        curl http://${esgf_host_ip}/thredds >& /dev/null
+        curl http://localhost/thredds >& /dev/null
         ret=$?
         [ $ret == 0 ] && break
         sleep 1
@@ -3034,7 +3036,7 @@ fetch_esgf_certificates() {
         [ -e ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ] && rm ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz
     fi
 
-    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /esg/config/myproxy/myproxy-server.config 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
     if [ -n "${simpleCA_cert}" ]; then
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
@@ -3087,8 +3089,8 @@ fetch_esgf_truststore() {
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
-    if [ -e /etc/myproxy-server.config ] ; then
-        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /etc/myproxy-server.config 2> /dev/null | awk '{print $2}') 2> /dev/null)
+    if [ -e /esg/config/myproxy/myproxy-server.config ] ; then
+        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /esg/config/myproxy/myproxy-server.config 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
     fi
@@ -3695,7 +3697,7 @@ make_fresh_keystore() {
     #-------------
     echo
     echo -n "checking that key pair is congruent... "
-    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5) | uniq))
+    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5|cut -d '=' -f2 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5|cut -d '=' -f2) | uniq))
     (( 1 == ${#pair_hash[@]} )) && printf "$([OK]) ${pair_hash}\n\n" || (printf "$([FAIL])\n\n" && return 1)
 
 
@@ -5118,8 +5120,8 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
-    local dashboard_pid=$(pgrep dashboard)
-    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+#    local dashboard_pid=$(pgrep dashboard)
+#    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
     echo "---------------------------"
     echo
     return 0
@@ -5139,7 +5141,7 @@ run_startup_hooks() {
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
     (source ${scripts_dir}/esg-security >& /dev/null && security_startup_hook)
     (source ${scripts_dir}/esg-web-fe >& /dev/null && web_fe_startup_hook)
-    (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
+#    (source ${scripts_dir}/esg-desktop >& /dev/null && desktop_startup_hook)
     (source ${scripts_dir}/esg-search >& /dev/null && search_startup_hook)
 
     #------------------------------------------
@@ -5185,6 +5187,10 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
+	/etc/init.d/esgf-httpd status
+	if [ $? != 0 ]; then
+		/etc/init.d/esgf-httpd start
+	fi
     show_svc_list
 
     set_sel "${sel}"
@@ -5197,7 +5203,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+#    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
 
@@ -5568,7 +5574,7 @@ esgf_node_info() {
      |---------|                                                 |---------|
       ---------                                                   ---------
 
-     (Visit http://esgf.org , http://github.com/ESGF/esgf.github.io/wiki for more information)
+     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
 
                                                                                     
 \033[01;31m
@@ -5847,12 +5853,12 @@ done_remark() {
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/"
-    echo "http://${esgf_host}/esgf-node-manager"
-    echo "http://${esgf_host}/esgf-dashboard"
+#    echo "http://${esgf_host}/esgf-node-manager"
+#    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
-        echo "http://${esgf_host}/esgf-desktop"
+ #       echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/esgf-web-fe"
@@ -5939,14 +5945,13 @@ main() {
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Setting esg_dist_url with previously gathered information
-        esg_dist_url_root=${esgf_dist_mirror}
+        esg_dist_url_root="${esgf_dist_mirror}/dist"
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
-        # Downloading esg-init file
-	checked_get ${esg_init_file} ${esg_dist_url}/esgf-installer/${script_maj_version}/${esg_init_file##*/} $((force_install))
 
-        # Sourcing esg-init file	
-	[ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
+        # Sourcing esg-init file        
+        [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"		     
+
 
 	# Downloading esg-installarg file
 	if [ ! -e ${esg_installarg_file} ] || ((force_install)) || [ ${esg_installarg_file} -ot $0 ]; then
@@ -6084,7 +6089,7 @@ main() {
                 -v | --version)
                     echo "Version: $script_version"
                     echo "Release: $script_release"
-                    echo "Earth Systems Grid Federation (http://esgf.org)"
+                    echo "Earth Systems Grid Federation (http://esgf.llnl.gov)"
                     echo "ESGF Node Installation Script"
                     echo ""
                     exit 0
@@ -6331,6 +6336,9 @@ main() {
                     (( $# != 0 ))  && echo "error: \"--fetch-esgf-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     id | grep root >& /dev/null
                     [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
+                    get_esgf_dist_mirror "interactive"
+                    esg_dist_url_root=${esgf_dist_mirror}
+                    esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
                     fetch_esgf_certificates
                     exit $?
                     ;;
@@ -6652,7 +6660,7 @@ main() {
     the value is used for subsequent launches so the type value does not have to be
     always specified.  A simple \"esg-node start\" will launch with the last type used
     that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-    (more documentation available at http://esgf.org/esgf-installer/)\n\n"
+    (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n"
 
             exit 1
         fi
@@ -6660,18 +6668,8 @@ main() {
         esgf_node_info
 
         local doit="n"
-        echo "     ----------------------------------------------------------"
-        echo "     Please make sure you have installed ALL the prerequisites"
-        echo "     Please read the prerequisite list here:"
-        echo "     https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#what-do-i-need-on-my-system-before-i-install"
-        echo "     Before continuing make sure they are ALL present on this system!!!!!!"
-        if [ $((sel & DATA_BIT)) != 0 ]; then
-            echo "         If you intend on publishing from this node please check the publishing network prerequisites"
-            echo "         http://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ#prerequisites"
-        fi
-        echo "     ----------------------------------------------------------"
-        echo
-        (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
+        echo 
+	 (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
 
         read -e -p "Are you ready to begin the installation? [Y/n] " doit
         if [ "${doit}" = "N" ] || [ "${doit}" = "n" ] || [ "${doit}" = "no" ]; then
@@ -6689,20 +6687,56 @@ main() {
         initial_setup_questionnaire
 
     #---------------------------------------
+    #Installation of prerequisites.
+    #---------------------------------------
+
+    	echo
+    	echo "*******************************"
+	echo "Installing prerequisites"
+	echo "*******************************"
+	echo
+
+	yum -y install epel-release
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl '*ExtUtils*'
+
+    #---------------------------------------
+    #Setup ESGF RPM repository
+    #---------------------------------------
+
+        echo
+	echo "*******************************"
+	echo "Setting up ESGF RPM repository"
+	echo "*******************************"
+	echo
+
+	echo '[esgf]' > /etc/yum.repos.d/esgf.repo
+	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
+	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
+		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then 
+		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+	fi
+	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
+    	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
+    	echo 'priority=90' >> /etc/yum.repos.d/esgf.repo
+    	echo 'gpgcheck=0' >> /etc/yum.repos.d/esgf.repo
+    	echo 'proxy=_none_' >> /etc/yum.repos.d/esgf.repo 
+	
+    #---------------------------------------
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_openssl
+#        [ $((sel & INSTALL_BIT)) != 0 ] && setup_openssl
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_java
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_ant
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_postgress
         [ $((sel & TEST_BIT))    != 0 ] && test_postgress
-        [ $((sel & INSTALL_BIT)) != 0 ] && setup_cmake
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_cdat
         [ $((sel & TEST_BIT))    != 0 ] && test_cdat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_apache_frontend
         [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
@@ -6726,7 +6760,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
-        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
+#        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
 
     #---filters--------
     #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
@@ -6742,13 +6776,13 @@ main() {
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------
-    #(gridftp)
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
-
     #(myproxy - [depends on security backend in place])
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
+
+    #(gridftp)
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
 
     #---------------------------------------
@@ -6799,6 +6833,8 @@ main() {
         sanity_check_web_xmls
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
+# Hard coded to remove node manager
+	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
         start ${sel}
         install_bash_completion_file
         done_remark
@@ -6813,6 +6849,8 @@ main() {
     esg_node_finally() {
         debug_print "(esg_datanode: cleaning up etc...)"
         chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
+
+
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid
     #rm $OUTPUT_PIPE

@@ -23,10 +23,12 @@ init() {
     # Internal esgf node code versions 
     #--------------------------------
 
-    cdat_version=${cdat_version:-"1.5.0"}
-    cdat_tag="1.5.1.esgf-v1.7.0"
-    esgcet_version=${esgcet_version:-"2.12.3"}
-    publisher_tag=${publisher_tag:-"v2.12.3"}
+
+    cdat_version=${cdat_version:-"2.2.0"}
+#    cdat_tag="1.5.1.esgf-v1.7.0"
+
+    esgcet_version=${esgcet_version:-"2.13.1"}
+    publisher_tag=${publisher_tag:-"v2.13.1"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.7.1"}
@@ -43,7 +45,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.4.7"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.9.4"}
+    esg_search_version=${esg_search_version:-"3.9.9"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.6.0"}
@@ -59,11 +61,11 @@ init() {
     # External programs' versions
     #--------------------------------
     openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
-    java_version=${java_version:-"1.7.0_21"} ; java_min_version=${java_min_version:-"1.7.0_21"}
+    java_version=${java_version:-"1.8.0_45"} ; java_min_version=${java_min_version:-"1.8.0_45"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.7"} ; postgress_min_version=${postgress_min_version:-"8.4.7"}
-    tomcat_version=${tomcat_version:-"7.0.59"} ; tomcat_min_version=${tomcat_min_version:-"7.0.53"}
-    cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
+    tomcat_version=${tomcat_version:-"7.0.63"} ; tomcat_min_version=${tomcat_min_version:-"7.0.63"}
+    #cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
 
     # Since ESGF 1.8, LAS version is declared in esg-product-server
@@ -85,7 +87,7 @@ init() {
     unset pub_secret #only here to hold the tertiary ephemeral value from file, unset asap
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
-    cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
+    #cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
     cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
@@ -113,7 +115,7 @@ init() {
     export PGUSER=${postgress_user}
     export PGHOST=${postgress_host}
     export PGPORT=${postgress_port}
-    export CMAKE_HOME=${cmake_install_dir}
+    #export CMAKE_HOME=${cmake_install_dir}
     export CDAT_HOME=${cdat_home}
     export JAVA_HOME=${java_install_dir}
     export JAVA_OPTS=${java_opts}
@@ -179,15 +181,16 @@ init() {
     postgress_dist_url=${esg_dist_url}/thirdparty/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=http://ftp9.us.postgresql.org/pub/mirrors/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
     #postgress_dist_url=${esg_dist_url}/postgresql/source/v${postgress_version}/postgresql-${postgress_version}.tar.gz
-    cmake_workdir=${workdir}/cmake
-    cmake_repo=http://www.cmake.org/cmake.git
-    cdat_repo=git://github.com/UV-CDAT/uvcdat.git
-    cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
+    #cmake_workdir=${workdir}/cmake
+    #cmake_repo=http://www.cmake.org/cmake.git
+    #cdat_repo=git://github.com/UV-CDAT/uvcdat.git
+    #cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
     publisher_repo=git://github.com/ESGF/esg-publisher.git
+    apache_frontend_repo=git://github.com/ESGF/apache-frontend.git
     publisher_repo_https=https://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test
-    tomcat_dist_url=http://www.us.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+    tomcat_dist_url=http://archive.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
     tomcat_pid_file=/var/run/tomcat-jsvc.pid
     utils_url=${esg_dist_url}/utils
     thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war

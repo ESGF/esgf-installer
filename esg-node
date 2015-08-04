@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC1.7-devel"
+script_version="v2.0-RC1.9-devel"
 script_maj_version="2.0"
 script_release="Centaur"
 envfile="/etc/esg.env"
@@ -1689,6 +1689,27 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+setup_apache_frontend() {
+	olddir=`pwd`;
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"/esg/workbench/esg"};
+	cd $localworkdir;
+	mkdir apache_frontend;
+	cd apache_frontend;
+	git clone ${apache_frontend_repo}
+	if [ $? -eq 0 ]; then
+		cd apache-frontend;
+		if [ $devel -eq 1 ]; then
+			git checkout devel;
+			else
+			git checkout master;
+		fi
+		hn=${esgf_host:-`hostname -f`}
+		echo -e "$hn\ny" >answers
+		/etc/init.d/httpd stop >/dev/null;
+		chkconfig --levels 2345 httpd off
+		bash copyfiles.sh ${tomcat_conf_dir} <answers;
+		/etc/init.d/esgf-httpd start
+}	
 #helper function to poke at tomcat ports...
 tomcat_port_check() {
     #---
@@ -5159,12 +5180,16 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-#    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
+	/etc/init.d/esgf-httpd status
+	if [ $? != 0 ]; then
+		/etc/init.d/esgf-httpd start
+	fi
     show_svc_list
 
     set_sel "${sel}"
@@ -6710,6 +6735,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_apache_frontend
         [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds

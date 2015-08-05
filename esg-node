@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC1.7-devel"
+script_version="v2.0-RC1.9-devel"
 script_maj_version="2.0"
 script_release="Centaur"
 envfile="/etc/esg.env"
@@ -1689,6 +1689,28 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+setup_apache_frontend() {
+	olddir=`pwd`;
+	localworkdir=${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg"};
+	cd $localworkdir;
+	mkdir apache_frontend;
+	cd apache_frontend;
+	git clone ${apache_frontend_repo}
+	if [ $? -eq 0 ]; then
+		cd apache-frontend;
+		if [ $devel -eq 1 ]; then
+			git checkout devel;
+			else
+			git checkout master;
+		fi
+		hn=${esgf_host:-`hostname -f`}
+		echo -e "$hn\ny" >answers
+		/etc/init.d/httpd stop >/dev/null;
+		chkconfig --levels 2345 httpd off
+		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
+		/etc/init.d/esgf-httpd start
+	fi
+}	
 #helper function to poke at tomcat ports...
 tomcat_port_check() {
     #---
@@ -1976,7 +1998,7 @@ setup_root_app() {
     tar xzf ${root_app_dist_url##*/} -C ${tomcat_install_dir}/webapps
     [ $? != 0 ] && echo " ERROR: Could not extract $(readlink -f ${root_app_dist_url##*/})" && popd && checked_done 1
 
-#    [ -e ${tomcat_install_dir}/webapps/esgf-node-manager ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.nm,}
+    [ -e ${tomcat_install_dir}/webapps/esgf-node-manager ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.nm,}
     [ -e ${tomcat_install_dir}/webapps/esgf-web-fe ] && cp ${tomcat_install_dir}/webapps/ROOT/index.html{.fe,}
 
     chown -R ${tomcat_user} $(readlink -f ${tomcat_install_dir}/webapps/ROOT)
@@ -3675,7 +3697,7 @@ make_fresh_keystore() {
     #-------------
     echo
     echo -n "checking that key pair is congruent... "
-    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5) | uniq))
+    local pair_hash=($((openssl x509 -noout -modulus -in ${certfiles[0]} | openssl md5|cut -d '=' -f2 ; openssl rsa -noout -modulus -in ${private_key} | openssl md5|cut -d '=' -f2) | uniq))
     (( 1 == ${#pair_hash[@]} )) && printf "$([OK]) ${pair_hash}\n\n" || (printf "$([FAIL])\n\n" && return 1)
 
 
@@ -4285,7 +4307,7 @@ _is_managed_db() {
 }
 
 set_redirect() {
-#    local web_app_tld=${1:-esgf-node-manager}
+    local web_app_tld=${1:-esgf-node-manager}
     local default_answer=${2:-"Y"}
     local index_file=${tomcat_install_dir}/webapps/ROOT/index.html
     [ ! -e ${index_file} ] && echo "Sorry, No \"ROOT\" application found!" && return 1
@@ -4378,9 +4400,9 @@ uninstall() {
         (source ${scripts_dir}/esg-orp >& /dev/null && clean_orp_webapp_subsystem)
         (source ${scripts_dir}/esg-search >& /dev/null && clean_search_subsystem)
         (source ${scripts_dir}/esg-security >& /dev/null && clean_security_database_subsystem_installation)
-#        (source ${scripts_dir}/esg-desktop >& /dev/null && clean_desktop_webapp_subsystem)
-#        (source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
-#        (source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
+        (source ${scripts_dir}/esg-desktop >& /dev/null && clean_desktop_webapp_subsystem)
+        (source ${scripts_dir}/esg-dashboard >& /dev/null && clean_dashboard_webapp_subsystem && clean_dashboard_database_subsystem_installation)
+        (source ${scripts_dir}/esg-node-manager >& /dev/null && clean_node_manager_webapp_subsystem && clean_node_manager_database_subsystem_installation)
 
         doit="N"
         if [ -e ${tomcat_install_dir}/webapps/thredds ]; then
@@ -4537,7 +4559,7 @@ check_for_group_intersection_with() {
     local visited=()
     for target_node in ${target_nodes[@]}; do
         grep -q ${target_node} <<<${visited[@]} && debug_print "  already visited ${target_node}" && continue
-#        local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
+        local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
         if [ -z "${target_groups}" ]; then
             printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n"
             ((ret=ret+100))
@@ -4857,7 +4879,7 @@ config_db() {
 
         if (( (mysel & DATA_BIT) != 0 )); then
             echo "Setting up database for DATA node type"
-#            source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
+            source ${scripts_dir}/esg-node-manager >& /dev/null && configure_postgress ${sel}
             ((mysel-=DATA_BIT))
         elif (( (mysel & IDP_BIT) != 0 )); then
             echo "Setting up database for IDP node type"
@@ -5159,12 +5181,16 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-#    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
+	/etc/init.d/esgf-httpd status
+	if [ $? != 0 ]; then
+		/etc/init.d/esgf-httpd start
+	fi
     show_svc_list
 
     set_sel "${sel}"
@@ -6671,7 +6697,7 @@ main() {
 	echo
 
 	yum -y install epel-release
-        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel '*ExtUtils*'
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl '*ExtUtils*'
 
     #---------------------------------------
     #Setup ESGF RPM repository
@@ -6710,12 +6736,13 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_esgcet ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_esgcet
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_tomcat ${upgrade_mode}
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_apache_frontend
         [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
-#        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
- #       [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
         # Compute Languages and Tools Setup
         #[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_languages

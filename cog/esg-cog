@@ -7,7 +7,7 @@ ESGF_ENVFILE=/etc/esg.env
 if [ -e "$ESGF_ENVFILE" ]; then
   source $ESGF_ENVFILE
 fi
-
+LD_LIBRARY_PATH=/opt/esgf/python/lib:$LD_LIBRARY_PATH
 # ESGF_INSTALL_PREFIX
 ESGF_INSTALL_PREFIX=${ESGF_INSTALL_PREFIX:-"/usr/local"}
 
@@ -29,8 +29,8 @@ VERSION=v2.12.0
 COG_TAG=$VERSION
 
 # must start from bare-bone Python 2.7.9 installation that contains only setup_tools, pip and virtualenv
-#PATH=/opt/esgf/python/bin:$PATH
-PATH=/usr/bin:$PATH
+#PATH=/usr/bin:$PATH
+PATH=/opt/esgf/python/bin:$PATH
 
 #=== ESGF INSTALLATION LOGIC - DO NOT CHANGE =========
 
@@ -65,7 +65,7 @@ COG_INSTALL_DIR=$INSTALLPATH/cog_install
 
 # use Python virtual environment
 cd $INSTALLPATH
-virtualenv venv
+virtualenv -p /opt/esgf/python/bin/python2.7 venv
 source venv/bin/activate
 echo 'Using Python:' `which python`
 

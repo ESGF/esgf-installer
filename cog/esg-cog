@@ -7,7 +7,7 @@ ESGF_ENVFILE=/etc/esg.env
 if [ -e "$ESGF_ENVFILE" ]; then
   source $ESGF_ENVFILE
 fi
-
+LD_LIBRARY_PATH=/opt/esgf/python/lib:$LD_LIBRARY_PATH
 # ESGF_INSTALL_PREFIX
 ESGF_INSTALL_PREFIX=${ESGF_INSTALL_PREFIX:-"/usr/local"}
 

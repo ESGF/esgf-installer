@@ -1691,7 +1691,7 @@ EOF
 
 setup_apache_frontend() {
 	olddir=`pwd`;
-	localworkdir=${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg"};
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
 	cd $localworkdir;
 	mkdir apache_frontend;
 	cd apache_frontend;

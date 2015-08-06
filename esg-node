@@ -6841,6 +6841,7 @@ main() {
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 # Hard coded to remove node manager
 	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
+	chmod a+r /esg/config/esgf_idp*.xml;
         start ${sel}
         install_bash_completion_file
         done_remark

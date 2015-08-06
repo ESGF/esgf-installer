@@ -109,17 +109,27 @@ esg-purge-base () {
 
     rm -rf /esg
     rm -f /etc/esg.env
-    rm -rf /usr/local/esgf-dashboard-ip
-    # The glob may fail here with no targets, thus || true
+    rm -rf /usr/local/cog
+
+    # The globs may fail here with no targets, thus || true
+    rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
 }
 
 esg-purge-cdat () {
+    yum remove cdat
     rm -rf /usr/local/cdat
 }
 
 esg-purge-globus () {
+    yum remove globus* myproxy*
+    rm -f /etc/globus-host-ssl.conf
+    rm -f /etc/globus-user-ssl.conf
+    rm -f /etc/grid-security.conf
+    rm -rf /etc/globus*
     rm -rf /etc/grid-security
+    rm -rf /etc/gridftp*
+    rm -rf /etc/myproxy*
     rm -rf $HOME/.globus
     rm -rf /root/.globus
     rm -rf /usr/local/globus

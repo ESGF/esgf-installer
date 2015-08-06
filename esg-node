@@ -1705,10 +1705,12 @@ setup_apache_frontend() {
 		fi
 		hn=${esgf_host:-`hostname -f`}
 		echo -e "$hn\ny" >answers
-		/etc/init.d/httpd stop >/dev/null;
+		#/etc/init.d/httpd stop >/dev/null;
+		/usr/sbin/apachectl stop > /dev/null;
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
-		/etc/init.d/esgf-httpd start
+		#/etc/init.d/esgf-httpd start
+		/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
 }	
 #helper function to poke at tomcat ports...
@@ -5187,9 +5189,12 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-	/etc/init.d/esgf-httpd status
+    #/etc/init.d/esgf-httpd status
+	/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		/etc/init.d/esgf-httpd start
+		#/etc/init.d/esgf-httpd start
+		echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
+		/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
     show_svc_list
 
@@ -5206,6 +5211,7 @@ stop() {
 #    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
+    /usr/sbin/apachectl stop
 
     run_shutdown_hooks
     show_svc_list

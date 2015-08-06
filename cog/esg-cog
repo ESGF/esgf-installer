@@ -31,6 +31,9 @@ COG_TAG=$VERSION
 # must start from bare-bone Python 2.7.9 installation that contains only setup_tools, pip and virtualenv
 PATH=/opt/esgf/python/bin:$PATH
 
+# location to unpack the Python eggs - must be writable by $USER
+PYTHON_EGG_CACHE_DIR=/var/www/.python-eggs
+
 #=== ESGF INSTALLATION LOGIC - DO NOT CHANGE =========
 
 # Sourcing ESGF Functions
@@ -101,6 +104,10 @@ rm -rf venv/lib/python2.7/site-packages/cog*
 chown -R $USER:$GROUP $COG_CONFIG_DIR
 chown -R $USER:$GROUP $COG_INSTALL_DIR
 
+# create location where Python eggs can be unpacked by user 'apache'
+mkdir -p $PYTHON_EGG_CACHE_DIR
+chown -R $USER:$GROUP $PYTHON_EGG_CACHE_DIR
+
 # Copying installation script in installation directory
 rm -f $INSTALLPATH/$0
 cp $0 $INSTALLPATH
@@ -110,5 +117,5 @@ echo "export COG_DIR=$INSTALLPATH" >> $ESGF_ENVFILE
 echo "export COG_INSTALL_DIR=$INSTALLPATH/cog_install" >> $ESGF_ENVFILE
 echo "export COG_CONFIG_DIR=$INSTALLPATH/cog_config" >> $ESGF_ENVFILE
 echo "export SSL_CERT_DIR=/etc/grid-security/certificates" >> $ESGF_ENVFILE
+echo "export PYTHON_EGG_CACHE=$PYTHON_EGG_CACHE_DIR" >> $ESGF_ENVFILE
 dedup $ESGF_ENVFILE && source $ESGF_ENVFILE
-

@@ -23,13 +23,12 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v2.12.0
+VERSION=v2.13.0
 
 # COG_TAG=master
 COG_TAG=$VERSION
 
 # must start from bare-bone Python 2.7.9 installation that contains only setup_tools, pip and virtualenv
-#PATH=/usr/bin:$PATH
 PATH=/opt/esgf/python/bin:$PATH
 
 #=== ESGF INSTALLATION LOGIC - DO NOT CHANGE =========
@@ -79,6 +78,7 @@ fi
 cd $COG_INSTALL_DIR
 git pull
 git checkout $COG_TAG
+git pull
 
 # install CoG dependencies within Python virtual environment
 cd $COG_INSTALL_DIR
@@ -107,5 +107,8 @@ cp $0 $INSTALLPATH
 
 # Write CoG environment variable
 echo "export COG_DIR=$INSTALLPATH" >> $ESGF_ENVFILE
+echo "export COG_INSTALL_DIR=$INSTALLPATH/cog_install" >> $ESGF_ENVFILE
+echo "export COG_CONFIG_DIR=$INSTALLPATH/cog_config" >> $ESGF_ENVFILE
+echo "export SSL_CERT_DIR=/etc/grid-security/certificates" >> $ESGF_ENVFILE
 dedup $ESGF_ENVFILE && source $ESGF_ENVFILE
 

@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v2.13.0
+VERSION=v2.13
 
 # COG_TAG=master
 COG_TAG=$VERSION
@@ -81,6 +81,10 @@ fi
 cd $COG_INSTALL_DIR
 git pull
 git checkout $COG_TAG
+if [ $? != 0 ]; then
+  echo "Unknown COG_TAG: $COG_TAG"
+  exit 1
+fi
 git pull
 
 # install CoG dependencies within Python virtual environment

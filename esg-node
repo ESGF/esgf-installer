@@ -786,7 +786,7 @@ setup_postgress() {
 		while [ 1 ]; do
         echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-		if [ $? -eq 0 ]; then popd && checked_done 0 break; fi
+		if [ $? -eq 0 ]; then popd && checked_done 0; break; fi
 		done
     fi
     #stop_postgress && return 1 #See trap in 'main'... that is who calls this.

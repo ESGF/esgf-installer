@@ -783,9 +783,11 @@ setup_postgress() {
     if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
         echo "${postgress_user} exists!! :-)";
     else
+		while [ 1 ]; do
         echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-        [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
+		if [ $? -eq 0 ]; then popd && checked_done 0 break; fi
+		done
     fi
     #stop_postgress && return 1 #See trap in 'main'... that is who calls this.
 

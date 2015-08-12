@@ -1715,6 +1715,7 @@ setup_sensible_confs() {
 		chmod a+r $esg_config_dir/$fn;
 	
 	done
+	chmod a+r $esg_config_dir/esgf_idp_static.xml
 
 }
 setup_apache_frontend() {

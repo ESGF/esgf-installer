@@ -1691,6 +1691,32 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+setup_sensible_confs() {
+	tmpservername='placeholder.fqdn';
+	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
+	servername=$esgf_host;
+	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
+	sconffiles="esgf_ats.xml esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
+	for i in `echo $sconffiles`; do
+		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
+		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;
+		if [ "$cksum" != "$ccksum" ]; then
+			echo "Checksum did not tally for file $i. Giving up.";
+			continue;
+		fi
+		if echo $i|grep tmpl >/dev/null; then
+			fn=`echo $i|sed "s/\(.*\).tmpl/\1/"`;
+		    curl -s --insecure ${esg_dist_url_root}/confs/$i|sed "s/\(.*\)$quotedtmpservername\(.*\)/\1$quotedservername\2/" >$esg_config_dir/$fn;
+		else
+			fn=$i;
+		    curl -s --insecure ${esg_dist_url_root}/confs/$i >$esg_config_dir/$fn;
+		fi
+		chown apache:apache $esg_config_dir/$fn;
+		chmod a+r $esg_config_dir/$fn;
+	
+	done
+
+}
 setup_apache_frontend() {
 	olddir=`pwd`;
 	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
@@ -1707,12 +1733,12 @@ setup_apache_frontend() {
 		fi
 		hn=${esgf_host:-`hostname -f`}
 		echo -e "$hn\ny" >answers
-		#/etc/init.d/httpd stop >/dev/null;
-		/usr/sbin/apachectl stop > /dev/null;
+		/etc/init.d/httpd stop >/dev/null;
+		#/usr/sbin/apachectl stop > /dev/null;
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
-		#/etc/init.d/esgf-httpd start
-		/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
+		/etc/init.d/esgf-httpd start
+		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
 }	
 #helper function to poke at tomcat ports...
@@ -5116,12 +5142,12 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-    #/etc/init.d/esgf-httpd status
-	/usr/sbin/apachectl status
+    /etc/init.d/esgf-httpd status
+	#/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		#/etc/init.d/esgf-httpd start
-		echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
-		/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
+		/etc/init.d/esgf-httpd start
+		#echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
+		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
     show_svc_list
 
@@ -5138,7 +5164,8 @@ stop() {
 #    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
-    /usr/sbin/apachectl stop
+    #/usr/sbin/apachectl stop
+	/etc/init.d/esgf-httpd stop
 
     run_shutdown_hooks
     show_svc_list
@@ -6768,7 +6795,8 @@ main() {
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 # Hard coded to remove node manager
 	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
-	chmod a+r /esg/config/esgf_idp*.xml;
+	#fix for sensible values for conf files post node-manager removal
+	setup_sensible_confs
         start ${sel}
         install_bash_completion_file
         done_remark

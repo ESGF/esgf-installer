@@ -2978,14 +2978,14 @@ _relocate_n_relink_globus_certicates_conf() {
 fetch_esgf_certificates() {
     echo
     echo "Fetching Freshest ESG Federation Certificates..."
-    _relocate_n_relink_globus_certicates_conf
-    #globus_global_certs_dir=/etc/grid-security/certificates
+    #_relocate_n_relink_globus_certicates_conf
+    globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    debug_print "curl -s -L --insecure ${esg_dist_url_root}/dist/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    curl -s -L --insecure ${esg_dist_url_root}/dist/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then

@@ -3010,26 +3010,6 @@ fetch_esgf_certificates() {
                 [OK]) || [FAIL]
         #zoiks
         #write_as_property node_dn $(extract_openssl_dn ${simpleCA_cert}) && echo "property updated $([OK])"
-
-        printf "
-    ----------------------------------------------------------------------
-    If you have not done so, please attach the files:
-    ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
-    ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy
-    ${globus_global_certs_dir%/*}/hostcert.pem
-
-    to an email addressed to esgf-ca@lists.llnl.gov
-
-    Include your name, organization, contact information and the context in which you are
-    joining the ESGF federation.
-
-    If you are able, please cryptographically sign the email with your
-    personal signature, preferably endorsed by your organization
-
-    Thank you :-)
-    ----------------------------------------------------------------------\n
-"
-
     fi
 
     chmod 755 ${globus_global_certs_dir}

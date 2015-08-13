@@ -5874,16 +5874,17 @@ main() {
         # Initializing
         debug_print "esg-node initializing..."
         ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
+	
+	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
+        [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Determining ESGF distribution mirror
         if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
-       	 get_esgf_dist_mirror "interactive"
+       	 get_esgf_dist_mirror "interactive" $devel
         else
-       	 get_esgf_dist_mirror "fastest"
+       	 get_esgf_dist_mirror "fastest" $devel
         fi
 
-	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
-        [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Setting esg_dist_url with previously gathered information
         esg_dist_url_root="${esgf_dist_mirror}/dist"

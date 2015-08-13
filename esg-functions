@@ -1342,7 +1342,7 @@ get_esgf_dist_mirror() {
 	done
 	if [ $outofsync -eq 1 ]; then
 		#lets use the master
-        esgf_dist_mirror="distrib-coffee.ipsl.jussie.fr/pub/esgf";
+        esgf_dist_mirror="distrib-coffee.ipsl.jussieu.fr/pub/esgf";
 		return;
 	fi
  

@@ -5072,6 +5072,7 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo_strong "Running startup hooks..."
+	setup_sensible_confs
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
@@ -5925,6 +5926,11 @@ main() {
                     fi
                     (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
                     ;;
+				--fix-perms | fixperms)
+					debug_print "fixing permissions"
+					setup_sensible_confs
+					exit 0;
+					;;
                 --verify | --test)
                     debug_print "VERIFY SERVICES"
                     (( (sel & TEST_BIT) == 0 )) && ((sel+=TEST_BIT))
@@ -6782,7 +6788,8 @@ main() {
         start ${sel}
         install_bash_completion_file
         done_remark
-        echo "${script_version}" |tee ${esg_root_dir}/version
+        echo "${script_version}" > ${esg_root_dir}/version
+        echo "${script_version}"
         echo
         write_as_property version ${script_version}
         write_as_property release ${script_release}

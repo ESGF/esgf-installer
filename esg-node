@@ -253,129 +253,6 @@ printf "
     return 0
 }
 
-#####
-# Openssl (support library - needed to support Curl and Globus tools, etc...)
-#####
-setup_openssl() {
-
-    echo -n "Checking for openssl between ${openssl_min_version} and ${openssl_max_version} "
-    check_version_with openssl "openssl version | perl -p -e 's/OpenSSL ?(\d+\.\d+\.\d+[a-z]?).*/\1/'" ${openssl_min_version} ${openssl_max_version}
-    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
-
-    echo
-    echo "*******************************"
-    echo "Setting up Openssl ${openssl_version}"
-    echo "*******************************"
-    echo
-
-    local default="Y"
-    ((force_install)) && default="N"
-    local dosetup
-    if [ -x ${openssl_install_dir}/bin/openssl ]; then
-        echo "Detected an existing OpenSSL installation..."
-        read -e -p "Do you want to continue with OpenSSL installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        [ -z ${dosetup} ] && dosetup=${default}
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-            echo "Skipping OpenSSL installation and setup - will assume OpenSSL is setup properly"
-            return 0
-        fi
-        echo
-    fi
-
-    mkdir -p ${openssl_workdir}
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw ${openssl_workdir}
-    pushd ${openssl_workdir} >& /dev/null
-
-    local openssl_dist_file=${openssl_dist_url##*/}
-    #strip off .tar.gz at the end
-    local openssl_dist_dir=$(echo ${openssl_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    #There is this pesky case of having a zero sized dist file... WTF!?
-    if [ -e ${openssl_dist_file} ]; then
-        ls -l ${openssl_dist_file}
-        local size=$(stat -c%s ${openssl_dist_file})
-        (( size == 0 )) && rm -v ${openssl_dist_file}
-    fi
-
-    #Check to see if we have postgres distribution directory
-    if [ ! -e ${openssl_dist_dir} ]; then
-        echo "Don't see OpenSSL distribution dir ${openssl_dist_dir}"
-        if [ ! -e ${openssl_dist_file} ]; then
-            echo "Don't see OpenSSL distribution file ${openssl_dist_file} either"
-            echo "Downloading OpenSSL from ${openssl_dist_url}"
-            wget -O ${openssl_dist_file} ${openssl_dist_url}
-            [ $? != 0 ] && echo " ERROR: Could not download OpenSSL:${openssl_dist_file}" && popd && checked_done 1
-            echo "unpacking ${openssl_dist_file}..."
-            tar xzf ${openssl_dist_file}
-            [ $? != 0 ] && echo " ERROR: Could not extract OpenSSL: ${openssl_dist_file}" && popd && checked_done 1
-        fi
-    fi
-
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it and go from there....
-    if [ -e ${openssl_dist_file} ] && [ ! -e ${openssl_dist_dir} ]; then
-        echo "unpacking ${openssl_dist_file}..."
-        tar xzf ${openssl_dist_file}
-    fi
-
-    pushd ${openssl_dist_dir}
-    ((force_install)) && (echo "Cleaning the source tree.. $(pwd) " && gmake clean && [OK] || [FAIL])
-    echo "./Configure --prefix=${openssl_install_dir} linux-generic${word_size}"
-    if ./Configure --prefix=${openssl_install_dir} shared linux-generic${word_size} \
-        && gmake all \
-        && gmake install
-    then
-        echo "Successfully Configured and Built OpenSSL in: ${openssl_install_dir}"
-        #this is the "test"
-        ${openssl_install_dir}/bin/openssl version
-        [ $? != 0 ] &&  echo" ERROR: Could NOT successfully build OpenSSL!!" && popd >& /dev/null && checked_done 1
-    else
-        echo" ERROR: Could NOT successfully build OpenSSL!!"
-        popd >& /dev/null
-        checked_done 1
-    fi
-
-    popd >& /dev/null
-    popd >& /dev/null
-
-    write_openssl_env
-    write_openssl_install_log
-    checked_done 0
-}
-
-write_openssl_env() {
-    ((show_summary_latch++))
-    echo "export OPENSSL_HOME=${openssl_install_dir}" >> ${envfile}
-    echo "export OPENSSL_INCLUDES=-I${OPENSSL_HOME}/include" >> ${envfile}
-    echo "export OPENSSL_CFLAGS=-fPIC" >> ${envfile}
-    echo "export OPENSSL_LDFLAGS=-L${OPENSSL_HOME}/lib" >> ${envfile}
-    echo "export OPENSSL_LIBS=\"-lssl -lcrypto\"" >> ${envfile}
-    prefix_to_path PATH ${openssl_install_dir}/bin >> ${envfile}
-    prefix_to_path LD_LIBRARY_PATH ${openssl_install_dir}/lib >> ${envfile}
-    dedup ${envfile} && source ${envfile}
-    return 0
-}
-
-remove_openssl_env() {
-    remove_env OPENSSL_HOME
-    remove_env OPENSSL_INCLUDES
-    remove_env OPENSSL_CFLAGS
-    remove_env OPENSSL_LDFLAGS
-    remove_env OPENSSL_LIBS
-    return 0
-}
-
-write_openssl_install_log() {
-    echo "$(date ${date_format}) openssl=${openssl_version} ${openssl_install_dir}" >> ${install_manifest}
-    dedup ${install_manifest}
-    return 0
-}
-
-remove_openssl_install_log() {
-    remove_install_log_entry openssl
-    return $?
-}
 
 #####
 # Java
@@ -2993,7 +2870,7 @@ fetch_esgf_certificates() {
         [ -e ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ] && rm ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz
     fi
 
-    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /esg/config/myproxy/myproxy-server.config 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
+    local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert "${esg_root_dir}/config/myproxy/myproxy-server.config" 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
     if [ -n "${simpleCA_cert}" ]; then
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
@@ -3026,8 +2903,8 @@ fetch_esgf_truststore() {
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 
     # For the IDP it is good to trust yourself ;-)...
-    if [ -e /esg/config/myproxy/myproxy-server.config ] ; then
-        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert /esg/config/myproxy/myproxy-server.config 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
+    if [ -e "${esg_root_dir}/config/myproxy/myproxy-server.config" ] ; then
+        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert "${esg_root_dir}/config/myproxy/myproxy-server.config" 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
         _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
     fi
@@ -4404,17 +4281,6 @@ uninstall() {
 
         # TODO Placeholder for compute tools and languages uninstall
 
-        doit="N"
-        if [ -e $openssl_install_dir ]; then
-            read -e -p "remove openssl? ($openssl_install_dir) [y/N]: " doit
-            if [ "doit" = "Y" ] || [ "$doit" = "y" ]; then
-                echo "removing $openssl_install_dir"
-                rm -rf ${openssl_install_dir}
-                [ $? != 0 ] && echo "ERROR: Unable to remove ${openssl_install_dir}"
-                remove_openssl_env
-                remove_openssl_install_log
-            fi
-        fi
         stop
     fi
     exit 0

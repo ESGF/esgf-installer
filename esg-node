@@ -2984,8 +2984,8 @@ fetch_esgf_certificates() {
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure ${esg_dist_url_root}/dist/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url_root}/dist/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -6277,8 +6277,8 @@ main() {
                     (( $# != 0 ))  && echo "error: \"--fetch-esgf-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     id | grep root >& /dev/null
                     [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
-                    get_esgf_dist_mirror "interactive"
-                    esg_dist_url_root=${esgf_dist_mirror}
+                    #get_esgf_dist_mirror "interactive"
+                    #esg_dist_url_root=${esgf_dist_mirror}
                     esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
                     fetch_esgf_certificates
                     exit $?

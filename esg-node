@@ -1692,7 +1692,7 @@ EOF
 }
 
 setup_sensible_confs() {
-	source /etc/esg.env
+	#source /etc/esg.env
 	tmpservername='placeholder.fqdn';
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
 	servername=$esgf_host;

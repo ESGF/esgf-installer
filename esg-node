@@ -783,9 +783,11 @@ setup_postgress() {
     if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
         echo "${postgress_user} exists!! :-)";
     else
+		while [ 1 ]; do
         echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
         PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
-        [ $? != 0 ] && echo " ERROR: Unable to create user on the system" && popd && checked_done 1
+		if [ $? -eq 0 ]; then popd && checked_done 0; break; fi
+		done
     fi
     #stop_postgress && return 1 #See trap in 'main'... that is who calls this.
 
@@ -1689,6 +1691,34 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+setup_sensible_confs() {
+	#source /etc/esg.env
+	tmpservername='placeholder.fqdn';
+	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
+	servername=$esgf_host;
+	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
+	sconffiles="esgf_ats.xml esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
+	for i in `echo $sconffiles`; do
+		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
+		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;
+		if [ "$cksum" != "$ccksum" ]; then
+			echo "Checksum did not tally for file $i. Giving up.";
+			continue;
+		fi
+		if echo $i|grep tmpl >/dev/null; then
+			fn=`echo $i|sed "s/\(.*\).tmpl/\1/"`;
+		    curl -s --insecure ${esg_dist_url_root}/confs/$i|sed "s/\(.*\)$quotedtmpservername\(.*\)/\1$quotedservername\2/" >$esg_config_dir/$fn;
+		else
+			fn=$i;
+		    curl -s --insecure ${esg_dist_url_root}/confs/$i >$esg_config_dir/$fn;
+		fi
+		chown apache:apache $esg_config_dir/$fn;
+		chmod a+r $esg_config_dir/$fn;
+	
+	done
+	chmod a+r $esg_config_dir/esgf_idp_static.xml
+
+}
 setup_apache_frontend() {
 	olddir=`pwd`;
 	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
@@ -1705,12 +1735,12 @@ setup_apache_frontend() {
 		fi
 		hn=${esgf_host:-`hostname -f`}
 		echo -e "$hn\ny" >answers
-		#/etc/init.d/httpd stop >/dev/null;
-		/usr/sbin/apachectl stop > /dev/null;
+		/etc/init.d/httpd stop >/dev/null;
+		#/usr/sbin/apachectl stop > /dev/null;
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
-		#/etc/init.d/esgf-httpd start
-		/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
+		/etc/init.d/esgf-httpd start
+		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
 }	
 #helper function to poke at tomcat ports...
@@ -2081,83 +2111,8 @@ select_idp_peer() {
 
     #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
     #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
-
-    local choice
-    while [ 1 ]; do
-        unset choice
-        printf "Please select the IDP Peer for this node: \n"
-        printf "\t-------------------------------------------\n"
-        printf "\t*[1] : ESGF-PCMDI-9 -> pcmdi9.llnl.gov\n"
-        printf "\t [2] : ESGF-PCMDI   -> pcmdi3.llnl.gov\n"
-        printf "\t [3] : ESGF-JPL     -> esg-gateway.jpl.nasa.gov\n"
-        printf "\t [4] : ESGF-ORNL    -> esg2-gw.ccs.ornl.gov\n"
-        printf "\t [5] : ESGF-BADC    -> cmip-gw.badc.rl.ac.uk\n"
-        printf "\t [6] : ESGF-DKRZ    -> ipcc-ar5.dkrz.de\n"
-        printf "\t [7] : ESGF-PNNL    -> esg1-gw.pnl.gov\n"
-        printf "\t [8] : ESGF-ANL     -> dev.esg.anl.gov\n"
-        printf "\t-------------------------------------------\n"
-        printf "\t [C] : (Manual Entry)\n"
-        printf "\t-------------------------------------------\n"
-        read -e -p "select [1] > " choice
-
-        [ -z "${choice}" ] && choice=1 #default
-        case ${choice} in
-            9)  esgf_idp_peer_name="ESGF-PCMDI-TEST3"
-                esgf_idp_peer="esgf-node3.llnl.gov"
-                ;;
-            8)  esgf_idp_peer_name="ESGF-ANL"
-                esgf_idp_peer="dev.esg.anl.gov"
-                ;;
-            7)  esgf_idp_peer_name="ESGF-PNNL"
-                esgf_idp_peer="esg1-gw.pnl.gov"
-                ;;
-            6)  esgf_idp_peer_name="ESGF-DKRZ"
-                esgf_idp_peer="ipcc-ar5.dkrz.de"
-                ;;
-            5)  esgf_idp_peer_name="ESGF-BADC"
-                esgf_idp_peer="cmip-gw.badc.rl.ac.uk"
-                ;;
-            4)  esgf_idp_peer_name="ESG-ORNL"
-                esgf_idp_peer="esg2-gw.ccs.ornl.gov"
-                ;;
-            3)  esgf_idp_peer_name="ESGF-JPL"
-                esgf_idp_peer="esg-gateway.jpl.nasa.gov"
-                ;;
-            2)  esgf_idp_peer_name="ESGF-PCMDI"
-                esgf_idp_peer="pcmdi3.llnl.gov/esgcet"
-                custom_myproxy_port=2119 #hack till we open the right port
-                ;;
-            1)  esgf_idp_peer_name="ESGF-PCMDI-9"
-                esgf_idp_peer="pcmdi9.llnl.gov"
-                ;;
-            c | C)
-                local input
-                get_property esgf_idp_peer_name "ESGF-PCMDI-9"
-                get_property esgf_idp_peer "pcmdi9.llnl.gov"
-                read -e -p "Please enter the IDP Peer's name [${esgf_idp_peer_name}] " input
-                [ -n "${input}" ] && esgf_idp_peer_name=$(echo ${input} | tr 'a-z' 'A-Z')
-                unset input
-                read -e -p "Please enter the IDP Peer's hostname [${esgf_idp_peer}] " input
-                [ -n "${input}" ] && esgf_idp_peer=$(echo ${input} | tr 'A-Z' 'a-z' | sed -n 's{\(.*://\)*\(.*\){\2{p')
-                unset input
-                choice="(Manual Entry)"
-                ;;
-            *)  echo "Invalid selection [${choice}]"
-        esac
-        echo
-        echo "You have selected: ${choice}"
-        echo "${esgf_idp_peer_name} -> ${esgf_idp_peer}"
-        echo
-        local is_correct
-        read -e -p "Is this correct? [Y/n] " is_correct
-        is_correct=$(echo ${is_correct} | tr 'A-Z' 'a-z')
-        if [ "${is_correct}" = "n" ]; then
-            continue
-        else
-            break
-        fi
-    done
-
+	esgf_idp_peer_name=`echo $esgf_host| tr '[a-z]' '[A-Z]'`;
+	esgf_idp_peer=$esgf_host;
     myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
 
     echo
@@ -3024,8 +2979,8 @@ _relocate_n_relink_globus_certicates_conf() {
 fetch_esgf_certificates() {
     echo
     echo "Fetching Freshest ESG Federation Certificates..."
-    _relocate_n_relink_globus_certicates_conf
-    #globus_global_certs_dir=/etc/grid-security/certificates
+    #_relocate_n_relink_globus_certicates_conf
+    globus_global_certs_dir=/etc/grid-security/certificates
     [ -d ${globus_global_certs_dir} ] && tar czf ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ${globus_global_certs_dir} >& /dev/null && rm ${globus_global_certs_dir}/*
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
@@ -3056,26 +3011,6 @@ fetch_esgf_certificates() {
                 [OK]) || [FAIL]
         #zoiks
         #write_as_property node_dn $(extract_openssl_dn ${simpleCA_cert}) && echo "property updated $([OK])"
-
-        printf "
-    ----------------------------------------------------------------------
-    If you have not done so, please attach the files:
-    ${globus_global_certs_dir}/${simpleCA_cert_hash}.0
-    ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy
-    ${globus_global_certs_dir%/*}/hostcert.pem
-
-    to an email addressed to esgf-ca@lists.llnl.gov
-
-    Include your name, organization, contact information and the context in which you are
-    joining the ESGF federation.
-
-    If you are able, please cryptographically sign the email with your
-    personal signature, preferably endorsed by your organization
-
-    Thank you :-)
-    ----------------------------------------------------------------------\n
-"
-
     fi
 
     chmod 755 ${globus_global_certs_dir}
@@ -5138,6 +5073,7 @@ show_svc_list() {
 #In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)
 run_startup_hooks() {
     echo_strong "Running startup hooks..."
+	setup_sensible_confs
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
@@ -5189,12 +5125,12 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-    #/etc/init.d/esgf-httpd status
-	/usr/sbin/apachectl status
+    /etc/init.d/esgf-httpd status
+	#/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		#/etc/init.d/esgf-httpd start
-		echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
-		/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
+		/etc/init.d/esgf-httpd start
+		#echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
+		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
     show_svc_list
 
@@ -5211,7 +5147,8 @@ stop() {
 #    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
-    /usr/sbin/apachectl stop
+    #/usr/sbin/apachectl stop
+	/etc/init.d/esgf-httpd stop
 
     run_shutdown_hooks
     show_svc_list
@@ -5939,16 +5876,17 @@ main() {
         # Initializing
         debug_print "esg-node initializing..."
         ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
+	
+	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
+        [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Determining ESGF distribution mirror
         if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
-       	 get_esgf_dist_mirror "interactive"
+       	 get_esgf_dist_mirror "interactive" $devel
         else
-       	 get_esgf_dist_mirror "fastest"
+       	 get_esgf_dist_mirror "fastest" $devel
         fi
 
-	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
-        [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
 	# Setting esg_dist_url with previously gathered information
         esg_dist_url_root="${esgf_dist_mirror}/dist"
@@ -5989,6 +5927,11 @@ main() {
                     fi
                     (( (sel & INSTALL_BIT) == 0 )) && ((sel+=INSTALL_BIT))
                     ;;
+				--fix-perms | fixperms)
+					debug_print "fixing permissions"
+					setup_sensible_confs
+					exit 0;
+					;;
                 --verify | --test)
                     debug_print "VERIFY SERVICES"
                     (( (sel & TEST_BIT) == 0 )) && ((sel+=TEST_BIT))
@@ -6342,8 +6285,8 @@ main() {
                     (( $# != 0 ))  && echo "error: \"--fetch-esgf-certs\" must be the last argument in the arg sequence, Sorry :-(" && exit 1
                     id | grep root >& /dev/null
                     [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
-                    get_esgf_dist_mirror "interactive"
-                    esg_dist_url_root=${esgf_dist_mirror}
+                    #get_esgf_dist_mirror "interactive"
+                    #esg_dist_url_root=${esgf_dist_mirror}
                     esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
                     fetch_esgf_certificates
                     exit $?
@@ -6841,11 +6784,13 @@ main() {
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
 # Hard coded to remove node manager
 	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
-	chmod a+r /esg/config/esgf_idp*.xml;
+	#fix for sensible values for conf files post node-manager removal
+	setup_sensible_confs
         start ${sel}
         install_bash_completion_file
         done_remark
-        echo "${script_version}" |tee ${esg_root_dir}/version
+        echo "${script_version}" > ${esg_root_dir}/version
+        echo "${script_version}"
         echo
         write_as_property version ${script_version}
         write_as_property release ${script_release}

@@ -258,7 +258,7 @@ setup_globus_services() {
         echo "Old globus version: $(/usr/bin/globus-version)"
     fi
 
-    read -p "Do you want to continue with the Globus installation and setup? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+    read -e -p "Do you want to continue with the Globus installation and setup? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
     [ -z "${dosetup}" ] && dosetup=$default_val
 
     if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -586,7 +586,7 @@ start_gridftp_usage_parsing() {
              if [[ "$new_cron" != "$current_cron" ]]; then
                 echo "Current crontab for user ($installer_user):"; echo "$current_cron"
                 echo "will be updated to:"; echo "$new_cron"
-                read -p "Is this ok ? [Y/n]" answ
+                read -e -p "Is this ok ? [Y/n]" answ
                 if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
                     echo "$current_cron" > $backup_cron
                     crontab -u $username <(echo "$new_cron" | awk '!x[$0]++')

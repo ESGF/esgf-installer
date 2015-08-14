@@ -784,8 +784,19 @@ setup_postgress() {
         echo "${postgress_user} exists!! :-)";
     else
 		while [ 1 ]; do
-        echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
-        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
+			while [ 1 ]; do
+				echo "Enter password for postgres user $postgress_user";
+				read -s p1;
+				echo "Re-enter password for postgres user $postgress_user";
+				read -s p2;
+				if [ "$p1" != "$p2" ]; then
+					echo "The passwords did not tally. Enter same password twice";
+					continue;
+					else
+					break;
+				fi
+			done
+		sudo -u $pg_sys_acct $postgress_install_dir/bin/psql -c "create user $postgress_user with password '$p1';"
 		if [ $? -eq 0 ]; then popd && checked_done 0; break; fi
 		done
     fi

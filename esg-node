@@ -796,7 +796,7 @@ setup_postgress() {
 					break;
 				fi
 			done
-		sudo -u $pg_sys_acct $postgress_install_dir/bin/psql -c "create user $postgress_user with password '$p1';"
+		sudo -u $pg_sys_acct $postgress_install_dir/bin/psql -c "create user $postgress_user with superuser password '$p1';"
 		if [ $? -eq 0 ]; then popd && checked_done 0; break; fi
 		done
     fi

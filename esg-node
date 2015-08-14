@@ -1936,7 +1936,7 @@ configure_tomcat() {
         else
             [ -z $(echo $dname | sed -n 's#.*CN=\([^,]*\),.*#\1#p') ] && dname="CN=${esgf_host:-$(hostname --fqdn)}, ${dname}"
             echo "Using keystore DN = ${dname}"
-            $java_install_dir/bin/keytool -genkey -dname "${dname}" -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password}
+            $java_install_dir/bin/keytool -genkey -dname "${dname}" -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password} -keypass ${store_password}
             [ $? != 0 ] && echo " ERROR*: keytool genkey command failed" && popd && checked_done 1
         fi
         unset use_dn

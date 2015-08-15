@@ -242,6 +242,10 @@ setup_globus_services() {
     echo "*******************************"
     echo
 
+	if [ -p /tmp/outputpipe ]; then
+		echo "go-ahead" >/tmp/outputpipe;
+	fi
+
     local dosetup
     local default_val="Y"
 

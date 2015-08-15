@@ -3313,7 +3313,7 @@ generate_ssl_key_and_csr() {
     fi
 
     echo "Generating 30 day temporary self-signed certificate... "
-    openssl x509 -req -days 30 -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
+    openssl x509 -req -days 30 -extensions v3_ca -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
     [ $? == 0 ] && [OK] || ([FAIL] && return 3)
     openssl x509 -noout -text -in ${public_cert_req%.*}.pem
 
@@ -3322,8 +3322,8 @@ generate_ssl_key_and_csr() {
     echo "In Directory: $(pwd)"
     echo "Generated private key: $(ls ${private_key})"
     echo "Generated certificate: $(ls ${public_cert_req})"
-    echo "Please submit the certificate request to your Certificate Authority: (esgf-ca@lists.llnl.gov)"
-    echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
+    echo "Please obtain and install appropriate certificates at the earliest. Execute esg-node --cert-helper for details.";
+    #echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
     echo "--------------------------------------------------------"
     echo
 }
@@ -3480,7 +3480,7 @@ install_keypair() {
 
     local certfiles=()
     local certfile_entry
-    echo "Please enter your Certificate Athority's certificate chain file(s): [if in doubt: http://pcmdi6.llnl.gov/cacert.pem] "
+    echo "Please enter your Certificate Athority's certificate chain file(s)"
     echo " [enter each cert file/url press return, press return with blank entry when done]"
     echo
     while [ 1 ]; do

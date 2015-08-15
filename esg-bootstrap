@@ -56,6 +56,12 @@ get_latest() {
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-bootstrap
 
+	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/setup-autoinstall
+    ((ret == 1)) && echo "ESGF Node bootstrap script (esg-bootstrap) already up-to-date"
+    ((ret == 0)) && echo "Updated Auto-install script (setup-autoinstall) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-bootstrap
+
     popd >& /dev/null
 }
 

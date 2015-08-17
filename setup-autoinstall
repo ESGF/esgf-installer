@@ -14,10 +14,11 @@ function ctrl_c(){
 	exit 0;
 }
 function get_double_entry(){
-	local l1 l2
+	local l1
+	local l2
 	while [ 1 ]; do
-		read -p "Enter $1: " l1;
-		read -p "Re-enter $1: " l2;
+		read -e -p "Enter $1: " l1
+		read -e -p "Re-enter $1: " l2
 		if [ "$l1" != "$l2" ]; then
 			continue;
 			else break;
@@ -27,14 +28,54 @@ function get_double_entry(){
 }
 function get_entry(){
 	local l1
-	read -p "Enter $1: " l1;
+	read -e -p "Enter $1: " l1;
 	echo "$l1";
 }
 
-vl=('fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer' 
+ip addr show|grep -w inet|grep -v 127.0.0.1|awk '{print $2}'|cut -d '/' -f1 >ips
+declare -A ipaddrs
+numl=`cat ips|wc -l`;
+ct=0
+if [ $numl -gt 1 ]; then
+	for (( num=1; num<=$numl; num++ )); do
+		ip=`cat ips|head -$num|tail -1`;
+		ipaddrs[$ct]=$ip;
+		ct=`expr $ct + 1`;
+	done
+	while [ 1 ]; do
+		echo "The following ip addresses were found configured on this machine. Specify which is to be used.";
+		for n in ${!ipaddrs[@]}; do
+			echo  "[$n] ${ipaddrs[$n]}";
+		done
+		read choice;
+		invalid=1;
+		for n in ${!ipaddrs[@]}; do
+			if [ "$n" = "$choice" ]; then
+				invalid=0;
+				break;
+			fi
+		done
+		if [ $invalid -eq 1 ]; then
+			echo "Invalid choice. Try again";
+			continue;
+		else
+			break;
+		fi
+	done
+
+vl=('ipchoice' 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'fix-12' 'fix-13' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername' 
-'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28') 
+'fix-11' 'fix-12' 'fix-13' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
+	va['ipchoice']=$choice;
+	numprompts=40;
+	else
+vl=('fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
+'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
+'fix-11' 'fix-12' 'fix-13' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
+	numprompts=39
+fi
 
 va['fix-1']='y'
 va['fqdn']=`get_entry 'fqdn'`
@@ -77,7 +118,6 @@ va['fix-25']=${va['globususername']}
 va['fix-26']=${va['globuspassword']}
 va['fix-27']='y'
 va['fix-28']='y'
-numprompts=39;
 echo -n >/tmp/answers;
 for val in ${vl[@]}; do
 	ans=${va[$val]}

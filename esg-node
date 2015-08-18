@@ -1860,6 +1860,63 @@ _check_keystore_password() {
     return 0
 }
 
+write_ca_ans_templ(){
+cat <<EOF
+
+
+
+placeholder.fqdn-CA
+
+
+
+EOF
+}
+write_reqhost.ans_templ(){
+cat <<EOF
+
+
+placeholder.fqdn
+
+
+EOF
+}
+print_templ() {
+cat <<EOF
+# ca-signing-policy.conf, see ca-signing-policy.doc for more information
+#
+# This is the configuration file describing the policy for what CAs are
+# allowed to sign whoses certificates.
+#
+# This file is parsed from start to finish with a given CA and subject
+# name.
+# subject names may include the following wildcard characters:
+#    *    Matches any number of characters.
+#    ?    Matches any single character.
+#
+# CA names must be specified (no wildcards). Names containing whitespaces
+# must be included in single quotes, e.g. 'Certification Authority'. 
+# Names must not contain new line symbols. 
+# The value of condition attribute is represented as a set of regular 
+# expressions. Each regular expression must be included in double quotes.  
+#
+# This policy file dictates the following policy:
+#   -The Globus CA can sign Globus certificates
+#
+# Format:
+#------------------------------------------------------------------------
+#  token type  | def.authority |                value              
+#--------------|---------------|-----------------------------------------
+# EACL entry #1|
+
+ access_id_CA      X509         '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+
+ pos_rights        globus        CA:sign
+
+ cond_subjects     globus       '"/O=ESGF/OU=ESGF.ORG/*"'
+
+# end of EACL
+EOF
+}
 configure_tomcat() {
     #----------------------------
     # TOMCAT Configuration...
@@ -1914,7 +1971,6 @@ configure_tomcat() {
         else
             echo "store_password = ******"
         fi
-
         #NOTE:
         #As Reference on Distingueshed Names (DNs)
         #http://download.oracle.com/javase/1.4.2/docs/tooldocs/windows/keytool.html
@@ -1944,34 +2000,46 @@ configure_tomcat() {
     else
         echo "Using existing keystore \"${keystore_file}\""
     fi
-
-    local answer
-    read -e -p "Do you wish to generate a Certificate Signing Request at this time? $([ $genreq = "Y" ] && echo "[Y/n]" || echo "[y/N]") " answer
-            [ -n "${answer}" ] && genreq=${answer}
-            unset answer
-            ((DEBUG)) && echo " -> [${genreq}]"
-            if [ "${genreq}" == "Y" ] || [ "${genreq}" == "y" ]; then
-                echo "Generating Certificate Signing Request..."
-                #-------------------------------------------------
-                #Previous way, when we were generating the request directly from the keystore via keytool
-                #${java_install_dir}/bin/keytool -certreq -alias ${keystore_alias} -keystore ${keystore_file} -file ${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr
-                #[ $? != 0 ] && echo " ERROR: keytool certreq command failed"
-                #-------------------------------------------------
-
-                #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
-                local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
-                sleep 1
-                generate_ssl_key_and_csr ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem ${dn}
-                if [ $? != 0 ]; then
-                    echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
-                else
-                    write_as_property node_dn ${dn}
-                fi
-
-                chown -R ${installer_uid}:${installer_gid} ${esgf_host:-$(hostname --fqdn)}-esg-node.csr
-            fi
-
-
+	hostname=$esgf_host;
+	mkdir -p /etc/tempcerts;
+	cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl
+	mkdir CA
+	write_ca_ans_templ >setupca.ans.tmpl
+	write_reqhost.ans_templ >reqhost.ans.tmpl
+	echo -e "y\ny" >setuphost.ans
+	cat setupca.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >setupca.ans
+	cat reqhost.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >reqhost.ans
+    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/CA.pl >CA.pl
+    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/openssl.cnf >openssl.cnf
+    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/myproxy-server.config >myproxy-server.config
+	perl CA.pl -newca <setupca.ans
+	openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
+	perl CA.pl -newreq-nodes <reqhost.ans
+	perl CA.pl -sign <setuphost.ans
+	openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
+	cp CA/private/cakey.pem cakey.pem
+	openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem
+	mv newkey.pem hostkey.pem
+	chmod 400 cakey.pem 
+	chmod 400 hostkey.pem
+	rm -f new*.pem
+	ESGF_OPENSSL=/usr/bin/openssl
+	cert=cacert.pem
+	tmpsubj='/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+	quotedtmpsubj=`echo "$tmpsubj" | sed 's/[./*?|]/\\\\&/g'`;
+	certsubj=`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;
+	quotedcertsubj=`echo "$certsubj" | sed 's/[./*?|]/\\\\&/g'`;
+	echo "quotedcertsubj=~$quotedcertsubj~";
+	localhash=`$ESGF_OPENSSL x509 -in $cert -noout -hash`;
+	tgtdir="globus_simple_ca_${localhash}_setup-0";
+	mkdir $tgtdir;
+	cp $cert $tgtdir/${localhash}.0;
+	print_templ >signing_policy_template;
+	sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;
+	tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
+	rm -rf $tgtdir;
+	rm -f signing_policy_template;
+	
     #Fetch/Copy truststore to $tomcat_conf_dir
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
@@ -1984,7 +2052,6 @@ configure_tomcat() {
                     [ $? != 0 ] && echo " ERROR: Could not fetch or copy ${fetch_file} for tomcat!!" && popd && checked_done 1
                 fi
             fi
-
 
     #NOTE: The truststore uses the java default password: "changeit"
 
@@ -2014,6 +2081,88 @@ configure_tomcat() {
             [ $? != 0 ] && " ERROR: Could not change group of esg's tomcat config dir to \"$tomcat_user\" user" && popd && checked_done 1
 
             popd #>& /dev/null
+}
+
+generate_esgf_csrs(){
+    [ -z "${esgf_host}" ] && get_property esgf_host
+	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
+	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
+	echo -e "You are strongly advised to obtain and install commercial CA issued certificates for the web container.\n\
+Do you still want to generate a CSR for the web container (N/y)?";
+	read response
+	if [ "$response" = "y" -o "$response" = "Y" ]; then
+		openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
+	fi
+	echo "Please mail the csr files for signing to Prashanth Dwarakanath <pchengi@nsc.liu.se> or Nicolas Carenton <ncarenton@ipsl.jussieu.fr>";
+	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
+	echo "If you also have web-container certs to install, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
+	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
+	
+
+}
+cert_howto(){
+cat <<EOF
+If you want to install a commercial CA issued certificate:
+esg-node --install-keypair <certificate file> <key file>
+When prompted for the cachain file, specify the chain file provided by your CA
+
+If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
+esg-node --generate-esgf-csr
+
+If you wish to install ESGF certificates:
+1. untar the entire contents of the tarball you received from Nicolas/Prashanth into /etc/esgfcerts
+2. esg-node --install-local-certs
+3. If you also have locally issued certificates for the webcontainer:
+esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem
+When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem
+EOF
+}
+install_local_certs(){
+	if [ "$1" = "firstrun" ]; then
+		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem" "myproxy-server.config")
+		certdir=/etc/tempcerts;
+	else
+		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem")
+		certdir=/etc/esgfcerts;
+	fi
+	cd $certdir;
+	missingfiles=0;
+	for fl in ${flist[@]}; do 
+		if [ ! -s $fl ]; then
+			missingfiles=1;
+			echo "File $fl is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
+		fi
+	done
+	cert=cacert.pem
+	localhash=`openssl x509 -in $cert -noout -hash`;
+	globuspack=globus_simple_ca_${localhash}_setup-0.tar.gz
+	if [ ! -s $globuspack ]; then
+			missingfiles=1;
+			echo "File $globuspack is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
+	fi
+	if [ $missingfiles -eq 1 ]; then
+		return;
+	fi
+	if [ "$1" = "firstrun" ]; then
+		cp myproxy-server.config /var/lib/myproxy/
+		cp myproxy-server.config /esg/config/myproxy/
+		cp openssl.cnf /etc/certs/
+		mkdir /var/lib/myproxy/newcerts
+		mkdir /etc/esgfcerts
+		rm -rf /var/lib/globus-connect-server/grid-security
+		cd /var/lib/globus-connect-server && ln -s /etc/grid-security grid-security
+	fi
+
+	cp cacert.pem /var/lib/myproxy/cacert.pem
+	cp cakey.pem /var/lib/myproxy/cakey.pem
+	if [ -s hostkey.pem -a -s hostcert.pem ]; then 
+		cp host*.pem /etc/grid-security/
+	fi
+	cp $globuspack /var/lib/myproxy/
+	cp $globuspack /etc/grid-security/certificates/
+	echo "Local installation of certs complete.";
 }
 
 setup_root_app() {
@@ -3322,7 +3471,7 @@ generate_ssl_key_and_csr() {
     echo "In Directory: $(pwd)"
     echo "Generated private key: $(ls ${private_key})"
     echo "Generated certificate: $(ls ${public_cert_req})"
-    echo "Please obtain and install appropriate certificates at the earliest. Execute esg-node --cert-helper for details.";
+    echo "Please obtain and install appropriate certificates at the earliest. Execute esg-node --cert-howto for details.";
     #echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
     echo "--------------------------------------------------------"
     echo
@@ -5825,6 +5974,9 @@ done_remark() {
     echo "Your specified \"default\" peer : $(echo_strong [$esgf_default_peer])"
     echo "Your specified \"index\" peer - : $(echo_strong [${esgf_index_peer}]) (url = http://${esgf_index_peer}/)"
     echo "Your specified \"idp\" peer --- : $(echo_strong [${esgf_idp_peer}]) (name = ${esgf_idp_peer_name})"
+    echo "Your temporary certificates have been placed in $(echo_strong /etc/tempcerts)"
+	echo "You can install them by executing this : $(echo_strong esg-node --install-keypair /etc/tempcerts/hostcert.pem /etc/tempcerts/hostkey.pem)"
+	echo "When promped for the chainfile, specify: $(echo_strong /etc/tempcerts/cacert.pem)";
 
     if [ -d "${thredds_content_dir}/thredds" ]; then
         echo
@@ -5941,6 +6093,21 @@ main() {
 				--fix-perms | fixperms)
 					debug_print "fixing permissions"
 					setup_sensible_confs
+					exit 0;
+					;;
+				--install-local-certs | installlocalcerts)
+					debug_print "installing local certs"
+					install_local_certs
+					exit 0;
+					;;
+				--generate-esgf-csrs | generateesgfcsrs)
+					debug_print "generating esgf csrs"
+					generate_esgf_csrs
+					exit 0;
+					;;
+				--cert-howto | certhowto)
+					debug_print "cert howto"
+					cert_howto
 					exit 0;
 					;;
                 --verify | --test)
@@ -6743,6 +6910,7 @@ main() {
     #(gridftp)
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
 
     #---------------------------------------

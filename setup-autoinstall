@@ -65,18 +65,16 @@ if [ $numl -gt 1 ]; then
 
 vl=('ipchoice' 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'fix-12' 'fix-13' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'fix-11' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 	va['ipchoice']=$choice;
-	numprompts=40;
 	else
 vl=('fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'fix-12' 'fix-13' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'fix-11' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
-	numprompts=39
 fi
-
+numprompts=${#vl[@]}
 va['fix-1']='y'
 va['fqdn']=`get_entry 'fqdn'`
 va['adminpass']=`get_double_entry 'admin-password'`
@@ -100,7 +98,7 @@ va['fix-9']='blank'
 va['fix-10']='y'
 va['fix-11']=${va['orgname']}
 va['fix-12']='y'
-va['fix-13']='y'
+#va['fix-13']='y'
 va['fix-14']=${va['adminpass']}
 va['fix-15']=${va['adminpass']}
 va['fix-16']='blank'

@@ -120,7 +120,8 @@ echo -n >/tmp/answers;
 for val in ${vl[@]}; do
 	ans=${va[$val]}
 	echo $ans:$val >>/tmp/answers;
-done 
+done
+numprompts=`expr $numprompts - 2`; #the two pauses arent exactly prompts 
 echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
 echo "Use CTRL-C at the end of the install, to cleanup.";
 promptct=0

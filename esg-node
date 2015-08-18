@@ -2154,7 +2154,7 @@ install_local_certs(){
 		rm -rf /var/lib/globus-connect-server/grid-security
 		cd /var/lib/globus-connect-server && ln -s /etc/grid-security grid-security
 	fi
-
+	cd $certdir
 	cp cacert.pem /var/lib/myproxy/cacert.pem
 	cp cakey.pem /var/lib/myproxy/cakey.pem
 	if [ -s hostkey.pem -a -s hostcert.pem ]; then 
@@ -3637,6 +3637,16 @@ install_keypair() {
         [ -z ${certfile_entry} ] && break
         certfiles=("${certfiles[@]} ${certfile_entry}")
     done
+	cp ${private_key} /etc/certs/hostkey.pem
+	cp ${public_cert} /etc/certs/hostcert.pem
+	echo -n >/etc/certs/tmpchain
+	for cert in ${certfiles[@]}; do
+		cat $cert >>/etc/certs/tmpchain
+	done
+	cp /etc/certs/tmpchain /etc/certs/cachain.pem
+	chmod 400 /etc/certs/hostkey.pem
+	chmod 644 /etc/certs/hostcert.pem
+	chmod 644 /etc/certs/cachain.pem
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
     if [ $? != 0 ]; then

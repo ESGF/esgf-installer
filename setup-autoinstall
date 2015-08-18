@@ -32,6 +32,57 @@ function get_entry(){
 	echo "$l1";
 }
 
+function load_pipe(){
+	if [ $tosave -eq 1 ]; then
+		mkdir -p /opt/esgf
+		cp /tmp/answers /opt/esgf
+	fi
+	numprompts=`cat /tmp/answers|wc -l`;
+	numpauses=`cat /tmp/answers|grep pause|wc -l`;
+	numprompts=`expr $numprompts - $numpauses`;
+	promptct=0
+	while read line; do
+		ans=`echo $line|cut -d ':' -f1`;
+		if [ "$ans" = "blank" ]; then
+			ans="";
+		fi
+		if [ "$ans" = "pause" ]; then
+			echo "Now waiting for ping-back from the globus-installer.";
+			cat </tmp/outputpipe
+			continue;
+		fi
+		promptct=`expr $promptct + 1`;
+		echo "$ans" >/tmp/inputpipe
+		echo "Answered question $promptct of $numprompts";
+	done</tmp/answers
+	echo "All prompts have now been answered. Do not terminate this script till the installation completes fully.";
+	while [ 1 ]; do
+		sleep 2;
+	done
+}
+echo "Do you wish to save the answer file from this questionnaire for later use? (n/Y)"
+read choice;
+tosave=0
+if [ "$choice" = "y" -o "$choice" = "Y" ]; then
+	echo "Your choices will be stored in /opt/esgf/answers";
+	tosave=1;
+fi
+echo "Do you wish to load in an answer file from an earlier run? (y/N)"
+read choice;
+if [ "$choice" = "y" -o "$choice" = "Y" ]; then
+	while [ 1 ]; do
+		echo "Provide path to answer file";
+		read anspath;
+		if [ -s $anspath ]; then
+			break;
+		fi
+		echo "File $anspath does not exist";
+	done
+	cp $anspath /tmp/answers;
+	echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
+	echo "Use CTRL-C at the end of the install, to cleanup.";
+	load_pipe
+fi
 ip addr show|grep -w inet|grep -v 127.0.0.1|awk '{print $2}'|cut -d '/' -f1 >ips
 declare -A ipaddrs
 numl=`cat ips|wc -l`;
@@ -121,25 +172,6 @@ for val in ${vl[@]}; do
 	ans=${va[$val]}
 	echo $ans:$val >>/tmp/answers;
 done
-numprompts=`expr $numprompts - 2`; #the two pauses arent exactly prompts 
 echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
 echo "Use CTRL-C at the end of the install, to cleanup.";
-promptct=0
-while read line; do
-	ans=`echo $line|cut -d ':' -f1`;
-	if [ "$ans" = "blank" ]; then
-		ans="";
-	fi
-	if [ "$ans" = "pause" ]; then
-		echo "Now waiting for ping-back from the globus-installer.";
-		cat </tmp/outputpipe
-		continue;
-	fi
-	promptct=`expr $promptct + 1`;
-	echo "$ans" >/tmp/inputpipe 
-	echo "Answered question $promptct of $numprompts";
-done</tmp/answers
-echo "All prompts have now been answered. Do not terminate this script till the installation completes fully.";
-while [ 1 ]; do
-	sleep 2;
-done
+load_pipe

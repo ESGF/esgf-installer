@@ -2151,6 +2151,7 @@ install_local_certs(){
 		cp openssl.cnf /etc/certs/
 		mkdir /var/lib/myproxy/newcerts
 		mkdir /etc/esgfcerts
+		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		rm -rf /var/lib/globus-connect-server/grid-security
 		cd /var/lib/globus-connect-server && ln -s /etc/grid-security grid-security
 	fi

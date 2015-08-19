@@ -2149,6 +2149,8 @@ install_local_certs(){
 		cp myproxy-server.config /var/lib/myproxy/
 		cp myproxy-server.config /esg/config/myproxy/
 		cp openssl.cnf /etc/certs/
+		cp host*.pem /etc/certs/
+		cp cacert.pem /etc/certs/cachain.pem
 		mkdir /var/lib/myproxy/newcerts
 		mkdir /etc/esgfcerts
 		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;

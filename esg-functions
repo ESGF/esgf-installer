@@ -657,7 +657,7 @@ stop_tomcat() {
 
 #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
 check_postgress_process() {
-    su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data status"
+    su $pg_sys_acct -c "$postgress_bin_dir/pg_ctl -D $postgress_install_dir/data status"
 }
 
 

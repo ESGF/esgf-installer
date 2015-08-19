@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC1.9-devel"
+script_version="v2.0-RC3.2-devel"
 script_maj_version="2.0"
 script_release="Centaur"
 envfile="/etc/esg.env"
@@ -604,7 +604,7 @@ setup_postgress() {
     _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version} "
-    check_version ${install_prefix}/pgsql/bin/psql ${postgress_min_version}
+    check_version ${postgress_bin_dir}/psql ${postgress_min_version}
     local ret=$?
     if [ $ret == 0 ] ; then
         (( ! force_install )) && [OK] && return 0
@@ -612,11 +612,36 @@ setup_postgress() {
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 
-    echo
-    echo    "*******************************"
-    echo -n "Setting up PostgreSQL... ${postgress_version} " && ( ((upgrade)) && echo "(upgrade)" ) || echo "(install)"
-    echo    "*******************************"
-    echo
+    #---------------------------------------
+    #Setup PostgreSQL RPM repository
+    #---------------------------------------
+
+        echo
+        echo "************************************"
+        echo "Setting up PostgreSQL RPM repository"
+        echo "************************************"
+        echo
+
+    if [[ ${DISTRIB} == "CentOS" ]] ; then
+    	yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+    elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
+        yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-redhat94-9.4-1.noarch.rpm
+    elif [[ ${DISTRIB} == "Scientific Linux" ]] ; then
+	yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-sl94-9.4-1.noarch.rpm
+    fi
+
+    #---------------------------------------
+    #Setup PostgreSQL RPM repository
+    #---------------------------------------
+
+        echo
+        echo "*****************************"
+        echo "Setting PostgreSQL Server RPM"
+        echo "*****************************"
+        echo
+
+
+    yum -y install postgresql94-server postgresql94-devel
 
     local default="Y"
     ((force_install)) && default="N"
@@ -626,13 +651,6 @@ setup_postgress() {
         echo "To force a re-install you must manually remove the database completely - remove ${postgress_install_dir}/bin/psql"
         echo 'Only if you know what you are doing!!!!!'
         echo
-        #read -e -p "Do you want to continue with Postgres installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        #[ -z ${dosetup} ] && dosetup=${default}
-        #if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-        #    echo "Skipping postgres installation and setup - will assume postgres is setup properly"
-        #    return 0
-        #fi
-        #echo
 
         read -e -p "Do you want to backup the curent database? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
         dosetup=$(echo "${dosetup}" | tr [a-z] [A-Z])
@@ -644,65 +662,8 @@ setup_postgress() {
         return 0
     fi
 
-    mkdir -p ${postgress_workdir}
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw ${postgress_workdir}
-    pushd ${postgress_workdir} >& /dev/null
-
-    local postgress_dist_file=${postgress_dist_url##*/}
-    #strip off .tar.gz at the end
-    postgress_dist_dir=$(echo ${postgress_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    #There is this pesky case of having a zero sized dist file... WTF!?
-    if [ -e ${postgress_dist_file} ]; then
-        ls -l ${postgress_dist_file}
-        local size=$(stat -c%s ${postgress_dist_file})
-        (( size == 0 )) && rm -v ${postgress_dist_file}
-    fi
-
-    #Check to see if we have postgres distribution directory
-    if [ ! -e ${postgress_dist_dir} ]; then
-        echo "Don't see postgress distribution dir ${postgress_dist_dir}"
-        if [ ! -e ${postgress_dist_file} ]; then
-            echo "Don't see postgress distribution file ${postgress_dist_file} either"
-            echo "Downloading Postgress from ${postgress_dist_url}"
-            wget -O ${postgress_dist_file} ${postgress_dist_url}
-            [ $? != 0 ] && echo " ERROR: Could not download Postgress:${postgress_dist_file}" && popd && checked_done 1
-            echo "unpacking ${postgress_dist_file}..."
-            tar xzf ${postgress_dist_file}
-            [ $? != 0 ] && echo " ERROR: Could not extract Postgress: ${postgress_dist_file}" && popd && checked_done 1
-        fi
-    fi
-
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it and go from there....
-    if [ -e ${postgress_dist_file} ] && [ ! -e ${postgress_dist_dir} ]; then
-        echo "unpacking ${postgress_dist_file}..."
-        tar xzf ${postgress_dist_file}
-    fi
-
-    pushd ${postgress_dist_dir}
-    ((force_install)) && make clean
-    echo "./configure --prefix=${postgress_install_dir} --enable-thread-safety"
-    if ./configure --prefix=${postgress_install_dir} --enable-thread-safety \
-        && gmake -j ${num_cpus} \
-        && gmake install \
-        && cd contrib/tablefunc/ \
-        && gmake
-    then
-        stop_postgress
-        gmake install
-        echo "Successfully Configured and Built PostgresSQL in: ${postgress_install_dir}"
-    else
-        echo" ERROR: Could NOT successfully build POSTGRESS!"
-        popd >& /dev/null
-        checked_done 1
-    fi
-
-    popd >& /dev/null
-
     if ((upgrade)); then
-        echo "UPGRADE of postgress to ${postgress_version} completed"
+        echo "UPGRADE of postgress completed"
         echo "It is recommended to restart the entire node as to not leave"
         echo "orphaned db connections that have been created by the rest of"
         echo "the application stack"
@@ -757,9 +718,8 @@ setup_postgress() {
     id $pg_sys_acct >& /dev/null
     [ $? != 0 ] && grep $pg_sys_acct /etc/passwd && echo " ERROR: Problem with $pg_sys_acct creation!!!" && checked_done 1
 
-    chown -R $pg_sys_acct $postgress_install_dir
-    chgrp -R $pg_sys_acct_group $postgress_install_dir
-
+    chown -R $pg_sys_acct $postgress_install_dir $postgress_bin_dir
+    chgrp -R $pg_sys_acct_group $postgress_install_dir $postgress_bin_dir
 
     #Create the database:
     mkdir -p ${postgress_install_dir}/data
@@ -767,19 +727,19 @@ setup_postgress() {
     [ $? != 0 ] && " ERROR: Could not change ownership of postgres' data to \"$pg_sys_acct\" user" && popd && checked_done 1
 
     chmod 700 $postgress_install_dir/data
-    su $pg_sys_acct -c "$postgress_install_dir/bin/initdb -D $postgress_install_dir/data"
+    su $pg_sys_acct -c "$postgress_bin_dir/initdb -D $postgress_install_dir/data"
     mkdir $postgress_install_dir/log
     chown -R $pg_sys_acct $postgress_install_dir/log
     [ $? != 0 ] && " ERROR: Could not change ownership of postgres' log to \"$pg_sys_acct\" user" && popd && checked_done 1
-
 
     #Start the database
     start_postgress
 
     #Check to see if there is a ${postgress_user} already on the system if not, make one
-    if [ ! -x ${postgress_install_dir}/bin/psql ] ; then
+    if [ ! -x ${postgress_bin_dir}/psql ] ; then
         echo " ERROR: psql not found after install!" && checked_done 1
     fi
+    
     if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
         echo "${postgress_user} exists!! :-)";
     else
@@ -796,7 +756,7 @@ setup_postgress() {
 					break;
 				fi
 			done
-		sudo -u $pg_sys_acct $postgress_install_dir/bin/psql -c "create user $postgress_user with superuser password '$p1';"
+		sudo -u $pg_sys_acct $postgress_bin_dir/psql -c "create user $postgress_user with superuser password '$p1';"
 		if [ $? -eq 0 ]; then popd && checked_done 0; break; fi
 		done
     fi
@@ -866,8 +826,10 @@ write_postgress_env() {
     echo "export PGUSER=$PGUSER" >> ${envfile}
     echo "export PGHOST=$PGHOST" >> ${envfile}
     echo "export PGPORT=$PGPORT" >> ${envfile}
-    prefix_to_path PATH ${postgress_install_dir}/bin >> ${envfile}
-    prefix_to_path LD_LIBRARY_PATH ${postgress_install_dir}/lib >> ${envfile}
+    echo "export PGBINDIR=$PGBINDIR" >> ${envfile}
+    echo "export PGLIBDIR=$PGLIBDIR" >> ${envfile}
+    prefix_to_path PATH ${postgress_bin_dir} >> ${envfile}
+    prefix_to_path LD_LIBRARY_PATH ${postgress_lib_dir} >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -886,8 +848,8 @@ start_postgress() {
 
     echo "Starting Postgress..."
     check_shmmax
-    echo "su $pg_sys_acct -c \"$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start\""
-    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
+    echo "su $pg_sys_acct -c \"$postgress_bin_dir/pg_ctl -D $postgress_install_dir/data start\""
+    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_bin_dir/pg_ctl -D $postgress_install_dir/data start"
     [ $? != 0 ] && echo " ERROR: Could not start database!" && return 1
 
     #NOTE: How long does it take for the database to come up? Set sleep appropriately
@@ -929,7 +891,7 @@ test_postgress() {
     echo "----------------------------"
     echo
 
-    ${postgress_install_dir}/bin/psql --version
+    ${postgress_bin_dir}/psql --version
     [ $? != 0 ] && echo" ERROR: Could NOT successfully locate postgres installation!!" && popd >& /dev/null && checked_done 1
 
     start_postgress

@@ -114,7 +114,7 @@ if [ $numl -gt 1 ]; then
 		fi
 	done
 
-vl=('ipchoice' 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
+vl=('fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 'fix-11' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')

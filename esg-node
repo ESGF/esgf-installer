@@ -843,17 +843,10 @@ write_postgress_install_log() {
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 start_postgress() {
     _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
-
     check_postgress_process && return 1
-
     echo "Starting Postgress..."
+	/etc/init.d/postgresql-9.4 start
     check_shmmax
-    echo "su $pg_sys_acct -c \"$postgress_bin_dir/pg_ctl -D $postgress_install_dir/data start\""
-    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_bin_dir/pg_ctl -D $postgress_install_dir/data start"
-    [ $? != 0 ] && echo " ERROR: Could not start database!" && return 1
-
-    #NOTE: How long does it take for the database to come up? Set sleep appropriately
-    echo "Giving database time to startup... (3 seconds) "
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
     checked_done 0
@@ -862,25 +855,11 @@ start_postgress() {
 stop_postgress() {
 
     _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
-
-    sleep 1
-    #Stop the database
-    #su postgres -c "pg_ctl -D /usr/local/pgsql/data stop" #(gently stop server)
-    #
-
     check_postgress_process
     [ $? != 0 ] && return 1
-
-    echo
-    echo "stop postgress: su $pg_sys_acct -c \"pg_ctl -D $postgress_install_dir/data -m f stop\""
-    su $pg_sys_acct -c "pg_ctl -D $postgress_install_dir/data -m f stop" #(stop server immediately)
-    if [ $? != 0 ]; then
-        echo " WARNING: Unable to stop the database (nicely)"
-        echo " Hmmm...  okay no more mr nice guy... issuing \"killall postgres\""
-        killall postgres
-        [ $? != 0 ] && echo "Hmmm... still could not shutdown... do so manually"
-    fi
-    /bin/ps -elf | grep postgres | grep -v grep
+	/etc/init.d/postgresql-9.4 stop
+    check_shmmax
+	/bin/ps -elf | grep postgres | grep -v grep
     return 0
 }
 

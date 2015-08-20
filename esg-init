@@ -186,7 +186,7 @@ init() {
     #cdat_repo=git://github.com/UV-CDAT/uvcdat.git
     #cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
     publisher_repo=git://github.com/ESGF/esg-publisher.git
-    apache_frontend_repo=git://github.com/ESGF/apache-frontend.git
+    apache_frontend_repo=https://github.com/ESGF/apache-frontend.git
     publisher_repo_https=https://github.com/ESGF/esg-publisher.git
     esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
     esg_testdir=${workdir}/../esg_test

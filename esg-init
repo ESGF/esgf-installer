@@ -176,7 +176,7 @@ init() {
     bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
     db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
     node_db_name=${db_database}
-    postgress_jar=postgresql-9.4-1201.jdbc41.jar
+    postgress_jar=postgresql-8.3-603.jdbc3.jar
     postgress_driver=org.postgresql.Driver
     postgress_protocol=jdbc:postgresql:
     pg_sys_acct=${pg_sys_acct:-postgres}

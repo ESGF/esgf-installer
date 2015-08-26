@@ -109,6 +109,7 @@ esg-purge-base () {
 
     rm -rf /esg
     rm -f /etc/esg.env
+    rm -rf /opt/esgf
     rm -rf /usr/local/cog
 
     # The globs may fail here with no targets, thus || true

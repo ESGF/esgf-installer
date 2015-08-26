@@ -146,12 +146,14 @@ esg-purge-las () {
 }
 
 esg-purge-postgres () {
+    yum remove -y postgresql postgresql-libs postgresql-server \
+        postgresql94 postgresql94-libs postgresql94-server postgresql94-devel
+
     # esg-node --stop may not actually cause Postgresql to exit
     # properly, so force-kill all remaining instances
     pkill -9 -u postgres
     rm -rf /usr/local/pgsql
-
-    yum remove -y postgresql postgresql-server postgresql94-server postgresql94-devel
+    rm -rf /var/lib/pgsql
 
     # The installation of CDAT creates databases and tables, so
     # purging postgres but leaving CDAT will always result in invalid

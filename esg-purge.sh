@@ -110,12 +110,19 @@ esg-purge-base () {
     rm -rf /esg
     rm -f /etc/esg.env
     rm -rf /opt/esgf
+    rm -f /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
+
+    # These can potentially be symlinks back to git repositories for
+    # development.  Remove only if they are regular files.
+    find /usr/local/bin -type f -iname esg-\* -exec echo rm -f {} \+
+    find /usr/local/bin -type f -iname esgf-\* -exec echo rm -f {} \+
+    find /usr/local/bin -type f -iname setup-autoinstall -exec echo rm -f {} \+
 
     # The globs may fail here with no targets, thus || true
     rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
-    rm -rf /usr/local/solr-* || true
+    rm -rf /usr/local/solr* || true
 }
 
 esg-purge-cdat () {
@@ -142,7 +149,7 @@ esg-purge-las () {
     rm -rf /usr/local/ferret
     rm -rf /usr/local/ferret_data
     # The glob may fail here with no targets, thus || true
-    rm -rf /usr/local/las-esg-* || true
+    rm -rf /usr/local/las-esg* || true
 }
 
 esg-purge-postgres () {
@@ -182,6 +189,8 @@ esg-purge-utils () {
     rm -rf /usr/local/geoip
     rm -rf /usr/local/git
     rm -rf /usr/local/openssl
+    rm -rf /usr/local/jdk1.*
+    rm -f /usr/local/java
 }
 
 esg-purge-workbench() {

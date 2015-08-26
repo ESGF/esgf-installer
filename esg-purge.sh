@@ -113,6 +113,11 @@ esg-purge-base () {
     rm -f /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
 
+    # WARNING: if $HOME has been reset from /root during an install
+    # run, these directories could show up in a different place!
+    rm -rf /root/.cache
+    rm -rf /root/.python-eggs
+
     # These can potentially be symlinks back to git repositories for
     # development.  Remove only if they are regular files.
     find /usr/local/bin -type f -iname esg-\* -exec echo rm -f {} \+

@@ -622,9 +622,9 @@ setup_postgress() {
     else
 		while [ 1 ]; do
 			while [ 1 ]; do
-				echo "Enter password for postgres user $postgress_user";
+				echo "Enter password for postgres user $postgress_user: ";
 				read -s p1;
-				echo "Re-enter password for postgres user $postgress_user";
+				echo "Re-enter password for postgres user $postgress_user: ";
 				read -s p2;
 				if [ "$p1" != "$p2" ]; then
 					echo "The passwords did not tally. Enter same password twice";

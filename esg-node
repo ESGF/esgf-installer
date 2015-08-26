@@ -898,7 +898,7 @@ setup_cdat() {
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
 
-    wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
+    curl -k -O https://bootstrap.pypa.io/ez_setup.py
     ${cdat_home}/bin/python ez_setup.py
     ${cdat_home}/bin/easy_install pip
 

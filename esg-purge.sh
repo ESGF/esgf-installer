@@ -114,15 +114,16 @@ esg-purge-base () {
     # The globs may fail here with no targets, thus || true
     rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
+    rm -rf /usr/local/solr-* || true
 }
 
 esg-purge-cdat () {
-    yum remove cdat
-    rm -rf /usr/local/cdat
+    yum remove -y cdat uvcdat
+    rm -rf /usr/local/cdat /usr/local/uvcdat
 }
 
 esg-purge-globus () {
-    yum remove globus* myproxy*
+    yum remove -y globus* myproxy*
     rm -f /etc/globus-host-ssl.conf
     rm -f /etc/globus-user-ssl.conf
     rm -f /etc/grid-security.conf
@@ -148,6 +149,8 @@ esg-purge-postgres () {
     # properly, so force-kill all remaining instances
     pkill -9 -u postgres
     rm -rf /usr/local/pgsql
+
+    yum remove -y postgresql postgresql-server postgresql94-server postgresql94-devel
 
     # The installation of CDAT creates databases and tables, so
     # purging postgres but leaving CDAT will always result in invalid

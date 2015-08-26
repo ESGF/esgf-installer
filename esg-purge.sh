@@ -137,6 +137,7 @@ esg-purge-cdat () {
 
 esg-purge-globus () {
     yum remove -y globus\* myproxy\*
+    rm -rf /etc/esgfcerts
     rm -f /etc/globus-host-ssl.conf
     rm -f /etc/globus-user-ssl.conf
     rm -f /etc/grid-security.conf
@@ -148,6 +149,7 @@ esg-purge-globus () {
     rm -rf /root/.globus
     rm -rf /usr/local/globus
     rm -rf /usr/local/gsoap
+    rm -rf /var/lib/myproxy/newcerts
 }
 
 esg-purge-las () {

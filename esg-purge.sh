@@ -120,9 +120,9 @@ esg-purge-base () {
 
     # These can potentially be symlinks back to git repositories for
     # development.  Remove only if they are regular files.
-    find /usr/local/bin -type f -iname esg-\* -exec echo rm -f {} \+
-    find /usr/local/bin -type f -iname esgf-\* -exec echo rm -f {} \+
-    find /usr/local/bin -type f -iname setup-autoinstall -exec echo rm -f {} \+
+    find /usr/local/bin -type f -iname esg-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname esgf-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname setup-autoinstall -exec rm -f {} \+
 
     # The globs may fail here with no targets, thus || true
     rm -rf /usr/local/esgf* || true

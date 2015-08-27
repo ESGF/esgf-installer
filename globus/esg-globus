@@ -194,17 +194,6 @@ postgress_port=${postgress_port:-5432}
 pg_sys_acct=${pg_sys_acct:-postgres}
 #-----------
 
-#-----------
-#NOTE: These should have been written by the install of openssl,
-#      if it was deamed necessary to do so. see esg-node:setup_openssl()
-#      Values needed for globus compilation to include SSL support when 
-#      not in default location - i.e. we installed our own.
-#export OPENSSL_INCLUDES="-I${OPENSSL_HOME}/include"
-#export OPENSSL_CFLAGS="-fPIC"
-#export OPENSSL_LDFLAGS="-L${OPENSSL_HOME}/lib"
-#export OPENSSL_LIBS="-lssl -lcrypto"
-#-----------
-
 globus_flavor=gcc${globus_word_size}dbg
 debug_print "(globus_flavor = ${globus_flavor})"
 
@@ -699,20 +688,25 @@ fetch_host_certificate_data() {
     echo "   https://globus.org/SignUp"
     echo
 
-    local input
-    while [ 1 ]; do
-        read -e -p "Please enter your Globus username [${globus_user}]: " input
-        [ -n "${input}" ] && globus_user=${input} && break
-        [ -n "${globus_user}" ] && break
-    done
-    unset input
+    if [ -z "$GLOBUS_USER" ]; then
+        local input
+        while [ 1 ]; do
+            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
+            [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
+        done
+        unset input
+    fi
 
-    while [ 1 ]; do
-        read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-        [ -n "${input}" ] && globus_password=${input} && break
-        [ -n "${globus_password}" ] && break
-    done
-    unset input
+    if [ -z "$GLOBUS_PASSWORD" ]; then
+        local input
+        while [ 1 ]; do
+            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
+            [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
+        done
+        unset input
+    fi
 
     local myproxy_hostname=${myproxy_endpoint:-${esgf_idp_peer:-%(HOSTNAME)s}}
 
@@ -737,7 +731,7 @@ SharingRestrictPaths = R/
 Server = ${myproxy_hostname}
 EOF
 
-    GLOBUS_USER="${globus_user}" GLOBUS_PASSWORD="${globus_password}" globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
+    globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
 
     /etc/init.d/globus-gridftp-server stop
 
@@ -1246,20 +1240,25 @@ fetch_host_certificate_idp() {
     echo "   https://globus.org/SignUp"
     echo
 
-    local input
-    while [ 1 ]; do
-        read -e -p "Please enter your Globus username [${globus_user}]: " input
-        [ -n "${input}" ] && globus_user=${input} && break
-        [ -n "${globus_user}" ] && break
-    done
-    unset input
+    if [ -z "$GLOBUS_USER" ]; then
+        local input
+        while [ 1 ]; do
+            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
+            [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
+        done
+        unset input
+    fi
 
-    while [ 1 ]; do
-        read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-        [ -n "${input}" ] && globus_password=${input} && break
-        [ -n "${globus_password}" ] && break
-    done
-    unset input
+    if [ -z "$GLOBUS_PASSWORD" ]; then
+        local input
+        while [ 1 ]; do
+            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
+            [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
+        done
+        unset input
+    fi
 
     local myproxy_config_dir=${esg_config_dir}/myproxy
     mkdir -p ${myproxy_config_dir}
@@ -1285,7 +1284,7 @@ SharingRestrictPaths = R/
 Server = %(HOSTNAME)s
 EOF
 
-    GLOBUS_USER="${globus_user}" GLOBUS_PASSWORD="${globus_password}" globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
+    globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
 
 }
 

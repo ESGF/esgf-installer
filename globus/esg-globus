@@ -1112,6 +1112,7 @@ EOF
         cp host*.pem /etc/grid-security
     fi
     localhash=`openssl x509 -noout -hash -in cacert.pem`
+    cp globus_simple_ca_${localhash}_setup-0.tar.gz ${myproxyca_dir}
     cp globus_simple_ca_${localhash}_setup-0.tar.gz /etc/grid-security/certificates
     popd >& /dev/null
 

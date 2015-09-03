@@ -731,9 +731,9 @@ Server = ${myproxy_hostname}
 EOF
 
     if [ "x$1" = "xfirstrun" ]; then
-        pushd /etc/esgfcerts >& /dev/null
-    else
         pushd /etc/tempcerts >& /dev/null
+    else
+        pushd /etc/esgfcerts >& /dev/null
     fi
     if [ -s hostkey.pem -a -s hostcert.pem ]; then
         cp host*.pem /etc/grid-security

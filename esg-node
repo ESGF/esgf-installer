@@ -494,31 +494,13 @@ setup_postgress() {
     #---------------------------------------
 
         echo
-        echo "************************************"
-        echo "Setting up PostgreSQL RPM repository"
-        echo "************************************"
-        echo
-
-    if [[ ${DISTRIB} == "CentOS" ]] ; then
-    	yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
-    elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
-        yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-redhat94-9.4-1.noarch.rpm
-    elif [[ ${DISTRIB} == "Scientific Linux" ]] ; then
-	yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-sl94-9.4-1.noarch.rpm
-    fi
-
-    #---------------------------------------
-    #Setup PostgreSQL RPM repository
-    #---------------------------------------
-
-        echo
         echo "*****************************"
         echo "Setting PostgreSQL Server RPM"
         echo "*****************************"
         echo
 
 
-    yum -y install postgresql94-server postgresql94-devel
+    yum -y install postgresql-server postgresql-devel
 
     local default="Y"
     ((force_install)) && default="N"

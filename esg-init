@@ -63,7 +63,7 @@ init() {
     openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
     java_version=${java_version:-"1.8.0_45"} ; java_min_version=${java_min_version:-"1.8.0_45"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
-    postgress_version=${postgress_version:-"9.4.4"} ; postgress_min_version=${postgress_min_version:-"9.4.4"}
+    postgress_version=${postgress_version:-"8.4.20"} ; postgress_min_version=${postgress_min_version:-"8.4.20"}
     tomcat_version=${tomcat_version:-"7.0.63"} ; tomcat_min_version=${tomcat_min_version:-"7.0.63"}
     #cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
     tds_version=${tds_version:-"4.3.17"} ; tds_min_version=${tds_min_version:-"4.3.17"}
@@ -76,9 +76,9 @@ init() {
     # Script vars (~external)
     #--------------------------------
     openssl_install_dir=${OPENSSL_HOME:-${install_prefix}/openssl}
-    postgress_install_dir=${PGHOME:-/var/lib/pgsql/9.4}
-    postgress_bin_dir=${PGBINDIR:-/usr/pgsql-9.4/bin}
-    postgress_lib_dir=${PGLIBDIR:-/usr/pgsql-9.4/lib}
+    postgress_install_dir=${PGHOME:-/var/lib/pgsql}
+    postgress_bin_dir=${PGBINDIR:-/usr/bin}
+    postgress_lib_dir=${PGLIBDIR:-/usr/lib64/pgsql}
     postgress_user=${PGUSER:-dbsuper}
 
     local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
@@ -129,12 +129,12 @@ init() {
     export CATALINA_OPTS=${tomcat_opts}
     export GLOBUS_LOCATION=${globus_location}
 
-    myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$PGBINDIR:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
-    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$PGLIBDIR:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
+    myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
+    myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
     export PATH=$(_path_unique $myPATH:$PATH)
     export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
-    export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/pgsql-9.4/include/ -I/usr/include ${CFLAGS} -fPIC"
-    export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/pgsql-9.4/lib -L/usr/lib64 -L/usr/lib -Wl,--rpath,${OPENSSL_HOME}/lib"
+    export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/include ${CFLAGS} -fPIC"
+    export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib -Wl,--rpath,${OPENSSL_HOME}/lib"
 
     #--------------
     # ID Setting

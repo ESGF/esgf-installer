@@ -271,11 +271,10 @@ setup_globus_services() {
         echo
 
         create_globus_account
-        setup_globus datanode
-        fetch_host_certificate_data
+        install_globus datanode
+        setup_gcs_io
         setup_gridftp_metrics_logging
 
-        #now for configuration of the portions we just "setup" (installed)
         shift
         while [ -n "$1" ]; do 
             case $1 in
@@ -302,7 +301,6 @@ setup_globus_services() {
         [ -e /usr/sbin/globus-gridftp-server ] && \
             write_as_property gridftp_app_home /usr/sbin/globus-gridftp-server || \
             echo "WARNING: Cannot find executable /usr/sbin/globus-gridftp-server"
-    #    setup_gridftp_jail
 
     elif [ "${config_type}" = "gateway" ]; then
 
@@ -313,8 +311,8 @@ setup_globus_services() {
         echo
 
         shift
-        setup_globus gateway
-        upgrade_myproxy_server
+        install_globus gateway
+        setup_gcs_id
         config_myproxy_server $@
         [ $? != 0 ] && return 3
 
@@ -389,7 +387,7 @@ test_globus_services() {
 
 # All methods below this point should be considered "private" functions
 
-setup_globus() {
+install_globus() {
     local config_type
     if [ $1 = "datanode" ]; then
         config_type="globus-connect-server-io"
@@ -678,7 +676,7 @@ EOF
     fi
 }
 
-fetch_host_certificate_data() {
+setup_gcs_io() {
     echo "*******************************"
     echo " Rgistering the Data node with Globus Platform and fetching a host certificate"
     echo "*******************************"
@@ -719,11 +717,12 @@ Name = %(SHORT_HOSTNAME)s
 Public = True
 [Security]
 FetchCredentialFromRelay = True
+CertificateFile = /etc/grid-security/hostcert.pem
+KeyFile = /etc/grid-security/hostkey.pem
+TrustedCertificateDirectory = /etc/grid-security/certificates/
 IdentityMethod = MyProxy
 [GridFTP]
 Server = %(HOSTNAME)s
-IncomingPortRange = 60000,61000
-OutgoingPortRange = 60000,61000
 RestrictPaths = R/
 Sharing = True
 SharingRestrictPaths = R/
@@ -731,13 +730,20 @@ SharingRestrictPaths = R/
 Server = ${myproxy_hostname}
 EOF
 
+    if [ -d /etc/esgcerts ]; then
+        pushd /etc/esgfcerts >& /dev/null
+    else
+        pushd /etc/tempcerts >& /dev/null
+    fi
+    if [ -s hostkey.pem -a -s hostcert.pem ]; then
+        cp host*.pem /etc/grid-security
+    fi
+    popd >& /dev/null
+
     globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
 
     /etc/init.d/globus-gridftp-server stop
 
-    cp /var/lib/globus-connect-server/grid-security/hostcert.pem /etc/grid-security
-    cp /var/lib/globus-connect-server/grid-security/hostkey.pem /etc/grid-security
-    cp /var/lib/globus-connect-server/grid-security/certificates/* /etc/grid-security/certificates
 }
 
 
@@ -995,15 +1001,6 @@ check_gridftp_process() {
 # MY PROXY
 #--------------------------------------------------------------
 
-upgrade_myproxy_server() {
-    if [ -e /usr/bin/globus-version ]; then
-        yum -y update globus-connect-server-id
-        return
-    fi
-    checked_done 0
-}
-
-
 # This function bascially copies and renames the signed cert into the right place.
 # It also does the bookkeeping needed in the overall property file to reflect the DN
 # arg (optional) -> the signed certificate (.pem) file to be installed
@@ -1039,7 +1036,89 @@ globus_check_certificates() {
     #do this in a subshell
     (source ${esg_functions_file} && check_cert_expiry_for_files ${my_cert})
 }
-#--------------------------------------------------------------
+
+
+#--------------------
+# Register with Globus Web Service and get a host certificate
+#--------------------
+
+setup_gcs_id() {
+    echo "*******************************"
+    echo " Rgistering the IDP node with Globus Platform and fetching a host certificate"
+    echo "*******************************"
+    echo
+    echo "NOTE: You MUST have created a Globus account for this node."
+    echo
+    echo "   https://globus.org/SignUp"
+    echo
+
+    if [ -z "$GLOBUS_USER" ]; then
+        local input
+        while [ 1 ]; do
+            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
+            [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
+        done
+        unset input
+    fi
+
+    if [ -z "$GLOBUS_PASSWORD" ]; then
+        local input
+        while [ 1 ]; do
+            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
+            [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
+        done
+        unset input
+    fi
+
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+    mkdir -p ${myproxy_config_dir}
+
+cat >${myproxy_config_dir}/globus-connect-server.conf <<EOF
+[Globus]
+User = %(GLOBUS_USER)s
+Password = %(GLOBUS_PASSWORD)s
+[Endpoint]
+Name = %(SHORT_HOSTNAME)s
+Public = True
+[Security]
+FetchCredentialFromRelay = True
+CertificateFile = /etc/grid-security/hostcert.pem
+KeyFile = /etc/grid-security/hostkey.pem
+TrustedCertificateDirectory = /etc/grid-security/certificates/
+IdentityMethod = MyProxy
+[GridFTP]
+Server = %(HOSTNAME)s
+RestrictPaths = R/
+Sharing = True
+SharingRestrictPaths = R/
+[MyProxy]
+Server = %(HOSTNAME)s
+EOF
+
+    if [ -d /etc/esgcerts ]; then
+        pushd /etc/esgfcerts >& /dev/null
+    else
+        pushd /etc/tempcerts >& /dev/null
+    fi
+    myproxyca_dir=/var/lib/globus-connect-server/myproxy-ca
+    [ ! -d ${myproxyca_dir}/newcerts ] && mkdir -p ${myproxyca_dir}/newcerts && chmod 700 ${myproxyca_dir}
+    [ ! -d ${myproxyca_dir}/private ] && mkdir -p ${myproxyca_dir}/private && chmod 700 ${myproxyca_dir}/private
+    cp cacert.pem ${myproxyca_dir}
+    cp cakey.pem ${myproxyca_dir}/private
+    cp signing-policy ${myproxyca_dir}
+    if [ -s hostkey.pem -a -s hostcert.pem ]; then
+        cp host*.pem /etc/grid-security
+    fi
+    localhash=`openssl x509 -noout -hash -in cacert.pem`
+    cp globus_simple_ca_${localhash}_setup-0.tar.gz /etc/grid-security/certificates
+    popd >& /dev/null
+
+    globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
+
+}
+
 
 # Note: myproxy servers live on gateway machines
 # see - http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/MyProxyWithAttributeCalloutConfig
@@ -1106,12 +1185,6 @@ config_myproxy_server() {
     #--------------------
 
     #--------------------
-    # Register with Globus Web Service and get a host certificate
-    #--------------------
-    fetch_host_certificate_idp
-    #--------------------
-
-    #--------------------
     # Get myproxy-certificate-mapapp file
     #--------------------
     fetch_myproxy_certificate_mapapp
@@ -1136,13 +1209,13 @@ config_myproxy_server() {
     #--------------------
 
     #--------------------
-    # Configure /etc/myproxy-server.config
+    # Create /esg/config/myproxy/myproxy-server.config
     #--------------------
     edit_myproxy_server_config
     #--------------------
 
     #--------------------
-    # Configure /etc/myproxy.d/myproxy-esgf
+    # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
     #--------------------
     edit_etc_myproxyd
     #--------------------
@@ -1164,7 +1237,7 @@ write_myproxy_install_log() {
         echo "WARNING: Cannot find executable /usr/sbin/myproxy-server"
     ! grep myproxy.endpoint ${esg_config_dir}/esgf.properties && write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}"
     ! grep myproxy.port ${esg_config_dir}/esgf.properties && write_as_property myproxy_port
-    write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /var/lib/globus-connect-server/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
+    write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /etc/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
     
     echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_manifest}
     dedup ${install_manifest}
@@ -1229,64 +1302,6 @@ check_myproxy_process() {
 ############################################
 # Configuration File Editing Functions
 ############################################
-
-fetch_host_certificate_idp() {
-    echo "*******************************"
-    echo " Rgistering the IDP node with Globus Platform and fetching a host certificate"
-    echo "*******************************"
-    echo
-    echo "NOTE: You MUST have created a Globus account for this node."
-    echo
-    echo "   https://globus.org/SignUp"
-    echo
-
-    if [ -z "$GLOBUS_USER" ]; then
-        local input
-        while [ 1 ]; do
-            read -e -p "Please enter your Globus username [${globus_user}]: " input
-            [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
-            [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
-        done
-        unset input
-    fi
-
-    if [ -z "$GLOBUS_PASSWORD" ]; then
-        local input
-        while [ 1 ]; do
-            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-            [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
-            [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
-        done
-        unset input
-    fi
-
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
-
-cat >${myproxy_config_dir}/globus-connect-server.conf <<EOF
-[Globus]
-User = %(GLOBUS_USER)s
-Password = %(GLOBUS_PASSWORD)s
-[Endpoint]
-Name = %(SHORT_HOSTNAME)s
-Public = True
-[Security]
-FetchCredentialFromRelay = True
-IdentityMethod = MyProxy
-[GridFTP]
-Server = %(HOSTNAME)s
-IncomingPortRange = 60000,61000
-OutgoingPortRange = 60000,61000
-RestrictPaths = R/
-Sharing = True
-SharingRestrictPaths = R/
-[MyProxy]
-Server = %(HOSTNAME)s
-EOF
-
-    globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
-
-}
 
 edit_myproxy_server_config() {
     mkdir -p ${esg_config_dir}/myproxy

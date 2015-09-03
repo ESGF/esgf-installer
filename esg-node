@@ -1850,6 +1850,7 @@ configure_tomcat() {
 	cp $cert $tgtdir/${localhash}.0;
 	print_templ >signing_policy_template;
 	sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;
+	cp $tgtdir/${localhash}.signing_policy signing-policy
 	tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
 	rm -rf $tgtdir;
 	rm -f signing_policy_template;
@@ -1960,25 +1961,13 @@ install_local_certs(){
 		return;
 	fi
 	if [ "$1" = "firstrun" ]; then
-		cp myproxy-server.config /var/lib/myproxy/
-		cp myproxy-server.config /esg/config/myproxy/
 		cp openssl.cnf /etc/certs/
 		cp host*.pem /etc/certs/
 		cp cacert.pem /etc/certs/cachain.pem
-		mkdir /var/lib/myproxy/newcerts
 		mkdir /etc/esgfcerts
 		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
-		rm -rf /var/lib/globus-connect-server/grid-security
-		cd /var/lib/globus-connect-server && ln -s /etc/grid-security grid-security
 	fi
 	cd $certdir
-	cp cacert.pem /var/lib/myproxy/cacert.pem
-	cp cakey.pem /var/lib/myproxy/cakey.pem
-	if [ -s hostkey.pem -a -s hostcert.pem ]; then 
-		cp host*.pem /etc/grid-security/
-	fi
-	cp $globuspack /var/lib/myproxy/
-	cp $globuspack /etc/grid-security/certificates/
 	echo "Local installation of certs complete.";
 }
 
@@ -6719,6 +6708,8 @@ main() {
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
+
     #(myproxy - [depends on security backend in place])
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
@@ -6726,7 +6717,6 @@ main() {
     #(gridftp)
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
 
     #---------------------------------------

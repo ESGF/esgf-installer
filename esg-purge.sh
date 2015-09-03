@@ -108,46 +108,78 @@ esg-purge-base () {
     fi
 
     rm -rf /esg
+    rm -rf /etc/certs
     rm -f /etc/esg.env
+    rm -rf /etc/esgfcerts
+    rm -f /etc/httpd/conf/esgf-httpd.conf
+    rm -rf /etc/tempcerts
+    rm -rf /opt/esgf
+    rm -f /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
+    rm -rf /var/www/.python-eggs
+
+    # WARNING: if $HOME has been reset from /root during an install
+    # run, these directories could show up in a different place!
+    rm -rf /root/.cache
+    rm -rf /root/.python-eggs
+
+    # These can potentially be symlinks back to git repositories for
+    # development.  Remove only if they are regular files.
+    find /usr/local/bin -type f -iname esg-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname esgf-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname setup-autoinstall -exec rm -f {} \+
 
     # The globs may fail here with no targets, thus || true
     rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
+    rm -rf /usr/local/solr* || true
 }
 
 esg-purge-cdat () {
-    yum remove cdat
-    rm -rf /usr/local/cdat
+    yum remove -y cdat uvcdat
+    rm -rf /usr/local/cdat /usr/local/uvcdat
 }
 
 esg-purge-globus () {
-    yum remove globus* myproxy*
+    yum remove -y globus\* myproxy\*
+    rm -rf /etc/esgfcerts
     rm -f /etc/globus-host-ssl.conf
     rm -f /etc/globus-user-ssl.conf
     rm -f /etc/grid-security.conf
-    rm -rf /etc/globus*
+    rm -rf /etc/globus* || true
     rm -rf /etc/grid-security
-    rm -rf /etc/gridftp*
-    rm -rf /etc/myproxy*
+    rm -rf /etc/gridftp* || true
+    rm -f /etc/logrotate.d/globus-connect-server
+    rm -rf /etc/myproxy* || true
+    rm -rf /etc/pam.d/myproxy
+    rm -f /etc/pam_pgsql.conf
+    rm -f /etc/rc.d/init.d/globus-gridftp-* || true
     rm -rf $HOME/.globus
     rm -rf /root/.globus
     rm -rf /usr/local/globus
     rm -rf /usr/local/gsoap
+    rm -rf /usr/share/myproxy
+    rm -rf /var/lib/globus
+    rm -rf /var/lib/globus-connect-server
+    rm -rf /var/lib/myproxy
 }
 
 esg-purge-las () {
     rm -rf /usr/local/ferret
     rm -rf /usr/local/ferret_data
     # The glob may fail here with no targets, thus || true
-    rm -rf /usr/local/las-esg-* || true
+    rm -rf /usr/local/las-esg* || true
 }
 
 esg-purge-postgres () {
+    yum remove -y postgresql postgresql-libs postgresql-server \
+        postgresql94 postgresql94-libs postgresql94-server postgresql94-devel
+
     # esg-node --stop may not actually cause Postgresql to exit
     # properly, so force-kill all remaining instances
     pkill -9 -u postgres
     rm -rf /usr/local/pgsql
+    rm -rf /var/lib/pgsql
 
     # The installation of CDAT creates databases and tables, so
     # purging postgres but leaving CDAT will always result in invalid
@@ -165,6 +197,9 @@ esg-purge-tomcat () {
     # esg-node --stop may not actually cause Tomcat to exit properly,
     # so force-kill all remaining instances
     pkill -9 -u tomcat
+
+    rm -f /etc/logrotate.d/esgf_tomcat
+
     # The glob may fail here with no targets, thus || true
     rm -rf /usr/local/tomcat* /usr/local/apache-tomcat* || true
 }
@@ -176,6 +211,8 @@ esg-purge-utils () {
     rm -rf /usr/local/geoip
     rm -rf /usr/local/git
     rm -rf /usr/local/openssl
+    rm -rf /usr/local/jdk1.*
+    rm -f /usr/local/java
 }
 
 esg-purge-workbench() {

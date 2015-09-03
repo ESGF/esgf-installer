@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC1.9-devel"
+script_version="v2.0-RC3.2-devel"
 script_maj_version="2.0"
 script_release="Centaur"
 envfile="/etc/esg.env"
@@ -481,7 +481,7 @@ setup_postgress() {
     _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version} "
-    check_version ${install_prefix}/pgsql/bin/psql ${postgress_min_version}
+    check_version ${postgress_bin_dir}/psql ${postgress_min_version}
     local ret=$?
     if [ $ret == 0 ] ; then
         (( ! force_install )) && [OK] && return 0
@@ -489,11 +489,36 @@ setup_postgress() {
 
     local upgrade=$(( (ret==1) ? 1 : 0 )) #see check_version() function comments for meaning of return values
 
-    echo
-    echo    "*******************************"
-    echo -n "Setting up PostgreSQL... ${postgress_version} " && ( ((upgrade)) && echo "(upgrade)" ) || echo "(install)"
-    echo    "*******************************"
-    echo
+    #---------------------------------------
+    #Setup PostgreSQL RPM repository
+    #---------------------------------------
+
+        echo
+        echo "************************************"
+        echo "Setting up PostgreSQL RPM repository"
+        echo "************************************"
+        echo
+
+    if [[ ${DISTRIB} == "CentOS" ]] ; then
+    	yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+    elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
+        yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-redhat94-9.4-1.noarch.rpm
+    elif [[ ${DISTRIB} == "Scientific Linux" ]] ; then
+	yum -y install http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-sl94-9.4-1.noarch.rpm
+    fi
+
+    #---------------------------------------
+    #Setup PostgreSQL RPM repository
+    #---------------------------------------
+
+        echo
+        echo "*****************************"
+        echo "Setting PostgreSQL Server RPM"
+        echo "*****************************"
+        echo
+
+
+    yum -y install postgresql94-server postgresql94-devel
 
     local default="Y"
     ((force_install)) && default="N"
@@ -503,13 +528,6 @@ setup_postgress() {
         echo "To force a re-install you must manually remove the database completely - remove ${postgress_install_dir}/bin/psql"
         echo 'Only if you know what you are doing!!!!!'
         echo
-        #read -e -p "Do you want to continue with Postgres installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
-        #[ -z ${dosetup} ] && dosetup=${default}
-        #if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
-        #    echo "Skipping postgres installation and setup - will assume postgres is setup properly"
-        #    return 0
-        #fi
-        #echo
 
         read -e -p "Do you want to backup the curent database? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
         dosetup=$(echo "${dosetup}" | tr [a-z] [A-Z])
@@ -521,65 +539,8 @@ setup_postgress() {
         return 0
     fi
 
-    mkdir -p ${postgress_workdir}
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw ${postgress_workdir}
-    pushd ${postgress_workdir} >& /dev/null
-
-    local postgress_dist_file=${postgress_dist_url##*/}
-    #strip off .tar.gz at the end
-    postgress_dist_dir=$(echo ${postgress_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-
-    #There is this pesky case of having a zero sized dist file... WTF!?
-    if [ -e ${postgress_dist_file} ]; then
-        ls -l ${postgress_dist_file}
-        local size=$(stat -c%s ${postgress_dist_file})
-        (( size == 0 )) && rm -v ${postgress_dist_file}
-    fi
-
-    #Check to see if we have postgres distribution directory
-    if [ ! -e ${postgress_dist_dir} ]; then
-        echo "Don't see postgress distribution dir ${postgress_dist_dir}"
-        if [ ! -e ${postgress_dist_file} ]; then
-            echo "Don't see postgress distribution file ${postgress_dist_file} either"
-            echo "Downloading Postgress from ${postgress_dist_url}"
-            wget -O ${postgress_dist_file} ${postgress_dist_url}
-            [ $? != 0 ] && echo " ERROR: Could not download Postgress:${postgress_dist_file}" && popd && checked_done 1
-            echo "unpacking ${postgress_dist_file}..."
-            tar xzf ${postgress_dist_file}
-            [ $? != 0 ] && echo " ERROR: Could not extract Postgress: ${postgress_dist_file}" && popd && checked_done 1
-        fi
-    fi
-
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it and go from there....
-    if [ -e ${postgress_dist_file} ] && [ ! -e ${postgress_dist_dir} ]; then
-        echo "unpacking ${postgress_dist_file}..."
-        tar xzf ${postgress_dist_file}
-    fi
-
-    pushd ${postgress_dist_dir}
-    ((force_install)) && make clean
-    echo "./configure --prefix=${postgress_install_dir} --enable-thread-safety"
-    if ./configure --prefix=${postgress_install_dir} --enable-thread-safety \
-        && gmake -j ${num_cpus} \
-        && gmake install \
-        && cd contrib/tablefunc/ \
-        && gmake
-    then
-        stop_postgress
-        gmake install
-        echo "Successfully Configured and Built PostgresSQL in: ${postgress_install_dir}"
-    else
-        echo" ERROR: Could NOT successfully build POSTGRESS!"
-        popd >& /dev/null
-        checked_done 1
-    fi
-
-    popd >& /dev/null
-
     if ((upgrade)); then
-        echo "UPGRADE of postgress to ${postgress_version} completed"
+        echo "UPGRADE of postgress completed"
         echo "It is recommended to restart the entire node as to not leave"
         echo "orphaned db connections that have been created by the rest of"
         echo "the application stack"
@@ -634,9 +595,8 @@ setup_postgress() {
     id $pg_sys_acct >& /dev/null
     [ $? != 0 ] && grep $pg_sys_acct /etc/passwd && echo " ERROR: Problem with $pg_sys_acct creation!!!" && checked_done 1
 
-    chown -R $pg_sys_acct $postgress_install_dir
-    chgrp -R $pg_sys_acct_group $postgress_install_dir
-
+    chown -R $pg_sys_acct $postgress_install_dir $postgress_bin_dir
+    chgrp -R $pg_sys_acct_group $postgress_install_dir $postgress_bin_dir
 
     #Create the database:
     mkdir -p ${postgress_install_dir}/data
@@ -644,25 +604,36 @@ setup_postgress() {
     [ $? != 0 ] && " ERROR: Could not change ownership of postgres' data to \"$pg_sys_acct\" user" && popd && checked_done 1
 
     chmod 700 $postgress_install_dir/data
-    su $pg_sys_acct -c "$postgress_install_dir/bin/initdb -D $postgress_install_dir/data"
+    su $pg_sys_acct -c "$postgress_bin_dir/initdb -D $postgress_install_dir/data"
     mkdir $postgress_install_dir/log
     chown -R $pg_sys_acct $postgress_install_dir/log
     [ $? != 0 ] && " ERROR: Could not change ownership of postgres' log to \"$pg_sys_acct\" user" && popd && checked_done 1
-
 
     #Start the database
     start_postgress
 
     #Check to see if there is a ${postgress_user} already on the system if not, make one
-    if [ ! -x ${postgress_install_dir}/bin/psql ] ; then
+    if [ ! -x ${postgress_bin_dir}/psql ] ; then
         echo " ERROR: psql not found after install!" && checked_done 1
     fi
+    
     if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
         echo "${postgress_user} exists!! :-)";
     else
 		while [ 1 ]; do
-        echo "$postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user"
-        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:=${security_admin_password}}} $postgress_install_dir/bin/createuser -U $pg_sys_acct -P -s -e $postgress_user
+			while [ 1 ]; do
+				echo "Enter password for postgres user $postgress_user: ";
+				read -s p1;
+				echo "Re-enter password for postgres user $postgress_user: ";
+				read -s p2;
+				if [ "$p1" != "$p2" ]; then
+					echo "The passwords did not tally. Enter same password twice";
+					continue;
+					else
+					break;
+				fi
+			done
+		sudo -u $pg_sys_acct $postgress_bin_dir/psql -c "create user $postgress_user with superuser password '$p1';"
 		if [ $? -eq 0 ]; then popd && checked_done 0; break; fi
 		done
     fi
@@ -732,8 +703,10 @@ write_postgress_env() {
     echo "export PGUSER=$PGUSER" >> ${envfile}
     echo "export PGHOST=$PGHOST" >> ${envfile}
     echo "export PGPORT=$PGPORT" >> ${envfile}
-    prefix_to_path PATH ${postgress_install_dir}/bin >> ${envfile}
-    prefix_to_path LD_LIBRARY_PATH ${postgress_install_dir}/lib >> ${envfile}
+    echo "export PGBINDIR=$PGBINDIR" >> ${envfile}
+    echo "export PGLIBDIR=$PGLIBDIR" >> ${envfile}
+    prefix_to_path PATH ${postgress_bin_dir} >> ${envfile}
+    prefix_to_path LD_LIBRARY_PATH ${postgress_lib_dir} >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
 }
@@ -747,17 +720,10 @@ write_postgress_install_log() {
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 start_postgress() {
     _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
-
     check_postgress_process && return 1
-
     echo "Starting Postgress..."
+	/etc/init.d/postgresql-9.4 start
     check_shmmax
-    echo "su $pg_sys_acct -c \"$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start\""
-    PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd:-${security_admin_password}}} su $pg_sys_acct -c "$postgress_install_dir/bin/pg_ctl -D $postgress_install_dir/data start"
-    [ $? != 0 ] && echo " ERROR: Could not start database!" && return 1
-
-    #NOTE: How long does it take for the database to come up? Set sleep appropriately
-    echo "Giving database time to startup... (3 seconds) "
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
     checked_done 0
@@ -766,25 +732,11 @@ start_postgress() {
 stop_postgress() {
 
     _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
-
-    sleep 1
-    #Stop the database
-    #su postgres -c "pg_ctl -D /usr/local/pgsql/data stop" #(gently stop server)
-    #
-
     check_postgress_process
     [ $? != 0 ] && return 1
-
-    echo
-    echo "stop postgress: su $pg_sys_acct -c \"pg_ctl -D $postgress_install_dir/data -m f stop\""
-    su $pg_sys_acct -c "pg_ctl -D $postgress_install_dir/data -m f stop" #(stop server immediately)
-    if [ $? != 0 ]; then
-        echo " WARNING: Unable to stop the database (nicely)"
-        echo " Hmmm...  okay no more mr nice guy... issuing \"killall postgres\""
-        killall postgres
-        [ $? != 0 ] && echo "Hmmm... still could not shutdown... do so manually"
-    fi
-    /bin/ps -elf | grep postgres | grep -v grep
+	/etc/init.d/postgresql-9.4 stop
+    check_shmmax
+	/bin/ps -elf | grep postgres | grep -v grep
     return 0
 }
 
@@ -795,7 +747,7 @@ test_postgress() {
     echo "----------------------------"
     echo
 
-    ${postgress_install_dir}/bin/psql --version
+    ${postgress_bin_dir}/psql --version
     [ $? != 0 ] && echo" ERROR: Could NOT successfully locate postgres installation!!" && popd >& /dev/null && checked_done 1
 
     start_postgress
@@ -943,16 +895,12 @@ setup_cdat() {
 # TODO - this all should be handled by yum
     yum -y install uvcdat
 
-    popd >& /dev/null
-
-
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
 
-    wget --no-check-certificate https://bootstrap.pypa.io/ez_setup.py
+    curl -k -O https://bootstrap.pypa.io/ez_setup.py
     ${cdat_home}/bin/python ez_setup.py
     ${cdat_home}/bin/easy_install pip
-    
 
     popd >& /dev/null
     echo
@@ -1569,7 +1517,7 @@ EOF
 }
 
 setup_sensible_confs() {
-	source /etc/esg.env
+	#source /etc/esg.env
 	tmpservername='placeholder.fqdn';
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
 	servername=$esgf_host;
@@ -1726,6 +1674,63 @@ _check_keystore_password() {
     return 0
 }
 
+write_ca_ans_templ(){
+cat <<EOF
+
+
+
+placeholder.fqdn-CA
+
+
+
+EOF
+}
+write_reqhost.ans_templ(){
+cat <<EOF
+
+
+placeholder.fqdn
+
+
+EOF
+}
+print_templ() {
+cat <<EOF
+# ca-signing-policy.conf, see ca-signing-policy.doc for more information
+#
+# This is the configuration file describing the policy for what CAs are
+# allowed to sign whoses certificates.
+#
+# This file is parsed from start to finish with a given CA and subject
+# name.
+# subject names may include the following wildcard characters:
+#    *    Matches any number of characters.
+#    ?    Matches any single character.
+#
+# CA names must be specified (no wildcards). Names containing whitespaces
+# must be included in single quotes, e.g. 'Certification Authority'. 
+# Names must not contain new line symbols. 
+# The value of condition attribute is represented as a set of regular 
+# expressions. Each regular expression must be included in double quotes.  
+#
+# This policy file dictates the following policy:
+#   -The Globus CA can sign Globus certificates
+#
+# Format:
+#------------------------------------------------------------------------
+#  token type  | def.authority |                value              
+#--------------|---------------|-----------------------------------------
+# EACL entry #1|
+
+ access_id_CA      X509         '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+
+ pos_rights        globus        CA:sign
+
+ cond_subjects     globus       '"/O=ESGF/OU=ESGF.ORG/*"'
+
+# end of EACL
+EOF
+}
 configure_tomcat() {
     #----------------------------
     # TOMCAT Configuration...
@@ -1780,7 +1785,6 @@ configure_tomcat() {
         else
             echo "store_password = ******"
         fi
-
         #NOTE:
         #As Reference on Distingueshed Names (DNs)
         #http://download.oracle.com/javase/1.4.2/docs/tooldocs/windows/keytool.html
@@ -1802,7 +1806,7 @@ configure_tomcat() {
         else
             [ -z $(echo $dname | sed -n 's#.*CN=\([^,]*\),.*#\1#p') ] && dname="CN=${esgf_host:-$(hostname --fqdn)}, ${dname}"
             echo "Using keystore DN = ${dname}"
-            $java_install_dir/bin/keytool -genkey -dname "${dname}" -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password}
+            $java_install_dir/bin/keytool -genkey -dname "${dname}" -alias ${keystore_alias} -keyalg RSA -keystore ${keystore_file} -validity 365 -storepass ${store_password} -keypass ${store_password}
             [ $? != 0 ] && echo " ERROR*: keytool genkey command failed" && popd && checked_done 1
         fi
         unset use_dn
@@ -1810,34 +1814,46 @@ configure_tomcat() {
     else
         echo "Using existing keystore \"${keystore_file}\""
     fi
-
-    local answer
-    read -e -p "Do you wish to generate a Certificate Signing Request at this time? $([ $genreq = "Y" ] && echo "[Y/n]" || echo "[y/N]") " answer
-            [ -n "${answer}" ] && genreq=${answer}
-            unset answer
-            ((DEBUG)) && echo " -> [${genreq}]"
-            if [ "${genreq}" == "Y" ] || [ "${genreq}" == "y" ]; then
-                echo "Generating Certificate Signing Request..."
-                #-------------------------------------------------
-                #Previous way, when we were generating the request directly from the keystore via keytool
-                #${java_install_dir}/bin/keytool -certreq -alias ${keystore_alias} -keystore ${keystore_file} -file ${HOME}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr
-                #[ $? != 0 ] && echo " ERROR: keytool certreq command failed"
-                #-------------------------------------------------
-
-                #Now we generate the key and cert externally, but maintaining the DN specified in the, just built, keystore
-                local dn=$(extract_keystore_dn ${keystore_file} ${store_password})
-                sleep 1
-                generate_ssl_key_and_csr ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.csr ${tomcat_conf_dir}/hostkey.pem ${dn}
-                if [ $? != 0 ]; then
-                    echo " ERROR: Unable to generate ssl key and csr! (you will have to run --generate-ssl-key-and-csr after installation)"
-                else
-                    write_as_property node_dn ${dn}
-                fi
-
-                chown -R ${installer_uid}:${installer_gid} ${esgf_host:-$(hostname --fqdn)}-esg-node.csr
-            fi
-
-
+	hostname=$esgf_host;
+	mkdir -p /etc/tempcerts;
+	cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl
+	mkdir CA
+	write_ca_ans_templ >setupca.ans.tmpl
+	write_reqhost.ans_templ >reqhost.ans.tmpl
+	echo -e "y\ny" >setuphost.ans
+	cat setupca.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >setupca.ans
+	cat reqhost.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >reqhost.ans
+    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/CA.pl >CA.pl
+    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/openssl.cnf >openssl.cnf
+    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/myproxy-server.config >myproxy-server.config
+	perl CA.pl -newca <setupca.ans
+	openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
+	perl CA.pl -newreq-nodes <reqhost.ans
+	perl CA.pl -sign <setuphost.ans
+	openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
+	cp CA/private/cakey.pem cakey.pem
+	openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem
+	mv newkey.pem hostkey.pem
+	chmod 400 cakey.pem 
+	chmod 400 hostkey.pem
+	rm -f new*.pem
+	ESGF_OPENSSL=/usr/bin/openssl
+	cert=cacert.pem
+	tmpsubj='/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+	quotedtmpsubj=`echo "$tmpsubj" | sed 's/[./*?|]/\\\\&/g'`;
+	certsubj=`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;
+	quotedcertsubj=`echo "$certsubj" | sed 's/[./*?|]/\\\\&/g'`;
+	echo "quotedcertsubj=~$quotedcertsubj~";
+	localhash=`$ESGF_OPENSSL x509 -in $cert -noout -hash`;
+	tgtdir="globus_simple_ca_${localhash}_setup-0";
+	mkdir $tgtdir;
+	cp $cert $tgtdir/${localhash}.0;
+	print_templ >signing_policy_template;
+	sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;
+	tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
+	rm -rf $tgtdir;
+	rm -f signing_policy_template;
+	
     #Fetch/Copy truststore to $tomcat_conf_dir
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
@@ -1850,7 +1866,6 @@ configure_tomcat() {
                     [ $? != 0 ] && echo " ERROR: Could not fetch or copy ${fetch_file} for tomcat!!" && popd && checked_done 1
                 fi
             fi
-
 
     #NOTE: The truststore uses the java default password: "changeit"
 
@@ -1880,6 +1895,91 @@ configure_tomcat() {
             [ $? != 0 ] && " ERROR: Could not change group of esg's tomcat config dir to \"$tomcat_user\" user" && popd && checked_done 1
 
             popd #>& /dev/null
+}
+
+generate_esgf_csrs(){
+    [ -z "${esgf_host}" ] && get_property esgf_host
+	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
+	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
+	echo -e "You are strongly advised to obtain and install commercial CA issued certificates for the web container.\n\
+Do you still want to generate a CSR for the web container (N/y)?";
+	read response
+	if [ "$response" = "y" -o "$response" = "Y" ]; then
+		openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
+	fi
+	echo "Please mail the csr files for signing to Prashanth Dwarakanath <pchengi@nsc.liu.se> or Nicolas Carenton <ncarenton@ipsl.jussieu.fr>";
+	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
+	echo "If you also have web-container certs to install, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
+	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
+	
+
+}
+cert_howto(){
+cat <<EOF
+If you want to install a commercial CA issued certificate:
+esg-node --install-keypair <certificate file> <key file>
+When prompted for the cachain file, specify the chain file provided by your CA
+
+If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
+esg-node --generate-esgf-csr
+
+If you wish to install ESGF certificates:
+1. untar the entire contents of the tarball you received from Nicolas/Prashanth into /etc/esgfcerts
+2. esg-node --install-local-certs
+3. If you also have locally issued certificates for the webcontainer:
+esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem
+When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem
+EOF
+}
+install_local_certs(){
+	if [ "$1" = "firstrun" ]; then
+		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem" "myproxy-server.config")
+		certdir=/etc/tempcerts;
+	else
+		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem")
+		certdir=/etc/esgfcerts;
+	fi
+	cd $certdir;
+	missingfiles=0;
+	for fl in ${flist[@]}; do 
+		if [ ! -s $fl ]; then
+			missingfiles=1;
+			echo "File $fl is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
+		fi
+	done
+	cert=cacert.pem
+	localhash=`openssl x509 -in $cert -noout -hash`;
+	globuspack=globus_simple_ca_${localhash}_setup-0.tar.gz
+	if [ ! -s $globuspack ]; then
+			missingfiles=1;
+			echo "File $globuspack is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
+	fi
+	if [ $missingfiles -eq 1 ]; then
+		return;
+	fi
+	if [ "$1" = "firstrun" ]; then
+		cp myproxy-server.config /var/lib/myproxy/
+		cp myproxy-server.config /esg/config/myproxy/
+		cp openssl.cnf /etc/certs/
+		cp host*.pem /etc/certs/
+		cp cacert.pem /etc/certs/cachain.pem
+		mkdir /var/lib/myproxy/newcerts
+		mkdir /etc/esgfcerts
+		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
+		rm -rf /var/lib/globus-connect-server/grid-security
+		cd /var/lib/globus-connect-server && ln -s /etc/grid-security grid-security
+	fi
+	cd $certdir
+	cp cacert.pem /var/lib/myproxy/cacert.pem
+	cp cakey.pem /var/lib/myproxy/cakey.pem
+	if [ -s hostkey.pem -a -s hostcert.pem ]; then 
+		cp host*.pem /etc/grid-security/
+	fi
+	cp $globuspack /var/lib/myproxy/
+	cp $globuspack /etc/grid-security/certificates/
+	echo "Local installation of certs complete.";
 }
 
 setup_root_app() {
@@ -3179,7 +3279,7 @@ generate_ssl_key_and_csr() {
     fi
 
     echo "Generating 30 day temporary self-signed certificate... "
-    openssl x509 -req -days 30 -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
+    openssl x509 -req -days 30 -extensions v3_ca -in ${public_cert_req} -signkey ${private_key} -out ${public_cert_req%.*}.pem
     [ $? == 0 ] && [OK] || ([FAIL] && return 3)
     openssl x509 -noout -text -in ${public_cert_req%.*}.pem
 
@@ -3188,8 +3288,8 @@ generate_ssl_key_and_csr() {
     echo "In Directory: $(pwd)"
     echo "Generated private key: $(ls ${private_key})"
     echo "Generated certificate: $(ls ${public_cert_req})"
-    echo "Please submit the certificate request to your Certificate Authority: (esgf-ca@lists.llnl.gov)"
-    echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
+    echo "Please obtain and install appropriate certificates at the earliest. Execute esg-node --cert-howto for details.";
+    #echo "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
     echo "--------------------------------------------------------"
     echo
 }
@@ -3346,7 +3446,7 @@ install_keypair() {
 
     local certfiles=()
     local certfile_entry
-    echo "Please enter your Certificate Athority's certificate chain file(s): [if in doubt: http://pcmdi6.llnl.gov/cacert.pem] "
+    echo "Please enter your Certificate Athority's certificate chain file(s)"
     echo " [enter each cert file/url press return, press return with blank entry when done]"
     echo
     while [ 1 ]; do
@@ -3354,6 +3454,16 @@ install_keypair() {
         [ -z ${certfile_entry} ] && break
         certfiles=("${certfiles[@]} ${certfile_entry}")
     done
+	cp ${private_key} /etc/certs/hostkey.pem
+	cp ${public_cert} /etc/certs/hostcert.pem
+	echo -n >/etc/certs/tmpchain
+	for cert in ${certfiles[@]}; do
+		cat $cert >>/etc/certs/tmpchain
+	done
+	cp /etc/certs/tmpchain /etc/certs/cachain.pem
+	chmod 400 /etc/certs/hostkey.pem
+	chmod 644 /etc/certs/hostcert.pem
+	chmod 644 /etc/certs/cachain.pem
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
     if [ $? != 0 ]; then
@@ -5680,6 +5790,9 @@ done_remark() {
     echo "Your specified \"default\" peer : $(echo_strong [$esgf_default_peer])"
     echo "Your specified \"index\" peer - : $(echo_strong [${esgf_index_peer}]) (url = http://${esgf_index_peer}/)"
     echo "Your specified \"idp\" peer --- : $(echo_strong [${esgf_idp_peer}]) (name = ${esgf_idp_peer_name})"
+    echo "Your temporary certificates have been placed in $(echo_strong /etc/tempcerts)"
+	echo "You can install them by executing this : $(echo_strong esg-node --install-keypair /etc/tempcerts/hostcert.pem /etc/tempcerts/hostkey.pem)"
+	echo "When promped for the chainfile, specify: $(echo_strong /etc/tempcerts/cacert.pem)";
 
     if [ -d "${thredds_content_dir}/thredds" ]; then
         echo
@@ -5796,6 +5909,21 @@ main() {
 				--fix-perms | fixperms)
 					debug_print "fixing permissions"
 					setup_sensible_confs
+					exit 0;
+					;;
+				--install-local-certs | installlocalcerts)
+					debug_print "installing local certs"
+					install_local_certs
+					exit 0;
+					;;
+				--generate-esgf-csrs | generateesgfcsrs)
+					debug_print "generating esgf csrs"
+					generate_esgf_csrs
+					exit 0;
+					;;
+				--cert-howto | certhowto)
+					debug_print "cert howto"
+					cert_howto
 					exit 0;
 					;;
                 --verify | --test)
@@ -6598,6 +6726,7 @@ main() {
     #(gridftp)
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
 
     #---------------------------------------

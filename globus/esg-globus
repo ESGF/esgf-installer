@@ -172,7 +172,7 @@ mhash_workdir=${workdir}/extra/mhash
 pam_pgsql_dist_url=${myproxy_dist_url_base}/pam-pgsql-${pam_pgsql_version}.tar.gz
 pam_pgsql_workdir=${workdir}/extra/pam_pgsql
 pam_pgsql_install_dir=${install_prefix}/pam
-postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
+postgress_jar=${postgress_jar:-postgresql-9.4-1201.jdbc41.jar}
 bison_dist_url=http://ftp.gnu.org/gnu/bison/bison-${bison_version}.tar.gz
 flex_dist_url=http://downloads.sourceforge.net/project/flex/flex/flex-${flex_version}/flex-${flex_version}.tar.gz
 gsoap_dist_url=${esg_dist_url}/thirdparty/gsoap_${gsoap_version}-nm-patched.tar.gz
@@ -231,6 +231,10 @@ setup_globus_services() {
     echo "*******************************"
     echo
 
+	if [ -p /tmp/outputpipe ]; then
+		echo "go-ahead" >/tmp/outputpipe;
+	fi
+
     local dosetup
     local default_val="Y"
 
@@ -247,7 +251,7 @@ setup_globus_services() {
         echo "Old globus version: $(/usr/bin/globus-version)"
     fi
 
-    read -p "Do you want to continue with the Globus installation and setup? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
+    read -e -p "Do you want to continue with the Globus installation and setup? $([ "$default_val" = "Y" ] && echo "[Y/n]" || echo "[y/N]") " dosetup
     [ -z "${dosetup}" ] && dosetup=$default_val
 
     if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -575,7 +579,7 @@ start_gridftp_usage_parsing() {
              if [[ "$new_cron" != "$current_cron" ]]; then
                 echo "Current crontab for user ($installer_user):"; echo "$current_cron"
                 echo "will be updated to:"; echo "$new_cron"
-                read -p "Is this ok ? [Y/n]" answ
+                read -e -p "Is this ok ? [Y/n]" answ
                 if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
                     echo "$current_cron" > $backup_cron
                     crontab -u $username <(echo "$new_cron" | awk '!x[$0]++')

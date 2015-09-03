@@ -272,7 +272,7 @@ setup_globus_services() {
 
         create_globus_account
         install_globus datanode
-        setup_gcs_io
+        setup_gcs_io firstrun
         setup_gridftp_metrics_logging
 
         shift
@@ -312,7 +312,7 @@ setup_globus_services() {
 
         shift
         install_globus gateway
-        setup_gcs_id
+        setup_gcs_id firstrun
         config_myproxy_server $@
         [ $? != 0 ] && return 3
 
@@ -730,7 +730,7 @@ SharingRestrictPaths = R/
 Server = ${myproxy_hostname}
 EOF
 
-    if [ -d /etc/esgcerts ]; then
+    if [ "x$1" = "xfirstrun" ]; then
         pushd /etc/esgfcerts >& /dev/null
     else
         pushd /etc/tempcerts >& /dev/null
@@ -1097,10 +1097,10 @@ SharingRestrictPaths = R/
 Server = %(HOSTNAME)s
 EOF
 
-    if [ -d /etc/esgcerts ]; then
-        pushd /etc/esgfcerts >& /dev/null
-    else
+    if [ "x$1" = "xfirstrun" ]; then
         pushd /etc/tempcerts >& /dev/null
+    else
+        pushd /etc/esgfcerts >& /dev/null
     fi
     myproxyca_dir=/var/lib/globus-connect-server/myproxy-ca
     [ ! -d ${myproxyca_dir}/newcerts ] && mkdir -p ${myproxyca_dir}/newcerts && chmod 700 ${myproxyca_dir}

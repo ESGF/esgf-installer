@@ -1,9 +1,12 @@
 #!/bin/bash
+breaksold='v2.0-RC4'
+esgfver=`esg-node --version|head -1|cut -d ' ' -f2`
 mkfifo /tmp/inputpipe
 mkfifo /tmp/outputpipe
 sleep 7200 >/tmp/inputpipe &
 proc=$!
 declare -A va
+declare -A clearedips
 trap ctrl_c INT
 function ctrl_c(){
 	echo "got a ctrl-c. Cleaning up.";
@@ -31,7 +34,23 @@ function get_entry(){
 	read -e -p "Enter $1: " l1;
 	echo "$l1";
 }
+function get_cleared_ips(){
 
+	ct=0
+	while [ 1 ]; do
+		echo -e "Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses";
+		read ip;
+		clearedips[$ct]=$ip;
+		ct=`expr $ct + 1`;
+		echo "Do you wish to allow further ips? y/n";
+		read resp
+		clearedips[$ct]=$resp;
+		if [ "$resp" != 'y' -a "$resp" != 'Y' ]; then
+			break;
+		fi
+		ct=`expr $ct + 1`;
+	done
+}
 function load_pipe(){
 	if [ $tosave -eq 1 ]; then
 		mkdir -p /opt/esgf
@@ -40,8 +59,14 @@ function load_pipe(){
 	numprompts=`cat /tmp/answers|wc -l`;
 	numpauses=`cat /tmp/answers|grep pause|wc -l`;
 	numprompts=`expr $numprompts - $numpauses`;
+	if cat /tmp/answers|grep ^'#' >/dev/null; then
+		numprompts=`expr $numprompts - 1`;
+	fi
 	promptct=0
 	while read line; do
+		if echo $line|grep ^'#' >/dev/null; then
+			continue;
+		fi
 		ans=`echo $line|cut -d ':' -f1`;
 		if [ "$ans" = "blank" ]; then
 			ans="";
@@ -78,10 +103,23 @@ if [ "$choice" = "y" -o "$choice" = "Y" ]; then
 		fi
 		echo "File $anspath does not exist";
 	done
-	cp $anspath /tmp/answers;
-	echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
-	echo "Use CTRL-C at the end of the install, to cleanup.";
-	load_pipe
+	brokenanswers=0
+	if cat $anspath|grep ^'#' >/dev/null; then
+		oldver=`head -1 $anspath|cut -d '#' -f2`;
+		if ! echo $oldver|grep $breaksold >/dev/null; then
+			brokenanswers=1;
+		fi
+	else
+		brokenanswers=1;
+	fi
+	if [ $brokenanswers -eq 0 ]; then
+		cp $anspath /tmp/answers;
+		echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
+		echo "Use CTRL-C at the end of the install, to cleanup.";
+		load_pipe
+	else
+		echo -e "The answers file specified by you was incompatible with this version of the installer and will not be used.\n";
+	fi
 fi
 ip addr show|grep -w inet|grep -v 127.0.0.1|awk '{print $2}'|cut -d '/' -f1 >ips
 declare -A ipaddrs
@@ -114,18 +152,18 @@ if [ $numl -gt 1 ]; then
 		fi
 	done
 
-vl=('fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
+vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'fix-11' 'get-cleared-ips' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 	va['ipchoice']=$choice;
 	else
-vl=('fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
+vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'fix-11' 'get-cleared-ips' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 fi
-numprompts=${#vl[@]}
+va['esgfver']="#$esgfver"
 va['fix-1']='y'
 va['fqdn']=`get_entry 'fqdn'`
 va['adminpass']=`get_double_entry 'admin-password'`
@@ -145,9 +183,12 @@ va['publisherpassword']=`get_entry 'publisher password'`
 va['fix-6']=${va['adminpass']}
 va['fix-7']=${va['adminpass']}
 va['fix-8']='blank'
-va['fix-9']='blank'
-va['fix-10']='y'
-va['fix-11']=${va['orgname']}
+va['fix-9']='blank' #publisher system or user
+va['fix-10']='y' #is everything correct?
+va['fix-11']=${va['orgname']} #org id
+#now for setup_apache_frontend
+#adding the cleared ips with intermediate 'y's and final non-y response.
+get_cleared_ips
 va['fix-12']='y'
 #va['fix-13']='y'
 va['fix-14']=${va['adminpass']}
@@ -169,6 +210,12 @@ va['fix-27']='y'
 va['fix-28']='y'
 echo -n >/tmp/answers;
 for val in ${vl[@]}; do
+	if [ "$val" = "get-cleared-ips" ]; then
+		for i in ${clearedips[@]}; do
+			echo "$i:cleared-ip-response" >>/tmp/answers;
+		done
+		continue;
+	fi
 	ans=${va[$val]}
 	echo $ans:$val >>/tmp/answers;
 done

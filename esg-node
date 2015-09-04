@@ -1546,6 +1546,24 @@ setup_apache_frontend() {
 		#/usr/sbin/apachectl stop > /dev/null;
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
+		declare -A ips
+		ct=0
+		while [ 1 ]; do
+			echo -e "Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses";
+			read ip;
+			ips[$ct]=$ip;
+			echo "Do you wish to allow further ips? y/n";
+			read resp
+			if [ "$resp" != 'y' -a "$resp" != 'Y' ]; then
+				break;
+			fi
+			ct=`expr $ct + 1`;
+		done
+		allowipstr=""
+		for i in ${ips[@]}; do
+			allowipstr=${allowipstr}"\tAllow from $i\n";
+		done
+		sed -i "s/\#insert-permitted-ips-here/\#insert-permitted-ips-here\n$allowipstr/" /etc/httpd/conf/esgf-httpd.conf
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -1558,6 +1576,9 @@ tomcat_port_check() {
     local ret_all=0
     echo "checking connection at all ports described in ${tomcat_install_dir}/conf/server.xml"
     while read port key value; do
+		if [ "$port" = "8223" ]; then
+			continue;
+		fi
         echo -n "checking localhost port [${port}]"
         local wait_time=5
         local ret=1

@@ -500,7 +500,7 @@ setup_postgress() {
         echo
 
 
-    yum -y install postgresql-server postgresql-devel
+    yum -y install postgresql postgresql-server postgresql-devel
 
     local default="Y"
     ((force_install)) && default="N"
@@ -704,7 +704,7 @@ start_postgress() {
     _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
     check_postgress_process && return 1
     echo "Starting Postgress..."
-	/etc/init.d/postgresql-9.4 start
+	/etc/init.d/postgresql start
     check_shmmax
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
@@ -716,7 +716,7 @@ stop_postgress() {
     _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
     check_postgress_process
     [ $? != 0 ] && return 1
-	/etc/init.d/postgresql-9.4 stop
+	/etc/init.d/postgresql stop
     check_shmmax
 	/bin/ps -elf | grep postgres | grep -v grep
     return 0

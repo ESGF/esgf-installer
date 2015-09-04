@@ -154,17 +154,17 @@ if [ $numl -gt 1 ]; then
 
 vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'get-cleared-ips' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 	va['ipchoice']=$choice;
 	else
 vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-'fix-11' 'get-cleared-ips' 'fix-12' 'fix-14' 'fix-15' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-20' 'fix-21' 'fix-22' 'globususername'
 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 fi
 va['esgfver']="#$esgfver"
-va['fix-1']='y'
+va['fix-1']='y' #are you ready to start
 va['fqdn']=`get_entry 'fqdn'`
 va['adminpass']=`get_double_entry 'admin-password'`
 va['fix-2']=${va['adminpass']}
@@ -180,34 +180,34 @@ va['fix-3']='n'
 va['fix-4']='blank'
 va['fix-5']='blank'
 va['publisherpassword']=`get_entry 'publisher password'`
-va['fix-6']=${va['adminpass']}
-va['fix-7']=${va['adminpass']}
-va['fix-8']='blank'
+va['fix-6']=${va['adminpass']} #postgres user dbsuper password
+va['fix-7']=${va['adminpass']} #postgres user dbsuper password
+va['fix-8']='blank' #default port selection for postgres
 va['fix-9']='blank' #publisher system or user
 va['fix-10']='y' #is everything correct?
 va['fix-11']=${va['orgname']} #org id
+va['fix-12']='y' #ok with generation of csr
+#va['fix-13']='y'
+va['fix-14']=${va['adminpass']} #truststore pass
+va['fix-15']=${va['adminpass']} #truststore pass
 #now for setup_apache_frontend
 #adding the cleared ips with intermediate 'y's and final non-y response.
 get_cleared_ips
-va['fix-12']='y'
-#va['fix-13']='y'
-va['fix-14']=${va['adminpass']}
-va['fix-15']=${va['adminpass']}
-va['fix-16']='blank'
-va['fix-17']='blank'
-va['fix-18']='n'
+va['fix-16']='blank' #dnode user
+va['fix-17']='blank' #stick with truststore password
+va['fix-18']='n' #don't want to create further users
 va['fix-19']='blank'
 va['fix-20']='blank'
-va['fix-21']='pause'
+va['fix-21']='pause' #waiting for globus pingback
 va['fix-22']='y'
 va['globususername']=`get_entry 'globus-username'`
 va['globuspassword']=`get_entry 'globus-password'`
-va['fix-23']='pause'
-va['fix-24']='y'
+va['fix-23']='pause' #waiting for globus pingback
+va['fix-24']='y' #do you want to install globus? hell, yeah!
 va['fix-25']=${va['globususername']}
 va['fix-26']=${va['globuspassword']}
-va['fix-27']='y'
-va['fix-28']='y'
+va['fix-27']='y' #install cron?
+va['fix-28']='y' #install another cron?
 echo -n >/tmp/answers;
 for val in ${vl[@]}; do
 	if [ "$val" = "get-cleared-ips" ]; then

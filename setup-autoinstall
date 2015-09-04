@@ -1,6 +1,6 @@
 #!/bin/bash
 breaksold='v2.0-RC4'
-esgfver=`esg-node --version|head -1|cut -d ' ' -f2`
+esgfver=`esg-node --version|grep Version|cut -d ' ' -f2`
 mkfifo /tmp/inputpipe
 mkfifo /tmp/outputpipe
 sleep 7200 >/tmp/inputpipe &

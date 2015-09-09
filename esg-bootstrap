@@ -39,14 +39,14 @@ get_latest() {
     [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}
 
     checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-functions
-    ((ret == 1)) && echo "ESGF Node install script (esg-functions) already up-to-date"
-    ((ret == 0)) && echo "Updated ESGF Node install script (esg-functions) from ESGF distribution site"
+    ((ret == 1)) && echo "esg-functions script (esg-functions) already up-to-date"
+    ((ret == 0)) && echo "Updated esg-functions script (esg-functions) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-functions
 
     checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-init
-    ((ret == 1)) && echo "ESGF Node install script (esg-init) already up-to-date"
-    ((ret == 0)) && echo "Updated ESGF Node install script (esg-init) from ESGF distribution site"
+    ((ret == 1)) && echo "esg-init script (esg-init) already up-to-date"
+    ((ret == 0)) && echo "Updated esg-init script (esg-init) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-init
     
@@ -57,10 +57,16 @@ get_latest() {
     chmod 755 esg-bootstrap
 
 	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/setup-autoinstall
-    ((ret == 1)) && echo "ESGF Node bootstrap script (esg-bootstrap) already up-to-date"
+    ((ret == 1)) && echo "ESGF Node Auto-install script (esg-bootstrap) already up-to-date"
     ((ret == 0)) && echo "Updated Auto-install script (setup-autoinstall) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 setup-autoinstall
+	
+	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-purge.sh
+    ((ret == 1)) && echo "ESGF Node Purge script (esg-purge.sh) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-purge.sh
 
     popd >& /dev/null
 }

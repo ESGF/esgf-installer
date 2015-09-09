@@ -273,6 +273,7 @@ setup_globus_services() {
         create_globus_account
         install_globus datanode
         setup_gcs_io firstrun
+        [ $? -ne 0 ] && return 3
         setup_gridftp_metrics_logging
 
         shift
@@ -313,6 +314,7 @@ setup_globus_services() {
         shift
         install_globus gateway
         setup_gcs_id firstrun
+        [ $? -ne 0 ] && return 3
         config_myproxy_server $@
         [ $? != 0 ] && return 3
 
@@ -741,8 +743,7 @@ EOF
     popd >& /dev/null
 
     globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
-
-    /etc/init.d/globus-gridftp-server stop
+    return $?
 
 }
 
@@ -1117,6 +1118,7 @@ EOF
     popd >& /dev/null
 
     globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
+    return $?
 
 }
 

@@ -577,8 +577,8 @@ setup_postgress() {
     id $pg_sys_acct >& /dev/null
     [ $? != 0 ] && grep $pg_sys_acct /etc/passwd && echo " ERROR: Problem with $pg_sys_acct creation!!!" && checked_done 1
 
-    chown -R $pg_sys_acct $postgress_install_dir $postgress_bin_dir
-    chgrp -R $pg_sys_acct_group $postgress_install_dir $postgress_bin_dir
+    chown -R $pg_sys_acct $postgress_install_dir
+    chgrp -R $pg_sys_acct_group $postgress_install_dir
 
     #Create the database:
     mkdir -p ${postgress_install_dir}/data

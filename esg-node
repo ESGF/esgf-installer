@@ -6726,7 +6726,7 @@ main() {
     # Index type install...
     #---------------------------------------
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "search subsystem" && setup_subsystem search esg-search ${index_config}
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "web-fe subsystem" && setup_subsystem web-fe esgf-web-fe $@
 	[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & INDEX_BIT)) != 0 ] && echo "cog subsystem" && setup_subsystem_new cog esgf-cog $@
         [ $((sel & TEST_BIT)) != 0 ]    && [ $((sel & INDEX_BIT)) != 0 ] && echo "test search subsystem" && \
             (source ${scripts_dir}/esg-search >& /dev/null && test_search_services)

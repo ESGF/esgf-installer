@@ -118,6 +118,8 @@ esg-purge-base () {
     rm -rf /usr/local/cog
     rm -rf /var/www/.python-eggs
 
+    rm -rf /tmp/inputpipe /tmp/outputpipe
+
     # WARNING: if $HOME has been reset from /root during an install
     # run, these directories could show up in a different place!
     rm -rf /root/.cache

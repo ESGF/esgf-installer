@@ -2297,6 +2297,9 @@ setup_tds() {
         password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${password} | cut -d ":" -f 2)
         echo ${password_hash}
 
+	#Escaping $ signs between password hash and salt in tomcat 8
+	password_hash=$(sed 's/\$/\\$/g' <<< $password_hash)
+
         #Create user entry in tomcat-users.xml for thredds user
         user_entry="<user username=\"${username}\" password=\"${password_hash}\" roles=\"tdrAdmin,tdsConfig\"\/>"
         #Note: Have to escape the last "/" in "/>"
@@ -4051,7 +4054,7 @@ verify_thredds_credentials() {
     local tomcat_password_hash
 
     echo "Inspecting tomcat... "
-    read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9]*\)\".*/\1 \2/p' ${tomcat_users_file}))
+    read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9\$]*\)\".*/\1 \2/p' ${tomcat_users_file}))
 
     echo -n "Inspecting publisher... "
     local thredds_username=$(sed -n 's@^[^#]*[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )

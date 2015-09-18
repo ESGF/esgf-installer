@@ -1971,6 +1971,13 @@ install_local_certs(){
 		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	fi
 	cd $certdir
+	cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
+	cp cakey.pem /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
+	if [ -s hostkey.pem -a -s hostcert.pem ]; then
+		cp host*.pem /etc/grid-security/
+	fi
+	cp $globuspack /var/lib/globus-connect-server/myproxy-ca/
+	cp $globuspack /etc/grid-security/certificates/
 	echo "Local installation of certs complete.";
 }
 

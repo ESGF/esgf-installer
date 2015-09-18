@@ -39,11 +39,11 @@ function get_cleared_ips(){
 	ct=0
 	while [ 1 ]; do
 		echo -e "Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses";
-		read ip;
+		read -e -p ip;
 		clearedips[$ct]=$ip;
 		ct=`expr $ct + 1`;
 		echo "Do you wish to allow further ips? y/n";
-		read resp
+		read -e -p resp
 		clearedips[$ct]=$resp;
 		if [ "$resp" != 'y' -a "$resp" != 'Y' ]; then
 			break;
@@ -86,18 +86,18 @@ function load_pipe(){
 	done
 }
 echo "Do you wish to save the answer file from this questionnaire for later use? (n/Y)"
-read choice;
+read -e -p choice;
 tosave=0
 if [ "$choice" = "y" -o "$choice" = "Y" ]; then
 	echo "Your choices will be stored in /opt/esgf/answers";
 	tosave=1;
 fi
 echo "Do you wish to load in an answer file from an earlier run? (y/N)"
-read choice;
+read -e -p choice;
 if [ "$choice" = "y" -o "$choice" = "Y" ]; then
 	while [ 1 ]; do
 		echo "Provide path to answer file";
-		read anspath;
+		read -e -p anspath;
 		if [ -s $anspath ]; then
 			break;
 		fi
@@ -123,7 +123,7 @@ if [ "$choice" = "y" -o "$choice" = "Y" ]; then
 fi
 while [ 1 ]; do
 	echo "setup-autoinstall supports type 'all' and type 'data' installs. Which type do you want to install?(all/data)";
-	read resp;
+	read -e -p resp;
 	if [ "$resp" != "all" -a "$resp" != "data" ]; then
 		echo "Invalid type specified";
 		continue;
@@ -136,14 +136,14 @@ if [ "$install_type" = "data" ]; then
 	ext_idp='y';
 else
 	echo "Do you wish to use an external IDP peer?(N/y)";
-	read resp;
+	read -e -p resp;
 	if [ "$resp" = "y" -o "$resp" = "Y" ]; then
 		ext_idp='y';
 	fi
 fi
 if [ "$ext_idp" = "y" ]; then
 	echo "Specify your IDP peer's FQDN:";
-	read idppeer;
+	read -e -p idppeer;
 fi
 ip addr show|grep -w inet|grep -v 127.0.0.1|awk '{print $2}'|cut -d '/' -f1 >ips
 declare -A ipaddrs
@@ -160,7 +160,7 @@ if [ $numl -gt 1 ]; then
 		for n in ${!ipaddrs[@]}; do
 			echo  "[$n] ${ipaddrs[$n]}";
 		done
-		read choice;
+		read -e -p choice;
 		invalid=1;
 		for n in ${!ipaddrs[@]}; do
 			if [ "$n" = "$choice" ]; then

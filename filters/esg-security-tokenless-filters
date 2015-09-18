@@ -204,7 +204,7 @@ get_orp_libs() {
     #------------------------------------------------------------------
     #NOTE: Make sure that this version matches the version that is in
     #the esg-orp project!!!
-    spring_version=${spring_version:-"3.2.2.RELEASE"}
+    spring_version=${spring_version:-"4.1.6.RELEASE"}
     #------------------------------------------------------------------
 
     #----------------------------

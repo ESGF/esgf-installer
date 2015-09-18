@@ -2086,14 +2086,22 @@ select_idp_peer() {
 
     #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
     #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
-	esgf_idp_peer_name=`echo $esgf_host| tr '[a-z]' '[A-Z]'`;
-	esgf_idp_peer=$esgf_host;
+    if [ $((sel & IDP_BIT)) != 0 ]; then
+		read -n -p "Do you wish to use an external IDP peer?(N/y):" input
+		if [ "$input" = '' ]; then
+			input='N';
+		fi
+	else
+		input='y'
+	fi
+    read -e -p "Please specify your IDP peer node's FQDN:" input
+	esgf_idp_peer_name=`echo $input| tr '[a-z]' '[A-Z]'`;
+	esgf_idp_peer=$input
     myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
-
     echo
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
-    if [ $((sel & DATA_BIT)) != 0 ] && [ "${esgf_host}" != "${esgf_idp_peer}" ]; then
+    if [ "${esgf_host}" != "${esgf_idp_peer}" ]; then
         if ! check_for_group_intersection_with ${esgf_idp_peer} ; then
             printf "
   ----------------------------------------------------------------------
@@ -6714,8 +6722,7 @@ main() {
     #---------------------------------------
     # Security Services Installation...
     #---------------------------------------
-        #[ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
-        setup_subsystem security esgf-security $@
+        [ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
         [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
 
     #---------------------------------------
@@ -6724,16 +6731,12 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
     #(myproxy - [depends on security backend in place])
-        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
-        [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
-        #[ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
-        [ $((sel & TEST_BIT))    != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
+        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
 
     #(gridftp)
-        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-        [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-        #[ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
-        [ $((sel & TEST_BIT))    != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
 
     #---------------------------------------

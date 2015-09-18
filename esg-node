@@ -1857,6 +1857,12 @@ configure_tomcat() {
 	tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
 	rm -rf $tgtdir;
 	rm -f signing_policy_template;
+	mkdir -p /etc/certs
+	cp openssl.cnf /etc/certs/
+	cp host*.pem /etc/certs/
+	cp cacert.pem /etc/certs/cachain.pem
+	mkdir /etc/esgfcerts
+	cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	
     #Fetch/Copy truststore to $tomcat_conf_dir
     #(first try getting it from distribution server otherwise copy Java's)
@@ -1962,13 +1968,6 @@ install_local_certs(){
 	fi
 	if [ $missingfiles -eq 1 ]; then
 		return;
-	fi
-	if [ "$1" = "firstrun" ]; then
-		cp openssl.cnf /etc/certs/
-		cp host*.pem /etc/certs/
-		cp cacert.pem /etc/certs/cachain.pem
-		mkdir /etc/esgfcerts
-		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	fi
 	cd $certdir
 	cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem

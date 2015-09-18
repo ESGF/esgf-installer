@@ -1971,6 +1971,13 @@ install_local_certs(){
 		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	fi
 	cd $certdir
+	cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
+	cp cakey.pem /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
+	if [ -s hostkey.pem -a -s hostcert.pem ]; then
+		cp host*.pem /etc/grid-security/
+	fi
+	cp $globuspack /var/lib/globus-connect-server/myproxy-ca/
+	cp $globuspack /etc/grid-security/certificates/
 	echo "Local installation of certs complete.";
 }
 
@@ -2296,6 +2303,9 @@ setup_tds() {
         [ ! -z "${input}" ] && password=${input}
         password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${password} | cut -d ":" -f 2)
         echo ${password_hash}
+
+	#Escaping $ signs between password hash and salt in tomcat 8
+	password_hash=$(sed 's/\$/\\$/g' <<< $password_hash)
 
         #Create user entry in tomcat-users.xml for thredds user
         user_entry="<user username=\"${username}\" password=\"${password_hash}\" roles=\"tdrAdmin,tdsConfig\"\/>"
@@ -4051,7 +4061,7 @@ verify_thredds_credentials() {
     local tomcat_password_hash
 
     echo "Inspecting tomcat... "
-    read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9]*\)\".*/\1 \2/p' ${tomcat_users_file}))
+    read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9\$]*\)\".*/\1 \2/p' ${tomcat_users_file}))
 
     echo -n "Inspecting publisher... "
     local thredds_username=$(sed -n 's@^[^#]*[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
@@ -6714,12 +6724,16 @@ main() {
     [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
     #(myproxy - [depends on security backend in place])
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
-        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
+        [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
+        #[ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
+        [ $((sel & TEST_BIT))    != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
 
     #(gridftp)
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+        [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+        #[ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+        [ $((sel & TEST_BIT))    != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
 
     #---------------------------------------

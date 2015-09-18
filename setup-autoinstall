@@ -128,7 +128,7 @@ while [ 1 ]; do
 		echo "Invalid type specified";
 		continue;
 	fi
-	install_type=resp;
+	install_type=$resp;
 	break;
 done
 ip addr show|grep -w inet|grep -v 127.0.0.1|awk '{print $2}'|cut -d '/' -f1 >ips

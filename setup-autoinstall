@@ -211,7 +211,7 @@ else
 	else
 		vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'ext-idp-choice' 'ext-idp-val' 'fix-19' 'fix-20'
+		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'ext-idp-val' 'fix-19' 'fix-20'
 		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
 	fi
 fi

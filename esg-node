@@ -2087,7 +2087,7 @@ select_idp_peer() {
     #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
     #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
     if [ $((sel & IDP_BIT)) != 0 ]; then
-		read -n -p "Do you wish to use an external IDP peer?(N/y):" input
+		read -e -p "Do you wish to use an external IDP peer?(N/y):" input
 		if [ "$input" = '' ]; then
 			input='N';
 		fi

@@ -2117,9 +2117,9 @@ select_idp_peer() {
 "
             local answer
             local default_answer="N" #always be safe.
-            read -e -p "Do you still wish to continue? [y/N] " answer
-            [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
-            [ "${answer}" = "N" ] && exit 1
+            #read -e -p "Do you still wish to continue? [y/N] " answer
+            #[ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
+            #[ "${answer}" = "N" ] && exit 1
 
         fi
     fi

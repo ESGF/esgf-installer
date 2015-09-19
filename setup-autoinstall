@@ -249,7 +249,9 @@ va['fix-16']='blank' #dnode user
 va['fix-17']='blank' #stick with truststore password
 va['fix-18']='n' #don't want to create further users
 if [ "$ext_idp" = "y" ]; then
-	va['ext-idp-choice']='y'
+	if [ "$install_type" = "all" ]; then
+		va['ext-idp-choice']='y'
+	fi
 	va['ext-idp-val']=$idppeer
 else
 	va['ext-idp-choice']='n'

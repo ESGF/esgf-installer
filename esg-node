@@ -2370,7 +2370,7 @@ setup_tds() {
     #replace the value for token "tds..content.root.path" with ${thredds_content_dir}
     local thredds_property_file=${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
     if [ -e "${thredds_property_file}" ]; then
-        sed -i.bak -e 's#tds.content.root.path=.*#tds.content.root.path='${thredds_content_dir}'#' ${thredds_property_file}
+	echo "tds.content.root.path=${thredds_content_dir}" >> ${thredds_property_file}
         chown -R ${tomcat_user}:${tomcat_group} ${thredds_property_file}
         chmod 644 ${thredds_property_file}
         echo "configured thredds content root -> $(egrep -e 'tds.content.root.path=.*' ${thredds_property_file})"
@@ -2449,10 +2449,6 @@ setup_tds() {
     done
 
     append_esgf_log4j_entries ${tomcat_install_dir}/webapps/thredds/WEB-INF/log4j.xml
-
-    #Move over XSLT files... (see Nicolas' email(ncarenton...fr) subj="ESGF1.5.0 TDS4.3.16" date:"5/27/13 8:30 AM PDT")
-    cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/xsl/ncssGrid* ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/resources/xsl/
-    cp -vp ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/idd/thredds/wmsConfig.xml ${thredds_content_dir}/thredds/
 
     [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
     [OK]

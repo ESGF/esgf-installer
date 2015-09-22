@@ -2381,6 +2381,9 @@ setup_tds() {
     fi
     #--------
 
+    #Getting ESGF specific appplicationContext.xml file
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/applicationContext.xml ${esg_dist_url}/thredds/applicationContext.xml
+
     #Here we want to make sure that there is the file - Ex: /esg/content/thredds/threddsConfig.xml exists.
     #If not go get it... (needed, since if the file is not there then re-init will not work - apparently)
     local thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl

@@ -79,94 +79,10 @@ setup_security_token_filters() {
     [ $? != 0 ] && return 1
     pushd $workdir >& /dev/null
     
-    install_security_token_filter && install_security_token_authorizer
+    install_security_token_authorizer
     
     popd >& /dev/null
     start_tomcat
-    return 0
-}
-
-#NOTE:This function will stop tomcat, it is up to the caller to restart tomcat!
-#This functionality - the use of token based filters is deprecated!!!
-
-#Takes 2 arguments: 
-# First  - The top level directory of the webapp where filter is to be installed.
-# Second - The file containing the filter entry xml snippet (optional: defaulted)
-install_security_token_filter() {
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/thredds}
-    local esg_filter_entry_file=${2:-esg-security-token-filters.xml}
-    local esg_filter_entry_pattern="<!--@@esg_security_token_filter_entry@@-->"
-
-    ! egrep ${esg_filter_entry_pattern} ${dest_dir}/WEB-INF/web.xml && printf " No Pattern Found In File [${dest_dir}/WEB-INF/web.xml] - skipping this filter setup\n" && return 1
-
-
-    echo
-    echo "*******************************"
-    echo "Installing Tomcat ESGF Token-based Security Filter... (deprecated)"
-    echo "(using hessian v${hessian_version})"
-    echo "*******************************"
-    echo
-    echo "Filter installation destination dir = ${dest_dir}"
-    echo "Filter entry file = ${esg_filter_entry_file}"
-    echo "Filter entry pattern = ${esg_filter_entry_pattern}"
-
-    #-----
-    #project generated jarfiles...
-    eske_jar=eske.jar
-    hessian_jar=hessian-${hessian_version}.jar
-    #-----
-
-    
-    #Installs esg filter into the web application's web.xml file, by replacing a
-    #place holder token with the contents of the filter snippet file
-    #"esg-security-token-filter.xml".  Copies the filter jar file to the web app's
-    #lib dir
-
-    
-    #pre-checking... make sure the files we need in the web app are there....
-    [ ! -e ${dest_dir}/WEB-INF ] && echo " ERROR: Could not find WEB-INF installation dir!!" && return 1
-    [ ! -e ${dest_dir}/WEB-INF/lib ] && echo " ERROR: Could not find WEB-INF/lib installation dir!!" && return 1
-    [ ! -e ${dest_dir}/WEB-INF/web.xml ] && echo " ERROR no web.xml file found!!" && return 1
-
-    stop_tomcat
-
-    pushd ${dest_dir}/WEB-INF/lib >& /dev/null
-    echo "Checking for / Installing required jars..."
-    [ ! -e ${eske_jar} ]  && echo "no eske jar found locally" && checked_get ${esg_dist_url}/filters/${eske_jar}; (( $? > 1 )) && popd && checked_done 1
-    [ ! -e ${hessian_jar} ]  && echo "no hessian jar found locally" && checked_get ${esg_dist_url}/filters/${hessian_jar}; (( $? > 1 )) && popd && checked_done 1
-    popd >& /dev/null
-
-    mkdir -p $workdir
-    [ $? != 0 ] && return 1
-    pushd $workdir >& /dev/null
-    
-    checked_get ${esg_security_filters_dist_url}/${esg_filter_entry_file}
-    esg_filter_entry_file=$(readlink -f ${esg_filter_entry_file}) #going to need full path for pattern replacement below
-    
-    popd >& /dev/null
-    
-    #----------------------
-    #Configuration...
-    pushd ${dest_dir}/WEB-INF >& /dev/null
-    [ $? != 0 ] && echo " ERROR: Could not find web application (${dest_dir})" && return 1
-    local target_file=web.xml
-
-    #Replace the filter's place holder token in the web app's web.xml file with the filter entry.
-    #Use utility function...
-    target_file=$(readlink -f ${target_file})
-    insert_file_at_pattern ${target_file} ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
-
-    local esgf_idp_peer_name=${esgf_idp_peer_name:-"ESG-PCMDI"}
-    local esgf_idp_peer=${esgf_idp_peer:-"pcmdi3.llnl.gov/esgcet"}
-
-    #Edit the web.xml file for the web app to include these token replacement values
-    echo -n "Replacing tokens... "
-    eval "perl -p -i -e 's/\\@node_host_ip_address\\@/${node_host_ip_address}/g' web.xml"; echo -n "*"
-    eval "perl -p -i -e 's/\\@esgf_idp_peer_name\\@/${esgf_idp_peer_name}/g' web.xml"; echo -n "*"
-    eval "perl -p -i -e 's#\\@esgf_idp_peer\\@#${esgf_idp_peer}#g' web.xml"; echo -n "*"
-    echo " [OK]"
-    popd >& /dev/null
-    #----------------------
     return 0
 }
 

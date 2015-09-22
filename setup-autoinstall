@@ -267,7 +267,7 @@ if [ "$install_type" = "all" ]; then
 	va['fix-24']='y' #do you want to install globus? hell, yeah!
 	va['fix-25']=${va['globususername']}
 	va['fix-26']=${va['globuspassword']}
-}
+fi
 va['fix-27']='y' #install cron?
 va['fix-28']='y' #install another cron?
 if [ "$ext_idp" = "y" ]; then

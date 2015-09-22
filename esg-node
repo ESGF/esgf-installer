@@ -2365,19 +2365,6 @@ setup_tds() {
 
     #See thredds_content_dir set in init() - default value is ${esg_root_dir}/content
 
-    #--------
-    #EDIT the thredds property file: ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
-    #replace the value for token "tds..content.root.path" with ${thredds_content_dir}
-    local thredds_property_file=${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
-    if [ -e "${thredds_property_file}" ]; then
-	echo "tds.content.root.path=${thredds_content_dir}" >> ${thredds_property_file}
-        chown -R ${tomcat_user}:${tomcat_group} ${thredds_property_file}
-        chmod 644 ${thredds_property_file}
-        echo "configured thredds content root -> $(egrep -e 'tds.content.root.path=.*' ${thredds_property_file})"
-    else
-        echo "WARNING: Could not file thredds' property file: ${thredds_property_file}"
-    fi
-
     echo "Please set the thredds content directory to: ${thredds_content_dir} in the following setup"
     #--------
 
@@ -2448,7 +2435,7 @@ setup_tds() {
         : $((wait_time--))
     done
 
-    append_esgf_log4j_entries ${tomcat_install_dir}/webapps/thredds/WEB-INF/log4j.xml
+    #append_esgf_log4j_entries ${tomcat_install_dir}/webapps/thredds/WEB-INF/log4j.xml
 
     [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
     [OK]

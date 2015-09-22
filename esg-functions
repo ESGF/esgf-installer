@@ -599,6 +599,8 @@ start_tomcat() {
         -Djava.awt.headless=true \
         -Dcom.sun.enterprise.server.ss.ASQuickStartup=false \
         -Dcatalina.home=${tomcat_install_dir} \
+        -Dtds.content.root.path=${thredds_content_dir} \
+	-Djava.util.prefs.userRoot=${thredds_content_dir}/thredds/javaUtilPrefs \
         -pidfile ${tomcat_pid_file} \
         -cp $(find $(readlink -f `pwd`/bin/) | grep .jar | xargs | perl -pe 's/ /:/g') \
         -outfile ${tomcat_install_dir}/logs/catalina.out \

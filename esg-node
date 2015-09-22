@@ -1127,6 +1127,10 @@ setup_esgcet() {
         read -e -p "What is your organization's id? [${esg_root_id}]: " input
         [ ! -z "${input}" ] && esg_root_id=${input}
 
+		if [ -p /tmp/outputpipe ]; then
+			echo "go-ahead" >/tmp/outputpipe;
+		fi
+
         echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
         mkdir -p ${publisher_home}
         ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}

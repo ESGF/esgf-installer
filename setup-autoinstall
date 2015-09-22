@@ -180,19 +180,19 @@ if [ $numl -gt 1 ]; then
 		if [ "$ext_idp" = "y" ]; then
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-19b' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
-			'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
+			'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'fix-29')
 		else
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-19b' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-21' 'fix-22' 'globususername'
 			'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 		fi
 	else
 		vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-19b' 'ext-idp-val' 'fix-20'
-		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
+		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-val' 'fix-20'
+		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
 	fi
 	va['ipchoice']=$choice;
 else
@@ -200,19 +200,19 @@ else
 		if [ "$ext_idp" = "y" ]; then
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-19b' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
-			'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
+			'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'fix-29')
 		else
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-19b' 'fix-20' 'fix-21' 'fix-22' 'globususername'
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-21' 'fix-22' 'globususername'
 			'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 		fi
 	else
 		vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-19b' 'ext-idp-val' 'fix-20'
-		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
+		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-val' 'fix-20'
+		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
 	fi
 fi
 va['esgfver']="#$esgfver"
@@ -228,9 +228,9 @@ va['peergroup']=`get_entry 'peergroup'`
 va['defaultpeer']=`get_entry 'defaultpeer'`
 va['publishendpoint']=`get_entry 'publishendpoint'`
 va['email']=`get_entry 'admin-email'`
-va['fix-3']='n'
-va['fix-4']='blank'
-va['fix-5']='blank'
+va['fix-3']='n' #external db?
+va['fix-4']='blank' #postgresurl
+va['fix-5']='blank' #postgresuser esgcet?
 va['publisherpassword']=`get_entry 'publisher password'`
 va['fix-6']=${va['adminpass']} #postgres user dbsuper password
 va['fix-7']=${va['adminpass']} #postgres user dbsuper password
@@ -238,7 +238,7 @@ va['fix-8']='blank' #default port selection for postgres
 va['fix-9']='blank' #publisher system or user
 va['fix-10']='y' #is everything correct?
 va['fix-11']=${va['orgname']} #org id
-va['fix-12']='y' #ok with generation of csr
+va['fix-12']='y' #is DN of csr ok?
 #va['fix-13']='y'
 va['fix-14']=${va['adminpass']} #truststore pass
 va['fix-15']=${va['adminpass']} #truststore pass
@@ -248,27 +248,31 @@ get_cleared_ips
 va['fix-16']='blank' #dnode user
 va['fix-17']='blank' #stick with truststore password
 va['fix-18']='n' #don't want to create further users
-va['fix-19']='blank'
-va['fix-19b']='pause' #waiting for pre-publish pingback
+va['fix-19']='blank' #routable ip address of this host
 if [ "$ext_idp" = "y" ]; then
 	if [ "$install_type" = "all" ]; then
 		va['ext-idp-choice']='y'
 	fi
 	va['ext-idp-val']=$idppeer
+	va['fix-20']='blank' #add certs
 else
 	va['ext-idp-choice']='n'
 fi
-va['fix-20']='blank'
 va['fix-21']='pause' #waiting for globus pingback
-va['fix-22']='y'
+va['fix-22']='y' #continue with globus installation
 va['globususername']=`get_entry 'globus-username'`
 va['globuspassword']=`get_entry 'globus-password'`
-va['fix-23']='pause' #waiting for globus pingback
-va['fix-24']='y' #do you want to install globus? hell, yeah!
-va['fix-25']=${va['globususername']}
-va['fix-26']=${va['globuspassword']}
+if [ "$install_type" = "all" ]; then
+	va['fix-23']='pause' #waiting for globus pingback
+	va['fix-24']='y' #do you want to install globus? hell, yeah!
+	va['fix-25']=${va['globususername']}
+	va['fix-26']=${va['globuspassword']}
+}
 va['fix-27']='y' #install cron?
 va['fix-28']='y' #install another cron?
+if [ "$ext_idp" = "y" ]; then
+	va['fix-29']='blank' #add certs to truststore
+fi
 if [ "$install_type" = "data" ]; then
 	va['install-compute']=`get_entry 'whether you wish to install COMPUTE role'`
 	va['fix-29']='blank'

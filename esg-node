@@ -2402,9 +2402,6 @@ setup_tds() {
     stop_tomcat
     start_tomcat
     start_postgress
-	if [ -p /tmp/outputpipe ]; then
-			echo "go-ahead" >/tmp/outputpipe;
-	fi
     #set in cdms setup (prerequisite)
     echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
     ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")

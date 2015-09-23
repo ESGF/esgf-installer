@@ -6696,7 +6696,7 @@ main() {
 
     #---filters (TDS)--
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
 #        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
 

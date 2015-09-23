@@ -2385,6 +2385,11 @@ setup_tds() {
     #Getting ESGF specific appplicationContext.xml file
     checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/applicationContext.xml ${esg_dist_url}/thredds/applicationContext.xml
 
+    #Getting jars needed by authorizationFilter, authenticationFilter and authenticationByIPFilter since TDS5 migration
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/lib/jdom-legacy-1.1.3.jar ${esg_dist_url}/filters/jdom-legacy-1.1.3.jar
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar ${esg_dist_url}/filters/commons-httpclient-3.1.jar
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar ${esg_dist_url}/filters/commons-lang-2.6.jar
+
     #Here we want to make sure that there is the file - Ex: /esg/content/thredds/threddsConfig.xml exists.
     #If not go get it... (needed, since if the file is not there then re-init will not work - apparently)
     local thredds_config_file_template_url=${esg_dist_url}/thredds/threddsConfig.xml.tmpl

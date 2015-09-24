@@ -5033,8 +5033,8 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
-#    local dashboard_pid=$(pgrep dashboard)
-#    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+    local dashboard_pid=$(pgrep dashboard)
+    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
     echo "---------------------------"
     echo
     return 0
@@ -5120,7 +5120,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-#    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
@@ -5773,11 +5773,11 @@ done_remark() {
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/"
 #    echo "http://${esgf_host}/esgf-node-manager"
-#    echo "http://${esgf_host}/esgf-dashboard"
+    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
- #       echo "http://${esgf_host}/esgf-desktop"
+        echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/esgf-web-fe"

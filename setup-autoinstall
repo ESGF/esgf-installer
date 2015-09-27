@@ -255,8 +255,8 @@ if [ "$ext_idp" = "y" ]; then
 	fi
 	va['ext-idp-val']=$idppeer
 	va['fix-20']='blank' #add certs
-else
-	va['ext-idp-choice']='n'
+#else
+#	va['ext-idp-choice']='n'
 fi
 va['fix-21']='pause' #waiting for globus pingback
 va['fix-22']='y' #continue with globus installation

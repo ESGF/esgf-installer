@@ -2091,13 +2091,14 @@ select_idp_peer() {
 		read -e -p "Do you wish to use an external IDP peer?(N/y):" input
 		if [ "$input" = '' ]; then
 			input='N';
+			esgf_idp_peer=$esgf_host
 		fi
 	else
 		input='y'
+    	read -e -p "Please specify your IDP peer node's FQDN:" input
+		esgf_idp_peer_name=`echo $input| tr '[a-z]' '[A-Z]'`;
+		esgf_idp_peer=$input
 	fi
-    read -e -p "Please specify your IDP peer node's FQDN:" input
-	esgf_idp_peer_name=`echo $input| tr '[a-z]' '[A-Z]'`;
-	esgf_idp_peer=$input
     myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
     echo
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"

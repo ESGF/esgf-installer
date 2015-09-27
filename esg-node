@@ -1127,6 +1127,7 @@ setup_esgcet() {
         read -e -p "What is your organization's id? [${esg_root_id}]: " input
         [ ! -z "${input}" ] && esg_root_id=${input}
 
+
         echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
         mkdir -p ${publisher_home}
         ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
@@ -1857,6 +1858,12 @@ configure_tomcat() {
 	tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
 	rm -rf $tgtdir;
 	rm -f signing_policy_template;
+	mkdir -p /etc/certs
+	cp openssl.cnf /etc/certs/
+	cp host*.pem /etc/certs/
+	cp cacert.pem /etc/certs/cachain.pem
+	mkdir /etc/esgfcerts
+	cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	
     #Fetch/Copy truststore to $tomcat_conf_dir
     #(first try getting it from distribution server otherwise copy Java's)
@@ -1962,13 +1969,6 @@ install_local_certs(){
 	fi
 	if [ $missingfiles -eq 1 ]; then
 		return;
-	fi
-	if [ "$1" = "firstrun" ]; then
-		cp openssl.cnf /etc/certs/
-		cp host*.pem /etc/certs/
-		cp cacert.pem /etc/certs/cachain.pem
-		mkdir /etc/esgfcerts
-		cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	fi
 	cd $certdir
 	cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
@@ -2087,14 +2087,22 @@ select_idp_peer() {
 
     #@@esgf_idp_peer_name@@ -> @@esgf_idp_peer@@  #Tokens in file
     #ESGF-PCMDI -> pcmdi3.llnl.gov/esgcet
-	esgf_idp_peer_name=`echo $esgf_host| tr '[a-z]' '[A-Z]'`;
-	esgf_idp_peer=$esgf_host;
+    if [ $((sel & INDEX_BIT)) != 0 ]; then
+		read -e -p "Do you wish to use an external IDP peer?(N/y):" input
+		if [ "$input" = '' ]; then
+			input='N';
+		fi
+	else
+		input='y'
+	fi
+    read -e -p "Please specify your IDP peer node's FQDN:" input
+	esgf_idp_peer_name=`echo $input| tr '[a-z]' '[A-Z]'`;
+	esgf_idp_peer=$input
     myproxy_endpoint=$(echo ${esgf_idp_peer} | sed 's{\(.*://\)*\([^/]*\)[/]*.*{\2{')
-
     echo
     echo "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
 
-    if [ $((sel & DATA_BIT)) != 0 ] && [ "${esgf_host}" != "${esgf_idp_peer}" ]; then
+    if [ "${esgf_host}" != "${esgf_idp_peer}" ]; then
         if ! check_for_group_intersection_with ${esgf_idp_peer} ; then
             printf "
   ----------------------------------------------------------------------
@@ -2110,9 +2118,9 @@ select_idp_peer() {
 "
             local answer
             local default_answer="N" #always be safe.
-            read -e -p "Do you still wish to continue? [y/N] " answer
-            [ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
-            [ "${answer}" = "N" ] && exit 1
+            #read -e -p "Do you still wish to continue? [y/N] " answer
+            #[ -n "${answer}" ] && answer=$(echo ${answer} | tr 'a-z' 'A-Z') || answer=${default_answer}
+            #[ "${answer}" = "N" ] && exit 1
 
         fi
     fi
@@ -2358,19 +2366,6 @@ setup_tds() {
 
     #See thredds_content_dir set in init() - default value is ${esg_root_dir}/content
 
-    #--------
-    #EDIT the thredds property file: ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
-    #replace the value for token "tds..content.root.path" with ${thredds_content_dir}
-    local thredds_property_file=${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/thredds/server/tds.properties
-    if [ -e "${thredds_property_file}" ]; then
-        sed -i.bak -e 's#tds.content.root.path=.*#tds.content.root.path='${thredds_content_dir}'#' ${thredds_property_file}
-        chown -R ${tomcat_user}:${tomcat_group} ${thredds_property_file}
-        chmod 644 ${thredds_property_file}
-        echo "configured thredds content root -> $(egrep -e 'tds.content.root.path=.*' ${thredds_property_file})"
-    else
-        echo "WARNING: Could not file thredds' property file: ${thredds_property_file}"
-    fi
-
     echo "Please set the thredds content directory to: ${thredds_content_dir} in the following setup"
     #--------
 
@@ -2386,6 +2381,14 @@ setup_tds() {
         created_brand_new_thredds_content_dir=1
     fi
     #--------
+
+    #Getting ESGF specific appplicationContext.xml file
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/applicationContext.xml ${esg_dist_url}/thredds/applicationContext.xml
+
+    #Getting jars needed by authorizationFilter, authenticationFilter and authenticationByIPFilter since TDS5 migration
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/lib/jdom-legacy-1.1.3.jar ${esg_dist_url}/filters/jdom-legacy-1.1.3.jar
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar ${esg_dist_url}/filters/commons-httpclient-3.1.jar
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar ${esg_dist_url}/filters/commons-lang-2.6.jar
 
     #Here we want to make sure that there is the file - Ex: /esg/content/thredds/threddsConfig.xml exists.
     #If not go get it... (needed, since if the file is not there then re-init will not work - apparently)
@@ -2404,7 +2407,6 @@ setup_tds() {
     stop_tomcat
     start_tomcat
     start_postgress
-
     #set in cdms setup (prerequisite)
     echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
     ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
@@ -2441,11 +2443,7 @@ setup_tds() {
         : $((wait_time--))
     done
 
-    append_esgf_log4j_entries ${tomcat_install_dir}/webapps/thredds/WEB-INF/log4j.xml
-
-    #Move over XSLT files... (see Nicolas' email(ncarenton...fr) subj="ESGF1.5.0 TDS4.3.16" date:"5/27/13 8:30 AM PDT")
-    cp -v ${tomcat_install_dir}/webapps/thredds/WEB-INF/xsl/ncssGrid* ${tomcat_install_dir}/webapps/thredds/WEB-INF/classes/resources/xsl/
-    cp -vp ${tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/idd/thredds/wmsConfig.xml ${thredds_content_dir}/thredds/
+    #append_esgf_log4j_entries ${tomcat_install_dir}/webapps/thredds/WEB-INF/log4j.xml
 
     [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to contact thredds page on this server" && checked_done 1
     [OK]
@@ -5035,8 +5033,8 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
-#    local dashboard_pid=$(pgrep dashboard)
-#    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+    local dashboard_pid=$(pgrep dashboard)
+    [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
     echo "---------------------------"
     echo
     return 0
@@ -5122,7 +5120,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-#    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
@@ -5775,11 +5773,11 @@ done_remark() {
     echo "In order to see if this node has been installed properly you may direct your browser to:"
     echo "http://${esgf_host}/"
 #    echo "http://${esgf_host}/esgf-node-manager"
-#    echo "http://${esgf_host}/esgf-dashboard"
+    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
- #       echo "http://${esgf_host}/esgf-desktop"
+        echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/esgf-web-fe"
@@ -6703,7 +6701,7 @@ main() {
 
     #---filters (TDS)--
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
 #        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
 
@@ -6721,19 +6719,15 @@ main() {
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------
-    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
+    [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
     #(myproxy - [depends on security backend in place])
-        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
-        [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
-        #[ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
-        [ $((sel & TEST_BIT))    != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
+        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & IDP_BIT)) != 0 ]  && (( ! no_globus )) && debug_print "calling... test_globus [${IDP_BIT}]"  && test_globus  $((TEST_BIT+IDP_BIT))  ${myproxy_config_args}
 
     #(gridftp)
-        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-        [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
-        #[ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
-        [ $((sel & TEST_BIT))    != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
+        [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
 
     #---------------------------------------
@@ -6755,7 +6749,7 @@ main() {
         fi
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem_new product-server esgf-product-server $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && setup_subsystem compute-tools esgf-compute-tools $@
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "access logging filter subsystem (COMPUTE)"  && service_name="las" extensions="ProductServer.do" setup_subsystem access-logging-filter filters $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "access logging filter subsystem (COMPUTE)"  && service_name="las" extensions="ProductServer.do" setup_subsystem access-logging-filter filters $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & COMPUTE_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)" && service_name="las" setup_subsystem security-tokenless-filters filters $@
 
     #---------------------------------------

@@ -593,12 +593,14 @@ start_tomcat() {
 
     pushd $tomcat_install_dir >& /dev/null
     [ $((sel & ALL_BIT)) != 0 ] && java_opts=" -Xmx2048m -server -Xms1024m -XX:MaxPermSize=512m $java_opts"
-    jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false org.apache.catalina.startup.Bootstrap"
+    jsvc_launch_command="JAVA_HOME=$java_install_dir ${tomcat_install_dir}/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false -Dcatalina.home=${tomcat_install_dir} -pidfile $tomcat_pid_file -cp $(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g') -outfile ${tomcat_install_dir}/logs/catalina.out -errfile ${tomcat_install_dir}/logs/catalina.err -user $tomcat_user $tomcat_opts $java_opts -Dsun.security.ssl.allowUnsafeRenegotiation=false -Dtds.content.root.path=${thredds_content_dir} org.apache.catalina.startup.Bootstrap"
     echo "$jsvc_launch_command"
     JAVA_HOME=${java_install_dir} ./bin/jsvc \
         -Djava.awt.headless=true \
         -Dcom.sun.enterprise.server.ss.ASQuickStartup=false \
         -Dcatalina.home=${tomcat_install_dir} \
+        -Dtds.content.root.path=${thredds_content_dir} \
+	-Djava.util.prefs.userRoot=${thredds_content_dir}/thredds/javaUtilPrefs \
         -pidfile ${tomcat_pid_file} \
         -cp $(find $(readlink -f `pwd`/bin/) | grep .jar | xargs | perl -pe 's/ /:/g') \
         -outfile ${tomcat_install_dir}/logs/catalina.out \
@@ -1319,7 +1321,7 @@ esgf_dist_mirror=""
 
 get_esgf_dist_mirror() {
 
-    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf" "dist.ceda.ac.uk/esgf" "aims1.llnl.gov/esgf")
+    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf" "dist.ceda.ac.uk/esgf" "aims1.llnl.gov/esgf" "esg-dn2.nsc.liu.se/esgf")
 
 	declare -A resarray
 	for m in "${esgf_dist_mirrors_list[@]}"; do
@@ -1342,7 +1344,8 @@ get_esgf_dist_mirror() {
 	done
 	if [ $outofsync -eq 1 ]; then
 		#lets use the master
-        esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
+        #esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
+        esgf_dist_mirror="http://esg-dn2.nsc.liu.se/esgf";
 		return;
 	fi
  

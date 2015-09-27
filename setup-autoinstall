@@ -185,7 +185,7 @@ if [ $numl -gt 1 ]; then
 		else
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-21' 'fix-22' 'globususername'
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'globususername'
 			'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 		fi
 	else
@@ -205,7 +205,7 @@ else
 		else
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'fix-21' 'fix-22' 'globususername'
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'globususername'
 			'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
 		fi
 	else
@@ -255,8 +255,8 @@ if [ "$ext_idp" = "y" ]; then
 	fi
 	va['ext-idp-val']=$idppeer
 	va['fix-20']='blank' #add certs
-#else
-#	va['ext-idp-choice']='n'
+else
+	va['ext-idp-choice']='n'
 fi
 va['fix-21']='pause' #waiting for globus pingback
 va['fix-22']='y' #continue with globus installation

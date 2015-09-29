@@ -1371,20 +1371,19 @@ get_esgf_dist_mirror() {
        flist[$i]=$m
         ((i++))
     done
-
+	master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
+	fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
+	outofsync=0
+	if [ "${resarray[$fastest]}" != "$master" ]; then #if the fastest mirror is not in sync with coffee
+		echo "$fastest is the fastest mirror, but is out-of-sync, hence overlooked";
+		outofsync=1;
+	fi
+	if [ $outofsync -eq 1 ]; then
+		#lets use the master
+        	esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
+		return;
+	fi
 	if [ -p /tmp/inputpipe ]; then
-		master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
-		fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
-		outofsync=0
-		if [ "${resarray[$fastest]}" != "$master" ]; then #if the fastest mirror is not in sync with coffee
-			echo "$fastest is the fastest mirror, but is out-of-sync, hence overlooked";
-			outofsync=1;
-		fi
-		if [ $outofsync -eq 1 ]; then
-			#lets use the master
-	        	esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
-			return;
-		fi
 		echo "Using the fastest mirror (${flist[1]})";
 		esgf_dist_mirror=${flist[1]};
 		return;

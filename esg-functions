@@ -1381,6 +1381,7 @@ get_esgf_dist_mirror() {
 	if [ $outofsync -eq 1 ]; then
 		#lets use the master
         	esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
+        	#esgf_dist_mirror="http://esg-dn2.nsc.liu.se/esgf";
 		return;
 	fi
 	if [ -p /tmp/inputpipe ]; then

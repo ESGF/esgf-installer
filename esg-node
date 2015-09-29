@@ -2096,6 +2096,8 @@ select_idp_peer() {
 		fi
 	else
 		input='y'
+	fi
+	if [ "$input" = "y" -o "$input" = "Y" ]; then
     	read -e -p "Please specify your IDP peer node's FQDN:" input
 		esgf_idp_peer_name=`echo $input| tr '[a-z]' '[A-Z]'`;
 		esgf_idp_peer=$input

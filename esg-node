@@ -2482,9 +2482,6 @@ test_tds() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
 
-    verify_thredds_credentials
-    [ $? != 0 ] && echo "(restarting tomcat to accept modified credential values...)" && stop_tomcat
-
     start_tomcat
     start_postgress
 

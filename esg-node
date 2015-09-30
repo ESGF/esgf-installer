@@ -5934,6 +5934,12 @@ main() {
                     debug_print "VERIFY SERVICES"
                     (( (sel & TEST_BIT) == 0 )) && ((sel+=TEST_BIT))
                     debug_print "sel = $sel "
+                    test_postgress
+                    test_cdat
+                    test_esgcet
+                    test_tomcat
+                    test_tds
+                    exit 0;
                     ;;
                 --type | -t | --flavor)
                 #TODO: look for next arg if "data" node or if "index" node set the selection bit accordingly

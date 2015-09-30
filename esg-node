@@ -1584,7 +1584,7 @@ tomcat_port_check() {
         local wait_time=5
         local ret=1
         while [[ $wait_time > 0 ]]; do
-            curl http://localhost:${port} >& /dev/null
+            curl -k http://localhost:${port} >& /dev/null
             ret=$?
             [ $ret == 0 ] && break
             sleep 1

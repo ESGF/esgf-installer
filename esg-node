@@ -6809,6 +6809,12 @@ main() {
         debug_print "(esg_datanode: cleaning up etc...)"
         chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
 
+    if [ $((sel & IDP_BIT)) != 0 ]; then	
+	export PGPASSWORD=${pg_sys_acct_passwd}
+
+	echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.
+	psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
+    fi
 
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid

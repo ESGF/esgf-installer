@@ -27,8 +27,8 @@ init() {
     cdat_version=${cdat_version:-"2.2.0"}
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
-    esgcet_version=${esgcet_version:-"2.13.6"}
-    publisher_tag=${publisher_tag:-"v2.13.6"}
+    esgcet_version=${esgcet_version:-"2.14.0"}
+    publisher_tag=${publisher_tag:-"v2.14.0"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.7.5"}
@@ -45,13 +45,13 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.4.10"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"3.9.25"}
+    esg_search_version=${esg_search_version:-"3.9.26"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.6.5"}
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.13"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.3.14"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
 
     #see esgf-desktop project:

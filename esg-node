@@ -1565,6 +1565,7 @@ setup_apache_frontend() {
 			allowipstr=${allowipstr}"\tAllow from $i\n";
 		done
 		sed -i "s/\#insert-permitted-ips-here/\#insert-permitted-ips-here\n$allowipstr/" /etc/httpd/conf/esgf-httpd.conf
+		cat /tmp/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -1867,7 +1868,6 @@ configure_tomcat() {
 	cp host*.pem /etc/certs/
 	cp cacert.pem /etc/certs/cachain.pem
 	mkdir /etc/esgfcerts
-	cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	
     #Fetch/Copy truststore to $tomcat_conf_dir
     #(first try getting it from distribution server otherwise copy Java's)

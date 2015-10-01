@@ -6809,7 +6809,7 @@ main() {
         debug_print "(esg_datanode: cleaning up etc...)"
         chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
 
-    if [ $((sel & INDEX_BIT)) != 0 ]; then	
+    if [ $((sel & IDP_BIT)) != 0 ]; then	
 	export PGPASSWORD=${pg_sys_acct_passwd}
 
 	echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.

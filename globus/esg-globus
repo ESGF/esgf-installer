@@ -649,6 +649,11 @@ post_gridftp_jail_setup() {
 
     if $(echo "${gridftp_chroot_jail}" | grep "${esg_root_dir}" >& /dev/null); then echo "*"; else (echo "illegal chroot location: ${gridftp_chroot_jail}" && return 1); fi
 
+    # Add a test data file if already not added
+    if [ ! -f ${gridftp_chroot_jail}/esg_dataroot/test/sftlf.nc ]; then
+        mkdir -p ${gridftp_chroot_jail}/esg_dataroot/test
+        echo test > ${gridftp_chroot_jail}/esg_dataroot/test/sftlf.nc
+    fi
 
     echo -n "writing sanitized passwd file to [${gridftp_chroot_jail}/etc/passwd]"
     if [ -e ${gridftp_chroot_jail}/etc/passwd ]; then
@@ -679,19 +684,21 @@ EOF
 }
 
 setup_gcs_io() {
-    echo "*******************************"
-    echo " Rgistering the Data node with Globus Platform and fetching a host certificate"
-    echo "*******************************"
+    echo '*******************************'
+    echo ' Registering the Data node with Globus Platform'
+    echo '*******************************'
     echo
-    echo "NOTE: You MUST have created a Globus account for this node."
-    echo
-    echo "   https://globus.org/SignUp"
+    echo 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
+    echo 'download data through Globus. This uses the GridFTP server on the data node.'
+    echo 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
+    echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
+    echo 'go to www.globus.org/SignUp.'
     echo
 
     if [ -z "$GLOBUS_USER" ]; then
         local input
         while [ 1 ]; do
-            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            read -e -p "Please provide a Globus username [${globus_user}]: " input
             [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
             [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
         done
@@ -701,7 +708,7 @@ setup_gcs_io() {
     if [ -z "$GLOBUS_PASSWORD" ]; then
         local input
         while [ 1 ]; do
-            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
             [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
             [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
         done
@@ -870,7 +877,7 @@ test_auth_service() {
     echo -n "Testing authorization service on ${esgf_host} ... "
     ! ${adq_client} https://${esgf_host}/esg-orp/saml/soap/secure/authorizationService.htm https://${esgf_host}/esgf-idp/openid/rootAdmin gsiftp://${esgf_host}:${gridftp_server_port}//esg_dataroot/test/sftlf.nc | grep -q 'NOT PERMIT' >& /dev/null
     local ret=$?
-    [ ${ret} == 0 ] && echo "[OK]" || echo "[FAIL]"
+    [ ${ret} == 0 ] && [OK] || [FAIL]
     return ${ret}
 }
 
@@ -892,28 +899,28 @@ test_gridftp_server() {
     while [ -n "$1" ]; do
         case $1 in
             end-user)
-                echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
+                echo "myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
                 X509_CERT_DIR=${_X509_CERT_DIR} \
                     X509_USER_KEY=${_X509_USER_KEY} \
                     X509_USER_CERT=${_X509_USER_CERT} \
-                    $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
+                    myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
                 [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
 
-                echo -n "GridFTP - End-User Test... [$1]"
+                echo -n "GridFTP - End-User Test... [$1] "
                 tmpdestfile=$(mktemp)
                 X509_CERT_DIR=${_X509_CERT_DIR} \
                     X509_USER_KEY=${_X509_USER_KEY} \
                     X509_USER_CERT=${_X509_USER_CERT} \
-                    ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+                    globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
                     diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
-                    rm -f ${tmpdestfile} && echo "[OK]" || ( echo "[FAIL]" && ((ret++)) )
+                    rm -f ${tmpdestfile} && [OK] || ( [FAIL] && ((ret++)) )
                 ;;
             bdm)
-                echo -n "GridFTP - BDM Test... [$1]"
+                echo -n "GridFTP - BDM Test... [$1] "
                 tmpdestfile=$(mktemp)
-                ${globus_location}/bin/globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_bdm_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+                globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_bdm_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
                     diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
-                    rm -f ${tmpdestfile} && echo "[OK]" || ( echo "[FAIL]" && ((ret++)) )
+                    rm -f ${tmpdestfile} && [OK] || ( [FAIL] && ((ret++)) )
                 ;;
             *)
                 [ -n "$1" ] && echo "unknown parameter [$1]"
@@ -1044,19 +1051,21 @@ globus_check_certificates() {
 #--------------------
 
 setup_gcs_id() {
-    echo "*******************************"
-    echo " Rgistering the IDP node with Globus Platform and fetching a host certificate"
-    echo "*******************************"
+    echo '*******************************'
+    echo ' Registering the IdP node with Globus Platform'
+    echo '*******************************'
     echo
-    echo "NOTE: You MUST have created a Globus account for this node."
-    echo
-    echo "   https://globus.org/SignUp"
+    echo 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
+    echo 'download data through Globus. This uses the GridFTP server on the data node.'
+    echo 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
+    echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
+    echo 'go to www.globus.org/SignUp.'
     echo
 
     if [ -z "$GLOBUS_USER" ]; then
         local input
         while [ 1 ]; do
-            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            read -e -p "Please provide a Globus username [${globus_user}]: " input
             [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
             [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
         done
@@ -1066,7 +1075,7 @@ setup_gcs_id() {
     if [ -z "$GLOBUS_PASSWORD" ]; then
         local input
         while [ 1 ]; do
-            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
             [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
             [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
         done

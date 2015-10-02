@@ -1565,6 +1565,7 @@ setup_apache_frontend() {
 			allowipstr=${allowipstr}"\tAllow from $i\n";
 		done
 		sed -i "s/\#insert-permitted-ips-here/\#insert-permitted-ips-here\n$allowipstr/" /etc/httpd/conf/esgf-httpd.conf
+		cat /tmp/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -1867,7 +1868,6 @@ configure_tomcat() {
 	cp host*.pem /etc/certs/
 	cp cacert.pem /etc/certs/cachain.pem
 	mkdir /etc/esgfcerts
-	cat cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 	
     #Fetch/Copy truststore to $tomcat_conf_dir
     #(first try getting it from distribution server otherwise copy Java's)
@@ -2709,11 +2709,11 @@ test_publication() {
     echo "X509_USER_KEY  = [${_X509_USER_KEY}]"
     echo "X509_USER_CERT = [${_X509_USER_CERT}]"
     echo "----------"
-    echo "$globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
+    echo "myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T"
     X509_CERT_DIR=${_X509_CERT_DIR} \
         X509_USER_KEY=${_X509_USER_KEY} \
         X509_USER_CERT=${_X509_USER_CERT} \
-        $globus_location/bin/myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
+        myproxy-logon -s $myproxy_endpoint -l $myproxy_user -p $myproxy_port -o ${personal_credential_repo}/certificate-file -T
     [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
 
     chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}

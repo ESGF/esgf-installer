@@ -80,7 +80,7 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC3.2-devel"
+script_version="v2.0-RC5.4.0-devel"
 script_maj_version="2.0"
 script_release="Centaur"
 envfile="/etc/esg.env"
@@ -1914,12 +1914,16 @@ configure_tomcat() {
 
 generate_esgf_csrs(){
     [ -z "${esgf_host}" ] && get_property esgf_host
+    if [ $((sel & INDEX_BIT)) != 0 ]; then
 	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
 	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
 	echo -e "You are strongly advised to obtain and install commercial CA issued certificates for the web container.\n\
 Do you still want to generate a CSR for the web container (N/y)?";
 	read response
+    else
+        response='y';
+    fi
 	if [ "$response" = "y" -o "$response" = "Y" ]; then
 		openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
@@ -1953,7 +1957,12 @@ install_local_certs(){
 		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem" "myproxy-server.config")
 		certdir=/etc/tempcerts;
 	else
-		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem")
+    		if [ $((sel & INDEX_BIT)) != 0 ]; then
+			flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem")
+		else
+			flist=("hostcert.pem" "hostkey.pem")
+		fi
+
 		certdir=/etc/esgfcerts;
 	fi
 	cd $certdir;
@@ -1964,24 +1973,28 @@ install_local_certs(){
 			echo "File $fl is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
 		fi
 	done
-	cert=cacert.pem
-	localhash=`openssl x509 -in $cert -noout -hash`;
-	globuspack=globus_simple_ca_${localhash}_setup-0.tar.gz
-	if [ ! -s $globuspack ]; then
-			missingfiles=1;
-			echo "File $globuspack is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
+    	if [ $((sel & INDEX_BIT)) != 0 ]; then
+		cert=cacert.pem
+		localhash=`openssl x509 -in $cert -noout -hash`;
+		globuspack=globus_simple_ca_${localhash}_setup-0.tar.gz
+		if [ ! -s $globuspack ]; then
+				missingfiles=1;
+				echo "File $globuspack is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
+		fi
 	fi
 	if [ $missingfiles -eq 1 ]; then
 		return;
 	fi
 	cd $certdir
-	cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
-	cp cakey.pem /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
+    	if [ $((sel & INDEX_BIT)) != 0 ]; then
+		cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
+		cp cakey.pem /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
+		cp $globuspack /var/lib/globus-connect-server/myproxy-ca/
+		cp $globuspack /etc/grid-security/certificates/
+	fi
 	if [ -s hostkey.pem -a -s hostcert.pem ]; then
 		cp host*.pem /etc/grid-security/
 	fi
-	cp $globuspack /var/lib/globus-connect-server/myproxy-ca/
-	cp $globuspack /etc/grid-security/certificates/
 	echo "Local installation of certs complete.";
 }
 

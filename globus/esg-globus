@@ -684,19 +684,21 @@ EOF
 }
 
 setup_gcs_io() {
-    echo "*******************************"
-    echo " Rgistering the Data node with Globus Platform and fetching a host certificate"
-    echo "*******************************"
+    echo '*******************************'
+    echo ' Registering the Data node with Globus Platform'
+    echo '*******************************'
     echo
-    echo "NOTE: You MUST have created a Globus account for this node."
-    echo
-    echo "   https://globus.org/SignUp"
+    echo 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
+    echo 'download data through Globus. This uses the GridFTP server on the data node.'
+    echo 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
+    echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
+    echo 'go to www.globus.org/SignUp.'
     echo
 
     if [ -z "$GLOBUS_USER" ]; then
         local input
         while [ 1 ]; do
-            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            read -e -p "Please provide a Globus username [${globus_user}]: " input
             [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
             [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
         done
@@ -706,7 +708,7 @@ setup_gcs_io() {
     if [ -z "$GLOBUS_PASSWORD" ]; then
         local input
         while [ 1 ]; do
-            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
             [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
             [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
         done
@@ -1049,19 +1051,21 @@ globus_check_certificates() {
 #--------------------
 
 setup_gcs_id() {
-    echo "*******************************"
-    echo " Rgistering the IDP node with Globus Platform and fetching a host certificate"
-    echo "*******************************"
+    echo '*******************************'
+    echo ' Registering the IdP node with Globus Platform'
+    echo '*******************************'
     echo
-    echo "NOTE: You MUST have created a Globus account for this node."
-    echo
-    echo "   https://globus.org/SignUp"
+    echo 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
+    echo 'download data through Globus. This uses the GridFTP server on the data node.'
+    echo 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
+    echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
+    echo 'go to www.globus.org/SignUp.'
     echo
 
     if [ -z "$GLOBUS_USER" ]; then
         local input
         while [ 1 ]; do
-            read -e -p "Please enter your Globus username [${globus_user}]: " input
+            read -e -p "Please provide a Globus username [${globus_user}]: " input
             [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
             [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
         done
@@ -1071,7 +1075,7 @@ setup_gcs_id() {
     if [ -z "$GLOBUS_PASSWORD" ]; then
         local input
         while [ 1 ]; do
-            read -es -p "Please enter your Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+            read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
             [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
             [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
         done

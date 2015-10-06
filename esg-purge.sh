@@ -10,7 +10,7 @@
 #
 # If you want to purge in a single command, you may wish to set up an
 # alias to:
-#   source /usr/local/esgf/installer/esg-purge.sh && esg-purge
+#   source /usr/local/esgf/installer/esg-purge.sh && esg-purge all
 #
 # Run the following command before running this script:
 #   /usr/local/bin/esg-node --stop
@@ -28,13 +28,9 @@ unset X509_USER_CERT
 unset X509_USER_KEY
 
 esg-purge () {
-    if [ X"$1" = "X" ] ; then
-        PURGEMODE="default"
-    else
-        PURGEMODE=$1
-    fi
+    PURGEMODE=$1
     case $PURGEMODE in
-    default)
+    fast|default)
         esg-purge-base
         esg-purge-cdat
         esg-purge-globus
@@ -90,7 +86,9 @@ esg-purge () {
         esg-purge-workbench
         ;;
     *)
-        echo "Unrecognized purge mode '${PURGEMODE}', aborting!"
+        echo "You must specify a valid purge mode!"
+        echo "If you are doing a rebuild of the same version, you can try 'esg-purge fast'"
+        echo "Otherwise, run 'esg-purge all'"
         return 1
         ;;
     esac

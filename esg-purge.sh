@@ -107,16 +107,15 @@ esg-purge-base () {
 
     rm -rf /esg
     rm -rf /etc/certs
-    rm -f /etc/esg.env
+    rm -f  /etc/esg.env
     rm -rf /etc/esgfcerts
-    rm -f /etc/httpd/conf/esgf-httpd.conf
+    rm -f  /etc/httpd/conf/esgf-httpd.conf
     rm -rf /etc/tempcerts
     rm -rf /opt/esgf
-    rm -f /usr/local/bin/add_checksums_to_map.sh
+    rm -rf /tmp/inputpipe /tmp/outputpipe
+    rm -f  /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
     rm -rf /var/www/.python-eggs
-
-    rm -rf /tmp/inputpipe /tmp/outputpipe
 
     # WARNING: if $HOME has been reset from /root during an install
     # run, these directories could show up in a different place!

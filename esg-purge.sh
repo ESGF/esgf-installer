@@ -10,7 +10,7 @@
 #
 # If you want to purge in a single command, you may wish to set up an
 # alias to:
-#   source /usr/local/esgf/installer/esg-purge.sh && esg-purge
+#   source /usr/local/esgf/installer/esg-purge.sh && esg-purge all
 #
 # Run the following command before running this script:
 #   /usr/local/bin/esg-node --stop
@@ -28,13 +28,9 @@ unset X509_USER_CERT
 unset X509_USER_KEY
 
 esg-purge () {
-    if [ X"$1" = "X" ] ; then
-        PURGEMODE="default"
-    else
-        PURGEMODE=$1
-    fi
+    PURGEMODE=$1
     case $PURGEMODE in
-    default)
+    fast|default)
         esg-purge-base
         esg-purge-cdat
         esg-purge-globus
@@ -90,7 +86,9 @@ esg-purge () {
         esg-purge-workbench
         ;;
     *)
-        echo "Unrecognized purge mode '${PURGEMODE}', aborting!"
+        echo "You must specify a valid purge mode!"
+        echo "If you are doing a rebuild of the same version, you can try 'esg-purge fast'"
+        echo "Otherwise, run 'esg-purge all'"
         return 1
         ;;
     esac
@@ -109,21 +107,15 @@ esg-purge-base () {
 
     rm -rf /esg
     rm -rf /etc/certs
-    rm -f /etc/esg.env
+    rm -f  /etc/esg.env
     rm -rf /etc/esgfcerts
-    rm -f /etc/httpd/conf/esgf-httpd.conf
+    rm -f  /etc/httpd/conf/esgf-httpd.conf
     rm -rf /etc/tempcerts
     rm -rf /opt/esgf
-    rm -f /usr/local/bin/add_checksums_to_map.sh
+    rm -rf /tmp/inputpipe /tmp/outputpipe
+    rm -f  /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
     rm -rf /var/www/.python-eggs
-    rm -rf /usr/local/src/esgf
-    rm -rf /usr/local/*jdk*
-    rm -rf /usr/local/*ant*
-    rm -rf /usr/local/java
-    rm -rf /usr/local/geoip
-
-    rm -rf /tmp/inputpipe /tmp/outputpipe
 
     # WARNING: if $HOME has been reset from /root during an install
     # run, these directories could show up in a different place!

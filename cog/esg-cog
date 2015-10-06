@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.0.0
+VERSION=v3.0.1
 
 # COG_TAG=master
 COG_TAG=$VERSION
@@ -79,6 +79,7 @@ fi
 
 # checkout a specific tag or version
 cd $COG_INSTALL_DIR
+git checkout master
 git pull
 git checkout $COG_TAG
 if [ $? != 0 ]; then

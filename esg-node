@@ -3028,6 +3028,10 @@ fetch_esgf_truststore() {
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
     checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
+	apache_truststore='/etc/certs/esgf-ca-bundle.crt'
+    [ -e "${apache_truststore}" ] && mv -v ${apache_truststore}{,.bak}
+    checked_get ${apache_truststore} ${esg_dist_url_root}/certs/${apache_truststore##*/}
+    (( $? > 1 )) && [FAIL] && mv -v ${apache_truststore}{.bak,} || [OK] && cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 
     # For the IDP it is good to trust yourself ;-)...
     if [ -e "${esg_root_dir}/config/myproxy/myproxy-server.config" ] ; then

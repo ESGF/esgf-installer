@@ -117,11 +117,6 @@ esg-purge-base () {
     rm -f /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
     rm -rf /var/www/.python-eggs
-    rm -rf /usr/local/src/esgf
-    rm -rf /usr/local/*jdk*
-    rm -rf /usr/local/*ant*
-    rm -rf /usr/local/java
-    rm -rf /usr/local/geoip
 
     rm -rf /tmp/inputpipe /tmp/outputpipe
 

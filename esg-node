@@ -6573,6 +6573,11 @@ main() {
                     [ -e "${scripts_dir}/esg-idp" ] && (source ${scripts_dir}/esg-idp >& /dev/null && fetch_static_idp_file $@)
                     exit $?
                     ;;
+                --fetch-static-ats-file)
+                    shift
+                    [ -e "${scripts_dir}/esg-orp" ] && (source ${scripts_dir}/esg-orp >& /dev/null && fetch_static_ats_file $@)
+                    exit $?
+                    ;;
 		--fetch-known-providers-file)
 		    shift
 		    [ -e "${scripts_dir}/esg-orp" ] && (source ${scripts_dir}/esg-orp >& /dev/null && fetch_known_providers_file $@)

@@ -1918,22 +1918,14 @@ generate_esgf_csrs(){
 	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
 	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
-	echo -e "You are strongly advised to obtain and install commercial CA issued certificates for the web container.\n\
-Do you still want to generate a CSR for the web container (N/y)?";
-	read response
-    else
-        response='y';
     fi
-	if [ "$response" = "y" -o "$response" = "Y" ]; then
-		openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
+	echo "You are strongly advised to obtain and install commercial CA issued certificates for the web container.";
+	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
-	fi
 	echo "Please mail the csr files for signing to Prashanth Dwarakanath <pchengi@nsc.liu.se> or Nicolas Carenton <ncarenton@ipsl.jussieu.fr>";
 	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
-	echo "If you also have web-container certs to install, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
+	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
 	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
-	
-
 }
 generate_esgf_csrs_ext(){
 	echo "Are you requesting certs for an index-node or a datanode? (index/data)?";
@@ -1949,23 +1941,24 @@ generate_esgf_csrs_ext(){
 	echo "Enter FQDN of node you are requesting certificates for";
 	read req_node_hostname;
 	mkdir -p /etc/extcsrs 2>/dev/null;
+	to_tar='hostkey.pem hostcert_req.csr'
 	if [ "$nd_type" = "index" ]; then
+		to_tar=${to_tar}" cacert_req.csr cakey.pem";
 		openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/extcsrs/cakey.pem -out /etc/extcsrs/cacert_req.csr \
--subj "/O=ESGF/OU=ESGF.ORG/CN=$req_node_hostname"
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$req_node_hostname-CA"
 	echo "Successfully generated request for a simpleCA CA certificate: /etc/extcsrs/cacert_req.csr"
-	echo -e "You are strongly advised to obtain and install commercial CA issued certificates for the web container.\n\
-Do you still want to generate a CSR for the web container (N/y)?";
-	read response
-    else
-        response='y';
-    fi
-	if [ "$response" = "y" -o "$response" = "Y" ]; then
-		openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/extcsrs/hostkey.pem -out /etc/extcsrs/hostcert_req.csr \
+    	fi
+	echo -e "You are strongly advised to obtain and install commercial CA issued certificates for the web container."
+	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/extcsrs/hostkey.pem -out /etc/extcsrs/hostcert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$req_node_hostname"
-	fi
+	#echo "to tar: $to_tar";
+	pushd /etc/extcsrs;
+	tar -czf $req_node_hostname.tgz $to_tar;
+	popd;
+	echo "A copy of the generated keys and CSRs has been saved as /etc/extcsrs/$req_node_hostname.tgz";
 	echo "Please mail the csr files for signing to Prashanth Dwarakanath <pchengi@nsc.liu.se> or Nicolas Carenton <ncarenton@ipsl.jussieu.fr>";
 	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
-	echo "If you also have web-container certs to install, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
+	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
 	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
 }
 cert_howto(){

@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.0.1
+VERSION=v3.0.3
 
 # COG_TAG=master
 COG_TAG=$VERSION

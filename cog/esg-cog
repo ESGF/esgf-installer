@@ -109,6 +109,9 @@ rm -rf venv/lib/python2.7/site-packages/cog*
 chown -R $USER:$GROUP $COG_CONFIG_DIR
 chown -R $USER:$GROUP $COG_INSTALL_DIR
 
+# change ownership of COG_DIR/venv
+chown -R $USER:$GROUP $COG_DIR/venv
+
 # create location where Python eggs can be unpacked by user 'apache'
 mkdir -p $PYTHON_EGG_CACHE_DIR
 chown -R $USER:$GROUP $PYTHON_EGG_CACHE_DIR

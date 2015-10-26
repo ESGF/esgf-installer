@@ -501,6 +501,7 @@ setup_postgress() {
 
 
     yum -y install postgresql postgresql-server postgresql-devel
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update postgresql\n\n" && return 1	
 
     local default="Y"
     ((force_install)) && default="N"
@@ -876,6 +877,7 @@ setup_cdat() {
 
 # TODO - this all should be handled by yum
     yum -y install uvcdat
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat\n\n" && return 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
@@ -6715,8 +6717,11 @@ main() {
 	echo "*******************************"
 	echo
 
+	yum -y remove rpmforge-release
 	yum -y install epel-release
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not configure epel repository\n\n" && return 1
         yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl '*ExtUtils*'
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update prerequisites\n\n" && return 1
 
     #---------------------------------------
     #Setup ESGF RPM repository

@@ -1133,8 +1133,8 @@ setup_esgcet() {
         echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
         mkdir -p ${publisher_home}
         ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
-	sed -i ${publisher_home}/${publisher_config} s/"host\.sample\.gov"/${esgf_host}/g
-	sed -i ${publisher_home}/${publisher_config} s/"LASatYourHost"/LASat${node_short_name}/g
+	sed -i s/"host\.sample\.gov"/${esgf_host}/g ${publisher_home}/${publisher_config} 
+	sed -i s/"LASatYourHost"/LASat${node_short_name}/g ${publisher_home}/${publisher_config} 
         [ $? != 0 ] && popd && checked_done 1
     fi
     echo "chown -R ${installer_uid}:${installer_gid} ${publisher_home}"

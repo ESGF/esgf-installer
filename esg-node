@@ -5351,8 +5351,8 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_default_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_default_peer:-'vesgint-idx.ipsl.upmc.fr'}
+        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
     else
@@ -5365,8 +5365,8 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_index_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_index_peer:-'vesgint-idx.ipsl.upmc.fr'}
+        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else

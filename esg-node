@@ -5832,16 +5832,14 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${esgf_host}/"
 #    echo "http://${esgf_host}/esgf-node-manager"
-    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
         echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
-        echo "http://${esgf_host}/esgf-web-fe"
+        echo "http://${esgf_host}/"
     fi
     if [ $((sel & COMPUTE_BIT)) != 0 ]; then
         echo "http://${esgf_host}/las"

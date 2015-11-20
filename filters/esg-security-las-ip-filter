@@ -167,7 +167,6 @@ get_las_filter_support_libs() {
     local src_dir=${openid_relying_party_app_home}/WEB-INF/lib
 
     #Jar versions...
-    opensaml_version=${opensaml_version:-"2.3.2"}
     openws_version=${openws_version:-"1.3.1"}
     xmltooling_version=${xmltooling_version:-"1.2.2"}
     xsgroup_role_version=${xsgroup_role_version:-"1.0.0"}
@@ -184,7 +183,6 @@ get_las_filter_support_libs() {
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
     #----------------------------
-    opensaml_jar=opensaml-${opensaml_version}.jar
     openws_jar=openws-${openws_version}.jar
     xmltooling_jar=xmltooling-${xmltooling_version}.jar
     xsgroup_role_jar=XSGroupRole-${xsgroup_role_version}.jar
@@ -202,7 +200,6 @@ get_las_filter_support_libs() {
         #move over SAML libraries...
         echo "getting (copying) libary jars from the ORP to ${dest_dir}"
 
-        [ ! -e ${dest_dir}/${opensaml_jar} ]     && cp -v ${src_dir}/${opensaml_jar}     ${dest_dir}
         [ ! -e ${dest_dir}/${openws_jar} ]       && cp -v ${src_dir}/${openws_jar}       ${dest_dir}
         [ ! -e ${dest_dir}/${xmltooling_jar} ]   && cp -v ${src_dir}/${xmltooling_jar}   ${dest_dir}
         [ ! -e ${dest_dir}/${xsgroup_role_jar} ] && cp -v ${src_dir}/${xsgroup_role_jar} ${dest_dir}

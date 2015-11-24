@@ -105,16 +105,7 @@ cdat_home=${cdat_home:-${install_prefix}/cdat}
 
 #-----------
 globus_version=${globus_version:-"6.0"}
-gridftp_server_version=${gridftp_server_version:-"7.25"}
-adq_version=${adq_version:-"0.9.1"}
-myproxy_version=${myproxy_version:-"6.1"}
 usage_parser_version=${usage_parser_version:-"0.1.1"}
-
-mhash_version=${mhash_version:-"0.9.9.9"}
-pam_pgsql_version=${pam_pgsql_version:-"0.7"}
-bison_version=${bison_version:-"2.4"}
-flex_version=${flex_version:-"2.5.35"}
-gsoap_version=${gsoap_version:-"2.7.17"}
 
 distro=$(perl -ple 's/^([^ ]*) .*$/$1/;' < /etc/redhat-release)
 release=$(perl -ple 's/^.* (\d).\d .*$/$1/;' < /etc/redhat-release)
@@ -122,37 +113,21 @@ release=$(perl -ple 's/^.* (\d).\d .*$/$1/;' < /etc/redhat-release)
 #-----------
 globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
 # since script runs as root and simpleCA should be done as root, make it /root/.globus here
-dot_globus=${HOME}/.globus
 #NOTE-RedHat/CentOS specific...
-globus_word_size=${globus_word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-num_cpus=${num_cpus:-1}
 globus_install_dir=$globus_location
 globus_workdir=${workdir}/extra/globus
 globus_sys_acct=${globus_sys_acct:-globus}
 globus_sys_acct_group=${globus_sys_acct_group:-globus}
 globus_sys_acct_passwd=${globus_sys_acct_passwd:-$(cat ${esgf_secret_file} 2> /dev/null)}
-globus_dist_url=${esg_dist_url}/globus/gt${globus_version}-all-source-installer.tar.bz2
 #-----------
 gridftp_config=${gridftp_config:-""}
 gridftp_dist_url_base=${esg_dist_url}/globus/gridftp
-gridftp_update_dist_url=${gridftp_dist_url_base}/globus_gridftp_server-${gridftp_server_version}.tar.gz
-#gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-09-02-2010.tar.gz
-#gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-07-18-2011.tar.gz
-gridftp_authz_esgsaml_dist_url=${gridftp_dist_url_base}/authz_esgsaml_callout-06-06-2012.tar.gz
-#gridftp_bdm_dist_url=${gridftp_dist_url_base}/BDM/authz_bdm_callout-12-17-2009.tar.gz
-gridftp_bdm_dist_url=${gridftp_dist_url_base}/BDM/authz_bdm_callout-02-11-2011.tar.gz
-gsi_authz_conf_dist_url=${gridftp_dist_url_base}/authz_callouts_esgsaml${globus_word_size}.cfg
-customgsiauthz_dist_url=${gridftp_dist_url_base}/customgsiauthzinterface.tar.gz
-gss_assist_patch_dist_url=${gridftp_dist_url_base}/globus_gss_assist-5.5.tar.gz
 gridftp_chroot_jail=${esg_root_dir}/gridftp_root
 #ports end-user configured:
-gridftp_server_port=2811
+gridftp_server_port_range=${gridftp_server_port_range:-50000,51000}
+gridftp_server_source_range=${gridftp_server_source_range:-50000,51000}
 gridftp_server_usage_log=${esg_log_dir}/esg-server-usage-gridftp.log
 gridftp_server_usage_config=${esg_config_dir}/gridftp/esg-server-usage-gridftp.conf
-#ports bdm-configured:
-gridftp_bdm_server_port=2812
-gridftp_bdm_server_usage_log=${esg_log_dir}/esg-bdm-usage-gridftp.log
-gridftp_bdm_server_usage_config=${esg_config_dir}/gridftp/esg-bdm-usage-gridftp.conf
 esg_crontab=${esg_config_dir}/esg_crontab
 #-----------
 myproxy_config_args=${myproxy_config_args:-""}
@@ -163,20 +138,9 @@ myproxy_location=${globus_location}/bin/
 #-----------
 #esg_usage_parser_dist_url=http://www.mcs.anl.gov/~neillm/esg/esg_usage_parser-0.1.0.tar.gz
 esg_usage_parser_dist_url=${esg_dist_url}/globus/gridftp/esg_usage_parser-${usage_parser_version}.tar.bz2
-mhash_dist_url=${myproxy_dist_url_base}/mhash-${mhash_version}.tar.bz2
-mhash_workdir=${workdir}/extra/mhash
-pam_pgsql_dist_url=${myproxy_dist_url_base}/pam-pgsql-${pam_pgsql_version}.tar.gz
 pam_pgsql_workdir=${workdir}/extra/pam_pgsql
 pam_pgsql_install_dir=${install_prefix}/pam
 postgress_jar=${postgress_jar:-postgresql-8.4-703.jdbc3.jar}
-bison_dist_url=http://ftp.gnu.org/gnu/bison/bison-${bison_version}.tar.gz
-flex_dist_url=http://downloads.sourceforge.net/project/flex/flex/flex-${flex_version}/flex-${flex_version}.tar.gz
-gsoap_dist_url=${esg_dist_url}/thirdparty/gsoap_${gsoap_version}-nm-patched.tar.gz
-#gsoap_dist_url=http://downloads.sourceforge.net/project/gsoap2/gSOAP/gSOAP%20${gsoap_version}%20stable/gsoap_${gsoap_version}.tar.gz
-#gsoap_dist_url=http://sourceforge.net/projects/gsoap2/files/gSOAP/gsoap_2.7.17.zip/download
-gsoap_install_dir=${install_prefix}/gsoap
-gsoap_workdir=${workdir}/extra/gsoap
-libglobus_adq_dist_url=${gridftp_dist_url_base}/libglobus_adq-${adq_version}.tar.gz
 
 #-----------
 #"PRIVATE" variables that are expected to be set and overridden by calling script!!
@@ -189,9 +153,6 @@ postgress_host=${postgress_host:-localhost}
 postgress_port=${postgress_port:-5432}
 pg_sys_acct=${pg_sys_acct:-postgres}
 #-----------
-
-globus_flavor=gcc${globus_word_size}dbg
-debug_print "(globus_flavor = ${globus_flavor})"
 
 date_format=${date_format:-"+%Y_%m_%d_%H%M%S"}
 
@@ -215,7 +176,7 @@ dedup ${envfile} && source ${envfile}
 # PROCEDURE 
 #--------------------------------------------------------------
 
-#arg1 - config_type ("datanode" ["bdm"|"end-user"] | 
+#arg1 - config_type ("datanode" | 
 #                    "gateway"  ["install"|"update"])
 setup_globus_services() {
 
@@ -272,28 +233,8 @@ setup_globus_services() {
         [ $? -ne 0 ] && return 3
         setup_gridftp_metrics_logging
 
-        shift
-        while [ -n "$1" ]; do 
-            case $1 in
-                "bdm")
-                    echo " bdm configuration..."
-                    config_bdm_gridftp_server && \
-                        config_gridftp_metrics_logging "bdm"
-                    [ $? != 0 ] && echo " WARNING: Unable to complete $1 gridftp configuration!!" && return 1
-                    ;;
-                "end-user")
-                    echo " end-user configuration..."
-                    config_gridftp_server && \
-                        config_gridftp_metrics_logging "end-user"
-                    [ $? != 0 ] && echo " WARNING: Unable to complete $1 gridftp configuration!!" && return 2
-                    ;;
-                *)
-                    echo "Unknown gridftp configuration [$2] please select \"bdm\" and/or \"end-user\")"
-                    return 4;
-                    ;;
-            esac
-            shift
-        done
+        config_gridftp_server && config_gridftp_metrics_logging "end-user"
+        [ $? != 0 ] && echo " WARNING: Unable to complete gridftp configuration!!" && return 2
 
         [ -e /usr/sbin/globus-gridftp-server ] && \
             write_as_property gridftp_app_home /usr/sbin/globus-gridftp-server || \
@@ -323,14 +264,12 @@ setup_globus_services() {
 }
 
 
-
-#arg1 - config_type ("datanode" ["bdm" | "end-user"] | "gateway")
+#arg1 - config_type ("datanode" | "gateway")
 start_globus_services() {
     local config_type="$1"
     echo "Starting Globus services for ${config_type}"
     if [ "${config_type}" = "datanode" ]; then
-        shift
-        start_gridftp_server $@ #i.e. the gridftp_config
+        start_gridftp_server
         write_as_property gridftp_endpoint "gsiftp://${esgf_host:-$(hostname --fqdn)}"
         #zoiks TODO: setup code to check on the crontab for gridftp usage parser.
         return $?
@@ -343,13 +282,12 @@ start_globus_services() {
     fi
 }
 
-#arg1 - config_type ("datanode" ["bdm" | "end-user"] | "gateway")
+#arg1 - config_type ("datanode" | "gateway")
 stop_globus_services() {
     local config_type="$1"
     echo "stop_globus_services for ${config_type}"
     if [ "${config_type}" = "datanode" ]; then
-        shift
-        stop_gridftp_server $@
+        stop_gridftp_server
         return $?
     elif [ "${config_type}" = "gateway" ]; then
         stop_myproxy_server
@@ -411,7 +349,7 @@ install_globus() {
     # Install Globus and ESGF RPMs
     yum -y install ${config_type}
     if [ ${config_type} = 'globus-connect-server-io' ]; then
-        yum -y install globus-authz-esgsaml-callout globus-authz-bdm-callout globus-gaa globus-adq customgsiauthzinterface
+        yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface
     else
         yum -y install mhash pam-pgsql
     fi
@@ -476,15 +414,11 @@ setup_gridftp_metrics_logging() {
 #http://rainbow.llnl.gov/dist/esg-node/esg-node
 
 config_gridftp_metrics_logging() {
-    echo -n "Configuring gridftp metrics collection..."
+    echo 'Configuring gridftp metrics collection ...'
 
-    local config_type=${1-:"end-user"}
-
-    if [ "${config_type}" = "end-user" ]; then
-        echo "for ${config_type}"
-        mkdir -p ${gridftp_server_usage_config%/*}
-        #generate config file for gridftp server
-        printf "DBNAME=${node_db_name}
+    mkdir -p ${gridftp_server_usage_config%/*}
+    #generate config file for gridftp server
+    printf "DBNAME=${node_db_name}
 DBHOST=${postgress_host}
 DBPORT=${postgress_port}
 DBUSER=${postgress_user}
@@ -494,107 +428,13 @@ TMPFILE=/tmp/__up_tmpfile
 DEBUG=0
 NODBWRITE=0\n" > ${gridftp_server_usage_config}
 
-        local cronscript=${gridftp_server_usage_config%.*}.cron
-        printf "5 0,12 * * * ESG_USAGE_PARSER_CONF=${gridftp_server_usage_config} ${esg_tools_dir}/esg_usage_parser \n" > ${cronscript}
-        
-        #start crontab
-        start_gridftp_usage_parsing ${cronscript} ${config_type}
-        unset cronscript
-        
-    elif [ "${config_type}" = "bdm" ]; then
-        echo "for ${config_type}"
-        mkdir -p ${gridftp_bdm_server_usage_config%/*}
-        #generate config file for bdm (if enabled)
-        printf "DBNAME=${node_db_name}
-DBHOST=${postgress_host}
-DBPORT=${postgress_port}
-DBUSER=${postgress_user}
-DBPASS=${pg_sys_acct_passwd}
-USAGEFILE=${gridftp_bdm_server_usage_log}
-TMPFILE=/tmp/__up_tmpfile
-DEBUG=0
-NODBWRITE=0\n" > ${gridftp_bdm_server_usage_config}
-        
-        cronscript=${gridftp_bdm_server_usage_config%.*}.cron
-        printf "35 0,12 * * * ESG_USAGE_PARSER_CONF=${gridftp_bdm_server_usage_config} ${esg_tools_dir}/esg_usage_parser \n" > ${cronscript}
-        
-        #start crontab
-        start_gridftp_usage_parsing ${cronscript} ${config_type}
-        unset cronscript
-    else
-        echo
-        echo "Unknown metrics configuration type [${config_type}]"
-        return 1
-    fi
+    echo 'Setting up a cron job, /etc/cron.d/esg_usage_parser ...'
+    local cronscript=${gridftp_server_usage_config%.*}.cron
+    echo "5 0,12 * * * ESG_USAGE_PARSER_CONF=${gridftp_server_usage_config} ${esg_tools_dir}/esg_usage_parser" > /etc/cron.d/esg_usage_parser
+
     return 0
 }
 
-#Puts in crontab entries for running the gridftp usage parsing code periodically
-start_gridftp_usage_parsing() {
-    local cronscript=$1
-    local config_type=${2:-"<unknown type>"}
-    
-    [ -z "${cronscript}" ] && "No cronscript [${cronscript}] specified" && return 1
-
-    # setup crontab here
-    if [ -e ${cronscript} ]; then
-        pushd ${cronscript%/*} >& /dev/null
-        cat ${cronscript} >> ${esg_crontab}
-        [ $? != 0 ] && echo " ERROR: could not add cronfile [${cronscript}] to ${esg_crontab}" && popd >& /dev/null && return 3
-        echo "Adding ${cronscript} to ${esg_crontab} file"
-        
-        local username=$(/usr/bin/getent passwd ${installer_uid} | awk -F: {'print $1'})
-        if [ -n "${username}" ] ; then
-
-                    echo -n "Installing crontab entry... for ${username} running ${cronscript} via ${esg_crontab} "
-            
-            local backup_cron="$esg_backup_dir/oldcron_${username}_$(date +%y%m%d_%k%M%S)"
-            local start_mark="# ESGF cronjob BEGIN ###"
-            local end_mark="# ESGF cronjob END ###"
-            local current_cron=$(crontab -u $username -l)
-            local simple_update
-            echo "$current_cron" | grep -q "$start_mark" && simple_update=1
-            if ((simple_update)); then
-                #we know what we are doing. Replace the content within the markings
-                new_cron=$(echo "$current_cron" |  sed "/^$start_mark\$/,/^$end_mark\$/ {
-                    /^$start_mark\$/ {
-                        r $esg_crontab
-                        ba}
-                 /^$end_mark\$/ba
-                 d
-                 :a}" | awk '!x[$0]++')
-            else
-                # try to figure out if we have alread touched this or it's the very first time.
-                cleaned_cron=$(echo "$current_cron" | sed -e '/esg_usage_parser/ d')
-                new_cron=$(echo "$cleaned_cron"; echo $start_mark; cat $esg_crontab; echo $end_mark)
-                
-                #after this always ask the user if it's ok.
-            fi
-            
-            #ok. Compare what we did to that what we have
-             if [[ "$new_cron" != "$current_cron" ]]; then
-                echo "Current crontab for user ($installer_user):"; echo "$current_cron"
-                echo "will be updated to:"; echo "$new_cron"
-                read -e -p "Is this ok ? [Y/n]" answ
-                if [[ -z "$answ" || "$answ" == y || "$answ" == Y ]]; then
-                    echo "$current_cron" > $backup_cron
-                    crontab -u $username <(echo "$new_cron" | awk '!x[$0]++')
-                     local ret=$?
-                fi
-            fi
-            [ $ret == 0 ] && echo "[OK]" || echo "[FAILED]"
-            return $ret
-        else
-            echo "Crontab for user: [${username}] - to run script: [${cronscript}] is already present!"
-            $(/usr/bin/crontab -u ${username} -l | grep ${cronscript##*/})
-        fi
-        popd >& /dev/null
-    else
-        echo " *WARNING: No Crontab File Found For ${config_type} Usage parsing"
-        return 2
-    fi
-    return 0
-}
 
 setup_gridftp_jail() {
     echo
@@ -604,17 +444,15 @@ setup_gridftp_jail() {
     echo "*******************************"
     echo
 
-    if [ -e /usr/bin/globus-version ]; then
-        globus_root=/usr
-    else
-        globus_root=${globus_location}
-    fi
-
     [ -z "${gridftp_chroot_jail}" ] && echo "setup_gridftp_jail() rendered impotent \$gridftp_chroot_jail not set" && return 2
     [ ! -e ${gridftp_chroot_jail}  ] && echo "${gridftp_chroot_jail} does not exist, making it..." && mkdir -p ${gridftp_chroot_jail}
 
     echo "Creating chroot jail @ ${gridftp_chroot_jail}"
-    ${globus_root}/sbin/globus-gridftp-server-setup-chroot -r ${gridftp_chroot_jail}
+    globus-gridftp-server-setup-chroot -r ${gridftp_chroot_jail}
+
+    mkdir -p ${gridftp_chroot_jail}/etc/grid-security/sharing/${globus_sys_acct}
+    chown ${globus_sys_acct}:${globus_sys_acct_group} ${gridftp_chroot_jail}/etc/grid-security/sharing/${globus_sys_acct}
+    chmod 700 ${gridftp_chroot_jail}/etc/grid-security/sharing/${globus_sys_acct}
 
     [ ! -e "${ESGINI}" ] && echo "Cannot find ESGINI=[${ESGINI}] file that describes data dir location" && return 1
     echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
@@ -726,11 +564,15 @@ CertificateFile = /etc/grid-security/hostcert.pem
 KeyFile = /etc/grid-security/hostkey.pem
 TrustedCertificateDirectory = /etc/grid-security/certificates/
 IdentityMethod = MyProxy
+AuthorizationMethod = Gridmap
 [GridFTP]
 Server = %(HOSTNAME)s
-RestrictPaths = R/
+IncomingPortRange = ${gridftp_server_port_range}
+OutgoingPortRange = ${gridftp_server_source_range}
+RestrictPaths = R/,N/etc,N/tmp,N/dev
 Sharing = True
 SharingRestrictPaths = R/
+SharingStateDir = ${gridftp_chroot_jail}/etc/grid-security/sharing/\$USER
 [MyProxy]
 Server = ${myproxy_hostname}
 EOF
@@ -746,12 +588,9 @@ EOF
     popd >& /dev/null
 
     globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
-    service globus-gridftp-server stop
-    chkconfig --del globus-gridftp-server
     return $?
 
 }
-
 
 # (OLD WAY) http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/GridFTPServerWithTokenAuthorizationModuleConfig
 # http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/EnhancedEndUserDownloadGridFTPModule
@@ -764,15 +603,6 @@ config_gridftp_server() {
     echo "*******************************"
     echo
 
-    if [ -e /usr/bin/globus-version ]; then
-        globus_root=/usr
-    else
-        globus_root=${globus_location}
-    fi
-
-    local dosetup
-    local default_val="Y"
-
     write_as_property gridftp_server_port
 
     #TODO: Decide how to maintain semantic integrity
@@ -782,26 +612,16 @@ config_gridftp_server() {
     write_esgsaml_auth_conf
 
     dnode_root_dn_wildcard='^.*$'
-    ${globus_root}/sbin/grid-mapfile-add-entry -dn ${dnode_root_dn_wildcard} -ln ${globus_sys_acct}
+    grid-mapfile-add-entry -dn ${dnode_root_dn_wildcard} -ln ${globus_sys_acct}
 
-    sed -e 's#conf=${sysconfdir}/gridftp.conf#conf=${sysconfdir}/gridftp-enduser.conf#' \
-        -e 's#confdir=${sysconfdir}/gridftp.d#confdir=${sysconfdir}/gridftp-enduser.d#' \
-        -e 's#pidfile=${localstatedir}/run/globus-gridftp-server.pid#pidfile=${localstatedir}/run/globus-gridftp-server-enduser.pid#' \
-        -e 's#-C $confdir#-C $confdir -no-cas#' \
-        </etc/init.d/globus-gridftp-server >/etc/init.d/globus-gridftp-server-enduser
-    chmod 755 /etc/init.d/globus-gridftp-server-enduser
-
-    echo 'port 2811' > /etc/gridftp-enduser.conf
-    echo "chroot_path ${gridftp_chroot_jail}" >> /etc/gridftp-enduser.conf
-    echo 'usage_stats_id 2811' >> /etc/gridftp-enduser.conf
-    echo 'usage_stats_target localhost:0\!all' >> /etc/gridftp-enduser.conf
-    echo 'acl customgsiauthzinterface' >> /etc/gridftp-enduser.conf
-    echo "\$GLOBUS_USAGE_DEBUG \"MESSAGES,${gridftp_server_usage_log}\"" >> /etc/gridftp-enduser.conf
-
-    cat /etc/gridftp.d/* \
-    | sed -e 's#$GSI_AUTHZ_CONF.*#$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_esgsaml.conf"#' \
-        -e 's#/var/lib/globus-connect-server#/etc#' \
-        >>/etc/gridftp-enduser.conf
+    echo "chroot_path ${gridftp_chroot_jail}" > /etc/gridftp.d/globus-esgf
+    echo 'usage_stats_id 2811' >> /etc/gridftp.d/globus-esgf
+    echo 'usage_stats_target localhost:0\!all' >> /etc/gridftp.d/globus-esgf
+    echo 'acl customgsiauthzinterface' >> /etc/gridftp.d/globus-esgf
+    echo "\$GLOBUS_USAGE_DEBUG \"MESSAGES,${gridftp_server_usage_log}\"" >> /etc/gridftp.d/globus-esgf
+    echo '$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_esgsaml.conf"' >> /etc/gridftp.d/globus-esgf
+    echo '#$GLOBUS_GSI_AUTHZ_DEBUG_LEVEL "10"' >> /etc/gridftp.d/globus-esgf
+    echo '#$GLOBUS_GSI_AUTHZ_DEBUG_FILE "/var/log/gridftp-debug.log"' >> /etc/gridftp.d/globus-esgf
 
     checked_done 0
 }
@@ -818,62 +638,9 @@ write_esgsaml_auth_conf() {
     return 0
 }
 
-
-# http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/BDMSecurityDatanodeAdminGuide
-config_bdm_gridftp_server() {
-    echo "GridFTP - Configuration... for Bulk Data Mover (BDM)"
-    echo
-    echo "*******************************"
-    echo "Setting up GridFTP... (BDM Configuration)"
-    echo "*******************************"
-    echo
-
-    write_as_property gridftp_bdm_server_port
-
-    #TODO: Decide how to maintain semantic integrity
-    [ -z ${globus_sys_acct} ] && echo " ERROR: globus_sys_acct=[${globus_sys_acct}] must be set" && checked_done 1
-
-    # generate /etc/grid-security/esg_gridmap_assist.conf
-    [ ! -d /etc/grid-security ] && mkdir -p /etc/grid-security
-    echo "attribute=group_BDM_role_publisher" > /etc/grid-security/esg_gridmap_assist.conf
-    echo "localAccount=${globus_sys_acct}" >> /etc/grid-security/esg_gridmap_assist.conf
-    echo 
-    echo "---------esg_gridmap_assist.conf---------"
-    cat /etc/grid-security/esg_gridmap_assist.conf
-    echo "---------------------------------"
-    echo 
-
-    sed -e 's#conf=${sysconfdir}/gridftp.conf#conf=${sysconfdir}/gridftp-bdm.conf#' \
-        -e 's#confdir=${sysconfdir}/gridftp.d#confdir=${sysconfdir}/gridftp-bdm.d#' \
-        -e 's#pidfile=${localstatedir}/run/globus-gridftp-server.pid#pidfile=${localstatedir}/run/globus-gridftp-server-bdm.pid#' \
-        -e 's#-C $confdir#-C $confdir -no-cas#' \
-        </etc/init.d/globus-gridftp-server >/etc/init.d/globus-gridftp-server-bdm
-    chmod 755 /etc/init.d/globus-gridftp-server-bdm
-
-    echo 'port 2812' > /etc/gridftp-bdm.conf
-    echo "chroot_path ${gridftp_chroot_jail}" >> /etc/gridftp-bdm.conf
-    echo 'usage_stats_id 2812' >> /etc/gridftp-bdm.conf
-    echo 'usage_stats_target localhost:0\!all' >> /etc/gridftp-bdm.conf
-    echo 'acl customgsiauthzinterface' >> /etc/gridftp-bdm.conf
-    echo "\$GLOBUS_USAGE_DEBUG \"MESSAGES,${gridftp_server_usage_log}\"" >> /etc/gridftp-bdm.conf
-    cat /etc/gridftp.d/* \
-    | sed -e 's#$GSI_AUTHZ_CONF.*#$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_bdm.conf"#' \
-        -e 's#/var/lib/globus-connect-server#/etc#' \
-        >>/etc/gridftp-bdm.conf
-
-    checked_done 0
-    write_as_property gridftp.service.type "Replication"
-}
-
 test_auth_service() {
-    if [ -e /usr/bin/globus_adq_client ]; then
-        adq_client=/usr/bin/globus_adq_client
-    else
-        adq_client=${installer_home}/workbench/esg/extra/globus/libglobus_adq-0.9.1/libglobus_adq_client
-    fi
-    local installer_home=${installer_home:-${ESG_USER_HOME:-/usr/local/src/esgf}}
     echo -n "Testing authorization service on ${esgf_host} ... "
-    ! ${adq_client} https://${esgf_host}/esg-orp/saml/soap/secure/authorizationService.htm https://${esgf_host}/esgf-idp/openid/rootAdmin gsiftp://${esgf_host}:${gridftp_server_port}//esg_dataroot/test/sftlf.nc | grep -q 'NOT PERMIT' >& /dev/null
+    ! globus_adq_client https://${esgf_host}/esg-orp/saml/soap/secure/authorizationService.htm https://${esgf_host}/esgf-idp/openid/rootAdmin gsiftp://${esgf_host}:${gridftp_server_port}//esg_dataroot/test/sftlf.nc | grep -q 'NOT PERMIT' >& /dev/null
     local ret=$?
     [ ${ret} == 0 ] && [OK] || [FAIL]
     return ${ret}
@@ -894,39 +661,21 @@ test_gridftp_server() {
     local _X509_USER_KEY=${personal_credential_repo}/esgf_credentials
     local _X509_USER_CERT=${personal_credential_repo}/esgf_credentials
 
-    while [ -n "$1" ]; do
-        case $1 in
-            end-user)
-                echo "myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
-                X509_CERT_DIR=${_X509_CERT_DIR} \
-                    X509_USER_KEY=${_X509_USER_KEY} \
-                    X509_USER_CERT=${_X509_USER_CERT} \
-                    myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
-                [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
+    echo "myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
+    X509_CERT_DIR=${_X509_CERT_DIR} \
+        X509_USER_KEY=${_X509_USER_KEY} \
+        X509_USER_CERT=${_X509_USER_CERT} \
+        myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
+    [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
 
-                echo -n "GridFTP - End-User Test... [$1] "
-                tmpdestfile=$(mktemp)
-                X509_CERT_DIR=${_X509_CERT_DIR} \
-                    X509_USER_KEY=${_X509_USER_KEY} \
-                    X509_USER_CERT=${_X509_USER_CERT} \
-                    globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
-                    diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
-                    rm -f ${tmpdestfile} && [OK] || ( [FAIL] && ((ret++)) )
-                ;;
-            bdm)
-                echo -n "GridFTP - BDM Test... [$1] "
-                tmpdestfile=$(mktemp)
-                globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_bdm_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
-                    diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
-                    rm -f ${tmpdestfile} && [OK] || ( [FAIL] && ((ret++)) )
-                ;;
-            *)
-                [ -n "$1" ] && echo "unknown parameter [$1]"
-                break
-                ;;
-        esac
-        shift
-    done
+    echo -n "GridFTP - End-User Test... [$1] "
+    tmpdestfile=$(mktemp)
+    X509_CERT_DIR=${_X509_CERT_DIR} \
+        X509_USER_KEY=${_X509_USER_KEY} \
+        X509_USER_CERT=${_X509_USER_CERT} \
+        globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
+        diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
+        rm -f ${tmpdestfile} && [OK] || ( [FAIL] && ((ret++)) )
     return ${ret}
 }
 
@@ -942,7 +691,6 @@ configure_esgf_publisher_for_gridftp() {
     return 1
 }
 
-#Could takes the arg(s): "bdm" | "end-user"
 #see caller start_globus_services() above.
 #returns true  (0) if this function actively started the process
 #returns false (1) if this function did not have to start the process since already running
@@ -965,34 +713,18 @@ start_gridftp_server() {
     [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
 
     configure_esgf_publisher_for_gridftp
-    
-    #disable_command_list="-disable-command-list APPE,DELE,ESTO,MKD,RMD,RNFR,RNTO,RDEL,STOR,STOU,XMKD,XRMD,CHMOD"
-    disable_command_list=""
 
-    while [ -n "$1" ]; do
-        case $1 in
+    service globus-gridftp-server start
 
-            bdm)
-                    service globus-gridftp-server-bdm start
-                ;;
-            end-user)
-                    service globus-gridftp-server-enduser start
-                ;;
-        esac
-        shift
-    done
     return 0
 }
 
 
 stop_gridftp_server() {
-    if [ -e /etc/init.d/globus-gridftp-server-enduser ]; then
-        service globus-gridftp-server-enduser stop
-        service globus-gridftp-server-bdm stop
-        return 0
-    fi
-    return 1
+    service globus-gridftp-server stop
+    return 0
 }
+
 
 #This function "succeeds" (is true -> returns 0)  if there *are* running processes found
 check_gridftp_process() {
@@ -1098,7 +830,7 @@ TrustedCertificateDirectory = /etc/grid-security/certificates/
 IdentityMethod = MyProxy
 [GridFTP]
 Server = %(HOSTNAME)s
-RestrictPaths = R/
+RestrictPaths = R/,N/etc,N/tmp,N/dev
 Sharing = True
 SharingRestrictPaths = R/
 [MyProxy]

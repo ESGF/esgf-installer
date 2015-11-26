@@ -67,6 +67,12 @@ get_latest() {
     ((ret == 0)) && echo "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-purge.sh
+    
+	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/jar_security_scan
+    ((ret == 1)) && echo "jar_security_scan script already up-to-date"
+    ((ret == 0)) && echo "Updated jar_security_scan script from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 jar_security_scan
 
     popd >& /dev/null
 }

@@ -1509,7 +1509,7 @@ setup_sensible_confs() {
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
 	servername=$esgf_host;
 	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
-	sconffiles="esgf_ats.xml esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
+	sconffiles="esgf_ats.xml.tmpl esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
 	for i in `echo $sconffiles`; do
 		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
 		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;

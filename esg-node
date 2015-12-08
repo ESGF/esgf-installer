@@ -1504,7 +1504,14 @@ EOF
 }
 
 setup_sensible_confs() {
-	#source /etc/esg.env
+	#place for post-install configuration overrides, binary replacements etc
+	
+	#quick-fix for removing insecure commons-fileupload jar file
+	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
+		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
+		cp ${tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/;
+	fi
+	#configuration overrides
 	tmpservername='placeholder.fqdn';
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
 	servername=$esgf_host;

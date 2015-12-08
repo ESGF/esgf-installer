@@ -124,6 +124,7 @@ gridftp_config=${gridftp_config:-""}
 gridftp_dist_url_base=${esg_dist_url}/globus/gridftp
 gridftp_chroot_jail=${esg_root_dir}/gridftp_root
 #ports end-user configured:
+gridftp_server_port=2811
 gridftp_server_port_range=${gridftp_server_port_range:-50000,51000}
 gridftp_server_source_range=${gridftp_server_source_range:-50000,51000}
 gridftp_server_usage_log=${esg_log_dir}/esg-server-usage-gridftp.log

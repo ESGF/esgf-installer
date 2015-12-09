@@ -126,6 +126,7 @@ esg-purge-base () {
     # development.  Remove only if they are regular files.
     find /usr/local/bin -type f -iname esg-\* -exec rm -f {} \+
     find /usr/local/bin -type f -iname esgf-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname jar_security_scan -exec rm -f {} \+
     find /usr/local/bin -type f -iname setup-autoinstall -exec rm -f {} \+
 
     # The globs may fail here with no targets, thus || true

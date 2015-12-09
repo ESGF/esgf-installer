@@ -571,7 +571,7 @@ Server = %(HOSTNAME)s
 IncomingPortRange = ${gridftp_server_port_range}
 OutgoingPortRange = ${gridftp_server_source_range}
 RestrictPaths = R/,N/etc,N/tmp,N/dev
-Sharing = True
+Sharing = False
 SharingRestrictPaths = R/
 SharingStateDir = ${gridftp_chroot_jail}/etc/grid-security/sharing/\$USER
 [MyProxy]
@@ -832,7 +832,7 @@ IdentityMethod = MyProxy
 [GridFTP]
 Server = %(HOSTNAME)s
 RestrictPaths = R/,N/etc,N/tmp,N/dev
-Sharing = True
+Sharing = False
 SharingRestrictPaths = R/
 [MyProxy]
 Server = %(HOSTNAME)s

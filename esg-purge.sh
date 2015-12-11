@@ -126,12 +126,16 @@ esg-purge-base () {
     # development.  Remove only if they are regular files.
     find /usr/local/bin -type f -iname esg-\* -exec rm -f {} \+
     find /usr/local/bin -type f -iname esgf-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname jar_security_scan -exec rm -f {} \+
     find /usr/local/bin -type f -iname setup-autoinstall -exec rm -f {} \+
 
     # The globs may fail here with no targets, thus || true
     rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
     rm -rf /usr/local/solr* || true
+
+    # Solr may leave stuck java processes.  Kill them with extreme prejudice
+    pkill -9 -f 'java.*/usr/local/solr'
 }
 
 esg-purge-cdat () {
@@ -201,6 +205,9 @@ esg-purge-tomcat () {
 
     # The glob may fail here with no targets, thus || true
     rm -rf /usr/local/tomcat* /usr/local/apache-tomcat* || true
+
+    # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
+    pkill -9 -f 'java.*/usr/local/tomcat'
 }
 
 esg-purge-utils () {

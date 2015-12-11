@@ -193,9 +193,9 @@ get_orp_libs() {
     commons_collections_version=${commons_collections_version:-"3.2.1"}
     serializer_version=${serializer_version:-"2.9.1"}
     velocity_version=${velocity_version:-"1.5"}
-    xalan_version=${xalan_version:-"2.7.1"}
-    xercesImpl_version=${xercesImpl_version:-"2.9.1"}
-    xml_apis_version=${xml_apis_version:-"1.3.04"}
+    xalan_version=${xalan_version:-"2.7.2"}
+    xercesImpl_version=${xercesImpl_version:-"2.10.0"}
+    xml_apis_version=${xml_apis_version:-"1.4.01"}
     xmlsec_version=${xmlsec_version:-"1.4.2"}
     joda_version=${joda_version:-"2.0"}
     commons_io_version=${commons_io_version:-"2.4"}
@@ -204,7 +204,7 @@ get_orp_libs() {
     #------------------------------------------------------------------
     #NOTE: Make sure that this version matches the version that is in
     #the esg-orp project!!!
-    spring_version=${spring_version:-"4.1.6.RELEASE"}
+    spring_version=${spring_version:-"4.2.3.RELEASE"}
     #------------------------------------------------------------------
 
     #----------------------------

@@ -1,0 +1,502 @@
+#!/usr/bin/perl
+#
+# ESGF JAR Security Scanner
+#
+# Generates a JAR manifest from the installed Tomcat and SOLR and then
+# searches CVEs for potential problems.
+#
+# On CentOS, this will require the following packages:
+#   perl-Sort-Versions
+#   perl-XML-Twig
+#   perl-XML-XPath
+#   perl-XML-XPathEngine
+#
+# You will also need to download CVRF files from:
+#   https://cve.mitre.org/data/downloads/index.html
+# and put them in /tmp (location can be changed in $cvrfdir below)
+# Filename format will look like:
+#   allitems-cvrf-year-XXXX.xml
+# You will need to download a file for each year listed in @cvrf_years
+#
+# Usage:
+#   jar_security_scan > scan_output.txt
+#
+
+use strict; use warnings;
+use 5.010;
+
+use Data::Dumper;
+use Sort::Versions;
+use XML::Twig;
+
+my $tomcatdir = '/usr/local/tomcat';
+my $cvrfdir = '/tmp';
+my $cvrfprefix = '/allitems-cvrf-year-';
+my @cvrf_years = ( '2015','2014','2013','2012' );
+my %cvrf_twigs;
+
+# %jar_searchregex is a hash of jar names to regular expressions that
+# should be used to search the description fields of CVRF files
+# instead of the simple jar name (which might be too short to be
+# useful)
+#
+# Each regular expression will be used with /i (case-insensitive match)
+#
+
+my %jar_searchregex = (
+    'activation'		=> qr/activation.*java/i,
+    'annotations'		=> qr/java.*annotations/i,
+    'ant'			=> qr/apache ant/i,
+    'asm'			=> qr/asm.*java/i,
+    'commons-beanutils'		=> qr/(apache.*beanutils|commons-beanutils)/i,
+    'commons-cli'		=> qr/(apache.*cli|commons-cli)/i,
+    'commons-codec'		=> qr/(apache.*codec|commons-codec)/i,
+    'commons-collections'       => qr/(apache.*collections|commons-collections)/i,
+    'commons-dbcp'		=> qr/(apache.*dbcp|commons-dbcp)/i,
+    'commons-dbutils'		=> qr/(apache.*dbutils|commons-dbutils)/i,
+    'commons-digester'		=> qr/(apache.*digester|commons-digester)/i,
+    'commons-discovery'		=> qr/(apache.*discovery|commons-discovery)/i,
+    'commons-fileupload'        => qr/(apache.*fileupload|commons-fileupload)/i,
+    'commons-httpclient'	=> qr/(apache.*httpclient|commons-httpclient)/i,
+    'commons-lang'		=> qr/(apache.*lang|commons-lang)/i,
+    'commons-logging'		=> qr/apache.*commons/i,
+    'commons-pool'		=> qr/(apache.*pool|commons-pool)/i,
+    'commons-validator'		=> qr/(apache.*validator|commons-validator)/i,
+    'compiler'			=> qr/compiler.*java/i,
+    'encoder'			=> qr/encoder.*java/i,
+    'forms'			=> qr/forms.*java/i,
+    'geronimo-servlet_3.0_spec' => qr/geronimo/i,
+    'je'			=> qr/berkeley.*db/i,
+    'org.apache.aries.util'	=> qr/apache.*aries/i,
+    'oro'			=> qr/jakarta.*oro/i,
+    'jstl'			=> qr/apache.*taglibs/i,
+    'lang'              	=> qr/lang.*java/i,
+    'mail'			=> qr/mail.*java/i,
+    'rome'              	=> qr/rome.*(java|rss)/i,
+    'serializer'		=> qr/xalan/i,
+    'solr-core'			=> qr/apache.*solr/i,
+    'spring-beans'		=> qr/spring.*framework/i,
+    'spring-core'		=> qr/spring.*framework/i,
+    'spring-security-config'	=> qr/spring.*security/i,
+    'spring-security-core'	=> qr/spring.*security/i,
+    'spring-security-openid'	=> qr/spring.*security/i,
+    'spring-security-taglibs'	=> qr/spring.*security/i,
+    'spring-security-web'	=> qr/spring.*security/i,
+    'standard'          	=> qr/standard.*java/i,
+    'struts2-core'		=> qr/struts/i,
+    'tds'			=> qr/thredds/i,
+    'tiles-api'			=> qr/apache.*tiles/i,
+    'tiles-compat'		=> qr/apache.*tiles/i,
+    'tiles-servlet'		=> qr/apache.*tiles/i,
+    'tiles-template'		=> qr/apache.*tiles/i,
+    'velocity'			=> qr/velocity.*java/i,
+    'xercesImpl'		=> qr/xerces/i,
+    'xml-resolver'		=> qr/xml-resolver/i,
+   );
+
+# %falsepositives is a hash of vulnerability titles (generally CVE
+# codes) mapped to a string starting with the name of the person
+# declaring that the vulnerability is a false positive in this scan
+# followed by a colon followed by a short explanation of why it's a
+# false positive
+#
+# Keywords in use:
+#   * unrelated: CVE is completely unrelated to the software being scanned
+#   * oldversion: CVE applies only to versions older than any in use
+#   * reject: CVE is flagged as rejected in the CVRFs
+my %falsepositives = (
+    'CVE-2011-2731' => 'zed: unrelated (VMWare SpringSource)',
+    'CVE-2011-2732' => 'zed: unrelated (VMWare SpringSource)',
+    'CVE-2011-2894' => 'zed: oldversion (Spring Framework <= 3.0.5)',
+    'CVE-2011-4314' => 'zed: oldversion',
+    'CVE-2012-0004' => 'zed: unrelated (MS DirectShow)',
+    'CVE-2012-0391' => 'zed: oldversion (Struts < 2.2.3.1)',
+    'CVE-2012-0392' => 'zed: oldversion (Struts < 2.3.1.1)',
+    'CVE-2012-0393' => 'zed: oldversion (Struts < 2.3.1.1)',
+    'CVE-2012-0394' => 'zed: oldversion (Struts < 2.3.1.1)',
+    'CVE-2012-0657' => 'zed: unrelated (Apple Quartz Composer)',
+    'CVE-2012-0838' => 'zed: oldversion (Struts < 2.2.3.1)',
+    'CVE-2012-0936' => 'zed: unrelated (OpenNMS)',
+    'CVE-2012-1006' => 'zed: oldversion (Struts <= 2.2.3)',
+    'CVE-2012-1007' => 'zed: oldversion (struts 1.3.10)',
+    'CVE-2012-1621' => 'zed: unrelated (Apache OFBiz)',
+    'CVE-2012-2578' => 'zed: unrelated (SmarterMail)',
+    'CVE-2012-2586' => 'zed: unrelated (Mailtraq)',
+    'CVE-2012-4386' => 'zed: oldversion (Struts <= 2.3.4)',
+    'CVE-2012-4387' => 'zed: oldversion (Struts <= 2.3.4)',
+    'CVE-2012-5055' => 'zed: unrelated (VMWare SpringSource)',
+    'CVE-2012-5616' => 'zed: unrelated (Apache CloudStack/Citrix CloudPlatform)',
+    'CVE-2012-5783' => 'zed: oldversion (Apache HttpClient 3.x)',
+    'CVE-2012-6127' => 'zed: reject',
+    'CVE-2012-6153' => 'zed: oldversion (Apache HttpClient < 4.2.3)',
+    'CVE-2012-6573' => 'zed: unrelated (Solr for Drupal)',
+    'CVE-2012-6612' => 'zed: oldversion (Solr < 4.1)',
+    'CVE-2013-0077' => 'zed: unrelated (MS DirectShow)',
+    'CVE-2013-0753' => 'zed: unrelated (Firefox/Thunderbird/SeaMonkey)',
+    'CVE-2013-1777' => 'zed: unrelated (full Geronimo, not just servlet)',
+    'CVE-2013-1790' => 'zed: unrelated (Poppler)',
+    'CVE-2013-1856' => 'zed: unrelated (Ruby on Rails)',
+    'CVE-2013-1965' => 'zed: oldversion (Struts < 2.3.14.1)',
+    'CVE-2013-1966' => 'zed: oldversion (Struts < 2.3.14.1)',
+    'CVE-2013-2115' => 'zed: oldversion (Struts < 2.3.14.2)',
+    'CVE-2013-2134' => 'zed: oldversion (Struts < 2.3.14.3)',
+    'CVE-2013-2135' => 'zed: oldversion (Struts < 2.3.14.3)',
+    'CVE-2013-2186' => 'zed: oldversion (Apache Commons FileUpload < 1.3.1)',
+    'CVE-2013-2248' => 'zed: oldversion (Struts < 2.3.15)',
+    'CVE-2013-2251' => 'zed: oldversion (Struts < 2.3.15)',
+    'CVE-2013-3066' => 'zed: unrelated (Linksys EA6500)',
+    'CVE-2013-3219' => 'zed: unrelated (bitcoind)',
+    'CVE-2013-3220' => 'zed: unrelated (bitcoind)',
+    'CVE-2013-4152' => 'zed: oldversion (Spring Framework < 4.0.0.M1)',
+    'CVE-2013-4204' => 'zed: unrelated (Google Web Toolkit)',
+    'CVE-2013-4212' => 'zed: unrelated (Apache Roller)',
+    'CVE-2013-4310' => 'zed: oldversion (Struts < 2.3.15.1)',
+    'CVE-2013-4316' => 'zed: oldversion (Struts < 2.3.15.1)',
+    'CVE-2013-6288' => 'zed: unrelated (Apache Solr for TYPO3)',
+    'CVE-2013-6289' => 'zed: unrelated (Apache Solr for TYPO3)',
+    'CVE-2013-6348' => 'zed: oldversion (Struts < 2.3.15.3)',
+    'CVE-2013-6397' => 'zed: oldversion (Solr < 4.6)',
+    'CVE-2013-6407' => 'zed: oldversion (Solr < 4.1)',
+    'CVE-2013-6408' => 'zed: oldversion (Solr < 4.3.1)',
+    'CVE-2013-6429' => 'zed: oldversion (Spring Framework <= 4.0.0.RC1)',
+    'CVE-2013-7295' => 'zed: unrelated (Tor)',
+    'CVE-2013-7315' => 'zed: oldversion (Spring Framework <= 4.0.0.M3)',
+    'CVE-2013-7398' => 'zed: unrelated (async-http-client < 1.9.0)',
+    'CVE-2014-0085' => 'zed: unrelated (Actually a problem with Fuse Fabric, not Zookeeper)',
+    'CVE-2014-0094' => 'zed: oldversion (Struts < 2.3.16.1)',
+    'CVE-2014-0112' => 'zed: oldversion (Struts < 2.3.16.2)',
+    'CVE-2014-0113' => 'zed: oldversion (Struts < 2.3.16.2)',
+    'CVE-2014-0114' => 'zed: oldversion (Apache Commons BeanUtils < 1.9.2)',
+    'CVE-2014-0116' => 'zed: oldversion (Struts < 2.3.16.3)',
+    'CVE-2014-1904' => 'zed: oldversion (Spring Framework < 4.0.2)',
+    'CVE-2014-1972' => 'zed: unrelated (Apache Tapestry)',
+    'CVE-2014-0050' => 'zed: oldversion (Apache Commons FileUpload < 1.3.1)',
+    'CVE-2014-0111' => 'zed: unrelated (Apache Syncope)',
+    'CVE-2014-0107' => 'zed: oldversion (Xalan < 2.7.2)',
+    'CVE-2014-0722' => 'zed: unrelated (Cisco UCM)',
+    'CVE-2014-0728' => 'zed: unrelated (Cisco UCM)',
+    'CVE-2014-1512' => 'zed: unrelated (Firefox/Thunderbird/Seamonkey)',
+    'CVE-2014-1904' => 'zed: oldversion (Spring Framework < 4.0.2)',
+    'CVE-2014-2483' => 'zed: oldversion (OpenJDK < 7u65, Oracle Java < 7u60/8u5)',
+    'CVE-2014-3004' => 'zed: unrelated (Castor)',
+    'CVE-2014-3628' => 'zed: oldversion (SOLR < 4.10.3)',
+    'CVE-2014-3577' => 'zed: oldversion (Apache HttpClient < 4.3.5)',
+    'CVE-2014-3578' => 'zed: oldversion (Spring Framework < 4.0.5)',
+    'CVE-2014-3625' => 'zed: oldversion (Spring Framework < 4.1.2)',
+    'CVE-2014-5185' => 'zed: unrelated (WordPress Quartz plugin)',
+    'CVE-2014-5325' => 'zed: unrelated (Direct Web Remoting)',
+    'CVE-2014-5886' => 'zed: unrelated (iVysilani)',
+    'CVE-2014-6278' => 'zed: unrelated (GNU Bash)',
+    'CVE-2014-7809' => 'zed: oldversion (Struts < 2.3.20)',
+    'CVE-2014-8152' => 'zed: unrelated (Apache Santuario)',
+    'CVE-2014-8244' => 'zed: unrelated (Linksys SMART WiFi)',
+    'CVE-2015-0201' => 'zed: oldversion (Spring Framework < 4.1.5)',
+    'CVE-2015-0231' => 'zed: unrelated (PHP)',
+    'CVE-2015-0252' => 'zed: urelated (Xerces C, not Java)',
+    'CVE-2015-0254' => 'zed: oldversion (Apache Standard Taglibs < 1.2.3)',
+    'CVE-2015-0279' => 'zed: unrelated (JBoss RichFaces)',
+    'CVE-2015-0851' => 'zed: unrelated (OpenSAML-C, not Java)',
+    'CVE-2015-1235' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-1236' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-1261' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-1275' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-1831' => 'zed: oldversion (Struts 2.3.20)',
+    'CVE-2015-2583' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2624' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2626' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2640' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2654' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2656' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2738' => 'zed: unrelated (Firefox)',
+    'CVE-2015-2787' => 'zed: unrelated (PHP)',
+    'CVE-2015-2938' => 'zed: unrelated (MediaWiki)',
+    'CVE-2015-3227' => 'zed: unrelated (Ruby on Rails)',
+    'CVE-2015-4754' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4764' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4774' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4775' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4776' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4777' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4778' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4779' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4780' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4781' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4782' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4783' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4784' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4785' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4786' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4787' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4788' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4789' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4790' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-5262' => 'zed: oldversion (Apache HttpClient < 4.3.6)',
+    'CVE-2015-5506' => 'zed: unrelated (Drupal Solr)',
+    'CVE-2015-5771' => 'zed: unrelated (Apple Quartz Composer)',
+    'CVE-2015-6761' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-6762' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-6763' => 'zed: unrelated (Google Chrome)',
+    'CVE-2015-7834' => 'zed: unrelated (Google Chrome)',
+   );
+
+
+# %jars is a global hash of hashes modified directly by other subs
+# Each key is the name of a jar, and the value is an anonymous hash of
+# webapp => jarversion
+my %jars;
+my %lowversions;
+
+
+find_all_jars(\%jars);
+print_jars(%jars);
+
+say "\n===========\n";
+
+%lowversions = lowest_jar_versions(%jars);
+foreach my $year (@cvrf_years) {
+    say {*STDERR} "Parsing CVRF entries for $year... ";
+    $cvrf_twigs{$year} = twig_cvrf($cvrfdir . $cvrfprefix . $year . '.xml');
+}
+
+foreach my $year (@cvrf_years) {
+    say {*STDERR} "Searching $year CVRFs for potential issues...";
+    foreach my $jar (keys %lowversions) {
+        my @notes;
+        if ($jar_searchregex{$jar}) {
+            @notes = $cvrf_twigs{$year}->descendants("Note[string() =~ /$jar_searchregex{$jar}/]");
+        }
+        else {
+            @notes = $cvrf_twigs{$year}->descendants("Note[string() =~ /$jar/i]");
+        }
+        foreach my $note (@notes) {
+            next if ($note->parent->gi eq 'DocumentNotes');
+            next if ($note->text =~ /\*\* REJECT \*\*/);
+            my $vuln = $note->parent->parent;
+            if(not $vuln) {
+                die("Could not find grandparent of note!");
+            }
+            my $title_element = $vuln->first_child('Title');
+            if(not $title_element) {
+                die("Could not find title for note with text:\n",$note->text);
+            }
+            my $title = $title_element->text;
+            next if $falsepositives{$title};
+
+            # TODO: The title has so far always been identical to CVE.
+            # Just always use this, since we absolutely need CVE to
+            # generate the links?
+            my $cve_element = $vuln->first_child('CVE');
+            if(not $cve_element) {
+                die("Could not find CVE for note with text:\n",$note->text);
+            }
+            my $cve = $cve_element->text;
+
+            # Attempt to isolate the last mentioned version string in
+            # the description.
+            #
+            # This may be a bad idea, as it's not strictly guaranteed
+            # to be the highest version with an exploit, so it should
+            # be at most used informationally.  Sometimes the last
+            # version mentioned is the last version including the
+            # exploit, and sometimes the first version fixed.
+
+            $note->text =~ /\s([0-9][0-9a-zA-Z;.-]+)(\s|,|\.)/;
+            my $lastversionstring = $1 || '';
+
+            say '----------';
+            say "${jar} $lowversions{$jar}: ${title} ($lastversionstring)";
+            say $note->text;
+
+            say "https://web.nvd.nist.gov/view/vuln/detail?vulnId=" . $cve;
+            my @urlelements = $vuln->descendants('URL');
+            foreach my $url (@urlelements) {
+                say $url->text;
+            }
+        }
+    }
+}
+
+##################
+### PROCEDURES ###
+##################
+
+# sub find_all_jars
+#
+# Wrapper to find_webapp_jars that finds jars in every detected java module
+#
+# Arguments:
+#   * $jars: global hashref of jar information (will be directly modified)
+#
+# Returns nothing
+#
+sub find_all_jars {
+    my ($jars) = @_;
+    my @webapps = list_webapps();
+
+    find_solr_jars($jars);
+    foreach my $webapp (sort @webapps) {
+        find_webapp_jars($webapp,$jars);
+    }
+    return;
+}
+
+# sub find_solr_jars
+#
+# Updates the jars hashref to contain all information on jars found in
+# the SOLR Jetty webapp directory
+#
+# Arguments:
+#   * hashref containing jar information that will be directly modified
+# Returns: nothing
+#
+sub find_solr_jars {
+    my ($jars) = @_;
+    my $dirhandle;
+    my @dirlist;
+    my $jarname;
+    my $jarver;
+
+    opendir($dirhandle,"/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib")
+      or die ("Unable to read /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib !");
+    @dirlist = readdir $dirhandle;
+    closedir($dirhandle);
+
+    foreach my $entry (sort @dirlist) {
+        next if ($entry eq '.');
+        next if ($entry eq '..');
+        if ( ($jarname,$jarver) = $entry =~ /([a-zA-Z0-9._-]+)-([0-9][a-zA-Z0-9.]+)\.jar/)
+        {
+            $jars{$jarname}->{'solr-jetty'} = $jarver;
+        }
+    }
+    return;
+}
+
+# sub find_webapp_jars
+#
+# Updates the jars hashref to contain all information on jars found in
+# a particular webapp directory
+#
+# Arguments:
+#   * webapp to search
+#   * hashref containing jar information that will be directly modified
+# Returns: nothing
+
+sub find_webapp_jars {
+    my ($webapp,$jars) = @_;
+    my $dirhandle;
+    my @dirlist;
+    my $jarname;
+    my $jarver;
+
+    opendir($dirhandle,"${tomcatdir}/webapps/${webapp}/WEB-INF/lib")
+      or die ("Unable to read ${tomcatdir}/webapps/${webapp}/WEB-INF/lib !");
+    @dirlist = readdir $dirhandle;
+    closedir($dirhandle);
+
+    foreach my $entry (sort @dirlist) {
+        next if ($entry eq '.');
+        next if ($entry eq '..');
+        if ( ($jarname,$jarver) = $entry =~ /([a-zA-Z0-9._-]+)-([0-9][a-zA-Z0-9.]+)\.jar/)
+        {
+            $jars{$jarname}->{$webapp} = $jarver;
+        }
+    }
+    return;
+}
+
+# sub lowest_jar_versions
+#
+# Arguments:
+#   * %jars: hash containing jar information
+#
+# Returns a hash containing just the lowest version of each jar found
+# This can also be used to generate a unique list of jars
+#
+sub lowest_jar_versions {
+    my %jars = @_;
+    my %lowversion;
+
+    foreach my $jarname (keys %jars) {
+        foreach my $webapp (keys %{$jars{$jarname}}) {
+            if(not $lowversion{$jarname} or versioncmp($jars{$jarname}->{$webapp},$lowversion{$jarname}) <= 0) {
+                $lowversion{$jarname} = $jars{$jarname}->{$webapp};
+            }
+        }
+    }
+    return %lowversion;
+}
+
+# sub print_jars
+#
+# Prints to the screen each jar name, the module it was found in, and
+# what version was found in that module, in tab-separated format.
+#
+# Arguments:
+#   * %jars: hash containing jar information
+#
+# Returns nothing
+#
+sub print_jars {
+    my %jars = @_;
+
+    say "Java JAR manifest";
+    say "=================";
+    foreach my $jar (sort keys %jars) {
+        foreach my $webapp (sort keys %{$jars{$jar}}) {
+            say "$jar\t$webapp\t$jars{$jar}{$webapp}";
+        }
+    }
+    return;
+}
+
+# sub list_webapps
+#
+# Arguments: none
+# Returns: array containing all webapps except ROOT
+#
+sub list_webapps {
+    my @webapps;
+    my $dirhandle;
+    my @dirlist;
+
+    opendir($dirhandle,"${tomcatdir}/webapps")
+      or die ("Unable to read ${tomcatdir}/webapps directory!");
+    @dirlist = readdir $dirhandle;
+    closedir($dirhandle);
+
+    foreach my $entry (sort @dirlist) {
+        next if ($entry eq '.');
+        next if ($entry eq '..');
+        next if ($entry eq 'ROOT');
+
+        if (-d "${tomcatdir}/webapps/${entry}") {
+            push(@webapps,$entry);
+        }
+    }
+    return @webapps;
+}
+
+# sub twig_cvrf
+#
+# Convert a CVRF file into a XML::Twig object for further usage
+#
+# Arguments:
+#   $cvrf: full path to CVRF file
+#
+# Returns:
+#   Scalar twig object
+#
+sub twig_cvrf {
+    my ($cvrf) = @_;
+    my $twig = XML::Twig->new(
+        keep_atts_order => 1,
+        output_encoding => 'utf-8',
+        pretty_print => 'record'
+       );
+    $twig->parsefile($cvrf)
+      or die ("Failed to parse CVRF file ${cvrf}!");
+    return $twig;
+}
+
+

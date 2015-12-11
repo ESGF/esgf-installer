@@ -501,6 +501,7 @@ setup_postgress() {
 
 
     yum -y install postgresql postgresql-server postgresql-devel
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update postgresql\n\n" && return 1	
 
     local default="Y"
     ((force_install)) && default="N"
@@ -876,6 +877,7 @@ setup_cdat() {
 
 # TODO - this all should be handled by yum
     yum -y install uvcdat
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat\n\n" && return 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
@@ -1131,6 +1133,8 @@ setup_esgcet() {
         echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
         mkdir -p ${publisher_home}
         ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
+	sed -i s/"host\.sample\.gov"/${esgf_host}/g ${publisher_home}/${publisher_config} 
+	sed -i s/"LASatYourHost"/LASat${node_short_name}/g ${publisher_home}/${publisher_config} 
         [ $? != 0 ] && popd && checked_done 1
     fi
     echo "chown -R ${installer_uid}:${installer_gid} ${publisher_home}"
@@ -1500,12 +1504,19 @@ EOF
 }
 
 setup_sensible_confs() {
-	#source /etc/esg.env
+	#place for post-install configuration overrides, binary replacements etc
+	
+	#quick-fix for removing insecure commons-fileupload jar file
+	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
+		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
+		cp ${tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/;
+	fi
+	#configuration overrides
 	tmpservername='placeholder.fqdn';
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
 	servername=$esgf_host;
 	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
-	sconffiles="esgf_ats.xml esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
+	sconffiles="esgf_ats.xml.tmpl esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
 	for i in `echo $sconffiles`; do
 		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
 		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;
@@ -2457,7 +2468,7 @@ setup_tds() {
     fi
 
     get_property mail_admin_address
-    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/${thredds_config_file}
+    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/threddsConfig.xml
 
     #restart tomcat to put modifications in effect.
     stop_tomcat
@@ -5349,8 +5360,8 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_default_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_default_peer:-'vesgint-idx.ipsl.upmc.fr'}
+        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
     else
@@ -5363,8 +5374,8 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_index_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_index_peer:-'vesgint-idx.ipsl.upmc.fr'}
+        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else
@@ -5828,16 +5839,14 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${esgf_host}/"
 #    echo "http://${esgf_host}/esgf-node-manager"
-    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
         echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
-        echo "http://${esgf_host}/esgf-web-fe"
+        echo "http://${esgf_host}/"
     fi
     if [ $((sel & COMPUTE_BIT)) != 0 ]; then
         echo "http://${esgf_host}/las"
@@ -6715,8 +6724,11 @@ main() {
 	echo "*******************************"
 	echo
 
+	yum -y remove rpmforge-release
 	yum -y install epel-release
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not configure epel repository\n\n" && return 1
         yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl '*ExtUtils*'
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update prerequisites\n\n" && return 1
 
     #---------------------------------------
     #Setup ESGF RPM repository

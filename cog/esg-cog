@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.0.1
+VERSION=v3.0.3
 
 # COG_TAG=master
 COG_TAG=$VERSION
@@ -108,6 +108,9 @@ rm -rf venv/lib/python2.7/site-packages/cog*
 # change ownership of COG_CONFIG_DIR/site_media
 chown -R $USER:$GROUP $COG_CONFIG_DIR
 chown -R $USER:$GROUP $COG_INSTALL_DIR
+
+# change ownership of COG_DIR/venv
+chown -R $USER:$GROUP $COG_DIR/venv
 
 # create location where Python eggs can be unpacked by user 'apache'
 mkdir -p $PYTHON_EGG_CACHE_DIR

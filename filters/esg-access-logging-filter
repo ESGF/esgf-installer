@@ -193,7 +193,7 @@ get_mgr_libs() {
     local dbcp_jar=commons-dbcp-${commons_dbcp_version}.jar
     local dbutils_jar=commons-dbutils-${commons_dbutils_version}.jar
     local pool_jar=commons-pool-${commons_pool_version}.jar
-    local postgress_jar=${postgress_jar:-postgresql-8.3-603.jdbc3.jar}
+    local postgress_jar=${postgress_jar:-postgresql-9.4-1201.jdbc41.jar}
         
     #move over libraries...
     echo "getting (copying) libary jars from the Node Manager App to ${dest_dir} ..."

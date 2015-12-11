@@ -13,7 +13,7 @@ source /usr/local/etc/esg-autoinstall.conf
 
 ### Expect script begins here ###
 
-spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}--devel --debug
+spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}
 expect {
     # Error messages cause instant abort
     "ERROR:" { exit 1 }

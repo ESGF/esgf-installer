@@ -4577,6 +4577,8 @@ sanity_check_for_hints_todo_compute() {
         default_answer="Y"
         read -e -t 120 -p " Would you like to install the \"COMPUTE\" configuration to support this ? $([ ${default_answer} = "Y" ] && echo "[Y/n]" || echo "[y/N]")" answer
         [ -z "${answer}" ] && answer=$(tr 'A-Z' 'a-z' <<< ${default_answer})
+        ans2=$(tr 'A-Z' 'a-z' <<< ${answer})
+        answer=$ans2
         if [ "${answer}" != "y" ] && [ "${answer}" != "yes" ]; then
             echo "Will NOT install \"COMPUTE\" configuration..."
             return 1

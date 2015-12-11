@@ -5165,7 +5165,7 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+    #switched off dashboard after consultation with Sandro [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
@@ -5190,7 +5190,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+    #Turned off(source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
@@ -5845,7 +5845,7 @@ done_remark() {
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
-        echo "http://${esgf_host}/esgf-desktop"
+        #echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
         echo "http://${esgf_host}/"
@@ -6868,8 +6868,10 @@ main() {
         sanity_check_web_xmls
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
-# Hard coded to remove node manager
+# Hard coded to remove node manager, desktop and dashboard
 	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
+	rm -rf /usr/local/tomcat/webapps/esgf-desktop
+	rm -rf /usr/local/tomcat/webapps/esgf-dashboard
 	#fix for sensible values for conf files post node-manager removal
 	setup_sensible_confs
         start ${sel}

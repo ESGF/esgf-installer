@@ -1,95 +1,19 @@
 #!/usr/bin/expect -f
 # -*- mode:shell-script -*-
 #
-# Expect script for automatically building an ESGF node from
-# the development branch in Git
+# Expect script for automatically building an ESGF node 
+#
+# To use, copy the file esg-autoinstall.template (either in
+# /usr/local/etc from the boostrapper or from the Git repository) to
+# /usr/local/etc/esg-autoinstall.conf and edit it to reflect your site
+# settings, then run 'esg-autoinstall'
 #
 
-set ESGNODESCRIPT /usr/local/bin/esg-node
-
-# Set this to "data" or "data compute" for a data-only node
-set NODETYPE "index idp data compute"
-set timeout -1
-
-
-### Local Node Settings ###
-
-# Fully qualified domain name of the node
-set FQDN localhost.localdomain
-
-# Shortname of the node
-set SHORTNAME localhost
-
-# Long descriptive name of the node
-set LONGNAME "ESGF Local Test Data Node"
-
-# Admin password (alphanumeric-only)
-set ADMINPASS "CHANGEME"
-
-# IP address cleared for admin-restricted pages
-set ADMINIP ""
-
-# Globus Online username and password
-# (you must have set up this account in advance)
-set GLOBUSUSER "NOT-A-VALID-USERNAME"
-set GLOBUSPASS "NOT-A-VALID-PASSWORD"
-
-# CA Certificate password
-set CACERTPASS "CHANGEME"
-
-# Organization name
-set ORGNAME "NOT-A-VALID-ORG"
-
-# Namespace (reverse FQDN, i.e. "gov.llnl")
-set NAMESPACE localdomain.localhost
-
-# Peer Group (valid values are usually "esgf-test" and "esgf-prod")
-set PEERGROUP "esgf-test"
-
-# Default Peer (set this to empty for the default peergroup member, or to your own FQDN)
-set DEFAULTPEER ""
-
-# Hostname of the node to publish to
-set PUBLISHNODE "pcmdi9.llnl.gov"
-
-# Use an external IDP Peer?
-# (Unless you know you need to run your own, put y)
-set EXTERNALIDP "y"
-
-# FQDN of the external IDP Peer
-set IDPPEER "pcmdi9.llnl.gov"
-
-# E-mail address notifications will be sent as
-set ADMINEMAIL root@localhost
-
-# Database connection string
-# (form: [username]@[host]:[port]/[database])
-# Note: all elements are mandatory, and the "postgresql://" header is
-# automatically prepended by the esg-node script!
-# Currently, the only allowed database name is "esgcet"
-## DO NOT CURRENTLY SET THIS TO ANYTHING BUT ""
-#set DBSTRING "esg@localhost:5432/esgcet
-set DBSTRING ""
-
-# Is this an externally managed database?
-# (if DBSTRING isn't pointed at localhost, the answer is yes)
-# DO NOT CURRENTLY SET THIS TO YES
-set DBEXTERNAL no
-
-# Low-privilege database account (this may need to be "esgcet")
-set DBLOWUSER "esgcet"
-
-# Password for low-privilege database account
-set DBLOWPASS "CHANGEME"
-
-# PostgreSQL port number
-# DO NOT CURRENTLY CHANGE THIS
-set PGPORT 5432
-
+source /usr/local/etc/esg-autoinstall.conf
 
 ### Expect script begins here ###
 
-spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install --devel --debug
+spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}--devel --debug
 expect {
     # Error messages cause instant abort
     "ERROR:" { exit 1 }

@@ -16,8 +16,10 @@ source /usr/local/etc/esg-autoinstall.conf
 spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}
 expect {
     # Error messages cause instant abort
-    "ERROR:" { exit 1 }
+# ERROR and FATAL are found even in working installs
+#    "ERROR:" { exit 1 }
     "could not change directory to" { exit 1 }
+    "No space left on device" { exit 1 }
     "Permission denied" { exit 1 }
     "This action did not complete successfully" { exit 1 }
 
@@ -97,6 +99,9 @@ expect {
     "What is your organization's id?" {
         send ${ORGNAME}\n ; exp_continue
     }
+    "Do you want to continue with thredds installation and setup?" {
+        send \n ; exp_continue
+    }
     "Would you like to use the DN: (OU=ESGF.ORG, O=ESGF)" {
         send \n ; exp_continue
     }
@@ -155,6 +160,12 @@ expect {
         send ${GLOBUSUSER}\n ; exp_continue
     }
     "Globus password" {
+        send ${GLOBUSPASS}\n ; exp_continue
+    }
+    "Globus Username:" {
+        send ${GLOBUSUSER}\n ; exp_continue
+    }
+    "Globus Password:" {
         send ${GLOBUSPASS}\n ; exp_continue
     }
     "Enter password for new role:" {
@@ -226,32 +237,14 @@ expect {
     "Enter PEM pass phrase:" {
         send ${CACERTPASS}\n ; exp_continue
     }
-    "What is the CA subject string" {
-        send \n ; exp_continue
-    }
-    "ca_subject =" {
-        send \n ; exp_continue
-    }
-    "What is the CA hash value" {
-        send \n ; exp_continue
-    }
     "please enter the password for the CA key" {
         send ${CACERTPASS}\n ; exp_continue
     }
     "Enter (simple) CA's certificate password" {
         send ${CACERTPASS}\n ; exp_continue
     }
-    "Would you like to continue to use the detected simpleCA installation?" {
-        send Y\n; exp_continue
-    }
-    "Do you want to continue with web front-end installation and setup?" {
-        send \n ; exp_continue
-    }
-    "Do you wish to have the esgf-node-manager's page as this node's homepage?" {
-        send \n ; exp_continue
-    }
 
-    # Victory condition
+    # Victory conditions
     "(esg_datanode: cleaning up etc...)" {
         exit 0
     }

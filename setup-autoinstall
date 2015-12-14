@@ -279,7 +279,7 @@ if [ "$install_type" = "data" ]; then
 	va['fix-29']='blank'
 fi
 echo -n >/tmp/answers;
-chmod 400 /tmp/answers;
+chmod 600 /tmp/answers;
 for val in ${vl[@]}; do
 	if [ "$val" = "get-cleared-ips" ]; then
 		for i in ${clearedips[@]}; do
@@ -290,6 +290,7 @@ for val in ${vl[@]}; do
 	ans=${va[$val]}
 	echo $ans:$val >>/tmp/answers;
 done
+chmod 400 /tmp/answers
 echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
 echo "Use CTRL-C at the end of the install, to cleanup.";
 load_pipe

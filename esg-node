@@ -1981,6 +1981,9 @@ When prompted for the cachain file, specify the chain file provided by your CA
 If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
 esg-node --generate-esgf-csrs
 
+If you wish to generate CSRs for a node other than the one you are running, you could use
+esg-node --generate-esgf-csrs-ext
+
 If you wish to install ESGF certificates:
 1. untar the entire contents of the tarball you received from Nicolas/Prashanth into /etc/esgfcerts
 2. esg-node --install-local-certs

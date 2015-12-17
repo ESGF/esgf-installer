@@ -1,5 +1,5 @@
 #!/bin/bash
-breaksold='v2.1\.'
+breaksold='v2.2\.'
 esgfver=`/usr/local/bin/esg-node --version|grep Version|cut -d ' ' -f2`
 mkfifo /tmp/inputpipe
 mkfifo /tmp/outputpipe

@@ -175,6 +175,7 @@ if [ $numl -gt 1 ]; then
 		else
 			break;
 		fi
+	rm -f ips
 	done
 
 	if [ "$install_type" = "all" ]; then

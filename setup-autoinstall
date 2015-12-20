@@ -1,5 +1,5 @@
 #!/bin/bash
-breaksold='v2.0\.'
+breaksold='v2.2\.'
 esgfver=`/usr/local/bin/esg-node --version|grep Version|cut -d ' ' -f2`
 mkfifo /tmp/inputpipe
 mkfifo /tmp/outputpipe
@@ -114,6 +114,7 @@ if [ "$choice" = "y" -o "$choice" = "Y" ]; then
 	fi
 	if [ $brokenanswers -eq 0 ]; then
 		cp $anspath /tmp/answers;
+		chmod 400 /tmp/answers;
 		echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
 		echo "Use CTRL-C at the end of the install, to cleanup.";
 		load_pipe
@@ -278,6 +279,7 @@ if [ "$install_type" = "data" ]; then
 	va['fix-29']='blank'
 fi
 echo -n >/tmp/answers;
+chmod 600 /tmp/answers;
 for val in ${vl[@]}; do
 	if [ "$val" = "get-cleared-ips" ]; then
 		for i in ${clearedips[@]}; do
@@ -288,6 +290,7 @@ for val in ${vl[@]}; do
 	ans=${va[$val]}
 	echo $ans:$val >>/tmp/answers;
 done
+chmod 400 /tmp/answers
 echo "Ready with the answers. You can now run the installer with a </tmp/inputpipe";
 echo "Use CTRL-C at the end of the install, to cleanup.";
 load_pipe

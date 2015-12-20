@@ -49,6 +49,7 @@ esg-purge () {
         # ... but we add ...
         esg-purge-utils
         esg-purge-workbench
+        esg-purge-final
         ;;
     cdat)
         esg-purge-cdat
@@ -126,17 +127,33 @@ esg-purge-base () {
     # development.  Remove only if they are regular files.
     find /usr/local/bin -type f -iname esg-\* -exec rm -f {} \+
     find /usr/local/bin -type f -iname esgf-\* -exec rm -f {} \+
+    find /usr/local/bin -type f -iname jar_security_scan -exec rm -f {} \+
     find /usr/local/bin -type f -iname setup-autoinstall -exec rm -f {} \+
 
     # The globs may fail here with no targets, thus || true
     rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
     rm -rf /usr/local/solr* || true
+
+    # Solr may leave stuck java processes.  Kill them with extreme prejudice
+    pkill -9 -f 'java.*/usr/local/solr'
 }
 
 esg-purge-cdat () {
     yum remove -y cdat uvcdat
     rm -rf /usr/local/cdat /usr/local/uvcdat
+}
+
+esg-purge-final () {
+    # Final cleanup -- anything that prints warning or informational
+    # message for the user should happen here so they don't get
+    # scrolled off the screen.
+
+    rm -f /usr/local/etc/esg-autoinstall.template
+    if [ -f /usr/local/etc/esg-autoinstall.conf ] ; then
+        echo "WARNING: not removing autoinstall configuration file /usr/local/etc/esg-autoinstall.conf"
+        echo "If you want a pristine environment, remove it manually."
+    fi
 }
 
 esg-purge-globus () {
@@ -201,6 +218,9 @@ esg-purge-tomcat () {
 
     # The glob may fail here with no targets, thus || true
     rm -rf /usr/local/tomcat* /usr/local/apache-tomcat* || true
+
+    # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
+    pkill -9 -f 'java.*/usr/local/tomcat'
 }
 
 esg-purge-utils () {

@@ -1,89 +1,32 @@
 #!/usr/bin/expect -f
 # -*- mode:shell-script -*-
 #
-# Expect script for automatically building an ESGF node from
-# the development branch in Git
+# Expect script for automatically building an ESGF node 
+#
+# To use, copy the file esg-autoinstall.template (either in
+# /usr/local/etc from the boostrapper or from the Git repository) to
+# /usr/local/etc/esg-autoinstall.conf and edit it to reflect your site
+# settings, then run 'esg-autoinstall'
 #
 
-set ESGNODESCRIPT /usr/local/bin/esg-node
-
-# Set this to "data" or "data compute" for a data-only node
-set NODETYPE "index idp data compute"
-set timeout -1
-
-
-### Local Node Settings ###
-
-# Fully qualified domain name of the node
-set FQDN localhost.localdomain
-
-# Shortname of the node
-set SHORTNAME localhost
-
-# Long descriptive name of the node
-set LONGNAME "ESGF Local Test Data Node"
-
-# Admin password (alphanumeric-only)
-set ADMINPASS "CHANGEME"
-
-# CA Certificate password
-set CACERTPASS "CHANGEME"
-
-# Organization name
-set ORGNAME "NOT-A-VALID-ORG"
-
-# Organization ID (how is this different from ORGNAME?)
-set ORGID "NOT-A-VALID-ID"
-
-# Namespace (reverse FQDN, i.e. "gov.llnl")
-set NAMESPACE localdomain.localhost
-
-# Hostname of the node to publish to
-set PUBLISHNODE pcmdi9.llnl.gov
-
-# IDP Peer
-# This is a numeric selection, not an actual name
-# If you want a custom entry, the value you want here is "C"
-set IDPPEER ""
-
-# E-mail address notifications will be sent as
-set ADMINEMAIL esg-node-dev@lists.llnl.gov
-
-# Database connection string
-# (form: [username]@[host]:[port]/[database])
-# Note: all elements are mandatory, and the "postgresql://" header is
-# automatically prepended by the esg-node script!
-# Currently, the only allowed database name is "esgcet"
-set DBSTRING esg@localhost:5432/esgcet
-
-# Is this an externally managed database?
-# (if DBSTRING isn't pointed at localhost, the answer is yes)
-set DBEXTERNAL no
-
-# Low-privilege database account (this may need to be "esgcet")
-set DBLOWUSER esgcet
-
-# Password for low-privilege database account
-set DBLOWPASS CHANGEME
-
-# PostgreSQL port number
-set PGPORT 5432
-
-# Username for Tomcat
-set TOMCATUSER dnode_user
-
+source /usr/local/etc/esg-autoinstall.conf
 
 ### Expect script begins here ###
 
-spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install --devel --debug
+spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}
 expect {
     # Error messages cause instant abort
-    "ERROR:" { exit 1 }
+# ERROR and FATAL are found even in working installs
+#    "ERROR:" { exit 1 }
     "could not change directory to" { exit 1 }
+    "No space left on device" { exit 1 }
     "Permission denied" { exit 1 }
     "This action did not complete successfully" { exit 1 }
 
     # Actual script responses
+    "Please select the ESGF distribution mirror for this installation" {
+        send \n ; exp_continue
+    }
     "Are you ready to begin the installation?" {
         send y\n ; exp_continue
     }
@@ -102,9 +45,6 @@ expect {
     "What is the name of your organization?" {
         send ${ORGNAME}\n ; exp_continue
     }
-    "What is your organization's id?" {
-        send ${ORGID}\n ; exp_continue
-    }
     "Please give this node a \"short\" name" {
         send ${SHORTNAME}\n ; exp_continue
     }
@@ -115,10 +55,10 @@ expect {
         send ${NAMESPACE}\n ; exp_continue
     }
     "What peer group(s) will this node participate in?" {
-        send \n ; exp_continue
+        send ${PEERGROUP}\n ; exp_continue
     }
     "What is the default peer to this node?" {
-        send \n ; exp_continue
+        send ${DEFAULTPEER}\n ; exp_continue
     }
     "What is the hostname of the node do you plan to publish to?" {
         send ${PUBLISHNODE}\n ; exp_continue
@@ -126,8 +66,8 @@ expect {
     "What email address should notifications be sent as?" {
         send ${ADMINEMAIL}\n ; exp_continue
     }
-    "Enter the database connection string:" {
-        send ${DBSTRING}\n ; exp_continue
+    "Is the database external to this node?" {
+        send \n ; exp_continue
     }
     "What is the database connection string?" {
         send ${DBSTRING}\n ; exp_continue
@@ -141,17 +81,50 @@ expect {
     "What is the db password for publisher user" {
         send ${DBLOWPASS}\n ; exp_continue
     }
-    "Do you want to continue with Java installation and setup?" {
-        send \n ; exp_continue
+    "Enter password for postgres user dbsuper:" {
+        send ${ADMINPASS}\n ; exp_continue
+    }
+    "Re-enter password for postgres user dbsuper:" {
+        send ${ADMINPASS}\n ; exp_continue
+    }
+    "Please Enter PostgreSQL port number" {
+        send ${PGPORT}\n ; exp_continue
     }
     "Would you like a \"system\" or \"user\" publisher configuration" {
+        send \n ; exp_continue
+    }
+    "Is this correct?" {
+        send Y\n ; exp_continue
+    }
+    "What is your organization's id?" {
+        send ${ORGNAME}\n ; exp_continue
+    }
+    "Do you want to continue with thredds installation and setup?" {
         send \n ; exp_continue
     }
     "Would you like to use the DN: (OU=ESGF.ORG, O=ESGF)" {
         send \n ; exp_continue
     }
+    "Please enter the password for this keystore" {
+        send ${ADMINPASS}\n ; exp_continue
+    }
+    "Please re-enter the password for this keystore" {
+        send ${ADMINPASS}\n ; exp_continue
+    }
+    "Enter a single ip address which would be cleared to access admin restricted pages." {
+        send ${ADMINIP}\n ; exp_continue
+    }
+    "Do you wish to allow further ips?" {
+        send n\n ; exp_continue
+    }
     "Please enter username for tomcat" {
-        send ${TOMCATUSER}\n ; exp_continue
+        send \n ; exp_continue
+    }
+    "Please enter password for user, " {
+        send \n ; exp_continue
+    }
+    "Would you like to add another user?" {
+        send \n ; exp_continue
     }
     "Do you wish to setup the redirect to the esgf-node-manager's page?" {
         send \n ; exp_continue
@@ -159,29 +132,41 @@ expect {
     "(RETURN if same as keystore password)" {
         send \n ; exp_continue
     }
-    "Would you like to add another user?" {
-        send \n ; exp_continue
-    }
     "Do you wish to generate a Certificate Signing Request at this time?" {
-        send \n ; exp_continue
-    }
-    "Please enter password for user, " {
         send \n ; exp_continue
     }
     "Please Enter the IP address of this host" {
         send \n ; exp_continue
     }
-    "Please select the IDP Peer for this node" {
+    "Please Enter the public (i.e. routable) IP address of this host" {
+        send \n ; exp_continue
+    }
+    "Do you wish to use an external IDP peer?" {
+        send ${EXTERNALIDP}\n ; exp_continue
+    }
+    "Please specify your IDP peer node's FQDN:" {
         send ${IDPPEER}\n ; exp_continue
-    }
-    "Is this correct?" {
-        send Y\n ; exp_continue
-    }
-    "Do you still wish to continue?" {
-        send Y\n ; exp_continue
     }
     "Enter certificate to add to trusted keystore" {
         send \n ; exp_continue
+    }
+    "Do you want to continue with the Globus installation and setup" {
+        send \n ; exp_continue
+    }
+    "Do you want to make a back up of the existing Globus distribution (datanode)?" {
+        send \n ; exp_continue
+    }
+    "Please provide a Globus username" {
+        send ${GLOBUSUSER}\n ; exp_continue
+    }
+    "Globus password" {
+        send ${GLOBUSPASS}\n ; exp_continue
+    }
+    "Globus Username:" {
+        send ${GLOBUSUSER}\n ; exp_continue
+    }
+    "Globus Password:" {
+        send ${GLOBUSPASS}\n ; exp_continue
     }
     "Enter password for new role:" {
         send ${ADMINPASS}\n ; exp_continue
@@ -189,14 +174,14 @@ expect {
     "Enter it again:" {
         send ${ADMINPASS}\n ; exp_continue
     }
-    "Please Enter PostgreSQL port number" {
-        send ${PGPORT}\n ; exp_continue
-    }
     "Is this ok" {
         send Y\n ; exp_continue
     }
     "Add new line:" {
         send \n ; exp_continue
+    }
+    "Do you still wish to continue?" {
+        send Y\n ; exp_continue
     }
     "Do you want to continue with openid relying party installation and setup?" {
         send \n ; exp_continue
@@ -217,12 +202,6 @@ expect {
         send \n ; exp_continue
     }
     "Do you want to make a back up of the existing database schema" {
-        send \n ; exp_continue
-    }
-    "Do you want to continue with the Globus installation and setup" {
-        send \n ; exp_continue
-    }
-    "Do you want to make a back up of the existing Globus distribution (datanode)?" {
         send \n ; exp_continue
     }
     "Do you still wish to (re)GENERATE self signed certs (and usurp what is present)?" {
@@ -258,32 +237,14 @@ expect {
     "Enter PEM pass phrase:" {
         send ${CACERTPASS}\n ; exp_continue
     }
-    "What is the CA subject string" {
-        send \n ; exp_continue
-    }
-    "ca_subject =" {
-        send \n ; exp_continue
-    }
-    "What is the CA hash value" {
-        send \n ; exp_continue
-    }
     "please enter the password for the CA key" {
         send ${CACERTPASS}\n ; exp_continue
     }
     "Enter (simple) CA's certificate password" {
         send ${CACERTPASS}\n ; exp_continue
     }
-    "Would you like to continue to use the detected simpleCA installation?" {
-        send Y\n; exp_continue
-    }
-    "Do you want to continue with web front-end installation and setup?" {
-        send \n ; exp_continue
-    }
-    "Do you wish to have the esgf-node-manager's page as this node's homepage?" {
-        send \n ; exp_continue
-    }
 
-    # Victory condition
+    # Victory conditions
     "(esg_datanode: cleaning up etc...)" {
         exit 0
     }

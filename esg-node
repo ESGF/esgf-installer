@@ -1504,12 +1504,19 @@ EOF
 }
 
 setup_sensible_confs() {
-	#source /etc/esg.env
+	#place for post-install configuration overrides, binary replacements etc
+	
+	#quick-fix for removing insecure commons-fileupload jar file
+	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
+		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
+		cp ${tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/;
+	fi
+	#configuration overrides
 	tmpservername='placeholder.fqdn';
 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
 	servername=$esgf_host;
 	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
-	sconffiles="esgf_ats.xml esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
+	sconffiles="esgf_ats.xml.tmpl esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
 	for i in `echo $sconffiles`; do
 		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
 		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;
@@ -1973,6 +1980,9 @@ When prompted for the cachain file, specify the chain file provided by your CA
 
 If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
 esg-node --generate-esgf-csrs
+
+If you wish to generate CSRs for a node other than the one you are running, you could use
+esg-node --generate-esgf-csrs-ext
 
 If you wish to install ESGF certificates:
 1. untar the entire contents of the tarball you received from Nicolas/Prashanth into /etc/esgfcerts
@@ -2461,7 +2471,7 @@ setup_tds() {
     fi
 
     get_property mail_admin_address
-    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/${thredds_config_file}
+    sed -i "s/support@my.group/$mail_admin_address/g" ${thredds_content_dir}/thredds/threddsConfig.xml
 
     #restart tomcat to put modifications in effect.
     stop_tomcat
@@ -4570,6 +4580,8 @@ sanity_check_for_hints_todo_compute() {
         default_answer="Y"
         read -e -t 120 -p " Would you like to install the \"COMPUTE\" configuration to support this ? $([ ${default_answer} = "Y" ] && echo "[Y/n]" || echo "[y/N]")" answer
         [ -z "${answer}" ] && answer=$(tr 'A-Z' 'a-z' <<< ${default_answer})
+        ans2=$(tr 'A-Z' 'a-z' <<< ${answer})
+        answer=$ans2
         if [ "${answer}" != "y" ] && [ "${answer}" != "yes" ]; then
             echo "Will NOT install \"COMPUTE\" configuration..."
             return 1
@@ -5156,7 +5168,7 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+    #switched off dashboard after consultation with Sandro [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
@@ -5181,7 +5193,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+    #Turned off(source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
@@ -5353,8 +5365,8 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_default_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_default_peer:-'vesgint-idx.ipsl.upmc.fr'}
+        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
     else
@@ -5367,8 +5379,8 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_index_peer:-'vesgint-idx.ipsl.jussieu.fr'}
-        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.jussieu.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_index_peer:-'vesgint-idx.ipsl.upmc.fr'}
+        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else
@@ -5832,16 +5844,14 @@ done_remark() {
     echo ""
     echo "Finished!..."
     echo "In order to see if this node has been installed properly you may direct your browser to:"
-    echo "http://${esgf_host}/"
 #    echo "http://${esgf_host}/esgf-node-manager"
-    echo "http://${esgf_host}/esgf-dashboard"
     if [ $((sel & DATA_BIT ))   != 0 ] ; then
         echo "http://${esgf_host}/thredds"
         echo "http://${esgf_host}/esg-orp"
-        echo "http://${esgf_host}/esgf-desktop"
+        #echo "http://${esgf_host}/esgf-desktop"
     fi
     if [ $((sel & INDEX_BIT))   != 0 ]; then
-        echo "http://${esgf_host}/esgf-web-fe"
+        echo "http://${esgf_host}/"
     fi
     if [ $((sel & COMPUTE_BIT)) != 0 ]; then
         echo "http://${esgf_host}/las"
@@ -6861,8 +6871,10 @@ main() {
         sanity_check_web_xmls
         setup_root_app
         [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
-# Hard coded to remove node manager
+# Hard coded to remove node manager, desktop and dashboard
 	rm -rf /usr/local/tomcat/webapps/esgf-node-manager
+	rm -rf /usr/local/tomcat/webapps/esgf-desktop
+	rm -rf /usr/local/tomcat/webapps/esgf-dashboard
 	#fix for sensible values for conf files post node-manager removal
 	setup_sensible_confs
         start ${sel}

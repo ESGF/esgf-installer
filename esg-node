@@ -481,7 +481,7 @@ setup_postgress() {
     _is_managed_db && return 0
 
     echo -n "Checking for postgresql >= ${postgress_min_version} "
-    check_version ${postgress_bin_dir}/psql ${postgress_min_version}
+    check_version ${postgress_bin_dir}/postgres ${postgress_min_version}
     local ret=$?
     if [ $ret == 0 ] ; then
         (( ! force_install )) && [OK] && return 0

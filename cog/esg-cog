@@ -88,6 +88,13 @@ if [ $? != 0 ]; then
 fi
 git pull
 
+#FIXME: must download and install PIL manually
+cd $COG_DIR
+wget http://effbot.org/media/downloads/PIL-1.1.7.tar.gz
+tar xfz PIL-1.1.7.tar.gz
+cd PIL-1.1.7
+python setup.py install
+
 # install CoG dependencies within Python virtual environment
 cd $COG_INSTALL_DIR
 python setup.py install

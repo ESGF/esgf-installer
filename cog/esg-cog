@@ -23,9 +23,9 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.1.1
+VERSION=v3.2.0
 
-# COG_TAG=master
+#COG_TAG=devel
 COG_TAG=$VERSION
 
 # must start from bare-bone Python 2.7.9 installation that contains only setup_tools, pip and virtualenv
@@ -65,11 +65,19 @@ mkdir -p $COG_CONFIG_DIR
 # will be created during git checkout
 COG_INSTALL_DIR=$INSTALLPATH/cog_install
 
-# use Python virtual environment
+# use Python virtual environment (rebuild from scratch each time)
 cd $INSTALLPATH
+rm -rf venv
 virtualenv -p /opt/esgf/python/bin/python2.7 venv
 source venv/bin/activate
 echo 'Using Python:' `which python`
+
+# pre-requisite: update pip
+pip install -U pip
+
+# pre-requisite: install from wheel otherwise it does not work on MacOSX
+pip install wheel
+pip install --use-wheel Pillow==3.1.0
 
 # initial checkout CoG software stack
 cd $INSTALLPATH
@@ -88,25 +96,25 @@ if [ $? != 0 ]; then
 fi
 git pull
 
-#FIXME: must download and install PIL manually
-cd $COG_DIR
-wget http://effbot.org/media/downloads/PIL-1.1.7.tar.gz
-tar xfz PIL-1.1.7.tar.gz
-cd PIL-1.1.7
-python setup.py install
-
 # install CoG dependencies within Python virtual environment
 cd $COG_INSTALL_DIR
 python setup.py install
-
-# create or upgrade CoG installation
-python setup.py setup_cog --esgf=$ESGF
 
 # FIXME: must download and install Globus Nexus manually
 cd $COG_DIR
 git clone https://github.com/globusonline/python-nexus-client.git
 cd python-nexus-client/
 python setup.py install
+
+# FIXME: must download and install django-openid-auth fork manually
+cd $COG_DIR
+git clone https://github.com/EarthSystemCoG/django-openid-auth.git
+cd django-openid-auth
+python setup.py install
+
+# create or upgrade CoG installation
+cd $COG_INSTALL_DIR
+python setup.py setup_cog --esgf=$ESGF
 
 # cleanup CoG egg
 cd $INSTALLPATH

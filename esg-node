@@ -864,14 +864,9 @@ setup_cdat() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
 
-# TODO - remove once this is relocated to use yum
-    uvcdat_rpm_url=http://pcmdi9.llnl.gov/rpms/UVCDAT-2.2.0-Linux.rpm
-
-    uvcdat_rpm_file=${uvcdat_rpm_url##*/}
-
     #---------
-    #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
-#    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
+    # Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
+    #((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
 
 

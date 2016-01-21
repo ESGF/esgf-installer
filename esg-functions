@@ -662,6 +662,9 @@ check_postgress_process() {
     /etc/init.d/postgresql status
 }
 
+check_esgf_httpd_process() {
+    service esgf-httpd status
+}
 
 check_tomcat_process() {
     if [ -f ${tomcat_install_dir}/conf/server.xml ]; then

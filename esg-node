@@ -5203,7 +5203,7 @@ status() {
     #TODO conditionally reflect the status of globus (gridftp) process
     read_sel
     local ret=1
-    if check_postgress_process && check_tomcat_process; then
+    if check_postgress_process && check_tomcat_process && check_esgf_http_process; then
         echo
         echo "$(echo_strong "Node Running...") (${sel})"
         ret=0

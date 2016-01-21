@@ -3484,6 +3484,19 @@ install_keypair() {
 
     local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
     local default_passwd=${ks_secret:=changeit}
+   
+     if [ ! -f ${public_cert} ] ; then
+	echo ${public_cert} not found or not readable.
+	
+	return (-1)
+    fi
+
+    if [ ! -f ${private_key} ] ; then
+	echo ${private_key} not found or not readable.
+	
+	return (-1)
+    fi
+
 
     if [ -z "${store_password}" ]; then
         local verify_password
@@ -3524,9 +3537,16 @@ install_keypair() {
 	cp ${public_cert} /etc/certs/hostcert.pem
 	echo -n >/etc/certs/tmpchain
 	for cert in ${certfiles[@]}; do
-		cat $cert >>/etc/certs/tmpchain
+	    if [ ! -f $cert ] ; then
+		echo ${cert} not found or not readable.
+	
+		return (-1)		
+	    fi
+	    
+	    cat $cert >>/etc/certs/tmpchain
 	done
 	cp /etc/certs/tmpchain /etc/certs/cachain.pem
+
 	chmod 400 /etc/certs/hostkey.pem
 	chmod 644 /etc/certs/hostcert.pem
 	chmod 644 /etc/certs/cachain.pem

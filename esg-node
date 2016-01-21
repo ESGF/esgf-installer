@@ -5534,9 +5534,9 @@ esgf_node_info() {
      Please be sure that you have gotten your created an account on
      your ESGF IDP Peer.
 
-     The primary IDP Peer for ESGF is pcmdi9.llnl.gov
-     You may register for an account at PCMDI9 at the following URL:
-     http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
+     The primary IDP Peer for ESGF is pcmdi.llnl.gov
+     You may register for an account at PCMDI at the following URL:
+     http://pcmdi.llnl.gov/esgf-web-fe/createAccount
 
      Note: Account creation is prerequisite for publication!
 
@@ -5660,7 +5660,7 @@ usage() {
         -------------------------------
         Publication Endpoint Setting (Index Peer)
         -------------------------------
-        --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
+        --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi.llnl.gov
         --get-index-peer - tells you where this node is indexing it's data
 
         -------------------------------

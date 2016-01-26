@@ -39,10 +39,10 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.8.5"}
+    esg_orp_version=${esg_orp_version:-"2.8.6"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.6.5"}
+    esgf_idp_version=${esgf_idp_version:-"2.7.0"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"4.7.4"}

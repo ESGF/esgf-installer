@@ -6611,7 +6611,7 @@ main() {
                     ;;
                 --fetch-static-idp-file)
                     shift
-                    [ -e "${scripts_dir}/esg-idp" ] && (source ${scripts_dir}/esg-idp >& /dev/null && fetch_static_idp_file $@)
+                    [ -e "${scripts_dir}/esg-orp" ] && (source ${scripts_dir}/esg-orp >& /dev/null && fetch_static_idp_file $@)
                     exit $?
                     ;;
                 --fetch-static-ats-file)

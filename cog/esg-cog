@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.2.2
+VERSION=v3.2.4
 
 #COG_TAG=devel
 COG_TAG=$VERSION
@@ -79,6 +79,9 @@ pip install -U pip
 pip install wheel
 pip install --use-wheel Pillow==3.1.0
 
+# pre-requisite: install Django separately otherwise it causes compilation errors
+pip install django==1.9.1
+
 # initial checkout CoG software stack
 cd $INSTALLPATH
 if [ ! -d "$COG_INSTALL_DIR" ]; then
@@ -132,8 +135,8 @@ mkdir -p $PYTHON_EGG_CACHE_DIR
 chown -R $USER:$GROUP $PYTHON_EGG_CACHE_DIR
 
 # Copying installation script in installation directory
-rm -f $INSTALLPATH/$0
-cp $0 $INSTALLPATH
+#rm -f $INSTALLPATH/$0
+#cp $0 $INSTALLPATH
 
 # Write CoG environment variable
 echo "export COG_DIR=$INSTALLPATH" >> $ESGF_ENVFILE

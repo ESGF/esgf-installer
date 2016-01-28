@@ -3484,6 +3484,19 @@ install_keypair() {
 
     local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
     local default_passwd=${ks_secret:=changeit}
+   
+     if [ ! -f ${public_cert} ] ; then
+	echo ${public_cert} not found or not readable.
+	
+	exit -1
+    fi
+
+    if [ ! -f ${private_key} ] ; then
+	echo ${private_key} not found or not readable.
+	
+	exit -1
+    fi
+
 
     if [ -z "${store_password}" ]; then
         local verify_password
@@ -3524,9 +3537,16 @@ install_keypair() {
 	cp ${public_cert} /etc/certs/hostcert.pem
 	echo -n >/etc/certs/tmpchain
 	for cert in ${certfiles[@]}; do
-		cat $cert >>/etc/certs/tmpchain
+	    if [ ! -f $cert ] ; then
+		echo ${cert} not found or not readable.
+	
+		exit -1		
+	    fi
+	    
+	    cat $cert >>/etc/certs/tmpchain
 	done
 	cp /etc/certs/tmpchain /etc/certs/cachain.pem
+
 	chmod 400 /etc/certs/hostkey.pem
 	chmod 644 /etc/certs/hostcert.pem
 	chmod 644 /etc/certs/cachain.pem
@@ -5101,8 +5121,10 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
+    lsof -Pni |egrep httpd | head -n1
     local dashboard_pid=$(pgrep dashboard)
     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+
     echo "---------------------------"
     echo
     return 0
@@ -5203,13 +5225,13 @@ status() {
     #TODO conditionally reflect the status of globus (gridftp) process
     read_sel
     local ret=1
-    if check_postgress_process && check_tomcat_process; then
+    if check_postgress_process && check_tomcat_process && check_esgf_httpd_process; then
         echo
         echo "$(echo_strong "Node Running...") (${sel})"
         ret=0
     else
         echo
-        echo "$(echo_strong "Stopped:") No running processes detected"
+        echo "$(echo_strong "Stopped:") At least one process not running"
         ret=1
     fi
     #This is here for sanity checking...

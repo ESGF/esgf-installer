@@ -2257,6 +2257,24 @@ sanity_check_web_xmls() {
 #####
 # THREDDS Data Server
 #####
+
+get_webxml_file() {
+    #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
+    fetch_file=web.xml
+
+    # 3rd and 4th args mean we force download and keep a backup of the file. 
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} 1 1
+    local ret=$?
+    (( ret > 1 )) && popd && checked_done 1
+    if (( ret == 0 )); then
+        debug_print "new template file detected: swapping files..."
+        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.bak}
+        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{.tmpl,}
+    fi
+    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+}
+
 setup_tds() {
     echo -n "Checking for thredds (tds) >= ${tds_min_version} "
     check_webapp_version "thredds" ${tds_min_version} "Implementation-Version"
@@ -2410,22 +2428,8 @@ setup_tds() {
     checked_get $tomcat_conf_dir/Catalina/localhost/${fetch_file} ${esg_dist_url}/externals/bootstrap/tomcat-${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
-
-    #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
-    fetch_file=web.xml
-    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
-    local ret=$?
-    (( ret > 1 )) && popd && checked_done 1
-    if (( ret == 0 )); then
-        debug_print "new template file detected: swapping files..."
-        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.bak}
-        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{.tmpl,}
-    fi
-    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
-    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
-
-    #DEBUGGING
-    ((DEBUG)) && cat ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
+    # Getting TDS web.xml template file.
+    get_webxml_file
 
     select_idp_peer
 
@@ -6807,18 +6811,19 @@ main() {
 
     #---subsystems-----
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
-   #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
     #---filters (TDS)--
+
+	# Getting TDS web.xml template file. Forcing download here let us update TDS filters config without going through tds_setup()
+        get_webxml_file
+
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
-#        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
-
-    #---filters--------
-    #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
+        #[ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem (DATA)"  && service_name="thredds" extensions=".nc" setup_subsystem access-logging-filter filters $@
-    #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
 
     #---------------------------------------
     # Security Services Installation...

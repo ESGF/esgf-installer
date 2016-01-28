@@ -349,10 +349,13 @@ install_globus() {
 
     # Install Globus and ESGF RPMs
     yum -y install ${config_type}
+    yum -y update ${config_type}
     if [ ${config_type} = 'globus-connect-server-io' ]; then
         yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface
+        yum -y update globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface
     else
         yum -y install mhash pam-pgsql
+        yum -y update mhash pam-pgsql
     fi
 
     popd >& /dev/null

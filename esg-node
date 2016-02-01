@@ -1498,6 +1498,60 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+update_apache_conf() {
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
+	pushd $localworkdir;
+	if [ ! -d apache_frontend ]; then
+		mkdir apache_frontend && pushd apache_frontend && git clone ${apache_frontend_repo} && popd
+	else
+		pushd apache_frontend;
+		rm -rf apache-frontend;
+		git clone ${apache_frontend_repo}
+		popd
+	fi
+	pushd apache_frontend/apache-frontend;
+	if [ $devel -eq 1 ]; then
+		git checkout $apache_frontend_version;
+	else
+		git checkout master;
+	fi
+
+	quotedwsgipath=`echo "/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so"|sed 's/[./*?|"]/\\\\&/g'`
+	allowedips=`sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf|grep Allow|sort -u`;
+	sed "s/\#permitted-ips-end-here/\#permitted-ips-end-here\n\t\#insert-permitted-ips-here/" /etc/httpd/conf/esgf-httpd.conf >etc/httpd/conf/esgf-httpd.conf;
+	sed -i '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/d' etc/httpd/conf/esgf-httpd.conf;
+	sed -i "s/\(.*\)LoadModule wsgi_module $quotedwsgipath\(.*\)/\1LoadModule wsgi_module placeholder_so\2/" etc/httpd/conf/esgf-httpd.conf;
+	incsfile=`echo Include /etc/httpd/conf/esgf-httpd-locals.conf|sed 's/[./*?|]/\\\\&/g'`;
+	incfile=`echo Include /etc/httpd/conf/esgf-httpd-local.conf|sed 's/[./*?|]/\\\\&/g'`;
+	uncommentedincfile=0
+	uncommentedincsfile=0
+	if ! grep -w 'Include /etc/httpd/conf/esgf-httpd-locals.conf' etc/httpd/conf/esgf-httpd.conf|grep '#' >/dev/null; then
+		uncommentedincsfile=1;
+		sed -i "s/$incsfile/\#$incsfile/" etc/httpd/conf/esgf-httpd.conf;
+	fi
+	if ! grep -w 'Include /etc/httpd/conf/esgf-httpd-local.conf' etc/httpd/conf/esgf-httpd.conf|grep '#' >/dev/null; then
+		uncommentedincfile=1;
+		sed -i "s/$incfile/\#$incfile/" etc/httpd/conf/esgf-httpd.conf;
+	fi
+	if ! diff etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf >/dev/null; then
+		#we have changes; add allowed ips, ext file selection and wsgi path to latest template and apply
+		debug_print "Detected changes. Will update and reapply customizations";
+		cp etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf
+		sed -i "s/\(.*\)LoadModule wsgi_module placeholder_so\(.*\)/\1LoadModule wsgi_module $quotedwsgipath\2/" etc/httpd/conf/esgf-httpd.conf;
+		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowedips\n\t#permitted-ips-end-here/" etc/httpd/conf/esgf-httpd.conf;
+		if [ $uncommentedincfile -eq 1 ]; then
+			sed -i "s/\#$incfile/$incfile/" etc/httpd/conf/esgf-httpd.conf;
+		fi
+		if [ $uncommentedincsfile -eq 1 ]; then
+			sed -i "s/\#$incsfile/$incsfile/" etc/httpd/conf/esgf-httpd.conf;
+		fi
+	else
+		debug_print "No changes detected in apache frontend conf.";
+	fi
+		
+	popd; popd;
+}
+	
 setup_sensible_confs() {
 	#place for post-install configuration overrides, binary replacements etc
 	
@@ -1543,7 +1597,7 @@ setup_apache_frontend() {
 	if [ $? -eq 0 ]; then
 		cd apache-frontend;
 		if [ $devel -eq 1 ]; then
-			git checkout devel;
+			git checkout $apache_frontend_version;
 			else
 			git checkout master;
 		fi
@@ -1570,7 +1624,7 @@ setup_apache_frontend() {
 		for i in ${ips[@]}; do
 			allowipstr=${allowipstr}"\tAllow from $i\n";
 		done
-		sed -i "s/\#insert-permitted-ips-here/\#insert-permitted-ips-here\n$allowipstr/" /etc/httpd/conf/esgf-httpd.conf
+		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\n\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
@@ -6131,6 +6185,11 @@ main() {
                     update_script $@
                     exit 0
                     ;;
+				--update-apache-conf | updateapacheconf)
+					debug_print "checking for updated apache frontend configuration"
+					update_apache_conf
+					exit 0;
+					;;
                 --write-env)
                     (( (sel & WRITE_ENV_BIT) == 0 )) && ((sel+=WRITE_ENV_BIT))
                     echo

@@ -1535,7 +1535,7 @@ update_apache_conf() {
 	fi
 	if ! diff etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf >/dev/null; then
 		#we have changes; add allowed ips, ext file selection and wsgi path to latest template and apply
-		debug_print "Detected changes. Will update and reapply customizations";
+		debug_print "Detected changes. Will update and reapply customizations. An esg-node restart would be needed to read in the changes.";
 		cp etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf
 		sed -i "s/\(.*\)LoadModule wsgi_module placeholder_so\(.*\)/\1LoadModule wsgi_module $quotedwsgipath\2/" etc/httpd/conf/esgf-httpd.conf;
 		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowedips\n\t#permitted-ips-end-here/" etc/httpd/conf/esgf-httpd.conf;
@@ -1545,6 +1545,8 @@ update_apache_conf() {
 		if [ $uncommentedincsfile -eq 1 ]; then
 			sed -i "s/\#$incsfile/$incsfile/" etc/httpd/conf/esgf-httpd.conf;
 		fi
+		cp /etc/httpd/conf/esgf-httpd.conf /etc/httpd/conf/esgf-httpd.conf.bck;
+		cp etc/httpd/conf/esgf-httpd.conf /etc/httpd/conf/esgf-httpd.conf;
 	else
 		debug_print "No changes detected in apache frontend conf.";
 	fi

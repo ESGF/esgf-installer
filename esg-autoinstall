@@ -99,6 +99,9 @@ expect {
     "What is your organization's id?" {
         send ${ORGNAME}\n ; exp_continue
     }
+    "Do you want to continue with esgcet installation and setup?" {
+        send \n ; exp_continue
+    }
     "Do you want to continue with thredds installation and setup?" {
         send \n ; exp_continue
     }

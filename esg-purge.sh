@@ -27,6 +27,8 @@ unset X509_CERT_DIR
 unset X509_USER_CERT
 unset X509_USER_KEY
 
+DATETIME=$(date +'%Y%m%d.%H')
+
 esg-purge () {
     PURGEMODE=$1
     case $PURGEMODE in
@@ -117,6 +119,20 @@ esg-purge-base () {
     rm -f  /usr/local/bin/add_checksums_to_map.sh
     rm -rf /usr/local/cog
     rm -rf /var/www/.python-eggs
+
+    # We want to potentially preserve certificates, as they may be
+    # annoying to recreate and sign.
+    if [ -f /etc/hostcert.pem ] ; then
+        echo "WARNING: preserving /etc/hostcert.pem to /tmp/hostcert-$DATETIME.pem"
+        mv -f /etc/hostcert.pem /tmp/hostcert-$DATETIME.pem
+    fi
+    if [ -f /etc/hostkey.pem ] ; then
+        echo "WARNING: preserving /etc/hostkey.pem to /tmp/hostkey-$DATETIME.pem"
+        mv -f /etc/hostcert.pem /tmp/hostcert-$DATETIME.pem
+    fi
+
+    # We don't need to preserve the certificate signing request
+    rm -f /etc/hostcert_request.pem
 
     # WARNING: if $HOME has been reset from /root during an install
     # run, these directories could show up in a different place!

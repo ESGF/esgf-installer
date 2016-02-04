@@ -185,6 +185,7 @@ esg-purge-globus () {
     rm -rf /etc/myproxy* || true
     rm -rf /etc/pam.d/myproxy
     rm -f /etc/pam_pgsql.conf
+    rm -f /etc/pam_pgsql.conf.tmpl.bak
     rm -f /etc/rc.d/init.d/globus-gridftp-* || true
     rm -rf $HOME/.globus
     rm -rf /root/.globus

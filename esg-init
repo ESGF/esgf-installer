@@ -36,7 +36,7 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.5"}
+    esgf_security_version=${esgf_security_version:-"2.7.4"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
@@ -46,7 +46,7 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.7.1"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"4.7.4"}
+    esg_search_version=${esg_search_version:-"4.7.5"}
 
     #see esgf-web-fe project:
     esgf_web_fe_version=${esgf_web_fe_version:-"2.6.5"}

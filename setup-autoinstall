@@ -21,6 +21,11 @@ function get_double_entry(){
 	local l2
 	while [ 1 ]; do
 		read -e -p "Enter $1: " l1
+		alnumpass=`echo $l1|tr -cd '[[:alnum:]]'`
+		if [ "$l1" != "$alnumpass" ]; then
+			echo "Only alpha-numeric passwords permitted";
+			continue;
+		fi
 		read -e -p "Re-enter $1: " l2
 		if [ "$l1" != "$l2" ]; then
 			continue;
@@ -220,7 +225,7 @@ fi
 va['esgfver']="#$esgfver"
 va['fix-1']='y' #are you ready to start
 va['fqdn']=`get_entry 'fqdn'`
-va['adminpass']=`get_double_entry 'admin-password'`
+va['adminpass']=`get_double_entry 'admin-password (alpha-numeric only)'`
 va['fix-2']=${va['adminpass']}
 va['orgname']=`get_entry 'orgname'`
 va['shortname']=`get_entry 'shortname'`

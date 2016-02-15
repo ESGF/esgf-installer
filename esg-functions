@@ -170,7 +170,7 @@ _version_segment_cmp() {
         VERSIONLENGTH=${#VERSIONB[*]}
     fi
 
-    for index in `seq 1 $VERSIONLENGTH` ; do
+    for index in `seq 0 $((VERSIONLENGTH-1))` ; do
         if ( [ -z ${VERSIONA[$index]##*[!0-9]*} ] ||
                 [ -z ${VERSIONB[$index]##*[!0-9]*} ] ) ; then
             # Non-numeric comparison
@@ -662,6 +662,9 @@ check_postgress_process() {
     /etc/init.d/postgresql status
 }
 
+check_esgf_httpd_process() {
+    service esgf-httpd status
+}
 
 check_tomcat_process() {
     if [ -f ${tomcat_install_dir}/conf/server.xml ]; then

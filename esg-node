@@ -864,14 +864,9 @@ setup_cdat() {
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
 
-# TODO - remove once this is relocated to use yum
-    uvcdat_rpm_url=http://pcmdi9.llnl.gov/rpms/UVCDAT-2.2.0-Linux.rpm
-
-    uvcdat_rpm_file=${uvcdat_rpm_url##*/}
-
     #---------
-    #Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
-#    ((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
+    # Under FORCE (--force) semantics we clean everything out: the cloned repo and build dir
+    #((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
 
 
@@ -1503,6 +1498,62 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+update_apache_conf() {
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
+	pushd $localworkdir;
+	if [ ! -d apache_frontend ]; then
+		mkdir apache_frontend && pushd apache_frontend && git clone ${apache_frontend_repo} && popd
+	else
+		pushd apache_frontend;
+		rm -rf apache-frontend;
+		git clone ${apache_frontend_repo}
+		popd
+	fi
+	pushd apache_frontend/apache-frontend;
+	if [ $devel -eq 1 ]; then
+		git checkout $apache_frontend_version;
+	else
+		git checkout master;
+	fi
+
+	quotedwsgipath=`echo "/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so"|sed 's/[./*?|"]/\\\\&/g'`
+	allowedips=`sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf|grep Allow|sort -u`;
+	sed "s/\#permitted-ips-end-here/\#permitted-ips-end-here\n\t\#insert-permitted-ips-here/" /etc/httpd/conf/esgf-httpd.conf >etc/httpd/conf/esgf-httpd.conf;
+	sed -i '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/d' etc/httpd/conf/esgf-httpd.conf;
+	sed -i "s/\(.*\)LoadModule wsgi_module $quotedwsgipath\(.*\)/\1LoadModule wsgi_module placeholder_so\2/" etc/httpd/conf/esgf-httpd.conf;
+	incsfile=`echo Include /etc/httpd/conf/esgf-httpd-locals.conf|sed 's/[./*?|]/\\\\&/g'`;
+	incfile=`echo Include /etc/httpd/conf/esgf-httpd-local.conf|sed 's/[./*?|]/\\\\&/g'`;
+	uncommentedincfile=0
+	uncommentedincsfile=0
+	if ! grep -w 'Include /etc/httpd/conf/esgf-httpd-locals.conf' etc/httpd/conf/esgf-httpd.conf|grep '#' >/dev/null; then
+		uncommentedincsfile=1;
+		sed -i "s/$incsfile/\#$incsfile/" etc/httpd/conf/esgf-httpd.conf;
+	fi
+	if ! grep -w 'Include /etc/httpd/conf/esgf-httpd-local.conf' etc/httpd/conf/esgf-httpd.conf|grep '#' >/dev/null; then
+		uncommentedincfile=1;
+		sed -i "s/$incfile/\#$incfile/" etc/httpd/conf/esgf-httpd.conf;
+	fi
+	if ! diff etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf >/dev/null; then
+		#we have changes; add allowed ips, ext file selection and wsgi path to latest template and apply
+		debug_print "Detected changes. Will update and reapply customizations. An esg-node restart would be needed to read in the changes.";
+		cp etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf
+		sed -i "s/\(.*\)LoadModule wsgi_module placeholder_so\(.*\)/\1LoadModule wsgi_module $quotedwsgipath\2/" etc/httpd/conf/esgf-httpd.conf;
+		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowedips\n\t#permitted-ips-end-here/" etc/httpd/conf/esgf-httpd.conf;
+		if [ $uncommentedincfile -eq 1 ]; then
+			sed -i "s/\#$incfile/$incfile/" etc/httpd/conf/esgf-httpd.conf;
+		fi
+		if [ $uncommentedincsfile -eq 1 ]; then
+			sed -i "s/\#$incsfile/$incsfile/" etc/httpd/conf/esgf-httpd.conf;
+		fi
+		cp /etc/httpd/conf/esgf-httpd.conf /etc/httpd/conf/esgf-httpd.conf.bck;
+		cp etc/httpd/conf/esgf-httpd.conf /etc/httpd/conf/esgf-httpd.conf;
+	else
+		debug_print "No changes detected in apache frontend conf.";
+	fi
+		
+	popd; popd;
+}
+	
 setup_sensible_confs() {
 	#place for post-install configuration overrides, binary replacements etc
 	
@@ -1548,7 +1599,7 @@ setup_apache_frontend() {
 	if [ $? -eq 0 ]; then
 		cd apache-frontend;
 		if [ $devel -eq 1 ]; then
-			git checkout devel;
+			git checkout $apache_frontend_version;
 			else
 			git checkout master;
 		fi
@@ -1575,7 +1626,7 @@ setup_apache_frontend() {
 		for i in ${ips[@]}; do
 			allowipstr=${allowipstr}"\tAllow from $i\n";
 		done
-		sed -i "s/\#insert-permitted-ips-here/\#insert-permitted-ips-here\n$allowipstr/" /etc/httpd/conf/esgf-httpd.conf
+		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\n\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
@@ -2262,6 +2313,24 @@ sanity_check_web_xmls() {
 #####
 # THREDDS Data Server
 #####
+
+get_webxml_file() {
+    #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
+    fetch_file=web.xml
+
+    # 3rd and 4th args mean we force download and keep a backup of the file. 
+    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} 1 1
+    local ret=$?
+    (( ret > 1 )) && popd && checked_done 1
+    if (( ret == 0 )); then
+        debug_print "new template file detected: swapping files..."
+        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.bak}
+        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{.tmpl,}
+    fi
+    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
+}
+
 setup_tds() {
     echo -n "Checking for thredds (tds) >= ${tds_min_version} "
     check_webapp_version "thredds" ${tds_min_version} "Implementation-Version"
@@ -2415,22 +2484,8 @@ setup_tds() {
     checked_get $tomcat_conf_dir/Catalina/localhost/${fetch_file} ${esg_dist_url}/externals/bootstrap/tomcat-${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
-
-    #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
-    fetch_file=web.xml
-    checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} $((force_install))
-    local ret=$?
-    (( ret > 1 )) && popd && checked_done 1
-    if (( ret == 0 )); then
-        debug_print "new template file detected: swapping files..."
-        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.bak}
-        cp -vf ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{.tmpl,}
-    fi
-    chown -R ${tomcat_user}  ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
-    chgrp -R ${tomcat_group} ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}{,.tmpl}
-
-    #DEBUGGING
-    ((DEBUG)) && cat ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}
+    # Getting TDS web.xml template file.
+    get_webxml_file
 
     select_idp_peer
 
@@ -3489,6 +3544,19 @@ install_keypair() {
 
     local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
     local default_passwd=${ks_secret:=changeit}
+   
+     if [ ! -f ${public_cert} ] ; then
+	echo ${public_cert} not found or not readable.
+	
+	exit -1
+    fi
+
+    if [ ! -f ${private_key} ] ; then
+	echo ${private_key} not found or not readable.
+	
+	exit -1
+    fi
+
 
     if [ -z "${store_password}" ]; then
         local verify_password
@@ -3529,9 +3597,16 @@ install_keypair() {
 	cp ${public_cert} /etc/certs/hostcert.pem
 	echo -n >/etc/certs/tmpchain
 	for cert in ${certfiles[@]}; do
-		cat $cert >>/etc/certs/tmpchain
+	    if [ ! -f $cert ] ; then
+		echo ${cert} not found or not readable.
+	
+		exit -1		
+	    fi
+	    
+	    cat $cert >>/etc/certs/tmpchain
 	done
 	cp /etc/certs/tmpchain /etc/certs/cachain.pem
+
 	chmod 400 /etc/certs/hostkey.pem
 	chmod 644 /etc/certs/hostcert.pem
 	chmod 644 /etc/certs/cachain.pem
@@ -5106,8 +5181,10 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
+    lsof -Pni |egrep httpd | head -n1
     local dashboard_pid=$(pgrep dashboard)
     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+
     echo "---------------------------"
     echo
     return 0
@@ -5208,13 +5285,13 @@ status() {
     #TODO conditionally reflect the status of globus (gridftp) process
     read_sel
     local ret=1
-    if check_postgress_process && check_tomcat_process; then
+    if check_postgress_process && check_tomcat_process && check_esgf_httpd_process; then
         echo
         echo "$(echo_strong "Node Running...") (${sel})"
         ret=0
     else
         echo
-        echo "$(echo_strong "Stopped:") No running processes detected"
+        echo "$(echo_strong "Stopped:") At least one process not running"
         ret=1
     fi
     #This is here for sanity checking...
@@ -5365,8 +5442,8 @@ initial_setup_questionnaire() {
     get_property esgf_default_peer ${esgf_default_peer}
     if [ -z "${esgf_default_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_default_peer:-'vesgint-idx.ipsl.upmc.fr'}
-        read -e -p "What is the default peer to this node? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+	default=${esgf_default_peer:-${esgf_host:-$(hostname --fqdn)}}
+        read -e -p "What is the default peer to this node? [${default}]: " input
         [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
         [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
     else
@@ -5379,8 +5456,8 @@ initial_setup_questionnaire() {
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
-        default=${esgf_index_peer:-'vesgint-idx.ipsl.upmc.fr'}
-        read -e -p "What is the hostname of the node do you plan to publish to? (esgf-test=vesgint-idx.ipsl.upmc.fr|esgf-prod=pcmdi9.llnl.gov) [${default}]: " input
+        default=${esgf_default_peer:-${esgf_host:-$(hostname --fqdn)}}
+        read -e -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else
@@ -5539,9 +5616,9 @@ esgf_node_info() {
      Please be sure that you have gotten your created an account on
      your ESGF IDP Peer.
 
-     The primary IDP Peer for ESGF is pcmdi9.llnl.gov
-     You may register for an account at PCMDI9 at the following URL:
-     http://pcmdi9.llnl.gov/esgf-web-fe/createAccount
+     The primary IDP Peer for ESGF is pcmdi.llnl.gov
+     You may register for an account at PCMDI at the following URL:
+     http://pcmdi.llnl.gov/esgf-web-fe/createAccount
 
      Note: Account creation is prerequisite for publication!
 
@@ -5665,7 +5742,7 @@ usage() {
         -------------------------------
         Publication Endpoint Setting (Index Peer)
         -------------------------------
-        --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi9.llnl.gov
+        --set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi.llnl.gov
         --get-index-peer - tells you where this node is indexing it's data
 
         -------------------------------
@@ -6110,6 +6187,11 @@ main() {
                     update_script $@
                     exit 0
                     ;;
+				--update-apache-conf | updateapacheconf)
+					debug_print "checking for updated apache frontend configuration"
+					update_apache_conf
+					exit 0;
+					;;
                 --write-env)
                     (( (sel & WRITE_ENV_BIT) == 0 )) && ((sel+=WRITE_ENV_BIT))
                     echo
@@ -6616,7 +6698,7 @@ main() {
                     ;;
                 --fetch-static-idp-file)
                     shift
-                    [ -e "${scripts_dir}/esg-idp" ] && (source ${scripts_dir}/esg-idp >& /dev/null && fetch_static_idp_file $@)
+                    [ -e "${scripts_dir}/esg-orp" ] && (source ${scripts_dir}/esg-orp >& /dev/null && fetch_static_idp_file $@)
                     exit $?
                     ;;
                 --fetch-static-ats-file)
@@ -6732,7 +6814,7 @@ main() {
 	yum -y remove rpmforge-release
 	yum -y install epel-release
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not configure epel repository\n\n" && return 1
-        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl '*ExtUtils*'
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel '*ExtUtils*'
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update prerequisites\n\n" && return 1
 
     #---------------------------------------
@@ -6790,18 +6872,19 @@ main() {
 
     #---subsystems-----
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
-   #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
     #---filters (TDS)--
+
+	# Getting TDS web.xml template file. Forcing download here let us update TDS filters config without going through tds_setup()
+        get_webxml_file
+
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security las filter subsystem (IP)" && service_name="thredds" setup_subsystem security-las-ip-filter filters $@
-#        [ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
-
-    #---filters--------
-    #TODO - think about moving the two following scripts to be under the esgf-node-manager directory on the server instead of the filters dir.
+        #[ $((sel & INSTALL_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="esgf-dashboard" setup_subsystem security-tokenless-filters filters $@
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "access logging filter subsystem (DATA)"  && service_name="thredds" extensions=".nc" setup_subsystem access-logging-filter filters $@
-    #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
+        #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "DRS/FS resolving filter subsystem"  && setup_subsystem drs-resolving-filter filters $@
 
     #---------------------------------------
     # Security Services Installation...

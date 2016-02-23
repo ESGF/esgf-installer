@@ -107,6 +107,7 @@ python setup.py install
 cd $COG_DIR
 git clone https://github.com/globusonline/python-nexus-client.git
 cd python-nexus-client/
+git pull
 python setup.py install
 
 # FIXME: must download and install django-openid-auth fork manually

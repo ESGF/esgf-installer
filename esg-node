@@ -408,7 +408,7 @@ setup_ant() {
     #strip off -bin.tar.gz at the end
     ant_dist_dir=${ant_dist_file/-bin.tar.gz}
 
-    #There is this pesky case of having a zero sized dist file... WTF!?
+    #There is this pesky case of having a zero sized dist file...
     if [ -e ${ant_dist_file} ]; then
         ls -l ${ant_dist_file}
         local size=$(stat -c%s ${ant_dist_file})
@@ -1276,7 +1276,7 @@ setup_tomcat() {
     #strip off .tar.gz at the end
     tomcat_dist_dir=$(echo ${tomcat_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
 
-    #There is this pesky case of having a zero sized dist file... WTF!?
+    #There is this pesky case of having a zero sized dist file...
     if [ -e ${tomcat_dist_file} ]; then
         ls -l ${tomcat_dist_file}
         local size=$(stat -c%s ${tomcat_dist_file})
@@ -2367,7 +2367,7 @@ setup_tds() {
 
     thredds_dist_file=${thredds_dist_file:-${thredds_dist_url##*/}}
 
-    #There is this pesky case of having a zero sized dist file... WTF!?
+    #There is this pesky case of having a zero sized dist file...
     if [ -e ${thredds_dist_file} ]; then
         ls -l ${thredds_dist_file}
         local size=$(stat -c%s ${thredds_dist_file} >& /dev/null)
@@ -2496,7 +2496,7 @@ setup_tds() {
 
     #--------
     #HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
-    #             So have to manually move over this directory to avert server not starting! WTF!? -gavin
+    #             So have to manually move over this directory to avert server not starting! -gavin
     local created_brand_new_thredds_content_dir=0
     if [ ! -d ${thredds_content_dir}/thredds ] || ((force_install)); then
         mkdir -p ${thredds_content_dir}/thredds

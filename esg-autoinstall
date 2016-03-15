@@ -177,9 +177,12 @@ expect {
     "Enter it again:" {
         send ${ADMINPASS}\n ; exp_continue
     }
-    "Is this ok" {
-        send Y\n ; exp_continue
-    }
+# This prompt is causing problems -- apparently it's either not a real
+# stopping point, or there is an errant \n before this prompt is
+# reached.  Removing it fixes a known installation problem, however.
+#    "Is this ok" {
+#        send Y\n ; exp_continue
+#    }
     "Add new line:" {
         send \n ; exp_continue
     }

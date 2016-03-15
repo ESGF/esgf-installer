@@ -6877,7 +6877,7 @@ main() {
     #---filters (TDS)--
 
 	# Getting TDS web.xml template file. Forcing download here let us update TDS filters config without going through tds_setup()
-        get_webxml_file
+        [ $((sel & DATA_BIT)) != 0 ] && get_webxml_file
 
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (SAML/ORP)"  && service_name="thredds" setup_subsystem security-tokenless-filters filters $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "security filters subsystem (TOKEN)" && service_name="thredds" setup_subsystem security-token-filters filters $@

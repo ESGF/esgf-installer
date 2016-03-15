@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 # -*- mode:shell-script -*-
 #
-# Expect script for automatically building an ESGF node 
+# Expect script for automatically building an ESGF node
 #
 # To use, copy the file esg-autoinstall.template (either in
 # /usr/local/etc from the boostrapper or from the Git repository) to
@@ -153,8 +153,19 @@ expect {
     "Enter certificate to add to trusted keystore" {
         send \n ; exp_continue
     }
-    "Do you want to continue with the Globus installation and setup" {
-        send \n ; exp_continue
+    # For --type all, Globus is set up twice, once as a gateway, and
+    # once as a datanode.  Unfortunately, on the second pass of this
+    # the prompt defaults to N because it detects the installation of
+    # the previous type, so we have to always force it to Y, or key
+    # packages will not be installed and the globus user will be
+    # missing.
+    #
+    # This means that it will always be forcibly reinstalled upon
+    # upgrade even if it doesn't need to be, but there is no way
+    # around that at this time without changing the detection in the
+    # esg-node script.
+    "Do you want to continue with the Globus installation and setup?" {
+        send Y\n ; exp_continue
     }
     "Do you want to make a back up of the existing Globus distribution (datanode)?" {
         send \n ; exp_continue

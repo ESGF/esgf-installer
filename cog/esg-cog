@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.3.1
+VERSION=v3.4.0
 
 #COG_TAG=devel
 COG_TAG=$VERSION
@@ -62,7 +62,7 @@ export COG_CONFIG_DIR=$INSTALLPATH/cog_config
 mkdir -p $COG_CONFIG_DIR
 
 # installation directory
-# will be created during git checkout
+# will be re-created during git checkout
 COG_INSTALL_DIR=$INSTALLPATH/cog_install
 
 # use Python virtual environment (rebuild from scratch each time)
@@ -80,13 +80,15 @@ pip install wheel
 pip install --use-wheel Pillow==3.1.0
 
 # pre-requisite: install Django separately otherwise it causes compilation errors
-pip install django==1.9.1
+pip install django==1.9.4
 
-# initial checkout CoG software stack
+# checkout CoG software stack
+# remove previous installation if existing
 cd $INSTALLPATH
-if [ ! -d "$COG_INSTALL_DIR" ]; then
-  git clone https://github.com/EarthSystemCoG/COG cog_install
+if [ -d "$COG_INSTALL_DIR" ]; then
+  rm -rf $COG_INSTALL_DIR
 fi
+git clone https://github.com/EarthSystemCoG/COG cog_install
 
 # checkout a specific tag or version
 cd $COG_INSTALL_DIR

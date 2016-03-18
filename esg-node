@@ -5034,6 +5034,11 @@ _is_in_git() {
     REALDIR=$(dirname $(_readlinkf ${1}))
     GITEXEC=`which git`
 
+    if [ ! -e $1 ] ; then
+        debug_print "DEBUG: ${1} does not exist yet, allowing creation"
+        return 1
+    fi
+
     if [ -d "${REALDIR}/.git" ] ; then
         debug_print "DEBUG: ${1} is in a git repository"
         return 0

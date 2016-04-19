@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.4.0
+VERSION=v3.5.0
 
 #COG_TAG=devel
 COG_TAG=$VERSION
@@ -105,12 +105,16 @@ git pull
 cd $COG_INSTALL_DIR
 python setup.py install
 
-# FIXME: must download and install Globus Nexus manually
+# install mkproxy. Mkproxy is used by Globus Transfer API client to create an X.509 proxy credential. 
+# (Globus Transfer REST API sends a public key. i
+# Mkproxy signs the public key using a private key extracted from an ESGF X.509 user credential.)
 cd $COG_DIR
-git clone https://github.com/globusonline/python-nexus-client.git
-cd python-nexus-client/
+git clone https://github.com/globusonline/transfer-api-client-python.git
+cd transfer-api-client-python
 git pull
-python setup.py install
+cd mkproxy
+make
+cp mkproxy $INSTALLPATH/venv/lib/python2.7/site-packages/globusonline_transfer_api_client-0.10.16-py2.7.egg/globusonline/transfer/api_client/x509_proxy/
 
 # FIXME: must download and install django-openid-auth fork manually
 cd $COG_DIR

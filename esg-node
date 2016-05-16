@@ -1804,7 +1804,7 @@ EOF
 }
 
 setup_temp_ca() {
-
+	[ -z "${esgf_host}" ] && get_property esgf_host
 	hostname=$esgf_host;
 	mkdir -p /etc/tempcerts;
 	cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl

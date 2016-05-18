@@ -2060,6 +2060,9 @@ When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem
 EOF
 }
 install_local_certs(){
+	if [ $upgrade_mode -eq 1 ]; then
+		return;
+	fi
 	if [ "$1" = "firstrun" ]; then
 		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem" "myproxy-server.config")
 		certdir=/etc/tempcerts;
@@ -6892,7 +6895,6 @@ main() {
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------
-    [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
     #(myproxy - [depends on security backend in place])
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && debug_print "calling... setup_globus [${IDP_BIT}]" && my_setup_globus $((INSTALL_BIT+IDP_BIT))   ${myproxy_config_args}
@@ -6902,6 +6904,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... my_setup_globus [${DATA_BIT}]" && my_setup_globus ${DATA_BIT} ${gridftp_config}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
+    [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
 
     #---------------------------------------
     # Index type install...

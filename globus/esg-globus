@@ -428,13 +428,13 @@ DBPORT=${postgress_port}
 DBUSER=${postgress_user}
 DBPASS=${pg_sys_acct_passwd}
 USAGEFILE=${gridftp_server_usage_log}
-TMPFILE=/tmp/__up_tmpfile
+TMPFILE=${esg_log_dir}/__up_tmpfile
 DEBUG=0
 NODBWRITE=0\n" > ${gridftp_server_usage_config}
 
     echo 'Setting up a cron job, /etc/cron.d/esg_usage_parser ...'
     local cronscript=${gridftp_server_usage_config%.*}.cron
-    echo "5 0,12 * * * ESG_USAGE_PARSER_CONF=${gridftp_server_usage_config} ${esg_tools_dir}/esg_usage_parser" > /etc/cron.d/esg_usage_parser
+    echo "5 0,12 * * * root ESG_USAGE_PARSER_CONF=${gridftp_server_usage_config} ${esg_tools_dir}/esg_usage_parser" > /etc/cron.d/esg_usage_parser
 
     return 0
 }

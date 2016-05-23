@@ -1533,9 +1533,14 @@ update_apache_conf() {
 		uncommentedincfile=1;
 		sed -i "s/$incfile/\#$incfile/" etc/httpd/conf/esgf-httpd.conf;
 	fi
+	head -22 etc/httpd/conf/esgf-httpd.conf >etc/httpd/conf/origsrvlines
+	head -22 etc/httpd/conf/esgf-httpd.conf.tmpl >etc/httpd/conf/defaultsrvlines
+	sed -ie '1,22d' etc/httpd/conf/esgf-httpd.conf
+	sed -ie '1,22d' etc/httpd/conf/esgf-httpd.conf.tmpl
 	if ! diff etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf >/dev/null; then
 		#we have changes; add allowed ips, ext file selection and wsgi path to latest template and apply
 		debug_print "Detected changes. Will update and reapply customizations. An esg-node restart would be needed to read in the changes.";
+		cat etc/httpd/conf/esgf-httpd.conf.tmpl >>etc/httpd/conf/origsrvlines && mv etc/httpd/conf/origsrvlines etc/httpd/conf/esgf-httpd.conf.tmpl
 		cp etc/httpd/conf/esgf-httpd.conf.tmpl etc/httpd/conf/esgf-httpd.conf
 		sed -i "s/\(.*\)LoadModule wsgi_module placeholder_so\(.*\)/\1LoadModule wsgi_module $quotedwsgipath\2/" etc/httpd/conf/esgf-httpd.conf;
 		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowedips\n\t#permitted-ips-end-here/" etc/httpd/conf/esgf-httpd.conf;
@@ -5215,6 +5220,7 @@ show_svc_list() {
 run_startup_hooks() {
     echo_strong "Running startup hooks..."
 	setup_sensible_confs
+	update_apache_conf
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)

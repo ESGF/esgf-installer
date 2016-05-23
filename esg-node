@@ -1631,7 +1631,7 @@ setup_apache_frontend() {
 		for i in ${ips[@]}; do
 			allowipstr=${allowipstr}"\tAllow from $i\n";
 		done
-		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\n\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
+		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start

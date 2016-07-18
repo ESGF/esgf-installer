@@ -28,8 +28,8 @@ init() {
     cdat_version=${cdat_version:-"2.2.0"}
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
-    esgcet_version=${esgcet_version:-"2.15.2"}
-    publisher_tag=${publisher_tag:-"v2.15.2"}
+    esgcet_version=${esgcet_version:-"3.0.0"}
+    publisher_tag=${publisher_tag:-"v3.0.0"}
 
     #see esgf-node-manager project:
     esgf_node_manager_version=${esgf_node_manager_version:-"0.7.16"}

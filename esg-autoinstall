@@ -170,6 +170,12 @@ expect {
     "Do you want to make a back up of the existing Globus distribution (datanode)?" {
         send \n ; exp_continue
     }
+    "Do you want to register the GridFTP server with Globus?" {
+        send Y\n ; exp_continue
+    }
+    "Do you want to register the MyProxy server with Globus?" {
+        send Y\n ; exp_continue
+    }
     "Please provide a Globus username" {
         send ${GLOBUSUSER}\n ; exp_continue
     }

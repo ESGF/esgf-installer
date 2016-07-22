@@ -148,9 +148,15 @@ my %repoinfo = (
             'devel'      => 'devel',
             'experiment' => 'experiment',
         },
-        'binlinks' => [ "esg-functions",
+        # esg-installarg MUST NOT be included in this list -- the
+        # install script will break if it is a symlink, and it will be
+        # downloaded by the first esg-node --set-type command
+        'binlinks' => [ "esg-autoinstall",
+                        "esg-functions",
                         "esg-gitstrap",
+                        "esg-init",
                         "esg-node",
+                        "esg-purge.sh",
                         "filters/esg-access-logging-filter",
                         "filters/esg-security-las-ip-filter",
                         "filters/esg-security-tokenless-filters",

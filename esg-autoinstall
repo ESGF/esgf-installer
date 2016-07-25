@@ -268,7 +268,7 @@ expect {
     }
 
     # Victory conditions
-    "(esg_datanode: cleaning up etc...)" {
+    "Node installation is complete." {
         exit 0
     }
 }

@@ -168,6 +168,17 @@ my %repoinfo = (
         'configlinks' => [],
         'installerlinks' => [],
     },
+    'config' => {
+        'url' => 'https://github.com/ESGF/config.git',
+        'branch' => {
+            'stable'     => 'master',
+            'devel'      => 'devel',
+            'experiment' => 'devel',
+        },
+        'binlinks'       => [],
+        'configlinks'    => [],
+        'installerlinks' => [],
+    },
     'esgf-dashboard' => {
         'url' => 'git://github.com/ESGF/esgf-dashboard.git',
         'branch' => {
@@ -273,7 +284,7 @@ if($opt{'all'}) {
     @repolist = keys %repoinfo;
 }
 else {
-    @repolist = ( 'esgf-installer' );
+    @repolist = ( 'esgf-installer', 'config' );
 }
 
 foreach my $repo (@repolist) {

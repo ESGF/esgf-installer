@@ -114,7 +114,7 @@ cd transfer-api-client-python
 git pull
 cd mkproxy
 make
-cp mkproxy $INSTALLPATH/venv/lib/python2.7/site-packages/globusonline_transfer_api_client-0.10.16-py2.7.egg/globusonline/transfer/api_client/x509_proxy/
+cp mkproxy $INSTALLPATH/venv/lib/python2.7/site-packages/globusonline_transfer_api_client-0.10.18-py2.7.egg/globusonline/transfer/api_client/x509_proxy/
 
 # FIXME: must download and install django-openid-auth fork manually
 cd $COG_DIR

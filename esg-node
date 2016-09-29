@@ -102,100 +102,6 @@ export UVCDAT_ANONYMOUS_LOG=False
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
-init_structure() {
-
-    #--------------
-    #Prepare necessary support filesystem structure and files
-    #--------------
-
-    (($DEBUG)) && echo "init_structure: esg_dist_url = ${esg_dist_url}"
-
-    #--------------
-    #Let's go down the line and make sure that we have what we need structurally on the filesystem
-    local config_check=8
-    if [ ! -e ${scripts_dir} ]; then mkdir -p ${scripts_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_backup_dir} ]; then mkdir -p ${esg_backup_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_tools_dir} ]; then mkdir -p ${esg_tools_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_log_dir} ]; then mkdir -p ${esg_log_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_config_dir} ]; then mkdir -p ${esg_config_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${esg_etc_dir} ]; then mkdir -p ${esg_etc_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${tomcat_conf_dir} ]; then mkdir -p ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
-    if [ ! -e ${config_file} ]; then touch ${config_file} && ((config_check--)); else ((config_check--)); fi
-    debug_print ${config_check}
-    ((config_check != 0 )) && echo "ERROR: checklist incomplete $([FAIL])" && checked_done 1 || verbose_print "checklist $([OK])"
-    #--------------
-
-    chmod 777 ${esg_etc_dir} 2> /dev/null
-
-    [ -w "${envfile}" ] && write_paths
-
-    #--------------
-    #Setup variables....
-    #--------------
-
-    check_for_my_ip
-
-    esgf_host=${esgf_host}
-    [ -z "${esgf_host}" ] && get_property esgf_host
-
-    esgf_default_peer=${esgf_default_peer}
-    [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
-
-    esgf_idp_peer_name=${esgf_idp_peer_name}
-    [ -z "${esgf_idp_peer_name}" ] && get_property esgf_idp_peer_name
-
-    esgf_idp_peer=${esgf_idp_peer}
-    [ -z "${esgf_idp_peer}" ] && get_property esgf_idp_peer
-    myproxy_endpoint=${esgf_idp_peer%%/*}
-
-    [ -z "${myproxy_port}" ] && get_property myproxy_port
-    myproxy_port=${myproxy_port:-7512}
-
-    esg_root_id=${esg_root_id}
-    [ -z "${esg_root_id}" ] && get_property esg_root_id
-
-    node_peer_group=${node_peer_group}
-    [ -z "${node_peer_group}" ] && get_property node_peer_group
-
-    [ -z "${node_short_name}" ] && get_property node_short_name
-
-    #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
-    #this is actually an issue with dedup_properties that gets called in the get_property function
-
-    #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
-    #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
-    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
-    dname=${dname}
-    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${node_dn})
-
-    gridftp_config=${gridftp_config}
-    [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
-
-    publisher_config=${publisher_config}
-    [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
-
-    publisher_home=${publisher_home}
-    [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
-
-    # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
-    get_property keystore_alias ${keystore_alias}
-
-    export ESGINI=${publisher_home}/${publisher_config}
-    ((DEBUG)) && echo "ESGINI = ${ESGINI}"
-
-    return 0
-}
-
-write_paths() {
-    ((show_summary_latch++))
-    echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
-    echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
-    echo "export ESGF_INSTALL_WORKDIR=${workdir}" >> ${envfile}
-    echo "export ESGF_INSTALL_PREFIX=${install_prefix}" >> ${envfile}
-    echo "export PATH=$myPATH:\$PATH" >> ${envfile}
-    echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
-    dedup ${envfile} && source ${envfile}
-}
 
 #checking for what we expect to be on the system a-priori
 #that we are not going to install or be responsible for
@@ -6016,7 +5922,12 @@ upgrade_mode=0
 install_mode=0
 main() {
         # Sourcing esg-functions file
+        # If esg_functions_file exists, then source that file; if that file sources successfully
         [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+
+        # If esg_setup_file exists, then source that file; if that file sources successfully
+        printf "attemtping to source esg-setup file \n"
+        [ -e ${esg_setup_file} ] && source ${esg_setup_file} && ((VERBOSE)) && printf "sourcing from: ${esg_setup_file} \n"
 
         # Initializing
         debug_print "esg-node initializing..."

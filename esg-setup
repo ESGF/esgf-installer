@@ -97,3 +97,60 @@ write_paths() {
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
     dedup ${envfile} && source ${envfile}
 }
+
+
+#checking for what we expect to be on the system a-priori
+#that we are not going to install or be responsible for
+check_prerequisites() {
+
+    printf "
+    \033[01;31m
+      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
+      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
+    \033[0m
+    "
+    printf "Checking that you have root privs on $(hostname)... "
+    id | grep root >& /dev/null
+    [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
+    [OK]
+
+
+    #----------------------------------------
+    echo "Checking requisites... "
+
+    # checking for OS, architecture, distribution and version
+
+    OS=`uname -s`
+    MACH=`uname -m`
+
+    if [ "${OS}" = "Linux" ] && [ "${MACH}" = "x86_64" ] && [ -f /etc/redhat-release ] ; then
+    	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
+    fi
+
+    if [ "${MAJREV}" = 6 ] ; then
+    	DIST=`cat /etc/redhat-release | sed s/release.*//`
+        DISTRIB=`echo $DIST`
+    fi
+
+    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
+
+
+    #----------------------------------------
+
+    echo
+    return 0
+}

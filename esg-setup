@@ -154,3 +154,110 @@ check_prerequisites() {
     echo
     return 0
 }
+
+#####
+# Java
+#####
+setup_java() {
+
+    # Sourcing esg-functions file
+    # If esg_functions_file exists, then source that file; if that file sources successfully
+    [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
+
+    echo -n "Checking for java >= ${java_min_version} and valid JAVA_HOME... "
+    #if java_install_dir exists; check version of java against the minimum java version required
+    [ -e ${java_install_dir} ] && check_version $java_install_dir/bin/java ${java_min_version}
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
+
+    echo
+    echo "*******************************"
+    echo "Setting up Java... ${java_version}"
+    echo "*******************************"
+    echo
+
+    local last_java_truststore_file
+
+    local default="Y"
+    ((force_install)) && default="N"
+    local dosetup
+    if [ -x ${java_install_dir}/bin/java ]; then
+        echo "Detected an existing java installation..."
+        read -e -p "Do you want to continue with Java installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+        [ -z ${dosetup} ] && dosetup=${default}
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping Java installation and setup - will assume Java is setup properly"
+            return 0
+        fi
+        last_java_truststore_file=$(readlink -f ${truststore_file})
+        echo
+    fi
+
+    mkdir -p ${workdir}
+    [ $? != 0 ] && checked_done 1
+    pushd ${workdir} #>& /dev/null
+
+    local java_dist_file=${java_dist_url##*/}
+    #strip off -(32|64).tar.gz at the end
+    java_dist_dir=$(echo ${java_dist_file} | awk 'gsub(/-(32|64)('$compress_extensions')/,"")')
+
+    #Check to see if we have an Java distribution directory
+    if [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
+        echo "Don't see java distribution dir ${java_install_dir%/*}/${java_dist_dir}"
+        if [ ! -e ${java_dist_file} ]; then
+            echo "Don't see java distribution file $(pwd)/${java_dist_file} either"
+            echo "Downloading Java from ${java_dist_url}"
+            checked_get ${java_dist_file} ${java_dist_url} $((force_install))
+            [ $? != 0 ] && echo " ERROR: Could not download Java" && popd && checked_done 1
+            echo "unpacking ${java_dist_file}..."
+            tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
+            [ $? != 0 ] && echo " ERROR: Could not extract Java" && popd && checked_done 1
+        fi
+    fi
+
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it
+    if [ -e ${java_dist_file} ] && [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
+        echo "unpacking ${java_dist_file}..."
+        tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
+        [ $? != 0 ] && echo " ERROR: Could not extract Java..." && popd && checked_done 1
+    fi
+
+    if [ ! -e ${java_install_dir} ]; then
+        ln -s ${java_install_dir%/*}/${java_dist_dir} ${java_install_dir}
+        [ $? != 0 ] && \
+            echo " ERROR: Could not create sym link ${java_install_dir%/*}/${java_dist_dir} -> ${java_install_dir}" && popd && checked_done 1
+    else
+        unlink ${java_install_dir}
+        [ $? != 0 ] && mv ${java_install_dir} ${java_install_dir}.$(date ${date_format}).bak
+
+        ln -s ${java_install_dir%/*}/${java_dist_dir} ${java_install_dir}
+        [ $? != 0 ] && \
+            echo " ERROR*: Could not create sym link ${java_install_dir%/*}/${java_dist_dir} -> ${java_install_dir}" && popd && checked_done 1
+    fi
+    debug_print "chown -R ${installer_uid}:${installer_gid} ${java_install_dir}"
+    chown    ${installer_uid}:${installer_gid} ${java_install_dir}
+    chown -R ${installer_uid}:${installer_gid} $(readlink -f ${java_install_dir})
+
+    popd >& /dev/null
+
+    ${java_install_dir}/bin/java -version
+    [ $? != 0 ] && echo "ERROR cannot run ${java_install_dir}/bin/java" && checked_done 1
+    write_java_env
+    write_java_install_log
+
+    #-----------------------------
+    #In the situation where this function is called under update
+    #semantics i.e. there is already a previous installation of java
+    #and installation of tomcat with tomcat setup with a properly
+    #generated/configured jssecacerts file and there is a valid
+    #ESGF_IDP_PEER being pointed to.  We should copy over that
+    #jssecacerts into this newly installed VM to satisfy SSL.
+    if [ -n "${last_java_truststore_file}" ] && [ -e "${last_java_truststore_file}" ]; then
+        mkdir -p ${java_install_dir}/conf
+        cp -v ${last_java_truststore_file} ${java_install_dir}/conf
+        chmod 644 ${java_install_dir}/conf/${last_java_truststore_file##*/}
+    fi
+    #-----------------------------
+
+    checked_done 0
+}

@@ -14,7 +14,6 @@ class test_ESG_Functions(unittest.TestCase):
 		self.assertEqual(output, 1)
 
 		output = esg_functions.version_comp("3:2.5.3-1", "3:2.5.3-1")
-		print "output: ", output
 		self.assertEqual(output, 0)
 
 	def test_version_segment_comp(self):

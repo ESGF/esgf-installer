@@ -116,29 +116,34 @@ def version_segment_comp(version1, version2):
             Usage example:
               if [ "$(_version_segment_cmp $MYVERSION 1.2.3)" -lt 0 ] ; then ...
       '''
-    version1 = re.sub(r'\.', r' ', test1)
+
+    version1 = re.sub(r'\.', r' ', version1)
     version1 = version1.split()
 
-    version2 = re.sub(r'\.', r' ', test2)
+    version2 = re.sub(r'\.', r' ', version2)
     version2 = version2.split()
 
     version_length = max(len(version1), len(version2))
 
     for i in range(version_length):
-        if (not version1[i].isdigit() or not version2[i].isdigit()):
-            if (version1[i].lower() == version2[i].lower()):
-                return 0
-            elif (version1[i].lower() > version2[i].lower()):
+        try:
+            if not version1[i].isdigit() or not version2[i].isdigit():
+                if version1[i].lower() > version2[i].lower():
+                    return 1
+                elif version1[i].lower() < version2[i].lower():
+                    return -1
+            else:
+                if version1[i] > version2[i]:
+                    return 1
+                elif version1[i] < version2[i]:
+                    return -1
+        except IndexError:
+            if version1 > version2:
                 return 1
             else:
-                return -1
-        else:
-            if (version1[i] == version2[i]):
                 return 0
-            if (version1[i] > version2[i]):
-                return 1
-            else:
-                return -1
+    else:
+        return 0
 
 
 def check_version_atleast(version1, version2):

@@ -36,7 +36,7 @@ def checked_done():
         return 0
 
 
-def version_comp(test1, test2):
+def version_comp(input_version1, input_version2):
     '''
             Takes two strings, splits them into epoch (before the last ':'),
             version (between the last ':' and the first '-'), and release
@@ -54,44 +54,46 @@ def version_comp(test1, test2):
               if [ "$(_version_cmp $MYVERSION 1:2.3.4-5)" -lt 0 ] ; then ...
      '''
 
-    version1 = re.search(r'(.*):(.*)-(\w)', test1)
+    version1 = re.search(r'(.*):(.*)-(\w)', input_version1)
     # TODO: replace with ternary operator
-    if (version1):
+    if version1:
         epoch_a = version1.group(1)
     else:
         epoch_a = -1
-    non_epoch_a = re.search(r'(?:.*:)?(.*)', test1).group(0)
-    version_a = re.search(r'([^-]*)', test1).group(1)
-    release_a = re.search(r'[^-]*-(.*)', test1)
-    if (release_a):
+
+    non_epoch_a = re.search(r'(?:.*:)?(.*)', input_version1).group(1)
+    version_a = re.search(r'([^-]*)', non_epoch_a).group(1)
+    release_a = re.search(r'[^-]*-(.*)', non_epoch_a)
+    if release_a:
         release_a = release_a.group(1)
     else:
         release_a = -1
 
-    version2 = re.search(r'(.*):(.*)-(\w)', test2)
-    if (version2):
+    version2 = re.search(r'(.*):(.*)-(\w)', input_version2)
+    if version2:
         epoch_b = version2.group(1)
     else:
         epoch_b = -1
-    non_epoch_b = re.search(r'(?:.*:)?(.*)', test2).group(0)
-    version_b = re.search(r'([^-]*)', test2).group(1)
-    release_b = re.search(r'[^-]*-(.*)', test2)
-    if (release_b):
+    non_epoch_b = re.search(r'(?:.*:)?(.*)', input_version2).group(1)
+
+    version_b = re.search(r'([^-]*)', non_epoch_b).group(1)
+    release_b = re.search(r'[^-]*-(.*)', non_epoch_b)
+    if release_b:
         release_b = release_b.group(1)
     else:
         release_b = -1
 
-    epoch_comp = version_segment_comp(str(epoch_a), str(epoch_b))
-    version_comp = version_segment_comp(str(version_a), str(version_b))
-    release_comp = version_segment_comp(str(release_a), str(release_b))
-    comp_list = [epoch_comp, version_comp, release_comp]
+    epoch_comparison = version_segment_comp(str(epoch_a), str(epoch_b))
+    version_comparison = version_segment_comp(str(version_a), str(version_b))
+    release_comparison = version_segment_comp(str(release_a), str(release_b))
+    comp_list = [epoch_comparison, version_comparison, release_comparison]
     for comp_value in comp_list:
-        if (comp_value != 0):
+        if comp_value != 0:
             return comp_value
     return 0
 
 
-def version_segment_comp(test1, test2):
+def version_segment_comp(version1, version2):
     '''
             Takes two strings, splits them on each '.' into arrays, compares
             array elements until a difference is found.

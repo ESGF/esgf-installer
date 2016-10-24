@@ -183,13 +183,56 @@ def check_version_between(current_version, min_version, max_version):
 
         Returns 255 if called with less than three arguments.
     '''
-    if (version_comp(current_version, min_version) >= 0 and version_comp(current_version, max_version) <= 0):
+    if version_comp(current_version, min_version) >= 0 and version_comp(current_version, max_version) <= 0:
         return 0
     else:
         return 1
 
+
 def check_version(binary_file_name, min_version, max_version=None):
-	return 1
+    '''
+            This is the most commonly used "public" version checking
+        routine.  It delegates to check_version_helper() for the actual
+        comparison, which in turn delegates to other functions in a chain.
+
+        Arguments:
+          $1: a string containing executable to call with the argument
+              "--version" or "-version" to find the version to check against
+          $2: the minimum acceptable version string
+          $3 (optional): the maximum acceptable version string
+
+        Returns 0 if the detected version is within the specified
+        bounds, or if there were not even two arguments passed.
+
+        Returns 1 if the detected version is not within the specified
+        bounds.
+
+        Returns 2 if running the specified command with "--version" or
+        "-version" as an argument results in an error for both
+        (i.e. because the command could not be found, or because neither
+		"--version" nor "-version" is a valid argument)
+    '''
+    found_version = subprocess.Popen(
+        [binary_file_name, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    found_version.wait()
+    current_version = None
+    version_tuple = found_version.communicate()
+    found_version.wait()
+    for version in version_tuple:
+        version_number = re.search(r'(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*', version)
+        if version_number:
+            current_version = version_number.group(1)
+            result = check_version_helper(
+                current_version, min_version, max_version)
+            if result is 0:
+                return result
+            else:
+                if max_version is None:
+                    print "\nThe detected version of %s %s is less than %s \n" % (binary_file_name, current_version, min_version)
+                else:
+                    print "\nThe detected version of %s %s is not between %s and %s \n" % (binary_file_name, current_version, min_version, max_version)
+                return 1
+
 
 # checked_done()
 # print version_comp("2:2.3.4-5", "3:2.5.3-1")

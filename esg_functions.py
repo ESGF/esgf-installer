@@ -157,10 +157,17 @@ def check_version_atleast(version1, version2):
 
             Returns 255 if called with less than two arguments.
     '''
-    if (version_comp(version1, version2) >= 0):
+    if version_comp(version1, version2) >= 0:
         return 0
     else:
         return 1
+
+
+def check_version_helper(current_version, min_version, max_version=None):
+    if not max_version:
+        return check_version_atleast(current_version, min_version)
+    else:
+        return check_version_between(current_version, min_version, max_version)
 
 
 def check_version_between(current_version, min_version, max_version):

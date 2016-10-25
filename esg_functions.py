@@ -55,8 +55,10 @@ def version_comp(input_version1, input_version2):
      '''
 
     version1 = re.search(r'(.*):(.*)-(\w)', input_version1)
+
     # TODO: replace with ternary operator
     if version1:
+        # print "version1: ", version1.groups()
         epoch_a = version1.group(1)
     else:
         epoch_a = -1
@@ -191,7 +193,7 @@ def check_version_between(current_version, min_version, max_version):
 
 def check_version(binary_file_name, min_version, max_version=None):
     '''
-            This is the most commonly used "public" version checking
+        This is the most commonly used "public" version checking
         routine.  It delegates to check_version_helper() for the actual
         comparison, which in turn delegates to other functions in a chain.
 
@@ -210,7 +212,7 @@ def check_version(binary_file_name, min_version, max_version=None):
         Returns 2 if running the specified command with "--version" or
         "-version" as an argument results in an error for both
         (i.e. because the command could not be found, or because neither
-		"--version" nor "-version" is a valid argument)
+                "--version" nor "-version" is a valid argument)
     '''
     found_version = subprocess.Popen(
         [binary_file_name, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -220,8 +222,13 @@ def check_version(binary_file_name, min_version, max_version=None):
     found_version.wait()
     for version in version_tuple:
         version_number = re.search(r'(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*', version)
-        if version_number:
+        # if version_number:
+        try:
             current_version = version_number.group(1)
+        except AttributeError:
+            print "attribute error"
+            continue
+        else:
             result = check_version_helper(
                 current_version, min_version, max_version)
             if result is 0:
@@ -234,7 +241,49 @@ def check_version(binary_file_name, min_version, max_version=None):
                 return 1
 
 
-# checked_done()
-# print version_comp("2:2.3.4-5", "3:2.5.3-1")
-# check = version_segment_comp("2.3.4", "3.2.5")
-# print "check: ", check
+def check_version_with(program_name, version_command, min_version, max_version=None):
+    '''
+        This is an alternate version of check_version() (see above)
+        where the second argument specifies the entire command string with
+        all arguments, pipes, etc. needed to result in a version number
+        to compare.
+
+        Arguments:
+          $1: a string containing the name of the program version to
+              check (this is only used in debugging output)
+          $2: the complete command to be passed to eval to produce the
+              version string to test
+          $3: the minimum acceptable version string
+          $4 (optional): the maximum acceptable version string
+
+        Returns 0 if the detected version is within the specified
+        bounds, or if at least three arguments were not passed
+
+        Returns 1 if the detected version is not within the specified
+        bounds.
+
+        Returns 2 if running the specified command results in an error
+    '''
+    command_list = version_command.split()
+    found_version = subprocess.Popen(
+        command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    version_tuple = found_version.communicate()
+    for version in version_tuple:
+        version = version.strip()
+        version_number = re.search(r'(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*', version)
+        try:
+            current_version = version_number.group(1)
+        except AttributeError:
+            print "attribute error"
+            continue
+        else:
+            result = check_version_helper(
+                current_version, min_version, max_version)
+        if result is 0:
+            return result
+        else:
+            if max_version is None:
+                print "\nThe detected version of %s %s is less than %s \n" % (program_name, current_version, min_version)
+            else:
+                print "\nThe detected version of %s %s is not between %s and %s \n" % (program_name, current_version, min_version, max_version)
+            return 1

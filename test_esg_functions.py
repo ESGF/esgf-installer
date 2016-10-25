@@ -11,11 +11,11 @@ class test_ESG_Functions(unittest.TestCase):
 
         self.assertEqual(output, -1)
 
-        # output = esg_functions.version_comp("3:2.5.3-1", "2:2.3.4-5")
-        # self.assertEqual(output, 1)
+        output = esg_functions.version_comp("3:2.5.3-1", "2:2.3.4-5")
+        self.assertEqual(output, 1)
 
-        # output = esg_functions.version_comp("3:2.5.3-1", "3:2.5.3-1")
-        # self.assertEqual(output, 0)
+        output = esg_functions.version_comp("3:2.5.3-1", "3:2.5.3-1")
+        self.assertEqual(output, 0)
 
     def test_version_segment_comp(self):
         output = esg_functions.version_segment_comp("2.3.4", "3.2.5")
@@ -60,11 +60,21 @@ class test_ESG_Functions(unittest.TestCase):
         self.assertEqual(output, 1)
 
     def test_check_version(self):
-    	output = esg_functions.check_version("python", "2.7")
-    	self.assertEqual(output,0)
+        output = esg_functions.check_version("python", "2.7")
+        self.assertEqual(output, 0)
 
-    	output = esg_functions.check_version("python", "2.9")
-    	self.assertEqual(output,1)
+        output = esg_functions.check_version("python", "2.9")
+        self.assertEqual(output, 1)
+
+        output = esg_functions.check_version("python", "2.9", "3.3")
+        self.assertEqual(output, 1)
+
+    def  test_check_version_with(self):
+    	output = esg_functions.check_version_with("java", "java -version", "1.6.0")
+    	self.assertEqual(output, 0)
+
+    	output = esg_functions.check_version_with("git", "git --version", "1.6.0")
+    	self.assertEqual(output, 0)
 
 if __name__ == '__main__':
     unittest.main()

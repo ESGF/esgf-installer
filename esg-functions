@@ -100,6 +100,7 @@ _version_cmp() {
     # Usage example:
     #   if [ "$(_version_cmp $MYVERSION 1:2.3.4-5)" -lt 0 ] ; then ...
 
+    # my in perl creates a new variable in local scope; . - > matches a single character; * -> matches 0 or more occurences of the previous
     EPOCHA=(`echo $1 | perl -ne 'my ($part)=/(.*):.*/;print "$part\n"'`)
     EPOCHB=(`echo $2 | perl -ne 'my ($part)=/(.*):.*/;print "$part\n"'`)
     EPOCHA=${EPOCHA:-"-1"}
@@ -235,6 +236,7 @@ vercomp() {
 }
 
 checked_done() {
+    #if positional parameter at position 1 is non-zero, then print error message.
     if (($1)); then
         echo ""
         echo "Sorry..."

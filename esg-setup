@@ -165,8 +165,9 @@ setup_java() {
     [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
 
     echo -n "Checking for java >= ${java_min_version} and valid JAVA_HOME... "
-    #if java_install_dir exists; check version of java against the minimum java version required
+    #if java_install_dir exists; check version of java against the minimum java version 
     [ -e ${java_install_dir} ] && check_version $java_install_dir/bin/java ${java_min_version}
+     #if the previous command returned 0 and the force_install bit is set to 0 
     [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
 
     echo

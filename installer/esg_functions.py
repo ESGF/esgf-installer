@@ -5,6 +5,7 @@ import os
 import subprocess
 import re
 import math
+import pylint
 
 esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
 esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
@@ -264,6 +265,9 @@ def check_version_with(program_name, version_command, min_version, max_version=N
 
         Returns 2 if running the specified command results in an error
     '''
+    # print "test math version: ", math.__version__
+    
+    # print "pylint version:",  pylint.__version__
     command_list = version_command.split()
     found_version = subprocess.Popen(
         command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -287,3 +291,25 @@ def check_version_with(program_name, version_command, min_version, max_version=N
             else:
                 print "\nThe detected version of %s %s is not between %s and %s \n" % (program_name, current_version, min_version, max_version)
             return 1
+
+def check_module_version(module_name, min_version):
+    '''
+        Checks the version of a given python module.
+
+        Arguments:
+        module_name: a string containing the name of a module that will have it's version checked
+        min_version: the minimum acceptable version string
+    '''
+    try:
+        module_version = __import__(module_name).__version__
+    except AttributeError as e:
+        print "error: ", e
+    else:
+        result = check_version_helper(
+            module_version, min_version)
+        if result is 0:
+            return result
+        else:
+            print "\nThe detected version of %s %s is less than %s \n" % (module_name, module_version, min_version)
+        return 1
+

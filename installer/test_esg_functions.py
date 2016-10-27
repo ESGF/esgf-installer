@@ -76,5 +76,12 @@ class test_ESG_Functions(unittest.TestCase):
     	output = esg_functions.check_version_with("git", "git --version", "1.6.0")
     	self.assertEqual(output, 0)
 
+    def test_check_module_version(self):
+        output = esg_functions.check_module_version("pylint", "1.6")
+        self.assertEqual(output,0)
+
+        output = esg_functions.check_module_version("pylint", "1.9")
+        self.assertEqual(output,1)
+
 if __name__ == '__main__':
     unittest.main()

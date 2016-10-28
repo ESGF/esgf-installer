@@ -313,3 +313,19 @@ def check_module_version(module_name, min_version):
             print "\nThe detected version of %s %s is less than %s \n" % (module_name, module_version, min_version)
         return 1
 
+        
+# TODO: implement and test
+def get_current_esgf_library_version(library_name):
+    '''
+        Some ESGF components, such as esgf-security, don't actually
+        install a webapp or anything that carries an independent
+        manifest or version command to check, so they must be checked
+        against the ESGF install manifest instead.
+    '''
+    if not os.path.isfile("/esg/esgf-install-manifest"):
+        return 1
+    else:
+        with open( "/esg/esgf-install-manifest", "r") as file:
+            for line in file:
+                line = line.rstrip() # remove trailing whitespace such as '\n'
+                version_number = re.search(r'(library)\w+', line)

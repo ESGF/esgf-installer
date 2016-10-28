@@ -2,9 +2,24 @@
 
 import unittest
 import esg_functions
+import os
 
 
 class test_ESG_Functions(unittest.TestCase):
+
+    # @classmethod
+    # def setUpClass(self):
+        # try: 
+        #     os.makedirs("/esg/esgf-install-manifest")
+        # except OSError:
+        #     if not os.path.isdir("/esg/esgf-install-manifest"):
+        #         raise
+
+    # def setUp(self):
+    #     if os.path.isdir("/home/el"):
+    #         print "found path"
+    #     else:
+    #         print "did not find path"
 
     def test_version_comp(self):
         output = esg_functions.version_comp("2:2.3.4-5", "3:2.5.3-1")
@@ -82,6 +97,10 @@ class test_ESG_Functions(unittest.TestCase):
 
         output = esg_functions.check_module_version("pylint", "1.9")
         self.assertEqual(output,1)
+
+    def test_get_current_esgf_library_version(self):
+        output = esg_functions.get_current_esgf_library_version("esgf-security")
+        self.assertEqual(output, 1)
 
 if __name__ == '__main__':
     unittest.main()

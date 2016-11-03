@@ -1994,7 +1994,7 @@ generate_esgf_csrs(){
 	echo "You are strongly advised to obtain and install commercial CA issued certificates for the web container.";
 	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
-	echo "Please mail the csr files for signing to Prashanth Dwarakanath <pchengi@nsc.liu.se> or Nicolas Carenton <ncarenton@ipsl.jussieu.fr>";
+	echo "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>
 	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
 	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
 	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";

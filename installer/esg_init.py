@@ -61,4 +61,28 @@ def init():
 	esgf_desktop_version = esg_bash2py.Expand.colonMinus("esgf_desktop_version", "0.0.20")
 
 
+	 #--------------------------------
+    # External programs' versions
+    #--------------------------------
+	openssl_version = esg_bash2py.Expand.colonMinus("openssl_version", "0.9.8r")  
+	openssl_min_version = esg_bash2py.Expand.colonMinus("openssl_min_version", "0.9.8e") 
+	openssl_max_version = esg_bash2py.Expand.colonMinus("openssl_max_version", "0.9.9z")
+	java_version = esg_bash2py.Expand.colonMinus("java_version", "1.8.0_92")
+	java_min_version = esg_bash2py.Expand.colonMinus("java_min_version", "1.8.0_92")
+	ant_version = esg_bash2py.Expand.colonMinus("ant_version", "1.9.1") 
+	ant_min_version = esg_bash2py.Expand.colonMinus("ant_min_version", "1.9.1")
+	postgress_version = esg_bash2py.Expand.colonMinus("postgress_version", "8.4.20")  
+	postgress_min_version = esg_bash2py.Expand.colonMinus("postgress_min_version", "8.4.20")
+	tomcat_version = esg_bash2py.Expand.colonMinus("tomcat_version", "8.0.33")  
+	tomcat_min_version = esg_bash2py.Expand.colonMinus("tomcat_min_version", "8.0.33")
+	tds_version = esg_bash2py.Expand.colonMinus("tds_version", "5.0.0")
+	tds_min_version = esg_bash2py.Expand.colonMinus("tds_min_version", "5.0.0")
+	python_version = esg_bash2py.colonMinus("python_version", "2.7")
+    #cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
+    # Since ESGF 1.8, LAS version is declared in esg-product-server
+    #las_version=${las_version:-"8.1"}; las_min_version=${las_min_version:-"8.1"}
+
+    
+
+
 init()

@@ -1,7 +1,10 @@
-import esg_bash2py
 import re
 import os
 import subprocess
+import pwd
+# from pwd import getpwnam
+import esg_bash2py
+
 '''
 	Public
 
@@ -82,7 +85,7 @@ def init():
         "esgf_desktop_version", "0.0.20")
 
     #--------------------------------
-    # External p rograms' versions
+    # External programs' versions
     #--------------------------------
     openssl_version = esg_bash2py.Expand.colonMinus(
         "openssl_version", "0.9.8r")
@@ -132,7 +135,7 @@ def init():
     # pub_secret = subprocess.Popen("cat " + pub_secret_file + " 2>/dev/null ")
     # publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
     # publisher_db_user_passwd = esg_bash2py.Expand.colonMinus(
-        # "publisher_db_user_passwd", pub_secret)
+    # "publisher_db_user_passwd", pub_secret)
     # del pub_secret
     postgress_host = esg_bash2py.Expand.colonMinus("PGHOST", "localhost")
     postgress_port = esg_bash2py.Expand.colonMinus("PGPORT", "5432")
@@ -140,7 +143,8 @@ def init():
     cdat_home = esg_bash2py.Expand.colonMinus(
         "CDAT_HOME", install_prefix + "/uvcdat/" + cdat_version)
     java_opts = esg_bash2py.Expand.colonMinus("JAVA_OPTS", "")
-    java_install_dir = esg_bash2py.Expand.colonMinus("JAVA_HOME", install_prefix + "/java")
+    java_install_dir = esg_bash2py.Expand.colonMinus(
+        "JAVA_HOME", install_prefix + "/java")
     ant_install_dir = esg_bash2py.Expand.colonMinus(
         "ANT_HOME", install_prefix + "/ant")
     tomcat_install_dir = esg_bash2py.Expand.colonMinus(
@@ -159,10 +163,10 @@ def init():
     #     publisher_home=${ESGINI%/*} <- 	Strip shortest match of $substring from back of $string
     #     publisher_config=${ESGINI##*/}
     # fi
-    try: 
-    	os.environ["ESGINI"]
+    try:
+        os.environ["ESGINI"]
     except KeyError:
-    	print "Key not found"
+        print "Key not found"
     else:
         publisher_home = subprocess.Popen("${ESGINI%/*}", shell=True)
         publisher_config = subprocess.Popen("${ESGINI##*/}", shell=True)
@@ -191,16 +195,94 @@ def init():
     os.environ['GLOBUS_LOCATION'] = globus_location
 
     # myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
-    myPATH = os.environ["OPENSSL_HOME"] + "/bin:"+ os.environ["JAVA_HOME"] +"/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
+    myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
+        "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
     print "myPATH: ", myPATH
     # myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
-    myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + os.environ["GLOBUS_LOCATION"] + "/lib:" + install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
+    myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
+        os.environ["GLOBUS_LOCATION"] + "/lib:" + \
+        install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
     print "myLD_LIBRARY_PATH: ", myLD_LIBRARY_PATH
     # export PATH=$(_path_unique $myPATH:$PATH)
     # export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
     # export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/include ${CFLAGS} -fPIC"
-# export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib
-# -Wl,--rpath,${OPENSSL_HOME}/lib"
+    # export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib
+    # -Wl,--rpath,${OPENSSL_HOME}/lib"
+
+    #--------------
+    # ID Setting
+    #--------------
+    # fix: id will always return the root id no matter what flags we use if we start this via sudo
+    # installer_user=${ESG_USER:-${SUDO_USER:-$(echo $HOME | sed
+    # 's#.*/\([^/]\+\)/\?$#\1#')}}
+    installer_user = esg_bash2py.Expand.colonMinus("ESG_USER", esg_bash2py.Expand.colonMinus("SUDO_USER", subprocess.Popen("$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')", shell=True)))
+    # installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
+    installer_uid = esg_bash2py.Expand.colonMinus("ESG_USER_UID", esg_bash2py.Expand.colonMinus(
+        "SUDO_UID", pwd.getpwnam('installer_user').pw_uid))
+    # installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
+    installer_gid = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
+        "SUDO_GID", pwd.getpwnam('installer_user').pw_gid))
+    # installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
+    installer_home = esg_bash2py.Expand.colonMinus(
+        "ESG_USER_HOME", "/usr/local/src/esgf")
+
+    # #deprecate SUDO_?ID so we only use one variable for all this
+    # [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
+    try:
+        os.environ["SUDO_UID"]
+    except KeyError:
+        print "SUDO_UID not found"
+    else:
+        os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
+        del os.environ["SUDO_UID"]
+
+    # [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
+    try:
+        os.environ["SUDO_GID"]
+    except KeyError:
+    	print "SUDO_GID not found"
+    else:
+    	os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
+    	del os.environ["SUDO_GID"]
+
+
+ 
+
+    # verbose_print
+    # "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
+    print "%s:%s:%s:%s" % (installer_user, installer_uid, installer_gid, installer_home)
+
+
+    #--------------
+    # Script vars (internal)
+    #--------------
+    # esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
+    esg_backup_dir = esg_bash2py.Expand.colonMinus("esg_backup_dir", esg_root_dir+"/backups")
+    # esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
+    esg_config_dir = esg_bash2py.Expand.colonMinus("esg_config_dir", esg_root_dir+"/config")
+    # esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
+    esg_log_dir = esg_bash2py.Expand.colonMinus("esg_log_dir", esg_root_dir+"/log")
+    # esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
+    esg_tools_dir = esg_bash2py.Expand.colonMinus("esg_tools_dir", esg_root_dir+"/tools")
+    # esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
+    esg_etc_dir = esg_bash2py.Expand.colonMinus("esg_etc_dir", esg_root_dir+"/etc")
+    # workdir=${workdir:-${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg}}
+    workdir = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus("ESGF_INSTALL_WORKDIR", installer_home+"/workbench/esg"))
+
+    # word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
+    word_size = esg_bash2py.Expand.colonMinus("word_size", subprocess.Popen("$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')"), shell=True )
+    # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
+    num_cpus = 1 + subprocess.Popen("$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)", shell = True)
+    # date_format="+%Y_%m_%d_%H%M%S"
+    date_format = subprocess.Popen("+%Y_%m_%d_%H%M%S", shell = True)
+    # num_backups_to_keep=${num_backups_to_keep:-7}
+    num_backups_to_keep = esg_bash2py.Expand.colonMinus("num_backups_to_keep", "7")
+    # compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+    compress_extensions = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+    # certificate_extensions="pem|crt|cert|key"
+    certificate_extensions = "pem|crt|cert|key"
+
+
 
 
 init()

@@ -54,7 +54,7 @@ class EsgInit(object):
             "cdat_version", "2.2.0")
     #    cdat_tag="1.5.1.esgf-v1.7.0"
 
-        internal_code_versions["esgcet_version"] = esg_bash2py.Expand.colonMinus(
+        self.esgcet_version = esg_bash2py.Expand.colonMinus(
             "esgcet_version", "3.0.1")
         internal_code_versions["publisher_tag"] = esg_bash2py.Expand.colonMinus(
             "publisher_tag", "v3.0.1")
@@ -103,7 +103,7 @@ class EsgInit(object):
         #--------------------------------
         # External programs' versions
         #--------------------------------
-        external_program_versions["openssl_version"] = esg_bash2py.Expand.colonMinus(
+        self.openssl_version = esg_bash2py.Expand.colonMinus(
             "openssl_version", "0.9.8r")
         external_program_versions["openssl_min_version"] = esg_bash2py.Expand.colonMinus(
             "openssl_min_version", "0.9.8e")
@@ -113,7 +113,7 @@ class EsgInit(object):
             "java_version", "1.8.0_92")
         external_program_versions["java_min_version"] = esg_bash2py.Expand.colonMinus(
             "java_min_version", "1.8.0_92")
-        external_program_versions["ant_version"] = esg_bash2py.Expand.colonMinus(
+        self.ant_version = esg_bash2py.Expand.colonMinus(
             "ant_version", "1.9.1")
         external_program_versions["ant_min_version"] = esg_bash2py.Expand.colonMinus(
             "ant_min_version", "1.9.1")
@@ -129,7 +129,7 @@ class EsgInit(object):
             "tds_version", "5.0.0")
         external_program_versions["tds_min_version"] = esg_bash2py.Expand.colonMinus(
             "tds_min_version", "5.0.0")
-        external_program_versions["python_version"] = esg_bash2py.Expand.colonMinus(
+        self.python_version = esg_bash2py.Expand.colonMinus(
             "python_version", "2.7")
 
         # print "locals: ", locals()
@@ -258,7 +258,7 @@ class EsgInit(object):
         installer_gid = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
             "SUDO_GID", pwd.getpwnam('installer_user').pw_gid))
         # installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
-        installer_home = esg_bash2py.Expand.colonMinus(
+        self.installer_home = esg_bash2py.Expand.colonMinus(
             "ESG_USER_HOME", "/usr/local/src/esgf")
 
         # #deprecate SUDO_?ID so we only use one variable for all this
@@ -284,128 +284,129 @@ class EsgInit(object):
         # verbose_print
         # "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
         print "%s:%s:%s:%s" % (installer_user, installer_uid, installer_gid,
-        installer_home)
+        self.installer_home)
 
 
-#     #--------------
-#     # Script vars (internal)
-#     #--------------
-#     # esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
-#     esg_backup_dir = esg_bash2py.Expand.colonMinus("esg_backup_dir", esg_root_dir+"/backups")
-#     # esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
-#     esg_config_dir = esg_bash2py.Expand.colonMinus("esg_config_dir", esg_root_dir+"/config")
-#     # esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
-#     esg_log_dir = esg_bash2py.Expand.colonMinus("esg_log_dir", esg_root_dir+"/log")
-#     # esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
-#     esg_tools_dir = esg_bash2py.Expand.colonMinus("esg_tools_dir", esg_root_dir+"/tools")
-#     # esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
-#     esg_etc_dir = esg_bash2py.Expand.colonMinus("esg_etc_dir", esg_root_dir+"/etc")
-#     # workdir=${workdir:-${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg}}
-#     workdir = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus("ESGF_INSTALL_WORKDIR", installer_home+"/workbench/esg"))
+    def populate_internal_script_variables(self):
+        #--------------
+        # Script vars (internal)
+        #--------------
+        # esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
+        esg_backup_dir = esg_bash2py.Expand.colonMinus("esg_backup_dir", self.esg_root_dir+"/backups")
+        # esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
+        esg_config_dir = esg_bash2py.Expand.colonMinus("esg_config_dir", self.esg_root_dir+"/config")
+        # esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
+        esg_log_dir = esg_bash2py.Expand.colonMinus("esg_log_dir", self.esg_root_dir+"/log")
+        # esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
+        esg_tools_dir = esg_bash2py.Expand.colonMinus("esg_tools_dir", self.esg_root_dir+"/tools")
+        # esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
+        esg_etc_dir = esg_bash2py.Expand.colonMinus("esg_etc_dir", self.esg_root_dir+"/etc")
+        # workdir=${workdir:-${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg}}
+        workdir = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus("ESGF_INSTALL_WORKDIR", self.installer_home+"/workbench/esg"))
 
-#     # word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-#     word_size = esg_bash2py.Expand.colonMinus("word_size", subprocess.Popen("$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')"), shell=True )
-#     # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
-#     num_cpus = 1 + subprocess.Popen("$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)", shell = True)
-#     # date_format="+%Y_%m_%d_%H%M%S"
-#     date_format = subprocess.Popen("+%Y_%m_%d_%H%M%S", shell = True)
-#     # num_backups_to_keep=${num_backups_to_keep:-7}
-#     num_backups_to_keep = esg_bash2py.Expand.colonMinus("num_backups_to_keep", "7")
-#     # compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
-#     compress_extensions = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
-#     # certificate_extensions="pem|crt|cert|key"
-#     certificate_extensions = "pem|crt|cert|key"
+        # word_size=${word_size:-$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
+        word_size = esg_bash2py.Expand.colonMinus("word_size", subprocess.Popen("$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')", shell=True))
+        # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)
+        num_cpus = 1 + subprocess.Popen("$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)", shell = True)
+        # date_format="+%Y_%m_%d_%H%M%S"
+        date_format = subprocess.Popen("+%Y_%m_%d_%H%M%S", shell = True)
+        # num_backups_to_keep=${num_backups_to_keep:-7}
+        num_backups_to_keep = esg_bash2py.Expand.colonMinus("num_backups_to_keep", "7")
+        # compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+        compress_extensions = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+        # certificate_extensions="pem|crt|cert|key"
+        certificate_extensions = "pem|crt|cert|key"
 
 
-#     # openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
-#     openssl_dist_url = "http://www.openssl.org/source/openssl-" + openssl_version + ".tar.gz"
-#     # java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
-#     # java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (esg_dist_url_root, java_version, java_version, word_size)
-#     # ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
-#     ant_dist_url= "http://archive.apache.org/dist/ant/binaries/apache-ant-"+ ant_version + "-bin.tar.gz"
-#     # openssl_workdir=${workdir}/openssl
-#     openssl_workdir=workdir+"/openssl"
-#     # esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
-#     esgf_dashboard_ip_workdir = workdir+"/esgf-dashboard-ip"
-#     # bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
-#     # bash_completion_url = esg_dist_url + "/thirdparty/bash-completion-20060301-1.noarch.rpm"
-#     # db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
-#     db_database = esg_bash2py.Expand.colonMinus("ESGF_DB_NAME", esg_bash2py.Expand.colonMinus("db_database", "esgcet"))
-#     # node_db_name=${db_database}
-#     node_db_name = db_database
-#     # postgress_jar=postgresql-8.4-703.jdbc3.jar
-#     postgress_jar="postgresql-8.4-703.jdbc3.jar"
-#     # postgress_driver=org.postgresql.Driver
-#     postgress_driver="org.postgresql.Driver"
-#     # postgress_protocol=jdbc:postgresql:
-#     postgress_protocol="jdbc:postgresql:"
-#     # pg_sys_acct=${pg_sys_acct:-postgres}
-#     pg_sys_acct = esg_bash2py.Expand.colonMinus("pg_sys_acct", "postgres")
-#     # pg_sys_acct_group=${pg_sys_acct_group:-$pg_sys_acct}
-#     pg_sys_acct_group = esg_bash2py.Expand.colonMinus("pg_sys_acct_group", pg_sys_acct)
-#     # #cmake_workdir=${workdir}/cmake
-#     # #cmake_repo=http://www.cmake.org/cmake.git
-#     # #cdat_repo=git://github.com/UV-CDAT/uvcdat.git
-#     # #cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
-#     # publisher_repo=git://github.com/ESGF/esg-publisher.git
-#     publisher_repo="git://github.com/ESGF/esg-publisher.git"
-#     # apache_frontend_repo=https://github.com/ESGF/apache-frontend.git
-#     apache_frontend_repo="https://github.com/ESGF/apache-frontend.git"
-#     # publisher_repo_https=https://github.com/ESGF/esg-publisher.git
-#     publisher_repo_https="https://github.com/ESGF/esg-publisher.git"
-#     # esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
-#     esgcet_egg_file="esgcet-%s-py%s.egg" % (esgcet_version, python_version)
-#     # esg_testdir=${workdir}/../esg_test
-#     esg_testdir = workdir+ "/../esg_test"
-#     # tomcat_dist_url=http://archive.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
-#     # tomcat_pid_file=/var/run/tomcat-jsvc.pid
-#     tomcat_pid_file="/var/run/tomcat-jsvc.pid"
-#     # utils_url=${esg_dist_url}/utils
-#     # utils_url = esg_dist_url+"/utils"
-#     # thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war
-#     # thredds_esg_dist_url=${esg_dist_url}/thredds/${tds_version%.*}/${tds_version}/thredds.war
-#     # thredds_content_dir=${thredds_content_dir:-${esg_root_dir}/content}
-#     thredds_content_dir = esg_bash2py.Expand.colonMinus("thredds_content_dir", esg_root_dir+"/content")
-#     # #NOTE: This root dir should match a root set in the thredds setup
-#     # thredds_root_dir=${esg_root_dir}/data
-#     thredds_root_dir = esg_root_dir+"/data"
-#     # thredds_replica_dir=${thredds_root_dir}/replica
-#     thredds_replica_dir = thredds_root_dir+"/replica"
-#     # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-#     # show_summary_latch=0
-#     show_summary_latch="0"
-#     # source_latch=0
-#     source_latch="0"
-#     # scripts_dir=${install_prefix}/bin
-#     scripts_dir=install_prefix+ "/bin"
-#     # esg_installarg_file=${scripts_dir}/esg-installarg
-#     esg_installarg_file=scripts_dir + "/esg-installarg"
-#     # no_globus=${no_globus:-0}
-#     no_globus = esg_bash2py.Expand.colonMinus("no_globus", "0")
-#     # force_install=${force_install:-0}
-#     force_install = esg_bash2py.Expand.colonMinus("force_install", "0")
-#     # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
-#     # extkeytool_download_url= esg_dist_url + "/etc/idptools.tar.gz"
-#     # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
-#     tomcat_users_file= tomcat_conf_dir + "/tomcat-users.xml"
-#     # keystore_file=${tomcat_conf_dir}/keystore-tomcat
-#     keystore_file= tomcat_conf_dir + "/keystore-tomcat"
-#     # keystore_alias=${keystore_alias:-my_esgf_node}
-#     keystore_alias = esg_bash2py.Expand.colonMinus("keystore_alias", "my_esgf_node")
-#     # keystore_password=${keystore_password}
-#     # truststore_file=${tomcat_conf_dir}/esg-truststore.ts
-#     truststore_file= tomcat_conf_dir + "/esg-truststore.ts"
-#     # truststore_password=${truststore_password:-changeit}
-#     truststore_password = esg_bash2py.Expand.colonMinus("truststore_password", "changeit")
-#     # globus_global_certs_dir=/etc/grid-security/certificates
-#     globus_global_certs_dir="/etc/grid-security/certificates"
-#     # #NOTE: java keystore style DN...
-#     # default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
-#     default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
-#     # config_file=${esg_config_dir}/esgf.properties
-#     config_file= esg_config_dir + "/esgf.properties"
-#     # index_config="master slave"
-#     index_config="master slave"
+        # openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
+        openssl_dist_url = "http://www.openssl.org/source/openssl-" + self.openssl_version + ".tar.gz"
+        # java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
+        # java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (esg_dist_url_root, java_version, java_version, word_size)
+        # ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
+        ant_dist_url= "http://archive.apache.org/dist/ant/binaries/apache-ant-"+ self.ant_version + "-bin.tar.gz"
+        # openssl_workdir=${workdir}/openssl
+        openssl_workdir=workdir+"/openssl"
+        # esgf_dashboard_ip_workdir=${workdir}/esgf-dashboard-ip
+        esgf_dashboard_ip_workdir = workdir+"/esgf-dashboard-ip"
+        # bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
+        # bash_completion_url = esg_dist_url + "/thirdparty/bash-completion-20060301-1.noarch.rpm"
+        # db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
+        db_database = esg_bash2py.Expand.colonMinus("ESGF_DB_NAME", esg_bash2py.Expand.colonMinus("db_database", "esgcet"))
+        # node_db_name=${db_database}
+        node_db_name = db_database
+        # postgress_jar=postgresql-8.4-703.jdbc3.jar
+        postgress_jar="postgresql-8.4-703.jdbc3.jar"
+        # postgress_driver=org.postgresql.Driver
+        postgress_driver="org.postgresql.Driver"
+        # postgress_protocol=jdbc:postgresql:
+        postgress_protocol="jdbc:postgresql:"
+        # pg_sys_acct=${pg_sys_acct:-postgres}
+        pg_sys_acct = esg_bash2py.Expand.colonMinus("pg_sys_acct", "postgres")
+        # pg_sys_acct_group=${pg_sys_acct_group:-$pg_sys_acct}
+        pg_sys_acct_group = esg_bash2py.Expand.colonMinus("pg_sys_acct_group", pg_sys_acct)
+        # #cmake_workdir=${workdir}/cmake
+        # #cmake_repo=http://www.cmake.org/cmake.git
+        # #cdat_repo=git://github.com/UV-CDAT/uvcdat.git
+        # #cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
+        # publisher_repo=git://github.com/ESGF/esg-publisher.git
+        publisher_repo="git://github.com/ESGF/esg-publisher.git"
+        # apache_frontend_repo=https://github.com/ESGF/apache-frontend.git
+        apache_frontend_repo="https://github.com/ESGF/apache-frontend.git"
+        # publisher_repo_https=https://github.com/ESGF/esg-publisher.git
+        publisher_repo_https="https://github.com/ESGF/esg-publisher.git"
+        # esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
+        esgcet_egg_file="esgcet-%s-py%s.egg" % (self.esgcet_version, self.python_version)
+        # esg_testdir=${workdir}/../esg_test
+        esg_testdir = workdir+ "/../esg_test"
+        # tomcat_dist_url=http://archive.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
+        # tomcat_pid_file=/var/run/tomcat-jsvc.pid
+        tomcat_pid_file="/var/run/tomcat-jsvc.pid"
+        # utils_url=${esg_dist_url}/utils
+        # utils_url = esg_dist_url+"/utils"
+        # thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war
+        # thredds_esg_dist_url=${esg_dist_url}/thredds/${tds_version%.*}/${tds_version}/thredds.war
+        # thredds_content_dir=${thredds_content_dir:-${esg_root_dir}/content}
+        thredds_content_dir = esg_bash2py.Expand.colonMinus("thredds_content_dir", self.esg_root_dir+"/content")
+        # #NOTE: This root dir should match a root set in the thredds setup
+        # thredds_root_dir=${esg_root_dir}/data
+        thredds_root_dir = self.esg_root_dir+"/data"
+        # thredds_replica_dir=${thredds_root_dir}/replica
+        thredds_replica_dir = thredds_root_dir+"/replica"
+        # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
+        # show_summary_latch=0
+        show_summary_latch="0"
+        # source_latch=0
+        source_latch="0"
+        # scripts_dir=${install_prefix}/bin
+        scripts_dir= self.install_prefix+ "/bin"
+        # esg_installarg_file=${scripts_dir}/esg-installarg
+        esg_installarg_file=scripts_dir + "/esg-installarg"
+        # no_globus=${no_globus:-0}
+        no_globus = esg_bash2py.Expand.colonMinus("no_globus", "0")
+        # force_install=${force_install:-0}
+        force_install = esg_bash2py.Expand.colonMinus("force_install", "0")
+        # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
+        # extkeytool_download_url= esg_dist_url + "/etc/idptools.tar.gz"
+        # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
+        tomcat_users_file= self.tomcat_conf_dir + "/tomcat-users.xml"
+        # keystore_file=${tomcat_conf_dir}/keystore-tomcat
+        keystore_file= self.tomcat_conf_dir + "/keystore-tomcat"
+        # keystore_alias=${keystore_alias:-my_esgf_node}
+        keystore_alias = esg_bash2py.Expand.colonMinus("keystore_alias", "my_esgf_node")
+        # keystore_password=${keystore_password}
+        # truststore_file=${tomcat_conf_dir}/esg-truststore.ts
+        truststore_file= self.tomcat_conf_dir + "/esg-truststore.ts"
+        # truststore_password=${truststore_password:-changeit}
+        truststore_password = esg_bash2py.Expand.colonMinus("truststore_password", "changeit")
+        # globus_global_certs_dir=/etc/grid-security/certificates
+        globus_global_certs_dir="/etc/grid-security/certificates"
+        # #NOTE: java keystore style DN...
+        # default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
+        default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to allow prompting of user for fields!
+        # config_file=${esg_config_dir}/esgf.properties
+        config_file= esg_config_dir + "/esgf.properties"
+        # index_config="master slave"
+        index_config="master slave"
 
 
 # init()

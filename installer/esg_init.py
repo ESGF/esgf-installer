@@ -41,7 +41,9 @@ class EsgInit(object):
     # #--------------
 
     def __init__(self):
+        #TODO: create a config dictionary
         print "initializing"
+        # self.populate_internal_esgf_node_code_versions()
 
     def populate_internal_esgf_node_code_versions(self):
         #--------------------------------
@@ -140,6 +142,9 @@ class EsgInit(object):
 # las_min_version=${las_min_version:-"8.1"}
 
     def populate_external_script_variables(self):
+
+        #TODO: try creating a local dictionary and then add to self
+        print "self type: ", type(self)
 
         #--------------------------------
         # Script vars (~external)

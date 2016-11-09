@@ -202,44 +202,48 @@ class EsgInit(object):
         print "self: ", vars(self)
         print "locals()['self']: ", locals()['self']
         return vars(self)
-#     ############################################
-#     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
-#     ############################################
-#     # export GIT_SSL_NO_VERIFY=1 -> os.environ['DISCOVERONLY'] =
-#     # Expand.colonMinus("DISCOVERONLY")
-#     os.environ['GIT_SSL_NO_VERIFY'] = "1"
-#     os.environ['OPENSSL_HOME'] = openssl_install_dir
-#     os.environ['PGHOME'] = postgress_install_dir
-#     os.environ['PGBINDIR'] = postgress_bin_dir
-#     os.environ['PGLIBDIR'] = postgress_lib_dir
-#     os.environ['PGUSER'] = postgress_user
-#     os.environ['PGHOST'] = postgress_host
-#     os.environ['PGPORT'] = postgress_port
-#     # #export CMAKE_HOME=${cmake_install_dir}`
-#     os.environ['CDAT_HOME'] = cdat_home
-#     os.environ['JAVA_HOME'] = java_install_dir
-#     os.environ['JAVA_OPTS'] = java_opts
-#     os.environ['ANT_HOME'] = ant_install_dir
-#     os.environ['CATALINA_HOME'] = tomcat_install_dir
-#     os.environ['CATALINA_BASE'] = os.environ["CATALINA_HOME"]
-#     os.environ['CATALINA_OPTS'] = tomcat_opts
-#     os.environ['GLOBUS_LOCATION'] = globus_location
 
-#     # myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
-#     myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
-#         "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
-#     print "myPATH: ", myPATH
-#     # myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
-#     myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
-#         os.environ["GLOBUS_LOCATION"] + "/lib:" + \
-#         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
-#     print "myLD_LIBRARY_PATH: ", myLD_LIBRARY_PATH
-#     # export PATH=$(_path_unique $myPATH:$PATH)
-#     # export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
-#     # export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/include ${CFLAGS} -fPIC"
-#     # export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib
-#     # -Wl,--rpath,${OPENSSL_HOME}/lib"
 
+    def populate_environment_constants(self):
+        ############################################
+        ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
+        ############################################
+        # export GIT_SSL_NO_VERIFY=1 -> os.environ['DISCOVERONLY'] =
+        # Expand.colonMinus("DISCOVERONLY")
+        os.environ['GIT_SSL_NO_VERIFY'] = "1"
+        os.environ['OPENSSL_HOME'] = self.openssl_install_dir
+        os.environ['PGHOME'] = self.postgress_install_dir
+        os.environ['PGBINDIR'] = self.postgress_bin_dir
+        os.environ['PGLIBDIR'] = self.postgress_lib_dir
+        os.environ['PGUSER'] = self.postgress_user
+        os.environ['PGHOST'] = self.postgress_host
+        os.environ['PGPORT'] = self.postgress_port
+        # #export CMAKE_HOME=${cmake_install_dir}`
+        os.environ['CDAT_HOME'] = self.cdat_home
+        os.environ['JAVA_HOME'] = self.java_install_dir
+        os.environ['JAVA_OPTS'] = self.java_opts
+        os.environ['ANT_HOME'] = self.ant_install_dir
+        os.environ['CATALINA_HOME'] = self.tomcat_install_dir
+        os.environ['CATALINA_BASE'] = os.environ["CATALINA_HOME"]
+        os.environ['CATALINA_OPTS'] = self.tomcat_opts
+        os.environ['GLOBUS_LOCATION'] = self.globus_location
+
+        # myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
+        self.myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
+            "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + self.install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
+        print "myPATH: ", self.myPATH
+        # myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
+        self.myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
+            os.environ["GLOBUS_LOCATION"] + "/lib:" + \
+            self.install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
+        print "myLD_LIBRARY_PATH: ", self.myLD_LIBRARY_PATH
+        # export PATH=$(_path_unique $myPATH:$PATH)
+        # export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
+        # export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/include ${CFLAGS} -fPIC"
+        # export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib
+        # -Wl,--rpath,${OPENSSL_HOME}/lib"
+
+        
 #     #--------------
 #     # ID Setting
 #     #--------------

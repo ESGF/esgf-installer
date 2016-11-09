@@ -243,48 +243,48 @@ class EsgInit(object):
         # export LDFLAGS="-L${OPENSSL_HOME}/lib -L/usr/lib64 -L/usr/lib
         # -Wl,--rpath,${OPENSSL_HOME}/lib"
 
-        
-#     #--------------
-#     # ID Setting
-#     #--------------
-#     # fix: id will always return the root id no matter what flags we use if we start this via sudo
-#     # installer_user=${ESG_USER:-${SUDO_USER:-$(echo $HOME | sed
-#     # 's#.*/\([^/]\+\)/\?$#\1#')}}
-#     installer_user = esg_bash2py.Expand.colonMinus("ESG_USER", esg_bash2py.Expand.colonMinus("SUDO_USER", subprocess.Popen("$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')", shell=True)))
-#     # installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
-#     installer_uid = esg_bash2py.Expand.colonMinus("ESG_USER_UID", esg_bash2py.Expand.colonMinus(
-#         "SUDO_UID", pwd.getpwnam('installer_user').pw_uid))
-#     # installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
-#     installer_gid = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
-#         "SUDO_GID", pwd.getpwnam('installer_user').pw_gid))
-#     # installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
-#     installer_home = esg_bash2py.Expand.colonMinus(
-#         "ESG_USER_HOME", "/usr/local/src/esgf")
+    def populate_ID_settings(self):
+        #--------------
+        # ID Setting
+        #--------------
+        # fix: id will always return the root id no matter what flags we use if we start this via sudo
+        # installer_user=${ESG_USER:-${SUDO_USER:-$(echo $HOME | sed
+        # 's#.*/\([^/]\+\)/\?$#\1#')}}
+        installer_user = esg_bash2py.Expand.colonMinus("ESG_USER", esg_bash2py.Expand.colonMinus("SUDO_USER", subprocess.Popen("$(echo $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')", shell=True)))
+        # installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
+        installer_uid = esg_bash2py.Expand.colonMinus("ESG_USER_UID", esg_bash2py.Expand.colonMinus(
+            "SUDO_UID", pwd.getpwnam('installer_user').pw_uid))
+        # installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
+        installer_gid = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
+            "SUDO_GID", pwd.getpwnam('installer_user').pw_gid))
+        # installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
+        installer_home = esg_bash2py.Expand.colonMinus(
+            "ESG_USER_HOME", "/usr/local/src/esgf")
 
-#     # #deprecate SUDO_?ID so we only use one variable for all this
-#     # [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
-#     try:
-#         os.environ["SUDO_UID"]
-#     except KeyError:
-#         print "SUDO_UID not found"
-#     else:
-#         os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
-#         del os.environ["SUDO_UID"]
+        # #deprecate SUDO_?ID so we only use one variable for all this
+        # [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
+        try:
+            os.environ["SUDO_UID"]
+        except KeyError:
+            print "SUDO_UID not found"
+        else:
+            os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
+            del os.environ["SUDO_UID"]
 
-#     # [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
-#     try:
-#         os.environ["SUDO_GID"]
-#     except KeyError:
-#       print "SUDO_GID not found"
-#     else:
-#       os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
-#       del os.environ["SUDO_GID"]
+        # [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
+        try:
+            os.environ["SUDO_GID"]
+        except KeyError:
+          print "SUDO_GID not found"
+        else:
+          os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
+          del os.environ["SUDO_GID"]
 
 
-#     # verbose_print
-#     # "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
-# print "%s:%s:%s:%s" % (installer_user, installer_uid, installer_gid,
-# installer_home)
+        # verbose_print
+        # "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
+        print "%s:%s:%s:%s" % (installer_user, installer_uid, installer_gid,
+        installer_home)
 
 
 #     #--------------

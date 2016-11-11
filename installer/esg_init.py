@@ -16,12 +16,8 @@ class EsgInit(object):
     #--------------
     # User Defined / Settable (public)
     #--------------
-
+    # Note: got no output for _t or logfile variables when testing on pcmdi7
     # _t=${0%.*} <-     Strip shortest match of $substring from back of $string
-    t = sys.argv[0]
-    # _t = subprocess.Popen("${t%.*}")
-    print sys.argv[0]
-    # print "_t: ", _t.communicate()
     # expected=${2:-0}  -> expected=Bash2Py(Expand.colonMinus("2","0"))
 
     install_prefix = esg_bash2py.Expand.colonMinus(
@@ -37,28 +33,22 @@ class EsgInit(object):
     install_manifest = esg_bash2py.Expand.colonMinus(
         "install_manifest", esg_root_dir + "/esgf-install-manifest")
     config_dictionary = {}
-    # logfile=${logfile:-"/tmp/${_t##*/}.out"}
-    # logfile = subprocess.Popen('${logfile:-"/tmp/${_t##*/}.out"}', shell=True)
     # #--------------
 
     def __init__(self):
-        # TODO: create a config dictionary
         print "initializing"
         self.populate_internal_esgf_node_code_versions()
         self.populate_external_programs_versions()
         self.populate_external_script_variables()
         self.populate_environment_constants()
-        self.populate_ID_settings()
-        # print "config_dictionary after method calls: ",
-        # self.config_dictionary
+        self.populate_id_settings()
 
     def populate_internal_esgf_node_code_versions(self):
+        '''
         #--------------------------------
         # Internal esgf node code versions
         #--------------------------------
-        # print "self in populate_internal_esgf_node_code_versions: ", self
-        # print "self type in populate_internal_esgf_node_code_versions: ", type(self)
-        # print "self vars: ", vars(self)
+        '''
         internal_code_versions = {}
         internal_code_versions["apache_frontend_version"] = esg_bash2py.Expand.colonMinus(
             "apache_frontend_version", "v1.02")
@@ -108,16 +98,17 @@ class EsgInit(object):
         # see esgf-desktop project:
         internal_code_versions["esgf_desktop_version"] = esg_bash2py.Expand.colonMinus(
             "esgf_desktop_version", "0.0.20")
-        # vars(self).update(internal_code_versions)
-        # print "vars after update: ", vars(self)
+
         self.config_dictionary.update(internal_code_versions)
         return internal_code_versions
 
     def populate_external_programs_versions(self):
-        external_program_versions = {}
+        '''
         #--------------------------------
         # External programs' versions
         #--------------------------------
+        '''
+        external_program_versions = {}
         external_program_versions["openssl_version"] = esg_bash2py.Expand.colonMinus(
             "openssl_version", "0.9.8r")
         external_program_versions["openssl_min_version"] = esg_bash2py.Expand.colonMinus(
@@ -147,7 +138,6 @@ class EsgInit(object):
         external_program_versions["python_version"] = esg_bash2py.Expand.colonMinus(
             "python_version", "2.7")
         self.config_dictionary.update(external_program_versions)
-        # print "locals: ", locals()
         return external_program_versions
         # cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
         # Since ESGF 1.8, LAS version is declared in esg-product-server
@@ -155,13 +145,12 @@ class EsgInit(object):
         # las_min_version=${las_min_version:-"8.1"}
 
     def populate_external_script_variables(self):
-
-        # TODO: try creating a local dictionary and then add to self
-        # print "self type: ", type(self)
-        external_script_variables = {}
+        '''
         #--------------------------------
         # Script vars (~external)
         #--------------------------------
+        '''
+        external_script_variables = {}
         external_script_variables["openssl_install_dir"] = esg_bash2py.Expand.colonMinus(
             "OPENSSL_HOME", self.install_prefix + "/openssl")
         external_script_variables["postgress_install_dir"] = esg_bash2py.Expand.colonMinus(
@@ -229,16 +218,16 @@ class EsgInit(object):
                 "${ESGINI%/*}", shell=True)
             external_script_variables["publisher_config"] = subprocess.Popen(
                 "${ESGINI##*/}", shell=True)
-        # print "populate_external_script_variables locals(): ", locals()
-        # print "self: ", vars(self)
-        # print "locals()['self']: ", locals()['self']
+
         self.config_dictionary.update(external_script_variables)
         return external_script_variables
 
     def populate_environment_constants(self):
+        '''
         ############################################
         ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
         ############################################
+        '''
         # export GIT_SSL_NO_VERIFY=1 -> os.environ['DISCOVERONLY']
         # =Expand.colonMinus("DISCOVERONLY")
         os.environ['GIT_SSL_NO_VERIFY'] = "1"
@@ -270,7 +259,6 @@ class EsgInit(object):
             os.environ["GLOBUS_LOCATION"] + "/lib:" + \
             self.install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
-        # print "os.environ: ", os.environ
         # export PATH=$(_path_unique $myPATH:$PATH)
         # export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)
         # export CFLAGS="-I${OPENSSL_HOME}/include -I/usr/include ${CFLAGS} -fPIC"
@@ -279,27 +267,19 @@ class EsgInit(object):
         self.config_dictionary.update(os.environ)
         return os.environ
 
-    def populate_ID_settings(self):
+    def populate_id_settings(self):
+        '''
         #--------------
         # ID Setting
         #--------------
-        # fix: id will always return the root id no matter what flags we use if we start this via sudo
-        # installer_user=${ESG_USER:-${SUDO_USER:-$(echo $HOME | sed
-        # 's#.*/\([^/]\+\)/\?$#\1#')}}
-        ID_settings = {}
-        # ID_settings["installer_user"] =
-        # esg_bash2py.Expand.colonMinus("ESG_USER",
-        # esg_bash2py.Expand.colonMinus("SUDO_USER", subprocess.Popen("$(echo
-        # $HOME | sed 's#.*/\([^/]\+\)/\?$#\1#')", shell=True)))
-        ID_settings["installer_user"] = pwd.getpwuid(os.getuid())[0]
-        # installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
-        ID_settings["installer_uid"] = esg_bash2py.Expand.colonMinus("ESG_USER_UID", esg_bash2py.Expand.colonMinus(
-            "SUDO_UID", pwd.getpwnam(ID_settings["installer_user"]).pw_uid))
-        # installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
-        ID_settings["installer_gid"] = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
-            "SUDO_GID", pwd.getpwnam(ID_settings["installer_user"]).pw_gid))
-        # installer_home=${ESG_USER_HOME:-/usr/local/src/esgf}
-        ID_settings["installer_home"] = esg_bash2py.Expand.colonMinus(
+        '''
+        id_settings = {}
+        id_settings["installer_user"] = pwd.getpwuid(os.getuid())[0]
+        id_settings["installer_uid"] = esg_bash2py.Expand.colonMinus("ESG_USER_UID", esg_bash2py.Expand.colonMinus(
+            "SUDO_UID", pwd.getpwnam(id_settings["installer_user"]).pw_uid))
+        id_settings["installer_gid"] = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
+            "SUDO_GID", pwd.getpwnam(id_settings["installer_user"]).pw_gid))
+        id_settings["installer_home"] = esg_bash2py.Expand.colonMinus(
             "ESG_USER_HOME", "/usr/local/src/esgf")
 
         # #deprecate SUDO_?ID so we only use one variable for all this
@@ -321,36 +301,27 @@ class EsgInit(object):
             os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
             del os.environ["SUDO_GID"]
 
-        # verbose_print
-        # "${installer_user}:${installer_uid}:${installer_gid}:${installer_home}"
-        print "%s:%s:%s:%s" % (ID_settings["installer_user"], ID_settings["installer_uid"], ID_settings["installer_gid"],
-                               ID_settings["installer_home"])
+        print "%s:%s:%s:%s" % (id_settings["installer_user"], id_settings["installer_uid"], id_settings["installer_gid"],
+                               id_settings["installer_home"])
 
-        print "os.environ: ", os.environ
-        self.config_dictionary.update(ID_settings)
-        return ID_settings
+        self.config_dictionary.update(id_settings)
+        return id_settings
 
     def populate_internal_script_variables(self):
         #--------------
         # Script vars (internal)
         #--------------
         internal_script_variables = {}
-        # esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
         internal_script_variables["esg_backup_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_backup_dir", self.esg_root_dir + "/backups")
-        # esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
         internal_script_variables["esg_config_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_config_dir", self.esg_root_dir + "/config")
-        # esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
         internal_script_variables["esg_log_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_log_dir", self.esg_root_dir + "/log")
-        # esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
         internal_script_variables["esg_tools_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_tools_dir", self.esg_root_dir + "/tools")
-        # esg_etc_dir=${esg_etc_dir:-"${esg_root_dir}/etc"}
         internal_script_variables["esg_etc_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_etc_dir", self.esg_root_dir + "/etc")
-        # workdir=${workdir:-${ESGF_INSTALL_WORKDIR:-${installer_home}/workbench/esg}}
         internal_script_variables["workdir"] = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus(
             "ESGF_INSTALL_WORKDIR", self.config_dictionary["installer_home"] + "/workbench/esg"))
 
@@ -417,16 +388,12 @@ class EsgInit(object):
         # publisher_repo=git://github.com/ESGF/esg-publisher.git
         internal_script_variables[
             "publisher_repo"] = "git://github.com/ESGF/esg-publisher.git"
-        # apache_frontend_repo=https://github.com/ESGF/apache-frontend.git
         internal_script_variables[
             "apache_frontend_repo"] = "https://github.com/ESGF/apache-frontend.git"
-        # publisher_repo_https=https://github.com/ESGF/esg-publisher.git
         internal_script_variables[
             "publisher_repo_https"] = "https://github.com/ESGF/esg-publisher.git"
-        # esgcet_egg_file=esgcet-${esgcet_version}-py${python_version}.egg
         internal_script_variables["esgcet_egg_file"] = "esgcet-%s-py%s.egg" % (
             self.config_dictionary["esgcet_version"], self.config_dictionary["python_version"])
-        # esg_testdir=${workdir}/../esg_test
         internal_script_variables["esg_testdir"] = internal_script_variables[
             "workdir"] + "/../esg_test"
         # tomcat_dist_url=http://archive.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
@@ -448,19 +415,15 @@ class EsgInit(object):
         internal_script_variables["thredds_replica_dir"] = internal_script_variables[
             "thredds_root_dir"] + "/replica"
         # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-        # show_summary_latch=0
         internal_script_variables["show_summary_latch"] = "0"
-        # source_latch=0
         internal_script_variables["source_latch"] = "0"
         # scripts_dir=${install_prefix}/bin
         internal_script_variables["scripts_dir"] = self.install_prefix + "/bin"
         # esg_installarg_file=${scripts_dir}/esg-installarg
         internal_script_variables["esg_installarg_file"] = internal_script_variables[
             "scripts_dir"] + "/esg-installarg"
-        # no_globus=${no_globus:-0}
         internal_script_variables[
             "no_globus"] = esg_bash2py.Expand.colonMinus("no_globus", "0")
-        # force_install=${force_install:-0}
         internal_script_variables[
             "force_install"] = esg_bash2py.Expand.colonMinus("force_install", "0")
         # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
@@ -492,7 +455,6 @@ class EsgInit(object):
         # config_file=${esg_config_dir}/esgf.properties
         internal_script_variables[
             "config_file"] = self.esg_config_dir + "/esgf.properties"
-        # index_config="master slave"
         internal_script_variables["index_config"] = "master slave"
 
         self.config_dictionary.update(internal_script_variables)

@@ -54,7 +54,7 @@ class EsgInit(object):
             "apache_frontend_version", "v1.02")
         internal_code_versions["cdat_version"] = esg_bash2py.Expand.colonMinus(
             "cdat_version", "2.2.0")
-    #    cdat_tag="1.5.1.esgf-v1.7.0"
+        #cdat_tag="1.5.1.esgf-v1.7.0"
 
         internal_code_versions["esgcet_version"] = esg_bash2py.Expand.colonMinus(
             "esgcet_version", "3.0.1")
@@ -163,13 +163,13 @@ class EsgInit(object):
             "postgress_user"] = esg_bash2py.Expand.colonMinus("PGUSER", "dbsuper")
 
         # local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
-        # pg_secret = subprocess.Popen("cat " + pg_secret_file + " 2>/dev/null ")
+        # pg_secret = subprocess.check_output("cat " + pg_secret_file + " 2>/dev/null ") <- This redirects stderr to a named pipe called /dev/null; In the same way, command 2> file will change the standard error and will make it point to file. Standard error is used by applications to print errors. 
         # pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
         external_script_variables["pg_sys_acct_passwd"] = esg_bash2py.Expand.colonMinus(
             "pg_sys_acct_passwd", esg_bash2py.Expand.colonMinus("pg_secret", "changeme"))
         # del pg_secret
         # local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
-        # pub_secret = subprocess.Popen("cat " + pub_secret_file + " 2>/dev/null ")
+        # pub_secret = subprocess.check_output("cat " + pub_secret_file + " 2>/dev/null ")
         # publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
         # publisher_db_user_passwd = esg_bash2py.Expand.colonMinus(
         # "publisher_db_user_passwd", pub_secret)
@@ -214,9 +214,9 @@ class EsgInit(object):
         except KeyError:
             print "Key not found"
         else:
-            external_script_variables["publisher_home"] = subprocess.Popen(
+            external_script_variables["publisher_home"] = subprocess.check_output(
                 "${ESGINI%/*}", shell=True)
-            external_script_variables["publisher_config"] = subprocess.Popen(
+            external_script_variables["publisher_config"] = subprocess.check_output(
                 "${ESGINI##*/}", shell=True)
 
         self.config_dictionary.update(external_script_variables)
@@ -251,10 +251,8 @@ class EsgInit(object):
         os.environ['GLOBUS_LOCATION'] = self.config_dictionary[
             "globus_location"]
 
-        # myPATH=$OPENSSL_HOME/bin:$CMAKE_HOME/bin:$JAVA_HOME/bin:$ANT_HOME/bin:$CDAT_HOME/bin:$CDAT_HOME/Externals/bin:$CATALINA_HOME/bin:$GLOBUS_LOCATION/bin:${install_prefix}/bin:/bin:/sbin:/usr/bin:/usr/sbin
         self.myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
             "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + self.install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
-        # myLD_LIBRARY_PATH=$OPENSSL_HOME/lib:$CDAT_HOME/Externals/lib:$GLOBUS_LOCATION/lib:${install_prefix}/geoip/lib:/usr/lib64:/usr/lib
         self.myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
             os.environ["GLOBUS_LOCATION"] + "/lib:" + \
             self.install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
@@ -327,14 +325,14 @@ class EsgInit(object):
 
         # word_size=${word_size:-$(file /bin/bash | perl -ple
         # 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-        internal_script_variables["word_size"] = esg_bash2py.Expand.colonMinus("word_size", subprocess.Popen(
+        internal_script_variables["word_size"] = esg_bash2py.Expand.colonMinus("word_size", subprocess.check_output(
             "$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')", shell=True))
         # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[
         # \t]*\(.*\)$/\1/p' | tail -1)
-        # internal_script_variables["num_cpus"] = 1 + subprocess.Popen(
+        # internal_script_variables["num_cpus"] = 1 + subprocess.check_output(
         #     "$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)", shell=True)
         # date_format="+%Y_%m_%d_%H%M%S"
-        internal_script_variables["date_format"] = subprocess.Popen(
+        internal_script_variables["date_format"] = subprocess.check_output(
             "+%Y_%m_%d_%H%M%S", shell=True)
         # num_backups_to_keep=${num_backups_to_keep:-7}
         internal_script_variables["num_backups_to_keep"] = esg_bash2py.Expand.colonMinus(

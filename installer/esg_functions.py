@@ -1,11 +1,14 @@
 #!/usr/bin/local/env python
-
+''' esg-functions: ESGF Node Application Stack Functions
+    description: Installer Functions for the ESGF Node application stack '''
 import sys
 import os
 import subprocess
 import re
 import math
 import pylint
+import esg_init
+
 
 esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
 esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"

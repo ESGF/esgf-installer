@@ -32,6 +32,7 @@ class EsgInit(object):
     ks_secret_file = esg_config_dir + "/.esg_keystore_pass"
     install_manifest = esg_bash2py.Expand.colonMinus(
         "install_manifest", esg_root_dir + "/esgf-install-manifest")
+    envfile = "/etc/esg.env"
     config_dictionary = {}
     # #--------------
 

@@ -4,13 +4,14 @@
 import sys
 import os
 import subprocess
+import pwd
 import re
 import math
 import pylint
-import esg_init
+from esg_init import EsgInit
+import esg_bash2py
 
-esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
-esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
+config = EsgInit()
 
 
 # subprocess.call(['ls', '-1'], shell=True)
@@ -324,10 +325,128 @@ def get_current_esgf_library_version(library_name):
         manifest or version command to check, so they must be checked
         against the ESGF install manifest instead.
     '''
+    version_number = ""
     if not os.path.isfile("/esg/esgf-install-manifest"):
         return 1
     else:
-        with open( "/esg/esgf-install-manifest", "r") as file:
-            for line in file:
+        with open("/esg/esgf-install-manifest", "r") as manifest_file:
+            for line in manifest_file:
                 line = line.rstrip() # remove trailing whitespace such as '\n'
                 version_number = re.search(r'(library)\w+', line)
+        if version_number:
+            print "version number: ", version_number
+            return version_number
+        else:
+            return 1
+
+def get_current_webapp_version(webapp_name, version_command = None):
+    version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
+    version = subprocess.check_output("$(echo $(sed -n '/^'"+version_property+"':[ ]*\(.*\)/p'"+config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))", shell=True)
+    if version:
+        print "version: ", version
+        return 0
+    else:
+        return 1
+
+def check_webapp_version(webapp_name, min_version, version_command=None):
+    version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
+    if not os.path.isdir(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+config.config_dictionary["webapp_name"]):
+        print "Web Application %s is not present or cannot be detected!" % (webapp_name)
+        return 2
+    else:
+        current_version= str(get_current_webapp_version(webapp_name,version_property)).strip()
+        if not current_version: 
+            print " WARNING:(2) Could not detect version of %s" % (webapp_name)
+        else:
+            version_comparison = check_version_helper(current_version,min_version)
+            if version_comparison == 0:
+                return version_comparison
+            else: 
+                print "\nSorry, the detected version of %s %s is older than required minimum version %s \n" % (webapp_name, current_version, min_version)
+
+#----------------------------------------------------------
+# Environment Management Utility Functions
+#----------------------------------------------------------
+#TODO: Fix sed statement
+def remove_env(env_name):
+    print "removing %s's environment from %s" % (env_name, config.config_dictionary["envfile"])
+    subprocess.check_output("sed -i '/'${env_name}'/d' ${envfile}", shell = True)
+
+#TODO: Fix sed statement
+def remove_install_log_entry(entry):
+    print "removing %s's install log entry from %s" % (entry, config.config_dictionary["install_manifest"])
+    subprocess.check_output("sed -i '/[:]\?'${key}'=/d' ${install_manifest}")
+
+#TODO: fix tac and awk statements
+# def deduplicate(envfile = None):
+#     '''
+#     Environment variable files of the form
+#     Ex: export FOOBAR=some_value
+#     Will have duplcate keys removed such that the
+#     last entry of that variable is the only one present
+#     in the final output.
+#     arg 1 - The environment file to dedup.
+#     '''
+#     infile = esg_bash2py.Expand.colonMinus(envfile, config["envfile"])
+#     if not os.path.isfile(infile):
+#         print "WARNING: dedup() - unable to locate %s does it exist?" % (infile)
+#         return 1
+#     if not os.access(infile, os.W_OK):
+#         "WARNING: dedup() - unable to write to %s" % (infile)
+#         return 1
+#     else:
+#         temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($2 in a) {a[$2];print $0}' | sort -k2,2)")
+#         subprocess.Popen("'$tmp' > ${infile}")
+# 
+
+#TODO: fix tac and awk statements
+# def deduplicate_properties(envfile = None):
+#     # infile=${1:-${config_file}}
+#     infile = esg_bash2py.Expand.colonMinus(envfile, config.config_dictionary["config_file"])
+#     if not os.path.isfile(infile):
+#         print "WARNING: dedup_properties() - unable to locate %s does it exist?" % (infile)
+#         return 1
+#     if not os.access(infile, os.W_OK):
+#         "WARNING: dedup_properties() - unable to write to %s" % (infile)
+#         return 1
+#     else:
+#         temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
+#         subprocess.Popen("'$tmp' > ${infile}")
+
+#TODO: fix awk statements
+# def get_config_ip(interface_value):
+#     '''
+#     #####
+#     # Get Current IP Address - Needed (at least temporarily) for Mesos Master
+#     ####
+#     Takes a single interface value
+#     "eth0" or "lo", etc...
+#     '''
+#     return subprocess.check_output("ifconfig $1 | grep "inet[^6]" | awk '{ gsub (" *inet [^:]*:",""); print $1}'")
+
+#----------------------------------------------------------
+# Tomcat Management Functions
+#----------------------------------------------------------
+
+def start_tomcat():
+    status = check_tomcat_process()
+    if status == 0:
+        return 1
+    elif status == 3:
+        print "Please resolve this issue before starting tomcat!"
+        checked_done(status)
+
+    print "Starting Tomcat (jsvc)..."
+
+    # mkdir -p ${tomcat_install_dir}/work/Catalina
+    # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
+    # chmod 755 ${tomcat_install_dir}/work
+    # chmod 755 ${tomcat_install_dir}/work/Catalina
+    os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
+    os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
+
+    current_directory = os.getcwd() 
+
+
+

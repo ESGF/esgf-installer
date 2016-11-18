@@ -429,24 +429,327 @@ def remove_install_log_entry(entry):
 #----------------------------------------------------------
 
 def start_tomcat():
-    status = check_tomcat_process()
-    if status == 0:
+    pass
+    # status = check_tomcat_process()
+    # if status == 0:
+    #     return 1
+    # elif status == 3:
+    #     print "Please resolve this issue before starting tomcat!"
+    #     checked_done(status)
+
+    # print "Starting Tomcat (jsvc)..."
+
+    # # mkdir -p ${tomcat_install_dir}/work/Catalina
+    # # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
+    # # chmod 755 ${tomcat_install_dir}/work
+    # # chmod 755 ${tomcat_install_dir}/work/Catalina
+    # os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    # os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
+    # os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
+
+    # current_directory = os.getcwd()
+    # copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
+    # os.chdir(config.config_dictionary["tomcat_install_dir"])
+    # jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
+    #     "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
+    #     "-errfile %s/logs/catalina.err "
+    #     "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
+    #     "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
+
+
+def stop_tomcat():
+    pass
+
+#-------------------------------
+# Process checking utility functions
+#-------------------------------
+
+def check_postgress_process():
+    '''
+        #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
+
+    '''
+    status = subprocess.check_output("/etc/init.d/postgresql status")
+    if status:
+        return 0
+    else:
         return 1
-    elif status == 3:
-        print "Please resolve this issue before starting tomcat!"
-        checked_done(status)
-
-    print "Starting Tomcat (jsvc)..."
-
-    # mkdir -p ${tomcat_install_dir}/work/Catalina
-    # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
-    # chmod 755 ${tomcat_install_dir}/work
-    # chmod 755 ${tomcat_install_dir}/work/Catalina
-    os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
-    os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
-    os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
-
-    current_directory = os.getcwd() 
 
 
+def check_esgf_httpd_process():
+    status = subprocess.check_output("service esgf-httpd status")
+    if status:
+        return 0
+    else: 
+        return 1
+
+def check_tomcat_process():
+    pass
+
+#----------------------------------------------------------
+# Postgresql informational functions
+#
+# These functions require that Postgresql be already installed and
+# running correctly.
+#----------------------------------------------------------
+
+def postgres_create_db():
+    pass
+
+def postgres_list_db_schemas():
+    pass
+
+def postgres_list_schemas_tables():
+    pass
+
+def postgres_list_dbs():
+    pass
+
+def  postgres_clean_schema_migration():
+    pass
+
+#----------------------------------------------------------
+# Process Launching and Checking...
+#----------------------------------------------------------
+def pcheck():
+    '''
+    This function is for repeatedly running a function until it returns
+    true and/or the number of iterations have been reached.  The format of
+    the args for this call are as follows:
+    
+    pcheck <num_of_iterations> <wait_time_in_seconds> <return_on_true> -- [function name] <args...>
+    The default operation is the run the function once a scecond for 5 seconds or until it returns true
+    The default value of iterations is 5
+    The default value of wait time is  1 (second)
+    The default value of return on true is 1 (no more iterations after function/command succeeds)
+    the "--" is a literal argument that MUST precede the function or command you wish to call
+    
+    Ex:
+    Run a function or command foo 3x waiting 2 seconds between and returning after function/command success
+    pcheck 3 2 1 -- foo arg1 arg2
+    Run a function or command foo using defaults
+    pcheck -- foo arg1 arg2
+    '''
+     #initial default values
+    iterations=5
+    wait_time=1
+    return_on_true=1
+    task_function=""
+
+
+def md5sum_():
+    '''
+        #Utility function, wraps md5sum so it may be used on either mac or
+        #linux machines
+    '''
+    pass
+#----------------------------------------------------------
+# Path munging...
+#----------------------------------------------------------
+
+def _path_unique():
+    '''
+        Prints a unique path string
+        
+        The first (leftmost) instance of a path entry will be the one that
+        is preserved.
+        
+        If $1 is specified, it will be taken as the string to deduplicate,
+        otherwise $PATH is used.
+        
+        If $2 is specified, it will be taken as the path separator, which
+        otherwise defaults to ':'
+        
+    '''
+
+def _readlinkf():
+    '''
+    This is a portable implementation of GNU's "readlink -f" in
+    bash/zsh, following symlinks recursively until they end in a
+    file, and will print the full dereferenced path of the specified
+    file even if the file isn't a symlink.
+    
+    Loop detection exists, but only as an abort after passing a
+    maximum length.
+    '''
+    pass
+
+
+#----------------------------------------------------------
+# File reading and writing...
+#----------------------------------------------------------
+def insert_file_at_pattern():
+    pass
+
+
+#----------------------------------------------------------
+# Property reading and writing...
+#----------------------------------------------------------
+def load_properties():
+    '''
+        Load properties from a java-style property file
+        providing them as script variables in this context
+        arg 1 - optional property file (default is ${config_file})
+    '''
+    pass
+
+def get_property():
+    '''
+        Gets a single property from a string arg and turns it into a shell var
+        arg 1 - the string that you wish to get the property of (and make a variable)
+        arg 2 - optional default value to set
+    '''
+    pass
+
+def get_property_as():
+    '''
+        Gets a single property from the arg string and turns the alias into a
+        shell var assigned to the value fetched.
+        arg 1 - the string that you wish to get the property of (and make a variable)
+        arg 2 - the alias string value of the variable you wish to create and assign
+        arg 3 - the optional default value if no value is found for arg 1
+    '''
+    pass
+
+def remove_property():
+    '''
+        Removes a given variable's property representation from the property file
+    '''
+    pass
+
+def write_as_property():
+    '''
+        Writes variable out to property file as java-stye property
+        I am replacing all bash-style "_"s with java-style "."s
+        arg 1 - The string of the variable you wish to write as property to property file
+        arg 2 - The value to set the variable to (default: the value of arg1)
+    '''
+def append_to_path():
+    '''
+        Appends path components to a variable, deduplicates the list,
+        then prints to stdout the export command required to append that
+        list to that variable
+        
+        Takes as arguments first a variable containing a colon-separated
+        path to append to, then a space-separated collection of paths to
+        append -- these path components MUST NOT contain spaces.
+        
+        If insufficient arguments are present, a warning message is
+        printed to stderr and nothing is printed to stdout.
+        
+        Example:
+          append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+        
+          Would result in the entry:
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/foo/lib:/bar/lib
+        
+        NOTE: In the context of system setup this is usually
+              NOT WHAT YOU WANT - use prefix_to_path (below)
+        
+    '''
+    pass
+
+def prefix_to_path():
+    '''
+        Prepends path components to a variable, deduplicates the list,
+        then prints to stdout the export command required to prepend
+        that list to that variable.
+        
+        Takes as arguments first a variable containing a colon-separated
+        path to prepend to, then a space-separated collection of paths to
+        prepend -- these path components MUST NOT contain spaces.
+        
+        If insufficient arguments are present, a warning message is
+        printed to stderr and nothing is printed to stdout.
+        
+        Example:
+          prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
+        
+          Would result in the entry:
+            export LD_LIBRARY_PATH=/foo/lib:/bar/lib:$LD_LIBRARY_PATH
+        
+        NOTE: In the context of system setup this is usually
+              WHAT YOU WANT; that your libs are found before any user libs are
+        
+    '''
+    pass
+
+def backup():
+    '''
+        Given a directory the contents of the directory is backed up as a tar.gz file in
+        arg1 - a filesystem path
+        arg2 - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
+        arg3 - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
+    '''
+    pass
+
+def get_node_id():
+    '''
+        Get (or generate) the id suitable for use in the context of zookeeper
+        and thus the sharded solr install.  If this variable is not set then
+        an ID is generated, unique to this host.
+        NOTE: A lot of things rely on this ID so at the moment it is okay to
+        provide a simple way to be able to determine an id externally... but
+        this is only something for the testing phase for the most part.
+    '''
+    pass
+
+def git_tagrelease():
+    '''
+        Makes a commit to the current git repository updating the
+        release version string and codename, tags that commit with the
+        version string, and then immediately makes another commit
+        appending "-devel" to the version string.
+        
+        This is to prepare for a release merge.  Note that the tag will
+        not be against the correct revision after a merge to the release
+        branch if it was not a fast-forward merge, so ensure that there
+        are no unmerged changes from the release branch before using.
+        
+        If that happens, delete the tag, issue a git reset --hard
+        against the last commit before the tag, merge the release
+        branch, and try again.
+        
+        Arguments:
+        $1: the release version string (mandatory)
+        $2: the release codename (optional)
+        
+        Examples:
+          git-tagrelease v4.5.6 AuthenticGreekPizzaEdition
+        or just
+          git-tagrelease v4.5.6
+    '''
+    pass
+
+#------------------------------------------
+#Certificate Gymnasitcs
+#------------------------------------------
+
+def print_cert():
+    pass
+
+def check_cert_expiry():
+    pass
+
+def check_cert_expiry_for_files():
+    pass
+
+def check_certs_in_dir():
+    pass
+
+def trash_expired_cert():
+    pass
+
+def set_aside_web_app():
+    pass
+
+def set_aside_web_app_cleanup():
+    pass
+
+#------------------------------------------
+#ESGF Distribution Mirrors Utilities
+#------------------------------------------
+
+def get_esgf_dist_mirror():
+    pass
 

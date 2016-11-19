@@ -380,40 +380,45 @@ def remove_install_log_entry(entry):
     subprocess.check_output("sed -i '/[:]\?'${key}'=/d' ${install_manifest}")
 
 #TODO: fix tac and awk statements
-# def deduplicate(envfile = None):
-#     '''
-#     Environment variable files of the form
-#     Ex: export FOOBAR=some_value
-#     Will have duplcate keys removed such that the
-#     last entry of that variable is the only one present
-#     in the final output.
-#     arg 1 - The environment file to dedup.
-#     '''
-#     infile = esg_bash2py.Expand.colonMinus(envfile, config["envfile"])
-#     if not os.path.isfile(infile):
-#         print "WARNING: dedup() - unable to locate %s does it exist?" % (infile)
-#         return 1
-#     if not os.access(infile, os.W_OK):
-#         "WARNING: dedup() - unable to write to %s" % (infile)
-#         return 1
-#     else:
-#         temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($2 in a) {a[$2];print $0}' | sort -k2,2)")
-#         subprocess.Popen("'$tmp' > ${infile}")
-# 
+def deduplicate(envfile = None):
+    '''
+    Environment variable files of the form
+    Ex: export FOOBAR=some_value
+    Will have duplcate keys removed such that the
+    last entry of that variable is the only one present
+    in the final output.
+    arg 1 - The environment file to dedup.
+    '''
+    infile = esg_bash2py.Expand.colonMinus(envfile, config.config_dictionary["envfile"])
+    if not os.path.isfile(infile):
+        print "WARNING: dedup() - unable to locate %s does it exist?" % (infile)
+        return 1
+    if not os.access(infile, os.W_OK):
+        "WARNING: dedup() - unable to write to %s" % (infile)
+        return 1
+    else:
+        temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS=\"[ =]\"} !($2 in a) {a[$2];print $0}' | sort -k2,2)")
+        target = open(infile, 'w')
+        target.write(temp)
+        target.close()
+
 
 #TODO: fix tac and awk statements
-# def deduplicate_properties(envfile = None):
-#     # infile=${1:-${config_file}}
-#     infile = esg_bash2py.Expand.colonMinus(envfile, config.config_dictionary["config_file"])
-#     if not os.path.isfile(infile):
-#         print "WARNING: dedup_properties() - unable to locate %s does it exist?" % (infile)
-#         return 1
-#     if not os.access(infile, os.W_OK):
-#         "WARNING: dedup_properties() - unable to write to %s" % (infile)
-#         return 1
-#     else:
-#         temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS="[ =]"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
-#         subprocess.Popen("'$tmp' > ${infile}")
+def deduplicate_properties(envfile = None):
+    # infile=${1:-${config_file}}
+    infile = esg_bash2py.Expand.colonMinus(envfile, config.config_dictionary["config_file"])
+    if not os.path.isfile(infile):
+        print "WARNING: dedup_properties() - unable to locate %s does it exist?" % (infile)
+        return 1
+    if not os.access(infile, os.W_OK):
+        "WARNING: dedup_properties() - unable to write to %s" % (infile)
+        return 1
+    else:
+        temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS=\"[ =]\"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
+        target = open(infile, 'w')
+        target.write(temp)
+        target.close()
+        subprocess.Popen("'$tmp' > ${infile}")
 
 #TODO: fix awk statements
 # def get_config_ip(interface_value):
@@ -424,7 +429,7 @@ def remove_install_log_entry(entry):
 #     Takes a single interface value
 #     "eth0" or "lo", etc...
 #     '''
-#     return subprocess.check_output("ifconfig $1 | grep "inet[^6]" | awk '{ gsub (" *inet [^:]*:",""); print $1}'")
+    return subprocess.check_output("ifconfig $1 | grep \"inet[^6]\" | awk '{ gsub (\" *inet [^:]*:\",\"\"); print $1}'")
 
 #----------------------------------------------------------
 # Tomcat Management Functions

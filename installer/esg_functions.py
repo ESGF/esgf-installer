@@ -8,6 +8,7 @@ import pwd
 import re
 import math
 import pylint
+from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
 
@@ -437,35 +438,79 @@ def deduplicate_properties(envfile = None):
 
 def start_tomcat():
     pass
-    # status = check_tomcat_process()
-    # if status == 0:
-    #     return 1
-    # elif status == 3:
-    #     print "Please resolve this issue before starting tomcat!"
-    #     checked_done(status)
+    status = check_tomcat_process()
+    if status == 0:
+        return 1
+    elif status == 3:
+        print "Please resolve this issue before starting tomcat!"
+        checked_done(status)
 
-    # print "Starting Tomcat (jsvc)..."
+    print "Starting Tomcat (jsvc)..."
 
-    # # mkdir -p ${tomcat_install_dir}/work/Catalina
-    # # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
-    # # chmod 755 ${tomcat_install_dir}/work
-    # # chmod 755 ${tomcat_install_dir}/work/Catalina
-    # os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
-    # os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
-    # os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
+    # mkdir -p ${tomcat_install_dir}/work/Catalina
+    # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
+    # chmod 755 ${tomcat_install_dir}/work
+    # chmod 755 ${tomcat_install_dir}/work/Catalina
+    os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
+    os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
 
-    # current_directory = os.getcwd()
-    # copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
-    # os.chdir(config.config_dictionary["tomcat_install_dir"])
-    # jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
-    #     "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
-    #     "-errfile %s/logs/catalina.err "
-    #     "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
-    #     "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
-
+    current_directory = os.getcwd()
+    os.chdir(config.config_dictionary["tomcat_install_dir"])
+    copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
+    jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
+        "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
+        "-errfile %s/logs/catalina.err "
+        "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
+        "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
+    # if [ $? != 0 ]; then
+    #     echo " ERROR: Could not start up tomcat"
+    #     tail ./logs/catalina.err
+    #     popd >& /dev/null
+    #     checked_done 1
+    # fi
+    if jsvc_launch_command != 0:
+        print " ERROR: Could not start up tomcat"
+        f = subprocess.Popen(['tail',"./logs/catalina.err"],\
+                stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        # while True:
+        #     line = f.stdout.readline()
+        #     print line
+        os.chdir(current_directory)
+        checked_done(1)
+    #Don't wait forever, but give tomcat some time before it starts
+    # pcheck 10 2 1 -- check_tomcat_process
+    # [ $? != 0 ] && echo "Tomcat couldn't be started."
+    # sleep 2
 
 def stop_tomcat():
-    pass
+    # check_tomcat_process
+    # [ $? != 0 ] && return 1
+    if check_tomcat_process() !=0:
+        return 1
+
+    # pushd $tomcat_install_dir >& /dev/null
+    # echo
+    # echo "stop tomcat: ${tomcat_install_dir}/bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap"
+    # echo "(please wait)"
+    current_directory = os.getcwd()
+    os.chdir(config.config_dictionary["tomcat_install_dir"])
+    print "stop tomcat: %s/bin/jsvc -pidfile %s -stop org.apache.catalina.startup.Bootstrap" % (config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"])
+    print "(please wait)"
+    sleep(1)
+    status = subprocess.check_output(config.config_dictionary["tomcat_install_dir"]+"/bin/jsvc -pidfile"+ config.config_dictionary["tomcat_pid_file"] +" -stop org.apache.catalina.startup.Bootstrap")
+    if status != 0:
+        kill_status = 0
+        print " WARNING: Unable to stop tomcat, (nicely)"
+        print " Hmmm...  okay no more mr nice guy... issuing "
+        print  "\"pkill -9 $(cat ${tomcat_pid_file})\""
+        kill_return_code = subprocess.check_output("kill -9 $(cat ${tomcat_pid_file}) >& /dev/null")
+        kill_status += kill_return_code
+        if kill_status != 0:
+            print "Hmmm... still could not shutdown... process may have already been stopped"
+    subprocess.call("/bin/ps -elf | grep jsvc | grep -v grep")
+    os.chdir(current_directory)
+    return 0
 
 #-------------------------------
 # Process checking utility functions
@@ -491,7 +536,28 @@ def check_esgf_httpd_process():
         return 1
 
 def check_tomcat_process():
-    pass
+    if os.path.isfile(config.config_dictionary["tomcat_install_dir"]+"/conf/server.xml"):
+        try:
+            esgf_host_ip
+        except NameError:
+             esgf_host_ip = get_property("esgf_host_ip")
+        ports= subprocess.check_output("$(sed -n 's/.*Connector.*port=\"\([0-9]*\)\".*/\1/p' "+config.config_dictionary["tomcat_install_dir"]+"/conf/server.xml | tr '\n' ',' | sed 's/,$//')")
+        procs = subprocess.check_output("$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'"+ esgf_host_ip+ "'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)")
+        if not procs:
+            #No process running on ports
+            return 1
+        procs_expression = subprocess.check_output("$(expr \"$procs\" : '.*jsvc.*')")
+        if procs_expression > 0:
+            print "Tomcat (jsvc) process is running... " 
+            return 0
+        else:
+            print " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [%s] ?? " % (procs)
+            subprocess.Popen("lsof -Pni TCP:"+ports+" | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'"+esgf_host_ip+"'\)/\0/p'")
+            return 3
+    else:
+        print " Warning Cannot find %s/conf/server.xml file!" % (config.config_dictionary["tomcat_install_dir"])
+        print " Using alternative method for checking on tomcat process..."
+        status_value = subprocess.check_output("$(ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }')")
 
 #----------------------------------------------------------
 # Postgresql informational functions
@@ -499,7 +565,7 @@ def check_tomcat_process():
 # These functions require that Postgresql be already installed and
 # running correctly.
 #----------------------------------------------------------
-
+# TODO: Could not find any instances of Postgres functions being used
 def postgres_create_db():
     pass
 

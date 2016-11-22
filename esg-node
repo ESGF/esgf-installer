@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC5.4.0-devel"
-script_maj_version="2.0"
-script_release="Centaur"
+script_version="v2.a-devel"
+script_maj_version="2.a"
+script_release="Demogorgon"
 envfile="/etc/esg.env"
 
 #--------------
@@ -839,7 +839,8 @@ setup_cdat() {
     CDAT_HOME=${cdat_home}
     #-----------------------------------------------------
 
-    check_version_with "cdat" "${cdat_home}/bin/python -c \"import cdat_info; print cdat_info.Version\"" ${cdat_version} 2> /dev/null
+
+    check_version_with "cdat" " source $cdat_home/bin/activate esgf-pub && python -c \"import cdat_info; print cdat_info.Version\" && source deactivate" ${cdat_version} 2> /dev/null
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
@@ -869,17 +870,27 @@ setup_cdat() {
     #((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
 
+    wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
+    bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
+    [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
 
-# TODO - this all should be handled by yum
-    yum -y install uvcdat
-    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat\n\n" && return 1
+        
+    export PATH=/opt/miniconda/bin:$PATH
+
+    if [ $ESGF_INSECURE > 0 ] ; then
+        conda config --set ssl_verify False
+        binstar config --set verify_ssl False
+    fi
+
+    # create a default environment for the publisher with cduitl (and cdms2)
+    conda create -n esgf-pub -c conda_forge -c uvcdat cdutil
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
 
     ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
 
-    curl -k -O https://bootstrap.pypa.io/ez_setup.py
-    ${cdat_home}/bin/python ez_setup.py
-    ${cdat_home}/bin/easy_install pip
+
 
     popd >& /dev/null
     echo
@@ -889,24 +900,6 @@ setup_cdat() {
 
     write_cdat_env
 
-    #----------------
-    #BIG HACK....
-    #----------------
-    #First let me explain...  this is regarding git or any program that
-    #dynamically loads the libz library. If it gets the lib from CDAT's
-    #installed/built libz (as posted in the LD_LIBRARY_PATH, written to
-    #etc/esg.env and sourced at the top of this script) it will result
-    #in the following warning:
-    #
-    #/usr/local/uvcdat/Externals/lib/libz.so.1: no version information available (required by git)
-    #
-    #The easiest and least invasive thing to do is to remove or rename
-    #CDAT's libz.  So that is what we are doing here.  CDAT should not
-    #have built its own libz in the first place, if there is libz
-    #already on the system.  So this bit of hacking in most clean
-    #install scenarios is moot (though it in-turn means you have to
-    #install libz on your system to get past, at least git building).
-    [[ ${cdat_home} ]] && [ -d ${cdat_home} ] && [  $(ls libz.* 2> /dev/null | wc -l) -gt 0 ] && tar cvzf ${cdat_home}/Externals/lib/libz.tgz ${cdat_home}/Externals/lib/libz.* && rm ${cdat_home}/Externals/lib/libz.*
     #----------------
 
 #    write_cdat_install_log

@@ -245,8 +245,12 @@ checked_done() {
         echo "Also please review the installation FAQ it may assist you"
         echo "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
         echo ""
+        if [ ! -z $CONDA_DEFAULT_ENV ] ; then
+            source deactivate
+        fi
         exit $1
     fi
+
     return 0
 }
 

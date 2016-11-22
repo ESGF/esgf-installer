@@ -91,7 +91,7 @@ init() {
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
     #cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
-    cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
+    cdat_home=${CDAT_HOME:-${install_prefix}/conda
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}

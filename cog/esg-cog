@@ -109,6 +109,7 @@ python setup.py install
 # (Globus Transfer REST API sends a public key. i
 # Mkproxy signs the public key using a private key extracted from an ESGF X.509 user credential.)
 cd $COG_DIR
+rm -rf transfer-api-client-python
 git clone https://github.com/globusonline/transfer-api-client-python.git
 cd transfer-api-client-python
 git pull
@@ -118,6 +119,7 @@ cp mkproxy $INSTALLPATH/venv/lib/python2.7/site-packages/globusonline_transfer_a
 
 # FIXME: must download and install django-openid-auth fork manually
 cd $COG_DIR
+rm -rf django-openid-auth
 git clone https://github.com/EarthSystemCoG/django-openid-auth.git
 cd django-openid-auth
 python setup.py install

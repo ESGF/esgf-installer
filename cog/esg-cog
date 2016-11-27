@@ -80,7 +80,7 @@ pip install wheel
 pip install --use-wheel Pillow==3.1.0
 
 # pre-requisite: install Django separately otherwise it causes compilation errors
-pip install django==1.9.4
+pip install django==1.10.3
 
 # checkout CoG software stack
 # remove previous installation if existing

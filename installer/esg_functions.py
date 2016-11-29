@@ -8,6 +8,7 @@ import pwd
 import re
 import math
 import pylint
+import mmap
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
@@ -582,7 +583,7 @@ def  postgres_clean_schema_migration():
 #----------------------------------------------------------
 # Process Launching and Checking...
 #----------------------------------------------------------
-def pcheck():
+def pcheck(function_name, num_of_iterations =5, wait_time_in_seconds=1, return_on_true=1):
     '''
     This function is for repeatedly running a function until it returns
     true and/or the number of iterations have been reached.  The format of
@@ -601,13 +602,17 @@ def pcheck():
     Run a function or command foo using defaults
     pcheck -- foo arg1 arg2
     '''
-     #initial default values
-    iterations=5
-    wait_time=1
-    return_on_true=1
-    task_function=""
+    return_code = None
+    for i in range(num_of_iterations):
+        return_code = subprocess.Popen(function_name)
+        if return_on_true ==1 and return_code == 0:
+            print "\n%s [OK]\n" % (function_name)
+            break
+        sleep(wait_time_in_seconds)
+    print "\n$%s [FAIL]\n" % (function_name)
+    return return_code
 
-
+# TODO: Not used anywhere; maybe deprecate
 def md5sum_():
     '''
         #Utility function, wraps md5sum so it may be used on either mac or
@@ -618,7 +623,7 @@ def md5sum_():
 # Path munging...
 #----------------------------------------------------------
 
-def _path_unique():
+def _path_unique(path_string = os.environ["PATH"], path_separator=":"):
     '''
         Prints a unique path string
         
@@ -633,7 +638,12 @@ def _path_unique():
         
     '''
 
-def _readlinkf():
+    # local path_string=${1:-${PATH}}
+    # local pathsep=${2:-":"}
+    split_path = path_string.split(path_separator)
+    return " ".join(sorted(set(split_path), key=split_path.index))
+
+def _readlinkf(file_name):
     '''
     This is a portable implementation of GNU's "readlink -f" in
     bash/zsh, following symlinks recursively until they end in a
@@ -643,35 +653,78 @@ def _readlinkf():
     Loop detection exists, but only as an abort after passing a
     maximum length.
     '''
-    pass
+    return os.path.realpath(file_name)
 
 
 #----------------------------------------------------------
 # File reading and writing...
 #----------------------------------------------------------
-def insert_file_at_pattern():
-    pass
+def insert_file_at_pattern(target_file, input_file, pattern):
 
+    print "Inserting into %s <- %s at pattern %s" % (target_file, input_file, pattern)
+    infile = target_file
+    filterfile = input_file
+    pattern=pattern
+    try:
+        f=open(infile)
+        s=f.read()
+        f.close()
+        f=open(filterfile)
+        filter = f.read()
+        f.close()
+        s=s.replace(pattern,filter)
+        f=open(infile,'w')
+        f.write(s)
+        f.close()
+    except:
+        e = sys.exc_info()[0]
+        print "<p>Error: %s</p>" % e 
 
 #----------------------------------------------------------
 # Property reading and writing...
 #----------------------------------------------------------
-def load_properties():
+def load_properties(property_file = config.config_dictionary["config_file"]):
     '''
         Load properties from a java-style property file
         providing them as script variables in this context
         arg 1 - optional property file (default is ${config_file})
     '''
-    pass
+    if not os.access(property_file, os.R_OK):
+        return False
+    # dedup_properties ${property_file}
+    deduplicate_properties(property_file)
+    separator = "="
+    count = 0
+    with open(property_file) as f:
+        for line in f:
+            key,value = line.split(separator)
+            # [ -z "${key}" ] && continue
+            print  "loading... "
+            print  "[%s] -> " % (key)
+            print "[%s]" % (value)
+            # eval "${key}=\"${value}\""
+            count+=1
+    print "Loaded (imported) ${count} properties from ${property_file}"
+    return 0
 
-def get_property():
+
+def get_property(property_name, default_value = None):
     '''
         Gets a single property from a string arg and turns it into a shell var
         arg 1 - the string that you wish to get the property of (and make a variable)
         arg 2 - optional default value to set
     '''
-    pass
-
+    f = open(config.config_dictionary["config_file"])
+    s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+    if s.find(property_name) != -1:
+        result = s.readline()
+        print "result: ", result
+        key, value = result.split("=")
+        if not value and default_value:
+            return default_value
+        else:
+            return value
+# TODO: Not used anywhere; maybe deprecate
 def get_property_as():
     '''
         Gets a single property from the arg string and turns the alias into a
@@ -682,19 +735,40 @@ def get_property_as():
     '''
     pass
 
-def remove_property():
+def remove_property(key):
     '''
         Removes a given variable's property representation from the property file
     '''
-    pass
+    print "removing $1's property from %s" % (config.config_dictionary["config_file"])
+    datafile = open(config.config_dictionary["config_file"], "r+")
+    searchlines = datafile.readlines()
+    datafile.seek(0)
+    # datafile.close()
+    for line in searchlines:
+        if key not in line:
+            datafile.write(line)
+    datafile.truncate()
+    datafile.close()
 
-def write_as_property():
+
+def write_as_property(property_name, property_value):
     '''
         Writes variable out to property file as java-stye property
         I am replacing all bash-style "_"s with java-style "."s
         arg 1 - The string of the variable you wish to write as property to property file
         arg 2 - The value to set the variable to (default: the value of arg1)
     '''
+    datafile = open(config.config_dictionary["config_file"], "r+")
+    searchlines = datafile.readlines()
+    datafile.seek(0)
+    for line in searchlines:
+        if property_name in line:
+            print "Property already exists"
+            return
+    else:
+        datafile.write(property_name+"="+property_value)
+
+# TODO: Not used anywhere; maybe deprecate
 def append_to_path():
     '''
         Appends path components to a variable, deduplicates the list,
@@ -720,7 +794,7 @@ def append_to_path():
     '''
     pass
 
-def prefix_to_path():
+def prefix_to_path(path, prepend_value):
     '''
         Prepends path components to a variable, deduplicates the list,
         then prints to stdout the export command required to prepend
@@ -743,7 +817,7 @@ def prefix_to_path():
               WHAT YOU WANT; that your libs are found before any user libs are
         
     '''
-    pass
+    os.environ[path] = _path_unique(prepend_value)+":"+path
 
 def backup():
     '''
@@ -764,7 +838,8 @@ def get_node_id():
         this is only something for the testing phase for the most part.
     '''
     pass
-
+    
+# TODO: No uses found
 def git_tagrelease():
     '''
         Makes a commit to the current git repository updating the

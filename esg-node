@@ -1059,7 +1059,9 @@ setup_esgcet() {
     #install publisher
     (
 	cd src/python/esgcet
-	$cdat_home/bin/python setup.py install
+
+    source ${cdat_home}/bin/attach esgf-pub
+	python setup.py install
     )
     [ $? != 0 ] && checked_done 1
 
@@ -1120,7 +1122,7 @@ setup_esgcet() {
 
         echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
         mkdir -p ${publisher_home}
-        ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
+        ESGINI=${publisher_home}/${publisher_config} esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
 	sed -i s/"host\.sample\.gov"/${esgf_host}/g ${publisher_home}/${publisher_config} 
 	sed -i s/"LASatYourHost"/LASat${node_short_name}/g ${publisher_home}/${publisher_config} 
         [ $? != 0 ] && popd && checked_done 1
@@ -1145,12 +1147,12 @@ setup_esgcet() {
             echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
         fi
 
-        ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${pg_sys_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
+        ESGINI=${publisher_home}/${publisher_config} esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${pg_sys_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
         [ $? != 0 ] && popd && checked_done 1
     fi
 
-    echo "${cdat_home}/bin/esginitialize -c"
-    ${cdat_home}/bin/esginitialize -c
+    echo "esginitialize -c"
+    esginitialize -c
     [ $? != 0 ] && popd && checked_done 1
 
     popd >& /dev/null
@@ -1158,6 +1160,7 @@ setup_esgcet() {
     echo
     write_esgcet_env
     write_esgcet_install_log
+
     checked_done 0
 }
 
@@ -1202,16 +1205,17 @@ test_esgcet() {
     checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url_root}/externals/${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
+    source ${cdat_home}/bin/attach esgf-pub
 
     #Run test...
     echo "$cdat_home/bin/esginitialize -c "
-    $cdat_home/bin/esginitialize -c
+    esginitialize -c
     echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
-    $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
+    esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
     [ $? != 0 ] && echo " ERROR: ESG directory scan failed" && popd && checked_done 1
 
     echo "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test"
-    $cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test
+    esgpublish --service fileservice --map mytest.txt --project test --model test
     [ $? != 0 ] && echo " ERROR: ESG publish failed" && popd && checked_done 1
 
 
@@ -2929,7 +2933,12 @@ setup_subsystem() {
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
-    checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
+
+    if [ $subsystem == "node_manager" ] ; then
+        checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}-a $((force_install))
+    else
+        checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
+    fi
     local ret=$?
     (( $ret > 1 )) && popd && return 1
     chmod 755 ${fetch_file}

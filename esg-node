@@ -851,6 +851,10 @@ setup_cdat() {
     echo
 
     local dosetup="N"
+
+# TODO - remove old installation
+# upgrate existing installation
+
     if [ -x ${cdat_home}/bin/uvcdat ]; then
         echo "Detected an existing CDAT installation..."
         read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
@@ -870,6 +874,7 @@ setup_cdat() {
     #((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
 
+    # TODO check for conda 
     wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
     [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
     bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
@@ -1991,7 +1996,7 @@ generate_esgf_csrs(){
 	echo "You are strongly advised to obtain and install commercial CA issued certificates for the web container.";
 	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
-	echo "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>
+	echo "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>";
 	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
 	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
 	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
@@ -2004,7 +2009,7 @@ generate_esgf_csrs_ext(){
 			echo "Please specify index or data as node type";
 			continue;
 		else
-			break;
+			break;;
 		fi
 	done
 	echo "Enter FQDN of node you are requesting certificates for";
@@ -6822,7 +6827,7 @@ main() {
 	yum -y remove rpmforge-release
 	yum -y install epel-release
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not configure epel repository\n\n" && return 1
-        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel myproxy '*ExtUtils*'
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel '*ExtUtils*'
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update prerequisites\n\n" && return 1
 
     #---------------------------------------

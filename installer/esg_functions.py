@@ -830,6 +830,7 @@ def backup():
     '''
     pass
 
+# TODO: No uses found
 def get_node_id():
     '''
         Get (or generate) the id suitable for use in the context of zookeeper

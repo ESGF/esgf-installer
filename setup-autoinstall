@@ -195,18 +195,18 @@ if [ $numl -gt 1 ]; then
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
-			'fix-21' 'regglobus' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' 'fix-29')
+			'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' 'fix-29')
 		else
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'regglobus' 'fix-22' 'globususername'
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'regglobus' 'globususername'
 			'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26')
 		fi
 	else
 		vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-val' 'fix-20'
-		'fix-21' 'regglobus' 'fix-22' 'globususername' 'globuspassword' 'install-compute' 'fix-29')
+		'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'install-compute' 'fix-29')
 	fi
 	va['ipchoice']=$choice;
 else
@@ -215,18 +215,18 @@ else
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
-			'fix-21' 'regglobus' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' 'fix-29')
+			'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' 'fix-29')
 		else
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'regglobus' 'fix-22' 'globususername'
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'regglobus' 'globususername'
 			'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' )
 		fi
 	else
 		vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-val' 'fix-20'
-		'fix-21' 'regglobus' 'fix-22' 'globususername' 'globuspassword' 'install-compute' 'fix-29')
+		'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'install-compute' 'fix-29')
 	fi
 fi
 va['esgfver']="#$esgfver"
@@ -275,8 +275,8 @@ fi
 va['fix-21']='pause' #waiting for globus pingback
 #this is where the new globus registeration choice poser occurs
 register_globus_myproxy
-va['regglobus']=$register_globus_choice
 va['fix-22']='y' #continue with globus installation
+va['regglobus']=$register_globus_choice
 va['globususername']=`get_entry 'globus-username'`
 va['globuspassword']=`get_entry 'globus-password'`
 if [ "$install_type" = "all" ]; then

@@ -2,6 +2,8 @@
 
 import sys
 import os
+import errno
+import re
 import subprocess
 import signal
 
@@ -36,6 +38,19 @@ class Bash2Py(object):
         self.val += inc
         return tmp
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+def getLongestSequenceSize(search_str, polymer_str):
+    matches = re.findall(r'(?:\b%s\b\s?)+' % search_str, polymer_str)
+    longest_match = max(matches)
+    return longest_match.count(search_str)
 
 def GetVariable(name, local=locals()):
     '''

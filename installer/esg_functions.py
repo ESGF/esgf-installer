@@ -9,6 +9,9 @@ import re
 import math
 import pylint
 import mmap
+from OpenSSL import crypto
+import datetime
+import tarfile
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
@@ -819,14 +822,50 @@ def prefix_to_path(path, prepend_value):
     '''
     os.environ[path] = _path_unique(prepend_value)+":"+path
 
-def backup():
+def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of_backups=config.config_dictionary["num_backups_to_keep"]):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in
         arg1 - a filesystem path
         arg2 - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
         arg3 - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
     '''
-    pass
+    source = _readlinkf(path)
+    print "Backup - Creating a backup archive of %s" % (source)
+    current_directory = os.getcwd()
+    # ${source%/*} >& /dev/null
+    move_to_dir = re.match('/*?', source).group()
+    os.chdir(move_to_dir)
+    os.mkdir(backup_dir)
+    source_backup_name = re.match("\w+$", source).group()
+    backup_filename=_readlinkf(backup_dir)+"/"+source_backup_name + "." + datetime.date.today()+".tgz"
+    # tar czf ${backup_filename} ${source##*/}
+    try:
+        with tarfile.open(backup_filename, "w:gz") as tar:
+            tar.add(backup_dir)
+    except:
+        print " ERROR: Problem with creating backup archive: ${backup_filename}"
+        os.chdir(current_directory)
+        return 1
+    if os.path.isfile(backup_filename):
+        print "Created backup: %s" % (backup_filename)
+    else:
+        "Could not locate backup file %s" % (backup_filename)
+        os.chdir(current_directory)
+        return 1
+    
+
+    # Cleanup
+    if os.getcwd() != backup_dir:
+        os.chdir(backup_dir)
+    files= subprocess.Popen('ls -t | grep %s.\*.tgz | tail -n +$((%i+1)) | xargs' %(source_backup_name, num_of_backups), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if len(files.stdout.readlines()) > 0:
+        print "Tidying up a bit..."
+        print "old backup files to remove: %s" % (''.join(files.stdout.readlines()))
+        for file in files.stdout.readlines():
+            os.remove(file)
+
+    os.chdir(current_directory)
+    return 0
 
 # TODO: No uses found
 def get_node_id():
@@ -871,9 +910,19 @@ def git_tagrelease():
 #------------------------------------------
 #Certificate Gymnasitcs
 #------------------------------------------
-
-def print_cert():
-    pass
+expired=0
+day=60*60*24
+warn=day*7
+info=day*3
+def print_cert(certificate_path):
+    print "CERTIFICATE = %s" % (certificate_path)
+    # cert_file = '/path/to/your/certificate'
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM, open(certificate_path).read())
+    print "%s  %s" % (cert.get_subject(), cert.notAfter())
+    # subject = cert.get_subject()
+    # issued_to = subject.CN    # the Common Name field
+    # issuer = cert.get_issuer()
+    # issued_by = issuer.CN 
 
 def check_cert_expiry():
     pass
@@ -887,9 +936,11 @@ def check_certs_in_dir():
 def trash_expired_cert():
     pass
 
+# TODO: No uses found
 def set_aside_web_app():
     pass
 
+# TODO: No uses found
 def set_aside_web_app_cleanup():
     pass
 

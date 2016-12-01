@@ -855,7 +855,7 @@ setup_cdat() {
 # TODO - remove old installation
 # upgrate existing installation
 
-    if [ -x ${cdat_home}/bin/uvcdat ]; then
+    if [ -x ${cdat_home}/bin/python ]; then
         echo "Detected an existing CDAT installation..."
         read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -875,26 +875,33 @@ setup_cdat() {
     #---------
 
     # TODO check for conda 
-    wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
-    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
-    bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
-    [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
+ 
 
+    if [ ! -f Miniconda2-latest-Linux-x86_64.sh ] ; then
+       wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+       [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
+    fi
+
+     bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
+      [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
         
-    export PATH=/opt/miniconda/bin:$PATH
+    export PATH=${cdat_home}/bin:$PATH
 
     if [ $ESGF_INSECURE > 0 ] ; then
         conda config --set ssl_verify False
-        binstar config --set verify_ssl False
+#        binstar config --set verify_ssl False
     fi
 
     # create a default environment for the publisher with cduitl (and cdms2)
-    conda create -n esgf-pub -c conda_forge -c uvcdat cdutil
-    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
+    if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
+	conda create -n esgf-pub -c conda-forge -c uvcdat cdutil
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1	
+    fi   
 
-    ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
+    source activate esgf-pub
+    python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
-
+    source deactivate
 
 
     popd >& /dev/null
@@ -916,7 +923,6 @@ write_cdat_env() {
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
     echo "export UVCDAT_ANONYMOUS_LOG=False" >> ${envfile}
     prefix_to_path PATH ${cdat_home}/bin >> ${envfile}
-    prefix_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
     prefix_to_path LD_LIBRARY_PATH ${cdat_home}/Externals/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
@@ -1027,16 +1033,20 @@ setup_esgcet() {
     pushd ${workdir} >& /dev/null
 
     echo "$(pwd)"
-    curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
-      echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
-      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure $esg_dist_url/externals/${ln}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
-      if [ $? -eq 0 ]; then
-         [OK]
-         echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln
-      else
-         [FAIL]
-      fi
-    done
+
+    source ${cdat_home}/bin/activate esgf-pub
+    conda install -c conda-forge lxml requests psycopg2 decorator Tempita
+    
+    if [ $ESGF_INSECURE > 0 ] ; then
+
+	pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
+    else
+	pipcmd="pip install"
+    fi
+    
+    $pipcmd esgprep
+    $pipcmd SQLAlchemy==0.7.10
+    $pipcmd sqlalchemy_migrate
 
     #clone publisher
     local publisher_git_protocol="git://"
@@ -1065,7 +1075,7 @@ setup_esgcet() {
     (
 	cd src/python/esgcet
 
-    source ${cdat_home}/bin/attach esgf-pub
+
 	python setup.py install
     )
     [ $? != 0 ] && checked_done 1
@@ -1167,6 +1177,7 @@ setup_esgcet() {
     write_esgcet_install_log
 
     checked_done 0
+    source deactivate
 }
 
 write_esgcet_env() {
@@ -2009,7 +2020,7 @@ generate_esgf_csrs_ext(){
 			echo "Please specify index or data as node type";
 			continue;
 		else
-			break;;
+			break;
 		fi
 	done
 	echo "Enter FQDN of node you are requesting certificates for";

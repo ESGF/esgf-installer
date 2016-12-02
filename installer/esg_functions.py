@@ -13,6 +13,8 @@ import shutil
 from OpenSSL import crypto
 import datetime
 import tarfile
+import requests
+import stat
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
@@ -1004,6 +1006,101 @@ def set_aside_web_app_cleanup():
 #ESGF Distribution Mirrors Utilities
 #------------------------------------------
 
-def get_esgf_dist_mirror():
-    pass
+def get_esgf_dist_mirror(selection_mode, install_type = None):
+    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf" "dist.ceda.ac.uk/esgf" "aims1.llnl.gov/esgf" "esg-dn2.nsc.liu.se/esgf")
+    response_array = {}
+    ranked_response_times = []
+
+    # for m in "${esgf_dist_mirrors_list[@]}"; do
+    #     if [ $devel -eq 1 ]; then
+    #         resarray[$m]=`curl -s -L --insecure $m/dist/devel/lastpush.md5|tr -s " "|cut -d " " -f1`;
+    #     else 
+    #         resarray[$m]=`curl -s -L --insecure $m/dist/lastpush.md5|tr -s " "|cut -d " " -f1`;
+    #     fi
+    # done
+
+    for mirror in esgf_dist_mirrors_list:
+        if install_type == "devel":
+            response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/devel/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        else:
+            response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    
+    # for m in "${esgf_dist_mirrors_list[@]}"; do
+
+    #     # get host and page
+    #     m=${m/[hH][tT][tT][pP]:\/\//}
+    #     [ "${m#*\/}" == "$m" ] && page="/" || page="/${m#*\/}"
+    #     host="${m%%\/*}"
+
+    for mirror in esgf_dist_mirrors_list:
+        host, page = mirror.split("/")
+
+        #  response = requests.get('http://www.google.com')
+        # >>> print response.elapsed
+        # 0:00:01.762032
+        # >>> response.elapsed
+        # datetime.timedelta(0, 1, 762032)
+        response = requests.get(host, timeout=0.001)
+        ranked_response_times[mirror] = response.elapsed
+
+    ranked_response_times.sort()
+
+    # master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
+    # fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
+    # outofsync=0
+    # if [ "${resarray[$fastest]}" != "$master" ]; then #if the fastest mirror is not in sync with coffee
+    #     echo "$fastest is the fastest mirror, but is out-of-sync, hence overlooked";
+    #     outofsync=1;
+    # fi
+    master=response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf']
+    fastest = ranked_response_times[0]
+    outofsync=0
+    if response_array[fastest] != master:
+        print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest
+        outofsync = 1
+    # if [ $outofsync -eq 1 ]; then
+    #     #lets use the master
+    #         esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
+    #         #esgf_dist_mirror="http://esg-dn2.nsc.liu.se/esgf";
+    #     return;
+    # fi
+    if outofsync == 1:
+        config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
+        return
+    # if [ -p /tmp/inputpipe ]; then
+    #     echo "Using the fastest mirror (${flist[1]})";
+    #     esgf_dist_mirror=${flist[1]};
+    #     return;
+    # fi
+    if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
+        print "using the fastest mirror %s" % ranked_response_times[0]
+        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[0]
+        return
+
+    # if [ $1 = "interactive" ]; then
+    #     i=1
+    #     printf "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
+    #     printf "\t-------------------------------------------\n"
+    #     for m in ${flist[@]}; do
+    #         printf "\t [$i] $m \n"
+    #             ((i++))
+    #     done
+    #     printf "\t-------------------------------------------\n"
+
+    #     read -e -p "select [1] > " choice
+    #     [ -z "${choice}" ] && choice=1
+
+    #     echo $choice
+    #     esgf_dist_mirror=${flist[$choice]}
+    # else
+    #     esgf_dist_mirror=${flist[1]}
+    # fi
+    if install_type == "interactive":
+        print "\t-------------------------------------------\n"
+        for index, mirror in ranked_response_times:
+            print "\t %i %s" % (index, mirror)
+        choice = raw_input("Please select the ESGF distribution mirror for this installation (fastest to slowest): \n")
+        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[choice]
+    else:
+        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[0]
 

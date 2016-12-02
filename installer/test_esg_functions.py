@@ -101,6 +101,9 @@ class test_ESG_Functions(unittest.TestCase):
     def test_get_current_esgf_library_version(self):
         output = esg_functions.get_current_esgf_library_version("esgf-security")
         self.assertEqual(output, 1)
+    def test_get_current_webapp_version(self):
+        output = esg_functions.get_current_webapp_version("esg-orp")
+        self.assertEqual(output, 0)
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,8 +6,8 @@ import os
 import subprocess
 import pwd
 import re
-import math
-import pylint
+# import math
+# import pylint
 import mmap
 import shutil
 from OpenSSL import crypto

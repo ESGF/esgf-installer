@@ -404,6 +404,18 @@ def check_webapp_version(webapp_name, min_version, version_command=None):
 #TODO: Fix sed statement
 def remove_env(env_name):
     print "removing %s's environment from %s" % (env_name, config.config_dictionary["envfile"])
+    # target = open(config.config_dictionary["envfile"], "r+")
+    # # target.write(temp)
+    # target.close()
+    # datafile = open(config.config_dictionary["envfile"], "r+")
+    # searchlines = datafile.readlines()
+    # datafile.seek(0)
+    # # datafile.close()
+    # for line in searchlines:
+    #     if env_name not in line:
+    #         datafile.write(line)
+    # datafile.truncate()
+    # datafile.close()
     subprocess.check_output("sed -i '/'${env_name}'/d' ${envfile}", shell = True)
 
 #TODO: Fix sed statement

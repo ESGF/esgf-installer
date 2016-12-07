@@ -105,15 +105,26 @@ class test_ESG_Functions(unittest.TestCase):
     def test_get_current_esgf_library_version(self):
         output = esg_functions.get_current_esgf_library_version("esgf-security")
         self.assertEqual(output, 1)
+
     def test_get_current_webapp_version(self):
         output = esg_functions.get_current_webapp_version("esg-orp")
         self.assertEqual(output, "2.9.0")
+
     def test_check_webapp_version(self):
         output = esg_functions.check_webapp_version("esg-orp", "2.0")
         self.assertEqual(output, 0)
 
         output = esg_functions.check_webapp_version("esg-orp", "4.0")
         self.assertEqual(output, 1)
+
+    def test_remove_env(self):
+
+        target = open(self.test.config_dictionary["envfile"], 'w')
+        target.write("Export TEST_ENV=/home")
+        target.close()
+
+        # output = esg_functions.remove_env("TEST_ENV")
+        # self.assertEqual(output,0)
 
 if __name__ == '__main__':
     unittest.main()

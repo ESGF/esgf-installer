@@ -1,5 +1,5 @@
 #!/bin/bash
-breaksold='v2.3\.'
+breaksold='v2.4\.'
 esgfver=`/usr/local/bin/esg-node --version|grep Version|cut -d ' ' -f2`
 mkfifo /tmp/inputpipe
 mkfifo /tmp/outputpipe
@@ -22,8 +22,10 @@ function get_double_entry(){
 	while [ 1 ]; do
 		read -e -p "Enter $1: " l1
 		alnumpass=`echo $l1|tr -cd '[[:alnum:]]'`
+		if [ "$l1" = '' ]; then
+			continue;
+		fi
 		if [ "$l1" != "$alnumpass" ]; then
-			echo "Only alpha-numeric passwords permitted";
 			continue;
 		fi
 		read -e -p "Re-enter $1: " l2
@@ -36,8 +38,31 @@ function get_double_entry(){
 }
 function get_entry(){
 	local l1
+	if [ "$2" != '' ]; then
+		read -e -p "Enter $1 ($2): " l1;
+		if [ "$l1" = '' ]; then
+			echo "$2";
+			return;
+		fi
+	else
 	read -e -p "Enter $1: " l1;
+	fi
+	if [ "$3" != '' -a "$l1" = '' ]; then
+		while [ 1 ]; do
+			read -e -p "Value for $1 cannot be blank; Enter $1: " l1;
+			if [ "$l1" != '' ]; then
+				break;
+			fi
+		done
+	fi
 	echo "$l1";
+}
+function register_globus_myproxy(){
+	echo -e "Do you wish to register your Myproxy server with Globus (Y/n)? If you select no, gridftp downloads by users will not work.";
+	read -e register_globus_choice;
+	if [ "$register_globus_choice" != 'n' -a "$register_globus_choice" != 'N' ]; then
+		register_globus_choice='Y';
+	fi
 }
 function get_cleared_ips(){
 
@@ -45,9 +70,12 @@ function get_cleared_ips(){
 	while [ 1 ]; do
 		echo -e "Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses";
 		read -e ip;
+		if [ "$ip" = '' ]; then
+			continue;
+		fi
 		clearedips[$ct]=$ip;
 		ct=`expr $ct + 1`;
-		echo "Do you wish to allow further ips? y/n";
+		echo "Do you wish to allow further ips? (y/N)";
 		read -e resp
 		clearedips[$ct]=$resp;
 		if [ "$resp" != 'y' -a "$resp" != 'Y' ]; then
@@ -148,8 +176,13 @@ else
 	fi
 fi
 if [ "$ext_idp" = "y" ]; then
-	echo "Specify your IDP peer's FQDN:";
-	read -e idppeer;
+	while [ 1 ]; do
+		echo "Specify your IDP peer's FQDN:";
+		read -e idppeer;
+		if [ "$idppeer" != '' ]; then
+			break
+		fi
+	done
 fi
 ip addr show|grep -w inet|grep -v 127.0.0.1|awk '{print $2}'|cut -d '/' -f1 >ips
 declare -A ipaddrs
@@ -188,18 +221,18 @@ if [ $numl -gt 1 ]; then
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
-			'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'fix-29')
+			'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' 'fix-29')
 		else
 			vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'globususername'
-			'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'regglobus' 'globususername'
+			'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26')
 		fi
 	else
 		vl=("esgfver" 'fix-1' 'ipchoice' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-val' 'fix-20'
-		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
+		'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'install-compute' 'fix-29')
 	fi
 	va['ipchoice']=$choice;
 else
@@ -208,37 +241,51 @@ else
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'ext-idp-val' 'fix-20'
-			'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28' 'fix-29')
+			'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' 'fix-29')
 		else
 			vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 			'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
-			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'globususername'
-			'globuspassword' 'fix-23' 'fix-24' 'fix-25' 'fix-26' 'fix-27' 'fix-28')
+			'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-choice' 'fix-21' 'fix-22' 'regglobus' 'globususername'
+			'globuspassword' 'fix-23' 'fix-24' 'regglobus2' 'fix-25' 'fix-26' )
 		fi
 	else
 		vl=("esgfver" 'fix-1' 'fqdn' 'adminpass' 'fix-2' 'orgname' 'shortname' 'longname' 'revdomain' 'peergroup' 'defaultpeer'
 		'publishendpoint' 'email' 'fix-3' 'fix-4' 'fix-5' 'publisherpassword' 'fix-6' 'fix-7' 'fix-8' 'fix-9' 'fix-10'
 		'fix-11' 'fix-12' 'fix-14' 'fix-15' 'get-cleared-ips' 'fix-16' 'fix-17' 'fix-18' 'fix-19' 'ext-idp-val' 'fix-20'
-		'fix-21' 'fix-22' 'globususername' 'globuspassword' 'fix-27' 'fix-28' 'install-compute' 'fix-29')
+		'fix-21' 'fix-22' 'regglobus' 'globususername' 'globuspassword' 'install-compute' 'fix-29')
 	fi
 fi
+
+#Here, we work out some defaults
+fqdn=`hostname -f`;
+domain=`hostname -d`;
+IFS=. read -ra line <<< $domain;
+let x=${#line[@]}-1;
+mys=''
+while [ "$x" -ge 0 ]; do
+      #echo -n "${line[$x]}.";
+      mys=${mys}${line[$x]}.;
+      let x--;
+done
+revdom=${mys::-1};
 va['esgfver']="#$esgfver"
 va['fix-1']='y' #are you ready to start
-va['fqdn']=`get_entry 'fqdn'`
+va['fqdn']=`get_entry 'fqdn' $fqdn`
 va['adminpass']=`get_double_entry 'admin-password (alpha-numeric only)'`
 va['fix-2']=${va['adminpass']}
-va['orgname']=`get_entry 'orgname'`
-va['shortname']=`get_entry 'shortname'`
-va['longname']=`get_entry 'longname'`
-va['revdomain']=`get_entry 'revdomain'`
-va['peergroup']=`get_entry 'peergroup'`
-va['defaultpeer']=`get_entry 'defaultpeer'`
-va['publishendpoint']=`get_entry 'publishendpoint'`
-va['email']=`get_entry 'admin-email'`
+va['orgname']=`get_entry 'orgname' '' 'notblank'`
+va['shortname']=`get_entry 'shortname' '' 'notblank'`
+va['longname']=`get_entry 'longname' '' 'notblank'`
+va['revdomain']=`get_entry 'revdomain' $revdom`
+va['peergroup']=`get_entry 'peergroup' esgf-test`
+va['defaultpeer']=`get_entry 'defaultpeer' $fqdn`
+defpeer=`echo ${va['defaultpeer']}`
+va['publishendpoint']=`get_entry "publishendpoint" $defpeer`
+va['email']=`get_entry 'admin-email' '' 'notblank'`
 va['fix-3']='n' #external db?
 va['fix-4']='blank' #postgresurl
 va['fix-5']='blank' #postgresuser esgcet?
-va['publisherpassword']=`get_entry 'publisher password'`
+va['publisherpassword']=`get_entry 'publisher password' '' 'notblank'`
 va['fix-6']=${va['adminpass']} #postgres user dbsuper password
 va['fix-7']=${va['adminpass']} #postgres user dbsuper password
 va['fix-8']='blank' #default port selection for postgres
@@ -266,22 +313,27 @@ else
 	va['ext-idp-choice']='n'
 fi
 va['fix-21']='pause' #waiting for globus pingback
+#this is where the new globus registeration choice poser occurs
+register_globus_myproxy
 va['fix-22']='y' #continue with globus installation
-va['globususername']=`get_entry 'globus-username'`
-va['globuspassword']=`get_entry 'globus-password'`
+va['regglobus']=$register_globus_choice
+va['globususername']=`get_entry 'globus-username' '' 'notblank'`
+va['globuspassword']=`get_entry 'globus-password' '' 'notblank'`
 if [ "$install_type" = "all" ]; then
 	va['fix-23']='pause' #waiting for globus pingback
 	va['fix-24']='y' #do you want to install globus? hell, yeah!
+	#this is where the new globus registeration choice poser occurs
+	va['regglobus2']=${va['regglobus']}
 	va['fix-25']=${va['globususername']}
 	va['fix-26']=${va['globuspassword']}
 fi
-va['fix-27']='y' #install cron?
-va['fix-28']='y' #install another cron?
+#va['fix-27']='y' #install cron?
+#va['fix-28']='y' #install another cron?
 if [ "$ext_idp" = "y" ]; then
 	va['fix-29']='blank' #add certs to truststore
 fi
 if [ "$install_type" = "data" ]; then
-	va['install-compute']=`get_entry 'whether you wish to install COMPUTE role'`
+	va['install-compute']=`get_entry 'whether you wish to install COMPUTE role(Y/n) 'y''`
 	va['fix-29']='blank'
 fi
 echo -n >/tmp/answers;

@@ -99,10 +99,16 @@ expect {
     "What is your organization's id?" {
         send ${ORGNAME}\n ; exp_continue
     }
+    "Do you want to continue with Tomcat installation and setup?" {
+        send \n ; exp_continue
+    }
     "Do you want to continue with esgcet installation and setup?" {
         send \n ; exp_continue
     }
     "Do you want to continue with thredds installation and setup?" {
+        send \n ; exp_continue
+    }
+    "Do you want to continue with ESGF Dashboard IP installation and setup?" {
         send \n ; exp_continue
     }
     "Would you like to use the DN: (OU=ESGF.ORG, O=ESGF)" {
@@ -268,7 +274,7 @@ expect {
     }
 
     # Victory conditions
-    "(esg_datanode: cleaning up etc...)" {
+    "Node installation is complete." {
         exit 0
     }
 }

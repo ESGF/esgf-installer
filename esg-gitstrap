@@ -73,19 +73,21 @@ use constant EXIT_EXTERNALFAIL => 2;
 #######################
 
 my %opt = (
-    'debug' => 0,
-    'prefix' => '/usr/local',
-    'bindir' => 'bin',
-    'configdir' => 'esgf/config_defaults',
+    'all'          => 0,
+    'debug'        => 0,
+    'prefix'       => '/usr/local',
+    'bindir'       => 'bin',
+    'configdir'    => 'esgf/config_defaults',
     'installerdir' => 'esgf/installer',
-    'srcdir' => 'src/esgf',
-    'branch' => 'devel',
+    'srcdir'       => 'src/esgf',
+    'branch'       => 'devel',
     'force-branch' => 0,
-    'os' => detect_os(),
+    'os'           => detect_os(),
    );
 
 GetOptions(
     \%opt,
+    'all',
     'debug|v',
     'prefix=s',
     'bindir=s',
@@ -148,18 +150,34 @@ my %repoinfo = (
             'devel'      => 'devel',
             'experiment' => 'experiment',
         },
-        'binlinks' => [ "esg-functions",
+        # esg-installarg MUST NOT be included in this list -- the
+        # install script will break if it is a symlink, and it will be
+        # downloaded by the first esg-node --set-type command
+        'binlinks' => [ "esg-autoinstall",
+                        "esg-functions",
                         "esg-gitstrap",
+                        "esg-init",
                         "esg-node",
+                        "esg-purge.sh",
                         "filters/esg-access-logging-filter",
                         "filters/esg-security-las-ip-filter",
-                        "filters/esg-security-token-filters",
                         "filters/esg-security-tokenless-filters",
                         "globus/esg-globus",
                         "product-server/esg-product-server",
                       ],
         'configlinks' => [],
-        'installerlinks' => [ "esg-autoinstall-testnode", "esg-purge.sh"],
+        'installerlinks' => [],
+    },
+    'config' => {
+        'url' => 'https://github.com/ESGF/config.git',
+        'branch' => {
+            'stable'     => 'master',
+            'devel'      => 'devel',
+            'experiment' => 'devel',
+        },
+        'binlinks'       => [],
+        'configlinks'    => [],
+        'installerlinks' => [],
     },
     'esgf-dashboard' => {
         'url' => 'git://github.com/ESGF/esgf-dashboard.git',
@@ -261,7 +279,15 @@ umask 022;
 
 install_packages();
 
-foreach my $repo (keys %repoinfo) {
+my @repolist;
+if($opt{'all'}) {
+    @repolist = keys %repoinfo;
+}
+else {
+    @repolist = ( 'esgf-installer', 'config' );
+}
+
+foreach my $repo (@repolist) {
     my $repobranch = $repoinfo{$repo}->{'branch'}->{$opt{'branch'}};
 
     debug_print("now handling ${repo}");

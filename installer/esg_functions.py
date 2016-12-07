@@ -349,12 +349,26 @@ def get_current_esgf_library_version(library_name):
 
 def get_current_webapp_version(webapp_name, version_command = None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
-    version = subprocess.check_output("$(echo $(sed -n '/^'"+version_property+"':[ ]*\(.*\)/p'"+config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))", shell=True)
-    if version:
-        print "version: ", version
-        return 0
-    else:
-        return 1
+    print "version_property: ", version_property
+    f = open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF")
+    s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+    if s.find(version_property) != -1:
+        result = s.readline()
+        print "result: ", result
+        key, value = result.split(":")
+        if not value:
+            print "No version number found"
+            return 1
+        else:
+            return value
+
+    # version = subprocess.check_output("$(echo $(sed -n '/^'"+version_property+"':[ ]*\(.*\)/p'"+config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))", shell=True)
+    # print "version: ", version
+    # if version:
+    #     print "version: ", version
+    #     return 0
+    # else:
+    #     return 1
 
 def check_webapp_version(webapp_name, min_version, version_command=None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")

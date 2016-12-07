@@ -6988,6 +6988,7 @@ main() {
 
 	echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.
 	psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
+        echo "Node installation is complete."
     fi
 
     #exec 1>&3 3>&- 2>&4 4>&-

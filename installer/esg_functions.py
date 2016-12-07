@@ -399,6 +399,7 @@ def check_webapp_version(webapp_name, min_version, version_command=None):
                 return version_comparison
             else: 
                 print "\nSorry, the detected version of %s %s is older than required minimum version %s \n" % (webapp_name, current_version, min_version)
+                return 1
 
 #----------------------------------------------------------
 # Environment Management Utility Functions

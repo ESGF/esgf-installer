@@ -108,6 +108,9 @@ class test_ESG_Functions(unittest.TestCase):
     def test_get_current_webapp_version(self):
         output = esg_functions.get_current_webapp_version("esg-orp")
         self.assertEqual(output, "2.9.0")
+    def test_check_webapp_version(self):
+        output = esg_functions.check_webapp_version("esg-orp", "2.0")
+        self.assertEqual(output, 1)
 
 if __name__ == '__main__':
     unittest.main()

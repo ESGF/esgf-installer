@@ -267,7 +267,8 @@ while [ "$x" -ge 0 ]; do
       mys=${mys}${line[$x]}.;
       let x--;
 done
-revdom=${mys::-1};
+revdom=`echo $mys|rev|cut -c 2-|rev`;
+
 va['esgfver']="#$esgfver"
 va['fix-1']='y' #are you ready to start
 va['fqdn']=`get_entry 'fqdn' $fqdn`

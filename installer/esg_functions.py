@@ -386,7 +386,7 @@ def get_current_webapp_version(webapp_name, version_command = None):
 
 def check_webapp_version(webapp_name, min_version, version_command=None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
-    if not os.path.isdir(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+config.config_dictionary["webapp_name"]):
+    if not os.path.isdir(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name):
         print "Web Application %s is not present or cannot be detected!" % (webapp_name)
         return 2
     else:

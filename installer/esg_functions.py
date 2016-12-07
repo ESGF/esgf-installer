@@ -353,15 +353,16 @@ def get_current_esgf_library_version(library_name):
 def get_current_webapp_version(webapp_name, version_command = None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
     print "version_property: ", version_property
+    reg_ex = r"^(" + re.escape(version_property) + ".*)"
     with open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF", "r") as manifest_file:
             for line in manifest_file:
                 line = line.rstrip() # remove trailing whitespace such as '\n'
-                version_number = re.search(r'[^\w-]%s.*', version_command, line)
-                if version_number:
-                    print "version number: ", version_number
-                    return version_number
-                else:
-                    return 1
+                version_number = re.search(reg_ex, line)
+                if version_number != None:
+                    # print "version number: ", version_number
+                    name, version = version_number.group(1).split(":")
+                    return version.strip()
+    return 1
     # f = open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF")
     # s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
     # print "type(s): ", type(s)

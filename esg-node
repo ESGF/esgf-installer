@@ -2939,11 +2939,17 @@ setup_subsystem() {
     local fetch_file=esg-${subsystem}
     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
 
-    if [ $subsystem == "node_manager" ] ; then
-        checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}-a $((force_install))
-    else
+    # if [ $subsystem == "node_manager" ] ; then
+    #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}-a $((force_install))
+    # else
+    #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
+    # fi
+
+    if [ $subsystem != "node_manager" ] ; then
         checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     fi
+
+
     local ret=$?
     (( $ret > 1 )) && popd && return 1
     chmod 755 ${fetch_file}

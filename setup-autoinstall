@@ -79,6 +79,7 @@ function get_cleared_ips(){
 		read -e resp
 		clearedips[$ct]=$resp;
 		if [ "$resp" != 'y' -a "$resp" != 'Y' ]; then
+			clearedips[$ct]='n';
 			break;
 		fi
 		ct=`expr $ct + 1`;

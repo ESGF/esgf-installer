@@ -2917,6 +2917,9 @@ update_script() {
 #arg (2) - directory on the distribution site where script is fetched from Ex: orp
 #usage: setup_subsystem security orp - looks for the script esg-security in the distriubtion dir orp
 setup_subsystem() {
+    echo
+    echo  setup subsystem
+    echo
     local subsystem=$1
     [ -z "${subsystem}" ] && echo "setup_subsystem [${subsystem}] requires argument!!" && checked_done 1
     local server_dir=${2:?"Must provide the name of the distribution directory where subsystem script lives - perhaps ${subsystem}?"}
@@ -2955,14 +2958,13 @@ setup_subsystem() {
     #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     # fi
 
-    if [ $subsystem == "node_manager" ] ; then
+    if [ ${subsystem} == "node_manager" ] ; then
         echo "This is the node manager, skipping the get"
+        read
     else
         verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
         checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     fi
-
-    read
 
     local ret=$?
     (( $ret > 1 )) && popd && return 1

@@ -2948,7 +2948,6 @@ setup_subsystem() {
 
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
-    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
 
     # if [ $subsystem == "node_manager" ] ; then
     #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}-a $((force_install))
@@ -2956,10 +2955,14 @@ setup_subsystem() {
     #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     # fi
 
-    if [ $subsystem != "node_manager" ] ; then
+    if [ $subsystem == "node_manager" ] ; then
+        echo "This is the node manager, skipping the get"
+    else
+        verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
         checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
     fi
 
+    read
 
     local ret=$?
     (( $ret > 1 )) && popd && return 1

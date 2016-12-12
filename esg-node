@@ -3619,6 +3619,7 @@ install_keypair() {
 	    fi
 	    
 	    cat $cert >>/etc/certs/tmpchain
+	    echo >> /etc/certs/tmpchain
 	done
 	cp /etc/certs/tmpchain /etc/certs/cachain.pem
 

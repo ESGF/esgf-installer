@@ -6,8 +6,8 @@ import os
 import subprocess
 import pwd
 import re
-import math
-import pylint
+# import math
+# import pylint
 import mmap
 import shutil
 from OpenSSL import crypto
@@ -20,6 +20,7 @@ from esg_init import EsgInit
 import esg_bash2py
 
 config = EsgInit()
+print "config.config_dictionary: ", config.config_dictionary["tomcat_users_file"]
 # esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
 # esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
 
@@ -351,16 +352,41 @@ def get_current_esgf_library_version(library_name):
 
 def get_current_webapp_version(webapp_name, version_command = None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
-    version = subprocess.check_output("$(echo $(sed -n '/^'"+version_property+"':[ ]*\(.*\)/p'"+config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))", shell=True)
-    if version:
-        print "version: ", version
-        return 0
-    else:
-        return 1
+    print "version_property: ", version_property
+    reg_ex = r"^(" + re.escape(version_property) + ".*)"
+    with open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF", "r") as manifest_file:
+            for line in manifest_file:
+                line = line.rstrip() # remove trailing whitespace such as '\n'
+                version_number = re.search(reg_ex, line)
+                if version_number != None:
+                    # print "version number: ", version_number
+                    name, version = version_number.group(1).split(":")
+                    return version.strip()
+    return 1
+    # f = open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF")
+    # s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+    # print "type(s): ", type(s)
+    # if s.find(version_property) != -1:
+    #     result = s.readline()
+    #     print "result: ", result
+    #     key, value = result.split(":")
+    #     if not value:
+    #         print "No version number found"
+    #         return 1
+    #     else:
+    #         return value
+
+    # version = subprocess.check_output("$(echo $(sed -n '/^'"+version_property+"':[ ]*\(.*\)/p'"+config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))", shell=True)
+    # print "version: ", version
+    # if version:
+    #     print "version: ", version
+    #     return 0
+    # else:
+    #     return 1
 
 def check_webapp_version(webapp_name, min_version, version_command=None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
-    if not os.path.isdir(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+config.config_dictionary["webapp_name"]):
+    if not os.path.isdir(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name):
         print "Web Application %s is not present or cannot be detected!" % (webapp_name)
         return 2
     else:
@@ -373,6 +399,7 @@ def check_webapp_version(webapp_name, min_version, version_command=None):
                 return version_comparison
             else: 
                 print "\nSorry, the detected version of %s %s is older than required minimum version %s \n" % (webapp_name, current_version, min_version)
+                return 1
 
 #----------------------------------------------------------
 # Environment Management Utility Functions
@@ -380,6 +407,18 @@ def check_webapp_version(webapp_name, min_version, version_command=None):
 #TODO: Fix sed statement
 def remove_env(env_name):
     print "removing %s's environment from %s" % (env_name, config.config_dictionary["envfile"])
+    # target = open(config.config_dictionary["envfile"], "r+")
+    # # target.write(temp)
+    # target.close()
+    # datafile = open(config.config_dictionary["envfile"], "r+")
+    # searchlines = datafile.readlines()
+    # datafile.seek(0)
+    # # datafile.close()
+    # for line in searchlines:
+    #     if env_name not in line:
+    #         datafile.write(line)
+    # datafile.truncate()
+    # datafile.close()
     subprocess.check_output("sed -i '/'${env_name}'/d' ${envfile}", shell = True)
 
 #TODO: Fix sed statement

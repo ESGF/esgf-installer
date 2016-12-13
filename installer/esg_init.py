@@ -3,6 +3,7 @@ import os
 import subprocess
 import pwd
 import sys
+import magic
 # from pwd import getpwnam
 import esg_bash2py
 
@@ -43,6 +44,7 @@ class EsgInit(object):
         self.populate_external_script_variables()
         self.populate_environment_constants()
         self.populate_id_settings()
+        self.populate_internal_script_variables()
 
     def populate_internal_esgf_node_code_versions(self):
         '''
@@ -326,15 +328,16 @@ class EsgInit(object):
 
         # word_size=${word_size:-$(file /bin/bash | perl -ple
         # 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-        internal_script_variables["word_size"] = esg_bash2py.Expand.colonMinus("word_size", subprocess.check_output(
-            "$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')", shell=True))
+        # internal_script_variables["word_size"] = esg_bash2py.Expand.colonMinus("word_size", subprocess.check_output(
+        #     "$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')", shell=True))
+        internal_script_variables["word_size"] = re.search(r'(\d\d)-bit?', magic.from_file("/bin/bash")).group(1)
+        print 'internal_script_variables["word_size"]: ', internal_script_variables["word_size"]
         # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[
         # \t]*\(.*\)$/\1/p' | tail -1)
         # internal_script_variables["num_cpus"] = 1 + subprocess.check_output(
         #     "$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)", shell=True)
         # date_format="+%Y_%m_%d_%H%M%S"
-        internal_script_variables["date_format"] = subprocess.check_output(
-            "+%Y_%m_%d_%H%M%S", shell=True)
+        internal_script_variables["date_format"] = "+%Y_%m_%d_%H%M%S"
         # num_backups_to_keep=${num_backups_to_keep:-7}
         internal_script_variables["num_backups_to_keep"] = esg_bash2py.Expand.colonMinus(
             "num_backups_to_keep", "7")
@@ -456,6 +459,7 @@ class EsgInit(object):
             "config_file"] = self.esg_config_dir + "/esgf.properties"
         internal_script_variables["index_config"] = "master slave"
 
+        print "internal_script_variables: ", internal_script_variables
         self.config_dictionary.update(internal_script_variables)
         return internal_script_variables
 

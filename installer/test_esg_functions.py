@@ -2,10 +2,14 @@
 
 import unittest
 import esg_functions
+from esg_init import EsgInit
 import os
 
 
 class test_ESG_Functions(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.test = EsgInit()
 
     # @classmethod
     # def setUpClass(self):
@@ -84,7 +88,7 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.check_version("python", "2.9", "3.3")
         self.assertEqual(output, 1)
 
-    def  test_check_version_with(self):
+    def test_check_version_with(self):
     	output = esg_functions.check_version_with("java", "java -version", "1.6.0")
     	self.assertEqual(output, 0)
 
@@ -92,7 +96,7 @@ class test_ESG_Functions(unittest.TestCase):
     	self.assertEqual(output, 0)
 
     def test_check_module_version(self):
-        output = esg_functions.check_module_version("pylint", "1.6")
+        output = esg_functions.check_module_version("esgcet", "3.0.1")
         self.assertEqual(output,0)
 
         output = esg_functions.check_module_version("pylint", "1.9")
@@ -101,9 +105,26 @@ class test_ESG_Functions(unittest.TestCase):
     def test_get_current_esgf_library_version(self):
         output = esg_functions.get_current_esgf_library_version("esgf-security")
         self.assertEqual(output, 1)
+
     def test_get_current_webapp_version(self):
         output = esg_functions.get_current_webapp_version("esg-orp")
+        self.assertEqual(output, "2.9.0")
+
+    def test_check_webapp_version(self):
+        output = esg_functions.check_webapp_version("esg-orp", "2.0")
         self.assertEqual(output, 0)
+
+        output = esg_functions.check_webapp_version("esg-orp", "4.0")
+        self.assertEqual(output, 1)
+
+    def test_remove_env(self):
+
+        target = open(self.test.config_dictionary["envfile"], 'w')
+        target.write("Export TEST_ENV=/home")
+        target.close()
+
+        # output = esg_functions.remove_env("TEST_ENV")
+        # self.assertEqual(output,0)
 
 if __name__ == '__main__':
     unittest.main()

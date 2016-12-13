@@ -417,7 +417,7 @@ class EsgInit(object):
         internal_script_variables["thredds_replica_dir"] = internal_script_variables[
             "thredds_root_dir"] + "/replica"
         # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-        internal_script_variables["show_summary_latch"] = "0"
+        internal_script_variables["show_summary_latch"] = 0
         internal_script_variables["source_latch"] = "0"
         # scripts_dir=${install_prefix}/bin
         internal_script_variables["scripts_dir"] = self.install_prefix + "/bin"

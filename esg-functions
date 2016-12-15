@@ -1348,7 +1348,7 @@ get_esgf_dist_mirror() {
         a=${a/./}
 
         # connect to host
-        curl --silent --output /dev/null $host --connect-timeout 1 -m 2
+        curl --silent -H 'Cache-Control: no-cache' --output /dev/null http://$host$page/dist/hundredk --connect-timeout 1 -m 3
         [ $? != 0 ] && continue
 
         # end date

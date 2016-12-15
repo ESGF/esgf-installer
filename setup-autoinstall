@@ -121,8 +121,10 @@ function load_pipe(){
 }
 echo "Do you wish to save the answer file from this questionnaire for later use? (n/Y)"
 read -e choice;
-tosave=0
-if [ "$choice" = "y" -o "$choice" = "Y" ]; then
+tosave=1
+if [ "$choice" = "n" -o "$choice" = "N" ]; then
+	tosave=0;
+	else 
 	echo "Your choices will be stored in /opt/esgf/answers";
 	tosave=1;
 fi

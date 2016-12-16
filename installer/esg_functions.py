@@ -448,7 +448,7 @@ def deduplicate(envfile = None):
         "WARNING: dedup() - unable to write to %s" % (infile)
         return 1
     else:
-        datafile = open(config.envfile, "r+")
+        datafile = open(infile, "r+")
         searchlines = datafile.readlines()
         print "searchlines: ", searchlines
         print "type(searchlines): ", type(searchlines)
@@ -483,6 +483,27 @@ def deduplicate_properties(envfile = None):
         "WARNING: dedup_properties() - unable to write to %s" % (infile)
         return 1
     else:
+        datafile = open(infile, "r+")
+        searchlines = datafile.readlines()
+        print "searchlines: ", searchlines
+        print "type(searchlines): ", type(searchlines)
+        print "searchlines.reverse(): ", searchlines[::-1]
+        datafile.seek(0)
+
+        my_set = set()
+        res = []
+
+        for e in reversed(searchlines):
+            print "e: ", e.split("=")
+            key, value = e.split("=")
+           # key = key.split()[1]
+            print "key: ", key
+            print "value: ", value
+            if key not in my_set:
+                res.append(key+ "=" + value)
+                my_set.add(key)
+        res.reverse()
+        print "final res: ", res
 
         return 0
         # temp = subprocess.check_output("$(tac " + infile + " | awk 'BEGIN {FS=\"[ =]\"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")

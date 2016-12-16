@@ -120,7 +120,7 @@ class test_ESG_Functions(unittest.TestCase):
     def test_remove_env(self):
 
         target = open(self.test.envfile, 'a')
-        target.write("Export TEST_ENV=/home")
+        target.write("export TEST_ENV=/home")
         target.close()
 
         output = esg_functions.remove_env("TEST_ENV")

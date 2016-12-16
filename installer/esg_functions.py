@@ -411,7 +411,7 @@ def remove_env(env_name):
     # # target.write(temp)
     # target.close()
     found_in_env_file = False
-    datafile = open(config.envfile, "a+")
+    datafile = open(config.envfile, "r+")
     searchlines = datafile.readlines()
     datafile.seek(0)
     # datafile.close()

@@ -123,8 +123,8 @@ class test_ESG_Functions(unittest.TestCase):
         target.write("Export TEST_ENV=/home")
         target.close()
 
-        # output = esg_functions.remove_env("TEST_ENV")
-        # self.assertEqual(output,0)
+        output = esg_functions.remove_env("TEST_ENV")
+        self.assertEqual(output,True)
 
 if __name__ == '__main__':
     unittest.main()

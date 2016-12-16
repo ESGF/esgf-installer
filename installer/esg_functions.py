@@ -734,7 +734,7 @@ def _path_unique(path_string = os.environ["PATH"], path_separator=":"):
     # local path_string=${1:-${PATH}}
     # local pathsep=${2:-":"}
     split_path = path_string.split(path_separator)
-    return " ".join(sorted(set(split_path), key=split_path.index))
+    return ":".join(sorted(set(split_path), key=split_path.index))
 
 def _readlinkf(file_name):
     '''

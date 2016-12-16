@@ -518,7 +518,7 @@ def deduplicate_properties(envfile = None):
 #     Takes a single interface value
 #     "eth0" or "lo", etc...
 #     '''
-    return subprocess.check_output("ifconfig $1 | grep \"inet[^6]\" | awk '{ gsub (\" *inet [^:]*:\",\"\"); print $1}'")
+    # return subprocess.check_output("ifconfig $1 | grep \"inet[^6]\" | awk '{ gsub (\" *inet [^:]*:\",\"\"); print $1}'")
 
 #----------------------------------------------------------
 # Tomcat Management Functions
@@ -610,6 +610,7 @@ def check_postgress_process():
 
     '''
     status = subprocess.check_output("/etc/init.d/postgresql status")
+    print "status: ", status
     if status:
         return 0
     else:

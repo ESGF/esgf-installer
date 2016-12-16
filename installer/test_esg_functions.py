@@ -129,5 +129,14 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.remove_env("NEW_ENV")
         self.assertEqual(output,True)
 
+    def test_deduplicate(self):
+        target = open(self.test.envfile, 'a')
+        target.write("export TEST_ENV=/home")
+        target.write("export TEST_ENV=/second")
+        target.close()
+
+        output = esg_functions.deduplicate()
+        self.assertEqual(output, 0)
+
 if __name__ == '__main__':
     unittest.main()

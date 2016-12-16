@@ -437,7 +437,7 @@ def deduplicate(envfile = None):
     in the final output.
     arg 1 - The environment file to dedup.
     '''
-    infile = esg_bash2py.Expand.colonMinus(envfile, config.config_dictionary["envfile"])
+    infile = esg_bash2py.Expand.colonMinus(envfile, config.envfile)
     if not os.path.isfile(infile):
         print "WARNING: dedup() - unable to locate %s does it exist?" % (infile)
         return 1
@@ -446,9 +446,11 @@ def deduplicate(envfile = None):
         return 1
     else:
         temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS=\"[ =]\"} !($2 in a) {a[$2];print $0}' | sort -k2,2)")
+        print "temp: ", temp
         target = open(infile, 'w')
         target.write(temp)
         target.close()
+        return 0
 
 
 #TODO: fix tac and awk statements

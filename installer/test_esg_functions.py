@@ -156,5 +156,10 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.check_esgf_httpd_process()
         self.assertEqual(output, 0)
 
+    def test_path_unique(self):
+        output = esg_functions._path_unique("usr/local/bin:/usr/test/bin:usr/local/bin")
+        print "output: ", output
+        self.assertEqual(output, "usr/local/bin:/usr/test/bin")
+
 if __name__ == '__main__':
     unittest.main()

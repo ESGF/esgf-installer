@@ -618,7 +618,7 @@ def check_postgress_process():
 
 
 def check_esgf_httpd_process():
-    status = subprocess.check_output("service esgf-httpd status")
+    status = subprocess.check_output(["service", "esgf-httpd", "status"])
     if status:
         return 0
     else: 

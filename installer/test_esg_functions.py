@@ -126,5 +126,8 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.remove_env("TEST_ENV")
         self.assertEqual(output,True)
 
+        output = esg_functions.remove_env("NEW_ENV")
+        self.assertEqual(output,True)
+
 if __name__ == '__main__':
     unittest.main()

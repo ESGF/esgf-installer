@@ -609,9 +609,9 @@ def check_postgress_process():
         #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
 
     '''
-    status = subprocess.check_output("/etc/init.d/postgresql status")
-    print "status: ", status
-    if status:
+    status = subprocess.check_output(["/etc/init.d/postgresql", "status"])
+
+    if "running" in status:
         return 0
     else:
         return 1

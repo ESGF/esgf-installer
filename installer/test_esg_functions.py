@@ -152,5 +152,9 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.check_postgress_process()
         self.assertEqual(output, 0)
 
+    def test_check_esgf_httpd_process(self):
+        output = esg_functions.check_esgf_httpd_process()
+        self.assertEqual(output, 0)
+
 if __name__ == '__main__':
     unittest.main()

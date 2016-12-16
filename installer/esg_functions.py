@@ -445,11 +445,27 @@ def deduplicate(envfile = None):
         "WARNING: dedup() - unable to write to %s" % (infile)
         return 1
     else:
-        temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS=\"[ =]\"} !($2 in a) {a[$2];print $0}' | sort -k2,2)")
-        print "temp: ", temp
-        target = open(infile, 'w')
-        target.write(temp)
-        target.close()
+        datafile = open(config.envfile, "r+")
+        searchlines = datafile.readlines()
+        print "searchlines: ", searchlines
+        print "type(searchlines): ", type(searchlines)
+        print "searchlines.reverse(): ", searchlines[::-1]
+        datafile.seek(0)
+
+        my_set = set()
+        res = []
+
+        for e in reversed(searchlines):
+            print "e: ", e.split("=")
+            key, value = e.split("=")
+           # key = key.split()[1]
+            print "key: ", key
+            print "value: ", value
+            if key not in my_set:
+                res.append(key+ "=" + value)
+                my_set.add(key)
+        res.reverse()
+        print "final res: ", res
         return 0
 
 
@@ -464,11 +480,13 @@ def deduplicate_properties(envfile = None):
         "WARNING: dedup_properties() - unable to write to %s" % (infile)
         return 1
     else:
-        temp = subprocess.check_output("$(tac ${infile} | awk 'BEGIN {FS=\"[ =]\"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
-        target = open(infile, 'w')
-        target.write(temp)
-        target.close()
-        subprocess.Popen("'$tmp' > ${infile}")
+
+        return 0
+        # temp = subprocess.check_output("$(tac " + infile + " | awk 'BEGIN {FS=\"[ =]\"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
+        # target = open(infile, 'w')
+        # target.write(temp)
+        # target.close()
+        # subprocess.Popen("'$tmp' > ${infile}")
 
 #TODO: fix awk statements
 # def get_config_ip(interface_value):

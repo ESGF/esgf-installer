@@ -148,5 +148,9 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.deduplicate_properties()
         self.assertEqual(output, 0)
 
+    def test_check_postgress_process(self):
+        output = esg_functions.check_postgress_process()
+        self.assertEqual(output, 0)
+
 if __name__ == '__main__':
     unittest.main()

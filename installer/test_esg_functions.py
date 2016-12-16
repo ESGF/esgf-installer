@@ -169,5 +169,9 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.load_properties()
         self.assertEqual(output, 0)
 
+    def test_get_property(self):
+        output = esg_functions.get_property("publisher.config")
+        self.assertEqual(output, "esg.ini")
+
 if __name__ == '__main__':
     unittest.main()

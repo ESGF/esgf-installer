@@ -807,16 +807,29 @@ def get_property(property_name, default_value = None):
         arg 1 - the string that you wish to get the property of (and make a variable)
         arg 2 - optional default value to set
     '''
-    f = open(config.config_dictionary["config_file"])
-    s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-    if s.find(property_name) != -1:
-        result = s.readline()
-        print "result: ", result
-        key, value = result.split("=")
-        if not value and default_value:
-            return default_value
-        else:
-            return value
+    if not os.access(config.config_dictionary["config_file"], os.R_OK):
+        print "Unable to read file"
+        return False
+    datafile = open(config.config_dictionary["config_file"], "r+")
+    searchlines = datafile.readlines()
+    datafile.seek(0)
+    for line in searchlines:
+        if property_name in line:
+            print "line: ", line
+            key, value = line.split("=")
+            if not value and default_value:
+                return default_value.strip()
+            else:
+                return value.strip()
+    # s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+    # if s.find(property_name) != -1:
+    #     result = s.readline()
+    #     print "result: ", result
+    #     key, value = result.split("=")
+    #     if not value and default_value:
+    #         return default_value
+    #     else:
+    #         return value
 # TODO: Not used anywhere; maybe deprecate
 def get_property_as():
     '''

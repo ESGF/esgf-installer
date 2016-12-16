@@ -173,5 +173,8 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.get_property("publisher.config")
         self.assertEqual(output, "esg.ini")
 
+        output = esg_functions.get_property("esgf.http.port")
+        self.assertEqual(output, "80")
+
 if __name__ == '__main__':
     unittest.main()

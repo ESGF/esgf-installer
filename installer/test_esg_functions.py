@@ -176,5 +176,13 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.get_property("esgf.http.port")
         self.assertEqual(output, "80")
 
+    def test_remove_property(self):
+        target = open(self.test.config_dictionary["config_file"], 'a')
+        target.write("test.remove=remove\n")
+        target.close()
+
+        output = esg_functions.remove_property("test.remove")
+        self.assertEqual(output, True)
+
 if __name__ == '__main__':
     unittest.main()

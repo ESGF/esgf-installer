@@ -843,6 +843,7 @@ def remove_property(key):
         Removes a given variable's property representation from the property file
     '''
     print "removing $1's property from %s" % (config.config_dictionary["config_file"])
+    property_found = False
     datafile = open(config.config_dictionary["config_file"], "r+")
     searchlines = datafile.readlines()
     datafile.seek(0)
@@ -850,8 +851,11 @@ def remove_property(key):
     for line in searchlines:
         if key not in line:
             datafile.write(line)
+        else:
+            property_found = True
     datafile.truncate()
     datafile.close()
+    return property_found
 
 
 def write_as_property(property_name, property_value):

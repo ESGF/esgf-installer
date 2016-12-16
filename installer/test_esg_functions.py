@@ -165,5 +165,9 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions._readlinkf(self.test.envfile)
         self.assertEqual(output, "/etc/esg.env")
 
+    def test_load_properties(self):
+        output = esg_functions.load_properties()
+        self.assertEqual(output, 0)
+
 if __name__ == '__main__':
     unittest.main()

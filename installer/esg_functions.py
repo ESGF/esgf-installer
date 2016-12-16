@@ -797,7 +797,7 @@ def load_properties(property_file = config.config_dictionary["config_file"]):
             print "[%s]" % (value)
             # eval "${key}=\"${value}\""
             count+=1
-    print "Loaded (imported) ${count} properties from ${property_file}"
+    print "Loaded (imported) %i properties from %s" % (count, property_file)
     return 0
 
 

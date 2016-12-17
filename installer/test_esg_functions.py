@@ -187,6 +187,13 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.remove_property("non.existant")
         self.assertEqual(output, False)
 
+    def test_write_as_property(self):
+        output = esg_functions.write_as_property("new.property", "new_value")
+        self.assertEqual(output, 0)
+
+        find_value = esg_functions.get_property("new.property")
+        self.assertEqual(output, "new_value")
+
 
 if __name__ == '__main__':
     unittest.main()

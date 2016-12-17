@@ -873,7 +873,7 @@ def write_as_property(property_name, property_value):
             print "Property already exists"
             return "Property already exists"
     else:
-        datafile.write(property_name+"="+property_value)
+        datafile.write(property_name+"="+property_value+"\n")
         return 0
 
 # TODO: Not used anywhere; maybe deprecate

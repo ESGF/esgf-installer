@@ -192,7 +192,7 @@ class test_ESG_Functions(unittest.TestCase):
         self.assertEqual(output, 0)
 
         find_value = esg_functions.get_property("new.property")
-        self.assertEqual(output, "new_value")
+        self.assertEqual(find_value, "new_value")
 
 
 if __name__ == '__main__':

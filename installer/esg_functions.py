@@ -868,15 +868,16 @@ def write_as_property(property_name, property_value):
         arg 1 - The string of the variable you wish to write as property to property file
         arg 2 - The value to set the variable to (default: the value of arg1)
     '''
-    datafile = open(config.config_dictionary["config_file"], "r+")
+    datafile = open(config.config_dictionary["config_file"], "a+")
     searchlines = datafile.readlines()
     datafile.seek(0)
     for line in searchlines:
         if property_name in line:
             print "Property already exists"
-            return
+            return "Property already exists"
     else:
         datafile.write(property_name+"="+property_value)
+        return 0
 
 # TODO: Not used anywhere; maybe deprecate
 def append_to_path():

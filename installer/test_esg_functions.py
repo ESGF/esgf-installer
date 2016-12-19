@@ -194,6 +194,10 @@ class test_ESG_Functions(unittest.TestCase):
         find_value = esg_functions.get_property("new.property")
         self.assertEqual(find_value, "new_value")
 
+    def test_prefix_to_path(self):
+        output = esg_functions.prefix_to_path("/path/to/test", "new/path")
+        self.assertEqual(output, "new/path/path/to/test")
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -196,8 +196,11 @@ class test_ESG_Functions(unittest.TestCase):
 
     def test_prefix_to_path(self):
         output = esg_functions.prefix_to_path("/path/to/test", "new/path")
-        self.assertEqual(output, "new/path/path/to/test")
+        self.assertEqual(output, "new/path:/path/to/test")
 
+    def test_backup(self):
+        output = esg_functions.backup(os.getcwd())
+        self.assertEqual(output, 0)
 
 if __name__ == '__main__':
     unittest.main()

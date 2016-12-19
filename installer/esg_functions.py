@@ -925,7 +925,8 @@ def prefix_to_path(path, prepend_value):
               WHAT YOU WANT; that your libs are found before any user libs are
         
     '''
-    os.environ[path] = _path_unique(prepend_value)+":"+path
+    # os.environ[path] = _path_unique(prepend_value)+":"+path
+    return _path_unique(prepend_value)+":"+path
 
 def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of_backups=config.config_dictionary["num_backups_to_keep"]):
     '''

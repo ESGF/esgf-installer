@@ -941,16 +941,21 @@ def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of
     source = _readlinkf(path)
     print "Backup - Creating a backup archive of %s" % (source)
     current_directory = os.getcwd()
-    # ${source%/*} >& /dev/null
-    move_to_dir = re.match('/*?', source).group()
-    os.chdir(move_to_dir)
-    os.mkdir(backup_dir)
-    source_backup_name = re.match("\w+$", source).group()
-    backup_filename=_readlinkf(backup_dir)+"/"+source_backup_name + "." + datetime.date.today()+".tgz"
-    # tar czf ${backup_filename} ${source##*/}
+    
+    os.chdir(source)
+    try:
+        os.mkdir(backup_dir)
+    except OSError, e:
+        if e.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    source_backup_name = re.search("\w+$", source).group()
+    backup_filename=_readlinkf(backup_dir)+"/"+source_backup_name + "." + str(datetime.date.today())+".tgz"
     try:
         with tarfile.open(backup_filename, "w:gz") as tar:
-            tar.add(backup_dir)
+            tar.add(source)
     except:
         print " ERROR: Problem with creating backup archive: ${backup_filename}"
         os.chdir(current_directory)
@@ -961,12 +966,12 @@ def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of
         "Could not locate backup file %s" % (backup_filename)
         os.chdir(current_directory)
         return 1
-    
+
 
     # Cleanup
     if os.getcwd() != backup_dir:
         os.chdir(backup_dir)
-    files= subprocess.Popen('ls -t | grep %s.\*.tgz | tail -n +$((%i+1)) | xargs' %(source_backup_name, num_of_backups), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    files= subprocess.Popen('ls -t | grep %s.\*.tgz | tail -n +$((%i+1)) | xargs' %(source_backup_name,int(num_of_backups)), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if len(files.stdout.readlines()) > 0:
         print "Tidying up a bit..."
         print "old backup files to remove: %s" % (''.join(files.stdout.readlines()))

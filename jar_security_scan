@@ -32,7 +32,7 @@ use XML::Twig;
 my $tomcatdir = '/usr/local/tomcat';
 my $cvrfdir = '/tmp';
 my $cvrfprefix = '/allitems-cvrf-year-';
-my @cvrf_years = ( '2016','2015' );
+my @cvrf_years = ( '2015','2016' );
 my %cvrf_twigs;
 
 # %jar_searchregex is a hash of jar names to regular expressions that
@@ -406,6 +406,12 @@ my %falsepositives = (
 my %jars;
 my %lowversions;
 
+# %found is a global hash keyed by CVE, where the value is an
+# anonymous hash of the following structure:
+#   jars => array of all potentially relevant jars
+#   text => text of the CVE
+#   urls => array of URLs referenced by the CVE
+my %found;
 
 find_all_jars(\%jars);
 print_jars(%jars);
@@ -465,18 +471,32 @@ foreach my $year (@cvrf_years) {
 
             $note->text =~ /\s([0-9][0-9a-zA-Z;.-]+)(\s|,|\.)/;
             my $lastversionstring = $1 || '';
-
-            say '----------';
-            say "${jar} $lowversions{$jar}: ${title} ($lastversionstring)";
-            say $note->text;
-
-            say "https://web.nvd.nist.gov/view/vuln/detail?vulnId=" . $cve;
             my @urlelements = $vuln->descendants('URL');
-            foreach my $url (@urlelements) {
-                say $url->text;
+
+            if(! $found{$cve}) {
+                $found{$cve}->{'text'} = $note->text;
+                foreach my $url (@urlelements) {
+                    push (@{$found{$cve}->{'urls'}},$url->text);
+                }
             }
+            push (@{$found{$cve}->{'jars'}},$jar);
         }
     }
+}
+
+foreach my $cve (sort keys %found) {
+    say "${cve} is possibly related to:";
+    foreach my $jar (sort @{$found{$cve}->{'jars'}}) {
+        foreach my $webapp (sort keys %{$jars{$jar}}) {
+            say "  $jar\t$webapp\t$jars{$jar}{$webapp}";
+        }
+    }
+    say "\n",$found{$cve}->{'text'};
+    say "https://web.nvd.nist.gov/view/vuln/detail?vulnId=" . $cve;
+    foreach my $url (@{$found{$cve}->{'urls'}}) {
+        say $url;
+    }
+    say "\n----------\n";
 }
 
 ##################
@@ -524,7 +544,8 @@ sub find_misc_jars {
     my %jardirs = (
         '/usr/local/las-esgf/8.4.1/las-esgf-v8.4.1/lib'                    => 'las',
         '/usr/local/las-esgf/8.4.1/las-esgf-v8.4.1/WebContent/WEB-INF/lib' => 'las-webcontent',
-        '/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib'        => 'solr-jetty',
+        '/usr/local/solr/server/lib/'                                      => 'solr-server',
+        '/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib'            => 'solr-webapp',
        );
 
     foreach my $jardir (keys %jardirs) {

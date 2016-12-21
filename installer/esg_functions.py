@@ -21,13 +21,18 @@ import esg_bash2py
 
 config = EsgInit()
 
+# print "config.config_dictionary: ", config.config_dictionary["tomcat_users_file"]
+# esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
+# esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
+
+
 
 # subprocess.call(['ls', '-1'], shell=True)
 # subprocess.call('echo $HOME', shell=True)
 # subprocess.check_call('echo $PATH', shell=True)
 
 
-def checked_done():
+def checked_done(status):
     '''
             if positional parameter at position 1 is non-zero, then print error message.
     '''

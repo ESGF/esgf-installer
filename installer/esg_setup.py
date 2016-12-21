@@ -159,6 +159,15 @@ def init_structure():
 
 
 def write_paths():
+	config.config_dictionary["show_summary_latch"]+=1
+
+	datafile = open(config.envfile, "a+")
+	datafile.write("export ESGF_HOME="+config.config_dictionary["esg_root_dir"])
+	datafile.write("export ESG_USER_HOME="+config.config_dictionary["installer_home"])
+	datafile.write("export ESGF_INSTALL_WORKDIR="+config.config_dictionary["workdir"])
+	datafile.write("export ESGF_INSTALL_PREFIX="+config.config_dictionary["install_prefix"])
+	datafile.write("export PATH="+config.config_dictionary["myPATH"]+":"+os.environ["PATH"])
+	datafile.write("export LD_LIBRARY_PATH="+config.config_dictionary["myLD_LIBRARY_PATH"]+":"+os.environ["LD_LIBRARY_PATH"])
 	pass
 
 def check_for_my_ip():

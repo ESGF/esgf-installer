@@ -16,6 +16,7 @@ import requests
 import stat
 import socket
 import platform
+import yum
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
@@ -211,6 +212,8 @@ def check_prerequisites():
 	#----------------------------------------
    	print "Checking requisites... "
 
+   	 # checking for OS, architecture, distribution and version
+
 	OS = platform.system()
    	MACHINE = platform.machine()
    	RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()[2]
@@ -221,6 +224,65 @@ def check_prerequisites():
 
 
 
-    # checking for OS, architecture, distribution and version
+   
 
 
+def setup_java():
+
+	"Checking for java >= %s and valid JAVA_HOME... " % (config.config_dictionary["java_min_version"])
+	print subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT)
+
+	if os.path.isdir(config.config_dictionary["java_install_dir"]):
+		java_version_check = esg_functions.check_version(config.config_dictionary["java_install_dir"]+"bin/java", config.config_dictionary["java_min_version"], version_command="-version")
+
+		if java_version_check == 0:
+			print "[OK]"
+			return 0
+
+	print '''*******************************
+    		  Setting up Java... %s
+    	 	 *******************************	
+    	 ''' % (config.config_dictionary["java_min_version"])
+
+	last_java_truststore_file = None
+	default = "Y"
+	dosetup = None
+
+	if os.path.isdir(config.config_dictionary["java_install_dir"]+"bin/java"):
+		print "Detected an existing java installation..."
+		dosetup = raw_input("Do you want to continue with Java installation and setup? [Y/n]") or default
+		if dosetup != "Y" or dosetup !="y":
+			print "Skipping Java installation and setup - will assume Java is setup properly"
+			return 0
+	last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"]) 
+
+
+
+
+
+yb=yum.YumBase()
+inst = yb.rpmdb.returnPackages()
+installed=[x.name for x in inst]
+print "installed: ", installed
+
+# yb.install("java")
+# yb.resolveDeps()
+# yb.buildTransaction()
+# yb.processTransaction()
+
+# packages=['bla1', 'bla2', 'bla3']
+
+# for package in packages:
+#         if package in installed:
+#                 print('{0} is already installed'.format(package))
+#         else:
+#                 print('Installing {0}'.format(package))
+#                 kwarg = {
+#                         'name':package
+#                 }
+#                 yb.install(**kwarg)
+#                 yb.resolveDeps()
+#                 yb.buildTransaction()
+#                 yb.processTransaction()
+
+	pass

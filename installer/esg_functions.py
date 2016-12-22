@@ -206,7 +206,7 @@ def check_version_between(current_version, min_version, max_version):
         return 1
 
 
-def check_version(binary_file_name, min_version, max_version=None):
+def check_version(binary_file_name, min_version, max_version=None, version_command = "--version"):
     '''
         This is the most commonly used "public" version checking
         routine.  It delegates to check_version_helper() for the actual
@@ -230,7 +230,7 @@ def check_version(binary_file_name, min_version, max_version=None):
                 "--version" nor "-version" is a valid argument)
     '''
     found_version = subprocess.Popen(
-        [binary_file_name, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        [binary_file_name, version_command], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     found_version.wait()
     current_version = None
     version_tuple = found_version.communicate()

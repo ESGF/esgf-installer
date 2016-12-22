@@ -14,6 +14,8 @@ import datetime
 import tarfile
 import requests
 import stat
+import socket
+import platform
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
@@ -168,7 +170,57 @@ def write_paths():
 	datafile.write("export ESGF_INSTALL_PREFIX="+config.config_dictionary["install_prefix"])
 	datafile.write("export PATH="+config.config_dictionary["myPATH"]+":"+os.environ["PATH"])
 	datafile.write("export LD_LIBRARY_PATH="+config.config_dictionary["myLD_LIBRARY_PATH"]+":"+os.environ["LD_LIBRARY_PATH"])
+
+	esg_functions.deduplicate(config.envfile)
 	pass
 
 def check_for_my_ip():
 	pass
+
+#checking for what we expect to be on the system a-priori
+#that we are not going to install or be responsible for
+def check_prerequisites():
+	print '''
+		\033[01;31m
+      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
+      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
+    \033[0m
+	'''
+
+	print "Checking that you have root privs on %s... " % (socket.gethostname())
+	root_check = os.geteuid()
+	if root_check != 0:
+		print "$([FAIL]) \n\tMust run this program with root's effective UID\n\n"
+		return 1
+	print "[OK]"
+
+	#----------------------------------------
+   	print "Checking requisites... "
+
+	OS = platform.system()
+   	MACHINE = platform.machine()
+   	RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()[2]
+
+   	if RELEASE_VERSION[0] != "6":
+   		print "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" 
+   		return 1
+
+
+
+    # checking for OS, architecture, distribution and version
+
+

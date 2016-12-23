@@ -6820,7 +6820,7 @@ main() {
 	yum -y remove rpmforge-release
 	yum -y install epel-release
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not configure epel repository\n\n" && return 1
-        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel myproxy '*ExtUtils*'
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel myproxy myproxy-libs '*ExtUtils*'
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update prerequisites\n\n" && return 1
 
     #---------------------------------------

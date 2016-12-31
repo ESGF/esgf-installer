@@ -25,7 +25,9 @@
 use strict; use warnings;
 use 5.010;
 
+use Cwd 'abs_path';
 use Data::Dumper;
+use File::Basename;
 use Sort::Versions;
 use XML::Twig;
 
@@ -70,6 +72,7 @@ my %jar_searchregex = (
     'encoder'			=> qr/encoder.*java/i,
     'forms'			=> qr/forms.*java/i,
     'geronimo-servlet_3.0_spec' => qr/geronimo/i,
+    'h2'                        => qr/h2 database/i,
     'je'			=> qr/berkeley.*db/i,
     'org.apache.aries.util'	=> qr/apache.*aries/i,
     'oro'			=> qr/jakarta.*oro/i,
@@ -212,6 +215,31 @@ my %falsepositives = (
     'CVE-2015-0254' => 'zed: oldversion (Apache Standard Taglibs < 1.2.3)',
     'CVE-2015-0274' => 'zed: unrelated (XFS)',
     'CVE-2015-0279' => 'zed: unrelated (JBoss RichFaces)',
+    'CVE-2015-0383' => 'zed: oldversion (Oracle Java <= 8u6)',
+    'CVE-2015-0395' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0400' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0403' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0406' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0407' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0408' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0410' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0412' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0413' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0421' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0437' => 'zed: oldversion (Oracle Java <= 8u25)',
+    'CVE-2015-0458' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0459' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0460' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0469' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0470' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0477' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0478' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0480' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0484' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0486' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0488' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0491' => 'zed: oldversion (Oracle Java <= 8u40)',
+    'CVE-2015-0492' => 'zed: oldversion (Oracle Java <= 8u40)',
     'CVE-2015-0851' => 'zed: unrelated (OpenSAML-C, not Java)',
     'CVE-2015-0899' => 'zed: oldversion (Struts <= 1.3.10)',
     'CVE-2015-1058' => 'zed: unrelated (AdaptCMS)',
@@ -232,11 +260,27 @@ my %falsepositives = (
     'CVE-2015-2328' => 'zed: unrelated (PCRE)',
     'CVE-2015-2335' => 'zed: unrelated (MyBB)',
     'CVE-2015-2583' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2590' => 'zed: oldversion (Oracle Java <= 8u33)',
+    'CVE-2015-2596' => 'zed: oldversion (Oracle Java <= 7u80)',
+    'CVE-2015-2597' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2597' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2601' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2613' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2619' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2621' => 'zed: oldversion (Oracle Java <= 8u45)',
     'CVE-2015-2624' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2625' => 'zed: oldversion (Oracle Java <= 8u45)',
     'CVE-2015-2626' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2627' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2628' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2632' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2637' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2638' => 'zed: oldversion (Oracle Java <= 8u45)',
     'CVE-2015-2640' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2015-2654' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2015-2656' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-2659' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-2664' => 'zed: oldversion (Oracle Java <= 8u45)',
     'CVE-2015-2738' => 'zed: unrelated (Firefox)',
     'CVE-2015-2787' => 'zed: unrelated (PHP)',
     'CVE-2015-2838' => 'zed: unrelated (Citrix NetScaler)',
@@ -251,7 +295,16 @@ my %falsepositives = (
     'CVE-2015-4027' => 'zed: unrelated (Acunetix Web Vulnerability Scanner)',
     'CVE-2015-4478' => 'zed: unrelated (Mozilla Firefox)',
     'CVE-2015-4590' => 'zed: unrelated (Arduino)',
+    'CVE-2015-4729' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-4731' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-4732' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-4733' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-4734' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4736' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-4748' => 'zed: oldversion (Oracle Java <= 8u45)',
+    'CVE-2015-4749' => 'zed: oldversion (Oracle Java <= 8u45)',
     'CVE-2015-4754' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4760' => 'zed: oldversion (Oracle Java <= 8u45)',
     'CVE-2015-4764' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2015-4774' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2015-4775' => 'zed: unrelated (Berkeley DB non-JE)',
@@ -270,7 +323,31 @@ my %falsepositives = (
     'CVE-2015-4788' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2015-4789' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2015-4790' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2015-4760' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4805' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4806' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4810' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4835' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4840' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4842' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4843' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4844' => 'zed: oldversion (Oracle Java <= 8u60)',
     'CVE-2015-4852' => 'zed: unrelated (WebLogic Server)',
+    'CVE-2015-4860' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4868' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4871' => 'zed: oldversion (Oracle Java <= 7u85)',
+    'CVE-2015-4872' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4881' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4882' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4883' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4893' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4901' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4902' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4903' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4906' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4908' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4911' => 'zed: oldversion (Oracle Java <= 8u60)',
+    'CVE-2015-4916' => 'zed: oldversion (Oracle Java <= 8u60)',
     'CVE-2015-5250' => 'zed: unrelated (OpenShift Origin)',
     'CVE-2015-5262' => 'zed: oldversion (Apache HttpClient < 4.3.6)',
     'CVE-2015-5289' => 'zed: unrelated (PostgreSQL)',
@@ -317,11 +394,22 @@ my %falsepositives = (
     'CVE-2015-8797' => 'zed: oldversion (SOLR < 5.3.1)',
     'CVE-2016-0231' => 'zed: unrelated (IBM FTM)',
     'CVE-2016-0232' => 'zed: unrelated (IBM FTM)',
+    'CVE-2016-0402' => 'zed: oldversion (Oracle Java <= 8u66)',
+    'CVE-2016-0448' => 'zed: oldversion (Oracle Java <= 8u66)',
+    'CVE-2016-0466' => 'zed: oldversion (Oracle Java <= 8u66)',
+    'CVE-2016-0475' => 'zed: oldversion (Oracle Java <= 8u66)',
+    'CVE-2016-0483' => 'zed: oldversion (Oracle Java <= 8u66)',
+    'CVE-2016-0494' => 'zed: oldversion (Oracle Java <= 8u66)',
+    'CVE-2016-0603' => 'zed: oldversion (Oracle Java <= 8u72)',
+    'CVE-2016-0636' => 'zed: oldversion (Oracle Java <= 8u74)',
     'CVE-2016-0657' => 'zed: unrelated (MySQL)',
     'CVE-2016-0682' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2016-0686' => 'zed: oldversion (Oracle Java <= 8u77)',
+    'CVE-2016-0687' => 'zed: oldversion (Oracle Java <= 8u77)',
     'CVE-2016-0689' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2016-0692' => 'zed: unrelated (Berkeley DB non-JE)',
     'CVE-2016-0694' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2016-0695' => 'zed: oldversion (Oracle Java <= 8u77)',
     'CVE-2016-0785' => 'zed: oldversion (Apache Struts < 2.3.28)',
     'CVE-2016-0729' => 'zed: unrelated (Apache Xerces C)',
     'CVE-2016-0792' => 'zed: unrelated (Jenkins via XStream, CVE-2016-3674)',
@@ -362,7 +450,25 @@ my %falsepositives = (
     'CVE-2016-3191' => 'zed: unrelated (PCRE)',
     'CVE-2016-3341' => 'zed: unrelated (MS Windows Transaction Manager)',
     'CVE-2016-3418' => 'zed: unrelated (Berkeley DB non-JE)',
+    'CVE-2016-3422' => 'zed: oldversion (Oracle Java <= 8u77)',
+    'CVE-2016-3425' => 'zed: oldversion (Oracle Java <= 8u77)',
+    'CVE-2016-3426' => 'zed: oldversion (Oracle Java <= 8u77)',
+    'CVE-2016-3427' => 'zed: oldversion (Oracle Java <= 8u77)',
     'CVE-2016-3642' => 'zed: duplicate (Apache Commons Collections, CVE-2015-6420)',
+    'CVE-2016-3443' => 'zed: oldversion (Oracle Java <= 8u77)',
+    'CVE-2016-3449' => 'zed: oldversion (Oracle Java <= 8u77)',
+    'CVE-2016-3458' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3485' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3498' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3500' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3503' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3508' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3511' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3550' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3552' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3587' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3598' => 'zed: oldversion (Oracle Java <= 8u92)',
+    'CVE-2016-3606' => 'zed: oldversion (Oracle Java <= 8u92)',
     'CVE-2016-3723' => 'zed: unrelated (Jenkins)',
     'CVE-2016-3918' => 'zed: unrelated (AOSP Mail for Android)',
     'CVE-2016-4003' => 'zed: unrelated (Apache Struts < 2.3.28)',
@@ -516,10 +622,39 @@ sub find_all_jars {
     my ($jars) = @_;
     my @webapps = list_webapps();
 
+    find_oracle_java($jars);
     find_misc_jars($jars);
     foreach my $webapp (sort @webapps) {
         find_webapp_jars($webapp,$jars);
     }
+    return;
+}
+
+
+# sub find_oracle_java
+#
+# Creates a synthetic hashref entry specifically for Oracle Java SE
+# itself
+#
+# Arguments:
+#   * hashref containing jar information that will be directly modified
+# Returns: nothing
+#
+sub find_oracle_java {
+    my ($jars) = @_;
+    my $javadir='/usr/local/java';
+    my $version;
+
+    $javadir = basename(abs_path($javadir));
+    $javadir =~ /^jdk1\.(\d)\.0_(\d+)/x;
+    if (not $2) {
+        say {*STDERR} "WARNING: Unable to find Oracle Java version";
+        $version = 'unknown';
+    }
+    else {
+        $version = "${1}u${2}";
+    }
+    $jars{'Oracle Java SE'}->{$javadir} = $version;
     return;
 }
 

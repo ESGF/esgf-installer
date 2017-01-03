@@ -204,7 +204,7 @@ get_orp_libs() {
     #------------------------------------------------------------------
     #NOTE: Make sure that this version matches the version that is in
     #the esg-orp project!!!
-    spring_version=${spring_version:-"4.3.2.RELEASE"}
+    spring_version=${spring_version:-"4.2.3.RELEASE"}
     #------------------------------------------------------------------
 
     #----------------------------
@@ -267,7 +267,8 @@ get_orp_libs() {
 
         echo "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to ${dest_dir} ..."
         local make_backup_file=0 #Do NOT make backup file
-
+		
+		if [ "$service_name" = "las" ]; then
         #Trying to avoid going on the wire to fetch files... see if the ORP has it locally first.
         if [[ ! -e "${dest_dir}/${spring_jar}" ]]; then
             if [[ -e "${src_dir}/${spring_jar}" ]]; then
@@ -298,6 +299,8 @@ get_orp_libs() {
         else
             ((DEBUG)) && echo "${dest_dir}/${spring_web_jar} - [OK]"
         fi
+
+		fi #end of las-only block for the spring jars. 
 
         if [[ ! -e "${dest_dir}/${esgf_security_jar}" ]]; then
             if [[ -e "${src_dir}/${esgf_security_jar}" ]]; then

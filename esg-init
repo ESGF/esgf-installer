@@ -62,7 +62,7 @@ init() {
     # External programs' versions
     #--------------------------------
     openssl_version=${openssl_version:="0.9.8r"} ; openssl_min_version=${openssl_min_version:="0.9.8e"} ; openssl_max_version=${openssl_max_version:="0.9.9z"}
-    java_version=${java_version:-"1.8.0_92"} ; java_min_version=${java_min_version:-"1.8.0_92"}
+    java_version=${java_version:-"1.8.0_112"} ; java_min_version=${java_min_version:-"1.8.0_112"}
     ant_version=${ant_version:-"1.9.1"} ; ant_min_version=${ant_min_version:-"1.9.1"}
     postgress_version=${postgress_version:-"8.4.20"} ; postgress_min_version=${postgress_min_version:-"8.4.20"}
     tomcat_version=${tomcat_version:-"8.5.9"} ; tomcat_min_version=${tomcat_min_version:-"8.5.9"}

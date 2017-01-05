@@ -331,7 +331,7 @@ class EsgInit(object):
         # internal_script_variables["word_size"] = esg_bash2py.Expand.colonMinus("word_size", subprocess.check_output(
         #     "$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')", shell=True))
         internal_script_variables["word_size"] = re.search(r'(\d\d)-bit?', magic.from_file("/bin/bash")).group(1)
-        print 'internal_script_variables["word_size"]: ', internal_script_variables["word_size"]
+        # print 'internal_script_variables["word_size"]: ', internal_script_variables["word_size"]
         # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[
         # \t]*\(.*\)$/\1/p' | tail -1)
         # internal_script_variables["num_cpus"] = 1 + subprocess.check_output(
@@ -351,8 +351,10 @@ class EsgInit(object):
         # openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
         internal_script_variables["openssl_dist_url"] = "http://www.openssl.org/source/openssl-" + \
             self.config_dictionary["openssl_version"] + ".tar.gz"
+        internal_script_variables["esgf_dist_mirror"] = "aims1.llnl.gov/esgf"
+        internal_script_variables["esg_dist_url_root"] = internal_script_variables["esgf_dist_mirror"]+ "/dist"
         # java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
-        # java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (esg_dist_url_root, java_version, java_version, word_size)
+        java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (internal_script_variables["esg_dist_url_root"], self.config_dictionary["java_version"], self.config_dictionary["java_version"], internal_script_variables["word_size"])
         # ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
         internal_script_variables["ant_dist_url"] = "http://archive.apache.org/dist/ant/binaries/apache-ant-" + \
             self.config_dictionary["ant_version"] + "-bin.tar.gz"

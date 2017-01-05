@@ -1,4 +1,4 @@
-#!/usr/bin/local/env python
+#!/usr/bin/python2.6
 
 import sys
 import os
@@ -254,16 +254,28 @@ def setup_java():
 		if dosetup != "Y" or dosetup !="y":
 			print "Skipping Java installation and setup - will assume Java is setup properly"
 			return 0
-	last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"]) 
+	last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"])
+
+	os.mkdir(config.config_dictionary["workdir"])
+	current_directory = os.getcwd()
+	os.chdir(config.config_dictionary["workdir"])
+	 # source_backup_name = re.search("\w+$", source).group()
+
+	java_dist_file = re.search("\w+$", config.config_dictionary["java_dist_url"]).group()
+	#strip off -(32|64).tar.gz at the end
+	java_dist_dir = re.search("(.+)-(32|64.*)", config.config_dictionary["java_dist_file"]).group(1)
+
+	if not os.path.isdir(config.config_dictionary["java_install_dir"]+ java_dist_dir):
+		print "Don't see java distribution dir %s/%s" % (config.config_dictionary["java_install_dir"], java_dist_dir)
+		if not os.path.isfile(java_dist_file):
+			print "Don't see java distribution file %s/%s either" % (os.getcwd(), java_dist_file)
 
 
 
-
-
-yb=yum.YumBase()
-inst = yb.rpmdb.returnPackages()
-installed=[x.name for x in inst]
-print "installed: ", installed
+# yb=yum.YumBase()
+# inst = yb.rpmdb.returnPackages()
+# installed=[x.name for x in inst]
+# print "installed: ", installed
 
 # yb.install("java")
 # yb.resolveDeps()

@@ -1,6 +1,9 @@
 import os
 import re
 import requests
+import hashlib
+import shutil
+import sys
 import esg_bash2py
 
 
@@ -64,7 +67,117 @@ def check_for_update(filename_1, filename_2 =None):
 		os.chmod(local_file, 0755)
  
 
-	r = requests.get(remote_file+ '.md5')
+	remote_file_md5 = requests.get(remote_file+ '.md5')
+	local_file_md5 = None
+
+	hasher = hashlib.md5()
+	with open(local_file, 'rb') as f:
+		buf = f.read()
+		hasher.update(buf)
+		local_file_md5 = hasher.hexdigest()
+
+	if local_file_md5 != remote_file_md5:
+		print " Update Available @ %s" % (remote_file)
+		return 0
+	return 1
 
 
+def checked_get(file_1, file_2 = None):
+	
+	if check_for_update(file_1, file_2) != 0:
+		return 1
+
+	if file_2 == None:
+		remote_file = file_1
+		local_file = re.search("\w+$", file_1).group()
+	else:
+		local_file = file_1
+		remote_file = file_2
+
+	if os.path.isfile(local_file):
+		shutil.copyfile(local_file, local_file+".bak")
+		os.chmod(local_file+".bak", 600)
+
+	r = requests.get(remote_file)
+	if r.status_code == requests.codes.ok:
+		file = open(local_file, "w")
+		file.write(r.content)
+		file.close()
+	else:
+		print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file) 
+		return 2
+
+	remote_file_md5 = requests.get(remote_file+ '.md5')
+	local_file_md5 = None
+
+	hasher = hashlib.md5()
+	with open(local_file, 'rb') as f:
+		buf = f.read()
+		hasher.update(buf)
+		local_file_md5 = hasher.hexdigest()
+
+	if local_file_md5 != remote_file_md5:
+		print " WARNING: Could not verify this file!" 
+		return 3
+	else:
+		print "[VERIFIED]"
+		return 0
+
+
+def self_verify():
+
+	python_script_name = os.path.basename(__file__)
+
+	remote_file_md5 = requests.get("esg_dist_url/esgf-installer/$script_maj_version/%s.md5" % (re.search("\w+$", python_script_name).group() ) )
+	local_file_md5 = None
+
+	hasher = hashlib.md5()
+	with open(python_script_name, 'rb') as f:
+		buf = f.read()
+		hasher.update(buf)
+		local_file_md5 = hasher.hexdigest()
+
+	if local_file_md5 != remote_file_md5:
+		return 3
+	else:
+		print "[VERIFIED]"
+		return 0
+
+
+def usage():
+	print '''
+			usage:
+        esg-bootstrap [--help]
+    \n
+	'''
+	exit(1) 
+
+############################################
+# Main
+############################################
+
+while str(sys.argv[1]) != None:
+	if str(sys.argv[1]) == "-v " or str(sys.argv[1]) == "--version":
+		print '''
+			Earth Systems Grid Federation (http://esgf.llnl.gov) \n
+	    	ESGF Node Bootstrap Script \n
+
+		'''
+		exit(0)
+	elif str(sys.argv[1]) == "--devel":
+		devel = "1"
+	else:
+		print "Unsupported option selected: %s" % (str(sys.argv[1]))
+		exit(1)
+
+
+if check_for_root_id == 0:
+	if devel == 1:
+		print "(Setup to pull from DEVELOPMENT tree...)"
+		esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+		verification_result = self_verify()
+		if verification_result > 0:
+			print "WARNING: $0 could not be verified!! \n(This file, $(readlink -f ${0}), may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" 
+			exit(1)
+		print "checking for updates for the ESGF Node" 
 

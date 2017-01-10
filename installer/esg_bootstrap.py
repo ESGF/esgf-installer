@@ -127,8 +127,13 @@ def checked_get(file_1, file_2 = None):
 def self_verify():
 
 	python_script_name = os.path.basename(__file__)
+	python_script_md5_name = re.sub(r'_', "-", python_script_name)
+	print "python_script_name: ", python_script_md5_name
 
-	remote_file_md5 = requests.get("esg_dist_url/esgf-installer/$script_maj_version/%s.md5" % (re.search("\w+$", python_script_name).group() ) )
+	remote_file_md5 = requests.get("%s/esgf-installer/%s/%s.md5" % (esg_dist_url,script_maj_version, re.search("^([^.]*).*", python_script_md5_name).group(1) ) ).content
+	remote_file_md5 = remote_file_md5.split()[0].strip()
+	print "md5 url: ", "%s/esgf-installer/%s/%s.md5" % (esg_dist_url,script_maj_version, re.search("^([^.]*).*", python_script_md5_name).group(1) ) 
+	print "remote_file_md5: ", remote_file_md5
 	local_file_md5 = None
 
 	hasher = hashlib.md5()
@@ -136,6 +141,7 @@ def self_verify():
 		buf = f.read()
 		hasher.update(buf)
 		local_file_md5 = hasher.hexdigest()
+		print "local_file_md5: ", local_file_md5.strip()
 
 	if local_file_md5 != remote_file_md5:
 		return 3

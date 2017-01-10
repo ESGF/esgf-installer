@@ -155,29 +155,54 @@ def usage():
 ############################################
 # Main
 ############################################
-
-while str(sys.argv[1]) != None:
-	if str(sys.argv[1]) == "-v " or str(sys.argv[1]) == "--version":
-		print '''
-			Earth Systems Grid Federation (http://esgf.llnl.gov) \n
-	    	ESGF Node Bootstrap Script \n
-
-		'''
-		exit(0)
-	elif str(sys.argv[1]) == "--devel":
-		devel = "1"
-	else:
-		print "Unsupported option selected: %s" % (str(sys.argv[1]))
-		exit(1)
+def main():
 
 
-if check_for_root_id == 0:
-	if devel == 1:
-		print "(Setup to pull from DEVELOPMENT tree...)"
-		esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
-		verification_result = self_verify()
-		if verification_result > 0:
-			print "WARNING: $0 could not be verified!! \n(This file, $(readlink -f ${0}), may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" 
+	while str(sys.argv[1]) != None:
+		if str(sys.argv[1]) == "-v " or str(sys.argv[1]) == "--version":
+			print '''
+				Earth Systems Grid Federation (http://esgf.llnl.gov) \n
+		    	ESGF Node Bootstrap Script \n
+
+			'''
+			exit(0)
+		elif str(sys.argv[1]) == "--devel":
+			devel = "1"
+		else:
+			print "Unsupported option selected: %s" % (str(sys.argv[1]))
 			exit(1)
-		print "checking for updates for the ESGF Node" 
+
+	'''
+	if id_check 
+	then
+	    (( devel == 1 )) && echo "(Setup to pull from DEVELOPMENT tree...)" && esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
+	    self_verify
+	    (( $? > 0 )) && printf "WARNING: $0 could not be verified!! \n(This file, $(readlink -f ${0}), may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" && exit 1
+	    echo "checking for updates for the ESGF Node"
+	    if (($# == 1)) && [ "$1" = "--help" ]; then
+		usage
+	    else
+		get_latest
+	    fi
+	fi
+	exit 0
+	'''
+
+	if check_for_root_id == 0:
+		if devel == 1:
+			print "(Setup to pull from DEVELOPMENT tree...)"
+			esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+			verification_result = self_verify()
+			if verification_result > 0:
+				print "WARNING: %s could not be verified!! \n(This file, %s, may have been tampered with or there is a newer version posted at the distribution server.\nPlease re-fetch this script.)\n\n" % (str(sys.argv[0]), os.path.realpath(str(sys.argv[0])))
+				exit(1)
+			print "checking for updates for the ESGF Node"
+			if len(sys.argv) == 2 and sys.argv[1] == "--help":
+				usage()
+			else:
+				get_latest_esgf_install_scripts()
+	exit(0)
+
+if __name__ == "__main__":
+    main()
 

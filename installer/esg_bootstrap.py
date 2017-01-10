@@ -31,7 +31,7 @@ def get_latest_esgf_install_scripts():
 
 	init_scripts_dir="/etc/rc.d/init.d"
 
-	current_directory = os.getcwd()
+	starting_directory = os.getcwd()
 	os.chdir(script_install_dir)
 
 	fetch_file = "esg_node.py"
@@ -40,10 +40,134 @@ def get_latest_esgf_install_scripts():
 
 	print "Checking......"
 
+	'''
+	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file} 
+    ret=$?
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/%s" % (esg_dist_url,script_maj_version, re.search("^([^.]*).*", fetch_file).group(1) ))
+
+	'''
+		((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
+	    ((ret == 0)) && echo "Updated ESGF Node install script ($fetch_file) from ESGF distribution site"
+	    (( ret > 1 )) && popd >& /dev/null && return 1
+	    chmod 755 ${fetch_file}
+	    [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}	
+	'''
+	if return_value == 1:
+		print "ESGF Node install script (${fetch_file}) already up-to-date"
+	elif return_value == 0:
+		print "Updated ESGF Node install script ($fetch_file) from ESGF distribution site"
+	elif return_value > 1:
+		os.chdir(starting_directory)
+		return 1
+	os.chmod(fetch_file, 0755)
+	if os.path.isfile(init_scripts_dir+"/"+fetch_file):
+		shutil.copyfile(fetch_file, init_scripts_dir+"/"+fetch_file)
+
+	'''
+		checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-functions
+    ((ret == 1)) && echo "esg-functions script (esg-functions) already up-to-date"
+    ((ret == 0)) && echo "Updated esg-functions script (esg-functions) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-functions
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/esg-functions" % (esg_dist_url,script_maj_version))
+	if return_value == 1:
+		print "esg-functions script (esg_functions.py) already up-to-date"
+	elif return_value == 0:
+		print "Updated esg-functions script (esg_functions.py) from ESGF distribution site"
+	elif return_value > 1:
+		os.chdir(starting_directory)
+		return 1
+	os.chmod(script_install_dir+"/esg_functions.py", 755)
+
+	'''
+		checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-init
+    ((ret == 1)) && echo "esg-init script (esg-init) already up-to-date"
+    ((ret == 0)) && echo "Updated esg-init script (esg-init) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-init
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/esg-init" % (esg_dist_url,script_maj_version))
+	if return_value == 1:
+		print "esg-init script (esg-init) already up-to-date"
+	elif return_value == 0:
+		print "Updated esg-init script (esg-init) from ESGF distribution site"
+	elif return_value > 1:
+		os.chdir(starting_directory)
+		return 1
+	os.chmod(script_install_dir+"/esg_init.py", 755)
+
+	'''
+		checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-bootstrap
+    ((ret == 1)) && echo "ESGF Node bootstrap script (esg-bootstrap) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node bootstrap script (esg-bootstrap) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-bootstrap
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/esg-bootstrap" % (esg_dist_url,script_maj_version))
+	if return_value == 1:
+		print "ESGF Node bootstrap script (esg-bootstrap) already up-to-date"
+	elif return_value == 0:
+		print "Updated ESGF Node bootstrap script (esg-bootstrap) from ESGF distribution site"
+	elif return_value > 1:
+	 	os.chdir(starting_directory)
+		return 1
+	os.chmod(script_install_dir+"/esg_bootstrap.py", 755)
+
+	'''	
+		checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/setup-autoinstall
+    ((ret == 1)) && echo "ESGF Node Auto-install script (esg-bootstrap) already up-to-date"
+    ((ret == 0)) && echo "Updated Auto-install script (setup-autoinstall) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 setup-autoinstall
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/setup-autoinstall" % (esg_dist_url,script_maj_version))
+	if return_value == 1:
+		print "ESGF Node Auto-install script (esg-bootstrap) already up-to-date"
+	elif return_value == 0:
+		print "Updated Auto-install script (setup-autoinstall) from ESGF distribution site"
+	elif return_value > 1:
+		os.chdir(starting_directory)
+		return 1
+	os.chmod(script_install_dir+"/setup-autoinstall", 755)
 
 
+	'''	
+		checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-purge.sh
+    ((ret == 1)) && echo "ESGF Node Purge script (esg-purge.sh) already up-to-date"
+    ((ret == 0)) && echo "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 esg-purge.sh
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/esg-purge" % (esg_dist_url,script_maj_version))
+	if return_value == 1:
+		print "ESGF Node Purge script (esg-purge.sh) already up-to-date"
+	elif return_value == 0:
+		print "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
+	elif return_value > 1:
+		os.chdir(starting_directory)
+		return 1
+	os.chmod(script_install_dir+"/esg_purge.py", 755)
 
+	'''
+		checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/jar_security_scan
+    ((ret == 1)) && echo "jar_security_scan script already up-to-date"
+    ((ret == 0)) && echo "Updated jar_security_scan script from ESGF distribution site"
+    (( ret > 1 )) && popd >& /dev/null && return 1
+    chmod 755 jar_security_scan
+	'''
+	return_value = checked_get("%s/esgf-installer/%s/jar_security_scan" % (esg_dist_url,script_maj_version))
+	if return_value == 1:
+		print "jar_security_scan script already up-to-date"
+	elif return_value == 0:
+		print "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
+	elif return_value > 1:
+		os.chdir(starting_directory)
+		return 1
+	os.chmod(script_install_dir+"/jar_security_scan.py", 755)
 
+	os.chdir(starting_directory)
 
 ############################################
 # Utility Functions

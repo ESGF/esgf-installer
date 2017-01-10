@@ -1080,6 +1080,10 @@ setup_esgcet() {
     )
     [ $? != 0 ] && checked_done 1
 
+
+
+
+
     if [ "${mode}" = "I" ]; then
 
         local choice
@@ -1147,6 +1151,10 @@ setup_esgcet() {
     chown -R ${installer_uid}:${installer_gid} ${publisher_home}
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     #Let's make sure the group is there before we attempt to assign a file to it....
+
+
+
+
     if [ ! $(getent group ${tomcat_group}) ]; then
         /usr/sbin/groupadd -r ${tomcat_group}
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
@@ -1167,9 +1175,21 @@ setup_esgcet() {
         [ $? != 0 ] && popd && checked_done 1
     fi
 
+    unset choice
+    read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
+    choice=$(echo ${choice} | tr 'A-Z' 'a-z')
+    if [ $choice == "y" ] ; then
+        conda install -c pcmdi -c conda-forge -c uvcdat cmor     
+    fi 
+
+
+
     echo "esginitialize -c"
     esginitialize -c
     [ $? != 0 ] && popd && checked_done 1
+
+
+
 
     popd >& /dev/null
     echo
@@ -7010,6 +7030,12 @@ main() {
         write_as_property version ${script_version}
         write_as_property release ${script_release}
         write_as_property gridftp_config
+
+        cond=`grep -c conda.*activate $envfile`
+        if [ $cond == 0 ] ; then
+            echo "source /usr/local/conda/bin/activate esgf-pub" >> $envfile
+        fi
+
         esg_node_finally
     }
 

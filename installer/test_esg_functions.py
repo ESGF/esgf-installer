@@ -2,10 +2,14 @@
 
 import unittest
 import esg_functions
+from esg_init import EsgInit
 import os
 
 
 class test_ESG_Functions(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.test = EsgInit()
 
     # @classmethod
     # def setUpClass(self):
@@ -84,7 +88,7 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.check_version("python", "2.9", "3.3")
         self.assertEqual(output, 1)
 
-    def  test_check_version_with(self):
+    def test_check_version_with(self):
     	output = esg_functions.check_version_with("java", "java -version", "1.6.0")
     	self.assertEqual(output, 0)
 
@@ -92,7 +96,7 @@ class test_ESG_Functions(unittest.TestCase):
     	self.assertEqual(output, 0)
 
     def test_check_module_version(self):
-        output = esg_functions.check_module_version("pylint", "1.6")
+        output = esg_functions.check_module_version("esgcet", "3.0.1")
         self.assertEqual(output,0)
 
         output = esg_functions.check_module_version("pylint", "1.9")
@@ -101,6 +105,102 @@ class test_ESG_Functions(unittest.TestCase):
     def test_get_current_esgf_library_version(self):
         output = esg_functions.get_current_esgf_library_version("esgf-security")
         self.assertEqual(output, 1)
+
+    def test_get_current_webapp_version(self):
+        output = esg_functions.get_current_webapp_version("esg-orp")
+        self.assertEqual(output, "2.9.0")
+
+    def test_check_webapp_version(self):
+        output = esg_functions.check_webapp_version("esg-orp", "2.0")
+        self.assertEqual(output, 0)
+
+        output = esg_functions.check_webapp_version("esg-orp", "4.0")
+        self.assertEqual(output, 1)
+
+    def test_remove_env(self):
+
+        target = open(self.test.envfile, 'a')
+        target.write("export TEST_ENV=/home")
+        target.close()
+
+        output = esg_functions.remove_env("TEST_ENV")
+        self.assertEqual(output,True)
+
+        output = esg_functions.remove_env("NEW_ENV")
+        self.assertEqual(output,True)
+
+
+    def test_deduplicate(self):
+        target = open(self.test.envfile, 'a')
+        target.write("export TEST_ENV=/home\n")
+        target.write("export TEST_ENV=/second\n")
+        target.close()
+
+        output = esg_functions.deduplicate()
+        self.assertEqual(output, 0)
+
+    def test_deduplicate_properties(self):
+        target = open(self.test.config_dictionary["config_file"], 'a')
+        target.write("test.property=first\n")
+        target.write("test.property=second\n")
+        target.close()
+
+        output = esg_functions.deduplicate_properties()
+        self.assertEqual(output, 0)
+
+    def test_check_postgress_process(self):
+        output = esg_functions.check_postgress_process()
+        self.assertEqual(output, 0)
+
+    def test_check_esgf_httpd_process(self):
+        output = esg_functions.check_esgf_httpd_process()
+        self.assertEqual(output, 0)
+
+    def test_path_unique(self):
+        output = esg_functions._path_unique("usr/local/bin:/usr/test/bin:usr/local/bin")
+        print "output: ", output
+        self.assertEqual(output, "usr/local/bin:/usr/test/bin")
+
+    def test_readlinkf(self):
+        output = esg_functions._readlinkf(self.test.envfile)
+        self.assertEqual(output, "/etc/esg.env")
+
+    def test_load_properties(self):
+        output = esg_functions.load_properties()
+        self.assertEqual(output, 0)
+
+    def test_get_property(self):
+        output = esg_functions.get_property("publisher.config")
+        self.assertEqual(output, "esg.ini")
+
+        output = esg_functions.get_property("esgf.http.port")
+        self.assertEqual(output, "80")
+
+    def test_remove_property(self):
+        target = open(self.test.config_dictionary["config_file"], 'a')
+        target.write("test.remove=remove\n")
+        target.close()
+
+        output = esg_functions.remove_property("test.remove")
+        self.assertEqual(output, True)
+
+        output = esg_functions.remove_property("non.existant")
+        self.assertEqual(output, False)
+
+    def test_write_as_property(self):
+        output = esg_functions.write_as_property("new.property", "new_value")
+        self.assertEqual(output, 0)
+
+        find_value = esg_functions.get_property("new.property")
+        self.assertEqual(find_value, "new_value")
+
+    def test_prefix_to_path(self):
+        output = esg_functions.prefix_to_path("/path/to/test", "new/path")
+        self.assertEqual(output, "new/path:/path/to/test")
+
+    def test_backup(self):
+        output = esg_functions.backup(os.getcwd())
+        self.assertEqual(output, 0)
 
 if __name__ == '__main__':
     unittest.main()

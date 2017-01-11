@@ -181,8 +181,8 @@ def check_for_update(filename_1, filename_2 =None):
 		local_file = os.path.realpath(re.search("\w+-\w+$", filename_1).group())
 		local_file = local_file + ".py"
 		local_file = re.sub(r'\-(?=[^-]*$)', "_", local_file)
-		print "remote_file: ", remote_file
-		print "local_file: ", local_file
+		# print "remote_file: ", remote_file
+		# print "local_file: ", local_file
 	else:
 		local_file = filename_1
 		remote_file = filename_2
@@ -197,7 +197,7 @@ def check_for_update(filename_1, filename_2 =None):
 
 	remote_file_md5 = requests.get(remote_file+ '.md5').content
 	remote_file_md5 = remote_file_md5.split()[0].strip()
-	print "remote_file_md5 in check_for_update: ", remote_file_md5
+	# print "remote_file_md5 in check_for_update: ", remote_file_md5
 	local_file_md5 = None
 
 	hasher = hashlib.md5()
@@ -205,7 +205,7 @@ def check_for_update(filename_1, filename_2 =None):
 		buf = f.read()
 		hasher.update(buf)
 		local_file_md5 = hasher.hexdigest()
-		print "local_file_md5 in check_for_update: ", local_file_md5
+		# print "local_file_md5 in check_for_update: ", local_file_md5
 
 	if local_file_md5 != remote_file_md5:
 		print " Update Available @ %s" % (remote_file)
@@ -238,7 +238,8 @@ def checked_get(file_1, file_2 = None):
 		print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file) 
 		return 2
 
-	remote_file_md5 = requests.get(remote_file+ '.md5')
+	remote_file_md5 = requests.get(remote_file+ '.md5').content
+	remote_file_md5 = remote_file_md5.split()[0].strip()
 	local_file_md5 = None
 
 	hasher = hashlib.md5()

@@ -367,8 +367,8 @@ check_version() {
 
     debug_print "\nDEBUG: check_version [$@]"
     [ -z "${2}" ] && return 0
-    local min_version=`echo ${2}|sed "s/_/./"
-    local max_version=`echo ${3}|sed "s/_/./"
+    local min_version=`echo ${2}|sed "s/_/./"`
+    local max_version=`echo ${3}|sed "s/_/./"`
     debug_print "min_version = [$min_version]"
     debug_print "max_version = [$max_version]"
 

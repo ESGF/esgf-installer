@@ -1728,6 +1728,14 @@ migrate_tomcat_credentials_to_esgf() {
 
             local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
         fi
+        if ! egrep -q '<CredentialHandler' ${tomcat_install_dir}/conf/server.xml; then
+            checked_get ${tomcat_install_dir}/conf/server.xml ${esg_dist_url}/externals/bootstrap/node.server.xml-v${tomcat_version%%.*} $((force_install))
+            (( $? > 1 )) && popd && checked_done 1
+            chmod 600 ${tomcat_install_dir}/conf/server.xml
+            chown ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/conf/server.xml
+
+            local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
+        fi
 
         #SET the server.xml variables to contain proper values
         ((DEBUG)) && echo "Editing ${tomcat_install_dir}/conf/server.xml accordingly..."

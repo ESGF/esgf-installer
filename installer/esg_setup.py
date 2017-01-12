@@ -21,6 +21,7 @@ from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
 import esg_functions
+import esg_bootstrap
 
 config = EsgInit()
 
@@ -222,9 +223,127 @@ def check_prerequisites():
    		print "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" 
    		return 1
 
+def is_in_git(file_name):
+	'''
+	 This determines if a specified file is in a git repository.
+     This function will resolve symlinks and check for a .git
+     directory in the directory of the actual file as well as its
+     parent to avoid attempting to call git unless absolutely needed,
+     so as to be able to detect some common cases on a system without
+     git actually installed and in the path.
+    
+     Accepts as an argument the file to be checked
+    
+     Returns 0 if the specified file is in a git repository
+    
+     Returns 2 if it could not detect a git repository purely by file
+     position and git was not available to complete a rev-parse test
+    
+     Returns 1 otherwise
+	'''
+	# test = git.Repo("/Users/williamhill/Development/esgf-installer/installer/esg_init.py").git_dir
 
+	'''
+		debug_print "DEBUG: Checking to see if ${1} is in a git repository..."
 
-   
+    	REALDIR=$(dirname $(_readlinkf ${1}))
+	'''
+	print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
+	absolute_path = esg_functions._readlinkf(file_name)
+
+	'''
+		if [ ! -e $1 ] ; then
+        debug_print "DEBUG: ${1} does not exist yet, allowing creation"
+        return 1
+    fi
+	'''
+	if not os.path.isfile(file_name):
+		print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
+		return 1
+
+	'''
+		if [ -d "${REALDIR}/.git" ] ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+
+	'''
+	pass
+
+def checked_get(local_file, remote_file = None, force_get = None, make_backup_file = None ):
+	'''
+
+     If an update is available then pull it down... then check the md5 sums again!
+	
+	  Yes, this results in 3 network calls to pull down a file, but it
+	  saves total bandwidth and it also allows the updating from the
+	  network process to be cronttab-able while parsimonious with
+	  resources.  It is also very good practice to make sure that code
+	  being executed is the RIGHT code!
+	
+	  The 3rd token is the "force" flag value 1|0.
+	  1 = do not check for update, directly go and fetch the file regardless
+	  0 = first check for update availability. (default)
+	
+	  The 4th token is for indicated whether a backup file should be made flag value 1|0.
+	  1 = yes, create a .bak file if the file is already there before fetching new
+	  0 = no, do NOT make a .bak file even if the file is already there, overwrite it
+	
+	  (When using the force flag you MUST specify the first two args!!)
+	
+	 NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
+	       A return value of 1 only means that the file is up-to-date and there
+	       Is no reason to fetch it.
+	
+	 USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
+	
+	'''
+
+	'''
+		   local force_get=${3:-0}
+		    local make_backup_file=${4:-1} #default to make backup *.bak files if necessary
+
+		    local local_file
+		    local remote_file
+		    if (( $# == 1 )); then
+		        remote_file=${1}
+		        local_file=${1##*/}
+		    elif (( $# >= 2 )); then
+		        local_file=${1}
+		        remote_file=${2}
+		    else
+		        echo "function \"checked_get\":  Called with incorrect number of args! (fatal) args[$@]"
+		        echo " usage: checked_get [<local dest>] <remote source> [force_get (0*|1)] [make_backup_file(0|1*)]"
+		        exit 1
+		    fi
+	'''
+	# try:
+ #    	force_get = str(sys.argv[3])
+	# except IndexError:
+ #    	force_get = '0'
+
+ #    try:
+ #    	make_backup_file = str(sys.argv[4])
+	# except IndexError:
+ #    	make_backup_file = '-1'
+	# force_get = esg_bash2py.Expand.colonMinus(str(sys.argv[3]), "0")
+	# make_backup_file = esg_bash2py.Expand.colonMinus(str(sys.argv[4]), "-1")
+	# local_file = None
+	# remote_file = None
+
+	if remote_file == None:
+		remote_file = file_1
+		local_file = re.search("\w+-\w+$", file_1).group()
+		print "remote_file in checked_get: ", remote_file
+		print "local_file in checked_get: ", local_file
+
+	'''
+		if (_is_in_git "${local_file}") ; then
+        printf "${local_file} is controlled by Git, not updating"
+        return 0
+    fi
+	'''
+	pass
 
 
 def setup_java():
@@ -269,6 +388,7 @@ def setup_java():
 		print "Don't see java distribution dir %s/%s" % (config.config_dictionary["java_install_dir"], java_dist_dir)
 		if not os.path.isfile(java_dist_file):
 			print "Don't see java distribution file %s/%s either" % (os.getcwd(), java_dist_file)
+			print "Downloading Java from %s" % (config.config_dictionary["java_dist_url"])
 
 
 

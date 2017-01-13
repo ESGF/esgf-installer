@@ -16,7 +16,7 @@ import requests
 import stat
 import socket
 import platform
-import yum
+# import yum
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
@@ -24,6 +24,7 @@ import esg_functions
 import esg_bootstrap
 
 config = EsgInit()
+use_local_files=0
 
 def source(script, update=1):
     pipe = subprocess.Popen(". %s; env" % script, stdout=subprocess.PIPE, shell=True)
@@ -248,8 +249,21 @@ def is_in_git(file_name):
 
     	REALDIR=$(dirname $(_readlinkf ${1}))
 	'''
+	try:
+		is_git_installed = subprocess.check_output(["which", "git"])
+	except subprocess.CalledProcessError, e:
+		print "Ping stdout output:\n", e.output
+		print "git is not available to finish checking for a repository -- assuming there isn't one!"
+
+
+
 	print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
 	absolute_path = esg_functions._readlinkf(file_name)
+	one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
+	print "absolute_path: ", absolute_path
+	print "parent_path: ", os.path.abspath(os.path.join(absolute_path, os.pardir))
+	two_directories_up = os.path.abspath(os.path.join(one_directory_up, os.pardir))
+	print "two_directories_up: ", two_directories_up
 
 	'''
 		if [ ! -e $1 ] ; then
@@ -268,9 +282,69 @@ def is_in_git(file_name):
     fi
 
 	'''
-	pass
+	if os.path.isdir(one_directory_up+"/.git"):
+		print "%s is in a git repository" % file_name
+		return 0
 
-def checked_get(local_file, remote_file = None, force_get = None, make_backup_file = None ):
+	'''
+		if [ -d "${REALDIR}/../.git" ] ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+	'''
+	if os.path.isdir(two_directories_up+"/.git"):
+		print "%s is in a git repository" % file_name
+		return 0
+
+
+def check_for_update(filename_1, filename_2 =None):
+	'''
+		 Does an md5 check between local and remote resource
+		 returns 0 (success) iff there is no match and thus indicating that
+		 an update is available.
+		 USAGE: checked_for_update [file] http://www.foo.com/file
+		
+	'''
+	# local_file = None
+	# remote_file = None
+
+	if filename_2 == None:
+		remote_file = filename_1
+		local_file = os.path.realpath(re.search("\w+-\w+$", filename_1).group())
+		local_file = local_file + ".py"
+		local_file = re.sub(r'\-(?=[^-]*$)', "_", local_file)
+		# print "remote_file: ", remote_file
+		# print "local_file: ", local_file
+	else:
+		local_file = filename_1
+		remote_file = filename_2
+
+	if not os.path.isfile(local_file):
+		print  " WARNING: Could not find local file %s" % (local_file)
+		return 0
+	if not os.access(local_file, os.X_OK):
+		print " WARNING: local file %s not executible" % (local_file)
+		os.chmod(local_file, 0755)
+ 
+
+	remote_file_md5 = requests.get(remote_file+ '.md5').content
+	remote_file_md5 = remote_file_md5.split()[0].strip()
+	# print "remote_file_md5 in check_for_update: ", remote_file_md5
+	local_file_md5 = None
+
+	hasher = hashlib.md5()
+	with open(local_file, 'rb') as f:
+		buf = f.read()
+		hasher.update(buf)
+		local_file_md5 = hasher.hexdigest()
+		# print "local_file_md5 in check_for_update: ", local_file_md5
+
+	if local_file_md5 != remote_file_md5:
+		print " Update Available @ %s" % (remote_file)
+		return 0
+	return 1
+
+def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = 1 ):
 	'''
 
      If an update is available then pull it down... then check the md5 sums again!
@@ -343,7 +417,89 @@ def checked_get(local_file, remote_file = None, force_get = None, make_backup_fi
         return 0
     fi
 	'''
-	pass
+	if is_in_git(local_file) == 0:
+		print "%s is controlled by Git, not updating" % (local_file)
+
+	'''
+		if ((use_local_files)) && [ -e "${local_file}" ]; then
+        printf "
+    ***************************************************************************
+    ALERT....
+    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
+    file: $(readlink -f ${local_file})
+    ***************************************************************************\n\n"
+        return 0
+    fi
+	'''
+	if use_local_files and if os.path.isfile(local_file):
+		print '''
+			***************************************************************************
+    		ALERT....
+    		NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
+    		file: %s
+    		***************************************************************************\n\n
+		''' % (esg_functions._readlinkf(local_file))
+
+	'''
+		if ((force_get == 0)); then
+        check_for_update $@
+        [ $? != 0 ] && return 1
+    fi
+	'''
+	if force_get == 1:
+		updates_available = check_for_update(local_file, remote_file)
+		if updates_available != 0:
+			return 1
+
+	'''
+		if [ -e ${local_file} ] && ((make_backup_file)) ; then
+        cp -v ${local_file} ${local_file}.bak
+        chmod 600 ${local_file}.bak
+    fi
+	'''
+	if os.path.isfile(local_file) and make_backup_file == 1:
+		shutil.copyfile(local_file, local_file+".bak")
+		os.chmod(local_file+".bak", 600)
+
+	'''
+		echo "Fetching file from ${remote_file} -to-> ${local_file}"
+    wget --no-check-certificate --progress=bar:force -O ${local_file} ${remote_file}
+    [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
+    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 |head -1| tr -s " " | cut -d " " -f 1) >& /dev/null
+    [ $? != 0 ] && echo " WARNING: Could not verify file! ${local_file}" && return 3
+    echo "[VERIFIED]"
+    return 0
+	'''
+
+	print "Fetching file from %s -to-> %s" % (remote_file, local_file)
+	r = requests.get(remote_file)
+	if not r.status_code == requests.codes.ok:
+		print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
+		r..raise_for_status() 
+		return 2
+	else:
+		file = open(local_file, "w")
+		file.write(r.content)
+		file.close()
+
+	remote_file_md5 = requests.get(remote_file+ '.md5').content
+	remote_file_md5 = remote_file_md5.split()[0].strip()
+	print "remote_file_md5 in checked_get: ", remote_file_md5
+	local_file_md5 = None
+
+	hasher = hashlib.md5()
+	with open(local_file, 'rb') as f:
+		buf = f.read()
+		hasher.update(buf)
+		local_file_md5 = hasher.hexdigest()
+		print "local_file_md5 in checked_get: ", local_file_md5
+
+	if local_file_md5 != remote_file_md5:
+		print " WARNING: Could not verify this file! %s" % (local_file)
+		return 3
+	else:
+		print "[VERIFIED]"
+		return 0
 
 
 def setup_java():
@@ -376,7 +532,7 @@ def setup_java():
 	last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"])
 
 	os.mkdir(config.config_dictionary["workdir"])
-	current_directory = os.getcwd()
+	starting_directory = os.getcwd()
 	os.chdir(config.config_dictionary["workdir"])
 	 # source_backup_name = re.search("\w+$", source).group()
 
@@ -389,7 +545,17 @@ def setup_java():
 		if not os.path.isfile(java_dist_file):
 			print "Don't see java distribution file %s/%s either" % (os.getcwd(), java_dist_file)
 			print "Downloading Java from %s" % (config.config_dictionary["java_dist_url"])
-
+			if checked_get(config.config_dictionary["java_dist_file"],config.config_dictionary["java_dist_url"]) != 0:
+				print " ERROR: Could not download Java" 
+				os.chdir(starting_directory)
+				esg_functions.checked_done(1)
+			else:
+				print "unpacking %s..." % (config.config_dictionary["java_dist_file"])
+				extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
+				tar = tarfile.open(config.config_dictionary["java_dist_file"])
+        		tar.extractall(extraction_location) 
+        		tar.close()
+        		print "Extracted in %s" % (extraction_location)
 
 
 # yb=yum.YumBase()

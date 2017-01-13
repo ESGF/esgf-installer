@@ -31,14 +31,14 @@ config = EsgInit()
 # subprocess.call('echo $HOME', shell=True)
 # subprocess.check_call('echo $PATH', shell=True)
 
-
+#TODO: Come up with better function name
 def checked_done(status):
     '''
             if positional parameter at position 1 is non-zero, then print error message.
     '''
-    print "sys.argv[1]: ", sys.argv[1]
-    print "type: ", type(sys.argv[1])
-    if int(sys.argv[1]) != 0:
+    # print "sys.argv[1]: ", sys.argv[1]
+    # print "type: ", type(sys.argv[1])
+    if int(status) != 0:
         print(
             ""
             "Sorry... \n"

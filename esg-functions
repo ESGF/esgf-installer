@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #####
 # esg-functions: ESGF Node Application Stack Functions
 # description: Installer Functions for the ESGF Node application stack
@@ -372,8 +371,8 @@ check_version() {
 
     debug_print "\nDEBUG: check_version [$@]"
     [ -z "${2}" ] && return 0
-    local min_version=${2}
-    local max_version=${3}
+    local min_version=`echo ${2}|sed "s/_/./"`
+    local max_version=`echo ${3}|sed "s/_/./"`
     debug_print "min_version = [$min_version]"
     debug_print "max_version = [$max_version]"
 
@@ -383,6 +382,8 @@ check_version() {
 
     local current_version=$(cat ${version_tempfile} 2>&1 | perl -ne '/(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*/, print "$1 "' | tr -d "\"" | cut -d " " -f1,1)
     local current_version=$(_trimline ${current_version})
+	bl=`echo ${current_version}|sed "s/_/./"`
+	current_version=${bl}
     debug_print "current_version = [$current_version]"
 
     check_version_helper "${current_version}" "${min_version}" "${max_version}"
@@ -1352,7 +1353,7 @@ get_esgf_dist_mirror() {
         a=${a/./}
 
         # connect to host
-        curl --silent --output /dev/null $host --connect-timeout 1 -m 2
+        curl --silent -H 'Cache-Control: no-cache' --output /dev/null http://$host$page/dist/hundredk --connect-timeout 1 -m 3
         [ $? != 0 ] && continue
 
         # end date

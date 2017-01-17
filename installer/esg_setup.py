@@ -552,10 +552,41 @@ def setup_java():
 			else:
 				print "unpacking %s..." % (config.config_dictionary["java_dist_file"])
 				extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
-				tar = tarfile.open(config.config_dictionary["java_dist_file"])
-        		tar.extractall(extraction_location) 
-        		tar.close()
-        		print "Extracted in %s" % (extraction_location)
+				try:
+					tar = tarfile.open(config.config_dictionary["java_dist_file"])
+	        		tar.extractall(extraction_location) 
+	        		tar.close()
+        			print "Extracted in %s" % (extraction_location)
+        		except tarfile.TarError:
+        			print " ERROR: Could not extract Java"
+        			os.chdir(starting_directory)
+        			esg_functions.checked_done(1)
+
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it
+
+    '''
+	if [ -e ${java_dist_file} ] && [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
+        echo "unpacking ${java_dist_file}..."
+        tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
+        [ $? != 0 ] && echo " ERROR: Could not extract Java..." && popd && checked_done 1
+    fi	
+    '''
+    if os.path.isfile(java_dist_file) and not os.path.isdir(re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])+"/"+config.config_dictionary["java_install_dir"]):
+    	print "unpacking %s..." % (java_dist_file)
+    	extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
+		try:
+			tar = tarfile.open(config.config_dictionary["java_dist_file"])
+    		tar.extractall(extraction_location) 
+    		tar.close()
+			print "Extracted in %s" % (extraction_location)
+		except tarfile.TarError:
+			print " ERROR: Could not extract Java"
+			os.chdir(starting_directory)
+			esg_functions.checked_done(1)
+
+	if not os.path.isdir(config.config_dictionary["java_install_dir"]):
+		
 
 
 # yb=yum.YumBase()

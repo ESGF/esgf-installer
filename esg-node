@@ -6931,6 +6931,7 @@ main() {
     #---------------------------------------
 
     #---subsystems-----
+        local_file="no"
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
@@ -6952,7 +6953,7 @@ main() {
     #---------------------------------------
         [ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && local_file="yes"  setup_subsystem security esgf-security $@
         [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
-
+        local_file="no"
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------

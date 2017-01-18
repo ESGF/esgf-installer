@@ -46,6 +46,16 @@ os.environ['UVCDAT_ANONYMOUS_LOG'] = False
 # 	# target = open(filename, 'w')
 # 	target = open(config.config_dictionary['envfile'], 'w')
 # 	target.write("export JAVA_HOME="+config.config_dictionary["java_install_dir"])
+
+'''
+	ESGCET Package (Publisher)
+'''
+def setup_esgcet():
+	print "Checking for esgcet (publisher) %s " % (config.config_dictionary["esgcet_version"])
+	esg_functions.check_module_version("esgcet", config.config_dictionary["esgcet_version"])
+	pass
+
+
 def main():
 	internal_node_code_versions = {}
 	test = EsgInit()

@@ -115,9 +115,12 @@ function load_pipe(){
 		echo "Answered question $promptct of $numprompts";
 	done</tmp/answers
 	echo "All prompts have now been answered. Do not terminate this script till the installation completes fully.";
-	while [ 1 ]; do
-		sleep 2;
-	done
+	cat </tmp/outputpipe
+	kill -9 $proc;
+	rm -f /tmp/outputpipe;
+	rm -f /tmp/inputpipe;
+	rm -f /tmp/answers;
+	exit 0;
 }
 echo "Do you wish to save the answer file from this questionnaire for later use? (n/Y)"
 read -e choice;

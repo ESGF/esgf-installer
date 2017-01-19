@@ -223,6 +223,7 @@ class EsgInit(object):
             # external_script_variables["publisher_config"] = subprocess.check_output(
             #     "${ESGINI##*/}", shell=True)
             external_script_variables["publisher_config"] = "esg.ini"
+            external_script_variables["ESGINI"] = external_script_variables["publisher_home"] + "/" + external_script_variables["publisher_config"]
 
         self.config_dictionary.update(external_script_variables)
         return external_script_variables

@@ -212,7 +212,8 @@ def check_for_update(filename_1, filename_2 =None):
 		return 0
 	return 1
 
-
+#TODO: Split into two functions: checked_get_local and checked_get_remote
+#TODO: Come up with better name than checked_get
 def checked_get(file_1, file_2 = None):
 	
 	if check_for_update(file_1, file_2) != 0:
@@ -220,7 +221,9 @@ def checked_get(file_1, file_2 = None):
 
 	if file_2 == None:
 		remote_file = file_1
-		local_file = re.search("\w+$", file_1).group()
+		local_file = re.search("\w+-\w+$", file_1).group()
+		print "remote_file in checked_get: ", remote_file
+		print "local_file in checked_get: ", local_file
 	else:
 		local_file = file_1
 		remote_file = file_2
@@ -240,6 +243,7 @@ def checked_get(file_1, file_2 = None):
 
 	remote_file_md5 = requests.get(remote_file+ '.md5').content
 	remote_file_md5 = remote_file_md5.split()[0].strip()
+	print "remote_file_md5 in checked_get: ", remote_file_md5
 	local_file_md5 = None
 
 	hasher = hashlib.md5()
@@ -247,6 +251,7 @@ def checked_get(file_1, file_2 = None):
 		buf = f.read()
 		hasher.update(buf)
 		local_file_md5 = hasher.hexdigest()
+		print "local_file_md5 in checked_get: ", local_file_md5
 
 	if local_file_md5 != remote_file_md5:
 		print " WARNING: Could not verify this file!" 

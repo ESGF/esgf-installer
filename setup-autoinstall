@@ -340,7 +340,7 @@ if [ "$ext_idp" = "y" ]; then
 	va['fix-29']='blank' #add certs to truststore
 fi
 if [ "$install_type" = "data" ]; then
-	va['install-compute']=`get_entry 'whether you wish to install COMPUTE role(Y/n) 'y''`
+	va['install-compute']=`get_entry 'whether you wish to install COMPUTE role(Y/n)' 'y'`
 	va['fix-29']='blank'
 fi
 echo -n >/tmp/answers;

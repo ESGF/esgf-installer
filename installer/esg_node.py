@@ -1,5 +1,10 @@
 import os
 import subprocess
+import requests
+import pip
+import hashlib
+import shutil
+from git import Repo
 from time import sleep
 import esg_functions
 import esg_bash2py
@@ -27,6 +32,7 @@ script_release="Centaur"
 envfile="/etc/esg.env"
 force_install = False
 upgrade_mode = 0
+esg_dist_url="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
 
 #--------------
 #User Defined / Settable (public)
@@ -118,8 +124,68 @@ def setup_esgcet(upgrade_mode = None):
 			raise
         sleep(1)
         pass
-	
 
+	print "current directory: ", os.getcwd()
+	starting_directory = os.getcwd()
+	'''
+		curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
+	      echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
+	      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure $esg_dist_url/externals/${ln}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+	      if [ $? -eq 0 ]; then
+	         [OK]
+	         echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln
+	      else
+	         [FAIL]
+	      fi
+	    done
+	'''
+	r = requests.get(esg_dist_url+"/externals/piplist.txt")
+	pip_package_list_names = r.text
+	for name in pip_package_list_names:
+		print "downloading %s: ", name
+		r = requests.get(esg_dist_url+"/externals/"+name)
+		if r.status_code == requests.codes.ok:
+			hasher = hashlib.md5()
+			with open(r, 'rb') as f:
+				buf = f.read()
+				hasher.update(buf)
+				pip_download_md5 = hasher.hexdigest()
+				print "pip_download_md5 in checked_get: ", pip_download_md5
+
+
+		pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5")
+		pip_package_remote_md5 = pip_package_remote_md5.split()[0].strip()
+		if pip_download_md5 != pip_package_remote_md5:
+			print " WARNING: Could not verify this file!" 
+			print "[FAIL]"
+		else:
+			print "[OK]"
+			pip.main(['install', name])
+
+	#clone publisher
+	publisher_git_protocol="git://"
+
+	if force_install and os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher"):
+		try:
+			shutil.rmtree(config.config_dictionary["workdir"]+"esg-publisher")
+		except:
+			print "Could not delete directory: %s" % (config.config_dictionary["workdir"]+"esg-publisher")
+
+	if os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher"):
+		print "Fetching the cdat project from GIT Repo... %s" % (config.config_dictionary["publisher_repo"])
+		Repo.clone_from(config.config_dictionary["publisher_repo"], config.config_dictionary["workdir"]+"esg-publisher")
+		if not os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher/.git"):
+			publisher_git_protocol="https://"
+			print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
+			Repo.clone_from(config.config_dictionary["publisher_repo_https"], config.config_dictionary["workdir"]+"esg-publisher")
+			if not os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher/.git"):
+				print "Could not fetch from cdat's repo (with git nor https protocol)"
+				esg_functions.checked_done(1)
+
+	os.chdir(config.config_dictionary["workdir"]+"esg-publisher")
+
+
+	
 
 	pass
 

@@ -183,6 +183,65 @@ def setup_esgcet(upgrade_mode = None):
 				esg_functions.checked_done(1)
 
 	os.chdir(config.config_dictionary["workdir"]+"esg-publisher")
+	publisher_repo_local = Repo(config.config_dictionary["workdir"]+"esg-publisher")
+	#pull from remote
+	publisher_repo_local.remotes.origin.pull()
+	#Checkout publisher tag
+	try:
+		publisher_repo_local.head.reference = publisher_repo_local.tags[config.config_dictionary["publisher_tag"]]
+		publisher_repo_local.head.reset(index=True, working_tree=True)
+	except:
+		print " WARNING: Problem with checking out publisher (esgcet) revision [%s] from repository :-(" % (config.config_dictionary["esgcet_version"])
+
+	#install publisher
+	'''
+	output = subprocess.check_output(
+    'echo to stdout; echo to stderr 1>&2; exit 1',
+    shell=True,
+    )
+    '''
+	installation_command = "cd src/python/esgcet; %s/bin/python setup.py install" % (config.config_dictionary["cdat_home"])
+	try:
+		output = subprocess.call(installation_command, shell=True)
+		if output != 0:
+			esg_functions.checked_done(1)
+	except:
+		esg_functions.checked_done(1)
+
+	if mode == "I":
+		choice = None
+
+		while choice != 0:
+			print "Would you like a \"system\" or \"user\" publisher configuration: \n"
+			print "\t-------------------------------------------\n"
+			print "\t*[1] : System\n"
+        	print "\t [2] : User\n"
+	        print "\t-------------------------------------------\n"
+	        print "\t [C] : (Custom)\n"
+	        print "\t-------------------------------------------\n"
+
+	        choice = raw_input("select [1] > ")
+	        if choice == 1:
+	        	config.config_dictionary["publisher_home"]=config.esg_config_dir+"/esgcet"
+	        elif choice == 2:
+	        	config.config_dictionary["publisher_home"]=os.environ["HOME"]+"/.esgcet"
+	        elif choice.lower() == "c":
+	        	# input = None
+	        	publisher_config_directory_input = raw_input("Please enter the desired publisher configuration directory [%s] " %  config.config_dictionary["publisher_home"])
+	        	config.config_dictionary["publisher_home"] = publisher_config_directory_input
+	        	publisher_config_filename_input = raw_input("Please enter the desired publisher configuration filename [%s] " % config.config_dictionary["publisher_config"])
+	        	choice = "(Manual Entry)"
+	        else:
+	        	print "Invalid Selection %s " % (choice)
+
+	        print "You have selected: %s" % (choice)
+	        print "Publisher configuration file -> [%s/%s]" % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"])
+	        is_correct = raw_input("Is this correct? [Y/n] ")
+	        if is_correct.lower() == "n":
+        		continue
+	        else:
+	        	break 
+
 
 
 	

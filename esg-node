@@ -1035,7 +1035,7 @@ setup_esgcet() {
     echo "$(pwd)"
 
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -c conda-forge lxml requests psycopg2 decorator Tempita
+    conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
     
     if [ $ESGF_INSECURE > 0 ] ; then
 
@@ -1176,12 +1176,18 @@ setup_esgcet() {
     fi
 
     unset choice
-    read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
-    choice=$(echo ${choice} | tr 'A-Z' 'a-z')
-    if [ $choice == "y" ] ; then
-        conda install -c pcmdi -c conda-forge -c uvcdat cmor     
-    fi 
 
+    if [ ! -d /usr/local/cmip6-cmor-tables ] ; then
+
+      read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
+      choice=$(echo ${choice} | tr 'A-Z' 'a-z')
+      if [ $choice == "y" ] ; then
+        conda install -c pcmdi -c conda-forge -c uvcdat cmor    
+        pushd $install_dir
+        git clone https://github.com/PCMDI/cmip6-cmor-tables
+        popd 
+      fi 
+    fi
 
 
     echo "esginitialize -c"
@@ -6086,6 +6092,11 @@ main() {
 	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
+
+        res=`echo $CDAT_HOME | grep -c conda` 
+        if [ $res == 0 ]; then
+            unset CDAT_HOME
+        fi
 	# Determining ESGF distribution mirror
         if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
        	 get_esgf_dist_mirror "interactive" $devel

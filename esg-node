@@ -7060,6 +7060,9 @@ main() {
 	psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
         echo "Node installation is complete."
     fi
+    if [ -p /tmp/outputpipe ]; then
+        echo "Installer ran to completion. Now cleaning up. There will be a 'Killed' message in your setup-autoinstall terminal, which is not a cause for concern." >/tmp/outputpipe;
+    fi
 
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid

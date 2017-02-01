@@ -173,9 +173,11 @@ class EsgInit(object):
         # del pg_secret
         # local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
         # pub_secret = subprocess.check_output("cat " + pub_secret_file + " 2>/dev/null ")
+        with open(self.pub_secret_file, 'rb') as f:
+            external_script_variables["pub_secret"] = f.read()
         # publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
-        # publisher_db_user_passwd = esg_bash2py.Expand.colonMinus(
-        # "publisher_db_user_passwd", pub_secret)
+        external_script_variables["publisher_db_user_passwd"] = esg_bash2py.Expand.colonMinus(
+        "publisher_db_user_passwd", external_script_variables["pub_secret"])
         # del pub_secret
         external_script_variables[
             "postgress_host"] = esg_bash2py.Expand.colonMinus("PGHOST", "localhost")

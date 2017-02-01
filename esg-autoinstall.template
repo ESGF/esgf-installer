@@ -102,3 +102,6 @@ set DBLOWUSER "esgcet"
 # PostgreSQL port number
 # DO NOT CURRENTLY CHANGE THIS
 set PGPORT 5432
+
+# Force recreation of SOLR replica indexes
+set SOLRREINDEX ""

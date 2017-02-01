@@ -272,6 +272,9 @@ expect {
     "Enter (simple) CA's certificate password" {
         send ${CACERTPASS}\n ; exp_continue
     }
+    "Are you sure you wish to add a NEW replica index" {
+        send ${SOLRREINDEX}\n ; exp_continue
+    }
 
     # Victory conditions
     "Node installation is complete." {

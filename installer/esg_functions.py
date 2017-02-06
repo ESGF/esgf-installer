@@ -1213,3 +1213,236 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     else:
         config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[0]
 
+def is_in_git(file_name):
+    '''
+     This determines if a specified file is in a git repository.
+     This function will resolve symlinks and check for a .git
+     directory in the directory of the actual file as well as its
+     parent to avoid attempting to call git unless absolutely needed,
+     so as to be able to detect some common cases on a system without
+     git actually installed and in the path.
+    
+     Accepts as an argument the file to be checked
+    
+     Returns 0 if the specified file is in a git repository
+    
+     Returns 2 if it could not detect a git repository purely by file
+     position and git was not available to complete a rev-parse test
+    
+     Returns 1 otherwise
+    '''
+    # test = git.Repo("/Users/williamhill/Development/esgf-installer/installer/esg_init.py").git_dir
+
+    '''
+        debug_print "DEBUG: Checking to see if ${1} is in a git repository..."
+
+        REALDIR=$(dirname $(_readlinkf ${1}))
+    '''
+    try:
+        is_git_installed = subprocess.check_output(["which", "git"])
+    except subprocess.CalledProcessError, e:
+        print "Ping stdout output:\n", e.output
+        print "git is not available to finish checking for a repository -- assuming there isn't one!"
+
+
+
+    print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
+    absolute_path = esg_functions._readlinkf(file_name)
+    one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
+    print "absolute_path: ", absolute_path
+    print "parent_path: ", os.path.abspath(os.path.join(absolute_path, os.pardir))
+    two_directories_up = os.path.abspath(os.path.join(one_directory_up, os.pardir))
+    print "two_directories_up: ", two_directories_up
+
+    '''
+        if [ ! -e $1 ] ; then
+        debug_print "DEBUG: ${1} does not exist yet, allowing creation"
+        return 1
+    fi
+    '''
+    if not os.path.isfile(file_name):
+        print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
+        return 1
+
+    '''
+        if [ -d "${REALDIR}/.git" ] ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+
+    '''
+    if os.path.isdir(one_directory_up+"/.git"):
+        print "%s is in a git repository" % file_name
+        return 0
+
+    '''
+        if [ -d "${REALDIR}/../.git" ] ; then
+        debug_print "DEBUG: ${1} is in a git repository"
+        return 0
+    fi
+    '''
+    if os.path.isdir(two_directories_up+"/.git"):
+        print "%s is in a git repository" % file_name
+        return 0
+
+
+
+def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = 1 ):
+    '''
+
+     If an update is available then pull it down... then check the md5 sums again!
+    
+      Yes, this results in 3 network calls to pull down a file, but it
+      saves total bandwidth and it also allows the updating from the
+      network process to be cronttab-able while parsimonious with
+      resources.  It is also very good practice to make sure that code
+      being executed is the RIGHT code!
+    
+      The 3rd token is the "force" flag value 1|0.
+      1 = do not check for update, directly go and fetch the file regardless
+      0 = first check for update availability. (default)
+    
+      The 4th token is for indicated whether a backup file should be made flag value 1|0.
+      1 = yes, create a .bak file if the file is already there before fetching new
+      0 = no, do NOT make a .bak file even if the file is already there, overwrite it
+    
+      (When using the force flag you MUST specify the first two args!!)
+    
+     NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
+           A return value of 1 only means that the file is up-to-date and there
+           Is no reason to fetch it.
+    
+     USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
+    
+    '''
+
+    '''
+           local force_get=${3:-0}
+            local make_backup_file=${4:-1} #default to make backup *.bak files if necessary
+
+            local local_file
+            local remote_file
+            if (( $# == 1 )); then
+                remote_file=${1}
+                local_file=${1##*/}
+            elif (( $# >= 2 )); then
+                local_file=${1}
+                remote_file=${2}
+            else
+                echo "function \"checked_get\":  Called with incorrect number of args! (fatal) args[$@]"
+                echo " usage: checked_get [<local dest>] <remote source> [force_get (0*|1)] [make_backup_file(0|1*)]"
+                exit 1
+            fi
+    '''
+    # try:
+ #      force_get = str(sys.argv[3])
+    # except IndexError:
+ #      force_get = '0'
+
+ #    try:
+ #      make_backup_file = str(sys.argv[4])
+    # except IndexError:
+ #      make_backup_file = '-1'
+    # force_get = esg_bash2py.Expand.colonMinus(str(sys.argv[3]), "0")
+    # make_backup_file = esg_bash2py.Expand.colonMinus(str(sys.argv[4]), "-1")
+    # local_file = None
+    # remote_file = None
+
+    if remote_file == None:
+        remote_file = file_1
+        local_file = re.search("\w+-\w+$", file_1).group()
+        print "remote_file in checked_get: ", remote_file
+        print "local_file in checked_get: ", local_file
+
+    '''
+        if (_is_in_git "${local_file}") ; then
+        printf "${local_file} is controlled by Git, not updating"
+        return 0
+    fi
+    '''
+    if is_in_git(local_file) == 0:
+        print "%s is controlled by Git, not updating" % (local_file)
+
+    '''
+        if ((use_local_files)) && [ -e "${local_file}" ]; then
+        printf "
+    ***************************************************************************
+    ALERT....
+    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
+    file: $(readlink -f ${local_file})
+    ***************************************************************************\n\n"
+        return 0
+    fi
+    '''
+    if use_local_files and if os.path.isfile(local_file):
+        print '''
+            ***************************************************************************
+            ALERT....
+            NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
+            file: %s
+            ***************************************************************************\n\n
+        ''' % (esg_functions._readlinkf(local_file))
+
+    '''
+        if ((force_get == 0)); then
+        check_for_update $@
+        [ $? != 0 ] && return 1
+    fi
+    '''
+    if force_get == 1:
+        updates_available = check_for_update(local_file, remote_file)
+        if updates_available != 0:
+            return 1
+
+    '''
+        if [ -e ${local_file} ] && ((make_backup_file)) ; then
+        cp -v ${local_file} ${local_file}.bak
+        chmod 600 ${local_file}.bak
+    fi
+    '''
+    if os.path.isfile(local_file) and make_backup_file == 1:
+        shutil.copyfile(local_file, local_file+".bak")
+        os.chmod(local_file+".bak", 600)
+
+    '''
+        echo "Fetching file from ${remote_file} -to-> ${local_file}"
+    wget --no-check-certificate --progress=bar:force -O ${local_file} ${remote_file}
+    [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
+    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 |head -1| tr -s " " | cut -d " " -f 1) >& /dev/null
+    [ $? != 0 ] && echo " WARNING: Could not verify file! ${local_file}" && return 3
+    echo "[VERIFIED]"
+    return 0
+    '''
+
+    print "Fetching file from %s -to-> %s" % (remote_file, local_file)
+    r = requests.get(remote_file)
+    if not r.status_code == requests.codes.ok:
+        print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
+        r..raise_for_status() 
+        return 2
+    else:
+        file = open(local_file, "w")
+        file.write(r.content)
+        file.close()
+
+    remote_file_md5 = requests.get(remote_file+ '.md5').content
+    remote_file_md5 = remote_file_md5.split()[0].strip()
+    print "remote_file_md5 in checked_get: ", remote_file_md5
+    local_file_md5 = None
+
+    hasher = hashlib.md5()
+    with open(local_file, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+        local_file_md5 = hasher.hexdigest()
+        print "local_file_md5 in checked_get: ", local_file_md5
+
+    if local_file_md5 != remote_file_md5:
+        print " WARNING: Could not verify this file! %s" % (local_file)
+        return 3
+    else:
+        print "[VERIFIED]"
+        return 0
+
+
+

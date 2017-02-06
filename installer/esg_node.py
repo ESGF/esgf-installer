@@ -474,23 +474,25 @@ def start_postgress():
     esg_functions.checked_done(0)
 
 def main():
-    internal_node_code_versions = {}
-    test = EsgInit()
-    print "install_prefix: ", test.install_prefix
 
-    internal_node_code_versions = test.populate_internal_esgf_node_code_versions()
-    print internal_node_code_versions
-    print "apache_frontend_version: ", internal_node_code_versions["apache_frontend_version"]   
+    print "inside main function of esg_node"
+    # internal_node_code_versions = {}
+    # test = EsgInit()
+    # print "install_prefix: ", test.install_prefix
 
-    local_test = test.populate_external_programs_versions()
-    print "local_test: ", local_test
-    print "globals type: ", type(globals())
-    globals().update(local_test)
-    print "globals: ", globals()
+    # internal_node_code_versions = test.populate_internal_esgf_node_code_versions()
+    # print internal_node_code_versions
+    # print "apache_frontend_version: ", internal_node_code_versions["apache_frontend_version"]   
 
-    ext_script_vars = test.populate_external_script_variables()
-    globals().update(ext_script_vars)
-    print "globals after update: ", globals()
+    # local_test = test.populate_external_programs_versions()
+    # print "local_test: ", local_test
+    # print "globals type: ", type(globals())
+    # globals().update(local_test)
+    # print "globals: ", globals()
+
+    # ext_script_vars = test.populate_external_script_variables()
+    # globals().update(ext_script_vars)
+    # print "globals after update: ", globals()
 
 
 if __name__ == '__main__':

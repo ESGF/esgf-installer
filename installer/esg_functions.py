@@ -319,7 +319,7 @@ def check_module_version(module_name, min_version):
     '''
     try:
         module_version = __import__(module_name).__version__
-    except AttributeError as e:
+    except (AttributeError, ImportError) as e:
         print "error: ", e
     else:
         result = check_version_helper(

@@ -155,7 +155,7 @@ def setup_esgcet(upgrade_mode = None):
     r = requests.get(esg_dist_url+"/externals/piplist.txt")
     pip_package_list_names = r.text
     for name in pip_package_list_names:
-        print "downloading %s: ", name
+        print "downloading %s: " % (name)
         r = requests.get(esg_dist_url+"/externals/"+name)
         if r.status_code == requests.codes.ok:
             hasher = hashlib.md5()
@@ -166,7 +166,7 @@ def setup_esgcet(upgrade_mode = None):
                 print "pip_download_md5 in checked_get: ", pip_download_md5
 
 
-        pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5")
+        pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5").content
         pip_package_remote_md5 = pip_package_remote_md5.split()[0].strip()
         if pip_download_md5 != pip_package_remote_md5:
             print " WARNING: Could not verify this file!" 

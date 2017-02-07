@@ -153,7 +153,8 @@ def setup_esgcet(upgrade_mode = None):
         done
     '''
     r = requests.get(esg_dist_url+"/externals/piplist.txt")
-    pip_package_list_names = r.text
+    print "r.text: ", r.text
+    pip_package_list_names = str(r.text).split()
     for name in pip_package_list_names:
         print "downloading %s: " % (name)
         r = requests.get(esg_dist_url+"/externals/"+name)
@@ -169,12 +170,11 @@ def setup_esgcet(upgrade_mode = None):
         pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5").content
         pip_package_remote_md5 = pip_package_remote_md5.split()[0].strip()
         if pip_download_md5 != pip_package_remote_md5:
-            print " WARNING: Could not verify this file!" 
+            print " WARNING: Could not verify this file!"
             print "[FAIL]"
         else:
             print "[OK]"
             pip.main(['install', name])
-
     #clone publisher
     publisher_git_protocol="git://"
 

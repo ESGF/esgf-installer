@@ -406,8 +406,8 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 	# remote_file = None
 
 	if remote_file == None:
-		remote_file = file_1
-		local_file = re.search("\w+-\w+$", file_1).group()
+		remote_file = local_file
+		local_file = re.search("\w+-\w+$", local_file).group()
 		print "remote_file in checked_get: ", remote_file
 		print "local_file in checked_get: ", local_file
 

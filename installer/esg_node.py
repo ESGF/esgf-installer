@@ -46,9 +46,9 @@ install_prefix = esg_bash2py.Expand.colonMinus(config.install_prefix, esg_bash2p
 # os.environ['UVCDAT_ANONYMOUS_LOG'] = False
 
 esg_root_id = None
-if config.config_dictionary["esg_root_id"]:
+try:
     esg_root_id = config.config_dictionary["esg_root_id"]
-else:
+except KeyError:
     esg_root_id = esg_functions.get_property("esg_root_id")
 
 node_short_name = None

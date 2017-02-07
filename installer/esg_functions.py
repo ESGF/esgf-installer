@@ -1374,7 +1374,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         return 0
     fi
     '''
-    if use_local_files and if os.path.isfile(local_file):
+    if use_local_files and os.path.isfile(local_file):
         print '''
             ***************************************************************************
             ALERT....

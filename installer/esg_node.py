@@ -52,7 +52,9 @@ except KeyError:
     esg_root_id = esg_functions.get_property("esg_root_id")
 
 node_short_name = None
-if not config.config_dictionary["node_short_name"]:
+try:
+    node_short_name = config.config_dictionary["node_short_name"]
+except:
     node_short_name = esg_functions.get_property("node_short_name")
 # write_java_env() {
 #     ((show_summary_latch++))

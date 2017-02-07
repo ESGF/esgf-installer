@@ -117,7 +117,7 @@ def setup_esgcet(upgrade_mode = None):
 
     continue_installation_answer = None
 
-    if os.path.isfile(config.config_dictionary["publisher_home"] + "/" + config.config_dictionary["publisher_config"]):
+    if os.path.isfile(os.path.join(config.config_dictionary["publisher_home"],config.config_dictionary["publisher_config"])):
         print "Detected an existing esgcet installation..."
         if default_upgrade_answer == "N":
             continue_installation_answer = raw_input("Do you want to continue with esgcet installation and setup? [y/N]")

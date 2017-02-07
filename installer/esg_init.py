@@ -220,7 +220,7 @@ class EsgInit(object):
             print "os.environ['ESGINI'] not found"
             # external_script_variables["publisher_home"] = subprocess.check_output(
             #     "${ESGINI%/*}", shell=True)
-            external_script_variables["publisher_home"] = self.config_dictionary["esg_config_dir"]+"/esgcet"
+            external_script_variables["publisher_home"] = self.esg_config_dir+"/esgcet"
             # external_script_variables["publisher_config"] = subprocess.check_output(
             #     "${ESGINI##*/}", shell=True)
             external_script_variables["publisher_config"] = "esg.ini"
@@ -320,8 +320,8 @@ class EsgInit(object):
         internal_script_variables = {}
         internal_script_variables["esg_backup_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_backup_dir", self.esg_root_dir + "/backups")
-        internal_script_variables["esg_config_dir"] = esg_bash2py.Expand.colonMinus(
-            "esg_config_dir", self.esg_root_dir + "/config")
+        # internal_script_variables["esg_config_dir"] = esg_bash2py.Expand.colonMinus(
+        #     "esg_config_dir", self.esg_root_dir + "/config")
         internal_script_variables["esg_log_dir"] = esg_bash2py.Expand.colonMinus(
             "esg_log_dir", self.esg_root_dir + "/log")
         internal_script_variables["esg_tools_dir"] = esg_bash2py.Expand.colonMinus(

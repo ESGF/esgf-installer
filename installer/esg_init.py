@@ -466,7 +466,7 @@ class EsgInit(object):
             "config_file"] = self.esg_config_dir + "/esgf.properties"
         internal_script_variables["index_config"] = "master slave"
 
-        print "internal_script_variables: ", internal_script_variables
+        # print "internal_script_variables: ", internal_script_variables
         self.config_dictionary.update(internal_script_variables)
         return internal_script_variables
 

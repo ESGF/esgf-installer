@@ -217,8 +217,7 @@ class EsgInit(object):
         try:
             os.environ["ESGINI"]
         except KeyError:
-            print "Key not found"
-        else:
+            print "os.environ['ESGINI'] not found"
             # external_script_variables["publisher_home"] = subprocess.check_output(
             #     "${ESGINI%/*}", shell=True)
             external_script_variables["publisher_home"] = self.config_dictionary["esg_config_dir"]+"/esgcet"
@@ -226,6 +225,7 @@ class EsgInit(object):
             #     "${ESGINI##*/}", shell=True)
             external_script_variables["publisher_config"] = "esg.ini"
             external_script_variables["ESGINI"] = external_script_variables["publisher_home"] + "/" + external_script_variables["publisher_config"]
+            
 
         self.config_dictionary.update(external_script_variables)
         return external_script_variables

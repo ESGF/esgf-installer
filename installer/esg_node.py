@@ -43,7 +43,7 @@ esg_dist_url="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
 install_prefix = esg_bash2py.Expand.colonMinus(config.install_prefix, esg_bash2py.Expand.colonMinus("ESGF_INSTALL_PREFIX", "/usr/local"))
 #--------------
 
-os.environ['UVCDAT_ANONYMOUS_LOG'] = False
+# os.environ['UVCDAT_ANONYMOUS_LOG'] = False
 
 esg_root_id = None
 if config.config_dictionary["esg_root_id"]:

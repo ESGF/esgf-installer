@@ -314,7 +314,7 @@ drslib-0.3.1p3.tar.gz
 
 
         print "%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s" % (config.config_dictionary["cdat_home"], recommended, esg_root_id)
-        
+
         try:
             os.mkdir(config.config_dictionary["publisher_home"])
         except OSError, e:
@@ -366,9 +366,9 @@ drslib-0.3.1p3.tar.gz
 
     # get_property publisher_db_user ${publisher_db_user}
     publisher_db_user = None
-    if config.config_dictionary["publisher_db_user"]:
+    try:
         publisher_db_user = config.config_dictionary["publisher_db_user"]
-    else:
+    except KeyError:
         publisher_db_user = esg_functions.get_property("publisher_db_user")
 
     if mode == "I":

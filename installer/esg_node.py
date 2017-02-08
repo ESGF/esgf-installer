@@ -314,7 +314,15 @@ drslib-0.3.1p3.tar.gz
 
 
         print "%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s" % (config.config_dictionary["cdat_home"], recommended, esg_root_id)
-        os.mkdir(config.config_dictionary["publisher_home"])
+        
+        try:
+            os.mkdir(config.config_dictionary["publisher_home"])
+        except OSError, e:
+            if e.errno != 17:
+                raise
+            sleep(1)
+            pass
+
         ESGINI = subprocess.Popen('''
             %s/%s $cdat_home/bin/esgsetup --config $( ((%s == 1 )) && echo "--minimal-setup" ) --rootid %s
             sed -i s/"host\.sample\.gov"/%s/g %s/%s 

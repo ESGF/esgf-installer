@@ -152,6 +152,36 @@ def setup_esgcet(upgrade_mode = None):
           fi
         done
     '''
+
+    '''
+        source ${cdat_home}/bin/activate esgf-pub
+        conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
+        
+        if [ $ESGF_INSECURE > 0 ] ; then
+
+        pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
+        else
+        pipcmd="pip install"
+        fi
+        
+        $pipcmd esgprep
+        $pipcmd SQLAlchemy==0.7.10
+        $pipcmd sqlalchemy_migrate
+    '''
+    '''
+        lxml-3.3.5.tar.gz
+requests-1.2.3.tar.gz
+SQLAlchemy-0.7.10.tar.gz
+sqlalchemy-migrate-0.6.tar.gz
+psycopg2-2.5.tar.gz
+Tempita-0.5.1.tar.gz
+decorator-3.4.0.tar.gz
+pysolr-3.3.0.tar.gz
+drslib-0.3.1p3.tar.gz
+    '''
+    pip_list = [{"package": "lxml", "version": "3.3.5"}, {"package": "requests", "version": "1.2.3"}, {"package": "SQLAlchemy", "version": "0.7.10"}, 
+    {"package": "sqlalchemy-migrate", "version":"0.6" },{"package":"psycopg2", "version":"2.5"}, {"package": "Tempita", "version":"0.5.1"}, 
+    {"package": "decorator", "version":"3.4.0"}, {"package": "pysolr", "version": "3.3.0"}, {"package": "drslib", "version": "0.3.1p3"} ]
     r = requests.get(esg_dist_url+"/externals/piplist.txt")
     print "r.text: ", r.text
     pip_package_list_names = str(r.text).split()

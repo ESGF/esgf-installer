@@ -233,7 +233,7 @@ drslib-0.3.1p3.tar.gz
                 esg_functions.checked_done(1)
 
     os.chdir(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
-    publisher_repo_local = Repo(config.config_dictionary["workdir"]+"esg-publisher")
+    publisher_repo_local = Repo(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
     #pull from remote
     publisher_repo_local.remotes.origin.pull()
     #Checkout publisher tag

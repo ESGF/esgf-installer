@@ -182,29 +182,36 @@ drslib-0.3.1p3.tar.gz
     pip_list = [{"package": "lxml", "version": "3.3.5"}, {"package": "requests", "version": "1.2.3"}, {"package": "SQLAlchemy", "version": "0.7.10"}, 
     {"package": "sqlalchemy-migrate", "version":"0.6" },{"package":"psycopg2", "version":"2.5"}, {"package": "Tempita", "version":"0.5.1"}, 
     {"package": "decorator", "version":"3.4.0"}, {"package": "pysolr", "version": "3.3.0"}, {"package": "drslib", "version": "0.3.1p3"} ]
-    r = requests.get(esg_dist_url+"/externals/piplist.txt")
-    print "r.text: ", r.text
-    pip_package_list_names = str(r.text).split()
-    for name in pip_package_list_names:
-        print "downloading %s: " % (name)
-        r = requests.get(esg_dist_url+"/externals/"+name)
-        if r.status_code == requests.codes.ok:
-            hasher = hashlib.md5()
-            with open(r, 'rb') as f:
-                buf = f.read()
-                hasher.update(buf)
-                pip_download_md5 = hasher.hexdigest()
-                print "pip_download_md5 in checked_get: ", pip_download_md5
+
+    for i,value in enumerate(pip_list):
+     # print "i:", i     
+     # print "package:", value["package"]     
+     # print "version:", value["version"]
+     print "installing %s-%s" % (value["package"], value["version"])
+     pip.main(["install", value["package"]+ "=="+ value["version"]])
+    # r = requests.get(esg_dist_url+"/externals/piplist.txt")
+    # print "r.text: ", r.text
+    # pip_package_list_names = str(r.text).split()
+    # for name in pip_package_list_names:
+    #     print "downloading %s: " % (name)
+    #     r = requests.get(esg_dist_url+"/externals/"+name)
+    #     if r.status_code == requests.codes.ok:
+    #         hasher = hashlib.md5()
+    #         with open(r, 'rb') as f:
+    #             buf = f.read()
+    #             hasher.update(buf)
+    #             pip_download_md5 = hasher.hexdigest()
+    #             print "pip_download_md5 in checked_get: ", pip_download_md5
 
 
-        pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5").content
-        pip_package_remote_md5 = pip_package_remote_md5.split()[0].strip()
-        if pip_download_md5 != pip_package_remote_md5:
-            print " WARNING: Could not verify this file!"
-            print "[FAIL]"
-        else:
-            print "[OK]"
-            pip.main(['install', name])
+    #     pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5").content
+    #     pip_package_remote_md5 = pip_package_remote_md5.split()[0].strip()
+    #     if pip_download_md5 != pip_package_remote_md5:
+    #         print " WARNING: Could not verify this file!"
+    #         print "[FAIL]"
+    #     else:
+    #         print "[OK]"
+    #         pip.main(['install', name])
     #clone publisher
     publisher_git_protocol="git://"
 

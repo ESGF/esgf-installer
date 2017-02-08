@@ -307,6 +307,7 @@ drslib-0.3.1p3.tar.gz
         except KeyError:
             esgf_host = esg_functions.get_property("esgf_host")
 
+        global esg_root_id
         org_id_input = raw_input("What is your organization's id? [%s]: " % esg_root_id)
         if org_id_input:
             esg_root_id = org_id_input

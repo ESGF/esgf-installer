@@ -227,12 +227,12 @@ drslib-0.3.1p3.tar.gz
         if not os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher/.git"):
             publisher_git_protocol="https://"
             print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
-            Repo.clone_from(config.config_dictionary["publisher_repo_https"], config.config_dictionary["workdir"]+"esg-publisher")
+            Repo.clone_from(config.config_dictionary["publisher_repo_https"], os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
             if not os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher/.git"):
                 print "Could not fetch from cdat's repo (with git nor https protocol)"
                 esg_functions.checked_done(1)
 
-    os.chdir(config.config_dictionary["workdir"]+"esg-publisher")
+    os.chdir(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
     publisher_repo_local = Repo(config.config_dictionary["workdir"]+"esg-publisher")
     #pull from remote
     publisher_repo_local.remotes.origin.pull()

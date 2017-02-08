@@ -811,12 +811,12 @@ def get_property(property_name, default_value = None):
     if not os.access(config.config_dictionary["config_file"], os.R_OK):
         print "Unable to read file"
         return False
+    property_name = re.sub(r'\_', r'.', property_name)
     datafile = open(config.config_dictionary["config_file"], "r+")
     searchlines = datafile.readlines()
     datafile.seek(0)
     for line in searchlines:
         if property_name in line:
-            print "line: ", line
             key, value = line.split("=")
             if not value and default_value:
                 return default_value.strip()

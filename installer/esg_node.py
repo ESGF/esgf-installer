@@ -234,6 +234,11 @@ drslib-0.3.1p3.tar.gz
 
     os.chdir(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
     publisher_repo_local = Repo(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
+    # print "git status:", publisher_repo_local.git.status()    
+    # print "current branch name:", publisher_repo_local.git.branch()
+    # print "checkout master: ", publisher_repo_local.git.checkout("master")
+    # print "after checkout: ", publisher_repo_local.git.branch()
+    publisher_repo_local.git.checkout("master")
     #pull from remote
     publisher_repo_local.remotes.origin.pull()
     #Checkout publisher tag

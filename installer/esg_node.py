@@ -296,11 +296,10 @@ drslib-0.3.1p3.tar.gz
         config.config_dictionary["ESGINI"] =  os.path.join(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"])
         print "Publisher configuration file -> [%s/%s]" % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"])
 
-
         esgf_host = None
-        if config.config_dictionary["esgf_host"]:
+        try:
             esgf_host = config.config_dictionary["esgf_host"]
-        else:
+        except KeyError:
             esgf_host = esg_functions.get_property("esgf_host")
 
         org_id_input = raw_input("What is your organization's id? [%s]: " % esg_root_id)

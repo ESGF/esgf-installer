@@ -395,7 +395,7 @@ drslib-0.3.1p3.tar.gz
            print '''ESGINI = 
                     {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup 
                     $( (({recommended} == 1 )) && echo "--minimal-setup" ) 
-                    --db $( [ -n "{db_database}" ] && echo "--db-name %{db_database}" ) 
+                    --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
                     $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
                     $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
                     $( [ -n "{publisher_db_user}" ] && echo "--db-user {publisher_db_user}" ) 
@@ -433,16 +433,19 @@ drslib-0.3.1p3.tar.gz
                     postgress_host=config.config_dictionary["postgress_host"],
                     postgress_port=config.config_dictionary["postgress_port"])
 
-    except:
+    except Exception, e:
+        print "exception occured with ESGINI: ", str(e)
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
 
-
-    esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]))
-    if esginitialize_output != 0:
-        os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+    try:    
+        esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]))
+        if esginitialize_output != 0:
+            os.chdir(starting_directory)
+            esg_functions.checked_done(1)
+    except Exception, e:
+        print "exception occurred with esginitialize_output: ", str(e)
 
 
     os.chdir(starting_directory)

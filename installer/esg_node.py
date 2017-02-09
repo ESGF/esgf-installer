@@ -393,22 +393,24 @@ drslib-0.3.1p3.tar.gz
 
         else:
            print '''ESGINI = 
-                    %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" ) 
-                    --db $( [ -n "%s" ] && echo "--db-name %s" ) $( [ -n "%s" ] 
-                    && echo "--db-admin %s" ) $([ -n "${pg_sys_acct_passwd:=%s}" ] 
-                    && echo "--db-admin-password %s") 
-                    $( [ -n "%s" ] && echo "--db-user %s" ) 
-                    $([ -n "%s" ] && echo "--db-user-password %s") 
-                    $( [ -n "%s" ] && echo "--db-host %s" ) 
-                    $( [ -n "%s" ] && echo "--db-port %s" )" % 
-            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended, 
-                config.config_dictionary["db_database"], config.config_dictionary["db_database"], config.config_dictionary["postgress_user"], 
-                config.config_dictionary["postgress_user"], security_admin_password, 
-                "******",
-                publisher_db_user, publisher_db_user, 
-                "******", config.config_dictionary["publisher_db_user_passwd"], 
-                config.config_dictionary["postgress_host"], config.config_dictionary["postgress_host"], 
-                config.config_dictionary["postgress_port"], config.config_dictionary["postgress_port"] )
+                    {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup 
+                    $( (({recommended} == 1 )) && echo "--minimal-setup" ) 
+                    --db $( [ -n "{db_database}" ] && echo "--db-name %{db_database}" ) 
+                    $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
+                    $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
+                    $( [ -n "{publisher_db_user}" ] && echo "--db-user {publisher_db_user}" ) 
+                    $([ -n "{publisher_db_user_passwd}" ] && echo "--db-user-password {publisher_db_user_passwd_stars}") 
+                    $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
+                    $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
+            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"], 
+                recommended=recommended, 
+                db_database=config.config_dictionary["db_database"], 
+                postgress_user=config.config_dictionary["postgress_user"], 
+                pg_sys_acct_passwd="******" if config.config_dictionary["pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"], 
+                publisher_db_user=publisher_db_user, 
+                publisher_db_user_passwd=config.config_dictionary["publisher_db_user_passwd"], publisher_db_user_passwd_stars = "******",
+                postgress_host=config.config_dictionary["postgress_host"], 
+                postgress_port=config.config_dictionary["postgress_port"] )
 
     try:
 
@@ -420,7 +422,7 @@ drslib-0.3.1p3.tar.gz
                     $( [ -n "{publisher_db_user}" ] && echo "--db-user {publisher_db_user}" ) 
                     $([ -n "{publisher_db_user_passwd}" ] && echo "--db-user-password {publisher_db_user_passwd}") 
                     $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
-                    $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" % 
+                    $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
                 '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
                     recommended=recommended,
                     db_database=config.config_dictionary["db_database"],

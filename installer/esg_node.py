@@ -549,6 +549,7 @@ def main():
 
     print "inside main function of esg_node"
     setup_esgcet()
+    test_esgcet()
     # internal_node_code_versions = {}
     # test = EsgInit()
     # print "install_prefix: ", test.install_prefix

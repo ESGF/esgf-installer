@@ -440,7 +440,7 @@ drslib-0.3.1p3.tar.gz
 
 
     try:    
-        esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]))
+        esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
         if esginitialize_output != 0:
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
@@ -458,7 +458,7 @@ drslib-0.3.1p3.tar.gz
 def write_esgcet_env():
     # print
     datafile = open(config.envfile, "a+")
-    datafile.write("export ESG_ROOT_ID="+config.config_dictionary["esg_root_id"])
+    datafile.write("export ESG_ROOT_ID="+esg_root_id)
     esg_functions.deduplicate(config.envfile)
     datafile.close()
 

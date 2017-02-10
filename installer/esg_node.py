@@ -324,12 +324,16 @@ drslib-0.3.1p3.tar.gz
             pass
 
         ESGINI = subprocess.Popen('''
-            %s/%s $cdat_home/bin/esgsetup --config $( ((%s == 1 )) && echo "--minimal-setup" ) --rootid %s
-            sed -i s/"host\.sample\.gov"/%s/g %s/%s 
-            sed -i s/"LASatYourHost"/LASat%s/g %s/%s 
-            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], recommended, esg_root_id, esgf_host,config.config_dictionary["publisher_home"],config.config_dictionary["publisher_config"],node_short_name, config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"]), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup --config 
+            $( (({recommended} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
+            sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 
+            sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}
+            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"], 
+                recommended=recommended, esg_root_id=esg_root_id, 
+                esgf_host=esgf_host,node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         if ESGINI.returncode != 0:
+            print "ESGINI.returncode did not equal 0: ", ESGINI.returncode
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 

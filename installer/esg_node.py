@@ -517,7 +517,7 @@ def test_esgcet():
     print "esgcet test directory: [%s]" % esgcet_testdir
 
     fetch_file="sftlf.nc"
-    if esg_functions.checked_get(os.path.join(esgcet_testdir,fetch_file), config.config_dictionary["esg_dist_url_root"]+"/externals/"+fetch_file) > 0:
+    if esg_functions.checked_get(os.path.join(esgcet_testdir,fetch_file), "http://"+config.config_dictionary["esg_dist_url_root"]+"/externals/"+fetch_file) > 0:
         print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
         os.chdir(starting_directory)
         esg_functions.checked_done(1)

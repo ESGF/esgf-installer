@@ -524,7 +524,7 @@ def test_esgcet():
 
     #Run test...
     print "%s/bin/esginitialize -c " % (config.config_dictionary["cdat_home"])
-    esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]))
+    esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
     print '''
         %s/bin/esgscan_directory --dataset pcmdi.%s.%s.
         test.mytest --project test %s > mytest.txt

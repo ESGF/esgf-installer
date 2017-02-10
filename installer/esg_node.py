@@ -458,13 +458,13 @@ drslib-0.3.1p3.tar.gz
 def write_esgcet_env():
     # print
     datafile = open(config.envfile, "a+")
-    datafile.write("export ESG_ROOT_ID="+esg_root_id)
+    datafile.write("export ESG_ROOT_ID="+esg_root_id+"\n")
     esg_functions.deduplicate(config.envfile)
     datafile.close()
 
 def write_esgcet_install_log():
     datafile = open(config.install_manifest, "a+")
-    datafile.write(str(datetime.date.today()) + "python:esgcet=" + config.config_dictionary["esgcet_version"])
+    datafile.write(str(datetime.date.today()) + "python:esgcet=" + config.config_dictionary["esgcet_version"]+"\n")
     esg_functions.deduplicate(config.install_manifest)
     datafile.close()
     esg_functions.write_as_property("publisher_config", config.config_dictionary["publisher_config"])

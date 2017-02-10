@@ -473,65 +473,78 @@ def write_esgcet_install_log():
     return 0
 
 def test_esgcet():
-	print '''
-    	"----------------------------"
-    	"ESGCET Test... "
-    	"----------------------------"
+    print '''
+        ----------------------------
+        ESGCET Test... 
+        ----------------------------
     '''
-	starting_directory = os.getcwd()
-	os.chdir(config.config_dictionary["workdir"])
+    starting_directory = os.getcwd()
+    os.chdir(config.config_dictionary["workdir"])
 
-	start_postgress()
+    start_postgress()
 
-	esgcet_testdir=os.path.join(config.config_dictionary["thredds_root_dir"], "test")
-	try:
-		os.mkdir(esgcet_testdir)
-	except:
-		esg_functions.checked_done(1)
+    esgcet_testdir=os.path.join(config.config_dictionary["thredds_root_dir"], "test")
 
-	os.chown(esgcet_testdir, config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
+    try:
+        os.mkdir(esgcet_testdir)
+    except OSError, e:
+        if e.errno != 17:
+            raise
+        sleep(1)
+        pass
+    except Exception, e:
+        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
+        esg_functions.checked_done(1)
 
-	try:
-		os.mkdir(config.config_dictionary["thredds_replica_dir"])
-	except:
-		esg_functions.checked_done(1)
+    os.chown(esgcet_testdir, config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
 
-	os.chown(config.config_dictionary["thredds_replica_dir"], config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
-	print "esgcet test directory: [%s]" % esgcet_testdir
+    try:
+        os.mkdir(config.config_dictionary["thredds_replica_dir"])
+    except OSError, e:
+        if e.errno != 17:
+            raise
+        sleep(1)
+        pass
+    except Exception, e:
+        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
+        esg_functions.checked_done(1)
 
-	fetch_file="sftlf.nc"
-	if esg_functions.checked_get(os.path.join(esgcet_testdir,fetch_file), config.config_dictionary["esg_dist_url_root"]+"/externals/"+fetch_file) > 0:
-		print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
-		os.chdir(starting_directory)
-		esg_functions.checked_done(1)
+    os.chown(config.config_dictionary["thredds_replica_dir"], config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
+    print "esgcet test directory: [%s]" % esgcet_testdir
 
-	#Run test...
-	print "%s/bin/esginitialize -c " % (config.config_dictionary["cdat_home"])
-	esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]))
-	print '''
-		%s/bin/esgscan_directory --dataset pcmdi.%s.%s.
-		test.mytest --project test %s > mytest.txt
-		''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir)
-	esgscan_directory_output = subprocess.call('''
-		%s/bin/esgscan_directory --dataset pcmdi.%s.%s.
-		test.mytest --project test %s > mytest.txt
-		''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir))
-	if esgscan_directory_output !=0:
-		print " ERROR: ESG directory scan failed"
-		os.chdir(starting_directory)
-		esg_functions.checked_done(1) 
+    fetch_file="sftlf.nc"
+    if esg_functions.checked_get(os.path.join(esgcet_testdir,fetch_file), config.config_dictionary["esg_dist_url_root"]+"/externals/"+fetch_file) > 0:
+        print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
+        os.chdir(starting_directory)
+        esg_functions.checked_done(1)
 
-	print "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test" % (config.config_dictionary["cdat_home"])
-	esgpublish_output = subprocess.call("$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test" % (config.config_dictionary["cdat_home"]))
-	if esgpublish_output != 0:
-		print " ERROR: ESG publish failed"
-		os.chdir(starting_directory)
-		esg_functions.checked_done(1)
+    #Run test...
+    print "%s/bin/esginitialize -c " % (config.config_dictionary["cdat_home"])
+    esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]))
+    print '''
+        %s/bin/esgscan_directory --dataset pcmdi.%s.%s.
+        test.mytest --project test %s > mytest.txt
+        ''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir)
+    esgscan_directory_output = subprocess.call('''
+        %s/bin/esgscan_directory --dataset pcmdi.%s.%s.
+        test.mytest --project test %s > mytest.txt
+        ''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir))
+    if esgscan_directory_output !=0:
+        print " ERROR: ESG directory scan failed"
+        os.chdir(starting_directory)
+        esg_functions.checked_done(1) 
 
-	os.chdir(starting_directory)
-	esg_functions.checked_done(0) 
+    print "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test" % (config.config_dictionary["cdat_home"])
+    esgpublish_output = subprocess.call("$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test" % (config.config_dictionary["cdat_home"]))
+    if esgpublish_output != 0:
+        print " ERROR: ESG publish failed"
+        os.chdir(starting_directory)
+        esg_functions.checked_done(1)
 
-	pass
+    os.chdir(starting_directory)
+    esg_functions.checked_done(0) 
+
+    pass
 
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 def start_postgress():

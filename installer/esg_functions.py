@@ -48,6 +48,7 @@ def checked_done(status):
             "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
             ""
         )
+        sys.exit()
     else:
         return 0
 

@@ -331,7 +331,7 @@ drslib-0.3.1p3.tar.gz
             '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"], 
                 recommended=recommended, esg_root_id=esg_root_id, 
                 esgf_host=esgf_host,node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
+        ESGINI.communicate()
         if ESGINI.returncode != 0:
             print "ESGINI.returncode did not equal 0: ", ESGINI.returncode
             os.chdir(starting_directory)

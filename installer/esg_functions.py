@@ -1455,15 +1455,20 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     '''
 
     print "Fetching file from %s -to-> %s" % (remote_file, local_file)
-    r = requests.get(remote_file)
-    if not r.status_code == requests.codes.ok:
-        print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
-        r.raise_for_status() 
-        return 2
-    else:
-        file = open(local_file, "w")
-        file.write(r.content)
-        file.close()
+    try:
+        r = requests.get(remote_file)
+        if not r.status_code == requests.codes.ok:
+            print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
+            r.raise_for_status() 
+            return 2
+        else:
+            file = open(local_file, "w")
+            file.write(r.content)
+            file.close()
+    except requests.exceptions.RequestException, e:
+        print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
+        print e
+        sys.exit()
 
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()

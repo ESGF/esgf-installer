@@ -490,7 +490,7 @@ def test_esgcet():
     esgcet_testdir=os.path.join(config.config_dictionary["thredds_root_dir"], "test")
 
     try:
-        os.mkdir(esgcet_testdir)
+        os.makedirs(esgcet_testdir)
     except OSError, e:
         if e.errno != 17:
             raise
@@ -526,7 +526,7 @@ def test_esgcet():
     print "%s/bin/esginitialize -c " % (config.config_dictionary["cdat_home"])
     esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
     print '''
-        %s/bin/esgscan_directory --dataset pcmdi.%s.%s.
+        /usr/local/src/esgf/workbench/esg/esg-publisher/src/python/esgcet/scripts/esgscan_directory --dataset pcmdi.%s.%s.
         test.mytest --project test %s > mytest.txt
         ''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir)
     esgscan_directory_output = subprocess.call('''

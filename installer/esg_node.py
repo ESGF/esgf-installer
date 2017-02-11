@@ -556,9 +556,11 @@ def start_postgress():
         print "Postgres is already running"
         return 1
     print "Starting Postgress..."
-    status = subprocess.check_output(["/etc/init.d/postgresql", "start"])
+    status = subprocess.Popen("/etc/init.d/postgresql start", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    status_output, err = status.communicate()
+    print "status_output: ", status_output
     sleep(3)
-    progress_process_status = subprocess.Popen("/bin/ps -elf | grep postgres | grep -v grep")
+    progress_process_status = subprocess.Popen("/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()
     esg_functions.checked_done(0)
 

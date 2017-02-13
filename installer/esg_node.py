@@ -140,78 +140,15 @@ def setup_esgcet(upgrade_mode = None):
 
     print "current directory: ", os.getcwd()
     starting_directory = os.getcwd()
-    '''
-        curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
-          echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
-          diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure $esg_dist_url/externals/${ln}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
-          if [ $? -eq 0 ]; then
-             [OK]
-             echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln
-          else
-             [FAIL]
-          fi
-        done
-    '''
-
-    '''
-        source ${cdat_home}/bin/activate esgf-pub
-        conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
-        
-        if [ $ESGF_INSECURE > 0 ] ; then
-
-        pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
-        else
-        pipcmd="pip install"
-        fi
-        
-        $pipcmd esgprep
-        $pipcmd SQLAlchemy==0.7.10
-        $pipcmd sqlalchemy_migrate
-    '''
-    '''
-        lxml-3.3.5.tar.gz
-requests-1.2.3.tar.gz
-SQLAlchemy-0.7.10.tar.gz
-sqlalchemy-migrate-0.6.tar.gz
-psycopg2-2.5.tar.gz
-Tempita-0.5.1.tar.gz
-decorator-3.4.0.tar.gz
-pysolr-3.3.0.tar.gz
-drslib-0.3.1p3.tar.gz
-    '''
+    
     pip_list = [{"package": "lxml", "version": "3.3.5"}, {"package": "requests", "version": "1.2.3"}, {"package": "SQLAlchemy", "version": "0.7.10"}, 
     {"package": "sqlalchemy-migrate", "version":"0.6" },{"package":"psycopg2", "version":"2.5"}, {"package": "Tempita", "version":"0.5.1"}, 
     {"package": "decorator", "version":"3.4.0"}, {"package": "pysolr", "version": "3.3.0"}, {"package": "drslib", "version": "0.3.1p3"} ]
 
     for i,value in enumerate(pip_list):
-     # print "i:", i     
-     # print "package:", value["package"]     
-     # print "version:", value["version"]
      print "installing %s-%s" % (value["package"], value["version"])
      pip.main(["install", value["package"]+ "=="+ value["version"]])
-    # r = requests.get(esg_dist_url+"/externals/piplist.txt")
-    # print "r.text: ", r.text
-    # pip_package_list_names = str(r.text).split()
-    # for name in pip_package_list_names:
-    #     print "downloading %s: " % (name)
-    #     r = requests.get(esg_dist_url+"/externals/"+name)
-    #     if r.status_code == requests.codes.ok:
-    #         hasher = hashlib.md5()
-    #         with open(r, 'rb') as f:
-    #             buf = f.read()
-    #             hasher.update(buf)
-    #             pip_download_md5 = hasher.hexdigest()
-    #             print "pip_download_md5 in checked_get: ", pip_download_md5
-
-
-    #     pip_package_remote_md5 = requests.get(esg_dist_url+"/externals/"+name+".md5").content
-    #     pip_package_remote_md5 = pip_package_remote_md5.split()[0].strip()
-    #     if pip_download_md5 != pip_package_remote_md5:
-    #         print " WARNING: Could not verify this file!"
-    #         print "[FAIL]"
-    #     else:
-    #         print "[OK]"
-    #         pip.main(['install', name])
+    
     #clone publisher
     publisher_git_protocol="git://"
 
@@ -234,10 +171,6 @@ drslib-0.3.1p3.tar.gz
 
     os.chdir(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
     publisher_repo_local = Repo(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
-    # print "git status:", publisher_repo_local.git.status()    
-    # print "current branch name:", publisher_repo_local.git.branch()
-    # print "checkout master: ", publisher_repo_local.git.checkout("master")
-    # print "after checkout: ", publisher_repo_local.git.branch()
     publisher_repo_local.git.checkout("master")
     #pull from remote
     publisher_repo_local.remotes.origin.pull()
@@ -249,12 +182,6 @@ drslib-0.3.1p3.tar.gz
         print " WARNING: Problem with checking out publisher (esgcet) revision [%s] from repository :-(" % (config.config_dictionary["esgcet_version"])
 
     #install publisher
-    '''
-    output = subprocess.check_output(
-    'echo to stdout; echo to stderr 1>&2; exit 1',
-    shell=True,
-    )
-    '''
     installation_command = "cd src/python/esgcet; %s/bin/python setup.py install" % (config.config_dictionary["cdat_home"])
     try:
         output = subprocess.call(installation_command, shell=True)
@@ -570,23 +497,7 @@ def main():
     print "inside main function of esg_node"
     setup_esgcet()
     test_esgcet()
-    # internal_node_code_versions = {}
-    # test = EsgInit()
-    # print "install_prefix: ", test.install_prefix
-
-    # internal_node_code_versions = test.populate_internal_esgf_node_code_versions()
-    # print internal_node_code_versions
-    # print "apache_frontend_version: ", internal_node_code_versions["apache_frontend_version"]   
-
-    # local_test = test.populate_external_programs_versions()
-    # print "local_test: ", local_test
-    # print "globals type: ", type(globals())
-    # globals().update(local_test)
-    # print "globals: ", globals()
-
-    # ext_script_vars = test.populate_external_script_variables()
-    # globals().update(ext_script_vars)
-    # print "globals after update: ", globals()
+    
 
 
 if __name__ == '__main__':

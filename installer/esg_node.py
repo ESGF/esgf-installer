@@ -541,8 +541,8 @@ def test_esgcet():
         os.chdir(starting_directory)
         esg_functions.checked_done(1) 
 
-    print "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test" % (config.config_dictionary["cdat_home"])
-    esgpublish_output = subprocess.call("$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test" % (config.config_dictionary["cdat_home"]))
+    print "{cdat_home}/bin/esgpublish --service fileservice --map mytest.txt --project test --model test".format(cdat_home=config.config_dictionary["cdat_home"])
+    esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map mytest.txt --project test --model test".format(cdat_home=config.config_dictionary["cdat_home"]))
     if esgpublish_output != 0:
         print " ERROR: ESG publish failed"
         os.chdir(starting_directory)

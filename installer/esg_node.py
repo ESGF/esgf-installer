@@ -539,19 +539,17 @@ def test_esgcet():
     if esgprep_output !=0:
         print " ERROR: ESG Mapfile generation failed"
         os.chdir(starting_directory)
-        esg_functions.checked_done(1) 
+        esg_functions.checked_done(1)
 
-    print "{cdat_home}/bin/esgpublish --service fileservice --map mytest.txt --project test --model test".format(cdat_home=config.config_dictionary["cdat_home"])
-    esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map mytest.txt --project test --model test".format(cdat_home=config.config_dictionary["cdat_home"]))
+    print "{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(cdat_home=config.config_dictionary["cdat_home"])
+    esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(cdat_home=config.config_dictionary["cdat_home"]),shell=True)
     if esgpublish_output != 0:
         print " ERROR: ESG publish failed"
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
     os.chdir(starting_directory)
-    esg_functions.checked_done(0) 
-
-    pass
+    esg_functions.checked_done(0)
 
 #returns 1 if it is already running (if check_postgress_process returns 0 - true)
 def start_postgress():

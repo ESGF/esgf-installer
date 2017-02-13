@@ -525,16 +525,19 @@ def test_esgcet():
     #Run test...
     print "%s/bin/esginitialize -c " % (config.config_dictionary["cdat_home"])
     esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
+
+    '''
+        esgprep mapfile --dataset ipsl.fr.test.mytest --project test /esg/data/test
+ mv ipsl.fr.test.mytest.map test_mapfile.txt
+    '''
     print '''
-        /usr/local/src/esgf/workbench/esg/esg-publisher/src/python/esgcet/scripts/esgscan_directory --dataset pcmdi.%s.%s.
-        test.mytest --project test %s > mytest.txt
-        ''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir)
-    esgscan_directory_output = subprocess.call('''
-        %s/bin/esgscan_directory --dataset pcmdi.%s.%s.
-        test.mytest --project test %s > mytest.txt
-        ''' % (config.config_dictionary["cdat_home"], esg_root_id, node_short_name, esgcet_testdir))
-    if esgscan_directory_output !=0:
-        print " ERROR: ESG directory scan failed"
+        {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
+        '''.format(cdat_home=config.config_dictionary["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir)
+    esgprep_output = subprocess.call('''
+        {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
+        '''.format(cdat_home=config.config_dictionary["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir),shell=True)
+    if esgprep_output !=0:
+        print " ERROR: ESG Mapfile generation failed"
         os.chdir(starting_directory)
         esg_functions.checked_done(1) 
 

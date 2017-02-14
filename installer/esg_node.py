@@ -137,6 +137,9 @@ def setup_esgcet(upgrade_mode=None):
             print "Skipping esgcet installation and setup - will assume esgcet is setup properly"
             return 0
 
+    print "current directory: ", os.getcwd()
+    starting_directory = os.getcwd()
+
     try:
         os.makedirs(config.config_dictionary["workdir"])
     except OSError, e:
@@ -145,8 +148,7 @@ def setup_esgcet(upgrade_mode=None):
         sleep(1)
         pass
 
-    print "current directory: ", os.getcwd()
-    starting_directory = os.getcwd()
+    os.chdir(config.config_dictionary["workdir"])
 
     pip_list = [{"package": "lxml", "version": "3.3.5"}, {"package": "requests", "version": "1.2.3"}, {"package": "SQLAlchemy", "version": "0.7.10"},
                 {"package": "sqlalchemy-migrate", "version": "0.6"}, {"package": "psycopg2",
@@ -167,16 +169,16 @@ def setup_esgcet(upgrade_mode=None):
         except:
             print "Could not delete directory: %s" % (config.config_dictionary["workdir"] + "esg-publisher")
 
-    if os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher"):
+    if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher")):
         print "Fetching the cdat project from GIT Repo... %s" % (config.config_dictionary["publisher_repo"])
         Repo.clone_from(config.config_dictionary[
-                        "publisher_repo"], config.config_dictionary["workdir"] + "esg-publisher")
-        if not os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher/.git"):
+                        "publisher_repo"], os.path.join(config.config_dictionary["workdir"], "esg-publisher"))
+        if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher",".git")):
             publisher_git_protocol = "https://"
             print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
             Repo.clone_from(config.config_dictionary["publisher_repo_https"], os.path.join(
                 config.config_dictionary["workdir"], "esg-publisher"))
-            if not os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher/.git"):
+            if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher",".git")):
                 print "Could not fetch from cdat's repo (with git nor https protocol)"
                 esg_functions.checked_done(1)
 

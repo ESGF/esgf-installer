@@ -23,24 +23,25 @@ DEBUG = esg_bash2py.Expand.colonMinus("DEBUG", "0")
 VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
 
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
-recommended="1"
-custom="0"
-use_local_files="0"
+recommended = "1"
+custom = "0"
+use_local_files = "0"
 
-progname="esg-node"
-script_version="v2.0-RC5.4.0-devel"
-script_maj_version="2.0"
-script_release="Centaur"
-envfile="/etc/esg.env"
+progname = "esg-node"
+script_version = "v2.0-RC5.4.0-devel"
+script_maj_version = "2.0"
+script_release = "Centaur"
+envfile = "/etc/esg.env"
 force_install = False
 upgrade_mode = 0
-esg_dist_url="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
 
 #--------------
-#User Defined / Settable (public)
+# User Defined / Settable (public)
 #--------------
 # install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
-install_prefix = esg_bash2py.Expand.colonMinus(config.install_prefix, esg_bash2py.Expand.colonMinus("ESGF_INSTALL_PREFIX", "/usr/local"))
+install_prefix = esg_bash2py.Expand.colonMinus(
+    config.install_prefix, esg_bash2py.Expand.colonMinus("ESGF_INSTALL_PREFIX", "/usr/local"))
 #--------------
 
 # os.environ['UVCDAT_ANONYMOUS_LOG'] = False
@@ -73,29 +74,33 @@ except:
 '''
     ESGCET Package (Publisher)
 '''
-def setup_esgcet(upgrade_mode = None):
+
+
+def setup_esgcet(upgrade_mode=None):
     print "Checking for esgcet (publisher) %s " % (config.config_dictionary["esgcet_version"])
-    #TODO: come up with better name
-    publisher_module_check = esg_functions.check_module_version("esgcet", config.config_dictionary["esgcet_version"])
+    # TODO: come up with better name
+    publisher_module_check = esg_functions.check_module_version(
+        "esgcet", config.config_dictionary["esgcet_version"])
 
-
-    #TODO: implement this if block
+    # TODO: implement this if block
     # if os.path.isfile(config.config_dictionary["ESGINI"]):
     #   urls_mis_match=1
     #   # files= subprocess.Popen('ls -t | grep %s.\*.tgz | tail -n +$((%i+1)) | xargs' %(source_backup_name,int(num_of_backups)), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    #   esgini_dburl = files= subprocess.Popen("sed -n 's@^[^#]*[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' %s | head -n1 | sed 's@\r@@'' " %(config.config_dictionary["ESGINI"]), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # esgini_dburl = files= subprocess.Popen("sed -n 's@^[^#]*[ ]*dburl[ ]*=[
+    # ]*\(.*\)$@\1@p' %s | head -n1 | sed 's@\r@@'' "
+    # %(config.config_dictionary["ESGINI"]), shell=True,
+    # stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     if publisher_module_check == 0 and not force_install:
         print "[OK]: Publisher already installed"
         return 0
 
     upgrade = upgrade_mode if upgrade_mode is not None else publisher_module_check
-    
+
     if upgrade == 1 and not force_install:
         mode = "U"
     else:
         mode = "I"
-
 
     print '''
         *******************************
@@ -104,7 +109,7 @@ def setup_esgcet(upgrade_mode = None):
      ''' % (config.config_dictionary["esgcet_egg_file"], mode)
 
     if mode == "U":
-        if config.config_dictionary["publisher_home"] == os.environ["HOME"]+"/.esgcet":
+        if config.config_dictionary["publisher_home"] == os.environ["HOME"] + "/.esgcet":
             print "user configuration", config.config_dictionary["publisher_home"]
         else:
             print "system configuration", config.config_dictionary["publisher_home"]
@@ -117,12 +122,14 @@ def setup_esgcet(upgrade_mode = None):
 
     continue_installation_answer = None
 
-    if os.path.isfile(os.path.join(config.config_dictionary["publisher_home"],config.config_dictionary["publisher_config"])):
+    if os.path.isfile(os.path.join(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"])):
         print "Detected an existing esgcet installation..."
         if default_upgrade_answer == "N":
-            continue_installation_answer = raw_input("Do you want to continue with esgcet installation and setup? [y/N]")
+            continue_installation_answer = raw_input(
+                "Do you want to continue with esgcet installation and setup? [y/N]")
         else:
-            continue_installation_answer = raw_input("Do you want to continue with esgcet installation and setup? [Y/n]")
+            continue_installation_answer = raw_input(
+                "Do you want to continue with esgcet installation and setup? [Y/n]")
         if not continue_installation_answer.strip():
             continue_installation_answer = default_upgrade_answer
 
@@ -140,49 +147,57 @@ def setup_esgcet(upgrade_mode = None):
 
     print "current directory: ", os.getcwd()
     starting_directory = os.getcwd()
-    
-    pip_list = [{"package": "lxml", "version": "3.3.5"}, {"package": "requests", "version": "1.2.3"}, {"package": "SQLAlchemy", "version": "0.7.10"}, 
-    {"package": "sqlalchemy-migrate", "version":"0.6" },{"package":"psycopg2", "version":"2.5"}, {"package": "Tempita", "version":"0.5.1"}, 
-    {"package": "decorator", "version":"3.4.0"}, {"package": "pysolr", "version": "3.3.0"}, {"package": "drslib", "version": "0.3.1p3"} ]
 
-    for i,value in enumerate(pip_list):
-     print "installing %s-%s" % (value["package"], value["version"])
-     pip.main(["install", value["package"]+ "=="+ value["version"]])
-    
-    #clone publisher
-    publisher_git_protocol="git://"
+    pip_list = [{"package": "lxml", "version": "3.3.5"}, {"package": "requests", "version": "1.2.3"}, {"package": "SQLAlchemy", "version": "0.7.10"},
+                {"package": "sqlalchemy-migrate", "version": "0.6"}, {"package": "psycopg2",
+                                                                      "version": "2.5"}, {"package": "Tempita", "version": "0.5.1"},
+                {"package": "decorator", "version": "3.4.0"}, {"package": "pysolr", "version": "3.3.0"}, {"package": "drslib", "version": "0.3.1p3"}]
 
-    if force_install and os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher"):
+    for i, value in enumerate(pip_list):
+        print "installing %s-%s" % (value["package"], value["version"])
+        pip.main(["install", value["package"] + "==" + value["version"]])
+
+    # clone publisher
+    publisher_git_protocol = "git://"
+
+    if force_install and os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher"):
         try:
-            shutil.rmtree(config.config_dictionary["workdir"]+"esg-publisher")
+            shutil.rmtree(config.config_dictionary[
+                          "workdir"] + "esg-publisher")
         except:
-            print "Could not delete directory: %s" % (config.config_dictionary["workdir"]+"esg-publisher")
+            print "Could not delete directory: %s" % (config.config_dictionary["workdir"] + "esg-publisher")
 
-    if os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher"):
+    if os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher"):
         print "Fetching the cdat project from GIT Repo... %s" % (config.config_dictionary["publisher_repo"])
-        Repo.clone_from(config.config_dictionary["publisher_repo"], config.config_dictionary["workdir"]+"esg-publisher")
-        if not os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher/.git"):
-            publisher_git_protocol="https://"
+        Repo.clone_from(config.config_dictionary[
+                        "publisher_repo"], config.config_dictionary["workdir"] + "esg-publisher")
+        if not os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher/.git"):
+            publisher_git_protocol = "https://"
             print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
-            Repo.clone_from(config.config_dictionary["publisher_repo_https"], os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
-            if not os.path.isdir(config.config_dictionary["workdir"]+"esg-publisher/.git"):
+            Repo.clone_from(config.config_dictionary["publisher_repo_https"], os.path.join(
+                config.config_dictionary["workdir"], "esg-publisher"))
+            if not os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher/.git"):
                 print "Could not fetch from cdat's repo (with git nor https protocol)"
                 esg_functions.checked_done(1)
 
-    os.chdir(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
-    publisher_repo_local = Repo(os.path.join(config.config_dictionary["workdir"],"esg-publisher"))
+    os.chdir(os.path.join(config.config_dictionary[
+             "workdir"], "esg-publisher"))
+    publisher_repo_local = Repo(os.path.join(
+        config.config_dictionary["workdir"], "esg-publisher"))
     publisher_repo_local.git.checkout("master")
-    #pull from remote
+    # pull from remote
     publisher_repo_local.remotes.origin.pull()
-    #Checkout publisher tag
+    # Checkout publisher tag
     try:
-        publisher_repo_local.head.reference = publisher_repo_local.tags[config.config_dictionary["publisher_tag"]]
+        publisher_repo_local.head.reference = publisher_repo_local.tags[
+            config.config_dictionary["publisher_tag"]]
         publisher_repo_local.head.reset(index=True, working_tree=True)
     except:
         print " WARNING: Problem with checking out publisher (esgcet) revision [%s] from repository :-(" % (config.config_dictionary["esgcet_version"])
 
-    #install publisher
-    installation_command = "cd src/python/esgcet; %s/bin/python setup.py install" % (config.config_dictionary["cdat_home"])
+    # install publisher
+    installation_command = "cd src/python/esgcet; %s/bin/python setup.py install" % (
+        config.config_dictionary["cdat_home"])
     try:
         output = subprocess.call(installation_command, shell=True)
         if output != 0:
@@ -204,14 +219,19 @@ def setup_esgcet(upgrade_mode = None):
 
             choice = raw_input("select [1] > ")
             if choice == 1:
-                config.config_dictionary["publisher_home"]=config.esg_config_dir+"/esgcet"
+                config.config_dictionary[
+                    "publisher_home"] = config.esg_config_dir + "/esgcet"
             elif choice == 2:
-                config.config_dictionary["publisher_home"]=os.environ["HOME"]+"/.esgcet"
+                config.config_dictionary[
+                    "publisher_home"] = os.environ["HOME"] + "/.esgcet"
             elif choice.lower() == "c":
                 # input = None
-                publisher_config_directory_input = raw_input("Please enter the desired publisher configuration directory [%s] " %  config.config_dictionary["publisher_home"])
-                config.config_dictionary["publisher_home"] = publisher_config_directory_input
-                publisher_config_filename_input = raw_input("Please enter the desired publisher configuration filename [%s] " % config.config_dictionary["publisher_config"])
+                publisher_config_directory_input = raw_input(
+                    "Please enter the desired publisher configuration directory [%s] " % config.config_dictionary["publisher_home"])
+                config.config_dictionary[
+                    "publisher_home"] = publisher_config_directory_input
+                publisher_config_filename_input = raw_input(
+                    "Please enter the desired publisher configuration filename [%s] " % config.config_dictionary["publisher_config"])
                 choice = "(Manual Entry)"
             else:
                 print "Invalid Selection %s " % (choice)
@@ -224,8 +244,8 @@ def setup_esgcet(upgrade_mode = None):
             else:
                 break
 
-
-        config.config_dictionary["ESGINI"] =  os.path.join(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"])
+        config.config_dictionary["ESGINI"] = os.path.join(config.config_dictionary[
+                                                          "publisher_home"], config.config_dictionary["publisher_config"])
         print "Publisher configuration file -> [%s/%s]" % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"])
 
         esgf_host = None
@@ -235,10 +255,10 @@ def setup_esgcet(upgrade_mode = None):
             esgf_host = esg_functions.get_property("esgf_host")
 
         global esg_root_id
-        org_id_input = raw_input("What is your organization's id? [%s]: " % esg_root_id)
+        org_id_input = raw_input(
+            "What is your organization's id? [%s]: " % esg_root_id)
         if org_id_input:
             esg_root_id = org_id_input
-
 
         print "%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s" % (config.config_dictionary["cdat_home"], recommended, esg_root_id)
 
@@ -255,9 +275,9 @@ def setup_esgcet(upgrade_mode = None):
             $( (({recommended} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
             sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 
             sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}
-            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"], 
-                recommended=recommended, esg_root_id=esg_root_id, 
-                esgf_host=esgf_host,node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
+                       recommended=recommended, esg_root_id=esg_root_id,
+                       esgf_host=esgf_host, node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         ESGINI.communicate()
         if ESGINI.returncode != 0:
             print "ESGINI.returncode did not equal 0: ", ESGINI.returncode
@@ -266,24 +286,30 @@ def setup_esgcet(upgrade_mode = None):
 
     print "chown -R %s:%s %s" % (config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"], config.config_dictionary["publisher_home"])
     try:
-        os.chown(config.config_dictionary["publisher_home"], config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
+        os.chown(config.config_dictionary["publisher_home"], config.config_dictionary[
+                 "installer_uid"], config.config_dictionary["installer_gid"])
     except:
         print "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
 
-    #Let's make sure the group is there before we attempt to assign a file to it....
+    # Let's make sure the group is there before we attempt to assign a file to
+    # it....
     try:
-        tomcat_group_check = grp.getgrnam(config.config_dictionary["tomcat_group"])
+        tomcat_group_check = grp.getgrnam(
+            config.config_dictionary["tomcat_group"])
     except KeyError:
-        groupadd_command = "/usr/sbin/groupadd -r %s" % (config.config_dictionary["tomcat_group"])
+        groupadd_command = "/usr/sbin/groupadd -r %s" % (
+            config.config_dictionary["tomcat_group"])
         groupadd_output = subprocess.call(groupadd_command, shell=True)
-        if groupadd_output !=0 or groupadd_output !=9:
+        if groupadd_output != 0 or groupadd_output != 9:
             print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
-    
+
     try:
-        tomcat_group_id = grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid
-        os.chown(os.path.join(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"]), -1, tomcat_group_id)
+        tomcat_group_id = grp.getgrnam(
+            config.config_dictionary["tomcat_group"]).gr_gid
+        os.chown(os.path.join(config.config_dictionary[
+                 "publisher_home"], config.config_dictionary["publisher_config"]), -1, tomcat_group_id)
         os.chmod(os.path.join(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"]), 0640)
     except:
         print "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
@@ -304,7 +330,7 @@ def setup_esgcet(upgrade_mode = None):
 
     if mode == "I":
         if DEBUG != "0":
-           print  '''ESGINI = 
+            print  '''ESGINI = 
                     %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" ) 
                     --db $( [ -n "%s" ] && echo "--db-name %s" ) $( [ -n "%s" ] 
                     && echo "--db-admin %s" ) $([ -n "${pg_sys_acct_passwd:=%s}" ] 
@@ -313,17 +339,21 @@ def setup_esgcet(upgrade_mode = None):
                     $([ -n "%s" ] && echo "--db-user-password %s") 
                     $( [ -n "%s" ] && echo "--db-host %s" ) 
                     $( [ -n "%s" ] && echo "--db-port %s" )" % 
-            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended, 
-                config.config_dictionary["db_database"], config.config_dictionary["db_database"], config.config_dictionary["postgress_user"], 
-                config.config_dictionary["postgress_user"], security_admin_password, 
-                config.config_dictionary["pg_sys_acct_passwd"],
-                publisher_db_user, publisher_db_user, 
-                config.config_dictionary["publisher_db_user_passwd"], config.config_dictionary["publisher_db_user_passwd"], 
-                config.config_dictionary["postgress_host"], config.config_dictionary["postgress_host"], 
-                config.config_dictionary["postgress_port"], config.config_dictionary["postgress_port"] )
+            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended,
+                   config.config_dictionary["db_database"], config.config_dictionary[
+                       "db_database"], config.config_dictionary["postgress_user"],
+                   config.config_dictionary[
+                       "postgress_user"], security_admin_password,
+                   config.config_dictionary["pg_sys_acct_passwd"],
+                   publisher_db_user, publisher_db_user,
+                   config.config_dictionary["publisher_db_user_passwd"], config.config_dictionary[
+                       "publisher_db_user_passwd"],
+                   config.config_dictionary[
+                       "postgress_host"], config.config_dictionary["postgress_host"],
+                   config.config_dictionary["postgress_port"], config.config_dictionary["postgress_port"])
 
         else:
-           print '''ESGINI = 
+            print '''ESGINI = 
                     {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup 
                     $( (({recommended} == 1 )) && echo "--minimal-setup" ) 
                     --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
@@ -333,15 +363,19 @@ def setup_esgcet(upgrade_mode = None):
                     $([ -n "{publisher_db_user_passwd}" ] && echo "--db-user-password {publisher_db_user_passwd_stars}") 
                     $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
                     $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
-            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"], 
-                recommended=recommended, 
-                db_database=config.config_dictionary["db_database"], 
-                postgress_user=config.config_dictionary["postgress_user"], 
-                pg_sys_acct_passwd="******" if config.config_dictionary["pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"], 
-                publisher_db_user=publisher_db_user, 
-                publisher_db_user_passwd=config.config_dictionary["publisher_db_user_passwd"], publisher_db_user_passwd_stars = "******",
-                postgress_host=config.config_dictionary["postgress_host"], 
-                postgress_port=config.config_dictionary["postgress_port"] )
+            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
+                       recommended=recommended,
+                       db_database=config.config_dictionary["db_database"],
+                       postgress_user=config.config_dictionary[
+                           "postgress_user"],
+                       pg_sys_acct_passwd="******" if config.config_dictionary[
+                           "pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"],
+                       publisher_db_user=publisher_db_user,
+                       publisher_db_user_passwd=config.config_dictionary[
+                           "publisher_db_user_passwd"], publisher_db_user_passwd_stars="******",
+                       postgress_host=config.config_dictionary[
+                           "postgress_host"],
+                       postgress_port=config.config_dictionary["postgress_port"])
 
     try:
 
@@ -355,29 +389,32 @@ def setup_esgcet(upgrade_mode = None):
                     $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
                     $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
                 '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
-                    recommended=recommended,
-                    db_database=config.config_dictionary["db_database"],
-                    postgress_user=config.config_dictionary["postgress_user"],
-                    pg_sys_acct_passwd=config.config_dictionary["pg_sys_acct_passwd"] if config.config_dictionary["pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"],
-                    publisher_db_user=publisher_db_user,
-                    publisher_db_user_passwd=config.config_dictionary["publisher_db_user_passwd"],
-                    postgress_host=config.config_dictionary["postgress_host"],
-                    postgress_port=config.config_dictionary["postgress_port"])
+                           recommended=recommended,
+                           db_database=config.config_dictionary["db_database"],
+                           postgress_user=config.config_dictionary[
+                               "postgress_user"],
+                           pg_sys_acct_passwd=config.config_dictionary["pg_sys_acct_passwd"] if config.config_dictionary[
+                               "pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"],
+                           publisher_db_user=publisher_db_user,
+                           publisher_db_user_passwd=config.config_dictionary[
+                               "publisher_db_user_passwd"],
+                           postgress_host=config.config_dictionary[
+                               "postgress_host"],
+                           postgress_port=config.config_dictionary["postgress_port"])
 
     except Exception, e:
         print "exception occured with ESGINI: ", str(e)
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
-
-    try:    
-        esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
+    try:
+        esginitialize_output = subprocess.call(
+            "%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
         if esginitialize_output != 0:
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
     except Exception, e:
         print "exception occurred with esginitialize_output: ", str(e)
-
 
     os.chdir(starting_directory)
     write_esgcet_env()
@@ -389,19 +426,25 @@ def setup_esgcet(upgrade_mode = None):
 def write_esgcet_env():
     # print
     datafile = open(config.envfile, "a+")
-    datafile.write("export ESG_ROOT_ID="+esg_root_id+"\n")
+    datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
     esg_functions.deduplicate(config.envfile)
     datafile.close()
 
+
 def write_esgcet_install_log():
     datafile = open(config.install_manifest, "a+")
-    datafile.write(str(datetime.date.today()) + "python:esgcet=" + config.config_dictionary["esgcet_version"]+"\n")
+    datafile.write(str(datetime.date.today()) + "python:esgcet=" +
+                   config.config_dictionary["esgcet_version"] + "\n")
     esg_functions.deduplicate(config.install_manifest)
     datafile.close()
-    esg_functions.write_as_property("publisher_config", config.config_dictionary["publisher_config"])
-    esg_functions.write_as_property("publisher_home", config.config_dictionary["publisher_home"])
-    esg_functions.write_as_property("monitor.esg.ini", os.path.join(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"]))
+    esg_functions.write_as_property(
+        "publisher_config", config.config_dictionary["publisher_config"])
+    esg_functions.write_as_property(
+        "publisher_home", config.config_dictionary["publisher_home"])
+    esg_functions.write_as_property("monitor.esg.ini", os.path.join(config.config_dictionary[
+                                    "publisher_home"], config.config_dictionary["publisher_config"]))
     return 0
+
 
 def test_esgcet():
     print '''
@@ -414,7 +457,8 @@ def test_esgcet():
 
     start_postgress()
 
-    esgcet_testdir=os.path.join(config.config_dictionary["thredds_root_dir"], "test")
+    esgcet_testdir = os.path.join(config.config_dictionary[
+                                  "thredds_root_dir"], "test")
 
     try:
         os.makedirs(esgcet_testdir)
@@ -427,7 +471,8 @@ def test_esgcet():
         print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
         esg_functions.checked_done(1)
 
-    os.chown(esgcet_testdir, config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
+    os.chown(esgcet_testdir, config.config_dictionary[
+             "installer_uid"], config.config_dictionary["installer_gid"])
 
     try:
         os.mkdir(config.config_dictionary["thredds_replica_dir"])
@@ -440,18 +485,20 @@ def test_esgcet():
         print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
         esg_functions.checked_done(1)
 
-    os.chown(config.config_dictionary["thredds_replica_dir"], config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
+    os.chown(config.config_dictionary["thredds_replica_dir"], config.config_dictionary[
+             "installer_uid"], config.config_dictionary["installer_gid"])
     print "esgcet test directory: [%s]" % esgcet_testdir
 
-    fetch_file="sftlf.nc"
-    if esg_functions.checked_get(os.path.join(esgcet_testdir,fetch_file), "http://"+config.config_dictionary["esg_dist_url_root"]+"/externals/"+fetch_file) > 0:
+    fetch_file = "sftlf.nc"
+    if esg_functions.checked_get(os.path.join(esgcet_testdir, fetch_file), "http://" + config.config_dictionary["esg_dist_url_root"] + "/externals/" + fetch_file) > 0:
         print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
-    #Run test...
+    # Run test...
     print "%s/bin/esginitialize -c " % (config.config_dictionary["cdat_home"])
-    esginitialize_output = subprocess.call("%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
+    esginitialize_output = subprocess.call(
+        "%s/bin/esginitialize -c" % (config.config_dictionary["cdat_home"]), shell=True)
 
     '''
         esgprep mapfile --dataset ipsl.fr.test.mytest --project test /esg/data/test
@@ -462,14 +509,15 @@ def test_esgcet():
         '''.format(cdat_home=config.config_dictionary["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir)
     esgprep_output = subprocess.call('''
         {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
-        '''.format(cdat_home=config.config_dictionary["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir),shell=True)
-    if esgprep_output !=0:
+        '''.format(cdat_home=config.config_dictionary["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir), shell=True)
+    if esgprep_output != 0:
         print " ERROR: ESG Mapfile generation failed"
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
     print "{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(cdat_home=config.config_dictionary["cdat_home"])
-    esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(cdat_home=config.config_dictionary["cdat_home"]),shell=True)
+    esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(
+        cdat_home=config.config_dictionary["cdat_home"]), shell=True)
     if esgpublish_output != 0:
         print " ERROR: ESG publish failed"
         os.chdir(starting_directory)
@@ -478,26 +526,31 @@ def test_esgcet():
     os.chdir(starting_directory)
     esg_functions.checked_done(0)
 
-#returns 1 if it is already running (if check_postgress_process returns 0 - true)
+# returns 1 if it is already running (if check_postgress_process returns 0
+# - true)
+
+
 def start_postgress():
     if esg_functions.check_postgress_process() == 0:
         print "Postgres is already running"
         return 1
     print "Starting Postgress..."
-    status = subprocess.Popen("/etc/init.d/postgresql start", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    status = subprocess.Popen("/etc/init.d/postgresql start",
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     status_output, err = status.communicate()
     print "status_output: ", status_output
     sleep(3)
-    progress_process_status = subprocess.Popen("/bin/ps -elf | grep postgres | grep -v grep", shell=True)
+    progress_process_status = subprocess.Popen(
+        "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()
     esg_functions.checked_done(0)
+
 
 def main():
 
     print "inside main function of esg_node"
     setup_esgcet()
     test_esgcet()
-    
 
 
 if __name__ == '__main__':

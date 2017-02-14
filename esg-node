@@ -1035,7 +1035,7 @@ setup_esgcet() {
     echo "$(pwd)"
 
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
+    conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2
     
     if [ $ESGF_INSECURE > 0 ] ; then
 

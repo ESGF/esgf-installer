@@ -138,7 +138,7 @@ def setup_esgcet(upgrade_mode=None):
             return 0
 
     try:
-        os.mkdir(config.config_dictionary["workdir"])
+        os.makedirs(config.config_dictionary["workdir"])
     except OSError, e:
         if e.errno != 17:
             raise

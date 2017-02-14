@@ -1035,7 +1035,7 @@ setup_esgcet() {
     echo "$(pwd)"
 
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2
+    conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient
     
     if [ $ESGF_INSECURE > 0 ] ; then
 
@@ -1182,7 +1182,7 @@ setup_esgcet() {
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
       choice=$(echo ${choice} | tr 'A-Z' 'a-z')
       if [ $choice == "y" ] ; then
-        conda install -c pcmdi -c conda-forge -c uvcdat cmor    
+        conda install -c pcmdi -c conda-forge -c uvcdat cmor cfchecker   
         pushd $install_dir
         git clone https://github.com/PCMDI/cmip6-cmor-tables
         popd 

@@ -5287,7 +5287,7 @@ show_svc_list() {
 run_startup_hooks() {
     echo_strong "Running startup hooks..."
 	setup_sensible_confs
-	update_apache_conf
+	#update_apache_conf
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)

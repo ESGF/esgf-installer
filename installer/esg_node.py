@@ -142,8 +142,8 @@ def setup_esgcet(upgrade_mode=None):
 
     try:
         os.makedirs(config.config_dictionary["workdir"])
-    except OSError, e:
-        if e.errno != 17:
+    except OSError, exception:
+        if exception.errno != 17:
             raise
         sleep(1)
         pass
@@ -266,8 +266,8 @@ def setup_esgcet(upgrade_mode=None):
 
         try:
             os.mkdir(config.config_dictionary["publisher_home"])
-        except OSError, e:
-            if e.errno != 17:
+        except OSError, exception:
+            if exception.errno != 17:
                 raise
             sleep(1)
             pass
@@ -404,8 +404,8 @@ def setup_esgcet(upgrade_mode=None):
                                "postgress_host"],
                            postgress_port=config.config_dictionary["postgress_port"])
 
-    except Exception, e:
-        print "exception occured with ESGINI: ", str(e)
+    except Exception, exception:
+        print "exception occured with ESGINI: ", str(exception)
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
@@ -415,8 +415,8 @@ def setup_esgcet(upgrade_mode=None):
         if esginitialize_output != 0:
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
-    except Exception, e:
-        print "exception occurred with esginitialize_output: ", str(e)
+    except Exception, exception:
+        print "exception occurred with esginitialize_output: ", str(exception)
 
     os.chdir(starting_directory)
     write_esgcet_env()
@@ -443,7 +443,7 @@ def write_esgcet_install_log():
 	    esg_functions.deduplicate(config.install_manifest)
     finally:
     	datafile.close()
-    	
+
     esg_functions.write_as_property(
         "publisher_config", config.config_dictionary["publisher_config"])
     esg_functions.write_as_property(
@@ -469,13 +469,13 @@ def test_esgcet():
 
     try:
         os.makedirs(esgcet_testdir)
-    except OSError, e:
-        if e.errno != 17:
+    except OSError, exception:
+        if exception.errno != 17:
             raise
         sleep(1)
         pass
-    except Exception, e:
-        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
+    except Exception, exception:
+        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
         esg_functions.checked_done(1)
 
     os.chown(esgcet_testdir, config.config_dictionary[
@@ -483,13 +483,13 @@ def test_esgcet():
 
     try:
         os.mkdir(config.config_dictionary["thredds_replica_dir"])
-    except OSError, e:
-        if e.errno != 17:
+    except OSError, exception:
+        if exception.errno != 17:
             raise
         sleep(1)
         pass
-    except Exception, e:
-        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
+    except Exception, exception:
+        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
         esg_functions.checked_done(1)
 
     os.chown(config.config_dictionary["thredds_replica_dir"], config.config_dictionary[

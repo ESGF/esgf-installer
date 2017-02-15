@@ -162,30 +162,33 @@ def setup_esgcet(upgrade_mode=None):
     # clone publisher
     publisher_git_protocol = "git://"
 
-    if force_install and os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher"):
-        try:
-            shutil.rmtree(config.config_dictionary[
-                          "workdir"] + "esg-publisher")
-        except:
-            print "Could not delete directory: %s" % (config.config_dictionary["workdir"] + "esg-publisher")
+    workdir_esg_publisher_directory = os.path.join(config.config_dictionary["workdir"], "esg-publisher")
 
-    if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher")):
+    if force_install and os.path.isdir(workdir_esg_publisher_directory):
+        try:
+            shutil.rmtree(workdir_esg_publisher_directory)
+        except:
+            print "Could not delete directory: %s" % (workdir_esg_publisher_directory)
+
+    if not os.path.isdir(workdir_esg_publisher_directory):
+
         print "Fetching the cdat project from GIT Repo... %s" % (config.config_dictionary["publisher_repo"])
         Repo.clone_from(config.config_dictionary[
-                        "publisher_repo"], os.path.join(config.config_dictionary["workdir"], "esg-publisher"))
-        if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher",".git")):
+                        "publisher_repo"], workdir_esg_publisher_directory)
+
+        if not os.path.isdir(os.path.join(workdir_esg_publisher_directory, ".git")):
+
             publisher_git_protocol = "https://"
             print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
-            Repo.clone_from(config.config_dictionary["publisher_repo_https"], os.path.join(
-                config.config_dictionary["workdir"], "esg-publisher"))
-            if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher",".git")):
+
+            Repo.clone_from(config.config_dictionary["publisher_repo_https"], workdir_esg_publisher_directory)
+
+            if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher", ".git")):
                 print "Could not fetch from cdat's repo (with git nor https protocol)"
                 esg_functions.checked_done(1)
 
-    os.chdir(os.path.join(config.config_dictionary[
-             "workdir"], "esg-publisher"))
-    publisher_repo_local = Repo(os.path.join(
-        config.config_dictionary["workdir"], "esg-publisher"))
+    os.chdir(workdir_esg_publisher_directory)
+    publisher_repo_local = Repo(workdir_esg_publisher_directory)
     publisher_repo_local.git.checkout("master")
     # pull from remote
     publisher_repo_local.remotes.origin.pull()

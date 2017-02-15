@@ -130,6 +130,7 @@ def setup_esgcet(upgrade_mode=None):
         else:
             continue_installation_answer = raw_input(
                 "Do you want to continue with esgcet installation and setup? [Y/n]")
+
         if not continue_installation_answer.strip():
             continue_installation_answer = default_upgrade_answer
 
@@ -223,10 +224,10 @@ def setup_esgcet(upgrade_mode=None):
             print "\t-------------------------------------------\n"
 
             choice = raw_input("select [1] > ")
-            if choice == 1:
+            if choice == "1":
                 config.config_dictionary[
                     "publisher_home"] = config.esg_config_dir + "/esgcet"
-            elif choice == 2:
+            elif choice == "2":
                 config.config_dictionary[
                     "publisher_home"] = os.environ["HOME"] + "/.esgcet"
             elif choice.lower() == "c":

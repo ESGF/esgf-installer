@@ -1118,7 +1118,7 @@ def set_aside_web_app_cleanup():
 #------------------------------------------
 
 def get_esgf_dist_mirror(selection_mode, install_type = None):
-    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf" "dist.ceda.ac.uk/esgf" "aims1.llnl.gov/esgf" "esg-dn2.nsc.liu.se/esgf")
+    esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
     response_array = {}
     ranked_response_times = []
 
@@ -1144,7 +1144,7 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     #     host="${m%%\/*}"
 
     for mirror in esgf_dist_mirrors_list:
-        host, page = mirror.split("/")
+        host, page = mirror.rsplit("/", 1)
 
         #  response = requests.get('http://www.google.com')
         # >>> print response.elapsed

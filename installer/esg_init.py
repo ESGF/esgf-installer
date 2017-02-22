@@ -217,7 +217,7 @@ class EsgInit(object):
         try:
             os.environ["ESGINI"]
         except KeyError:
-            print "os.environ['ESGINI'] not found"
+            # print "os.environ['ESGINI'] not found"
             # external_script_variables["publisher_home"] = subprocess.check_output(
             #     "${ESGINI%/*}", shell=True)
             external_script_variables["publisher_home"] = self.esg_config_dir+"/esgcet"
@@ -293,7 +293,8 @@ class EsgInit(object):
         try:
             os.environ["SUDO_UID"]
         except KeyError:
-            print "SUDO_UID not found"
+            # print "SUDO_UID not found"
+            pass
         else:
             os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
             del os.environ["SUDO_UID"]
@@ -302,7 +303,8 @@ class EsgInit(object):
         try:
             os.environ["SUDO_GID"]
         except KeyError:
-            print "SUDO_GID not found"
+            # print "SUDO_GID not found"
+            pass
         else:
             os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
             del os.environ["SUDO_GID"]

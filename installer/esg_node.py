@@ -586,7 +586,7 @@ def main():
         esg_functions.get_esgf_dist_mirror("interactive", install_type)
     else:
         logger.debug("fastest")
-        esg_functions.get_esgf_dist_mirror("interactive", install_type)
+        esg_functions.get_esgf_dist_mirror("fastest", install_type)
 
     # setup_esgcet()
     # test_esgcet()

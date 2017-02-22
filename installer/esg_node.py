@@ -1,18 +1,25 @@
 import os
 import subprocess
 import requests
+import sys
 import pip
 import hashlib
 import shutil
 import grp
 import datetime
+import logging
 from git import Repo
 from time import sleep
+from socket import gethostname
 import esg_functions
 import esg_bash2py
 import esg_functions
 from esg_init import EsgInit
 
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 config = EsgInit()
 # os.environ['DISCOVERONLY'] = Expand.colonMinus("DISCOVERONLY")
@@ -559,9 +566,10 @@ def start_postgress():
 
 def main():
 
-    print "inside main function of esg_node"
-    setup_esgcet()
-    test_esgcet()
+    logger.info("esg-node initializing...")
+    print gethostname() 
+    # setup_esgcet()
+    # test_esgcet()
 
 
 if __name__ == '__main__':

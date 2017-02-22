@@ -8,9 +8,9 @@ import shutil
 import grp
 import datetime
 import logging
+import socket
 from git import Repo
 from time import sleep
-from socket import gethostname
 import esg_functions
 import esg_bash2py
 import esg_functions
@@ -567,7 +567,18 @@ def start_postgress():
 def main():
 
     logger.info("esg-node initializing...")
-    print gethostname() 
+    try:
+        logger.info(socket.getfqdn())
+    except socket.error:
+        logger.error("Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command")
+        sys.exit()
+
+    # Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
+    if "devel" in script_version:
+        logger.debug("Using devel version")
+        devel = True
+    else:
+        devel = False    
     # setup_esgcet()
     # test_esgcet()
 

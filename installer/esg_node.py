@@ -137,6 +137,7 @@ def setup_esgcet(upgrade_mode=None):
         else:
             continue_installation_answer = raw_input(
                 "Do you want to continue with esgcet installation and setup? [Y/n]")
+
         if not continue_installation_answer.strip():
             continue_installation_answer = default_upgrade_answer
 
@@ -149,8 +150,8 @@ def setup_esgcet(upgrade_mode=None):
 
     try:
         os.makedirs(config.config_dictionary["workdir"])
-    except OSError, e:
-        if e.errno != 17:
+    except OSError, exception:
+        if exception.errno != 17:
             raise
         sleep(1)
         pass
@@ -169,30 +170,33 @@ def setup_esgcet(upgrade_mode=None):
     # clone publisher
     publisher_git_protocol = "git://"
 
-    if force_install and os.path.isdir(config.config_dictionary["workdir"] + "esg-publisher"):
-        try:
-            shutil.rmtree(config.config_dictionary[
-                          "workdir"] + "esg-publisher")
-        except:
-            print "Could not delete directory: %s" % (config.config_dictionary["workdir"] + "esg-publisher")
+    workdir_esg_publisher_directory = os.path.join(config.config_dictionary["workdir"], "esg-publisher")
 
-    if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher")):
+    if force_install and os.path.isdir(workdir_esg_publisher_directory):
+        try:
+            shutil.rmtree(workdir_esg_publisher_directory)
+        except:
+            print "Could not delete directory: %s" % (workdir_esg_publisher_directory)
+
+    if not os.path.isdir(workdir_esg_publisher_directory):
+
         print "Fetching the cdat project from GIT Repo... %s" % (config.config_dictionary["publisher_repo"])
         Repo.clone_from(config.config_dictionary[
-                        "publisher_repo"], os.path.join(config.config_dictionary["workdir"], "esg-publisher"))
-        if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher",".git")):
+                        "publisher_repo"], workdir_esg_publisher_directory)
+
+        if not os.path.isdir(os.path.join(workdir_esg_publisher_directory, ".git")):
+
             publisher_git_protocol = "https://"
             print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
-            Repo.clone_from(config.config_dictionary["publisher_repo_https"], os.path.join(
-                config.config_dictionary["workdir"], "esg-publisher"))
-            if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher",".git")):
+
+            Repo.clone_from(config.config_dictionary["publisher_repo_https"], workdir_esg_publisher_directory)
+
+            if not os.path.isdir(os.path.join(config.config_dictionary["workdir"], "esg-publisher", ".git")):
                 print "Could not fetch from cdat's repo (with git nor https protocol)"
                 esg_functions.checked_done(1)
 
-    os.chdir(os.path.join(config.config_dictionary[
-             "workdir"], "esg-publisher"))
-    publisher_repo_local = Repo(os.path.join(
-        config.config_dictionary["workdir"], "esg-publisher"))
+    os.chdir(workdir_esg_publisher_directory)
+    publisher_repo_local = Repo(workdir_esg_publisher_directory)
     publisher_repo_local.git.checkout("master")
     # pull from remote
     publisher_repo_local.remotes.origin.pull()
@@ -227,10 +231,10 @@ def setup_esgcet(upgrade_mode=None):
             print "\t-------------------------------------------\n"
 
             choice = raw_input("select [1] > ")
-            if choice == 1:
+            if choice == "1":
                 config.config_dictionary[
                     "publisher_home"] = config.esg_config_dir + "/esgcet"
-            elif choice == 2:
+            elif choice == "2":
                 config.config_dictionary[
                     "publisher_home"] = os.environ["HOME"] + "/.esgcet"
             elif choice.lower() == "c":
@@ -273,8 +277,8 @@ def setup_esgcet(upgrade_mode=None):
 
         try:
             os.mkdir(config.config_dictionary["publisher_home"])
-        except OSError, e:
-            if e.errno != 17:
+        except OSError, exception:
+            if exception.errno != 17:
                 raise
             sleep(1)
             pass
@@ -411,8 +415,8 @@ def setup_esgcet(upgrade_mode=None):
                                "postgress_host"],
                            postgress_port=config.config_dictionary["postgress_port"])
 
-    except Exception, e:
-        print "exception occured with ESGINI: ", str(e)
+    except Exception, exception:
+        print "exception occured with ESGINI: ", str(exception)
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
@@ -422,8 +426,8 @@ def setup_esgcet(upgrade_mode=None):
         if esginitialize_output != 0:
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
-    except Exception, e:
-        print "exception occurred with esginitialize_output: ", str(e)
+    except Exception, exception:
+        print "exception occurred with esginitialize_output: ", str(exception)
 
     os.chdir(starting_directory)
     write_esgcet_env()
@@ -435,17 +439,22 @@ def setup_esgcet(upgrade_mode=None):
 def write_esgcet_env():
     # print
     datafile = open(config.envfile, "a+")
-    datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
-    esg_functions.deduplicate(config.envfile)
-    datafile.close()
+    try:
+	    datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
+	    esg_functions.deduplicate(config.envfile)
+    finally:
+    	datafile.close()
 
 
 def write_esgcet_install_log():
     datafile = open(config.install_manifest, "a+")
-    datafile.write(str(datetime.date.today()) + "python:esgcet=" +
-                   config.config_dictionary["esgcet_version"] + "\n")
-    esg_functions.deduplicate(config.install_manifest)
-    datafile.close()
+    try:
+	    datafile.write(str(datetime.date.today()) + "python:esgcet=" +
+	                   config.config_dictionary["esgcet_version"] + "\n")
+	    esg_functions.deduplicate(config.install_manifest)
+    finally:
+    	datafile.close()
+
     esg_functions.write_as_property(
         "publisher_config", config.config_dictionary["publisher_config"])
     esg_functions.write_as_property(
@@ -471,13 +480,13 @@ def test_esgcet():
 
     try:
         os.makedirs(esgcet_testdir)
-    except OSError, e:
-        if e.errno != 17:
+    except OSError, exception:
+        if exception.errno != 17:
             raise
         sleep(1)
         pass
-    except Exception, e:
-        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
+    except Exception, exception:
+        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
         esg_functions.checked_done(1)
 
     os.chown(esgcet_testdir, config.config_dictionary[
@@ -485,13 +494,13 @@ def test_esgcet():
 
     try:
         os.mkdir(config.config_dictionary["thredds_replica_dir"])
-    except OSError, e:
-        if e.errno != 17:
+    except OSError, exception:
+        if exception.errno != 17:
             raise
         sleep(1)
         pass
-    except Exception, e:
-        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=e)
+    except Exception, exception:
+        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
         esg_functions.checked_done(1)
 
     os.chown(config.config_dictionary["thredds_replica_dir"], config.config_dictionary[

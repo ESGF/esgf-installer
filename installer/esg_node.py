@@ -576,9 +576,18 @@ def main():
     # Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
     if "devel" in script_version:
         logger.debug("Using devel version")
-        devel = True
+        install_type = "devel"
     else:
-        devel = False    
+        install_type = "master"
+
+    # Determining ESGF distribution mirror
+    if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
+        logger.debug("interactive")
+        esg_functions.get_esgf_dist_mirror("interactive", install_type)
+    else:
+        logger.debug("fastest")
+        esg_functions.get_esgf_dist_mirror("interactive", install_type)
+
     # setup_esgcet()
     # test_esgcet()
 

@@ -1152,7 +1152,7 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
         # 0:00:01.762032
         # >>> response.elapsed
         # datetime.timedelta(0, 1, 762032)
-        response = requests.get("http://"+host, timeout=0.001)
+        response = requests.get("http://"+host, timeout=4.0)
         response_times[mirror] = response.elapsed
 
     ranked_response_times = OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))

@@ -1224,6 +1224,7 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     # else
     #     esgf_dist_mirror=${flist[1]}
     # fi
+    logger.debug("install_type: %s", install_type)
     if install_type == "interactive":
         print "\t-------------------------------------------\n"
         for index, mirror in ranked_response_times:

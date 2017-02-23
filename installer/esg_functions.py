@@ -1195,10 +1195,14 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     #     esgf_dist_mirror=${flist[1]};
     #     return;
     # fi
-    if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
-        print "using the fastest mirror %s" % ranked_response_times[0]
-        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[0]
-        return
+    try:
+        if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
+            print "using the fastest mirror %s" % ranked_response_times.items()[0][0]
+            config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+            return
+    except OSError, error:
+        logger.warning(error)
+
 
     # if [ $1 = "interactive" ]; then
     #     i=1

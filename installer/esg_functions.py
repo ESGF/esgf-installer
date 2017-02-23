@@ -17,6 +17,7 @@ import requests
 import stat
 import hashlib
 from time import sleep
+from collections import OrderedDict
 from esg_init import EsgInit
 import esg_bash2py
 
@@ -1120,7 +1121,7 @@ def set_aside_web_app_cleanup():
 def get_esgf_dist_mirror(selection_mode, install_type = None):
     esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
     response_array = {}
-    ranked_response_times = []
+    response_times = {}
 
     # for m in "${esgf_dist_mirrors_list[@]}"; do
     #     if [ $devel -eq 1 ]; then
@@ -1151,10 +1152,10 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
         # 0:00:01.762032
         # >>> response.elapsed
         # datetime.timedelta(0, 1, 762032)
-        response = requests.get(host, timeout=0.001)
-        ranked_response_times[mirror] = response.elapsed
+        response = requests.get("http://"+host, timeout=0.001)
+        response_times[mirror] = response.elapsed
 
-    ranked_response_times.sort()
+    ranked_response_times = OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
     # master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
     # fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
@@ -1163,9 +1164,9 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     #     echo "$fastest is the fastest mirror, but is out-of-sync, hence overlooked";
     #     outofsync=1;
     # fi
-    master=response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf']
-    fastest = ranked_response_times[0]
-    outofsync=0
+    master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf']
+    fastest = ranked_response_times.items()[0][0]
+    outofsync = 0
     if response_array[fastest] != master:
         print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest
         outofsync = 1

@@ -1228,10 +1228,12 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     # fi
     logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
     if mirror_selection_mode == "interactive":
+        print "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
         print "\t-------------------------------------------\n"
         for index, (key, _) in enumerate(ranked_response_times.iteritems(),1):
             print "\t %i) %s" % (index, key)
-        choice = int(raw_input("Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"))
+        print "\t-------------------------------------------\n"
+        choice = int(raw_input())
         #Accounts for off by 1 error
         choice = choice - 1
         logger.debug("choice result: %s", ranked_response_times.items()[choice][0])

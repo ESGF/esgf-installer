@@ -1122,7 +1122,7 @@ def set_aside_web_app_cleanup():
 #ESGF Distribution Mirrors Utilities
 #------------------------------------------
 
-def get_esgf_dist_mirror(selection_mode, install_type = None):
+def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
     response_array = {}
     response_times = {}
@@ -1224,8 +1224,8 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     # else
     #     esgf_dist_mirror=${flist[1]}
     # fi
-    logger.debug("install_type: %s", install_type)
-    if install_type == "interactive":
+    logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
+    if mirror_selection_mode == "interactive":
         print "\t-------------------------------------------\n"
         for index, mirror in ranked_response_times:
             print "\t %i %s" % (index, mirror)

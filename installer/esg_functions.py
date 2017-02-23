@@ -1232,8 +1232,8 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
         print "\t-------------------------------------------\n"
         for index, (key, _) in enumerate(ranked_response_times.iteritems(),1):
             print "\t %i) %s" % (index, key)
-        print "\t-------------------------------------------\n"
-        choice = int(raw_input())
+        print "\n\t-------------------------------------------\n"
+        choice = int(raw_input("Enter mirror number: "))
         #Accounts for off by 1 error
         choice = choice - 1
         logger.debug("choice result: %s", ranked_response_times.items()[choice][0])

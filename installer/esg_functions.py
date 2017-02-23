@@ -1159,9 +1159,10 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
         # datetime.timedelta(0, 1, 762032)
         try:
             response = requests.get("http://"+host, timeout=4.0)
-            logger.debug("%s", response.elapsed)
+            logger.debug("%s response time %s", host, response.elapsed)
             response_times[mirror] = response.elapsed
         except requests.exceptions.Timeout:
+            logger.warn("%s request timed out", host)
             failed_requests[mirror] = "Request timed out"
 
     ranked_response_times = OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))

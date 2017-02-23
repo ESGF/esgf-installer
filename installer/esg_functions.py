@@ -1224,22 +1224,36 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     # else
     #     esgf_dist_mirror=${flist[1]}
     # fi
+    #TODO: Break this into private function
     logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
     if mirror_selection_mode == "interactive":
-        print "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
-        print "\t-------------------------------------------\n"
-        for index, (key, _) in enumerate(ranked_response_times.iteritems(),1):
-            print "\t %i) %s" % (index, key)
-        print "\n\t-------------------------------------------\n"
-        choice = int(raw_input("Enter mirror number: "))
-        #Accounts for off by 1 error
-        choice = choice - 1
-        logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
-        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
+        while True:
+            try:
+                _render_distribution_mirror_menu(ranked_response_times)
+                choice = _select_distribution_mirror()
+                logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
+                config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
+            except IndexError, error:
+                logger.error("Invalid selection", exc_info = True)
+                continue
+            break
     else:
         config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
 
 
+def _render_distribution_mirror_menu(distribution_mirror_choices):
+    print "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
+    print "\t-------------------------------------------\n"
+    for index, (key, _) in enumerate(distribution_mirror_choices.iteritems(),1):
+        print "\t %i) %s" % (index, key)
+    print "\n\t-------------------------------------------\n"
+
+def _select_distribution_mirror():
+    choice = int(raw_input("Enter mirror number: "))
+    #Accounts for off by 1 error
+    choice = choice - 1
+    return choice
+    
 
 def is_in_git(file_name):
     '''

@@ -16,11 +16,15 @@ import tarfile
 import requests
 import stat
 import hashlib
+import logging
 from time import sleep
 from collections import OrderedDict
 from esg_init import EsgInit
 import esg_bash2py
 
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 config = EsgInit()
 # print "config.config_dictionary: ", config.config_dictionary["tomcat_users_file"]
 # esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
@@ -1122,6 +1126,7 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
     response_array = {}
     response_times = {}
+    failed_requests = {}
 
     # for m in "${esgf_dist_mirrors_list[@]}"; do
     #     if [ $devel -eq 1 ]; then
@@ -1152,8 +1157,12 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
         # 0:00:01.762032
         # >>> response.elapsed
         # datetime.timedelta(0, 1, 762032)
-        response = requests.get("http://"+host, timeout=4.0)
-        response_times[mirror] = response.elapsed
+        try:
+            response = requests.get("http://"+host, timeout=4.0)
+            logger.debug("%s", response.elapsed)
+            response_times[mirror] = response.elapsed
+        except requests.exceptions.Timeout:
+            failed_requests[mirror] = "Request timed out"
 
     ranked_response_times = OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 

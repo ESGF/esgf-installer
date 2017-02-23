@@ -581,12 +581,15 @@ def main():
         install_type = "master"
 
     # Determining ESGF distribution mirror
+    logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
     if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
         logger.debug("interactive")
-        esg_functions.get_esgf_dist_mirror("interactive", install_type)
+        config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("interactive", install_type)
     else:
         logger.debug("fastest")
-        esg_functions.get_esgf_dist_mirror("fastest", install_type)
+        config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("fastest", install_type)
+
+    logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
 
     # setup_esgcet()
     # test_esgcet()

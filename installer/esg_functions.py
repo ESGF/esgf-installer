@@ -1158,14 +1158,14 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
         outofsync = True
   
     if outofsync == True:
-        config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
-        return
+        # config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
+        return "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
    
     try:
         if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
             print "using the fastest mirror %s" % ranked_response_times.items()[0][0]
-            config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
-            return
+            # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+            return ranked_response_times.items()[0][0]
     except OSError, error:
         logger.warning(error)
 
@@ -1177,13 +1177,15 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
                 _render_distribution_mirror_menu(ranked_response_times)
                 choice = _select_distribution_mirror()
                 logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
-                config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
+                # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
+                return ranked_response_times.items()[choice][0]
             except IndexError, error:
                 logger.error("Invalid selection", exc_info=True)
                 continue
             break
     else:
-        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+        # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+        ranked_response_times.items()[0][0]
 
 
 def _render_distribution_mirror_menu(distribution_mirror_choices):

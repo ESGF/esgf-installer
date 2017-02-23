@@ -1130,35 +1130,15 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     response_times = {}
     failed_requests = {}
 
-    # for m in "${esgf_dist_mirrors_list[@]}"; do
-    #     if [ $devel -eq 1 ]; then
-    #         resarray[$m]=`curl -s -L --insecure $m/dist/devel/lastpush.md5|tr -s " "|cut -d " " -f1`;
-    #     else 
-    #         resarray[$m]=`curl -s -L --insecure $m/dist/lastpush.md5|tr -s " "|cut -d " " -f1`;
-    #     fi
-    # done
-
     for mirror in esgf_dist_mirrors_list:
         if install_type == "devel":
             response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/devel/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         else:
             response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    
-    # for m in "${esgf_dist_mirrors_list[@]}"; do
-
-    #     # get host and page
-    #     m=${m/[hH][tT][tT][pP]:\/\//}
-    #     [ "${m#*\/}" == "$m" ] && page="/" || page="/${m#*\/}"
-    #     host="${m%%\/*}"
 
     for mirror in esgf_dist_mirrors_list:
         host, page = mirror.rsplit("/", 1)
 
-        #  response = requests.get('http://www.google.com')
-        # >>> print response.elapsed
-        # 0:00:01.762032
-        # >>> response.elapsed
-        # datetime.timedelta(0, 1, 762032)
         try:
             response = requests.get("http://"+host, timeout=4.0)
             logger.debug("%s response time %s", host, response.elapsed)
@@ -1170,13 +1150,6 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     ranked_response_times = OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
     logger.debug("ranked_response_times: %s", ranked_response_times)
 
-    # master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
-    # fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
-    # outofsync=0
-    # if [ "${resarray[$fastest]}" != "$master" ]; then #if the fastest mirror is not in sync with coffee
-    #     echo "$fastest is the fastest mirror, but is out-of-sync, hence overlooked";
-    #     outofsync=1;
-    # fi
     master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf']
     fastest = ranked_response_times.items()[0][0]
     logger.debug("fastest: %s", fastest)
@@ -1185,20 +1158,11 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     if response_array[fastest] != master:
         print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest
         outofsync = 1
-    # if [ $outofsync -eq 1 ]; then
-    #     #lets use the master
-    #         esgf_dist_mirror="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf";
-    #         #esgf_dist_mirror="http://esg-dn2.nsc.liu.se/esgf";
-    #     return;
-    # fi
+  
     if outofsync == 1:
         config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         return
-    # if [ -p /tmp/inputpipe ]; then
-    #     echo "Using the fastest mirror (${flist[1]})";
-    #     esgf_dist_mirror=${flist[1]};
-    #     return;
-    # fi
+   
     try:
         if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
             print "using the fastest mirror %s" % ranked_response_times.items()[0][0]
@@ -1208,25 +1172,6 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
         logger.warning(error)
 
 
-    # if [ $1 = "interactive" ]; then
-    #     i=1
-    #     printf "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
-    #     printf "\t-------------------------------------------\n"
-    #     for m in ${flist[@]}; do
-    #         printf "\t [$i] $m \n"
-    #             ((i++))
-    #     done
-    #     printf "\t-------------------------------------------\n"
-
-    #     read -e -p "select [1] > " choice
-    #     [ -z "${choice}" ] && choice=1
-
-    #     echo $choice
-    #     esgf_dist_mirror=${flist[$choice]}
-    # else
-    #     esgf_dist_mirror=${flist[1]}
-    # fi
-    #TODO: Break this into private function
     logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
     if mirror_selection_mode == "interactive":
         while True:
@@ -1236,7 +1181,7 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
                 logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
                 config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
             except IndexError, error:
-                logger.error("Invalid selection", exc_info = True)
+                logger.error("Invalid selection", exc_info=True)
                 continue
             break
     else:

@@ -1168,6 +1168,7 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
             failed_requests[mirror] = "Request timed out"
 
     ranked_response_times = OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
+    logger.debug("ranked_response_times: %s", ranked_response_times)
 
     # master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
     # fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
@@ -1178,6 +1179,8 @@ def get_esgf_dist_mirror(selection_mode, install_type = None):
     # fi
     master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf']
     fastest = ranked_response_times.items()[0][0]
+    logger.debug("fastest: %s", fastest)
+
     outofsync = 0
     if response_array[fastest] != master:
         print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest

@@ -1154,12 +1154,12 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     fastest = ranked_response_times.items()[0][0]
     logger.debug("fastest: %s", fastest)
 
-    outofsync = 0
+    outofsync = False
     if response_array[fastest] != master:
         print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest
-        outofsync = 1
+        outofsync = True
   
-    if outofsync == 1:
+    if outofsync == True:
         config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         return
    

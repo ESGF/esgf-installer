@@ -1227,12 +1227,17 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
     if mirror_selection_mode == "interactive":
         print "\t-------------------------------------------\n"
-        for index, mirror in ranked_response_times:
-            print "\t %i %s" % (index, mirror)
-        choice = raw_input("Please select the ESGF distribution mirror for this installation (fastest to slowest): \n")
-        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[choice]
+        for index, (key, _) in enumerate(ranked_response_times.iteritems(),1):
+            print "\t %i) %s" % (index, key)
+        choice = int(raw_input("Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"))
+        #Accounts for off by 1 error
+        choice = choice - 1
+        logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
+        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
     else:
-        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times[0]
+        config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+
+
 
 def is_in_git(file_name):
     '''

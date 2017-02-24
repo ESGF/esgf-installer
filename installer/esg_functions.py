@@ -979,6 +979,13 @@ def trim_string_from_tail(string_name):
     string_regex = r"^\w+"
     return re.search(string_regex, string_name).group()
 
+def touch(path):
+    ''' 
+        Mimics Bash's touch command
+    '''
+    with open(path, 'a'):
+        os.utime(path, None)
+
 def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of_backups=config.config_dictionary["num_backups_to_keep"]):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in

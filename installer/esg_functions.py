@@ -938,6 +938,45 @@ def prefix_to_path(path, prepend_value):
     os.environ[path] = _path_unique(prepend_value)+":"+path
     return _path_unique(prepend_value)+":"+path
 
+def trim_string_from_head(string_name):
+    '''
+        Mimics Bash's ##* Parameter Expansion
+        Example:
+            (Bash)
+            esg_installarg_file="/usr/local/bin/esg_installarg_file"
+            echo ${esg_installarg_file##*/}
+
+                output - > esg_installarg_file
+
+            (Python)
+            path = "/usr/local/bin/esg_installarg_file"
+            print trim_string_from_tail(path)
+
+                output -> esg_installarg_file
+    '''
+    string_regex = r"\w+$" 
+    return re.search(string_regex, string_name).group()
+
+def trim_string_from_tail(string_name):
+    '''
+        Mimics Bash's %%* Parameter Expansion
+        Example:
+            (Bash)
+            tomcat_version="3.0.33"
+            echo ${tomcat_version%%.*}
+
+                output -> 8
+
+            (Python)
+            tomcat_version="3.0.33"
+            print  trim_string_from_tail(tomcat_version)
+
+            output -> 8
+
+    '''
+    string_regex = r"^\w+"
+    return re.search(string_regex, string_name).group()
+
 def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of_backups=config.config_dictionary["num_backups_to_keep"]):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in

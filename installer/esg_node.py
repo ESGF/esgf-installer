@@ -28,6 +28,18 @@ os.umask(022)
 
 DEBUG = esg_bash2py.Expand.colonMinus("DEBUG", "0")
 VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
+INSTALL_BIT=1
+TEST_BIT=2
+DATA_BIT=4
+INDEX_BIT=8
+IDP_BIT=16
+COMPUTE_BIT=32
+WRITE_ENV_BIT=64
+#PRIVATE_BIT=128
+#NOTE: remember to adjust (below) when adding new bits!!
+MIN_BIT=4
+MAX_BIT=64
+ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
 recommended = "1"
@@ -590,6 +602,31 @@ def main():
         config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("fastest", install_type)
 
     logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+
+    # Setting esg_dist_url with previously gathered information
+    esg_dist_url_root = os.path.join(config.config_dictionary["esgf_dist_mirror"],"dist")
+    if devel == True:
+        esg_dist_url = os.path.join(esg_dist_url_root, "/devel")
+    else:
+        esg_dist_url = esg_dist_url_root
+
+    # Downloading esg-installarg file
+    if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
+        esg_installarg_file_name = esg_functions.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
+        esg_functions.checked_get(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
+        try:
+            if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
+                os.remove(config.config_dictionary["esg_installarg_file"])
+            esg_functions.touch(config.config_dictionary["esg_installarg_file"])
+        except IOError, error:
+            logger.error(error)
+
+    sel = 0
+    selection_string = None
+
+    for args in sys.argv:
+        unshift = 0
+        if args in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
 
     # setup_esgcet()
     # test_esgcet()

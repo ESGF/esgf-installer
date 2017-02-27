@@ -1236,7 +1236,7 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
             break
     else:
         # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
-        ranked_response_times.items()[0][0]
+        return ranked_response_times.items()[0][0]
 
 
 def _render_distribution_mirror_menu(distribution_mirror_choices):

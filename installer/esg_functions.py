@@ -954,7 +954,7 @@ def trim_string_from_head(string_name):
 
                 output -> esg_installarg_file
     '''
-    string_regex = r"\w+$" 
+    string_regex = r"\w*-*\w+$" 
     return re.search(string_regex, string_name).group()
 
 def trim_string_from_tail(string_name):
@@ -1181,7 +1181,10 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
             response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     for mirror in esgf_dist_mirrors_list:
+        logger.debug("mirror: %s", mirror)
         host, page = mirror.rsplit("/", 1)
+        logger.debug("host: %s", host)
+        logger.debug("page: %s", page)
 
         try:
             response = requests.get("http://"+host, timeout=4.0)

@@ -1459,6 +1459,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
             file: %s
             ***************************************************************************\n\n
         ''' % (_readlinkf(local_file))
+        return 0
 
     logger.debug("local file : %s", local_file)
     logger.debug("remote file: %s", remote_file)

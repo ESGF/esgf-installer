@@ -41,6 +41,9 @@ MIN_BIT=4
 MAX_BIT=64
 ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
+install_mode = 0
+upgrade_mode = 0
+
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
 recommended = "1"
 custom = "0"
@@ -575,7 +578,12 @@ def start_postgress():
     progress_process_status_tuple = progress_process_status.communicate()
     esg_functions.checked_done(0)
 
+#TODO: Rename and refactor this; there is already a function in esg_bootstrap.py called self_verify()
+def self_verify(installation_type):
+    pass
 
+def setup_sensible_confs():
+    pass
 def main():
 
     logger.info("esg-node initializing...")
@@ -621,12 +629,29 @@ def main():
         except IOError, error:
             logger.error(error)
 
-    sel = 0
+    selection_bit = 0
     selection_string = None
 
-    for args in sys.argv:
+    while sys.argv[1]:
         unshift = 0
-        if args in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
+        if sys.argv[1] in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
+            if "update" in sys.argv[1] or "upgrade" in sys.argv[1]:
+                if install_mode + upgrade_mode == 0:
+                    upgrade_mode = 1 
+                    install_mode = 0
+                    logger.debug("Update Services")
+                    self_verify("update")
+            else:
+                if install_mode + upgrade_mode == 0:
+                    upgrade_mode = 0
+                    install_mode = 1
+                    logger.debug("Install Services")
+            if selection_bit & INSTALL_BIT == 0:
+                selection_bit += INSTALL_BIT
+        elif sys.argv[1] in ["--fix-perms", "fixperms"]:
+            logger.debug("fixing permissions")
+            setup_sensible_confs
+            sys.exit(0)
 
     # setup_esgcet()
     # test_esgcet()

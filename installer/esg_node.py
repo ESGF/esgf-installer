@@ -9,6 +9,7 @@ import grp
 import datetime
 import logging
 import socket
+import urlparse
 from git import Repo
 from time import sleep
 import esg_functions
@@ -612,9 +613,10 @@ def main():
     logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
 
     # Setting esg_dist_url with previously gathered information
-    esg_dist_url_root = os.path.join(config.config_dictionary["esgf_dist_mirror"], "dist")
+    esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
+    logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
     if devel is True:
-        esg_dist_url = os.path.join(esg_dist_url_root, "/devel")
+        esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
     else:
         esg_dist_url = esg_dist_url_root
 

@@ -1435,6 +1435,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     '''
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
+        return 0
 
     '''
         if ((use_local_files)) && [ -e "${local_file}" ]; then
@@ -1456,6 +1457,8 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
             ***************************************************************************\n\n
         ''' % (_readlinkf(local_file))
 
+    logger.debug("local file : %s", local_file)
+    logger.debug("remote file: %s", remote_file)
     '''
         if ((force_get == 0)); then
         check_for_update $@

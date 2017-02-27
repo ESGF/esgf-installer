@@ -583,6 +583,12 @@ def self_verify(installation_type):
 def setup_sensible_confs():
     pass
 
+def read_sel():
+    pass
+
+def install_local_certs():
+    pass
+     
 def process_arguments():
     install_mode = 0
     upgrade_mode = 0
@@ -609,6 +615,11 @@ def process_arguments():
         elif sys.argv[1] in ["--fix-perms", "fixperms"]:
             logger.debug("fixing permissions")
             setup_sensible_confs
+            sys.exit(0)
+        elif sys.argv[1] in ["--install-local-certs", "installlocalcerts"]:
+            logger.debug("installing local certs")
+            read_sel()
+            install_local_certs()
             sys.exit(0)
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"

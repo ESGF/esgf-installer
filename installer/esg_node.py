@@ -42,8 +42,6 @@ MIN_BIT=4
 MAX_BIT=64
 ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
-install_mode = 0
-upgrade_mode = 0
 
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
 recommended = "1"
@@ -56,8 +54,7 @@ script_maj_version = "2.0"
 script_release = "Centaur"
 envfile = "/etc/esg.env"
 force_install = False
-upgrade_mode = 0
-esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+
 
 #--------------
 # User Defined / Settable (public)
@@ -586,6 +583,9 @@ def self_verify(installation_type):
 def setup_sensible_confs():
     pass
 def main():
+    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+    install_mode = 0
+    upgrade_mode = 0
 
     logger.info("esg-node initializing...")
     try:

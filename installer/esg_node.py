@@ -618,6 +618,7 @@ def main():
     else:
         esg_dist_url = esg_dist_url_root
 
+    logger.debug("esg_dist_url: %s", esg_dist_url)
     # Downloading esg-installarg file
     if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_functions.trim_string_from_head(config.config_dictionary["esg_installarg_file"])

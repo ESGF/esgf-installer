@@ -588,7 +588,23 @@ def read_sel():
 
 def install_local_certs():
     pass
-     
+
+def generate_esgf_csrs():
+    pass
+
+def generate_esgf_csrs_ext():
+    pass
+def cert_howto():
+    pass
+
+def test_postgress():
+    pass
+def test_cdat():
+    pass
+def test_tomcat():
+    pass
+def test_tds():
+    pass
 def process_arguments():
     install_mode = 0
     upgrade_mode = 0
@@ -621,6 +637,32 @@ def process_arguments():
             read_sel()
             install_local_certs()
             sys.exit(0)
+        elif sys.argv[1] in ["--generate-esgf-csrs", "generateesgfcsrs"]:
+            logger.debug("generating esgf csrs")
+            read_sel()
+            generate_esgf_csrs()
+            sys.exit(0)
+        elif sys.argv[1] in ["--generate-esgf-csrs-ext", "generateesgfcsrsext"]:
+            logger.debug("generating esgf csrs for other node")
+            read_sel()
+            generate_esgf_csrs_ext()
+            sys.exit(0)
+        elif sys.argv[1] in ["--cert-howto", "certhowto"]:
+            logger.debug("cert howto")
+            cert_howto()
+            sys.exit(0)
+        elif sys.argv[1] in ["--verify", "--test"]:
+            logger.debug("Verify Services")
+            if selection_bit & TEST_BIT == 0:
+                selection_bit += TEST_BIT
+            logger.debug("selection_bit = %s", selection_bit)
+            test_postgress()
+            test_cdat()
+            test_esgcet()
+            test_tomcat()
+            test_tds()
+            sys.exit(0)
+
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     

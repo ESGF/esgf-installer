@@ -612,8 +612,8 @@ def main():
     logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
 
     # Setting esg_dist_url with previously gathered information
-    esg_dist_url_root = os.path.join(config.config_dictionary["esgf_dist_mirror"],"dist")
-    if devel == True:
+    esg_dist_url_root = os.path.join(config.config_dictionary["esgf_dist_mirror"], "dist")
+    if devel is True:
         esg_dist_url = os.path.join(esg_dist_url_root, "/devel")
     else:
         esg_dist_url = esg_dist_url_root

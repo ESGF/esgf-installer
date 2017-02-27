@@ -582,10 +582,37 @@ def self_verify(installation_type):
 
 def setup_sensible_confs():
     pass
-def main():
-    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+
+def process_arguments():
     install_mode = 0
     upgrade_mode = 0
+
+    selection_bit = 0
+    selection_string = None
+
+    while sys.argv[1]:
+        unshift = 0
+        if sys.argv[1] in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
+            if "update" in sys.argv[1] or "upgrade" in sys.argv[1]:
+                if install_mode + upgrade_mode == 0:
+                    upgrade_mode = 1 
+                    install_mode = 0
+                    logger.debug("Update Services")
+                    self_verify("update")
+            else:
+                if install_mode + upgrade_mode == 0:
+                    upgrade_mode = 0
+                    install_mode = 1
+                    logger.debug("Install Services")
+            if selection_bit & INSTALL_BIT == 0:
+                selection_bit += INSTALL_BIT
+        elif sys.argv[1] in ["--fix-perms", "fixperms"]:
+            logger.debug("fixing permissions")
+            setup_sensible_confs
+            sys.exit(0)
+def main():
+    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+    
 
     logger.info("esg-node initializing...")
     try:
@@ -632,29 +659,9 @@ def main():
         except IOError, error:
             logger.error(error)
 
-    selection_bit = 0
-    selection_string = None
-
-    while sys.argv[1]:
-        unshift = 0
-        if sys.argv[1] in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
-            if "update" in sys.argv[1] or "upgrade" in sys.argv[1]:
-                if install_mode + upgrade_mode == 0:
-                    upgrade_mode = 1 
-                    install_mode = 0
-                    logger.debug("Update Services")
-                    self_verify("update")
-            else:
-                if install_mode + upgrade_mode == 0:
-                    upgrade_mode = 0
-                    install_mode = 1
-                    logger.debug("Install Services")
-            if selection_bit & INSTALL_BIT == 0:
-                selection_bit += INSTALL_BIT
-        elif sys.argv[1] in ["--fix-perms", "fixperms"]:
-            logger.debug("fixing permissions")
-            setup_sensible_confs
-            sys.exit(0)
+    #process command line arguments
+    process_arguments()
+    
 
     # setup_esgcet()
     # test_esgcet()

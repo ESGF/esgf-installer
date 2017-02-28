@@ -666,9 +666,21 @@ def process_arguments():
             sys.exit(0)
         elif argument_deque[1] in ["--type", "-t", "--flavor"]:
             type_value = None
-            for arg in argument_deque[2:]:
-                if arg == "all":
+            argument_deque.popleft()
+            while argument_deque[1]:
+                type_value = argument_deque[1]
+                if type_value == "all":
                     selection_bit = ALL_BIT
+                    selection_string = "all "
+                    argument_deque.popleft()
+                    break
+                elif type_value == "data" and selection_bit & DATA_BIT == 0:
+                    selection_bit += DATA_BIT
+                    selection_string += type_value
+                argument_deque.popleft()
+            logger.info("node type set to: [%s] (%s) ", selection_string, selection_bit)
+
+
 
 
 

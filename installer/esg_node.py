@@ -611,7 +611,7 @@ def process_arguments():
     upgrade_mode = 0
 
     selection_bit = 0
-    selection_string = None
+    selection_string = ""
     #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list
     argument_deque = deque(sys.argv)
     while argument_deque[1]:

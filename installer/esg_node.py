@@ -11,6 +11,7 @@ import logging
 import socket
 import urlparse
 from git import Repo
+from collections import deque
 from time import sleep
 import esg_functions
 import esg_bash2py
@@ -611,11 +612,12 @@ def process_arguments():
 
     selection_bit = 0
     selection_string = None
-
-    while sys.argv[1]:
+    #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list
+    argument_deque = deque(sys.argv)
+    while argument_deque[1]:
         unshift = 0
         if sys.argv[1] in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
-            if "update" in sys.argv[1] or "upgrade" in sys.argv[1]:
+            if "update" in argument_deque[1] or "upgrade" in argument_deque[1]:
                 if install_mode + upgrade_mode == 0:
                     upgrade_mode = 1 
                     install_mode = 0
@@ -628,30 +630,30 @@ def process_arguments():
                     logger.debug("Install Services")
             if selection_bit & INSTALL_BIT == 0:
                 selection_bit += INSTALL_BIT
-        elif sys.argv[1] in ["--fix-perms", "fixperms"]:
+        elif argument_deque[1] in ["--fix-perms", "fixperms"]:
             logger.debug("fixing permissions")
             setup_sensible_confs
             sys.exit(0)
-        elif sys.argv[1] in ["--install-local-certs", "installlocalcerts"]:
+        elif argument_deque[1] in ["--install-local-certs", "installlocalcerts"]:
             logger.debug("installing local certs")
             read_sel()
             install_local_certs()
             sys.exit(0)
-        elif sys.argv[1] in ["--generate-esgf-csrs", "generateesgfcsrs"]:
+        elif argument_deque[1] in ["--generate-esgf-csrs", "generateesgfcsrs"]:
             logger.debug("generating esgf csrs")
             read_sel()
             generate_esgf_csrs()
             sys.exit(0)
-        elif sys.argv[1] in ["--generate-esgf-csrs-ext", "generateesgfcsrsext"]:
+        elif argument_deque[1] in ["--generate-esgf-csrs-ext", "generateesgfcsrsext"]:
             logger.debug("generating esgf csrs for other node")
             read_sel()
             generate_esgf_csrs_ext()
             sys.exit(0)
-        elif sys.argv[1] in ["--cert-howto", "certhowto"]:
+        elif argument_deque[1] in ["--cert-howto", "certhowto"]:
             logger.debug("cert howto")
             cert_howto()
             sys.exit(0)
-        elif sys.argv[1] in ["--verify", "--test"]:
+        elif argument_deque[1] in ["--verify", "--test"]:
             logger.debug("Verify Services")
             if selection_bit & TEST_BIT == 0:
                 selection_bit += TEST_BIT
@@ -662,6 +664,13 @@ def process_arguments():
             test_tomcat()
             test_tds()
             sys.exit(0)
+        elif argument_deque[1] in ["--type", "-t", "--flavor"]:
+            type_value = None
+            for arg in argument_deque[2:]:
+                if arg == "all":
+                    selection_bit = ALL_BIT
+
+
 
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"

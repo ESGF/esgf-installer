@@ -615,7 +615,7 @@ def process_arguments():
     selection_string = ""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fix-perms", "fixperms", help="Fix permissions", action="store_true")
+    parser.add_argument("--fix-perms", "--fixperms", help="Fix permissions", action="store_true")
     args = parser.parse_args()
     if args.fixperms:
         logger.debug("fixing permissions")

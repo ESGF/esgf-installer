@@ -615,10 +615,17 @@ def process_arguments():
     selection_string = ""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fix-perms", "--fixperms", help="Fix permissions", action="store_true")
+    parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
     args = parser.parse_args()
     if args.fixperms:
         logger.debug("fixing permissions")
+        setup_sensible_confs
+        sys.exit(0)
+    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Fix permissions", action="store_true", nargs="+")
+    args = parser.parse_args()
+    if args.type:
+        logger.debug("selecting type")
+        logger.debug("args.type: %s", args.type)
         setup_sensible_confs
         sys.exit(0)
     #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list

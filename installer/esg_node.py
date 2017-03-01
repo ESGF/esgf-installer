@@ -52,6 +52,22 @@ def get_bit_value(node_type):
         return bit_dictionary["INSTALL_BIT"]
     elif node_type == "data":
         return bit_dictionary["DATA_BIT"]
+    elif node_type == "index":
+        return bit_dictionary["INDEX_BIT"]
+    elif node_type == "idp":
+        return bit_dictionary["IDP_BIT"]
+    elif node_type == "compute":
+        return bit_dictionary["COMPUTE_BIT"]
+    elif node_type == "write_env":
+        return bit_dictionary["WRITE_ENV_BIT"]
+    elif node_type == "min":
+        return bit_dictionary["MIN_BIT"]
+    elif node_type == "max":
+        return bit_dictionary["MAX_BIT"]
+    elif node_type == "all":
+        return bit_dictionary["ALL_BIT"]
+    else:
+        raise ValueError("Invalid bit reference")
 
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
 recommended = "1"

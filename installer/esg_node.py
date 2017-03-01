@@ -658,6 +658,7 @@ def _define_acceptable_arguments():
     parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+", choices=["data", "index", "idp", "compute", "all"])
     parser.add_argument("--get-type", "--show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)", action="store_true")
     parser.add_argument("--start", help="Start the node's services", action="store_true")
+    parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -753,7 +754,15 @@ def process_arguments():
         logger.debug("START SERVICES: %s", node_type_bit)
         init_structure()
         start(node_type_bit)
-        sys.exit(1)
+        sys.exit(0)
+    elif args.stop:
+        # if check_prerequisites() is not 0:
+        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
+        #     sys.exit(1)
+        logger.debug("STOP SERVICES:")
+        init_structure()
+        start(node_type_bit)
+        sys.exit(0)
 
 
 

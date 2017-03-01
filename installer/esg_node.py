@@ -44,6 +44,14 @@ MIN_BIT=4
 MAX_BIT=64
 ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
+bit_dictionary = {INSTALL_BIT:1, TEST_BIT:2, DATA_BIT:4, INDEX_BIT:8, IDP_BIT:16, COMPUTE_BIT:32, WRITE_ENV_BIT:64, MIN_BIT:4, MAX_BIT:64, ALL_BIT:DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT}
+
+
+def get_bit_value(node_type):
+    if node_type == "install":
+        return bit_dictionary["INSTALL_BIT"]
+    elif node_type == "data":
+        return bit_dictionary["DATA_BIT"]
 
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
 recommended = "1"
@@ -616,15 +624,21 @@ def process_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
-    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*")
+    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
     args = parser.parse_args()
     if args.fixperms:
         logger.debug("fixing permissions")
         setup_sensible_confs
         sys.exit(0)
-    if args.type:
+    elif args.type:
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
+        for arg in args.type:
+            if arg in ["data", "index", "idp", "compute", "all"] and selection_bit & get_bit_value(arg) == 0:
+                logger.debug("inside of %s selection", arg)
+                selection_bit += get_bit_value(arg)
+                selection_string += arg
+        logger.info("node type set to: [%s] (%s) ", selection_string, selection_bit)
         sys.exit(0)
     #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list
     # argument_deque = deque(sys.argv)

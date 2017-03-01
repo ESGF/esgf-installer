@@ -636,6 +636,12 @@ def _define_acceptable_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", dest="install", help="Goes through the installation process and automatically starts up node services", action="store_true")
     parser.add_argument("--update", help="Updates the node manager", action="store_true")
+    parser.add_argument("--upgrade", help="Upgrade the node manager", action="store_true")
+    parser.add_argument("--install-local-certs", dest="installlocalcerts", help="Install local certificates", action="store_true")
+    parser.add_argument("--generate-esgf-csrs", dest="generateesgfcsrs", help="Generate CSRs for a simpleCA CA certificate and/or web container certificate", action="store_true")
+    parser.add_argument("--generate-esgf-csrs-ext", dest="generateesgfcsrsext", help="Generate CSRs for a node other than the one you are running", action="store_true")
+    parser.add_argument("--cert-howto", dest="certhowto", help="Provides information about certificate management", action="store_true")
+    parser.add_argument("--verify", "--test", dest="verify", help="Runs the test code to verify installation", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
     parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
     args = parser.parse_args()
@@ -656,7 +662,7 @@ def process_arguments():
             install_mode = 1
             selection_bit += get_bit_value("install")
             logger.debug("Install Services")
-    if args.update:
+    if args.update or args.upgrade:
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 1 
             install_mode = 0
@@ -665,6 +671,36 @@ def process_arguments():
     if args.fixperms:
         logger.debug("fixing permissions")
         setup_sensible_confs
+        sys.exit(0)
+    if args.installlocalcerts:
+        logger.debug("installing local certs")
+        read_sel()
+        install_local_certs()
+        sys.exit(0)
+    if args.generateesgfcsrs:
+        logger.debug("generating esgf csrs")
+        read_sel()
+        generate_esgf_csrs()
+        sys.exit(0)
+    if args.generateesgfcsrsext:
+        logger.debug("generating esgf csrs for other node")
+        read_sel()
+        generate_esgf_csrs_ext()
+        sys.exit(0)
+    if args.certhowto:
+        logger.debug("cert howto")
+        cert_howto()
+        sys.exit(0)
+    elif args.verify:
+        logger.debug("Verify Services")
+        if selection_bit & get_bit_value("test") == 0:
+            selection_bit += get_bit_value("test")
+        logger.debug("selection_bit = %s", selection_bit)
+        test_postgress()
+        test_cdat()
+        test_esgcet()
+        test_tomcat()
+        test_tds()
         sys.exit(0)
     elif args.type:
         logger.debug("selecting type")
@@ -677,74 +713,6 @@ def process_arguments():
                 selection_string += " "+arg
         logger.info("node type set to: [%s] (%s) ", selection_string, selection_bit)
         sys.exit(0)
-    #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list
-    # argument_deque = deque(sys.argv)
-    # while argument_deque[1]:
-    #     unshift = 0
-    #     if sys.argv[1] in ["--install", "install", "--update", "update", "--upgrade", "upgrade" ]:
-    #         if "update" in argument_deque[1] or "upgrade" in argument_deque[1]:
-    #             if install_mode + upgrade_mode == 0:
-    #                 upgrade_mode = 1 
-    #                 install_mode = 0
-    #                 logger.debug("Update Services")
-    #                 self_verify("update")
-    #         else:
-    #             if install_mode + upgrade_mode == 0:
-    #                 upgrade_mode = 0
-    #                 install_mode = 1
-    #                 logger.debug("Install Services")
-    #         if selection_bit & INSTALL_BIT == 0:
-    #             selection_bit += INSTALL_BIT
-    #     elif argument_deque[1] in ["--fix-perms", "fixperms"]:
-    #         logger.debug("fixing permissions")
-    #         setup_sensible_confs
-    #         sys.exit(0)
-    #     elif argument_deque[1] in ["--install-local-certs", "installlocalcerts"]:
-    #         logger.debug("installing local certs")
-    #         read_sel()
-    #         install_local_certs()
-    #         sys.exit(0)
-    #     elif argument_deque[1] in ["--generate-esgf-csrs", "generateesgfcsrs"]:
-    #         logger.debug("generating esgf csrs")
-    #         read_sel()
-    #         generate_esgf_csrs()
-    #         sys.exit(0)
-    #     elif argument_deque[1] in ["--generate-esgf-csrs-ext", "generateesgfcsrsext"]:
-    #         logger.debug("generating esgf csrs for other node")
-    #         read_sel()
-    #         generate_esgf_csrs_ext()
-    #         sys.exit(0)
-    #     elif argument_deque[1] in ["--cert-howto", "certhowto"]:
-    #         logger.debug("cert howto")
-    #         cert_howto()
-    #         sys.exit(0)
-    #     elif argument_deque[1] in ["--verify", "--test"]:
-    #         logger.debug("Verify Services")
-    #         if selection_bit & TEST_BIT == 0:
-    #             selection_bit += TEST_BIT
-    #         logger.debug("selection_bit = %s", selection_bit)
-    #         test_postgress()
-    #         test_cdat()
-    #         test_esgcet()
-    #         test_tomcat()
-    #         test_tds()
-    #         sys.exit(0)
-    #     elif argument_deque[1] in ["--type", "-t", "--flavor"]:
-    #         type_value = None
-    #         argument_deque.popleft()
-    #         for arg in argument_deque:
-    #             type_value = argument_deque[0]
-    #             if type_value == "all":
-    #                 selection_bit = ALL_BIT
-    #                 selection_string = "all "
-    #                 argument_deque.popleft()
-    #                 break
-    #             elif type_value == "data" and selection_bit & DATA_BIT == 0:
-    #                 logger.debug("inside of data selection")
-    #                 selection_bit += DATA_BIT
-    #                 selection_string += type_value
-    #             argument_deque.popleft()
-    #         logger.info("node type set to: [%s] (%s) ", selection_string, selection_bit)
 
 
 

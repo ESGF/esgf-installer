@@ -634,7 +634,8 @@ def process_arguments():
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
         for arg in args.type:
-            if arg in ["data", "index", "idp", "compute", "all"] and selection_bit & get_bit_value(arg) == 0:
+            #TODO: refactor conditional to function with descriptive name
+            if selection_bit & get_bit_value(arg) == 0:
                 logger.debug("inside of %s selection", arg)
                 selection_bit += get_bit_value(arg)
                 selection_string += arg

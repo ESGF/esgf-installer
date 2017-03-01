@@ -631,6 +631,14 @@ def test_tomcat():
     pass
 def test_tds():
     pass
+
+def _define_acceptable_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
+    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
+    args = parser.parse_args()
+    return args
+
 def process_arguments():
     install_mode = 0
     upgrade_mode = 0
@@ -638,10 +646,8 @@ def process_arguments():
     selection_bit = 0
     selection_string = ""
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
-    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
-    args = parser.parse_args()
+    args = _define_acceptable_arguments()
+
     if args.fixperms:
         logger.debug("fixing permissions")
         setup_sensible_confs
@@ -654,7 +660,7 @@ def process_arguments():
             if selection_bit & get_bit_value(arg) == 0:
                 logger.debug("inside of %s selection", arg)
                 selection_bit += get_bit_value(arg)
-                selection_string += arg
+                selection_string += " "+arg
         logger.info("node type set to: [%s] (%s) ", selection_string, selection_bit)
         sys.exit(0)
     #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list

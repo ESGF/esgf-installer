@@ -633,6 +633,8 @@ def test_tds():
     pass
 def set_node_type_bit(selection_string):
     pass
+def show_type():
+    pass
 
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
@@ -647,7 +649,8 @@ def _define_acceptable_arguments():
     parser.add_argument("--verify", "--test", dest="verify", help="Runs the test code to verify installation", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
     parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
-    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="*", choices=["data", "index", "idp", "compute", "all"])
+    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+", choices=["data", "index", "idp", "compute", "all"])
+    parser.add_argument("--get-type", "-show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)")
     args = parser.parse_args()
     return args
 
@@ -712,7 +715,6 @@ def process_arguments():
         for arg in args.type:
             #TODO: refactor conditional to function with descriptive name
             if node_type_bit & get_bit_value(arg) == 0:
-                logger.debug("inside of %s selection", arg)
                 node_type_bit += get_bit_value(arg)
                 selection_string += " "+arg
         logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
@@ -722,7 +724,6 @@ def process_arguments():
         for arg in args.settype:
             #TODO: refactor conditional to function with descriptive name
             if node_type_bit & get_bit_value(arg) == 0:
-                logger.debug("inside of %s selection", arg)
                 node_type_bit += get_bit_value(arg)
                 selection_string += " "+arg
         if not os.path.isdir(config.esg_config_dir):
@@ -733,7 +734,10 @@ def process_arguments():
         logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         set_node_type_bit(node_type_bit)
         sys.exit(0)
-
+    elif args.gettype:
+        read_sel()
+        show_type()
+        sys.exit(0)
 
 
 

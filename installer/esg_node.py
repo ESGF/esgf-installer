@@ -635,6 +635,12 @@ def set_node_type_bit(selection_string):
     pass
 def show_type():
     pass
+def check_prerequisites():
+    pass
+def init_structure():
+    pass
+def start(node_bit):
+    pass
 
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
@@ -648,9 +654,10 @@ def _define_acceptable_arguments():
     parser.add_argument("--cert-howto", dest="certhowto", help="Provides information about certificate management", action="store_true")
     parser.add_argument("--verify", "--test", dest="verify", help="Runs the test code to verify installation", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
-    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
+    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="+", choices=["data", "index", "idp", "compute", "all"])
     parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+", choices=["data", "index", "idp", "compute", "all"])
-    parser.add_argument("--get-type", "-show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)")
+    parser.add_argument("--get-type", "--show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)")
+    parser.add_argument("--start", help="Start the node's services")
     args = parser.parse_args()
     return args
 
@@ -738,6 +745,16 @@ def process_arguments():
         read_sel()
         show_type()
         sys.exit(0)
+    elif args.start:
+        logger.debug("args: %s", args)
+        # if check_prerequisites() is not 0:
+        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
+        #     sys.exit(1)
+        logger.debug("START SERVICES: %s", node_type_bit)
+        init_structure()
+        start(node_type_bit)
+        sys.exit(1)
+
 
 
 
@@ -761,35 +778,35 @@ def main():
         install_type = "master"
 
     # Determining ESGF distribution mirror
-    logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
-    if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
-        logger.debug("interactive")
-        config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("interactive", install_type)
-    else:
-        logger.debug("fastest")
-        config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("fastest", install_type)
+    # logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+    # if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
+    #     logger.debug("interactive")
+    #     config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("interactive", install_type)
+    # else:
+    #     logger.debug("fastest")
+    #     config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("fastest", install_type)
 
-    logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+    # logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
 
-    # Setting esg_dist_url with previously gathered information
-    esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
-    logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
-    if devel is True:
-        esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
-    else:
-        esg_dist_url = esg_dist_url_root
+    # # Setting esg_dist_url with previously gathered information
+    # esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
+    # logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
+    # if devel is True:
+    #     esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
+    # else:
+    #     esg_dist_url = esg_dist_url_root
 
-    logger.debug("esg_dist_url: %s", esg_dist_url)
-    # Downloading esg-installarg file
-    if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-        esg_installarg_file_name = esg_functions.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
-        esg_functions.checked_get(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
-        try:
-            if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
-                os.remove(config.config_dictionary["esg_installarg_file"])
-            esg_functions.touch(config.config_dictionary["esg_installarg_file"])
-        except IOError, error:
-            logger.error(error)
+    # logger.debug("esg_dist_url: %s", esg_dist_url)
+    # # Downloading esg-installarg file
+    # if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
+    #     esg_installarg_file_name = esg_functions.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
+    #     esg_functions.checked_get(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
+    #     try:
+    #         if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
+    #             os.remove(config.config_dictionary["esg_installarg_file"])
+    #         esg_functions.touch(config.config_dictionary["esg_installarg_file"])
+    #     except IOError, error:
+    #         logger.error(error)
 
     #process command line arguments
     process_arguments()

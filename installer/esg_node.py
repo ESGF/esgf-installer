@@ -621,12 +621,11 @@ def process_arguments():
         logger.debug("fixing permissions")
         setup_sensible_confs
         sys.exit(0)
-    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Fix permissions", action="store_true", nargs="+")
+    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*")
     args = parser.parse_args()
     if args.type:
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
-        setup_sensible_confs
         sys.exit(0)
     #TODO copy sys.argv to collections.deque objec for efficient shifting of elements in argument list
     # argument_deque = deque(sys.argv)

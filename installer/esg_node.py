@@ -634,7 +634,7 @@ def test_tds():
 
 def _define_acceptable_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--install", "install", dest="install", help="Goes through the installation process and automatically starts up node services", action="store_true")
+    parser.add_argument("--install", dest="install", help="Goes through the installation process and automatically starts up node services", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
     parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="*", choices=["data", "index", "idp", "compute", "all"])
     args = parser.parse_args()

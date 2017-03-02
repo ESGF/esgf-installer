@@ -641,7 +641,20 @@ def init_structure():
     pass
 def start(node_bit):
     pass
-
+def stop(node_bit):
+    pass
+def get_node_status():
+    ''' 
+        Return a tuple with the node's status and a numeric return code
+    '''
+    pass
+def update_script(script_name, script_directory):
+    '''
+        arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
+        arg (2) - directory on the distribution site where script is fetched from Ex: orp
+        usage: update_script security orp - looks for the script esg-security in the distriubtion directory "orp"
+    '''
+    pass
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
     parser = argparse.ArgumentParser()
@@ -659,6 +672,9 @@ def _define_acceptable_arguments():
     parser.add_argument("--get-type", "--show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)", action="store_true")
     parser.add_argument("--start", help="Start the node's services", action="store_true")
     parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")
+    parser.add_argument("--restart", help="Restarts the node's services (calls stop then start :-/)", action="store_true")
+    parser.add_argument("--status", help="Status on node's services", action="store_true")
+    parser.add_argument("--update-sub-installer", "script_name", "script_directory", dest="updatesubinstaller", help="Update a specified installation script", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -759,11 +775,35 @@ def process_arguments():
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
-        logger.debug("STOP SERVICES:")
+        logger.debug("STOP SERVICES")
         init_structure()
+        stop(node_type_bit)
+        sys.exit(0)
+    elif args.restart:
+        # if check_prerequisites() is not 0:
+        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
+        #     sys.exit(1)
+        logger.debug("RESTARTING SERVICES")
+        init_structure()
+        stop(node_type_bit)
+        sleep(2)
         start(node_type_bit)
         sys.exit(0)
-
+    elif args.status:
+        # if check_prerequisites() is not 0:
+        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
+        #     sys.exit(1)
+        get_node_status()
+        #TODO: Exit with status code dependent on what is returned from get_node_status()
+        sys.exit(0)
+    elif args.updatesubinstaller:
+        self_verify("update")
+        # if check_prerequisites() is not 0:
+        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
+        #     sys.exit(1)
+        init_structure()
+        update_script(args[1], args[2])
+        sys.exit(0)
 
 
 

@@ -70,8 +70,8 @@ def get_bit_value(node_type):
         raise ValueError("Invalid bit reference")
 
 devel = esg_bash2py.Expand.colonMinus("devel", "0")
-recommended = "1"
-custom = "0"
+recommended_setup = 1
+custom_setup = 0
 use_local_files = "0"
 
 progname = "esg-node"
@@ -312,7 +312,7 @@ def setup_esgcet(upgrade_mode=None):
         if org_id_input:
             esg_root_id = org_id_input
 
-        print "%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s" % (config.config_dictionary["cdat_home"], recommended, esg_root_id)
+        print "%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s" % (config.config_dictionary["cdat_home"], recommended_setup, esg_root_id)
 
         try:
             os.mkdir(config.config_dictionary["publisher_home"])
@@ -324,11 +324,11 @@ def setup_esgcet(upgrade_mode=None):
 
         ESGINI = subprocess.Popen('''
             {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup --config 
-            $( (({recommended} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
+            $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
             sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 
             sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}
             '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
-                       recommended=recommended, esg_root_id=esg_root_id,
+                       recommended_setup=recommended_setup, esg_root_id=esg_root_id,
                        esgf_host=esgf_host, node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         ESGINI.communicate()
         if ESGINI.returncode != 0:
@@ -391,7 +391,7 @@ def setup_esgcet(upgrade_mode=None):
                     $([ -n "%s" ] && echo "--db-user-password %s") 
                     $( [ -n "%s" ] && echo "--db-host %s" ) 
                     $( [ -n "%s" ] && echo "--db-port %s" )" % 
-            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended,
+            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended_setup,
                    config.config_dictionary["db_database"], config.config_dictionary[
                        "db_database"], config.config_dictionary["postgress_user"],
                    config.config_dictionary[
@@ -407,7 +407,7 @@ def setup_esgcet(upgrade_mode=None):
         else:
             print '''ESGINI = 
                     {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup 
-                    $( (({recommended} == 1 )) && echo "--minimal-setup" ) 
+                    $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) 
                     --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
                     $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
                     $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
@@ -416,7 +416,7 @@ def setup_esgcet(upgrade_mode=None):
                     $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
                     $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
             '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
-                       recommended=recommended,
+                       recommended_setup=recommended_setup,
                        db_database=config.config_dictionary["db_database"],
                        postgress_user=config.config_dictionary[
                            "postgress_user"],
@@ -432,7 +432,7 @@ def setup_esgcet(upgrade_mode=None):
     try:
 
         ESGINI = '''{publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup 
-                    $( (({recommended} == 1 )) && echo "--minimal-setup" ) 
+                    $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) 
                     --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
                     $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
                     $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
@@ -441,7 +441,7 @@ def setup_esgcet(upgrade_mode=None):
                     $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
                     $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
                 '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
-                           recommended=recommended,
+                           recommended_setup=recommended_setup,
                            db_database=config.config_dictionary["db_database"],
                            postgress_user=config.config_dictionary[
                                "postgress_user"],
@@ -655,6 +655,8 @@ def update_script(script_name, script_directory):
         usage: update_script security orp - looks for the script esg-security in the distriubtion directory "orp"
     '''
     pass
+def update_apache_conf():
+    pass
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
     parser = argparse.ArgumentParser()
@@ -675,6 +677,10 @@ def _define_acceptable_arguments():
     parser.add_argument("--restart", help="Restarts the node's services (calls stop then start :-/)", action="store_true")
     parser.add_argument("--status", help="Status on node's services", action="store_true")
     parser.add_argument("--update-sub-installer", dest="updatesubinstaller", help="Update a specified installation script", nargs=2, metavar=('script_name', 'script_directory'))
+    parser.add_argument("--update-apache-conf", dest="updateapacheconf", help="Update Apache configuration", action="store_true")
+    parser.add_argument("--write-env", dest="writeenv", help="Writes the necessary environment variables to file {envfile}".format(envfile = envfile), action="store_true")
+    parser.add_argument("-v","--version", dest="version", help="Displays the version of this script", action="store_true")
+    parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -804,7 +810,22 @@ def process_arguments():
         init_structure()
         update_script(args[1], args[2])
         sys.exit(0)
-
+    elif args.updateapacheconf:
+        logger.debug("checking for updated apache frontend configuration")
+        update_apache_conf()
+        sys.exit(0)
+    elif args.writeenv:
+        if node_type_bit & WRITE_ENV_BIT == 0:
+            node_type_bit += WRITE_ENV_BIT
+    elif args.version:
+        logger.info("Version: %s", script_version)
+        logger.info("Release: %s", script_release)
+        logger.info("Earth Systems Grid Federation (http://esgf.llnl.gov)")
+        logger.info("ESGF Node Installation Script")
+        sys.exit(0)
+    elif args.recommendedsetup:
+        recommended_setup = 1
+        custom_setup = 0
 
 
 

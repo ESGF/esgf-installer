@@ -674,7 +674,7 @@ def _define_acceptable_arguments():
     parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")
     parser.add_argument("--restart", help="Restarts the node's services (calls stop then start :-/)", action="store_true")
     parser.add_argument("--status", help="Status on node's services", action="store_true")
-    parser.add_argument("--update-sub-installer", "script_name", "script_directory", dest="updatesubinstaller", help="Update a specified installation script", action="store_true")
+    parser.add_argument("--update-sub-installer", "script_name", "script_directory", dest="updatesubinstaller", help="Update a specified installation script", nargs=2, action="store_true")
     args = parser.parse_args()
     return args
 

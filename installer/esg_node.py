@@ -69,10 +69,10 @@ def get_bit_value(node_type):
     else:
         raise ValueError("Invalid bit reference")
 
-devel = esg_bash2py.Expand.colonMinus("devel", "0")
+devel = esg_bash2py.Expand.colonMinus("devel", 0)
 recommended_setup = 1
 custom_setup = 0
-use_local_files = "0"
+use_local_files = 0
 
 progname = "esg-node"
 script_version = "v2.0-RC5.4.0-devel"
@@ -681,6 +681,11 @@ def _define_acceptable_arguments():
     parser.add_argument("--write-env", dest="writeenv", help="Writes the necessary environment variables to file {envfile}".format(envfile = envfile), action="store_true")
     parser.add_argument("-v","--version", dest="version", help="Displays the version of this script", action="store_true")
     parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
+    parser.add_argument("--custom_setup", dest="customsetup", help="Sets esgsetup to use a custom, user-defined setup", action="store_true")
+    parser.add_argument("--use-local-files", dest="uselocalfiles", help="Sets a flag for using local files instead of attempting to fetch a remote file", action="store_true")
+    parser.add_argument("--devel", help="Sets the installation type to the devel build", action="store_true")
+    parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
+    parser.add_argument("--clear-env-state", dest="clearenvstate", help="Removes the file holding the environment state of last install", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -826,6 +831,24 @@ def process_arguments():
     elif args.recommendedsetup:
         recommended_setup = 1
         custom_setup = 0
+    elif args.customsetup:
+        recommended_setup = 0
+        custom_setup = 1
+    elif args.uselocalfiles:
+        use_local_files = 1
+    elif args.devel:
+        devel = 1
+    elif args.prod:
+        devel = 0
+    elif args.clearenvstate:
+        self_verify("clear")
+        # if check_prerequisites() is not 0:
+        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
+        #     sys.exit(1)
+        if os.path.isfile(envfile):
+            shutil.move(envfile, envfile+".bak")
+            #empty out contents of the file
+            open(envfile, 'w').close()
 
 
 

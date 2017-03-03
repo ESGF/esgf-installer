@@ -688,12 +688,8 @@ def _define_acceptable_arguments():
     parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
     parser.add_argument("--clear-env-state", dest="clearenvstate", help="Removes the file holding the environment state of last install", action="store_true")
     
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(0)
-    else:
-        args = parser.parse_args()
-        return args
+    args = parser.parse_args()
+    return (args, parser)
 
 def process_arguments():
     global install_mode
@@ -702,7 +698,11 @@ def process_arguments():
     global node_type_bit
     selection_string = ""
 
-    args = _define_acceptable_arguments()
+    args, parser = _define_acceptable_arguments()
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
 
     if args.install:
         if install_mode + upgrade_mode == 0:

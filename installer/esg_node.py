@@ -899,7 +899,7 @@ def check_prerequisites():
     if "6" not in  RELEASE_VERSION[1]:
         raise WrongOSError
     else:
-        print "Operating System = {OS}".format(OS=RELEASE_VERSION[0])
+        print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
         print "[OK]"
 
 

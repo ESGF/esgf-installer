@@ -48,6 +48,11 @@ ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
 bit_dictionary = {"INSTALL_BIT":1, "TEST_BIT":2, "DATA_BIT":4, "INDEX_BIT":8, "IDP_BIT":16, "COMPUTE_BIT":32, "WRITE_ENV_BIT":64, "MIN_BIT":4, "MAX_BIT":64, "ALL_BIT":DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT}
 
+install_mode = 0
+upgrade_mode = 0
+
+node_type_bit = 0
+
 
 def get_bit_value(node_type):
     if node_type == "install":
@@ -686,14 +691,17 @@ def _define_acceptable_arguments():
     return args
 
 def process_arguments():
-    install_mode = 0
-    upgrade_mode = 0
+    global install_mode
+    global upgrade_mode
 
-    node_type_bit = 0
+    global node_type_bit
     selection_string = ""
 
     args = _define_acceptable_arguments()
 
+    if len(sys.argv) == 1:
+        args.print_help()
+        sys.exit(0)
     if args.install:
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 0
@@ -1037,7 +1045,15 @@ def main():
     
     self_verify(esg_dist_url)
 
+    logger.debug("node_type_bit: %s", node_type_bit)
     
+
+
+    print  '''-----------------------------------
+                ESGF Node Installation Program
+            -----------------------------------'''
+        
+
     # setup_esgcet()
     # test_esgcet()
 

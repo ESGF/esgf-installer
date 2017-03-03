@@ -687,7 +687,12 @@ def _define_acceptable_arguments():
     parser.add_argument("--devel", help="Sets the installation type to the devel build", action="store_true")
     parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
     parser.add_argument("--clear-env-state", dest="clearenvstate", help="Removes the file holding the environment state of last install", action="store_true")
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except Exception, e:
+        logger.debug("exception when parsing args: %s", e)
+        parser.print_help()
+        sys.exit(0)
     return args
 
 def process_arguments():
@@ -699,9 +704,6 @@ def process_arguments():
 
     args = _define_acceptable_arguments()
 
-    if len(sys.argv) == 1:
-        args.print_help()
-        sys.exit(0)
     if args.install:
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 0

@@ -993,7 +993,7 @@ def get_previous_node_type_config(node_type_bit):
         logger.info("Acceptable range is between %s and %s", MIN_BIT, MAX_BIT)
         try:
             last_config_type = open(config.esg_config_type_file)
-            node_type_bit += int(last_config_type)
+            node_type_bit += int(last_config_type.readline())
             logger.debug("node_type_bit is now: %i", node_type_bit)
         except IOError, error:
             logger.error(error)

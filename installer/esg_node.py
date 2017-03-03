@@ -11,6 +11,8 @@ import logging
 import socket
 import urlparse
 import argparse
+import platform
+import re
 from git import Repo
 from collections import deque
 from time import sleep
@@ -635,8 +637,6 @@ def set_node_type_bit(selection_string):
     pass
 def show_type():
     pass
-def check_prerequisites():
-    pass
 def init_structure():
     pass
 def start(node_bit):
@@ -850,6 +850,54 @@ def process_arguments():
             #empty out contents of the file
             open(envfile, 'w').close()
 
+class UnprivilegedUserError(Exception):
+    pass
+
+class WrongOSError(Exception):
+    pass
+
+#checking for what we expect to be on the system a-priori
+#that we are not going to install or be responsible for
+def check_prerequisites():
+    print '''
+        \033[01;31m
+      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
+      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
+    \033[0m
+    '''
+
+    print "Checking that you have root privs on %s... " % (socket.gethostname())
+    root_check = os.geteuid()
+    if root_check != 0:
+        raise UnprivilegedUserError 
+    print "[OK]"
+
+    #----------------------------------------
+    print "Checking requisites... "
+
+     # checking for OS, architecture, distribution and version
+
+    OS = platform.system()
+    MACHINE = platform.machine()
+    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()[2]
+    logger.debug("Release Version: %s", RELEASE_VERSION)
+    if RELEASE_VERSION[0] != "6":
+        raise WrongOSError
+
 
 
 def main():
@@ -903,6 +951,13 @@ def main():
 
     #process command line arguments
     process_arguments()
+    try:
+        check_prerequisites()
+    except UnprivilegedUserError:
+        logger.info("$([FAIL]) \n\tMust run this program with root's effective UID\n\n")
+    except WrongOSError:
+        logger.info("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" )
+
     
 
     # setup_esgcet()

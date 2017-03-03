@@ -612,8 +612,6 @@ def start_postgress():
 def setup_sensible_confs():
     pass
 
-def read_sel():
-    pass
 
 def install_local_certs():
     pass
@@ -984,6 +982,26 @@ def check_prerequisites():
         print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
         print "[OK]"
 
+def get_previous_node_type_config(node_type_bit):
+    ''' 
+        Helper method for reading the last state of node type config from config dir file "config_type"
+        Every successful, explicit call to --type|-t gets recorded in the "config_type" file
+        If the configuration type is not explicity set the value is read from this file.
+    '''
+    if node_type_bit < MIN_BIT or node_type_bit > MAX_BIT:
+        logger.info("node_type_bit is out of range: %s", node_type_bit)
+        logger.info("Acceptable range is between %s and %s", MIN_BIT, MAX_BIT)
+        try:
+            last_config_type = open(config.esg_config_type_file)
+            node_type_bit += int(last_config_type)
+            logger.debug("node_type_bit is now: %i", node_type_bit)
+        except IOError, error:
+            logger.error(error)
+
+    if node_type_bit == 0:
+        print '''ERROR: No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag 
+        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
+        sys.exit(1)
 
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
@@ -1055,7 +1073,7 @@ def main():
                 ESGF Node Installation Program
             -----------------------------------'''
         
-
+    get_previous_node_type_config(node_type_bit)
     # setup_esgcet()
     # test_esgcet()
 

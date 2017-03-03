@@ -891,13 +891,16 @@ def check_prerequisites():
 
      # checking for OS, architecture, distribution and version
 
+    print "Checking operating system....."
     OS = platform.system()
     MACHINE = platform.machine()
-    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()[2]
+    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()
     logger.debug("Release Version: %s", RELEASE_VERSION)
-    if RELEASE_VERSION[0] != "6":
+    if "6" not in  RELEASE_VERSION[1]:
         raise WrongOSError
-
+    else:
+        print "Operating System = {OS}".format(OS=RELEASE_VERSION[0])
+        print "[OK]"
 
 
 def main():

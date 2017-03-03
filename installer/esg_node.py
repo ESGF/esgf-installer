@@ -1074,6 +1074,32 @@ def main():
             -----------------------------------'''
         
     get_previous_node_type_config(node_type_bit)
+    
+    #TODO: Break this into a function
+    #If we are doing an install - make sure a type is selected
+    if node_type_bit & INSTALL_BIT != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
+        print '''
+                Sorry no suitable node type has been selected
+                Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
+                (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
+
+                Ex:  esg-node --set-type data
+                esg-node install
+
+                or do so as a single command line:
+
+                Ex:  esg-node --type data install
+
+                Use the --help | -h option for more information
+
+                Note: The type value is recorded upon successfully starting the node.
+                the value is used for subsequent launches so the type value does not have to be
+                always specified.  A simple \"esg-node start\" will launch with the last type used
+                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
+                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n"
+              '''
+        sys.exit(1)
+
     # setup_esgcet()
     # test_esgcet()
 

@@ -604,10 +604,6 @@ def start_postgress():
     progress_process_status_tuple = progress_process_status.communicate()
     esg_functions.checked_done(0)
 
-#TODO: Rename and refactor this; there is already a function in esg_bootstrap.py called self_verify()
-def self_verify(installation_type):
-    pass
-
 def setup_sensible_confs():
     pass
 
@@ -856,9 +852,85 @@ class UnprivilegedUserError(Exception):
 class WrongOSError(Exception):
     pass
 
-#checking for what we expect to be on the system a-priori
-#that we are not going to install or be responsible for
+class UnverifiedScriptError(Exception):
+    pass
+
+def _verify_against_remote(esg_dist_url_root):
+    python_script_name = os.path.basename(__file__)
+    python_script_md5_name = re.sub(r'_', "-", python_script_name)
+    python_script_md5_name = re.search("\w*-\w*", python_script_md5_name)
+    logger.info("python_script_name: %s", python_script_md5_name)
+
+    remote_file_md5 = requests.get("{esg_dist_url_root}/esgf-installer/{script_maj_version}/{python_script_md5_name}.md5".format(esg_dist_url_root= esg_dist_url_root, script_maj_version= script_maj_version, python_script_md5_name= python_script_md5_name ) ).content
+    remote_file_md5 = remote_file_md5.split()[0].strip()
+
+    local_file_md5 = None
+
+    hasher = hashlib.md5()
+    with open(python_script_name, 'rb') as f:
+        buf = f.read()
+        hasher.update(buf)
+        local_file_md5 = hasher.hexdigest()
+        print "local_file_md5: ", local_file_md5.strip()
+
+    if local_file_md5 != remote_file_md5:
+        raise UnverifiedScriptError
+    else:
+        print "[VERIFIED]"
+        return True
+
+#TODO: Rename and refactor this; there is already a function in esg_bootstrap.py called self_verify()
+def self_verify(esg_dist_url_root, update_action = None):
+    # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
+    if esg_functions.is_in_git(os.path.basename(__file__)) == 0:
+        logger.info("Git repository detected; not checking checksum of esg-node")
+        return
+
+    if "devel" in script_version:
+        devel = 0
+        remote_url = "{esg_dist_url_root}/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
+    else:
+        devel = 1
+        remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
+    try:
+        _verify_against_remote(remote_url)
+    except UnverifiedScriptError:
+        logger.info('''WARNING: %s could not be verified!! \n(This file, %s, may have been tampered
+            with or there is a newer version posted at the distribution server.
+            \nPlease update this script.)\n\n''', os.path.basename(__file__), os.path.basename(__file__))
+
+        if update_action is None:
+            update_action = raw_input("Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: ")
+
+        if update_action in ["C".lower(), "Y".lower()]:
+            print  "Continuing..."
+            return
+        elif update_action in ["U".lower(), "update", "--update"]:
+            print "Updating local script with script from distribution server..."
+
+            if devel == 0:
+                bootstrap_path = "/usr/local/bin/esg-bootstrap"
+            else:
+                bootstrap_path = "/usr/local/bin/esg-bootstrap --devel"
+            invoke_bootstrap = subprocess.Popen(bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            invoke_bootstrap.communicate()
+            # if invoke_bootstrap.returncode == 0:
+            #     esg_functions.checked_get()
+            print "Please re-run this updated script: {current_script_name}".format(current_script_name = os.path.basename(__file__))
+            sys.exit(invoke_bootstrap.returncode)
+        elif update_action is "X".lower():
+            print "Exiting..."
+            sys.exit(1)
+        else:
+            print "Unknown option: {update_action} - Exiting".format(update_action = update_action)
+            sys.exit(1)
+
+    return True
+
 def check_prerequisites():
+    '''
+        Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for
+    '''
     print '''
         \033[01;31m
       EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
@@ -958,11 +1030,14 @@ def main():
         check_prerequisites()
     except UnprivilegedUserError:
         logger.info("$([FAIL]) \n\tMust run this program with root's effective UID\n\n")
+        sys.exit(1)
     except WrongOSError:
         logger.info("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" )
+        sys.exit(1)
+    
+    self_verify(esg_dist_url)
 
     
-
     # setup_esgcet()
     # test_esgcet()
 

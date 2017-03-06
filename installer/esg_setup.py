@@ -82,10 +82,10 @@ def init_structure():
 				os.makedirs(directory)
 				config_check-=1
 			except OSError, e:
-		        if e.errno != 17:
-		        	raise
-		        sleep(1)
-		        pass
+				if e.errno != 17:
+					raise
+				sleep(1)
+				pass
 		else:
 			config_check -= 1
 	if config_check != 0:

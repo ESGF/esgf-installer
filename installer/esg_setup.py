@@ -431,7 +431,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         return 0
     fi
 	'''
-	if use_local_files and if os.path.isfile(local_file):
+	if use_local_files and os.path.isfile(local_file):
 		print '''
 			***************************************************************************
     		ALERT....
@@ -475,7 +475,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 	r = requests.get(remote_file)
 	if not r.status_code == requests.codes.ok:
 		print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
-		r..raise_for_status() 
+		r.raise_for_status() 
 		return 2
 	else:
 		file = open(local_file, "w")
@@ -502,91 +502,96 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 		return 0
 
 
-def setup_java():
+# def setup_java():
 
-	"Checking for java >= %s and valid JAVA_HOME... " % (config.config_dictionary["java_min_version"])
-	print subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT)
+# 	"Checking for java >= %s and valid JAVA_HOME... " % (config.config_dictionary["java_min_version"])
+# 	print subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT)
 
-	if os.path.isdir(config.config_dictionary["java_install_dir"]):
-		java_version_check = esg_functions.check_version(config.config_dictionary["java_install_dir"]+"bin/java", config.config_dictionary["java_min_version"], version_command="-version")
+# 	if os.path.isdir(config.config_dictionary["java_install_dir"]):
+# 		java_version_check = esg_functions.check_version(config.config_dictionary["java_install_dir"]+"bin/java", config.config_dictionary["java_min_version"], version_command="-version")
 
-		if java_version_check == 0:
-			print "[OK]"
-			return 0
+# 		if java_version_check == 0:
+# 			print "[OK]"
+# 			return 0
 
-	print '''*******************************
-    		  Setting up Java... %s
-    	 	 *******************************	
-    	 ''' % (config.config_dictionary["java_min_version"])
+# 	print '''*******************************
+#     		  Setting up Java... %s
+#     	 	 *******************************	
+#     	 ''' % (config.config_dictionary["java_min_version"])
 
-	last_java_truststore_file = None
-	default = "Y"
-	dosetup = None
+# 	last_java_truststore_file = None
+# 	default = "Y"
+# 	dosetup = None
 
-	if os.path.isdir(config.config_dictionary["java_install_dir"]+"bin/java"):
-		print "Detected an existing java installation..."
-		dosetup = raw_input("Do you want to continue with Java installation and setup? [Y/n]") or default
-		if dosetup != "Y" or dosetup !="y":
-			print "Skipping Java installation and setup - will assume Java is setup properly"
-			return 0
-	last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"])
+# 	if os.path.isdir(config.config_dictionary["java_install_dir"]+"bin/java"):
+# 		print "Detected an existing java installation..."
+# 		dosetup = raw_input("Do you want to continue with Java installation and setup? [Y/n]") or default
+# 		if dosetup != "Y" or dosetup !="y":
+# 			print "Skipping Java installation and setup - will assume Java is setup properly"
+# 			return 0
+# 	last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"])
 
-	os.mkdir(config.config_dictionary["workdir"])
-	starting_directory = os.getcwd()
-	os.chdir(config.config_dictionary["workdir"])
-	 # source_backup_name = re.search("\w+$", source).group()
+# 	os.mkdir(config.config_dictionary["workdir"])
+# 	starting_directory = os.getcwd()
+# 	os.chdir(config.config_dictionary["workdir"])
+# 	 # source_backup_name = re.search("\w+$", source).group()
 
-	java_dist_file = re.search("\w+$", config.config_dictionary["java_dist_url"]).group()
-	#strip off -(32|64).tar.gz at the end
-	java_dist_dir = re.search("(.+)-(32|64.*)", config.config_dictionary["java_dist_file"]).group(1)
+# 	java_dist_file = re.search("\w+$", config.config_dictionary["java_dist_url"]).group()
+# 	#strip off -(32|64).tar.gz at the end
+# 	java_dist_dir = re.search("(.+)-(32|64.*)", config.config_dictionary["java_dist_file"]).group(1)
 
-	if not os.path.isdir(config.config_dictionary["java_install_dir"]+ java_dist_dir):
-		print "Don't see java distribution dir %s/%s" % (config.config_dictionary["java_install_dir"], java_dist_dir)
-		if not os.path.isfile(java_dist_file):
-			print "Don't see java distribution file %s/%s either" % (os.getcwd(), java_dist_file)
-			print "Downloading Java from %s" % (config.config_dictionary["java_dist_url"])
-			if checked_get(config.config_dictionary["java_dist_file"],config.config_dictionary["java_dist_url"]) != 0:
-				print " ERROR: Could not download Java" 
-				os.chdir(starting_directory)
-				esg_functions.checked_done(1)
-			else:
-				print "unpacking %s..." % (config.config_dictionary["java_dist_file"])
-				extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
-				try:
-					tar = tarfile.open(config.config_dictionary["java_dist_file"])
-	        		tar.extractall(extraction_location) 
-	        		tar.close()
-        			print "Extracted in %s" % (extraction_location)
-        		except tarfile.TarError:
-        			print " ERROR: Could not extract Java"
-        			os.chdir(starting_directory)
-        			esg_functions.checked_done(1)
+# 	if not os.path.isdir(config.config_dictionary["java_install_dir"]+ java_dist_dir):
+# 		print "Don't see java distribution dir %s/%s" % (config.config_dictionary["java_install_dir"], java_dist_dir)
+# 		if not os.path.isfile(java_dist_file):
+# 			print "Don't see java distribution file %s/%s either" % (os.getcwd(), java_dist_file)
+# 			print "Downloading Java from %s" % (config.config_dictionary["java_dist_url"])
+# 			if checked_get(config.config_dictionary["java_dist_file"],config.config_dictionary["java_dist_url"]) != 0:
+# 				print " ERROR: Could not download Java" 
+# 				os.chdir(starting_directory)
+# 				esg_functions.checked_done(1)
+# 			else:
+# 				print "unpacking %s..." % (config.config_dictionary["java_dist_file"])
+# 				extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
+# 				try:
+# 					tar = tarfile.open(config.config_dictionary["java_dist_file"])
+# 	        		tar.extractall(extraction_location) 
+# 	        		tar.close()
+#         			print "Extracted in %s" % (extraction_location)
+#         		except tarfile.TarError:
+#         			print " ERROR: Could not extract Java"
+#         			os.chdir(starting_directory)
+#         			esg_functions.checked_done(1)
 
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it
+#     #If you don't see the directory but see the tar.gz distribution
+#     #then expand it
 
-    '''
-	if [ -e ${java_dist_file} ] && [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
-        echo "unpacking ${java_dist_file}..."
-        tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
-        [ $? != 0 ] && echo " ERROR: Could not extract Java..." && popd && checked_done 1
-    fi	
-    '''
-    if os.path.isfile(java_dist_file) and not os.path.isdir(re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])+"/"+config.config_dictionary["java_install_dir"]):
-    	print "unpacking %s..." % (java_dist_file)
-    	extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
-		try:
-			tar = tarfile.open(config.config_dictionary["java_dist_file"])
-    		tar.extractall(extraction_location) 
-    		tar.close()
-			print "Extracted in %s" % (extraction_location)
-		except tarfile.TarError:
-			print " ERROR: Could not extract Java"
-			os.chdir(starting_directory)
-			esg_functions.checked_done(1)
+#     '''
+# 	if [ -e ${java_dist_file} ] && [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
+#         echo "unpacking ${java_dist_file}..."
+#         tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
+#         [ $? != 0 ] && echo " ERROR: Could not extract Java..." && popd && checked_done 1
+#     fi	
+#     '''
+#     if os.path.isfile(java_dist_file) and not os.path.isdir(re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])+"/"+config.config_dictionary["java_install_dir"]):
+#     	print "unpacking %s..." % (java_dist_file)
+#     	extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
+# 		try:
+# 			tar = tarfile.open(config.config_dictionary["java_dist_file"])
+#     		tar.extractall(extraction_location) 
+#     		tar.close()
+# 			print "Extracted in %s" % (extraction_location)
+# 		except tarfile.TarError:
+# 			print " ERROR: Could not extract Java"
+# 			os.chdir(starting_directory)
+# 			esg_functions.checked_done(1)
 
-	if not os.path.isdir(config.config_dictionary["java_install_dir"]):
+# 	if not os.path.isdir(config.config_dictionary["java_install_dir"]):
 		
+
+def setup_ant():
+	pass
+
+# def 
 
 
 # yb=yum.YumBase()

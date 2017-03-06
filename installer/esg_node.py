@@ -632,8 +632,6 @@ def test_tomcat():
     pass
 def test_tds():
     pass
-def set_node_type_bit(selection_string):
-    pass
 def show_type():
     pass
 def init_structure():
@@ -771,7 +769,7 @@ def process_arguments():
             except IOError, error:
                 logger.error(error)
         logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
-        set_node_type_bit(node_type_bit)
+        set_node_type_config(node_type_bit)
         sys.exit(0)
     elif args.gettype:
         get_previous_node_type_config(node_type_bit)

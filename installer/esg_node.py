@@ -18,7 +18,6 @@ from collections import deque
 from time import sleep
 import esg_functions
 import esg_bash2py
-import esg_functions
 import esg_setup
 from esg_init import EsgInit
 

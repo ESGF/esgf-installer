@@ -6,8 +6,9 @@ import sys
 import magic
 import logging
 # from pwd import getpwnam
-import esg_bash2py
 import esg_functions
+import esg_bash2py
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

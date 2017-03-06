@@ -720,17 +720,17 @@ def process_arguments():
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        read_sel()
+        get_previous_node_type_config(node_type_bit)
         install_local_certs()
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        read_sel()
+        get_previous_node_type_config(node_type_bit)
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        read_sel()
+        get_previous_node_type_config(node_type_bit)
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -774,7 +774,7 @@ def process_arguments():
         set_node_type_bit(node_type_bit)
         sys.exit(0)
     elif args.gettype:
-        read_sel()
+        get_previous_node_type_config(node_type_bit)
         show_type()
         sys.exit(0)
     elif args.start:
@@ -1003,6 +1003,36 @@ def get_previous_node_type_config(node_type_bit):
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
         sys.exit(1)
 
+def set_node_type_config(node_type_bit):
+    '''
+            Write the node type numeric value to file
+            (Yes... gratuitous error and bounds checking)
+    '''
+    logger.debug("new node_type_bit: %s", node_type_bit)
+    hit_bits = 0
+
+    #valididty check for type... in range power of 2
+    #MIN and MAX BIT range... if so then valid and an be written down.
+    if node_type_bit < MIN_BIT or node_type_bit > MAX_BIT:
+        logger.debug("WARNING: Selection %s is out of range $MIN_BIT - $MAX_BIT", node_type_bit)
+
+    #Check if the new sel has any bits turned on in the range of our type bits
+    type_bit = MIN_BIT
+    while type_bit <= MAX_BIT:
+        if node_type_bit & type_bit != 0:
+            hit_bits += type_bit
+        type_bit *= 2
+
+    logger.debug("[hit_bits = %s] =? [node_type_bit = %s]", hit_bits, node_type_bit)
+
+    if hit_bits:
+        try:
+            config_type_file = open(config.envfile, "w")
+            logger.debug("Writing %s to file as new node_type_bit", hit_bits)
+            config_type_file.write(hit_bits)
+        except IOError, error:
+            logger.error(error)
+
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     
@@ -1096,7 +1126,7 @@ def main():
                 the value is used for subsequent launches so the type value does not have to be
                 always specified.  A simple \"esg-node start\" will launch with the last type used
                 that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n"
+                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
               '''
         sys.exit(1)
 

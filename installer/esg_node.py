@@ -983,6 +983,7 @@ def check_prerequisites():
         print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
         print "[OK]"
 
+#TODO: Refactor this to return value vs using global variable
 def get_previous_node_type_config():
     ''' 
         Helper method for reading the last state of node type config from config dir file "config_type"
@@ -1034,6 +1035,83 @@ def set_node_type_config(node_type_bit):
             config_type_file.write(str(hit_bits))
         except IOError, error:
             logger.error(error)
+
+
+def esgf_node_info():
+
+    print '''
+        The goal of this script is to automate as many tasks as possible
+     regarding the installation, maintenance and use of the ESGF
+     software stack that is know as the \"ESGF Node\".  A software
+     stack is a collection of tools that work in concert to perform a
+     particular task or set of tasks that are semantically united. The
+     software stack is comprised of: Tomcat, Thredds, CDAT & CDMS,
+     PostgreSQL, MyProxy, and several ESGF.org custom software
+     applications running on a LINUX (RedHat/CentOS) operating system.
+
+     Through the installation process there are different accounts
+     that are created that facilitate the communication between the
+     software stack entities.  These credentials are internal to the
+     stack.  It is recommended that you use the defaults provided
+     throughout this installation.  The security impact with regards
+     to the visibility and accessibility of the constituent components
+     of the stack depends on other factors to be addressed by your
+     organization.
+
+     Please be sure that you have gotten your created an account on
+     your ESGF IDP Peer.
+
+     The primary IDP Peer for ESGF is pcmdi.llnl.gov
+     You may register for an account at PCMDI at the following URL:
+     http://pcmdi.llnl.gov/esgf-web-fe/createAccount
+
+     Note: Account creation is prerequisite for publication!
+
+     ESGF P2P Node:                                             ESGF P2P Node:
+      ---------                                                   ---------
+     |Tomcat   |                                                 |Tomcat   |
+     |-Node Mgr|   <================= P2P =================>     |-Node Mgr|
+     |-Thredds |                                                 |-Thredds |
+     |-ORP     |                                                 |-ORP     |
+     |---------|                                                 |---------|
+     |CDAT/CDMS|                                                 |CDAT/CDMS|
+     |---------|                                                 |---------|
+     |Postgres |                                                 |Postgres |
+     |---------|                                                 |---------|
+     | MyProxy |  <===(HTTPS)===> [ESGF Peer Node(s)]*           | MyProxy |
+     |---------|                                                 |---------|
+     | GridFTP |  <=============> [End User(s)]*                 | GridFTP |
+     >---------<                                                 >---------<
+     | CentOS  |                                                 | CentOS  |
+     |(Virtual)|                                                 |(Virtual)|
+     | Machine |                                                 | Machine |
+     |---------|                                                 |---------|
+      ---------                                                   ---------
+
+     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
+
+                                                                                    
+\033[01;31m
+  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+\033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+\033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org
+\033[0m
+     -ESGF.org \n\n
+
+    '''
 
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
@@ -1139,6 +1217,8 @@ def main():
                 (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
               '''
         sys.exit(1)
+
+    esgf_node_info()
 
     # setup_esgcet()
     # test_esgcet()

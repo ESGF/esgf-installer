@@ -73,7 +73,7 @@ def init_structure():
 		config.config_dictionary["esg_log_dir"], config.esg_config_dir, config.config_dictionary["esg_etc_dir"], 
 		config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["config_file"] ]
 	for directory in directories_to_check:
-		if not os.path.isfile(directory):
+		if not os.path.isdir(directory):
 			os.mkdir(directory)
 			config_check-=1
 		else:

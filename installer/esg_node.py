@@ -704,12 +704,15 @@ def process_arguments():
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 0
             install_mode = 1
-            node_type_bit += get_bit_value("install")
+            if node_type_bit & INSTALL_BIT == 0:
+                node_type_bit += get_bit_value("install")
             logger.debug("Install Services")
     if args.update or args.upgrade:
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 1 
             install_mode = 0
+            if node_type_bit & INSTALL_BIT == 0:
+                node_type_bit += get_bit_value("install")
             logger.debug("Update Services")
             self_verify("update")
     if args.fixperms:

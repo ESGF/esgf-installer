@@ -1225,10 +1225,10 @@ def main():
         print "(Installing DEVELOPMENT tree...)"
     while True:
         begin_installation = raw_input("Are you ready to begin the installation? [Y/n] ") or default_install_answer
-        if begin_installation.lower() is "n" or begin_installation.lower() is "no":
+        if begin_installation.lower() == "n" or begin_installation.lower() == "no":
             print "Canceling installation"
             sys.exit(0)
-        elif begin_installation.lower() is "y" or begin_installation.lower() is "yes":
+        elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
             break
         else:
             print "Invalid option.  Please select a valid option [Y/n]"

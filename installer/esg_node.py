@@ -19,6 +19,7 @@ from time import sleep
 import esg_functions
 import esg_bash2py
 import esg_functions
+import esg_setup
 from esg_init import EsgInit
 
 
@@ -634,8 +635,6 @@ def test_tds():
     pass
 def show_type():
     pass
-def init_structure():
-    pass
 def start(node_bit):
     pass
 def stop(node_bit):
@@ -1233,7 +1232,7 @@ def main():
         else:
             print "Invalid option.  Please select a valid option [Y/n]"
 
-    init_structure()
+    esg_setup.init_structure()
     # setup_esgcet()
     # test_esgcet()
 

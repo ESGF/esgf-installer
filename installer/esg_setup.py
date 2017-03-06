@@ -68,14 +68,24 @@ else:
 def init_structure():
 
 	# print "init_structure: esg_dist_url =",  config.config_dictionary["esg_dist_url"]
-	config_check = 8
+
+	if not os.path.isfile(config.config_dictionary["config_file"]):
+		esg_functions.touch(config.config_dictionary["config_file"])
+
+	config_check = 7
 	directories_to_check = [config.config_dictionary["scripts_dir"], config.config_dictionary["esg_backup_dir"], config.config_dictionary["esg_tools_dir"], 
 		config.config_dictionary["esg_log_dir"], config.esg_config_dir, config.config_dictionary["esg_etc_dir"], 
-		config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["config_file"] ]
+		config.config_dictionary["tomcat_conf_dir"]  ]
 	for directory in directories_to_check:
-		if not os.path.isdir(directory):
-			os.mkdir(directory)
-			config_check-=1
+		if not os.path.isdir(directory): 
+			try:
+				os.makedirs(directory)
+				config_check-=1
+			except OSError, e:
+		        if e.errno != 17:
+		            raise
+		        sleep(1)
+		        pass
 		else:
 			config_check -= 1
 	if config_check != 0:

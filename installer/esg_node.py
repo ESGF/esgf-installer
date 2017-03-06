@@ -1027,7 +1027,7 @@ def set_node_type_config(node_type_bit):
         try:
             config_type_file = open(config.esg_config_type_file, "w")
             logger.debug("Writing %s to file as new node_type_bit", hit_bits)
-            config_type_file.write(hit_bits)
+            config_type_file.write(str(hit_bits))
         except IOError, error:
             logger.error(error)
 

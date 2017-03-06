@@ -721,17 +721,17 @@ def process_arguments():
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config()
         install_local_certs()
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config()
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config()
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -775,7 +775,7 @@ def process_arguments():
         set_node_type_config(node_type_bit)
         sys.exit(0)
     elif args.gettype:
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config()
         show_type()
         sys.exit(0)
     elif args.start:
@@ -983,12 +983,13 @@ def check_prerequisites():
         print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
         print "[OK]"
 
-def get_previous_node_type_config(node_type_bit):
+def get_previous_node_type_config():
     ''' 
         Helper method for reading the last state of node type config from config dir file "config_type"
         Every successful, explicit call to --type|-t gets recorded in the "config_type" file
         If the configuration type is not explicity set the value is read from this file.
     '''
+    global node_type_bit
     if node_type_bit < MIN_BIT or node_type_bit > MAX_BIT:
         logger.info("node_type_bit is out of range: %s", node_type_bit)
         logger.info("Acceptable range is between %s and %s", MIN_BIT, MAX_BIT)
@@ -1103,8 +1104,16 @@ def main():
     print  '''-----------------------------------
                 ESGF Node Installation Program
             -----------------------------------'''
+
+    logger.debug("node_type_bit & INSTALL_BIT != 0: %s", node_type_bit & INSTALL_BIT != 0)
+    logger.debug("node_type_bit: %i, %s", node_type_bit, type(node_type_bit))
+    logger.debug("MIN_BIT: %i, %s", MIN_BIT, type(MIN_BIT))
+    logger.debug("MAX_BIT: %i", MAX_BIT)
+    logger.debug("node_type_bit >= MIN_BIT: %s",  node_type_bit >= MIN_BIT)
+    logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
+
         
-    get_previous_node_type_config(node_type_bit)
+    get_previous_node_type_config()
     
     #TODO: Break this into a function
     #If we are doing an install - make sure a type is selected

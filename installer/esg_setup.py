@@ -181,8 +181,8 @@ def write_paths():
 	datafile.write("export ESG_USER_HOME="+config.config_dictionary["installer_home"])
 	datafile.write("export ESGF_INSTALL_WORKDIR="+config.config_dictionary["workdir"])
 	datafile.write("export ESGF_INSTALL_PREFIX="+config.install_prefix)
-	datafile.write("export PATH="+config.config_dictionary["myPATH"]+":"+os.environ["PATH"])
-	datafile.write("export LD_LIBRARY_PATH="+config.config_dictionary["myLD_LIBRARY_PATH"]+":"+os.environ["LD_LIBRARY_PATH"])
+	datafile.write("export PATH="+config.myPATH+":"+os.environ["PATH"])
+	datafile.write("export LD_LIBRARY_PATH="+config.myLD_LIBRARY_PATH+":"+os.environ["LD_LIBRARY_PATH"])
 
 	esg_functions.deduplicate(config.envfile)
 

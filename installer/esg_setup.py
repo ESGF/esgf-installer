@@ -70,7 +70,7 @@ def init_structure():
 	# print "init_structure: esg_dist_url =",  config.config_dictionary["esg_dist_url"]
 	config_check = 8
 	directories_to_check = [config.config_dictionary["scripts_dir"], config.config_dictionary["esg_backup_dir"], config.config_dictionary["esg_tools_dir"], 
-		config.config_dictionary["esg_log_dir"], config.config_dictionary["esg_config_dir"], config.config_dictionary["esg_etc_dir"], 
+		config.config_dictionary["esg_log_dir"], config.esg_config_dir, config.config_dictionary["esg_etc_dir"], 
 		config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["config_file"] ]
 	for directory in directories_to_check:
 		if not os.path.isfile(directory):
@@ -153,7 +153,7 @@ def init_structure():
    	if config.config_dictionary["publisher_home"]:
    		publisher_home = config.config_dictionary["publisher_home"]
    	else:
-   		publisher_home = esg_functions.get_property("publisher_home", config.config_dictionary["esg_config_dir"]+"/esgcet")
+   		publisher_home = esg_functions.get_property("publisher_home", config.esg_config_dir+"/esgcet")
 
    	# Sites can override default keystore_alias in esgf.properties (keystore.alias=)
    	config.config_dictionary["keystore_alias"] = esg_functions.get_property("keystore_alias")

@@ -83,7 +83,7 @@ def init_structure():
 				config_check-=1
 			except OSError, e:
 		        if e.errno != 17:
-		            raise
+		        	raise
 		        sleep(1)
 		        pass
 		else:

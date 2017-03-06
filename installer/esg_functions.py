@@ -723,7 +723,7 @@ def md5sum_():
 # Path munging...
 #----------------------------------------------------------
 
-def _path_unique(path_string = os.environ["PATH"], path_separator=":"):
+def path_unique(path_string = os.environ["PATH"], path_separator=":"):
     '''
         Prints a unique path string
         

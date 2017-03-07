@@ -469,7 +469,8 @@ def deduplicate_settings_in_file(envfile = None):
             deduplicated_list.reverse()
             logger.debug("deduplicated_list: %s", str(deduplicated_list))
             environment_file.seek(0)
-            environment_file.write(str(deduplicated_list))
+            for setting in deduplicated_list:
+                environment_file.write(setting)
             environment_file.truncate()
     except IOError, error:
         logger.error(error)

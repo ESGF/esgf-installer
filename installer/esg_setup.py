@@ -12,6 +12,7 @@ import shutil
 from OpenSSL import crypto
 import datetime
 import tarfile
+import logging
 import requests
 import stat
 import socket
@@ -22,6 +23,9 @@ from esg_init import EsgInit
 import esg_bash2py
 import esg_functions
 import esg_bootstrap
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 config = EsgInit()
 use_local_files=0

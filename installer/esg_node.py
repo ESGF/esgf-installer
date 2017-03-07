@@ -487,7 +487,7 @@ def write_esgcet_env():
     datafile = open(config.envfile, "a+")
     try:
 	    datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
-	    esg_functions.deduplicate(config.envfile)
+	    esg_functions.deduplicate_settings_in_file(config.envfile)
     finally:
     	datafile.close()
 
@@ -497,7 +497,7 @@ def write_esgcet_install_log():
     try:
 	    datafile.write(str(datetime.date.today()) + "python:esgcet=" +
 	                   config.config_dictionary["esgcet_version"] + "\n")
-	    esg_functions.deduplicate(config.install_manifest)
+	    esg_functions.deduplicate_settings_in_file(config.install_manifest)
     finally:
     	datafile.close()
 

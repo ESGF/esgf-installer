@@ -110,17 +110,16 @@ def init_structure():
 	except KeyError:
 		esgf_host = esg_functions.get_property("esgf_host")
 		
-
-	if config.config_dictionary["esgf_default_peer"]:
+	try:
 		esgf_default_peer = config.config_dictionary["esgf_default_peer"]
-	else:
+	except:
 		esgf_default_peer = esg_functions.get_property("esgf_default_peer")
-
-	if config.config_dictionary["esgf_idp_peer_name"]:
+		
+	try:
 		esgf_idp_peer_name = config.config_dictionary["esgf_idp_peer_name"]
-	else:
+	except:
 		esgf_idp_peer_name = esg_functions.get_property("esgf_idp_peer_name")
-
+		
 	myproxy_endpoint = re.search("/\w+", source)
 
 	if not config.config_dictionary["myproxy_port"]:

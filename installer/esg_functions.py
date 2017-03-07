@@ -477,6 +477,8 @@ def deduplicate(envfile = None):
                 res.append(key+ "=" + value)
                 my_set.add(key)
         res.reverse()
+        for setting in res:
+            datafile.write(setting)
         print "final res: ", res
         return 0
 

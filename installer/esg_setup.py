@@ -184,7 +184,7 @@ def write_paths():
 	datafile.write("export PATH="+config.myPATH+":"+os.environ["PATH"]+"\n")
 	datafile.write("export LD_LIBRARY_PATH="+config.myLD_LIBRARY_PATH+":"+os.environ["LD_LIBRARY_PATH"]+"\n")
 
-	esg_functions.deduplicate(config.envfile)
+	esg_functions.deduplicate_settings_in_file(config.envfile)
 
 def check_for_my_ip():
 	pass

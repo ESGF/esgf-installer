@@ -124,8 +124,8 @@ def init_structure():
     except KeyError:
         esgf_idp_peer_name = esg_functions.get_property("esgf_idp_peer_name")
     
-    logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  trim_string_from_tail(esgf_idp_peer_name))
-    myproxy_endpoint = trim_string_from_tail(esgf_idp_peer_name)
+    logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer_name))
+    myproxy_endpoint = esg_functions.trim_string_from_tail(esgf_idp_peer_name)
     # re.search("/\w+", source)
 
     try:

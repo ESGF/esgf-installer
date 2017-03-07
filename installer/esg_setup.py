@@ -183,6 +183,8 @@ def write_paths():
 	datafile.write("export ESGF_INSTALL_PREFIX="+config.install_prefix+"\n")
 	datafile.write("export PATH="+config.myPATH+":"+os.environ["PATH"]+"\n")
 	datafile.write("export LD_LIBRARY_PATH="+config.myLD_LIBRARY_PATH+":"+os.environ["LD_LIBRARY_PATH"]+"\n")
+	datafile.truncate()
+	datafile.close()
 
 	esg_functions.deduplicate_settings_in_file(config.envfile)
 

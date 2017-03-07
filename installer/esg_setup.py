@@ -105,10 +105,11 @@ def init_structure():
 
 	check_for_my_ip()
 
-	if config.config_dictionary["esgf_host"]:
+	try:
 		esgf_host = config.config_dictionary["esgf_host"]
-	else:
+	except KeyError:
 		esgf_host = esg_functions.get_property("esgf_host")
+		
 
 	if config.config_dictionary["esgf_default_peer"]:
 		esgf_default_peer = config.config_dictionary["esgf_default_peer"]

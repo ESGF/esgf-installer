@@ -112,31 +112,38 @@ def init_structure():
 		
 	try:
 		esgf_default_peer = config.config_dictionary["esgf_default_peer"]
-	except:
+	except KeyError:
 		esgf_default_peer = esg_functions.get_property("esgf_default_peer")
 		
 	try:
 		esgf_idp_peer_name = config.config_dictionary["esgf_idp_peer_name"]
-	except:
+	except KeyError:
 		esgf_idp_peer_name = esg_functions.get_property("esgf_idp_peer_name")
-		
-	myproxy_endpoint = re.search("/\w+", source)
+	
+	logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  trim_string_from_tail(esgf_idp_peer_name))
+	myproxy_endpoint = trim_string_from_tail(esgf_idp_peer_name)
+	# re.search("/\w+", source)
 
-	if not config.config_dictionary["myproxy_port"]:
+	try:
+		config.config_dictionary["myproxy_port"]
+	except KeyError:
 		myproxy_port =  esg_bash2py.Expand.colonMinus(esg_functions.get_property("myproxy_port"), "7512")
 
-	if config.config_dictionary["esg_root_id"]:
+	try:
 		esg_root_id = config.config_dictionary["esg_root_id"]
-	else:
+	except KeyError:
 		esg_root_id = esg_functions.get_property("esg_root_id")
 
-	if config.config_dictionary["node_peer_group"]:
+	try:
 		node_peer_group = config.config_dictionary["node_peer_group"]
-	else:
+	except KeyError:
 		node_peer_group = esg_functions.get_property("node_peer_group")
 
-	if not config.config_dictionary["node_short_name"]:
+	try:
+		config.config_dictionary["node_short_name"]
+	except KeyError:
 		node_short_name = esg_functions.get_property("node_short_name")
+		
 
 	#NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
     #this is actually an issue with dedup_properties that gets called in the get_property function
@@ -145,25 +152,26 @@ def init_structure():
     #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
     #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
 
-	if config.config_dictionary["dname"]:
-		dname = config.config_dictionary["dname"]
-   	else:
-   		dname = esg_functions.get_property("dname")
-
-   	if config.config_dictionary["gridftp_config"]:
-   		gridftp_config = config.config_dictionary["gridftp_config"]
-   	else:
-   		gridftp_config = esg_functions.get_property("gridftp_config", "bdm end-user")
-
-   	if config.config_dictionary["publisher_config"]:
-   		publisher_config = config.config_dictionary["publisher_config"]
-   	else:
-   		publisher_config = esg_functions.get_property("publisher_config", "esg.ini")
-
-   	if config.config_dictionary["publisher_home"]:
-   		publisher_home = config.config_dictionary["publisher_home"]
-   	else:
-   		publisher_home = esg_functions.get_property("publisher_home", config.esg_config_dir+"/esgcet")
+    try:
+    	dname = config.config_dictionary["dname"]
+    except KeyError:
+    	dname = esg_functions.get_property("dname")
+   		
+    try:
+    	gridftp_config = config.config_dictionary["gridftp_config"]
+    except KeyError:
+    	gridftp_config = esg_functions.get_property("gridftp_config", "bdm end-user")
+   		
+    try:
+    	publisher_config = config.config_dictionary["publisher_config"]
+    except KeyError:
+    	publisher_config = esg_functions.get_property("publisher_config", "esg.ini")
+   		
+    try:
+    	publisher_home = config.config_dictionary["publisher_home"]
+    except KeyError:
+    	publisher_home = esg_functions.get_property("publisher_home", config.esg_config_dir+"/esgcet")
+   		
 
    	# Sites can override default keystore_alias in esgf.properties (keystore.alias=)
    	config.config_dictionary["keystore_alias"] = esg_functions.get_property("keystore_alias")

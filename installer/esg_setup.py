@@ -180,7 +180,7 @@ def init_structure():
     # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
     config.config_dictionary["keystore_alias"] = esg_functions.get_property("keystore_alias")
 
-    config.config_dictionary["ESGINI"] = publisher_home+"/"+publisher_config
+    config.config_dictionary["ESGINI"] = os.path.join(publisher_home, publisher_config)
 
     return 0
 

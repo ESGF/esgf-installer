@@ -17,6 +17,7 @@ import requests
 import stat
 import socket
 import platform
+import netifaces
 # import yum
 from time import sleep
 from esg_init import EsgInit
@@ -200,8 +201,59 @@ def write_paths():
 
     esg_functions.deduplicate_settings_in_file(config.envfile)
 
+def _select_ip_address():
+    choice = int(raw_input(""))
+    return choice
+
+def _render_ip_address_menu(ip_addresses):
+        print "Detected multiple IP addresses bound to this host...\n"
+        print "Please select the IP address to use for this installation\n"
+        print "\t-------------------------------------------\n"
+        for index, ip in enumerate(ip_addresses.iteritems(),1):
+            print "\t %i) %s" % (index, ip)
+        print "\t-------------------------------------------\n"
+
 def check_for_my_ip():
-    pass
+    logger.debug("Checking for IP address(es)...")
+    matched = 0
+    my_ip_address = None
+    eth0 = netifaces.ifaddresses('eth0')
+    ip_addresses = [ ip["addr"] for ip in eth0[netifaces.AF_INET] ]
+
+    try:
+        esgf_host_ip
+    except NameError:            
+        esgf_host_ip = get_property("esgf_host_ip")
+
+    if esgf_host_ip and not force_install:
+        logger.info("Using IP: %s", esgf_host_ip)
+        return 0
+
+    #We want to make sure that the IP address we have in our config
+    #matches one of the IPs that are associated with this host
+    for ip in ip_addresses:
+        if ip == esgf_host_ip:
+            matched++
+
+    if matched == 0:
+        logger.info("Configured host IP address does not match available IPs...")
+
+    if not esgf_host_ip or force_install or matched == 0:
+        if len(ip_addresses) > 1:
+            #ask the user to choose...
+            while True:
+                _render_ip_address_menu()
+                default = 0
+                choice = _select_ip_address() or default
+                my_ip_address = ip_addresses[choice]
+                logger.info("selected address -> %s", my_ip_address)
+                break
+        else:
+            my_ip_address = ip_addresses[0]
+
+    esg_functions.write_as_property("esgf_host_ip", write_as_property)
+    esgf_host_ip = get_property("esgf_host_ip")
+    return esgf_host_ip
 
 #checking for what we expect to be on the system a-priori
 #that we are not going to install or be responsible for

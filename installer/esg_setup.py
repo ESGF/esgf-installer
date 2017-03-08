@@ -302,6 +302,35 @@ def check_prerequisites():
 
 
 def initial_setup_questionnaire():
+    print "-------------------------------------------------------"
+    print 'Welcome to the ESGF Node installation program! :-)'
+
+    try:
+        os.makedirs(config.esg_config_dir)
+    except OSError, e:
+        if e.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    starting_directory = os.getcwd()
+
+    os.chdir(config.esg_config_dir)
+
+    esgf_host = esg_functions.get_property("esgf_host")
+
+    if not esgf_host or force_install:
+        default_host_name = esgf_host or socket.getfqdn()
+        defaultdomain_regex =  r"^\w+-*\w*\W*(.+)"
+        defaultdomain = re.search(defaultdomain_regex, default_host_name).group(1)
+        if not default_host_name:
+            default_host_name = "localhost.localdomain"
+        elif not defaultdomain:
+            default_host_name = default_host_name + ".localdomain"
+
+        default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(default_host_name = default_host_name)) or default_host_name
+        esgf_host = default_host_name
+        esg_functions.write_as_property(esgf_host)
     pass
 
 

@@ -1232,6 +1232,19 @@ def main():
             print "Invalid option.  Please select a valid option [Y/n]"
 
     esg_setup.init_structure()
+
+    if force_install:
+        logger.info("(force install is ON)")
+    if node_type_bit & DATA_BIT != 0:
+        logger.info("(data node type selected)")
+    if node_type_bit & INDEX_BIT != 0:
+        logger.info("(index node type selected)")
+    if node_type_bit & IDP_BIT != 0:
+        logger.info("(idp node type selected)")
+    if node_type_bit & COMPUTE_BIT != 0:
+        logger.info("(compute node type selected)")
+
+    esg_setup.initial_setup_questionnaire()
     # setup_esgcet()
     # test_esgcet()
 

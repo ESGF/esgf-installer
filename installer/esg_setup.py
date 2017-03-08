@@ -233,7 +233,7 @@ def check_for_my_ip():
     #matches one of the IPs that are associated with this host
     for ip in ip_addresses:
         if ip == esgf_host_ip:
-            matched++
+            matched +=1
 
     if matched == 0:
         logger.info("Configured host IP address does not match available IPs...")

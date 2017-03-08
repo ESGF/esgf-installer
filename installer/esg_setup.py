@@ -223,7 +223,7 @@ def check_for_my_ip():
     try:
         esgf_host_ip
     except NameError:            
-        esgf_host_ip = get_property("esgf_host_ip")
+        esgf_host_ip = esg_functions.get_property("esgf_host_ip")
 
     if esgf_host_ip and not force_install:
         logger.info("Using IP: %s", esgf_host_ip)
@@ -251,8 +251,8 @@ def check_for_my_ip():
         else:
             my_ip_address = ip_addresses[0]
 
-    esg_functions.write_as_property("esgf_host_ip", write_as_property)
-    esgf_host_ip = get_property("esgf_host_ip")
+    esg_functions.write_as_property("esgf_host_ip", my_ip_address)
+    esgf_host_ip = esg_functions.get_property("esgf_host_ip")
     return esgf_host_ip
 
 #checking for what we expect to be on the system a-priori

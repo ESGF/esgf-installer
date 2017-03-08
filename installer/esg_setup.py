@@ -300,6 +300,11 @@ def check_prerequisites():
         print "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" 
         return 1
 
+
+def initial_setup_questionnaire():
+    pass
+
+
 def is_in_git(file_name):
     '''
      This determines if a specified file is in a git repository.

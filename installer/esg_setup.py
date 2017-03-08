@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 config = EsgInit()
 use_local_files=0
+force_install = False
 
 def source(script, update=1):
     pipe = subprocess.Popen(". %s; env" % script, stdout=subprocess.PIPE, shell=True)
@@ -213,7 +214,7 @@ def _render_ip_address_menu(ip_addresses):
             print "\t %i) %s" % (index, ip)
         print "\t-------------------------------------------\n"
 
-def check_for_my_ip():
+def check_for_my_ip(force_install=False):
     logger.debug("Checking for IP address(es)...")
     matched = 0
     my_ip_address = None

@@ -330,10 +330,10 @@ def initial_setup_questionnaire():
 
         default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(default_host_name = default_host_name)) or default_host_name
         esgf_host = default_host_name
-        esg_functions.write_as_property(esgf_host)
+        esg_functions.write_as_property("esgf_host", esgf_host)
     else:
         logger.info("esgf_host = [%s]", esgf_host)
-        esg_functions.write_as_property(esgf_host)
+        esg_functions.write_as_property("esgf_host", esgf_host)
 
     try:
         security_admin_password_file = open(config.esgf_secret_file, 'r')

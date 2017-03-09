@@ -1182,7 +1182,8 @@ setup_esgcet() {
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
       choice=$(echo ${choice} | tr 'A-Z' 'a-z')
       if [ $choice == "y" ] ; then
-        conda install -c pcmdi -c conda-forge -c uvcdat cmor cfchecker   
+        conda install -c pcmdi -c conda-forge -c uvcdat cmor cfchecker
+        pip install esgfpid   
         pushd $install_dir
         git clone https://github.com/PCMDI/cmip6-cmor-tables
         popd 

@@ -300,6 +300,23 @@ def check_prerequisites():
         print "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" 
         return 1
 
+def _choose_fqdn(esgf_host):
+    if not esgf_host or force_install:
+        default_host_name = esgf_host or socket.getfqdn()
+        defaultdomain_regex =  r"^\w+-*\w*\W*(.+)"
+        defaultdomain = re.search(defaultdomain_regex, default_host_name).group(1)
+        if not default_host_name:
+            default_host_name = "localhost.localdomain"
+        elif not defaultdomain:
+            default_host_name = default_host_name + ".localdomain"
+
+        default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(default_host_name = default_host_name)) or default_host_name
+        esgf_host = default_host_name
+        logger.info("esgf_host = [%s]", esgf_host)
+        esg_functions.write_as_property("esgf_host", esgf_host)
+    else:
+        logger.info("esgf_host = [%s]", esgf_host)
+        esg_functions.write_as_property("esgf_host", esgf_host)
 
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
@@ -318,22 +335,8 @@ def initial_setup_questionnaire():
     os.chdir(config.esg_config_dir)
 
     esgf_host = esg_functions.get_property("esgf_host")
-
-    if not esgf_host or force_install:
-        default_host_name = esgf_host or socket.getfqdn()
-        defaultdomain_regex =  r"^\w+-*\w*\W*(.+)"
-        defaultdomain = re.search(defaultdomain_regex, default_host_name).group(1)
-        if not default_host_name:
-            default_host_name = "localhost.localdomain"
-        elif not defaultdomain:
-            default_host_name = default_host_name + ".localdomain"
-
-        default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(default_host_name = default_host_name)) or default_host_name
-        esgf_host = default_host_name
-        esg_functions.write_as_property("esgf_host", esgf_host)
-    else:
-        logger.info("esgf_host = [%s]", esgf_host)
-        esg_functions.write_as_property("esgf_host", esgf_host)
+    _choose_fqdn(esgf_host)
+    
 
     try:
         security_admin_password_file = open(config.esgf_secret_file, 'r')

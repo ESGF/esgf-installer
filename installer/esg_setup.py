@@ -348,7 +348,7 @@ def initial_setup_questionnaire():
         while True:
             password_input = raw_input("What is the admin password to use for this installation? (alpha-numeric only)")
 
-            if force_install and len(input) == 0 len(security_admin_password) > 0:
+            if force_install and len(input) == 0 and len(security_admin_password) > 0:
                 changed = False
                 break
             if not input or not str.isalnum(input):

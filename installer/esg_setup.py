@@ -329,9 +329,9 @@ def _is_valid_password(password_input):
 def _confirm_password(password_input, password_confirmation):
     if password_confirmation == password_input:
             return True
-        else:
-            print "Sorry, values did not match"
-            return False
+    else:
+        print "Sorry, values did not match"
+        return False
 
 def _update_admin_password_file(updated_password):
     try:

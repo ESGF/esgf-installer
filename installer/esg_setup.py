@@ -331,6 +331,100 @@ def initial_setup_questionnaire():
         default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(default_host_name = default_host_name)) or default_host_name
         esgf_host = default_host_name
         esg_functions.write_as_property(esgf_host)
+    else:
+        logger.info("esgf_host = [%s]", esgf_host)
+        esg_functions.write_as_property(esgf_host)
+
+    try:
+        security_admin_password_file = open(config.esgf_secret_file, 'r')
+        security_admin_password = security_admin_password_file.read()
+    except IOError, error:
+        logger.error(error)
+
+    finally:
+        security_admin_password_file.close()
+
+    if not security_admin_password or force_install:
+        while True:
+            password_input = raw_input("What is the admin password to use for this installation? (alpha-numeric only)")
+
+            if force_install and len(input) == 0 len(security_admin_password) > 0:
+                changed = False
+                break
+            if not input or not str.isalnum(input):
+                print "Invalid password... "
+                continue
+            if not input or len(input) < 6:
+                print "Sorry password must be at least six characters :-( "
+                continue
+            if input:
+                security_admin_password = input
+                changed = True
+
+            security_admin_password_confirmation = raw_input("Please re-enter password to confirm: ")
+            if security_admin_password == security_admin_password_confirmation:
+                changed = True
+                break
+            else:
+                print "Sorry, values did not match"
+                changed = False
+
+            if changed is True:
+                try:
+                    security_admin_password_file = open(config.esgf_secret_file, 'w+')
+                    security_admin_password_file.write(security_admin_password)
+                    security_admin_password = security_admin_password_file.read()
+                except IOError, error:
+                    logger.error(error)
+
+                finally:
+                    security_admin_password_file.close()
+
+                #Use the same password when creating the postgress account
+                config.config_dictionary["pg_sys_acct_passwd"] = security_admin_password
+
+            os.chmod(config.esgf_secret_file, 0640)
+
+            try:
+                tomcat_group_check = grp.getgrnam(
+                    config.config_dictionary["tomcat_group"])
+            except KeyError:
+                groupadd_command = "/usr/sbin/groupadd -r %s" % (
+                    config.config_dictionary["tomcat_group"])
+                groupadd_output = subprocess.call(groupadd_command, shell=True)
+                if groupadd_output != 0 or groupadd_output != 9:
+                    print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
+                    os.chdir(starting_directory)
+                    esg_functions.checked_done(1)
+
+            tomcat_group_id = grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_id
+            try:
+                os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+            except OSError, error:
+                logger.error(error)
+
+        if os.path.isfile(config.esgf_secret_file):
+            os.chmod(config.esgf_secret_file, 0640)
+            tomcat_group_id = grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_id
+            try:
+                os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+            except OSError, error:
+                logger.error(error)
+
+        if not os.path.isfile(config.pg_secret_file):
+            esg_functions.touch(config.pg_secret_file)
+            try:
+                with open(config.pg_secret_file, "w") as secret_file:
+                    secret_file.write(config.config_dictionary["pg_sys_acct_passwd"])
+            except IOError, error:
+                logger.error(error)
+        else:
+            os.chmod(config.pg_secret_file, 0640)
+            try:
+                os.chown(config.pg_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+            except OSError, error:
+                logger.error(error)
+
     pass
 
 

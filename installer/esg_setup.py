@@ -318,6 +318,106 @@ def _choose_fqdn(esgf_host):
         logger.info("esgf_host = [%s]", esgf_host)
         esg_functions.write_as_property("esgf_host", esgf_host)
 
+def _is_valid_password(password_input):
+    if not password_input or not str.isalnum(password_input):
+            print "Invalid password... "
+            return False
+    if not password_input or len(password_input) < 6:
+            print "Sorry password must be at least six characters :-( "
+            return False
+
+def _confirm_password(password_input, password_confirmation):
+    if password_confirmation == password_input:
+            return True
+        else:
+            print "Sorry, values did not match"
+            return False
+
+def _update_admin_password_file(updated_password):
+    try:
+        security_admin_password_file = open(config.esgf_secret_file, 'w+')
+        security_admin_password_file.write(updated_password)
+    except IOError, error:
+        logger.error(error)
+    finally:
+        security_admin_password_file.close()
+
+    #Use the same password when creating the postgress account
+    config.config_dictionary["pg_sys_acct_passwd"] = updated_password
+
+#TODO: move this function to esg_functions
+def _add_user_group(group_name):
+    #TODO: Refactor by modifying the /etc/group and /etc/gshadow files; use [max_list.gr_gid for max_list in group_list] to find max group id and increment
+    groupadd_command = ["/usr/sbin/groupadd", "-r", group_name]
+    # groupadd_command = "/usr/sbin/groupadd -r {group_name}".format(group_name = group_name)
+    try:
+        groupadd_output = subprocess.check_output(groupadd_command, shell=True)
+    except subprocess.CalledProcessError as error:
+        logger.error(error)
+        print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
+        os.chdir(starting_directory)
+        esg_functions.checked_done(1) 
+
+def _update_password_files_permissions():
+    os.chmod(config.esgf_secret_file, 0640)
+
+    try:
+        tomcat_group_info = grp.getgrnam(
+            config.config_dictionary["tomcat_group"])
+    except KeyError:
+        _add_user_group(config.config_dictionary["tomcat_group"])
+
+    tomcat_group_id = tomcat_group_info.gr_id
+
+    try:
+        os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+    except OSError, error:
+        logger.error(error)
+
+    if os.path.isfile(config.esgf_secret_file):
+        os.chmod(config.esgf_secret_file, 0640)
+        try:
+            os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+        except OSError, error:
+            logger.error(error)
+
+    if not os.path.isfile(config.pg_secret_file):
+        esg_functions.touch(config.pg_secret_file)
+        try:
+            with open(config.pg_secret_file, "w") as secret_file:
+                secret_file.write(config.config_dictionary["pg_sys_acct_passwd"])
+        except IOError, error:
+            logger.error(error)
+    else:
+        os.chmod(config.pg_secret_file, 0640)
+        try:
+            os.chown(config.pg_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+        except OSError, error:
+            logger.error(error)
+
+def _choose_admin_password():
+    while True:
+        password_input = raw_input("What is the admin password to use for this installation? (alpha-numeric only)")
+
+        if force_install and len(password_input) == 0 and len(security_admin_password) > 0:
+            changed = False
+            break
+        if not _is_valid_password(password_input):
+            continue
+        if password_input:
+            security_admin_password = password_input
+
+        security_admin_password_confirmation = raw_input("Please re-enter password to confirm: ")
+        if _confirm_password(security_admin_password,security_admin_password_confirmation):
+            changed = True
+            break
+
+    if changed is True:
+        _update_admin_password_file()
+
+    _update_password_files_permissions()
+
+
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
@@ -348,86 +448,7 @@ def initial_setup_questionnaire():
         security_admin_password_file.close()
 
     if not security_admin_password or force_install:
-        while True:
-            password_input = raw_input("What is the admin password to use for this installation? (alpha-numeric only)")
-
-            if force_install and len(input) == 0 and len(security_admin_password) > 0:
-                changed = False
-                break
-            if not input or not str.isalnum(input):
-                print "Invalid password... "
-                continue
-            if not input or len(input) < 6:
-                print "Sorry password must be at least six characters :-( "
-                continue
-            if input:
-                security_admin_password = input
-                changed = True
-
-            security_admin_password_confirmation = raw_input("Please re-enter password to confirm: ")
-            if security_admin_password == security_admin_password_confirmation:
-                changed = True
-                break
-            else:
-                print "Sorry, values did not match"
-                changed = False
-
-            if changed is True:
-                try:
-                    security_admin_password_file = open(config.esgf_secret_file, 'w+')
-                    security_admin_password_file.write(security_admin_password)
-                    security_admin_password = security_admin_password_file.read()
-                except IOError, error:
-                    logger.error(error)
-
-                finally:
-                    security_admin_password_file.close()
-
-                #Use the same password when creating the postgress account
-                config.config_dictionary["pg_sys_acct_passwd"] = security_admin_password
-
-            os.chmod(config.esgf_secret_file, 0640)
-
-            try:
-                tomcat_group_check = grp.getgrnam(
-                    config.config_dictionary["tomcat_group"])
-            except KeyError:
-                groupadd_command = "/usr/sbin/groupadd -r %s" % (
-                    config.config_dictionary["tomcat_group"])
-                groupadd_output = subprocess.call(groupadd_command, shell=True)
-                if groupadd_output != 0 or groupadd_output != 9:
-                    print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
-                    os.chdir(starting_directory)
-                    esg_functions.checked_done(1)
-
-            tomcat_group_id = grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_id
-            try:
-                os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
-            except OSError, error:
-                logger.error(error)
-
-        if os.path.isfile(config.esgf_secret_file):
-            os.chmod(config.esgf_secret_file, 0640)
-            tomcat_group_id = grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_id
-            try:
-                os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
-            except OSError, error:
-                logger.error(error)
-
-        if not os.path.isfile(config.pg_secret_file):
-            esg_functions.touch(config.pg_secret_file)
-            try:
-                with open(config.pg_secret_file, "w") as secret_file:
-                    secret_file.write(config.config_dictionary["pg_sys_acct_passwd"])
-            except IOError, error:
-                logger.error(error)
-        else:
-            os.chmod(config.pg_secret_file, 0640)
-            try:
-                os.chown(config.pg_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
-            except OSError, error:
-                logger.error(error)
-
+        _choose_admin_password()
     pass
 
 

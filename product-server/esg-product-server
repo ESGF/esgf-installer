@@ -74,8 +74,8 @@ tomcat_group=${tomcat_group:-"tomcat"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
 ferret_version=${ferret_version:-"6.8"}
-las_version=${las_version:-"8.4"}
-VERSION=8.4
+las_version=${las_version:-"8.4.1"}
+VERSION=8.4.1
 
 esg_install_prefix=${esg_install_prefix:-"/usr/local"}
 INSTALLPATH=${esg_install_prefix}/las-esgf/$VERSION

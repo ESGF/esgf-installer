@@ -172,12 +172,12 @@ get_las_filter_support_libs() {
     xsgroup_role_version=${xsgroup_role_version:-"1.0.0"}
 
     #(formerly known as endorsed jars)
-    commons_collections_version=${commons_collections_version:-"3.2.1"}
+    commons_collections_version=${commons_collections_version:-"3.2.2"}
     serializer_version=${serializer_version:-"2.9.1"}
     velocity_version=${velocity_version:-"1.5"}
-    xalan_version=${xalan_version:-"2.7.1"}
-    xercesImpl_version=${xercesImpl_version:-"2.9.1"}
-    xml_apis_version=${xml_apis_version:-"1.3.04"}
+    xalan_version=${xalan_version:-"2.7.2"}
+    xercesImpl_version=${xercesImpl_version:-"2.10.0"}
+    xml_apis_version=${xml_apis_version:-"1.4.01"}
     xmlsec_version=${xmlsec_version:-"1.4.2"}
 
     #----------------------------

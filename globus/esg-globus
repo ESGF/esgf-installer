@@ -524,6 +524,19 @@ EOF
 }
 
 setup_gcs_io() {
+
+    if [ "x$1" = "xfirstrun" ]; then
+        pushd /etc/tempcerts >& /dev/null
+    else
+        pushd /etc/esgfcerts >& /dev/null
+    fi
+    if [ -s hostkey.pem -a -s hostcert.pem ]; then
+        cp host*.pem /etc/grid-security
+    fi
+    popd >& /dev/null
+
+    local input
+
     echo '*******************************'
     echo ' Registering the Data node with Globus Platform'
     echo '*******************************'
@@ -534,30 +547,41 @@ setup_gcs_io() {
     echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
     echo 'go to www.globus.org/SignUp.'
     echo
+    echo 'This step can be skipped, but users will not be able to download datasets'
+    echo 'from the GridFTP server on the data node through the ESGF web interface.'
+    echo
 
-    if [ -z "$GLOBUS_USER" ]; then
-        local input
-        while [ 1 ]; do
-            read -e -p "Please provide a Globus username [${globus_user}]: " input
-            [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
-            [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
-        done
-        unset input
-    fi
+    while [ 1 ]; do
+        read -e -p 'Do you want to register the GridFTP server with Globus? [Y/n]: ' input
+        [ -z "${input}" -o "${input}" = 'Y' -o "${input}" = 'y' ] && export GLOBUS_SETUP='yes' && break
+        [ "${input}" = 'N' -o "${input}" = 'n' ] && export GLOBUS_SETUP='no' && break
+    done
 
-    if [ -z "$GLOBUS_PASSWORD" ]; then
-        local input
-        while [ 1 ]; do
-            read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-            [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
-            [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
-        done
-        unset input
-    fi
+    if [ $GLOBUS_SETUP = 'yes' ]; then
 
-    local myproxy_hostname=${myproxy_endpoint:-${esgf_idp_peer:-%(HOSTNAME)s}}
+        if [ -z "$GLOBUS_USER" ]; then
+            local input
+            while [ 1 ]; do
+                read -e -p "Please provide a Globus username [${globus_user}]: " input
+                [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
+                [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
+            done
+            unset input
+        fi
 
-cat >/etc/globus-connect-server-esgf.conf <<EOF
+        if [ -z "$GLOBUS_PASSWORD" ]; then
+            local input
+            while [ 1 ]; do
+                read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+                [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
+                [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
+            done
+            unset input
+        fi
+
+        local myproxy_hostname=${myproxy_endpoint:-${esgf_idp_peer:-%(HOSTNAME)s}}
+
+        cat >/etc/globus-connect-server-esgf.conf <<EOF
 [Globus]
 User = %(GLOBUS_USER)s
 Password = %(GLOBUS_PASSWORD)s
@@ -583,18 +607,25 @@ SharingStateDir = ${gridftp_chroot_jail}/etc/grid-security/sharing/\$USER
 Server = ${myproxy_hostname}
 EOF
 
-    if [ "x$1" = "xfirstrun" ]; then
-        pushd /etc/tempcerts >& /dev/null
-    else
-        pushd /etc/esgfcerts >& /dev/null
+        globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
+        return $?
     fi
-    if [ -s hostkey.pem -a -s hostcert.pem ]; then
-        cp host*.pem /etc/grid-security
-    fi
-    popd >& /dev/null
 
-    globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
-    return $?
+    # Create a substitution of GCS configuration files for GridFTP server
+    [ ! -d /etc/gridftp.d ] && mkdir /etc/gridftp.d
+    cat >/etc/gridftp.d/globus-connect-esgf <<EOF
+port_range 50000,51000
+\$GLOBUS_TCP_SOURCE_RANGE 50000,51000
+restrict_paths R/,N/etc,N/tmp,N/dev
+\$GRIDMAP "/etc/grid-security/grid-mapfile"
+\$X509_USER_CERT "/etc/grid-security/hostcert.pem"
+\$X509_USER_KEY "/etc/grid-security/hostkey.pem"
+log_single /var/log/gridftp.log
+log_level ALL
+\$X509_CERT_DIR "/etc/grid-security/certificates"
+EOF
+
+    return 0
 
 }
 
@@ -787,6 +818,33 @@ globus_check_certificates() {
 #--------------------
 
 setup_gcs_id() {
+
+
+    if [ "x$1" = "xfirstrun" ]; then
+        pushd /etc/tempcerts >& /dev/null
+    else
+        pushd /etc/esgfcerts >& /dev/null
+    fi
+
+    myproxyca_dir=/var/lib/globus-connect-server/myproxy-ca
+    [ ! -d ${myproxyca_dir}/newcerts ] && mkdir -p ${myproxyca_dir}/newcerts && chmod 700 ${myproxyca_dir}
+    [ ! -d ${myproxyca_dir}/private ] && mkdir -p ${myproxyca_dir}/private && chmod 700 ${myproxyca_dir}/private
+    cp cacert.pem ${myproxyca_dir}
+    cp cakey.pem ${myproxyca_dir}/private
+    cp signing-policy ${myproxyca_dir}
+    if [ -s hostkey.pem -a -s hostcert.pem ]; then
+        cp host*.pem /etc/grid-security
+    fi
+    localhash=`openssl x509 -noout -hash -in cacert.pem`
+    cp globus_simple_ca_${localhash}_setup-0.tar.gz ${myproxyca_dir}
+    cp globus_simple_ca_${localhash}_setup-0.tar.gz /etc/grid-security/certificates
+    popd >& /dev/null
+
+    local myproxy_config_dir=${esg_config_dir}/myproxy
+    mkdir -p ${myproxy_config_dir}
+
+    local input
+
     echo '*******************************'
     echo ' Registering the IdP node with Globus Platform'
     echo '*******************************'
@@ -797,31 +855,39 @@ setup_gcs_id() {
     echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
     echo 'go to www.globus.org/SignUp.'
     echo
+    echo 'This step can be skipped, but users will not be able to download datasets'
+    echo 'from the GridFTP server on the data node through the ESGF web interface.'
+    echo
 
-    if [ -z "$GLOBUS_USER" ]; then
-        local input
-        while [ 1 ]; do
-            read -e -p "Please provide a Globus username [${globus_user}]: " input
-            [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
-            [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
-        done
-        unset input
-    fi
+    while [ 1 ]; do
+        read -e -p 'Do you want to register the MyProxy server with Globus? [Y/n]: ' input
+        [ -z "${input}" -o "${input}" = 'Y' -o "${input}" = 'y' ] && export GLOBUS_SETUP='yes' && break
+        [ "${input}" = 'N' -o "${input}" = 'n' ] && export GLOBUS_SETUP='no' && break
+    done
 
-    if [ -z "$GLOBUS_PASSWORD" ]; then
-        local input
-        while [ 1 ]; do
-            read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-            [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
-            [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
-        done
-        unset input
-    fi
+    if [ $GLOBUS_SETUP = 'yes' ]; then
 
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
+        if [ -z "$GLOBUS_USER" ]; then
+            local input
+            while [ 1 ]; do
+                read -e -p "Please provide a Globus username [${globus_user}]: " input
+                [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
+                [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
+            done
+            unset input
+        fi
 
-cat >${myproxy_config_dir}/globus-connect-server.conf <<EOF
+        if [ -z "$GLOBUS_PASSWORD" ]; then
+            local input
+            while [ 1 ]; do
+                read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
+                [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
+                [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
+            done
+            unset input
+        fi
+
+        cat >${myproxy_config_dir}/globus-connect-server.conf <<EOF
 [Globus]
 User = %(GLOBUS_USER)s
 Password = %(GLOBUS_PASSWORD)s
@@ -843,28 +909,46 @@ SharingRestrictPaths = R/
 Server = %(HOSTNAME)s
 EOF
 
-    if [ "x$1" = "xfirstrun" ]; then
-        pushd /etc/tempcerts >& /dev/null
-    else
-        pushd /etc/esgfcerts >& /dev/null
+        globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
+        return $?
     fi
-    myproxyca_dir=/var/lib/globus-connect-server/myproxy-ca
-    [ ! -d ${myproxyca_dir}/newcerts ] && mkdir -p ${myproxyca_dir}/newcerts && chmod 700 ${myproxyca_dir}
-    [ ! -d ${myproxyca_dir}/private ] && mkdir -p ${myproxyca_dir}/private && chmod 700 ${myproxyca_dir}/private
-    cp cacert.pem ${myproxyca_dir}
-    cp cakey.pem ${myproxyca_dir}/private
-    cp signing-policy ${myproxyca_dir}
-    if [ -s hostkey.pem -a -s hostcert.pem ]; then
-        cp host*.pem /etc/grid-security
-    fi
-    localhash=`openssl x509 -noout -hash -in cacert.pem`
-    cp globus_simple_ca_${localhash}_setup-0.tar.gz ${myproxyca_dir}
-    cp globus_simple_ca_${localhash}_setup-0.tar.gz /etc/grid-security/certificates
-    popd >& /dev/null
 
-    globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
-    return $?
+    # Create a substitution of Globus generated confguration files for MyProxy server
+    [ ! -d /etc/myproxy.d ] && mkdir /etc/myproxy.d
+    cat >/etc/myproxy.d/globus-connect-esgf <<EOF
+export MYPROXY_USER=root
+export X509_CERT_DIR="/etc/grid-security/certificates"
+export X509_USER_CERT="/etc/grid-security/hostcert.pem"
+export X509_USER_KEY="/etc/grid-security/hostkey.pem"
+export X509_USER_PROXY=""
+export MYPROXY_OPTIONS="\${MYPROXY_OPTIONS:+\$MYPROXY_OPTIONS }-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"
+EOF
 
+    cat >/esg/config/myproxy/myproxy-server.config <<EOF
+        authorized_retrievers      "*"
+        default_retrievers         "*"
+        authorized_renewers        "*"
+        authorized_key_retrievers  "*"
+        trusted_retrievers         "*"
+        default_trusted_retrievers "none"
+        max_cert_lifetime          "72"
+        disable_usage_stats        "true"
+        cert_dir                   "/etc/grid-security/certificates"
+
+        pam_id "myproxy"
+        pam "required"
+
+        certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
+        certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"
+        certificate_issuer_key_passphrase "globus"
+        certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"
+        certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"
+        certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
+        certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp
+        certificate_extapp /esg/config/myproxy/esg_attribute_callout_app
+EOF
+
+    return 0
 }
 
 

@@ -23,7 +23,7 @@ GROUP=apache
 
 # the specific CoG branch OR version to install
 # ESGF version
-VERSION=v3.5.2
+VERSION=v3.9.0-RC3
 
 #COG_TAG=devel
 COG_TAG=$VERSION
@@ -79,9 +79,6 @@ pip install -U pip
 pip install wheel
 pip install --use-wheel Pillow==3.1.0
 
-# pre-requisite: install Django separately otherwise it causes compilation errors
-pip install django==1.9.4
-
 # checkout CoG software stack
 # remove previous installation if existing
 cd $INSTALLPATH
@@ -103,21 +100,26 @@ git pull
 
 # install CoG dependencies within Python virtual environment
 cd $COG_INSTALL_DIR
+pip install -r requirements.txt
+
+# setup CoG configuration
 python setup.py install
 
 # install mkproxy. Mkproxy is used by Globus Transfer API client to create an X.509 proxy credential. 
 # (Globus Transfer REST API sends a public key. i
 # Mkproxy signs the public key using a private key extracted from an ESGF X.509 user credential.)
 cd $COG_DIR
+rm -rf transfer-api-client-python
 git clone https://github.com/globusonline/transfer-api-client-python.git
 cd transfer-api-client-python
 git pull
 cd mkproxy
 make
-cp mkproxy $INSTALLPATH/venv/lib/python2.7/site-packages/globusonline_transfer_api_client-0.10.16-py2.7.egg/globusonline/transfer/api_client/x509_proxy/
+cp mkproxy $INSTALLPATH/venv/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/
 
 # FIXME: must download and install django-openid-auth fork manually
 cd $COG_DIR
+rm -rf django-openid-auth
 git clone https://github.com/EarthSystemCoG/django-openid-auth.git
 cd django-openid-auth
 python setup.py install

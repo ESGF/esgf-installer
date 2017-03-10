@@ -526,6 +526,18 @@ def initial_setup_questionnaire():
     _choose_node_long_name()
     _choose_node_namespace()
     _choose_node_peer_group()
+
+    esgf_default_peer = esg_functions.get_property("esgf_default_peer")
+    if not esgf_default_peer or force_install:
+        try:
+            default_esgf_default_peer = esgf_host
+        except NameError:
+            default_esgf_default_peer = socket.getfqdn()
+
+        esgf_default_peer_input = raw_input("What is the default peer to this node? [{default_esgf_default_peer}]: ".format(default_esgf_default_peer = default_esgf_default_peer)) or default_esgf_default_peer
+        esg_functions.write_as_property("esgf_default_peer", esgf_default_peer_input)
+    else:
+        logger.info("esgf_default_peer = [%s]", esgf_default_peer) 
     
 
     

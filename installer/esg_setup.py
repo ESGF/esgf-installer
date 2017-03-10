@@ -470,6 +470,25 @@ def _choose_node_namespace():
     else:
         logger.info("node_namespace = [%s]", node_namespace)
 
+def _choose_node_peer_group():
+    node_peer_group = esg_functions.get_property("node_peer_group")
+    if not node_peer_group or force_install:
+        try:
+            node_peer_group
+        except NameError:
+            node_peer_group = "esgf-test"
+        while True:
+            node_peer_group_input = raw_input("What peer group(s) will this node participate in? (esgf-test|esgf-prod) [{node_peer_group}]: ".format(node_peer_group = node_peer_group)) or node_peer_group
+            if node_peer_group_input != "esgf-test" or node_peer_group_input != "esgf-prod":
+                print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input = node_peer_group_input)
+                print "Please choose either esgf-test or esgf-prod"
+                continue
+            else:
+                esg_functions.write_as_property("node_peer_group", node_peer_group_input)
+                break
+    else:
+       logger.info("node_peer_group = [%s]", node_peer_group) 
+
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
@@ -506,24 +525,8 @@ def initial_setup_questionnaire():
     _choose_node_short_name()
     _choose_node_long_name()
     _choose_node_namespace()
-
-    node_peer_group = esg_functions.get_property("node_peer_group")
-    if not node_peer_group or force_install:
-        try:
-            node_peer_group
-        except NameError:
-            node_peer_group = "esgf-test"
-        while True:
-            node_peer_group_input = raw_input("What peer group(s) will this node participate in? (esgf-test|esgf-prod) [{node_peer_group}]: ".format(node_peer_group = node_peer_group)) or node_peer_group
-            if node_peer_group_input != "esgf-test" or node_peer_group_input != "esgf-prod":
-                print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input = node_peer_group_input)
-                print "Please choose either esgf-test or esgf-prod"
-                continue
-            else:
-                esg_functions.write_as_property("node_peer_group", node_peer_group_input)
-                break
-    else:
-       logger.info("node_peer_group = [%s]", node_peer_group) 
+    _choose_node_peer_group()
+    
 
     
     

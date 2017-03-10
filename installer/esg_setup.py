@@ -430,6 +430,17 @@ def _choose_organization_name():
     else:
         logger.info("esg_root_id = [%s]", esg_root_id)
 
+def _choose_node_short_name():
+    node_short_name = esg_functions.get_property("node_short_name")
+    if not node_short_name or force_install:
+        while True:
+            node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name = node_short_name)) or node_short_name
+            node_short_name_input.replace("", "_")
+            esg_functions.write_as_property("node_short_name", node_short_name)
+            break
+    else:
+        logger.info("node_short_name = [%s]", node_short_name)
+
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
@@ -463,16 +474,8 @@ def initial_setup_questionnaire():
         _choose_admin_password()
 
     _choose_organization_name()
-
-    node_short_name = esg_functions.get_property("node_short_name")
-    if not node_short_name or force_install:
-        while True:
-            node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name = node_short_name)) or node_short_name
-            node_short_name_input.replace("", "_")
-            esg_functions.write_as_property("node_short_name", node_short_name)
-            break
-    else:
-        logger.info("node_short_name = [%s]", node_short_name)
+    _choose_node_short_name()
+    
 
 
     pass

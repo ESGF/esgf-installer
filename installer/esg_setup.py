@@ -475,6 +475,14 @@ def initial_setup_questionnaire():
 
     _choose_organization_name()
     _choose_node_short_name()
+
+    node_long_name = esg_functions.get_property("node_long_name")
+    if not node_long_name or force_install:
+        while True:
+            node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(node_long_name = node_long_name)) or node_long_name
+            esg_functions.write_as_property("node_long_name", node_long_name)
+    else:
+        logger.info("node_long_name = [%s]", node_long_name)
     
 
 

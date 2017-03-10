@@ -450,6 +450,24 @@ def _choose_node_long_name():
     else:
         logger.info("node_long_name = [%s]", node_long_name)
 
+def _choose_node_namespace():
+    node_namespace = esg_functions.get_property("node_namespace")
+    if not node_namespace or force_install:
+        top_level_domain =  tld.get_tld("http://"+socket.gethostname(), as_object=True)
+        domain = top_level_domain.domain
+        suffix = top_level_domain.suffix
+        default_node_namespace = suffix+"."+domain
+        while True:
+            node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(default_node_namespace = default_node_namespace)) or default_node_namespace
+            namespace_pattern_requirement = re.compile("(\w+.{1}\w+)$")
+            if not namespace_pattern_requirement.match(node_namespace_input):
+                print "Namespace entered is not in a valid format.  Valid format is [suffix].[domain].  Example: gov.llnl"
+                continue
+            else:
+                esg_functions.write_as_property("node_namespace", node_namespace_input)
+    else:
+        logger.info("node_namespace = [%s]", node_namespace)
+        
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
@@ -485,23 +503,8 @@ def initial_setup_questionnaire():
     _choose_organization_name()
     _choose_node_short_name()
     _choose_node_long_name()
-
-    node_namespace = esg_functions.get_property("node_namespace")
-    if not node_namespace or force_install:
-        top_level_domain =  tld.get_tld("http://"+socket.gethostname(), as_object=True)
-        domain = top_level_domain.domain
-        suffix = top_level_domain.suffix
-        default_node_namespace = suffix+"."+domain
-        while True:
-            node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(default_node_namespace = default_node_namespace)) or default_node_namespace
-            namespace_pattern_requirement = re.compile("(\w+.{1}\w+)$")
-            if not namespace_pattern_requirement.match(node_namespace_input):
-                print "Namespace entered is not in a valid format.  Valid format is [suffix].[domain].  Example: gov.llnl"
-                continue
-            else:
-                esg_functions.write_as_property("node_namespace", node_namespace_input)
-    else:
-        logger.info("node_namespace = [%s]", node_namespace)
+    _choose_node_namespace()
+    
     
 
 

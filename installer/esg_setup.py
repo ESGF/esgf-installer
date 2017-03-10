@@ -422,7 +422,7 @@ def _choose_organization_name():
     esg_root_id = esg_functions.get_property("esg_root_id")
     if not esg_root_id or force_install:
         while True:
-            default_org_name = tld.get_tld("http://"+socket.gethostname() as_object=True).domain
+            default_org_name = tld.get_tld("http://"+socket.gethostname(), as_object=True).domain
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ", format(default_org_name = default_org_name)) or default_org_name
             org_name_input.replace("", "_")
             esg_functions.write_as_property("esg_root_id", esg_root_id)

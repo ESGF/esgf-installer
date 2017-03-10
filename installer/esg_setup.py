@@ -490,7 +490,7 @@ def _choose_node_peer_group():
        logger.info("node_peer_group = [%s]", node_peer_group)
 
 def _choose_esgf_default_peer():
-     esgf_default_peer = esg_functions.get_property("esgf_default_peer")
+    esgf_default_peer = esg_functions.get_property("esgf_default_peer")
     if not esgf_default_peer or force_install:
         try:
             default_esgf_default_peer = esgf_host

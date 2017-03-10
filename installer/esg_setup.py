@@ -488,7 +488,7 @@ def initial_setup_questionnaire():
 
     node_namespace = esg_functions.get_property("node_namespace")
     if not node_namespace or force_install:
-        top_level_domain =  tld.get_tld("http://"+socket.gethostname() as_object=True)
+        top_level_domain =  tld.get_tld("http://"+socket.gethostname(), as_object=True)
         domain = top_level_domain.domain
         suffix = top_level_domain.suffix
         default_node_namespace = suffix+"."+domain

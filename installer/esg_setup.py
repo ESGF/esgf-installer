@@ -422,7 +422,7 @@ def _choose_organization_name():
     esg_root_id = esg_functions.get_property("esg_root_id")
     if not esg_root_id or force_install:
         while True:
-            default_org_name = tld.get_tld(socket.gethostname()).domain
+            default_org_name = tld.get_tld("http://"+socket.gethostname() as_object=True).domain
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ", format(default_org_name = default_org_name)) or default_org_name
             org_name_input.replace("", "_")
             esg_functions.write_as_property("esg_root_id", esg_root_id)
@@ -436,7 +436,7 @@ def _choose_node_short_name():
         while True:
             node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name = node_short_name)) or node_short_name
             node_short_name_input.replace("", "_")
-            esg_functions.write_as_property("node_short_name", node_short_name)
+            esg_functions.write_as_property("node_short_name", node_short_name_input)
             break
     else:
         logger.info("node_short_name = [%s]", node_short_name)
@@ -446,7 +446,7 @@ def _choose_node_long_name():
     if not node_long_name or force_install:
         while True:
             node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(node_long_name = node_long_name)) or node_long_name
-            esg_functions.write_as_property("node_long_name", node_long_name)
+            esg_functions.write_as_property("node_long_name", node_long_name_input)
     else:
         logger.info("node_long_name = [%s]", node_long_name)
 
@@ -485,7 +485,23 @@ def initial_setup_questionnaire():
     _choose_organization_name()
     _choose_node_short_name()
     _choose_node_long_name()
-    
+
+    node_namespace = esg_functions.get_property("node_namespace")
+    if not node_namespace or force_install:
+        top_level_domain =  tld.get_tld("http://"+socket.gethostname() as_object=True)
+        domain = top_level_domain.domain
+        suffix = top_level_domain.suffix
+        default_node_namespace = suffix+"."+domain
+        while True:
+            node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(default_node_namespace = default_node_namespace)) or default_node_namespace
+            namespace_pattern_requirement = re.compile("(\w+.{1}\w+)$")
+            if not namespace_pattern_requirement.match(node_namespace_input):
+                print "Namespace entered is not in a valid format.  Valid format is [suffix].[domain].  Example: gov.llnl"
+                continue
+            else:
+                esg_functions.write_as_property("node_namespace", node_namespace_input)
+    else:
+        logger.info("node_namespace = [%s]", node_namespace)
     
 
 

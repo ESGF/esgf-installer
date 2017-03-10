@@ -897,7 +897,7 @@ setup_cdat() {
 
     # create a default environment for the publisher with cduitl (and cdms2)
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
-	conda create -n esgf-pub -c conda-forge -c uvcdat cdutil
+	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1	
     fi   
 
@@ -1038,7 +1038,7 @@ setup_esgcet() {
     echo "$(pwd)"
 
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient
+    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient
     
     if [ $ESGF_INSECURE > 0 ] ; then
 
@@ -1185,7 +1185,7 @@ setup_esgcet() {
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
       choice=$(echo ${choice} | tr 'A-Z' 'a-z')
       if [ $choice == "y" ] ; then
-        conda install -c pcmdi -c conda-forge -c uvcdat cmor cfchecker
+        conda install -y -c pcmdi -c conda-forge -c uvcdat cmor cfchecker
         pip install esgfpid   
         pushd $install_dir
         git clone https://github.com/PCMDI/cmip6-cmor-tables
@@ -6104,7 +6104,6 @@ main() {
 	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-
         res=`echo $CDAT_HOME | grep -c conda` 
         if [ $res == 0 ]; then
             unset CDAT_HOME
@@ -6116,16 +6115,12 @@ main() {
        	 get_esgf_dist_mirror "fastest" $devel
         fi
 
-
 	# Setting esg_dist_url with previously gathered information
         esg_dist_url_root="${esgf_dist_mirror}/dist"
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
-
-        # Sourcing esg-init file        
+    # Sourcing esg-init file        
         [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"	
-        if [ -f ]	     
-
 
 	# Downloading esg-installarg file
 	if [ ! -e ${esg_installarg_file} ] || ((force_install)) || [ ${esg_installarg_file} -ot $0 ]; then

@@ -1418,6 +1418,8 @@ get_esgf_dist_mirror() {
     fi
     unset slist
     unset flist
+    
+    esgf_dist_mirror="aims1.llnl.gov/esgf"
 }
 
 ####################################################################

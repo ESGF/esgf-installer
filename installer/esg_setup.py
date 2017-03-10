@@ -18,6 +18,7 @@ import stat
 import socket
 import platform
 import netifaces
+import tld
 # import yum
 from time import sleep
 from esg_init import EsgInit
@@ -449,6 +450,18 @@ def initial_setup_questionnaire():
 
     if not security_admin_password or force_install:
         _choose_admin_password()
+
+    esg_root_id = esg_functions.get_property("esg_root_id")
+    if not esg_root_id or force_install:
+        while True:
+            default_org_name = tld.get_tld(socket.gethostname()).domain
+            org_name_input = raw_input("What is the name of your organization? [%s]: ", format(default_org_name = default_org_name)) or default_org_name
+            org_name_input.replace("", "_")
+            esg_functions.write_as_property("esg_root_id", esg_root_id)
+            break
+    else:
+        logger.info("esg_root_id = [%s]", esg_root_id)
+
     pass
 
 

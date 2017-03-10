@@ -423,7 +423,7 @@ def _choose_organization_name():
     if not esg_root_id or force_install:
         while True:
             default_org_name = tld.get_tld(socket.gethostname()).domain
-            org_name_input = raw_input("What is the name of your organization? [%s]: ", format(default_org_name = default_org_name)) or default_org_name
+            org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ", format(default_org_name = default_org_name)) or default_org_name
             org_name_input.replace("", "_")
             esg_functions.write_as_property("esg_root_id", esg_root_id)
             break
@@ -463,6 +463,17 @@ def initial_setup_questionnaire():
         _choose_admin_password()
 
     _choose_organization_name()
+
+    node_short_name = esg_functions.get_property("node_short_name")
+    if not node_short_name or force_install:
+        while True:
+            node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name = node_short_name)) or node_short_name
+            node_short_name_input.replace("", "_")
+            esg_functions.write_as_property("node_short_name", node_short_name)
+            break
+    else:
+        logger.info("node_short_name = [%s]", node_short_name)
+
 
     pass
 

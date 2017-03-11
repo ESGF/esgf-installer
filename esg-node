@@ -195,7 +195,6 @@ write_paths() {
     echo "export ESGF_INSTALL_PREFIX=${install_prefix}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
-    echo "source /usr/local/conda/bin/activate esgf-pub" >> $envfile
 
     dedup ${envfile} && source ${envfile}
 }
@@ -3098,6 +3097,7 @@ write_env() {
     write_tomcat_env
     write_tds_env
     write_globus_env
+    echo "source /usr/local/conda/bin/activate esgf-pub" >> $envfile
     echo "-------------------"
     cat ${envfile}
     echo "-------------------"

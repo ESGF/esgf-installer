@@ -3097,7 +3097,7 @@ write_env() {
     write_tomcat_env
     write_tds_env
     write_globus_env
-    echo "source /usr/local/conda/bin/activate esgf-pub" >> $envfile
+    echo "source /usr/local/conda/bin/activate esgf-pub" >> ${envfile}
     echo "-------------------"
     cat ${envfile}
     echo "-------------------"

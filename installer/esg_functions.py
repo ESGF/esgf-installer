@@ -20,6 +20,7 @@ import logging
 from time import sleep
 from collections import OrderedDict
 from esg_init import EsgInit
+from contextlib import contextmanager
 import esg_bash2py
 
 
@@ -1555,6 +1556,14 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     else:
         print "[VERIFIED]"
         return 0
+
+
+@contextmanager
+def pushd(new_dir):
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    yield
+    os.chdir(previous_dir)
 
 
 

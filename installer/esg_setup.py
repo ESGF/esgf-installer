@@ -581,6 +581,80 @@ def initial_setup_questionnaire():
 
     pass
 
+def _get_db_conn_str_questionnaire():
+    #postgresql://esgcet@localhost:5432/esgcet
+    user_ = None
+    host_ = None
+    port_ = None
+    dbname_ = None
+    connstring_ = None
+
+    if not db_user or not db_host or not db_port or not db_database:
+        if not db_host:
+            if db_host == esgf_host or db_host == "localhost":
+                connstring_ = "{db_user}@localhost"
+            else:
+                connstring_ = "{db_user}@{db_host}:{db_port}/{db_database}"
+
+
+    #Note the values referenced here should have been set by prior get_property *** calls
+    #that sets these values in the script scope. (see the call in questionnaire function - above)    
+    pass
+
+def _is_managed_db():
+    '''
+        responds true (returns 0) if this IS intended to be a managed database
+        is expecting the vars:
+        ---- "db_host"
+        ---- "esgf_host"
+        to be set
+        Define: managed - (true|0) this means NOT manipulated by this script but done by external means
+        (hint prepend "externally" before managed to get the meaning - yes I find it confusing but Stephen likes this term :-))
+        db_managed=no means that it is a LOCAL database. (I have to change this damn verbiage... what I get for following pasco-speak ;-).
+    '''
+    db_managed_default = None
+    default_selection_output = None
+    db_managed = esg_functions.get_property("db_managed")
+    if not force_install:
+        if db_managed == "yes":
+            return True
+        else:
+            return False
+
+    if not db_managed:
+        logger.debug("esgf_host = %s", esgf_host)
+        logger.debug("db_host = %s", db_host)
+
+        #Try to come up with some "sensible" default value for the user...
+        if db_host == esgf_host or db_host == "localhost" or not db_host:
+            db_managed_default = "no"
+            default_selection_output = "[y/N]:"
+        else:
+            db_managed_default = "yes"
+            default_selection_output = "[Y/n]:"
+
+        external_db_input = raw_input("Is the database external to this node? " + default_selection_output)
+        if not external_db_input:
+            db_managed = db_managed_default
+            esg_functions.write_as_property("db_managed", db_managed)
+        else:
+            if external_db_input.lower() == "y" or external_db_input.lower() == "yes":
+                db_managed == "yes"
+            else:
+                db_managed == "no"
+            esg_functions.write_as_property("db_managed", db_managed)
+    else:
+        logger.info("db_managed = [%s]", db_managed)
+
+    if db_managed == "yes":
+        print "Set to use externally \"managed\" database on host: {db_host}".format(db_host = db_host)
+        return True
+    else:
+        logger.debug("(hmm... setting db_host to localhost)")
+        #Note: if not managed and on the local machine... always use "localhost"
+        db_host="localhost"
+        return False
+    pass
 
 def is_in_git(file_name):
     '''

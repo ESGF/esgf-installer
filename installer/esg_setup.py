@@ -541,7 +541,39 @@ def initial_setup_questionnaire():
     _choose_node_namespace()
     _choose_node_peer_group()
     _choose_esgf_default_peer()
-    
+
+    esgf_index_peer = esg_functions.get_property("esgf_index_peer")
+    if note esgf_index_peer or force_install:
+        default_esgf_index_peer = esgf_default_peer or esgf_host or socket.getfqdn()
+        esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(default_esgf_index_peer = default_esgf_index_peer)) or default_esgf_index_peer
+        esg_functions.write_as_property("esgf_index_peer", esgf_index_peer_input)
+    else:
+        logger.info("esgf_index_peer = [%s]", esgf_index_peer)
+
+
+    mail_admin_address = esg_functions.get_property("mail_admin_address")
+    if not mail_admin_address or force_install:
+        mail_admin_address_input = raw_input("What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address =  mail_admin_address)) 
+        if mail_admin_address_input:
+             esg_functions.write_as_property("mail_admin_address", mail_admin_address_input)
+        else:
+            print " (The notification system will not be enabled without an email address)"
+    else:
+        logger.info("mail_admin_address = [%s]", mail_admin_address)
+
+    db_properties_dict = {"db_user": None,"db_host": None, "db_port": None. "db_database": None, "db_managed": None}
+    for key, value in db_properties_dict.items():
+        db_properties_dict[key] = esg_functions.get_property(key)
+
+    # db_user = esg_functions.get_property("db_user")
+    # db_host = esg_functions.get_property("db_host")
+    # db_port = esg_functions.get_property("db_port")
+    # db_database = esg_functions.get_property("db_database")
+    # db_managed = esg_functions.get_property("db_managed")
+
+    if not all(db_properties_dict) or force_install:
+        _is_managed_db()
+        _get_db_conn_str_questionnaire()
 
     
     

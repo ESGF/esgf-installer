@@ -588,18 +588,45 @@ def _get_db_conn_str_questionnaire():
     port_ = None
     dbname_ = None
     connstring_ = None
+    valid_connection_string = None
 
+    #Note the values referenced here should have been set by prior get_property *** calls
+    #that sets these values in the script scope. (see the call in questionnaire function - above)   
     if not db_user or not db_host or not db_port or not db_database:
         if not db_host:
             if db_host == esgf_host or db_host == "localhost":
                 connstring_ = "{db_user}@localhost"
             else:
                 connstring_ = "{db_user}@{db_host}:{db_port}/{db_database}"
+    while True:
+        print "Please enter the database connection string..."
+        print " (form: postgresql://[username]@[host]:[port]/esgcet)"
+        db_managed = get_property("db_managed")
+        #(if it is a not a force install and we are using a LOCAL (NOT MANAGED) database then db_managed == "no")
+        if not connstring_ and db_managed != "yes" and not force_install:
+            connstring_ = "dbsuper@localhost:5432/esgcet"
+        db_connection_input = raw_input("What is the database connection string? [postgresql://${connstring_}]: postgresql://".format(connstring_ = connstring_)) or connstring_ 
+        parsed_db_conn_string = urlparse.urlparse(db_connection_input)
+        #result.path[1:] is database name
+        if not parsed_db_conn_string.username or not parsed_db_conn_string.hostname or parsed_db_conn_string.port or parsed_db_conn_string.result.path[1:]
+            logger.error("ERROR: Incorrect connection string syntax or values")
+            valid_connection_string = False
+        else:
+            valid_connection_string = True
+            break
+    logger.debug("user = %s", user_) 
+    logger.debug("host = %s", host_) 
+    logger.debug("port = %s", port_) 
+    logger.debug("database = %s", dbname_)
 
+     #write vars to property file
+     esg_functions.write_as_property("db_user", user_)
+     esg_functions.write_as_property("db_host", host_)
+     esg_functions.write_as_property("db_port", port_)
+     esg_functions.write_as_property("db_database", dbname_)
 
-    #Note the values referenced here should have been set by prior get_property *** calls
-    #that sets these values in the script scope. (see the call in questionnaire function - above)    
-    pass
+     logger.debug("valid_connection_string: %s",  valid_connection_string)
+     return valid_connection_string
 
 def _is_managed_db():
     '''

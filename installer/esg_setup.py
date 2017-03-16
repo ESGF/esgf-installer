@@ -574,12 +574,45 @@ def initial_setup_questionnaire():
     if not all(db_properties_dict) or force_install:
         _is_managed_db()
         _get_db_conn_str_questionnaire()
+    else:
+        if db_host == esgf_host or db_host == "localhost":
+            print db_connection_string = "{db_user}@localhost"
+        else:
+            connstring_ = "{db_user}@{db_host}:{db_port}/{db_database}" + [external = ${db_managed}]
 
-    
-    
+    default_publisher_db_user = None        
+    publisher_db_user = esg_functions.get_property("publisher_db_user")
+    if not publisher_db_user or force_install:
+        default_publisher_db_user = publisher_db_user or "esgcet"
+        publisher_db_user_input = raw_input("What is the (low priv) db account for publisher? [${default}]: ") or default_publisher_db_user
+        esg_functions.write_as_property("publisher_db_user", publisher_db_user_input)
+    else:
+        logger.info("publisher_db_user: %s", publisher_db_user)
 
+    if not publisher_db_user_passwd or force_install:
+        publisher_db_user_passwd_input = raw_input("What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user = publisher_db_user))
+        if publisher_db_user_passwd_input:
+            with open(config.pub_secret_file, "w") as secret_file:
+                secret_file.write(publisher_db_user_passwd_input)
 
-    pass
+    if not os.path.isfile(config.pub_secret_file):
+        esg_functions.touch(config.pub_secret_file)
+        with open(config.pub_secret_file, "w") as secret_file:
+                secret_file.write(publisher_db_user_passwd)
+    os.chmod(config.pub_secret_file, 0640)
+    os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+
+    if db_host == esgf_host or db_host == "localhost":
+        logger.info("db publisher connection string %s@localhost", db_user)
+    else:
+       logger.info("db publisher connection string %s@%s:%s/%s", db_user, db_host, db_port, db_database)
+
+    esg_functions.dedup_properties(config.config_dictionary["config_file"])
+
+    os.chdir(starting_directory)
+
+    return True
+
 
 def _get_db_conn_str_questionnaire():
     #postgresql://esgcet@localhost:5432/esgcet

@@ -5,3 +5,4 @@ python:
 install: "pip install -r requirements.txt"
 script: 
   - python installer/test_esg_functions.py
+  - python installer/test_esg_setup.py

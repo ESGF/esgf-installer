@@ -1,6 +1,8 @@
 #######requirements.txt #######
 
 ###### Requirements without Version Specifiers ######
+requests
+###### Requirements with Version Specifiers ######
 jsonschema==2.5.1
 numpy==1.11.1
 pytest==2.9.2

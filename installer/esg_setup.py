@@ -574,12 +574,45 @@ def initial_setup_questionnaire():
     if not all(db_properties_dict) or force_install:
         _is_managed_db()
         _get_db_conn_str_questionnaire()
+    else:
+        if db_host == esgf_host or db_host == "localhost":
+            print db_connection_string = "{db_user}@localhost"
+        else:
+            connstring_ = "{db_user}@{db_host}:{db_port}/{db_database}" + [external = ${db_managed}]
 
-    
-    
+    default_publisher_db_user = None        
+    publisher_db_user = esg_functions.get_property("publisher_db_user")
+    if not publisher_db_user or force_install:
+        default_publisher_db_user = publisher_db_user or "esgcet"
+        publisher_db_user_input = raw_input("What is the (low priv) db account for publisher? [${default}]: ") or default_publisher_db_user
+        esg_functions.write_as_property("publisher_db_user", publisher_db_user_input)
+    else:
+        logger.info("publisher_db_user: %s", publisher_db_user)
 
+    if not publisher_db_user_passwd or force_install:
+        publisher_db_user_passwd_input = raw_input("What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user = publisher_db_user))
+        if publisher_db_user_passwd_input:
+            with open(config.pub_secret_file, "w") as secret_file:
+                secret_file.write(publisher_db_user_passwd_input)
 
-    pass
+    if not os.path.isfile(config.pub_secret_file):
+        esg_functions.touch(config.pub_secret_file)
+        with open(config.pub_secret_file, "w") as secret_file:
+                secret_file.write(publisher_db_user_passwd)
+    os.chmod(config.pub_secret_file, 0640)
+    os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
+
+    if db_host == esgf_host or db_host == "localhost":
+        logger.info("db publisher connection string %s@localhost", db_user)
+    else:
+       logger.info("db publisher connection string %s@%s:%s/%s", db_user, db_host, db_port, db_database)
+
+    esg_functions.dedup_properties(config.config_dictionary["config_file"])
+
+    os.chdir(starting_directory)
+
+    return True
+
 
 def _get_db_conn_str_questionnaire():
     #postgresql://esgcet@localhost:5432/esgcet
@@ -588,18 +621,45 @@ def _get_db_conn_str_questionnaire():
     port_ = None
     dbname_ = None
     connstring_ = None
+    valid_connection_string = None
 
+    #Note the values referenced here should have been set by prior get_property *** calls
+    #that sets these values in the script scope. (see the call in questionnaire function - above)   
     if not db_user or not db_host or not db_port or not db_database:
         if not db_host:
             if db_host == esgf_host or db_host == "localhost":
                 connstring_ = "{db_user}@localhost"
             else:
                 connstring_ = "{db_user}@{db_host}:{db_port}/{db_database}"
+    while True:
+        print "Please enter the database connection string..."
+        print " (form: postgresql://[username]@[host]:[port]/esgcet)"
+        db_managed = get_property("db_managed")
+        #(if it is a not a force install and we are using a LOCAL (NOT MANAGED) database then db_managed == "no")
+        if not connstring_ and db_managed != "yes" and not force_install:
+            connstring_ = "dbsuper@localhost:5432/esgcet"
+        db_connection_input = raw_input("What is the database connection string? [postgresql://${connstring_}]: postgresql://".format(connstring_ = connstring_)) or connstring_ 
+        parsed_db_conn_string = urlparse.urlparse(db_connection_input)
+        #result.path[1:] is database name
+        if not parsed_db_conn_string.username or not parsed_db_conn_string.hostname or parsed_db_conn_string.port or parsed_db_conn_string.result.path[1:]
+            logger.error("ERROR: Incorrect connection string syntax or values")
+            valid_connection_string = False
+        else:
+            valid_connection_string = True
+            break
+    logger.debug("user = %s", user_) 
+    logger.debug("host = %s", host_) 
+    logger.debug("port = %s", port_) 
+    logger.debug("database = %s", dbname_)
 
+     #write vars to property file
+     esg_functions.write_as_property("db_user", user_)
+     esg_functions.write_as_property("db_host", host_)
+     esg_functions.write_as_property("db_port", port_)
+     esg_functions.write_as_property("db_database", dbname_)
 
-    #Note the values referenced here should have been set by prior get_property *** calls
-    #that sets these values in the script scope. (see the call in questionnaire function - above)    
-    pass
+     logger.debug("valid_connection_string: %s",  valid_connection_string)
+     return valid_connection_string
 
 def _is_managed_db():
     '''

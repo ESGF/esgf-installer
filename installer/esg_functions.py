@@ -20,6 +20,7 @@ import logging
 from time import sleep
 from collections import OrderedDict
 from esg_init import EsgInit
+from contextlib import contextmanager
 import esg_bash2py
 
 
@@ -30,7 +31,6 @@ config = EsgInit()
 # print "config.config_dictionary: ", config.config_dictionary["tomcat_users_file"]
 # esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
 # esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
-
 
 
 # subprocess.call(['ls', '-1'], shell=True)
@@ -1557,6 +1557,14 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     else:
         print "[VERIFIED]"
         return 0
+
+
+@contextmanager
+def pushd(new_dir):
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    yield
+    os.chdir(previous_dir)
 
 
 

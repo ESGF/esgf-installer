@@ -130,13 +130,12 @@ class test_ESG_Functions(unittest.TestCase):
         self.assertEqual(output,True)
 
 
-    def test_deduplicate(self):
+    def test_deduplicate_settings_in_file(self):
         target = open(self.test.envfile, 'a')
         target.write("export TEST_ENV=/home\n")
         target.write("export TEST_ENV=/second\n")
         target.close()
-
-        output = esg_functions.deduplicate()
+        output = esg_functions.deduplicate_settings_in_file()
         self.assertEqual(output, 0)
 
     def test_deduplicate_properties(self):
@@ -197,6 +196,14 @@ class test_ESG_Functions(unittest.TestCase):
     def test_prefix_to_path(self):
         output = esg_functions.prefix_to_path("/path/to/test", "new/path")
         self.assertEqual(output, "new/path:/path/to/test")
+
+    def test_trim_string_from_head(self):
+        output = esg_functions.trim_string_from_head("/usr/local/bin/esg_installarg_file")
+        self.assertEqual(output, "esg_installarg_file")
+
+    def test_trim_string_from_tail(self):
+        output = esg_functions.trim_string_from_tail("8.0.33")
+        self.assertEqual(output, "8")
 
     def test_backup(self):
         output = esg_functions.backup(os.getcwd())

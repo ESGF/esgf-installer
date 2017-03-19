@@ -576,7 +576,7 @@ def initial_setup_questionnaire():
         _get_db_conn_str_questionnaire()
     else:
         if db_host == esgf_host or db_host == "localhost":
-            print db_connection_string = "{db_user}@localhost".format(db_user = db_properties_dict["db_user"])
+            print "db_connection_string = {db_user}@localhost".format(db_user = db_properties_dict["db_user"])
         else:
             connstring_ = "{db_user}@{db_host}:{db_port}/{db_database} [external = ${db_managed}]".format(db_user = db_properties_dict["db_user"], 
             	db_host = db_properties_dict["db_host"], 

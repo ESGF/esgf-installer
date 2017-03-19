@@ -656,7 +656,7 @@ def _get_db_conn_str_questionnaire():
     logger.debug("port = %s", port_) 
     logger.debug("database = %s", dbname_)
 
-     #write vars to property file
+    #write vars to property file
 	esg_functions.write_as_property("db_user", user_)
 	esg_functions.write_as_property("db_host", host_)
 	esg_functions.write_as_property("db_port", port_)

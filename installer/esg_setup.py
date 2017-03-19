@@ -561,7 +561,7 @@ def initial_setup_questionnaire():
     else:
         logger.info("mail_admin_address = [%s]", mail_admin_address)
 
-    db_properties_dict = {"db_user": None,"db_host": None, "db_port": None. "db_database": None, "db_managed": None}
+    db_properties_dict = {"db_user": None,"db_host": None, "db_port": None, "db_database": None, "db_managed": None}
     for key, value in db_properties_dict.items():
         db_properties_dict[key] = esg_functions.get_property(key)
 

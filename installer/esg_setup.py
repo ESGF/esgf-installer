@@ -645,7 +645,7 @@ def _get_db_conn_str_questionnaire():
         db_connection_input = raw_input("What is the database connection string? [postgresql://${connstring_}]: postgresql://".format(connstring_ = connstring_)) or connstring_ 
         parsed_db_conn_string = urlparse.urlparse(db_connection_input)
         #result.path[1:] is database name
-        if not parsed_db_conn_string.username or not parsed_db_conn_string.hostname or parsed_db_conn_string.port or parsed_db_conn_string.result.path[1:]
+        if not parsed_db_conn_string.username or not parsed_db_conn_string.hostname or parsed_db_conn_string.port or parsed_db_conn_string.result.path[1:]:
             logger.error("ERROR: Incorrect connection string syntax or values")
             valid_connection_string = False
         else:

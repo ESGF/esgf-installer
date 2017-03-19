@@ -219,7 +219,7 @@ def check_for_my_ip(force_install=False):
     logger.debug("Checking for IP address(es)...")
     matched = 0
     my_ip_address = None
-    eth0 = netifaces.ifaddresses('eth0')
+    eth0 = netifaces.ifaddresses(netifaces.interfaces()[1])
     ip_addresses = [ ip["addr"] for ip in eth0[netifaces.AF_INET] ]
 
     try:

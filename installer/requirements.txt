@@ -28,3 +28,5 @@ setuptools_svn==1.2
 tld==0.7.8
 wincertstore==0.2
 pyxdg==0.25
+coverage==4.3.4
+Sphinx==1.4.8

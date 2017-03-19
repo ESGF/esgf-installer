@@ -278,6 +278,8 @@ class EsgInit(object):
             os.environ["LD_LIBRARY_PATH"] = self.myLD_LIBRARY_PATH+':'+os.environ["LD_LIBRARY_PATH"]
         except KeyError, error:
             logger.error(error)
+            os.environ["LD_LIBRARY_PATH"] = self.myLD_LIBRARY_PATH
+            logger.debug("LD_LIBRARY_PATH: %s", os.environ["LD_LIBRARY_PATH"])
 
         # export PATH=$(_path_unique $myPATH:$PATH)
         # export LD_LIBRARY_PATH=$(_path_unique $myLD_LIBRARY_PATH:$LD_LIBRARY_PATH)

@@ -657,13 +657,13 @@ def _get_db_conn_str_questionnaire():
     logger.debug("database = %s", dbname_)
 
      #write vars to property file
-     esg_functions.write_as_property("db_user", user_)
-     esg_functions.write_as_property("db_host", host_)
-     esg_functions.write_as_property("db_port", port_)
-     esg_functions.write_as_property("db_database", dbname_)
+	esg_functions.write_as_property("db_user", user_)
+	esg_functions.write_as_property("db_host", host_)
+	esg_functions.write_as_property("db_port", port_)
+	esg_functions.write_as_property("db_database", dbname_)
 
-     logger.debug("valid_connection_string: %s",  valid_connection_string)
-     return valid_connection_string
+	logger.debug("valid_connection_string: %s",  valid_connection_string)
+	return valid_connection_string
 
 def _is_managed_db():
     '''

@@ -579,10 +579,10 @@ def initial_setup_questionnaire():
             print "db_connection_string = {db_user}@localhost".format(db_user = db_properties_dict["db_user"])
         else:
             connstring_ = "{db_user}@{db_host}:{db_port}/{db_database} [external = ${db_managed}]".format(db_user = db_properties_dict["db_user"], 
-            	db_host = db_properties_dict["db_host"], 
-            	db_port = db_properties_dict["db_port"],
-            	db_database = db_properties_dict["db_database"],
-            	db_managed = db_properties_dict["db_managed"])
+                db_host = db_properties_dict["db_host"], 
+                db_port = db_properties_dict["db_port"],
+                db_database = db_properties_dict["db_database"],
+                db_managed = db_properties_dict["db_managed"])
 
     default_publisher_db_user = None        
     publisher_db_user = esg_functions.get_property("publisher_db_user")
@@ -657,13 +657,13 @@ def _get_db_conn_str_questionnaire():
     logger.debug("database = %s", dbname_)
 
     #write vars to property file
-	esg_functions.write_as_property("db_user", user_)
-	esg_functions.write_as_property("db_host", host_)
-	esg_functions.write_as_property("db_port", port_)
-	esg_functions.write_as_property("db_database", dbname_)
+    esg_functions.write_as_property("db_user", user_)
+    esg_functions.write_as_property("db_host", host_)
+    esg_functions.write_as_property("db_port", port_)
+    esg_functions.write_as_property("db_database", dbname_)
 
-	logger.debug("valid_connection_string: %s",  valid_connection_string)
-	return valid_connection_string
+    logger.debug("valid_connection_string: %s",  valid_connection_string)
+    return valid_connection_string
 
 def _is_managed_db():
     '''

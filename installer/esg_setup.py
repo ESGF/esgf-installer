@@ -625,7 +625,7 @@ def initial_setup_questionnaire():
     else:
        logger.info("db publisher connection string %s@%s:%s/%s", db_properties_dict["db_user"], db_host, db_port, db_database)
 
-    esg_functions.dedup_properties(config.config_dictionary["config_file"])
+    esg_functions.deduplicate_properties(config.config_dictionary["config_file"])
 
     os.chdir(starting_directory)
 

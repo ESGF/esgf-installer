@@ -621,9 +621,9 @@ def initial_setup_questionnaire():
     os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
 
     if db_properties_dict["db_host"] == db_properties_dict["db_host"] or db_host == "localhost":
-        logger.info("db publisher connection string %s@localhost", db_user)
+        logger.info("db publisher connection string %s@localhost", db_properties_dict["db_user"])
     else:
-       logger.info("db publisher connection string %s@%s:%s/%s", db_user, db_host, db_port, db_database)
+       logger.info("db publisher connection string %s@%s:%s/%s", db_properties_dict["db_user"], db_host, db_port, db_database)
 
     esg_functions.dedup_properties(config.config_dictionary["config_file"])
 

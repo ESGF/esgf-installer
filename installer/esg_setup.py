@@ -510,7 +510,16 @@ def _choose_esgf_default_peer():
         esgf_default_peer_input = raw_input("What is the default peer to this node? [{default_esgf_default_peer}]: ".format(default_esgf_default_peer = default_esgf_default_peer)) or default_esgf_default_peer
         esg_functions.write_as_property("esgf_default_peer", esgf_default_peer_input)
     else:
-        logger.info("esgf_default_peer = [%s]", esgf_default_peer) 
+        logger.info("esgf_default_peer = [%s]", esgf_default_peer)
+
+def _choose_esgf_index_peer():
+    esgf_index_peer = esg_functions.get_property("esgf_index_peer")
+    if not esgf_index_peer or force_install:
+        default_esgf_index_peer = esgf_default_peer or esgf_host or socket.getfqdn()
+        esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(default_esgf_index_peer = default_esgf_index_peer)) or default_esgf_index_peer
+        esg_functions.write_as_property("esgf_index_peer", esgf_index_peer_input)
+    else:
+        logger.info("esgf_index_peer = [%s]", esgf_index_peer)
     
 
 def initial_setup_questionnaire():
@@ -551,14 +560,8 @@ def initial_setup_questionnaire():
     _choose_node_namespace()
     _choose_node_peer_group()
     _choose_esgf_default_peer()
+    _choose_esgf_index_peer()
 
-    esgf_index_peer = esg_functions.get_property("esgf_index_peer")
-    if not esgf_index_peer or force_install:
-        default_esgf_index_peer = esgf_default_peer or esgf_host or socket.getfqdn()
-        esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(default_esgf_index_peer = default_esgf_index_peer)) or default_esgf_index_peer
-        esg_functions.write_as_property("esgf_index_peer", esgf_index_peer_input)
-    else:
-        logger.info("esgf_index_peer = [%s]", esgf_index_peer)
 
 
     mail_admin_address = esg_functions.get_property("mail_admin_address")

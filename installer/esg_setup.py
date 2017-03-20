@@ -520,6 +520,17 @@ def _choose_esgf_index_peer():
         esg_functions.write_as_property("esgf_index_peer", esgf_index_peer_input)
     else:
         logger.info("esgf_index_peer = [%s]", esgf_index_peer)
+
+def _choose_mail_admin_address():
+    mail_admin_address = esg_functions.get_property("mail_admin_address")
+    if not mail_admin_address or force_install:
+        mail_admin_address_input = raw_input("What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address =  mail_admin_address)) 
+        if mail_admin_address_input:
+             esg_functions.write_as_property("mail_admin_address", mail_admin_address_input)
+        else:
+            print " (The notification system will not be enabled without an email address)"
+    else:
+        logger.info("mail_admin_address = [%s]", mail_admin_address)
     
 
 def initial_setup_questionnaire():
@@ -562,17 +573,6 @@ def initial_setup_questionnaire():
     _choose_esgf_default_peer()
     _choose_esgf_index_peer()
 
-
-
-    mail_admin_address = esg_functions.get_property("mail_admin_address")
-    if not mail_admin_address or force_install:
-        mail_admin_address_input = raw_input("What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address =  mail_admin_address)) 
-        if mail_admin_address_input:
-             esg_functions.write_as_property("mail_admin_address", mail_admin_address_input)
-        else:
-            print " (The notification system will not be enabled without an email address)"
-    else:
-        logger.info("mail_admin_address = [%s]", mail_admin_address)
 
     db_properties_dict = {"db_user": None,"db_host": None, "db_port": None, "db_database": None, "db_managed": None}
     for key, value in db_properties_dict.items():

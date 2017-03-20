@@ -19,6 +19,7 @@ import socket
 import platform
 import netifaces
 import tld
+import grp
 # import yum
 from time import sleep
 from esg_init import EsgInit

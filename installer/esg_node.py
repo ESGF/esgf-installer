@@ -1252,10 +1252,14 @@ def main():
     print '''*******************************
 		Installing prerequisites
 		******************************* '''
-    yum_remove_rpm_forge = subprocess.Popen(["yum -y remove rpmforge-release"],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
-    yum_install_epel = subprocess.Popen(["yum", "-y", "install", "epel-release"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+    yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE).communicate()[0]
+    print "yum_remove_rpm_forge: ", yum_remove_rpm_forge
+    # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
+    yum_install_epel = subprocess.Popen(["yum", "-y", "install", "epel-release"], stdout=subprocess.PIPE).communicate()[0]
+    print "yum_install_epel: ", yum_install_epel
+    yum_check = subprocess.Popen(["yum","--version"], stdout=subprocess.PIPE).communicate()[0]
+    #yum_check = subprocess.Popen(["ls","-la"], stdout=subprocess.PIPE).communicate()[0]
+    print "yum_check: ", yum_check
     # setup_esgcet()
     # test_esgcet()
 

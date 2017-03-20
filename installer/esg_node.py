@@ -1245,6 +1245,16 @@ def main():
         logger.info("(compute node type selected)")
 
     esg_setup.initial_setup_questionnaire()
+    #---------------------------------------
+    #Installation of prerequisites.
+    #---------------------------------------
+
+    print '''*******************************
+				Installing prerequisites
+			******************************* '''
+    yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
+    yum_install_epel = subprocess.Popen(["yum", "-y", "install", "epel-release"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # setup_esgcet()
     # test_esgcet()
 

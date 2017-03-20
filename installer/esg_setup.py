@@ -126,9 +126,15 @@ def init_structure():
         esgf_idp_peer_name = config.config_dictionary["esgf_idp_peer_name"]
     except KeyError:
         esgf_idp_peer_name = esg_functions.get_property("esgf_idp_peer_name")
+
+    try:
+        esgf_idp_peer = config.config_dictionary["esgf_idp_peer"]
+    except KeyError:
+        esgf_idp_peer = esg_functions.get_property("esgf_idp_peer")
+
     
-    logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer_name))
-    myproxy_endpoint = esg_functions.trim_string_from_tail(esgf_idp_peer_name)
+    # logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer))
+    myproxy_endpoint = esg_functions.trim_string_from_tail(esgf_idp_peer)
     # re.search("/\w+", source)
 
     try:

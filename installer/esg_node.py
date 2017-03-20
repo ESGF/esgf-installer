@@ -1249,9 +1249,11 @@ def main():
     #Installation of prerequisites.
     #---------------------------------------
 
-    print '''*******************************
+    print '''
+    *******************************
 	Installing prerequisites
-	******************************* '''
+	******************************* 
+    '''
     yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE)
     print "yum_remove_rpm_forge_output: ", yum_remove_rpm_forge.communicate()[0]
     print "remove_return_code: ", yum_remove_rpm_forge.returncode
@@ -1263,8 +1265,6 @@ def main():
         sys.exit(1)
     # setup_esgcet()
     # test_esgcet()
-    yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE)
-    print "yum_remove_rpm_forge_output: ", yum_remove_rpm_forge.communicate()[0]
     
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 

@@ -612,8 +612,10 @@ def initial_setup_questionnaire():
         esg_functions.touch(config.pub_secret_file)
         with open(config.pub_secret_file, "w") as secret_file:
                 secret_file.write(config.config_dictionary["publisher_db_user_passwd"])
-                
+
     os.chmod(config.pub_secret_file, 0640)
+    tomcat_group_info = grp.getgrnam(
+            config.config_dictionary["tomcat_group"])
     tomcat_group_id = tomcat_group_info.gr_id
     os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
 

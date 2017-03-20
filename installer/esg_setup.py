@@ -602,7 +602,7 @@ def initial_setup_questionnaire():
     else:
         logger.info("publisher_db_user: %s", publisher_db_user)
 
-    if not publisher_db_user_passwd or force_install:
+    if not config.config_dictionary["publisher_db_user_passwd"] or force_install:
         publisher_db_user_passwd_input = raw_input("What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user = publisher_db_user))
         if publisher_db_user_passwd_input:
             with open(config.pub_secret_file, "w") as secret_file:
@@ -611,7 +611,7 @@ def initial_setup_questionnaire():
     if not os.path.isfile(config.pub_secret_file):
         esg_functions.touch(config.pub_secret_file)
         with open(config.pub_secret_file, "w") as secret_file:
-                secret_file.write(publisher_db_user_passwd)
+                secret_file.write(config.config_dictionary["publisher_db_user_passwd"])
     os.chmod(config.pub_secret_file, 0640)
     os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
 

@@ -134,7 +134,10 @@ def init_structure():
 
     
     # logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer))
-    myproxy_endpoint = esg_functions.trim_string_from_tail(esgf_idp_peer)
+    if not esgf_idp_peer:
+        myproxy_endpoint = None
+    else:
+        myproxy_endpoint = esg_functions.trim_string_from_tail(esgf_idp_peer)
     # re.search("/\w+", source)
 
     try:

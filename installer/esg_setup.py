@@ -617,7 +617,7 @@ def initial_setup_questionnaire():
     os.chmod(config.pub_secret_file, 0640)
     tomcat_group_info = grp.getgrnam(
             config.config_dictionary["tomcat_group"])
-    tomcat_group_id = tomcat_group_info.gr_id
+    tomcat_group_id = tomcat_group_info[2]
     os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
 
     if db_host == esgf_host or db_host == "localhost":

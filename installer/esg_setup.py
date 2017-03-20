@@ -620,7 +620,7 @@ def initial_setup_questionnaire():
     tomcat_group_id = tomcat_group_info[2]
     os.chown(config.esgf_secret_file, config.config_dictionary["installer_uid"], tomcat_group_id)
 
-    if db_host == esgf_host or db_host == "localhost":
+    if db_properties_dict["db_host"] == db_properties_dict["db_host"] or db_host == "localhost":
         logger.info("db publisher connection string %s@localhost", db_user)
     else:
        logger.info("db publisher connection string %s@%s:%s/%s", db_user, db_host, db_port, db_database)

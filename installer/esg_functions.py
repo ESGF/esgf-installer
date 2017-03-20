@@ -518,10 +518,11 @@ def deduplicate_properties(properties_file = None):
         with open(infile, 'r+') as prop_file:
             property_settings = prop_file.readlines()
             for prop in reversed(property_settings):
-                logger.debug(prop.split("="))
-                key, value = prop.split("=")
-                logger.debug("key: %s", key)
-                logger.debug("value: %s", value)
+                # logger.debug(prop.split("="))
+                if not prop.isspace():
+                    key, value = prop.split("=")
+                    logger.debug("key: %s", key)
+                    logger.debug("value: %s", value)
                 if key not in my_set:
                     deduplicated_list.append(key+ "=" + value)
                     my_set.add(key)

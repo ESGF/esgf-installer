@@ -531,7 +531,16 @@ def _choose_mail_admin_address():
             print " (The notification system will not be enabled without an email address)"
     else:
         logger.info("mail_admin_address = [%s]", mail_admin_address)
-    
+
+def _choose_publisher_db_user():
+    default_publisher_db_user = None        
+    publisher_db_user = esg_functions.get_property("publisher_db_user")
+    if not publisher_db_user or force_install:
+        default_publisher_db_user = publisher_db_user or "esgcet"
+        publisher_db_user_input = raw_input("What is the (low priv) db account for publisher? [${default}]: ") or default_publisher_db_user
+        esg_functions.write_as_property("publisher_db_user", publisher_db_user_input)
+    else:
+        logger.info("publisher_db_user: %s", publisher_db_user)
 
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
@@ -572,7 +581,7 @@ def initial_setup_questionnaire():
     _choose_node_peer_group()
     _choose_esgf_default_peer()
     _choose_esgf_index_peer()
-
+    _choose_mail_admin_address()
 
     db_properties_dict = {"db_user": None,"db_host": None, "db_port": None, "db_database": None, "db_managed": None}
     for key, value in db_properties_dict.items():
@@ -597,14 +606,7 @@ def initial_setup_questionnaire():
                 db_database = db_properties_dict["db_database"],
                 db_managed = db_properties_dict["db_managed"])
 
-    default_publisher_db_user = None        
-    publisher_db_user = esg_functions.get_property("publisher_db_user")
-    if not publisher_db_user or force_install:
-        default_publisher_db_user = publisher_db_user or "esgcet"
-        publisher_db_user_input = raw_input("What is the (low priv) db account for publisher? [${default}]: ") or default_publisher_db_user
-        esg_functions.write_as_property("publisher_db_user", publisher_db_user_input)
-    else:
-        logger.info("publisher_db_user: %s", publisher_db_user)
+    _choose_publisher_db_user()
 
     if not config.config_dictionary["publisher_db_user_passwd"] or force_install:
         publisher_db_user_passwd_input = raw_input("What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user = publisher_db_user))

@@ -509,39 +509,61 @@ def deduplicate_settings_in_file(envfile = None):
 
 
 #TODO: fix tac and awk statements
-def deduplicate_properties(envfile = None):
+def deduplicate_properties(properties_file = None):
     # infile=${1:-${config_file}}
-    infile = esg_bash2py.Expand.colonMinus(envfile, config.config_dictionary["config_file"])
-    if not os.path.isfile(infile):
-        print "WARNING: dedup_properties() - unable to locate %s does it exist?" % (infile)
-        return 1
-    if not os.access(infile, os.W_OK):
-        "WARNING: dedup_properties() - unable to write to %s" % (infile)
-        return 1
-    else:
-        datafile = open(infile, "r+")
-        searchlines = datafile.readlines()
-        print "searchlines: ", searchlines
-        print "type(searchlines): ", type(searchlines)
-        print "searchlines.reverse(): ", searchlines[::-1]
-        datafile.seek(0)
-
+    infile = esg_bash2py.Expand.colonMinus(properties_file, config.config_dictionary["config_file"])
+    try:
         my_set = set()
-        res = []
+        deduplicated_list = []
+        with open(infile, 'r+') as prop_file:
+            property_settings = prop_file.readlines()
+            for prop in reversed(property_settings):
+                logger.debug(prop.split("="))
+                key, value = prop.split("=")
+                logger.debug("key: %s", key)
+                logger.debug("value: %s", value)
+                if key not in my_set:
+                    deduplicated_list.append(key+ "=" + value)
+                    my_set.add(key)
+            deduplicated_list.reverse()
+            logger.debug("deduplicated_list: %s", str(deduplicated_list))
+            prop_file.seek(0)
+            for setting in deduplicated_list:
+                prop_file.write(setting)
+            prop_file.truncate()
+    except IOError, error:
+        logger.error(error)
+        sys.exit(0)
+    # if not os.path.isfile(infile):
+    #     print "WARNING: dedup_properties() - unable to locate %s does it exist?" % (infile)
+    #     return 1
+    # if not os.access(infile, os.W_OK):
+    #     "WARNING: dedup_properties() - unable to write to %s" % (infile)
+    #     return 1
+    # else:
+    #     datafile = open(infile, "r+")
+    #     searchlines = datafile.readlines()
+    #     print "searchlines: ", searchlines
+    #     print "type(searchlines): ", type(searchlines)
+    #     print "searchlines.reverse(): ", searchlines[::-1]
+    #     datafile.seek(0)
 
-        for e in reversed(searchlines):
-            print "e: ", e.split("=")
-            key, value = e.split("=")
-           # key = key.split()[1]
-            print "key: ", key
-            print "value: ", value
-            if key not in my_set:
-                res.append(key+ "=" + value)
-                my_set.add(key)
-        res.reverse()
-        print "final res: ", res
+        # my_set = set()
+        # res = []
 
-        return 0
+        # for e in reversed(searchlines):
+        #     print "e: ", e.split("=")
+        #     key, value = e.split("=")
+        #    # key = key.split()[1]
+        #     print "key: ", key
+        #     print "value: ", value
+        #     if key not in my_set:
+        #         res.append(key+ "=" + value)
+        #         my_set.add(key)
+        # res.reverse()
+        # print "final res: ", res
+
+        # return 0
         # temp = subprocess.check_output("$(tac " + infile + " | awk 'BEGIN {FS=\"[ =]\"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
         # target = open(infile, 'w')
         # target.write(temp)

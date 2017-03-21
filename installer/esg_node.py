@@ -1263,6 +1263,23 @@ def main():
     if yum_install_epel.returncode != 0:
         print "$([FAIL]) \n\tCould not configure epel repository\n\n"
         sys.exit(1)
+
+    yum_install_list = ["yum-plugin-priorities", "sqlite-devel", "freetype-devel", "git", "curl-devel", 
+    "autoconf", "automake", "bison", "file", "flex", "gcc", "gcc-c++", 
+    "gettext-devel", "libtool", "uuid-devel", "libuuid-devel", "libxml2", 
+    "libxml2-devel", "libxslt", "libxslt-devel", "lsof", "make", 
+    "openssl-devel", "pam-devel", "pax", "readline-devel", "tk-devel", 
+    "wget", "zlib-devel", "perl-Archive-Tar", "perl-XML-Parser", 
+    "libX11-devel", "libtool-ltdl-devel", "e2fsprogs-devel", "gcc-gfortran",
+    "libicu-devel", "libgtextutils-devel", "httpd,"" httpd-devel", 
+    "mod_ssl", "libjpeg-turbo-devel", "myproxy", '*ExtUtils*']
+
+    yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
+    print "yum_install_from_list: ", yum_install_prerequisites
+    if yum_install_prerequisites.returncode != 0:
+        print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
+        sys.exit(1)
+
     # setup_esgcet()
     # test_esgcet()
     

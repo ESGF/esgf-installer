@@ -1275,7 +1275,7 @@ def main():
     "mod_ssl", "libjpeg-turbo-devel", "myproxy", '*ExtUtils*']
 
     yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
-    print "yum_install_from_list: ", yum_install_prerequisites
+    print "yum_install_from_list: ", yum_install_prerequisites.communicate()[0]
     if yum_install_prerequisites.returncode != 0:
         print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
         sys.exit(1)

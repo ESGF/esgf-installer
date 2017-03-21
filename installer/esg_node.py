@@ -1296,6 +1296,7 @@ def main():
     if node_type_bit & INSTALL_BIT !=0:
         print "Setting up Java"
         setup_java()
+        setup_ant()
     # setup_esgcet()
     # test_esgcet()
     
@@ -1305,5 +1306,10 @@ def setup_java():
     yum_install_java = subprocess.Popen(["yum", "-y", "install", "java"], stdout=subprocess.PIPE)
     print "yum_install_java: ", yum_install_java.communicate()[0]
     print "yum_install_java return code: ", yum_install_java.returncode
+
+def setup_ant():
+    yum_install_ant = subprocess.Popen(["yum", "-y", "install", "ant"], stdout=subprocess.PIPE)
+    print "yum_install_ant: ", yum_install_ant.communicate()[0]
+    print "yum_install_ant return code: ", yum_install_ant.returncode
 if __name__ == '__main__':
     main()

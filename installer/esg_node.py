@@ -1264,7 +1264,7 @@ def main():
         print "$([FAIL]) \n\tCould not configure epel repository\n\n"
         sys.exit(1)
 
-    yum_install_list = ["yum-plugin-priorities", "sqlite-devel", "freetype-devel", "git", "curl-devel", 
+    yum_install_list = ["yum", "-y", "install", "yum-plugin-priorities", "sqlite-devel", "freetype-devel", "git", "curl-devel", 
     "autoconf", "automake", "bison", "file", "flex", "gcc", "gcc-c++", 
     "gettext-devel", "libtool", "uuid-devel", "libuuid-devel", "libxml2", 
     "libxml2-devel", "libxslt", "libxslt-devel", "lsof", "make", 

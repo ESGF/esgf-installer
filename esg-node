@@ -3086,6 +3086,9 @@ show_summary() {
 
 write_env() {
     echo "Generating default ${envfile} file"
+
+    echo "modified"
+
     [ -e ${envfile} ] && cp ${envfile} ${envfile}.bak
     cat /dev/null > ${envfile}
     write_paths
@@ -3097,7 +3100,9 @@ write_env() {
     write_tomcat_env
     write_tds_env
     write_globus_env
-    echo "source /usr/local/conda/bin/activate esgf-pub" >> ${envfile}
+    echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
+    dedup ${envfile}
+
     echo "-------------------"
     cat ${envfile}
     echo "-------------------"
@@ -7059,6 +7064,17 @@ main() {
         write_as_property version ${script_version}
         write_as_property release ${script_release}
         write_as_property gridftp_config
+        echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
+
+        cat ${envfile}
+        echo
+        echo
+        dedup ${envfile} 
+
+        cat ${envfile}
+        echo
+        echo "Enter to continue.."
+        read
 
         esg_node_finally
     }

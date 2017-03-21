@@ -1280,11 +1280,30 @@ def main():
         print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
         sys.exit(1)
 
+
+    #---------------------------------------
+    #Setup ESGF RPM repository
+    #---------------------------------------    
+    print '''
+    *******************************
+    Setting up ESGF RPM repository
+    ******************************* '''
+
+    #---------------------------------------
+    #Installation of basic system components.
+    # (Only when one setup in the sequence is okay can we move to the next)
+    #---------------------------------------
+    if node_type_bit & INSTALL_BIT !=0:
+        print "Setting up Java"
+        setup_java()
     # setup_esgcet()
     # test_esgcet()
     
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
-
+def setup_java():
+    yum_install_java = subprocess.Popen(["yum", "-y", "install", "java"], stdout=subprocess.PIPE)
+    print "yum_install_java: ", yum_install_java.communicate()[0]
+    print "yum_install_java return code: ", yum_install_java.returncode
 if __name__ == '__main__':
     main()

@@ -609,6 +609,43 @@ def start_postgress():
     progress_process_status_tuple = progress_process_status.communicate()
     esg_functions.checked_done(0)
 
+def stop_postgress():
+    if esg_setup._is_managed_db:
+        print "Please be sure external database is NOT running at this point..."
+        return True
+    if esg_functions.check_postgress_process() == 1:
+        print "Postgres already stopped"
+        return True
+    print "Stopping Postgres...."
+    status = subprocess.Popen("/etc/init.d/postgresql stop",
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    status_output, err = status.communicate()
+    print "status_output: ", status_output
+    sleep(3)
+    check_shmmax()
+    progress_process_status = subprocess.Popen(
+        "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
+    progress_process_status_tuple = progress_process_status.communicate()
+    esg_functions.checked_done(0)
+
+def check_shmmax(min_shmmax = 48):
+    '''
+       NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
+       arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
+    '''
+    kernel_shmmax = esg_functions.get_property("kernel_shmmax", 48)
+    set_value_mb = min_shmmax
+    set_value_bytes = set_value_mb *1024*1024
+    cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)
+    cur_value_bytes = cur_value_bytes.strip()
+
+    if cur_value_bytes < set_value_bytes:
+        print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes = cur_value_bytes, set_value_bytes = set_value_bytes)
+        subprocess.call("sysctl -w kernel.shmmax=${set_value_bytes}".format(set_value_bytes = set_value_bytes))
+        subprocess.call("sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
+        esg_functions.write_as_property("kernal_shmmax", set_value_mb)
+
+
 def setup_sensible_confs():
     pass
 

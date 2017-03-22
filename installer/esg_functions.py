@@ -215,7 +215,7 @@ def check_version_between(current_version, min_version, max_version):
         return 1
 
 
-def check_version(binary_file_name, min_version, max_version=None, version_command = "--version"):
+def check_for_acceptible_version(binary_file_name, min_version, max_version=None, version_command = "--version"):
     '''
         This is the most commonly used "public" version checking
         routine.  It delegates to check_version_helper() for the actual
@@ -256,13 +256,13 @@ def check_version(binary_file_name, min_version, max_version=None, version_comma
             result = check_version_helper(
                 current_version, min_version, max_version)
             if result is 0:
-                return result
+                return True
             else:
                 if max_version is None:
                     print "\nThe detected version of %s %s is less than %s \n" % (binary_file_name, current_version, min_version)
                 else:
                     print "\nThe detected version of %s %s is not between %s and %s \n" % (binary_file_name, current_version, min_version, max_version)
-                return 1
+                return False
 
 
 def check_version_with(program_name, version_command, min_version, max_version=None):

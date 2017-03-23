@@ -7066,16 +7066,6 @@ main() {
         write_as_property gridftp_config
         echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
 
-        cat ${envfile}
-        echo
-        echo
-        dedup ${envfile} 
-
-        cat ${envfile}
-        echo
-        echo "Enter to continue.."
-        read
-
         esg_node_finally
     }
 

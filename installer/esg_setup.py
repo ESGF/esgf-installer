@@ -739,7 +739,6 @@ def _is_managed_db():
         #Note: if not managed and on the local machine... always use "localhost"
         db_host="localhost"
         return False
-    pass
 
 
 def is_in_git(file_name):

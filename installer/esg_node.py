@@ -1337,6 +1337,7 @@ def main():
         setup_java()
         setup_ant()
         setup_postgres()
+        setup_cdat()
     # setup_esgcet()
     # test_esgcet()
     
@@ -1553,6 +1554,43 @@ def setup_postgres():
     write_postgress_env()
     write_postgress_install_log()
     esg_functions.checked_done(0)
+
+
+def setup_cdat():
+    print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version = config.config_dictionary["cdat_version"])
+    import cdat_info
+    if esg_functions.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
+        print "CDAT already installed [OK]"
+        return True
+
+    print '''*******************************
+     Setting up CDAT - (Python + CDMS)... ${cdat_version}
+    ******************************* '''.format(cdat_version = config.config_dictionary["cdat_version"])
+
+    if os.access(os.path.join(config.config_dictionary["cdat_home"], "/bin/uvcdat"), os.X_OK):
+        print "Detected an existing CDAT installation..."
+        cdat_setup_choice = raw_input("Do you want to continue with CDAT installation and setup? [y/N] ")
+        if cdat_setup_choice.lower() != "y" or cdat_setup_choice.lower() != "yes":
+            print "Skipping CDAT installation and setup - will assume CDAT is setup properly"
+            return True
+
+    try:
+        os.makedirs(config.config_dictionary["workdir"])
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    starting_directory = os.getcwd(config.config_dictionary["workdir"])
+    os.chdir(config.config_dictionary["workdir"])
+
+    yum_install_uvcdat = subprocess.Popen(["yum", "-y", "install", "uvcdat"],stdout=subprocess.PIPE)
+    print "yum_install_uvcdat_output: ", yum_install_uvcdat.communicate()[0]
+    print "yum_install_return_code: ", yum_install_uvcdat.returncode
+    if yum_install_uvcdat.returncode != 0:
+        print "[FAIL] \n\tCould not install or update uvcdat\n\n"
+        return False
 
 def write_postgress_env():
     pass

@@ -1294,14 +1294,16 @@ def main():
 	******************************* 
     '''
     yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE)
-    print "yum_remove_rpm_forge_output: ", yum_remove_rpm_forge.communicate()[0]
-    print "remove_return_code: ", yum_remove_rpm_forge.returncode
+    stream_subprocess_output(yum_remove_rpm_forge)
+    # print "yum_remove_rpm_forge_output: ", yum_remove_rpm_forge.communicate()[0]
+    # print "remove_return_code: ", yum_remove_rpm_forge.returncode
     
     yum_install_epel = subprocess.Popen(["yum", "-y", "install", "epel-release"], stdout=subprocess.PIPE)
-    print "yum_install_epel: ", yum_install_epel.communicate()[0]
-    if yum_install_epel.returncode != 0:
-        print "$([FAIL]) \n\tCould not configure epel repository\n\n"
-        sys.exit(1)
+    stream_subprocess_output(yum_install_epel)
+    # print "yum_install_epel: ", yum_install_epel.communicate()[0]
+    # if yum_install_epel.returncode != 0:
+    #     print "$([FAIL]) \n\tCould not configure epel repository\n\n"
+    #     sys.exit(1)
 
     yum_install_list = ["yum", "-y", "install", "yum-plugin-priorities", "sqlite-devel", "freetype-devel", "git", "curl-devel", 
     "autoconf", "automake", "bison", "file", "flex", "gcc", "gcc-c++", 
@@ -1314,10 +1316,11 @@ def main():
     "mod_ssl", "libjpeg-turbo-devel", "myproxy", '*ExtUtils*']
 
     yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
-    print "yum_install_from_list: ", yum_install_prerequisites.communicate()[0]
-    if yum_install_prerequisites.returncode != 0:
-        print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
-        sys.exit(1)
+    stream_subprocess_output(yum_install_prerequisites)
+    # print "yum_install_from_list: ", yum_install_prerequisites.communicate()[0]
+    # if yum_install_prerequisites.returncode != 0:
+    #     print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
+    #     sys.exit(1)
 
 
     #---------------------------------------
@@ -1343,7 +1346,7 @@ def main():
     
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
-def stream_subprocess_output(command_list, subprocess_object):
+def stream_subprocess_output(subprocess_object):
 	with subprocess_object.stdout:
 		for line in iter(subprocess_object.stdout.readline, b''):
 			print line,
@@ -1358,14 +1361,14 @@ def stream_subprocess_output(command_list, subprocess_object):
 def setup_java():
 	command_list = ["yum", "-y", "install", "java"]
 	yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
-	stream_subprocess_output(command_list, yum_install_java)
+	stream_subprocess_output(yum_install_java)
 	# print "yum_install_java: ", yum_install_java.communicate()[0]
 	# print "yum_install_java return code: ", yum_install_java.returncode
 
 def setup_ant():
     command_list = ["yum", "-y", "install", "ant"]
     yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
-    stream_subprocess_output(command_list, yum_install_ant)
+    stream_subprocess_output(yum_install_ant)
 	# print "yum_install_ant: ", yum_install_ant.communicate()[0]
 	# print "yum_install_ant return code: ", yum_install_ant.returncode
 

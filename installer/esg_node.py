@@ -1592,6 +1592,13 @@ def setup_cdat():
         print "[FAIL] \n\tCould not install or update uvcdat\n\n"
         return False
 
+    curl_output = subprocess.call("curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
+    setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(cdat_home = config.config_dictionary["cdat_home"]), shell=True)
+    pip_setup_output = subprocess.call("{cdat_home}/bin/easy_install pip".format(cdat_home = config.config_dictionary["cdat_home"]), shell=True)
+
+    os.chdir(starting_directory)
+
+    return True
 def write_postgress_env():
     pass
 def write_postgress_install_log():

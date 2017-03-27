@@ -1344,16 +1344,20 @@ def main():
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 def stream_subprocess_output(command_list, subprocess_object):
-	for stdout_line in iter(subprocess_object.stdout.readline, ""):
-	    yield stdout_line 
-	subprocess_object.stdout.close()
-	return_code = subprocess_object.wait()
-	if return_code:
-	    raise subprocess.CalledProcessError(return_code, command_list)
+	with subprocess_object.stdout:
+		for line in iter(subprocess_object.stdout.readline, b''):
+			print line,
+	subprocess_object.wait() # wait for the subprocess to exit
+	# for stdout_line in iter(subprocess_object.stdout.readline, ""):
+	#     yield stdout_line 
+	# subprocess_object.stdout.close()
+	# return_code = subprocess_object.wait()
+	# if return_code:
+	#     raise subprocess.CalledProcessError(return_code, command_list)
 
 def setup_java():
 	command_list = ["yum", "-y", "install", "java"]
-	yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True)
+	yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
 	stream_subprocess_output(command_list, yum_install_java)
 	# print "yum_install_java: ", yum_install_java.communicate()[0]
 	# print "yum_install_java return code: ", yum_install_java.returncode

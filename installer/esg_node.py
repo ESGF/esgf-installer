@@ -1343,22 +1343,27 @@ def main():
     
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
+def stream_subprocess_output(command_list, subprocess_object):
+	for stdout_line in iter(subprocess_object.stdout.readline, ""):
+	    yield stdout_line 
+	subprocess_object.stdout.close()
+	return_code = subprocess_object.wait()
+	if return_code:
+	    raise subprocess.CalledProcessError(return_code, command_list)
+
 def setup_java():
 	command_list = ["yum", "-y", "install", "java"]
 	yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True)
-	for stdout_line in iter(yum_install_java.stdout.readline, ""):
-	    yield stdout_line 
-	yum_install_java.stdout.close()
-	return_code = yum_install_java.wait()
-	if return_code:
-	    raise subprocess.CalledProcessError(return_code, command_list)
+	stream_subprocess_output(command_list, yum_install_java)
 	# print "yum_install_java: ", yum_install_java.communicate()[0]
 	# print "yum_install_java return code: ", yum_install_java.returncode
 
 def setup_ant():
-    yum_install_ant = subprocess.Popen(["yum", "-y", "install", "ant"], stdout=subprocess.PIPE)
-    print "yum_install_ant: ", yum_install_ant.communicate()[0]
-    print "yum_install_ant return code: ", yum_install_ant.returncode
+    command_list = ["yum", "-y", "install", "ant"]
+    yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
+    stream_subprocess_output(command_list, yum_install_ant)
+	# print "yum_install_ant: ", yum_install_ant.communicate()[0]
+	# print "yum_install_ant return code: ", yum_install_ant.returncode
 
 def setup_postgres():
     if esg_setup._is_managed_db():

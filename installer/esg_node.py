@@ -333,6 +333,7 @@ def setup_esgcet(upgrade_mode=None):
             sleep(1)
             pass
 
+        #generate esg.ini file using esgprep script
         ESGINI_command = '''
             {cdat_home}/bin/esgsetup --config $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
             sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 

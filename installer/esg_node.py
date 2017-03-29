@@ -332,10 +332,9 @@ def setup_esgcet(upgrade_mode=None):
                 raise
             sleep(1)
             pass
-            
+
         ESGINI_command = '''
-            {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup --config 
-            $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
+            {cdat_home}/bin/esgsetup --config $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
             sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 
             sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}
             '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],

@@ -1340,7 +1340,7 @@ def main():
         setup_ant()
         setup_postgres()
         setup_cdat()
-        logger.debug()
+        logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT)", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             setup_esgcet("node_type_bit & (DATA_BIT+COMPUTE_BIT)", node_type_bit & (DATA_BIT+COMPUTE_BIT))
     # setup_esgcet()

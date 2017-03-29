@@ -1607,7 +1607,7 @@ def setup_cdat():
         sleep(1)
         pass
 
-    starting_directory = os.getcwd(config.config_dictionary["workdir"])
+    starting_directory = os.getcwd()
     os.chdir(config.config_dictionary["workdir"])
 
     yum_install_uvcdat = subprocess.Popen(["yum", "-y", "install", "uvcdat"],stdout=subprocess.PIPE)

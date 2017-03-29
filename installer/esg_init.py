@@ -276,6 +276,7 @@ class EsgInit(object):
             self.install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
         os.environ["PATH"] = self.myPATH+':'+os.environ["PATH"]
+        logger.debug("os.environ['PATH']: %s", os.environ["PATH"])
         try:
             os.environ["LD_LIBRARY_PATH"] = self.myLD_LIBRARY_PATH+':'+os.environ["LD_LIBRARY_PATH"]
         except KeyError, error:

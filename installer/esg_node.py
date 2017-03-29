@@ -343,7 +343,7 @@ def setup_esgcet(upgrade_mode=None):
                        esgf_host=esgf_host, node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         ESGINI.communicate()
         if ESGINI.returncode != 0:
-            print "ESGINI.returncode did not equal 0: ", ESGINI.returncode
+            logger.error("ESGINI.returncode did not equal 0: %s %s", ESGINI.returncode, ESGINI) 
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 

@@ -1341,6 +1341,8 @@ def main():
         setup_ant()
         setup_postgres()
         setup_cdat()
+        if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
+            setup_esgcet()
     # setup_esgcet()
     # test_esgcet()
     

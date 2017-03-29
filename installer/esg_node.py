@@ -1579,10 +1579,14 @@ def setup_postgres():
 
 def setup_cdat():
     print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version = config.config_dictionary["cdat_version"])
-    import cdat_info
-    if esg_functions.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
-        print "CDAT already installed [OK]"
-        return True
+    try:
+        sys.path.insert(0, os.path.join(config.config_dictionary["cdat_home"], "bin", "python"))
+        import cdat_info
+        if esg_functions.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
+            print "CDAT already installed [OK]"
+            return True
+    except ImportError, error:
+        logger.error(error)
 
     print '''*******************************
      Setting up CDAT - (Python + CDMS)... ${cdat_version}

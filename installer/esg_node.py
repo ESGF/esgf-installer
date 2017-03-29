@@ -1336,13 +1336,13 @@ def main():
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
     if node_type_bit & INSTALL_BIT !=0:
-        print "Setting up Java"
         setup_java()
         setup_ant()
         setup_postgres()
         setup_cdat()
+        logger.debug()
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
-            setup_esgcet()
+            setup_esgcet("node_type_bit & (DATA_BIT+COMPUTE_BIT)", node_type_bit & (DATA_BIT+COMPUTE_BIT))
     # setup_esgcet()
     # test_esgcet()
     

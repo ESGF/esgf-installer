@@ -275,7 +275,7 @@ class EsgInit(object):
             os.environ["GLOBUS_LOCATION"] + "/lib:" + \
             self.install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
-        os.environ["PATH"] = esg_functions.path_unique(self.myPATH+':'+os.environ["PATH"])
+        os.environ["PATH"] = self.myPATH+':'+os.environ["PATH"]
         try:
             os.environ["LD_LIBRARY_PATH"] = self.myLD_LIBRARY_PATH+':'+os.environ["LD_LIBRARY_PATH"]
         except KeyError, error:

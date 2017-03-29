@@ -262,8 +262,10 @@ def setup_esgcet(upgrade_mode=None):
     try:
         output = subprocess.call(installation_command, shell=True)
         if output != 0:
+            logger.error("Return code was %s for %s", output, installation_command)
             esg_functions.checked_done(1)
-    except:
+    except Error, error:
+        logger.error(error)
         esg_functions.checked_done(1)
 
     if mode == "I":

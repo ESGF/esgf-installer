@@ -332,18 +332,19 @@ def setup_esgcet(upgrade_mode=None):
                 raise
             sleep(1)
             pass
-
-        ESGINI = subprocess.Popen('''
+            
+        ESGINI_command = '''
             {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup --config 
             $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
             sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 
             sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}
             '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
                        recommended_setup=recommended_setup, esg_root_id=esg_root_id,
-                       esgf_host=esgf_host, node_short_name=node_short_name), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                       esgf_host=esgf_host, node_short_name=node_short_name)
+        ESGINI = subprocess.Popen(ESGINI_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         ESGINI.communicate()
         if ESGINI.returncode != 0:
-            logger.error("ESGINI.returncode did not equal 0: %s %s", ESGINI.returncode, ESGINI) 
+            logger.error("ESGINI.returncode did not equal 0: %s %s", ESGINI.returncode, ESGINI_command) 
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 

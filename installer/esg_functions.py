@@ -987,8 +987,8 @@ def prefix_to_path(path, prepend_value):
               WHAT YOU WANT; that your libs are found before any user libs are
         
     '''
-    os.environ[path] = _path_unique(prepend_value)+":"+path
-    return _path_unique(prepend_value)+":"+path
+    os.environ[path] = path_unique(prepend_value)+":"+path
+    return path_unique(prepend_value)+":"+path
 
 def trim_string_from_head(string_name):
     '''

@@ -312,7 +312,7 @@ def setup_esgcet(upgrade_mode=None):
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 
-    print "chown -R %s:%s %s" % (config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"], config.config_dictionary["publisher_home"])
+    logger.info("chown -R %s:%s %s", config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"], config.config_dictionary["publisher_home"])
     try:
         os.chown(config.config_dictionary["publisher_home"], config.config_dictionary[
                  "installer_uid"], config.config_dictionary["installer_gid"])
@@ -358,16 +358,15 @@ def setup_esgcet(upgrade_mode=None):
 
     if mode == "install":
         if DEBUG != "0":
-            print  '''ESGINI = 
-                    %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" ) 
-                    --db $( [ -n "%s" ] && echo "--db-name %s" ) $( [ -n "%s" ] 
-                    && echo "--db-admin %s" ) $([ -n "${pg_sys_acct_passwd:=%s}" ] 
-                    && echo "--db-admin-password %s") 
+            logger.info('''ESGINI = %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" ) 
+                    --db $( [ -n "%s" ] && echo "--db-name %s" ) 
+                    $( [ -n "%s" ] && echo "--db-admin %s" ) 
+                    $([ -n "${pg_sys_acct_passwd:=%s}" ] && echo "--db-admin-password %s") 
                     $( [ -n "%s" ] && echo "--db-user %s" ) 
                     $([ -n "%s" ] && echo "--db-user-password %s") 
                     $( [ -n "%s" ] && echo "--db-host %s" ) 
-                    $( [ -n "%s" ] && echo "--db-port %s" )" % 
-            ''' % (config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended_setup,
+                    $( [ -n "%s" ] && echo "--db-port %s" )"
+            ''', config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended_setup,
                    config.config_dictionary["db_database"], config.config_dictionary[
                        "db_database"], config.config_dictionary["postgress_user"],
                    config.config_dictionary[

@@ -287,7 +287,7 @@ def setup_esgcet(upgrade_mode=None):
         if org_id_input:
             esg_root_id = org_id_input
 
-        print "%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s" % (config.config_dictionary["cdat_home"], recommended_setup, esg_root_id)
+        logger.info("%s/bin/esgsetup --config $( ((%s == 1 )) && echo '--minimal-setup' ) --rootid %s", config.config_dictionary["cdat_home"], recommended_setup, esg_root_id)
 
         try:
             os.mkdir(config.config_dictionary["publisher_home"])

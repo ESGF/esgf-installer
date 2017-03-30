@@ -383,7 +383,7 @@ def setup_esgcet(upgrade_mode=None):
 
         else:
             generate_esg_ini_command = ''' 
-                    {publisher_home}/{publisher_config} {cdat_home}/bin/esgsetup 
+                    {cdat_home}/bin/esgsetup 
                     $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) 
                     --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
                     $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
@@ -401,6 +401,7 @@ def setup_esgcet(upgrade_mode=None):
                        postgress_host=config.config_dictionary["postgress_host"],
                        postgress_port=config.config_dictionary["postgress_port"])
 
+            generate_esg_ini_command.replace('\n', ' ')
             logger.info("generate_esg_ini_command: %s", generate_esg_ini_command)
 
     try:

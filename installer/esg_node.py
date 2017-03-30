@@ -25,7 +25,7 @@ from esg_init import EsgInit
 
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format = "%(levelname): %(lineno)s %(funcName)s")
 logger = logging.getLogger(__name__)
 
 config = EsgInit()

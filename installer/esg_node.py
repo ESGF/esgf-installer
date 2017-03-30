@@ -153,9 +153,9 @@ def setup_esgcet(upgrade_mode=None):
     upgrade = upgrade_mode if upgrade_mode is not None else publisher_module_check
 
     if upgrade == 1 and not force_install:
-        mode = "U"
+        mode = "upgrade"
     else:
-        mode = "I"
+        mode = "install"
 
     print '''
         *******************************
@@ -163,7 +163,7 @@ def setup_esgcet(upgrade_mode=None):
         *******************************
      ''' % (config.config_dictionary["esgcet_egg_file"], mode)
 
-    if mode == "U":
+    if mode == "upgrade":
         if config.config_dictionary["publisher_home"] == os.environ["HOME"] + "/.esgcet":
             print "user configuration", config.config_dictionary["publisher_home"]
         else:
@@ -268,7 +268,7 @@ def setup_esgcet(upgrade_mode=None):
         logger.error(exception)
         esg_functions.checked_done(1)
 
-    if mode == "I":
+    if mode == "install":
         choice = None
 
         while choice != 0:
@@ -392,7 +392,7 @@ def setup_esgcet(upgrade_mode=None):
     except KeyError:
         publisher_db_user = esg_functions.get_property("publisher_db_user")
 
-    if mode == "I":
+    if mode == "install":
         if DEBUG != "0":
             print  '''ESGINI = 
                     %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" ) 

@@ -382,27 +382,29 @@ def setup_esgcet(upgrade_mode=None):
             logger.info("generate_esg_ini_command: %s", generate_esg_ini_command)
 
         else:
-            generate_esg_ini_command = ''' 
-                    {cdat_home}/bin/esgsetup 
-                    $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) 
-                    --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
-                    $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
-                    $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
-                    $( [ -n "{publisher_db_user}" ] && echo "--db-user {publisher_db_user}" ) 
-                    $([ -n "{publisher_db_user_passwd}" ] && echo "--db-user-password {publisher_db_user_passwd_stars}") 
-                    $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
-                    $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
-            '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
-                       recommended_setup=recommended_setup, db_database=config.config_dictionary["db_database"],
-                       postgress_user=config.config_dictionary["postgress_user"],
-                       pg_sys_acct_passwd="******" if config.config_dictionary["pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"],
-                       publisher_db_user=publisher_db_user,
-                       publisher_db_user_passwd=config.config_dictionary["publisher_db_user_passwd"], publisher_db_user_passwd_stars="******",
-                       postgress_host=config.config_dictionary["postgress_host"],
-                       postgress_port=config.config_dictionary["postgress_port"])
+            esg_ini_command = generate_esg_config_file()
+            print "esg_ini_command: ", esg_ini_command
+            # generate_esg_ini_command = ''' 
+            #         {cdat_home}/bin/esgsetup 
+            #         $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) 
+            #         --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
+            #         $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
+            #         $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
+            #         $( [ -n "{publisher_db_user}" ] && echo "--db-user {publisher_db_user}" ) 
+            #         $([ -n "{publisher_db_user_passwd}" ] && echo "--db-user-password {publisher_db_user_passwd_stars}") 
+            #         $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
+            #         $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
+            # '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
+            #            recommended_setup=recommended_setup, db_database=config.config_dictionary["db_database"],
+            #            postgress_user=config.config_dictionary["postgress_user"],
+            #            pg_sys_acct_passwd="******" if config.config_dictionary["pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"],
+            #            publisher_db_user=publisher_db_user,
+            #            publisher_db_user_passwd=config.config_dictionary["publisher_db_user_passwd"], publisher_db_user_passwd_stars="******",
+            #            postgress_host=config.config_dictionary["postgress_host"],
+            #            postgress_port=config.config_dictionary["postgress_port"])
 
-            generate_esg_ini_command.replace('\n', ' ')
-            logger.info("generate_esg_ini_command: %s", generate_esg_ini_command)
+            # generate_esg_ini_command.replace('\n', ' ')
+            # logger.info("generate_esg_ini_command: %s", generate_esg_ini_command)
 
     try:
         esg_ini_file_process = subprocess.Popen(generate_esg_ini_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -433,6 +435,59 @@ def setup_esgcet(upgrade_mode=None):
     write_esgcet_install_log()
 
     esg_functions.checked_done(0)
+
+
+def generate_esg_config_file():
+    # get_property publisher_db_user ${publisher_db_user}
+    publisher_db_user = None
+    try:
+        publisher_db_user = config.config_dictionary["publisher_db_user"]
+    except KeyError:
+        publisher_db_user = esg_functions.get_property("publisher_db_user")
+
+    generate_esg_ini_command = "{cdat_home}/bin/esgsetup --db".format(cdat_home=config.config_dictionary["cdat_home"])
+    if recommended_setup == 1:
+        generate_esg_ini_command + " --minimal-setup"
+    if config.config_dictionary["db_database"]:
+        generate_esg_ini_command + " --db-name %s" % (config.config_dictionary["db_database"])
+    if config.config_dictionary["postgress_user"]:
+        generate_esg_ini_command + " --db-admin %s" % (config.config_dictionary["postgress_user"])
+
+    if config.config_dictionary["pg_sys_acct_passwd"]:
+        generate_esg_ini_command + " --db-admin-password %s" % (config.config_dictionary["pg_sys_acct_passwd"])
+    elif config.config_dictionary["security_admin_password"]:
+        generate_esg_ini_command + " --db-admin-password %s" % (config.config_dictionary["security_admin_password"])
+
+    if publisher_db_user:
+        generate_esg_ini_command + " --db-user %s" % (publisher_db_user)
+    if config.config_dictionary["publisher_db_user_passwd"]:
+        generate_esg_ini_command + " --db-user-password %s" % (config.config_dictionary["publisher_db_user_passwd"])
+    if config.config_dictionary["postgress_host"]:
+        generate_esg_ini_command + " --db-host %s" % (config.config_dictionary["postgress_host"])
+    if config.config_dictionary["postgress_port"]:
+        generate_esg_ini_command + " --db-port %s" % (config.config_dictionary["postgress_port"])
+
+    logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
+    return generate_esg_ini_command
+
+    # generate_esg_ini_command = ''' 
+    #                 {cdat_home}/bin/esgsetup 
+    #                 $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) 
+    #                 --db $( [ -n "{db_database}" ] && echo "--db-name {db_database}" ) 
+    #                 $( [ -n "{postgress_user}" ] && echo "--db-admin {postgress_user}" ) 
+    #                 $([ -n "{pg_sys_acct_passwd}" ] && echo "--db-admin-password {pg_sys_acct_passwd}") 
+    #                 $( [ -n "{publisher_db_user}" ] && echo "--db-user {publisher_db_user}" ) 
+    #                 $([ -n "{publisher_db_user_passwd}" ] && echo "--db-user-password {publisher_db_user_passwd_stars}") 
+    #                 $( [ -n "{postgress_host}" ] && echo "--db-host {postgress_host}" ) 
+    #                 $( [ -n "{postgress_port}" ] && echo "--db-port {postgress_port}" )" 
+    #         '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
+    #                    recommended_setup=recommended_setup, db_database=config.config_dictionary["db_database"],
+    #                    postgress_user=config.config_dictionary["postgress_user"],
+    #                    pg_sys_acct_passwd="******" if config.config_dictionary["pg_sys_acct_passwd"] else config.config_dictionary["security_admin_password"],
+    #                    publisher_db_user=publisher_db_user,
+    #                    publisher_db_user_passwd=config.config_dictionary["publisher_db_user_passwd"], publisher_db_user_passwd_stars="******",
+    #                    postgress_host=config.config_dictionary["postgress_host"],
+    #                    postgress_port=config.config_dictionary["postgress_port"])
 
 
 def write_esgcet_env():

@@ -447,25 +447,25 @@ def generate_esg_config_file():
 
     generate_esg_ini_command = "{cdat_home}/bin/esgsetup --db".format(cdat_home=config.config_dictionary["cdat_home"])
     if recommended_setup == 1:
-        generate_esg_ini_command + " --minimal-setup"
+        generate_esg_ini_command += " --minimal-setup"
     if config.config_dictionary["db_database"]:
-        generate_esg_ini_command + " --db-name %s" % (config.config_dictionary["db_database"])
+        generate_esg_ini_command += " --db-name %s" % (config.config_dictionary["db_database"])
     if config.config_dictionary["postgress_user"]:
-        generate_esg_ini_command + " --db-admin %s" % (config.config_dictionary["postgress_user"])
+        generate_esg_ini_command += " --db-admin %s" % (config.config_dictionary["postgress_user"])
 
     if config.config_dictionary["pg_sys_acct_passwd"]:
-        generate_esg_ini_command + " --db-admin-password %s" % (config.config_dictionary["pg_sys_acct_passwd"])
+        generate_esg_ini_command += " --db-admin-password %s" % (config.config_dictionary["pg_sys_acct_passwd"])
     elif config.config_dictionary["security_admin_password"]:
-        generate_esg_ini_command + " --db-admin-password %s" % (config.config_dictionary["security_admin_password"])
+        generate_esg_ini_command += " --db-admin-password %s" % (config.config_dictionary["security_admin_password"])
 
     if publisher_db_user:
-        generate_esg_ini_command + " --db-user %s" % (publisher_db_user)
+        generate_esg_ini_command += " --db-user %s" % (publisher_db_user)
     if config.config_dictionary["publisher_db_user_passwd"]:
-        generate_esg_ini_command + " --db-user-password %s" % (config.config_dictionary["publisher_db_user_passwd"])
+        generate_esg_ini_command += " --db-user-password %s" % (config.config_dictionary["publisher_db_user_passwd"])
     if config.config_dictionary["postgress_host"]:
-        generate_esg_ini_command + " --db-host %s" % (config.config_dictionary["postgress_host"])
+        generate_esg_ini_command += " --db-host %s" % (config.config_dictionary["postgress_host"])
     if config.config_dictionary["postgress_port"]:
-        generate_esg_ini_command + " --db-port %s" % (config.config_dictionary["postgress_port"])
+        generate_esg_ini_command += " --db-port %s" % (config.config_dictionary["postgress_port"])
 
     logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
     return generate_esg_ini_command

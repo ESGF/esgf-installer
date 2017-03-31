@@ -407,12 +407,12 @@ def setup_esgcet(upgrade_mode=None):
             # logger.info("generate_esg_ini_command: %s", generate_esg_ini_command)
 
     try:
-        esg_ini_file_process = subprocess.Popen(generate_esg_ini_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        esg_ini_file_process = subprocess.Popen(esg_ini_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout_data, stderr_data = esg_ini_file_process.communicate()
         if esg_ini_file_process.returncode != 0:
-            logger.error("ESGINI.returncode did not equal 0: %s %s", esg_ini_file_process.returncode, generate_esg_ini_command)
+            logger.error("ESGINI.returncode did not equal 0: %s %s", esg_ini_file_process.returncode, esg_ini_command)
             raise RuntimeError("%r failed, status code %s stdout %r stderr %r" % (
-                       generate_esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data)) 
+                       esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data)) 
 
     except Exception, exception:
         print "exception occured with ESGINI: ", str(exception)
@@ -445,6 +445,10 @@ def generate_esg_config_file():
     except KeyError:
         publisher_db_user = esg_functions.get_property("publisher_db_user")
 
+    security_admin_password = None
+    with open(config.esgf_secret_file, 'rb') as f:
+        security_admin_password = f.read()
+
     generate_esg_ini_command = "{cdat_home}/bin/esgsetup --db".format(cdat_home=config.config_dictionary["cdat_home"])
     if recommended_setup == 1:
         generate_esg_ini_command += " --minimal-setup"
@@ -455,8 +459,8 @@ def generate_esg_config_file():
 
     if config.config_dictionary["pg_sys_acct_passwd"]:
         generate_esg_ini_command += " --db-admin-password %s" % (config.config_dictionary["pg_sys_acct_passwd"])
-    elif config.config_dictionary["security_admin_password"]:
-        generate_esg_ini_command += " --db-admin-password %s" % (config.config_dictionary["security_admin_password"])
+    elif security_admin_password:
+        generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
 
     if publisher_db_user:
         generate_esg_ini_command += " --db-user %s" % (publisher_db_user)

@@ -179,7 +179,7 @@ class EsgInit(object):
         # pub_secret = subprocess.check_output("cat " + pub_secret_file + " 2>/dev/null ")
         try:
             with open(self.pub_secret_file, 'rb') as f:
-                external_script_variables["pub_secret"] = f.read()
+                external_script_variables["pub_secret"] = f.read().strip()
             # publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
             external_script_variables["publisher_db_user_passwd"] = esg_bash2py.Expand.colonMinus(
             "publisher_db_user_passwd", external_script_variables["pub_secret"])

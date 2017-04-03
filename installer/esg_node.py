@@ -350,7 +350,7 @@ def setup_esgcet(upgrade_mode=None):
     # security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null)
     security_admin_password = None
     with open(config.esgf_secret_file, 'rb') as f:
-        security_admin_password = f.read()
+        security_admin_password = f.read().strip()
 
     # get_property publisher_db_user ${publisher_db_user}
     publisher_db_user = None
@@ -447,7 +447,7 @@ def generate_esg_config_file():
 
     security_admin_password = None
     with open(config.esgf_secret_file, 'rb') as f:
-        security_admin_password = f.read()
+        security_admin_password = f.read().strip()
 
     generate_esg_ini_command = "{cdat_home}/bin/esgsetup --db".format(cdat_home=config.config_dictionary["cdat_home"])
     if recommended_setup == 1:

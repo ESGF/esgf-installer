@@ -457,10 +457,10 @@ def generate_esg_config_file():
     if config.config_dictionary["postgress_user"]:
         generate_esg_ini_command += " --db-admin %s" % (config.config_dictionary["postgress_user"])
 
-    if config.config_dictionary["pg_sys_acct_passwd"]:
+    if security_admin_password:
+        generate_esg_ini_command += " --db-admin-password %s" % (config.security_admin_password["pg_sys_acct_passwd"])
+    elif config.config_dictionary["pg_sys_acct_passwd"]:
         generate_esg_ini_command += " --db-admin-password %s" % (config.config_dictionary["pg_sys_acct_passwd"])
-    elif security_admin_password:
-        generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
 
     if publisher_db_user:
         generate_esg_ini_command += " --db-user %s" % (publisher_db_user)

@@ -17,6 +17,7 @@ import pwd
 import psycopg2
 import tarfile
 import urllib
+import shlex
 from git import Repo
 from collections import deque
 from time import sleep
@@ -1373,8 +1374,10 @@ def stream_subprocess_output(subprocess_object):
 	#     raise subprocess.CalledProcessError(return_code, command_list)
 
 def setup_java():
+    download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm'
+    subprocess.call(shlex.split(download_oracle_java_string))
     command_list = ["yum", "-y", "localinstall", "jdk-8u92-linux-x64.rpm"]
-    urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm", "jdk-8u92-linux-x64.rpm")
+    urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u121-b13/jdk-8u121-linux-x64.rpm", "jdk-8u121-linux-x64.rpm")
     yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
     stream_subprocess_output(yum_install_java)
 	# print "yum_install_java: ", yum_install_java.communicate()[0]

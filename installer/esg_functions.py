@@ -795,7 +795,7 @@ def path_unique(path_string = os.environ["PATH"], path_separator=":"):
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
 
-def _readlinkf(file_name):
+def readlinkf(file_name):
     '''
     This is a portable implementation of GNU's "readlink -f" in
     bash/zsh, following symlinks recursively until they end in a
@@ -1014,13 +1014,13 @@ def trim_string_from_tail(string_name):
         Mimics Bash's %%* Parameter Expansion
         Example:
             (Bash)
-            tomcat_version="3.0.33"
+            tomcat_version="8.0.33"
             echo ${tomcat_version%%.*}
 
                 output -> 8
 
             (Python)
-            tomcat_version="3.0.33"
+            tomcat_version="8.0.33"
             print  trim_string_from_tail(tomcat_version)
 
             output -> 8
@@ -1043,7 +1043,7 @@ def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of
         arg2 - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
         arg3 - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
     '''
-    source = _readlinkf(path)
+    source = readlinkf(path)
     print "Backup - Creating a backup archive of %s" % (source)
     current_directory = os.getcwd()
     
@@ -1057,7 +1057,7 @@ def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of
         pass
 
     source_backup_name = re.search("\w+$", source).group()
-    backup_filename=_readlinkf(backup_dir)+"/"+source_backup_name + "." + str(datetime.date.today())+".tgz"
+    backup_filename=readlinkf(backup_dir)+"/"+source_backup_name + "." + str(datetime.date.today())+".tgz"
     try:
         with tarfile.open(backup_filename, "w:gz") as tar:
             tar.add(source)
@@ -1326,7 +1326,7 @@ def is_in_git(file_name):
     '''
         debug_print "DEBUG: Checking to see if ${1} is in a git repository..."
 
-        REALDIR=$(dirname $(_readlinkf ${1}))
+        REALDIR=$(dirname $(readlinkf ${1}))
     '''
     try:
         is_git_installed = subprocess.check_output(["which", "git"])
@@ -1337,7 +1337,7 @@ def is_in_git(file_name):
 
 
     print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
-    absolute_path = _readlinkf(file_name)
+    absolute_path = readlinkf(file_name)
     one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
     print "absolute_path: ", absolute_path
     print "parent_path: ", os.path.abspath(os.path.join(absolute_path, os.pardir))
@@ -1510,7 +1510,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
             NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
             file: %s
             ***************************************************************************\n\n
-        ''' % (_readlinkf(local_file))
+        ''' % (readlinkf(local_file))
         return 0
 
     logger.debug("local file : %s", local_file)

@@ -427,8 +427,8 @@ class EsgInit(object):
             self.config_dictionary["esgcet_version"], self.config_dictionary["python_version"])
         internal_script_variables["esg_testdir"] = internal_script_variables[
             "workdir"] + "/../esg_test"
-        # tomcat_dist_url=http://archive.apache.org/dist/tomcat/tomcat-${tomcat_version%%.*}/v${tomcat_version}/bin/apache-tomcat-${tomcat_version}.tar.gz
-        # tomcat_pid_file=/var/run/tomcat-jsvc.pid
+        tomcat_major_version = esg_functions.trim_string_from_tail(self.config_dictionary["tomcat_version"])
+        internal_script_variables["tomcat_dist_url"] = "http://archive.apache.org/dist/tomcat/tomcat-{tomcat_major_version}/v{tomcat_version}/bin/apache-tomcat-{tomcat_version}.tar.gz".format(tomcat_major_version = tomcat_major_version, tomcat_version = self.config_dictionary["tomcat_version"])
         internal_script_variables[
             "tomcat_pid_file"] = "/var/run/tomcat-jsvc.pid"
         # utils_url=${esg_dist_url}/utils

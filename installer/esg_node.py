@@ -15,6 +15,8 @@ import platform
 import re
 import pwd
 import psycopg2
+import tarfile
+import urllib
 from git import Repo
 from collections import deque
 from time import sleep
@@ -1371,9 +1373,10 @@ def stream_subprocess_output(subprocess_object):
 	#     raise subprocess.CalledProcessError(return_code, command_list)
 
 def setup_java():
-	command_list = ["yum", "-y", "install", "java"]
-	yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
-	stream_subprocess_output(yum_install_java)
+    command_list = ["yum", "-y", "localinstall", "jdk-8u92-linux-x64.rpm"]
+    urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm", "jdk-8u92-linux-x64.rpm")
+    yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
+    stream_subprocess_output(yum_install_java)
 	# print "yum_install_java: ", yum_install_java.communicate()[0]
 	# print "yum_install_java return code: ", yum_install_java.returncode
 

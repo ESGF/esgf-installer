@@ -1827,8 +1827,110 @@ def setup_tomcat(upgrade_flag = False):
     #----------------------------------
     # Upgrade logic...
     #----------------------------------
+    if upgrade_flag:
+        esg_functions.stop_tomcat()
+        previous_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(last_install_directory))
+        new_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
+        print "Upgrading tomcat installation from {previous_tomcat_version} to {new_tomcat_version}".format(previous_tomcat_version = previous_tomcat_version, new_tomcat_version = new_tomcat_version)
+
+        print "copying webapps... "
+        src_files = os.listdir(os.path.join(last_install_directory, "webapps"))
+        for file_name in src_files:
+            full_file_name = os.path.join(last_install_directory, file_name)
+            if os.path.isfile(full_file_name):
+                shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
+
+        print "copying configuration... "
+        src_files = os.listdir(os.path.join(last_install_directory, "conf"))
+        for file_name in src_files:
+            full_file_name = os.path.join(last_install_directory, file_name)
+            if os.path.isfile(full_file_name):
+                shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
+
+        print "copying logs... "
+        src_files = os.listdir(os.path.join(last_install_directory, "logs"))
+        for file_name in src_files:
+            full_file_name = os.path.join(last_install_directory, file_name)
+            if os.path.isfile(full_file_name):
+                shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
+
+        print "upgrade migration complete"
+    else:
+        if os.stat(config.ks_secret_file).st_size != 0:
+            with open(config.ks_secret_file, 'rb') as f:
+                keystore_password = f.read().strip()
+            configure_tomcat(keystore_password)
+        else:
+            with open(config.esgf_secret_file, 'rb') as f:
+                security_admin_password = f.read().strip()
+            configure_tomcat(security_admin_password)
+    try:
+        os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+            config.config_dictionary["tomcat_group"]).gr_gid)
+    except Exception, error:
+        print "**WARNING**: Could not change owner/group of {tomcat_install_dir} successfully".format(tomcat_install_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
+        logger.error(error)
+             
+    #-------------------------------
+    # For Security Reasons...
+    #-------------------------------
+    os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
+    print "Checking for unnecessary webapps with dubious security implications as a precaution..."
+    obsolete_directory_list =["examples", "docs",  "host-manager", "manager"]
+    for directory in obsolete_directory_list:
+        if not os.path.exists(directory):
+            continue
+        directory_full_path = esg_functions.readlinkf(directory)
+        print "Removing {directory_full_path}".format(directory_full_path = directory_full_path)
+        try:
+            shutil.rmtree(directory_full_path)
+            print "{directory_full_path} successfully deleted [OK]".format(directory_full_path = directory_full_path)
+        except Exception, error:
+            print "[FAIL]"
+            logger.error(error)
+
+    os.chdir(config.config_dictionary["tomcat_install_dir"])
+
+    setup_root_app()
+
+    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+    esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
+    esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
+
+    migrate_tomcat_credentials_to_esgf()
+    sleep(1)
+    esg_functions.start_tomcat()
+
+    if tomcat_port_check():
+        print "Tomcat ports checkout [OK]"
+    else:
+        print "[FAIL]"
+        os.chdir(starting_directory)
+        esg_functions.checked_done(1)
 
 
+    os.chdir(starting_directory)
+    write_tomcat_env()
+    write_tomcat_install_log()
+
+    return True
+
+def configure_tomcat(keystore_password):
+    pass
+
+def setup_root_app():
+    pass
+
+def migrate_tomcat_credentials_to_esgf():
+    pass
+
+def tomcat_port_check():
+    pass
+
+def write_tomcat_env():
+    pass
+
+def write_tomcat_install_log():
     pass
 
 def write_postgress_env():

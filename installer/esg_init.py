@@ -5,6 +5,7 @@ import pwd
 import sys
 import magic
 import logging
+import multiprocessing
 # from pwd import getpwnam
 import esg_functions
 import esg_bash2py
@@ -353,16 +354,8 @@ class EsgInit(object):
         internal_script_variables["workdir"] = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus(
             "ESGF_INSTALL_WORKDIR", self.config_dictionary["installer_home"] + "/workbench/esg"))
 
-        # word_size=${word_size:-$(file /bin/bash | perl -ple
-        # 's/^.*ELF\s*(32|64)-bit.*$/$1/g')}
-        # internal_script_variables["word_size"] = esg_bash2py.Expand.colonMinus("word_size", subprocess.check_output(
-        #     "$(file /bin/bash | perl -ple 's/^.*ELF\s*(32|64)-bit.*$/$1/g')", shell=True))
         internal_script_variables["word_size"] = re.search(r'(\d\d)-bit?', magic.from_file("/bin/bash")).group(1)
-        # print 'internal_script_variables["word_size"]: ', internal_script_variables["word_size"]
-        # let num_cpus=1+$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[
-        # \t]*\(.*\)$/\1/p' | tail -1)
-        # internal_script_variables["num_cpus"] = 1 + subprocess.check_output(
-        #     "$(cat /proc/cpuinfo | sed -n 's/^processor[ \t]*:[ \t]*\(.*\)$/\1/p' | tail -1)", shell=True)
+        internal_script_variables["number_of_cpus"] = multiprocessing.cpu_count()
         # date_format="+%Y_%m_%d_%H%M%S"
         internal_script_variables["date_format"] = "+%Y_%m_%d_%H%M%S"
         # num_backups_to_keep=${num_backups_to_keep:-7}

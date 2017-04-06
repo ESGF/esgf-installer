@@ -1377,9 +1377,10 @@ def setup_java():
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm'
     subprocess.call(shlex.split(download_oracle_java_string))
     command_list = ["yum", "-y", "localinstall", "jdk-8u92-linux-x64.rpm"]
-    urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u121-b13/jdk-8u121-linux-x64.rpm", "jdk-8u121-linux-x64.rpm")
+    # urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u121-b13/jdk-8u121-linux-x64.rpm", "jdk-8u121-linux-x64.rpm")
     yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
     stream_subprocess_output(yum_install_java)
+    os.symlink("/usr/java/jdk1.8.0_92/", config.config_dictionary["java_install_dir"])
 	# print "yum_install_java: ", yum_install_java.communicate()[0]
 	# print "yum_install_java return code: ", yum_install_java.returncode
 

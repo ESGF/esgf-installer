@@ -18,6 +18,7 @@ import psycopg2
 import tarfile
 import urllib
 import shlex
+import errno
 from git import Repo
 from collections import deque
 from time import sleep
@@ -1356,6 +1357,7 @@ def main():
         logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             setup_esgcet()
+        setup_tomcat()
     # setup_esgcet()
     # test_esgcet()
     
@@ -1373,6 +1375,16 @@ def stream_subprocess_output(subprocess_object):
 	# if return_code:
 	#     raise subprocess.CalledProcessError(return_code, command_list)
 
+def symlink_force(target, link_name):
+    try:
+        os.symlink(target, link_name)
+    except OSError, e:
+        if e.errno == errno.EEXIST:
+            os.remove(link_name)
+            os.symlink(target, link_name)
+        else:
+            raise e
+
 def setup_java():
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm'
     subprocess.call(shlex.split(download_oracle_java_string))
@@ -1380,7 +1392,8 @@ def setup_java():
     # urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u121-b13/jdk-8u121-linux-x64.rpm", "jdk-8u121-linux-x64.rpm")
     yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
     stream_subprocess_output(yum_install_java)
-    os.symlink("/usr/java/jdk1.8.0_92/", config.config_dictionary["java_install_dir"])
+    # os.symlink("/usr/java/jdk1.8.0_92/", config.config_dictionary["java_install_dir"])
+    symlink_force("/usr/java/jdk1.8.0_92/", config.config_dictionary["java_install_dir"])
 	# print "yum_install_java: ", yum_install_java.communicate()[0]
 	# print "yum_install_java return code: ", yum_install_java.returncode
 
@@ -1641,6 +1654,183 @@ def setup_cdat():
     os.chdir(starting_directory)
 
     return True
+
+def setup_tomcat(upgrade_flag = False):
+    # print "Checking for tomcat >= ${tomcat_min_version} ".format(tomcat_min_version = config.config_dictionary["tomcat_min_version"])
+    # esg_functions.check_app
+    print "*******************************"
+    print "Setting up Apache Tomcat...(v${tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
+    print "*******************************"
+
+    last_install_directory = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"])
+
+    if force_install:
+        default = "y"
+    else:
+        default = "n"
+
+    if os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "bin", "jsvc"), os.X_OK):
+        print "Detected an existing tomcat installation..."
+        if default == "y":
+            continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [Y/n]") or default
+        else:
+            continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [y/N]") or default
+
+        if not continue_installation_answer.lower() == "y" or not continue_installation_answer.lower() == "yes":
+            print "Skipping tomcat installation and setup - will assume tomcat is setup properly"
+            return 0
+
+
+    try:
+        os.makedirs(config.config_dictionary["workdir"])
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    starting_directory = os.getcwd()
+    os.chdir(config.config_dictionary["workdir"])
+
+    tomcat_dist_file = esg_functions.trim_string_from_head(config.config_dictionary["tomcat_dist_url"])
+    tomcat_dist_dir = re.sub("\.tar.gz", "", tomcat_dist_file)
+
+    #There is this pesky case of having a zero sized dist file...
+    if os.stat(tomcat_dist_file).st_size == 0:
+        os.remove(tomcat_dist_file)
+
+    #Check to see if we have a tomcat distribution directory
+    tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"])
+
+    if not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
+        print "Don't see tomcat distribution dir {tomcat_parent_dir}/{tomcat_dist_dir}".format(tomcat_parent_dir = tomcat_parent_dir, tomcat_dist_dir =  tomcat_dist_dir)
+        if not os.path.isfile(tomcat_dist_file):
+            print "Don't see tomcat distribution file {pwd}/{tomcat_dist_file} either".format(pwd = os.getcwd(), tomcat_dist_file = tomcat_dist_file)
+            print "Downloading Tomcat from ${tomcat_dist_url}".format(tomcat_dist_url = config.config_dictionary["tomcat_dist_url"])
+            tomcat_dist_file_archive = requests.get(config.config_dictionary["tomcat_dist_url"])
+            print "unpacking ${tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file_archive)
+            tar = tarfile.open(tomcat_dist_file)
+            tar.extractall()
+            tar.close()
+            shutil.move(tomcat_dist_file, tomcat_parent_dir)
+
+
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it
+    if os.path.isfile(tomcat_dist_file) and not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
+        print "unpacking ${tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
+        tar = tarfile.open(tomcat_dist_file)
+        tar.extractall()
+        tar.close()
+        shutil.move(tomcat_dist_file, tomcat_parent_dir)
+
+    if not os.path.exists(config.config_dictionary["tomcat_install_dir"]):
+        os.chdir(tomcat_parent_dir)
+        try:
+            os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+        except OSError, error:
+            logger.error(" ERROR: Could not create sym link %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+            logger.error(error)
+        finally:
+            os.chdir(config.config_dictionary["workdir"])
+    else:
+        try:
+            os.unlink(config.config_dictionary["tomcat_install_dir"])
+        except OSError, error:
+            shutil.move(config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"] + "." + str(datetime.date.today())+".bak")
+        finally:
+            os.chdir(tomcat_parent_dir)
+            try:
+                os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+            except OSError, error:
+                logger.error(" ERROR: Could not create sym link %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+                logger.error(error)
+            finally:
+                os.chdir(config.config_dictionary["workdir"])
+
+    #If there is no tomcat user on the system create one (double check that usradd does the right thing)
+    if not pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid:
+        logger.info(" WARNING: There is no tomcat user \"%s\" present on system", config.config_dictionary["tomcat_user"])
+        #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
+        try:
+            tomcat_group_check = grp.getgrnam(
+                config.config_dictionary["tomcat_group"])
+        except KeyError:
+            groupadd_command = "/usr/sbin/groupadd -r %s" % (
+                config.config_dictionary["tomcat_group"])
+            groupadd_output = subprocess.call(groupadd_command, shell=True)
+            if groupadd_output != 0 or groupadd_output != 9:
+                print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
+                os.chdir(starting_directory)
+                esg_functions.checked_done(1)
+
+        useradd_command = '''/usr/sbin/useradd -r -c'Tomcat Server Identity' -g {tomcat_group} {tomcat_user} '''.format(tomcat_group = config.config_dictionary["tomcat_group"], tomcat_user = config.config_dictionary["tomcat_user"])
+        useradd_output = subprocess.call(useradd_command, shell=True)
+        if useradd_output != 0 or useradd_output != 9:
+            print "ERROR: Could not add tomcat system account user {tomcat_user}".format(tomcat_user = config.config_dictionary["tomcat_user"])
+            os.chdir(starting_directory)
+            esg_functions.checked_done(1)
+
+
+    os.chdir(config.config_dictionary["tomcat_install_dir"])
+
+    #----------
+    #build jsvc (if necessary)
+    #----------
+    print "Checking for jsvc... "
+    os.chdir("bin")
+
+    #https://issues.apache.org/jira/browse/DAEMON-246
+    try:
+        os.environ["LD_LIBRARY_PATH"]=os.environ["LD_LIBRARY_PATH"] + ":/lib" + config.config_dictionary["word_size"]
+    except KeyError, error:
+        logger.error(error)
+
+    if not os.access(os.path.join("./", "jsvc"), os.X_OK):
+        print "Found jsvc; no need to build"
+        print "[OK]"
+    else:
+        print "jsvc Not Found"
+        esg_functions.stop_tomcat()
+        print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
+
+        if os.path.isfile("commons-daemon-native.tar.gz"):
+            print "unpacking commons-daemon-native.tar.gz..."
+            tar = tarfile.open("commons-daemon-native.tar.gz")
+            tar.extractall()
+            tar.close()
+            os.chdir("commons-daemon-1.0.15-native-src")
+            #It turns out they shipped with a conflicting .o file in there (oops) so I have to remove it manually.
+            os.remove("./native/libservice.a")
+            subprocess.call(shlex.split("make clean"))
+        elif os.path.isfile("jsvc.tar.gz "):
+            print "unpacking jsvc.tar.gz..."
+            tar = tarfile.open("jsvc.tar.gz")
+            tar.extractall()
+            tar.close()
+            os.chdir("jsvc-src")
+            subprocess.call("autoconf")
+        else:
+            print "NOT ABLE TO INSTALL JSVC!"
+            esg_functions.checked_done(1)
+
+    os.chmod("./configure", 0755)
+    configure_string = "./configure --with-java={java_install_dir}".format(java_install_dir = config.config_dictionary["java_install_dir"])
+    subprocess.call(shlex.split(configure_string))
+    subprocess.call(shlex.split(" make -j " + config.config_dictionary["number_of_cpus"]))
+
+    if not os.path.isfile("/usr/lib/libcap.so") and os.path.isfile("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"])):
+        os.symlink("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"]), "/usr/lib/libcap.so")
+
+    os.chdir(config.config_dictionary["tomcat_install_dir"])
+
+    #----------------------------------
+    # Upgrade logic...
+    #----------------------------------
+
+
+    pass
+
 def write_postgress_env():
     pass
 def write_postgress_install_log():

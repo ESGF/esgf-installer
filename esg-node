@@ -1161,7 +1161,7 @@ setup_esgcet() {
         /usr/sbin/groupadd -r ${tomcat_group}
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
     fi
-    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 640 ${publisher_home}/${publisher_config} && chmod 755 ${HOME}
+    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 640 ${publisher_home}/${publisher_config} && chmod 700 ${HOME}
     [ $? != 0 ] && echo "**WARNING**: Could not change group successfully - this will lead to inability to use the publisher properly!"
     start_postgress
 
@@ -1274,7 +1274,7 @@ test_esgcet() {
 esgcet_startup_hook() {
     echo -n "ESGCET (Publisher) Startup Hook: Setting perms... "
     [ ! -e ${publisher_home}/${publisher_config} ] && echo_fail" Could not find publisher configuration file [${publisher_home}/${publisher_config}] :-(" && return 1
-    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 755 ${HOME} && echo_ok ":-)"
+    chgrp ${tomcat_group} ${publisher_home}/${publisher_config} && chmod 644 ${publisher_home}/${publisher_config} && chmod 700 ${HOME} && echo_ok ":-)"
     [ $? != 0 ] && echo_fail ":-/" && return 2
 }
 

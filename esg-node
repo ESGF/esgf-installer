@@ -97,7 +97,7 @@ install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
 esg_functions_file="${install_prefix}/bin/esg-functions"
 esg_init_file="${install_prefix}/bin/esg-init"
 #--------------
-esgf_nm_funcs_file="${install_prefix}/bin/"
+esgf_nm_funcs_file="${install_prefix}/bin/esgf-nm-func"
 
 export UVCDAT_ANONYMOUS_LOG=False
 

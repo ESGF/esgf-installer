@@ -80,8 +80,8 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.a-devel"
-script_maj_version="2.a"
+script_version="v2.5.1-devel"
+script_maj_version="2.5"
 script_release="Demogorgon"
 envfile="/etc/esg.env"
 
@@ -2991,20 +2991,8 @@ setup_subsystem() {
 
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-${subsystem}
-
-    # if [ $subsystem == "node_manager" ] ; then
-    #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}-a $((force_install))
-    # else
-    #     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
-    # fi
-
-    if [ ${local_file} == "yes" ] ; then
-        echo "Skipping the get"
-        read
-    else
-        verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
-        checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
-    fi
+    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
+    checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
 
     local ret=$?
     (( $ret > 1 )) && popd && return 1
@@ -5296,7 +5284,7 @@ show_svc_list() {
 run_startup_hooks() {
     echo_strong "Running startup hooks..."
 	setup_sensible_confs
-	#update_apache_conf
+	update_apache_conf
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
@@ -5721,9 +5709,9 @@ esgf_node_info() {
      Please be sure that you have gotten your created an account on
      your ESGF IDP Peer.
 
-     The primary IDP Peer for ESGF is pcmdi.llnl.gov
-     You may register for an account at PCMDI at the following URL:
-     https://pcmdi.llnl.gov/user/add/
+     The primary IDP Peer for ESGF is esgf-node.llnl.gov
+     You may register for an account at LLNL at the following URL:
+     https://esgf-node.llnl.gov/user/add/
 
      Note: Account creation is prerequisite for publication!
 
@@ -6949,10 +6937,9 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && test_tomcat
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
-        [ $((sel & INSTALL_BIT)) != 0 ] && local_file="yes" && setup_subsystem node-manager esgf-node-manager #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
 
-        # UNCOMMENT this before issing a PR 
-        #[ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+        [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
         # Compute Languages and Tools Setup
@@ -6964,7 +6951,6 @@ main() {
     #---------------------------------------
 
     #---subsystems-----
-        local_file="no"
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
@@ -6984,9 +6970,9 @@ main() {
     #---------------------------------------
     # Security Services Installation...
     #---------------------------------------
-        [ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && local_file="yes"  setup_subsystem security esgf-security $@
+        [ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
         [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
-        local_file="no"
+ 
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------

@@ -23,22 +23,23 @@ init() {
     # Internal esgf node code versions 
     #--------------------------------
 
-	apache_frontend_version=${apache_frontend_version:-"v1.03"}
+	apache_frontend_version=${apache_frontend_version:-"v1.04"}
 	
     cdat_version=${cdat_version:-"2.2.0"}
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
 
-    esgcet_version=${esgcet_version:-"3.0.1"}
-    publisher_tag=${publisher_tag:-"v3.0.1"}
+    esgcet_version=${esgcet_version:-"3.2.1"}
+    publisher_tag=${publisher_tag:-"v3.2.1"}
+
 
 
     #see esgf-node-manager project:
-    esgf_node_manager_version=${esgf_node_manager_version:-"0.7.22"}
+    esgf_node_manager_version=${esgf_node_manager_version:-"1.0.0"}
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.8"}
+    esgf_security_version=${esgf_security_version:-"2.7.9"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
@@ -93,7 +94,7 @@ init() {
     postgress_host=${PGHOST:-localhost}
     postgress_port=${PGPORT:-5432}
     #cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
-    cdat_home=${CDAT_HOME:-${install_prefix}/uvcdat/${cdat_version}}
+    cdat_home=${CDAT_HOME:-${install_prefix}/conda}
     java_opts=${JAVA_OPTS:-""}
     java_install_dir=${JAVA_HOME:-${install_prefix}/java}
     ant_install_dir=${ANT_HOME:-${install_prefix}/ant}

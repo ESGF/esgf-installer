@@ -462,10 +462,8 @@ class EsgInit(object):
         internal_script_variables["keystore_alias"] = esg_bash2py.Expand.colonMinus(
             "keystore_alias", "my_esgf_node")
         # keystore_password=${keystore_password}
-        # truststore_file=${tomcat_conf_dir}/esg-truststore.ts
         internal_script_variables["truststore_file"] = self.config_dictionary[
             "tomcat_conf_dir"] + "/esg-truststore.ts"
-        # truststore_password=${truststore_password:-changeit}
         internal_script_variables["truststore_password"] = esg_bash2py.Expand.colonMinus(
             "truststore_password", "changeit")
         # globus_global_certs_dir=/etc/grid-security/certificates
@@ -475,7 +473,7 @@ class EsgInit(object):
         # default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to
         # allow prompting of user for fields!
         # zoiks: allow this to be empty to allow prompting of user for fields!
-        internal_script_variables["default_dname"] = "OU=ESGF.ORG, O=ESGF"
+        internal_script_variables["default_distinguished_name"] = "OU=ESGF.ORG, O=ESGF"
         # config_file=${esg_config_dir}/esgf.properties
         internal_script_variables[
             "config_file"] = self.esg_config_dir + "/esgf.properties"

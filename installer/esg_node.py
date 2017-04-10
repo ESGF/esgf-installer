@@ -2073,8 +2073,6 @@ def configure_tomcat(keystore_password, esg_dist_url):
 
     os.chdir(starting_directory)
 
-    pass
-
 
 def add_my_cert_to_truststore(keystore_pass):
     pass
@@ -2083,12 +2081,75 @@ def setup_temp_ca():
     pass
 
 def setup_root_app():
+
+    if os.path.isdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")) and 'REFRESH' in open(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html")).read():
+        print "ROOT app in place... [OK]"
+        return True
+    else:
+        print "Oops, Don't see ESGF ROOT web application"
+        esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))
+
+        print "*******************************"
+        print "Setting up Apache Tomcat...(v${tomcat_version}) ROOT webapp"
+        print "*******************************"
+
+        esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+        root_app_dist_url = "{esg_dist_url}/ROOT.tgz".format(esg_dist_url = esg_dist_url)
+
+        try:
+            os.makedirs(config.config_dictionary["workdir"])
+        except OSError, exception:
+            if exception.errno != 17:
+                raise
+            sleep(1)
+            pass
+
+        starting_directory = os.getcwd()
+        os.chdir(config.config_dictionary["workdir"])
+
+        print "Downloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
+        if esg_functions.checked_get(root_app_dist_url) > 0:
+            print " ERROR: Could not download ROOT app archive"
+            os.chdir(starting_directory)
+            esg_functions.checked_done(1)
+
+        print "unpacking ${root_app_dist_url}...".format(root_app_dist_url = esg_functions.trim_string_from_tail(root_app_dist_url))
+        try:
+            tar = tarfile.open(esg_functions.trim_string_from_tail(root_app_dist_url))
+            tar.extractall()
+            tar.close()
+            shutil.move(esg_functions.trim_string_from_tail(root_app_dist_url), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
+        except Exception, error:
+            print " ERROR: Could not extract {root_app_dist_url}".format(esg_functions.readlinkf(esg_functions.trim_string_from_tail(root_app_dist_url)))
+
+        if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
+            shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))
+        if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-web-fe")):
+            shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.fe"))
+
+        os.chown(esg_functions.readlinkf(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+            config.config_dictionary["tomcat_group"]).gr_gid)
+
+        print "ROOT application \"installed\""
+        os.chdir(starting_directory)
+        return True
+
+
+
     pass
 
 def migrate_tomcat_credentials_to_esgf():
     pass
 
 def tomcat_port_check():
+    ''' 
+        Helper function to poke at tomcat ports...
+        Port testing for http and https
+    '''
+    return_all = True
+    protocol = "http"
+    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(config.config_dictionary["tomcat_install_dir"])
+
     pass
 
 def write_tomcat_env():

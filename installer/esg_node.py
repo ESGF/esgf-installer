@@ -19,6 +19,7 @@ import tarfile
 import urllib
 import shlex
 import errno
+import fileinput
 from git import Repo
 from collections import deque
 from time import sleep
@@ -1659,7 +1660,7 @@ def setup_tomcat(upgrade_flag = False):
     # print "Checking for tomcat >= ${tomcat_min_version} ".format(tomcat_min_version = config.config_dictionary["tomcat_min_version"])
     # esg_functions.check_app
     print "*******************************"
-    print "Setting up Apache Tomcat...(v${tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
+    print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
     print "*******************************"
 
     last_install_directory = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"])
@@ -1915,7 +1916,170 @@ def setup_tomcat(upgrade_flag = False):
 
     return True
 
-def configure_tomcat(keystore_password):
+def configure_tomcat(keystore_password, esg_dist_url):
+    #----------------------------
+    # TOMCAT Configuration...
+    #----------------------------
+
+    print "*******************************"
+    print "Configuring Tomcat... (for Node Manager)"
+    print "*******************************"
+
+    starting_directory = os.getcwd()
+    os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf"))
+
+    fetch_file_name = "server.xml"
+    fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
+
+    if esg_functions.checked_get(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_functions.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
+        os.chdir(starting_directory)
+        esg_functions.checked_done(1)
+
+    os.chmod(fetch_file_path, 0600)
+    os.chown(fetch_file_path, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+
+    print "Looking for keystore [${keystore_file}]...".format(keystore_file = config.config_dictionary["keystore_file"])
+    if os.path.isfile(config.config_dictionary["keystore_file"]):
+        print "Found keystore file"
+    else:
+        print "Could not find keystore file"
+
+    #Create a keystore in $tomcat_conf_dir
+    print "Keystore setup: "
+
+    if not keystore_password:
+        with open(config.ks_secret_file, 'rb') as f:
+            keystore_password = f.read().strip()
+
+    if not os.path.isfile(config.config_dictionary["keystore_file"]):
+        print "Launching Java's keytool:"
+
+        if not len(keystore_password) > 0:
+            verify_password = None
+            while True:
+                keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+                if not keystore_password_input:
+                    print "Invalid password"
+                    continue
+
+                keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
+                if keystore_password_input == keystore_password_input_confirmation:
+                    keystore_password = keystore_password_input
+                    break
+                else:
+                    print "Sorry, values did not match. Please try again."
+                    continue
+
+
+        #NOTE:
+        #As Reference on Distingueshed Names (DNs)
+        #http://download.oracle.com/javase/1.4.2/docs/tooldocs/windows/keytool.html
+        #According to that document, case does not matter but ORDER DOES!
+        #See script scope declaration of this variable (default_dname [suffix] = "OU=ESGF.ORG, O=ESGF")
+
+        use_distinguished_name = "Y"
+        try:
+            distinguished_name    
+        except NameError:
+            distinguished_name = config.config_dictionary["default_distinguished_name"]
+
+        distringuished_name_input = raw_input("Would you like to use the DN: [{distinguished_name}]?  [Y/n]".format(distinguished_name = distinguished_name))
+
+        if distringuished_name_input.lower in ("n", "no", "y", "yes"):
+            use_distinguished_name = distringuished_name_input
+
+        logger.debug("Your selection is %s", distringuished_name_input)
+        logger.debug("distinguished_name = %s", distinguished_name)
+
+        if not distinguished_name or use_distinguished_name.lower == "n":
+            java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias ${keystore_alias} -keyalg RSA \
+            -keystore ${keystore_file} \
+            -validity 365 -storepass ${keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
+                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = keystore_password)
+            keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+            if keytool_return_code != 0:
+                print " ERROR: keytool genkey command failed" 
+                os.chdir(starting_directory)
+            esg_functions.checked_done(1)
+        else:
+            # distringuished_name_sed_output = subprocess.check_output("echo {distinguished_name} | sed -n 's#.*CN=\([^,]*\),.*#\1#p'".format(distinguished_name = distinguished_name))
+            if re.search("(CN=)(\S+)(,)", distinguished_name).group(2):
+                try:
+                    esgf_host = config.config_dictionary["esgf_host"]
+                except KeyError:
+                    esgf_host = socket.getfqdn()
+                distinguished_name = "CN={esgf_host}, {distinguished_name}".format(esgf_host = esgf_host, distinguished_name = distinguished_name)
+                print "Using keystore DN = ${distinguished_name}".format(distinguished_name = distinguished_name)
+                java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
+                {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
+                -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"], 
+                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = keystore_password)
+                keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+                if keytool_return_code != 0:
+                    print " ERROR: keytool genkey command failed" 
+                    os.chdir(starting_directory)
+                esg_functions.checked_done(1)
+    else:
+        print "Using existing keystore \"{keystore_file}\"".format(keystore_file =config.config_dictionary["keystore_file"])
+
+    setup_temp_ca()
+    #Fetch/Copy truststore to $tomcat_conf_dir
+    #(first try getting it from distribution server otherwise copy Java's)
+    if not os.path.isfile(config.config_dictionary["truststore_file"]):
+        # i.e. esg-truststore.ts
+        truststore_file_name = esg_functions.trim_string_from_tail(config.config_dictionary["truststore_file"])
+        if esg_functions.checked_get(truststore_file_name, "http://{esg_dist_url_root}/certs/${fetch_file_name}".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"], fetch_file_name = fetch_file_name)) > 1:
+            print " INFO: Could not download certificates ${fetch_file_name} for tomcat - will copy local java certificate file".format(fetch_file_name = fetch_file_name)
+            print "(note - the truststore password will probably not match!)"
+            try:
+                shutil.copyfile(os.path.join(config.config_dictionary["java_install_dir"], "jre", "lib", "security", "cacerts"), config.config_dictionary["truststore_file"])
+            except Exception, error:
+                print " ERROR: Could not fetch or copy {fetch_file_name} for tomcat!!".format(fetch_file_name = fetch_file_name)
+                logger.error(error)
+
+    #NOTE: The truststore uses the java default password: "changeit"
+    #Edit the server.xml file to contain proper location of certificates
+
+    logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
+    for line in fileinput.FileInput(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"), inplace=True, backup='.bak'):
+        # for line in file:
+            # print line.replace(textToSearch, textToReplace), end='' 
+        print re.sub("pathname=\S+", "pathname={tomcat_users_file}".format(tomcat_users_file = config.config_dictionary["tomcat_users_file"]), line)
+        print re.sub("truststoreFile=\S+", "truststoreFile={truststore_file}".format(truststore_file = config.config_dictionary["truststore_file"]), line)
+        print re.sub("truststorePass=\S+", "truststorePass={truststore_password}".format(truststore_password = config.config_dictionary["truststore_password"]), line)
+        print re.sub("keystoreFile=\S+", "keystoreFile={keystore_file}".format(keystore_file = config.config_dictionary["keystore_file"]), line)
+        print re.sub("keystorePass=\S+", "keystorePass={keystore_password}".format(keystore_password = keystore_password), line)
+        print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
+        # print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
+
+
+    add_my_cert_to_truststore(keystore_pass = keystore_password)
+
+    try:
+        os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+            config.config_dictionary["tomcat_group"]).gr_gid)
+    except Exception, error:
+        print "**WARNING**: Could not change owner/group of {tomcat_install_dir} successfully".format(tomcat_install_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
+        logger.error(error)
+        esg_functions.checked_done(1)
+
+    try:
+        os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+            config.config_dictionary["tomcat_group"]).gr_gid)
+    except Exception, error:
+        print "**WARNING**: Could not change owner/group of {tomcat_conf_dir} successfully".format(tomcat_conf_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]))
+        logger.error(error)
+        esg_functions.checked_done(1)
+
+    os.chdir(starting_directory)
+
+    pass
+
+
+def add_my_cert_to_truststore(keystore_pass):
+    pass
+
+def setup_temp_ca():
     pass
 
 def setup_root_app():

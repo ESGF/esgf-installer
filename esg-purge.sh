@@ -120,6 +120,8 @@ esg-purge-base () {
     rm -rf /usr/local/cog
     rm -rf /var/www/.python-eggs
 
+
+
     # We want to potentially preserve certificates, as they may be
     # annoying to recreate and sign.
     if [ -f /etc/hostcert.pem ] ; then
@@ -150,6 +152,7 @@ esg-purge-base () {
     rm -rf /usr/local/esgf* || true
     rm -rf /usr/local/esgf-solr-* || true
     rm -rf /usr/local/solr* || true
+    rm -rf /usr/local/esgf-node-manager
 
     # Solr may leave stuck java processes.  Kill them with extreme prejudice
     pkill -9 -f 'java.*/usr/local/solr'
@@ -157,7 +160,9 @@ esg-purge-base () {
 
 esg-purge-cdat () {
     yum remove -y cdat uvcdat
-    rm -rf /usr/local/cdat /usr/local/uvcdat
+    rm -rf /usr/local/cdat /usr/local/uvcdat /usr/local/conda /usr/local/cmip6-cmor-tables
+
+
 }
 
 esg-purge-final () {

@@ -2078,6 +2078,31 @@ def add_my_cert_to_truststore(keystore_pass):
     pass
 
 def setup_temp_ca():
+    try:
+        esgf_host = config.config_dictionary["esgf_host"]
+    except KeyError:
+        esgf_host = esg_functions.get_property("esgf_host")
+
+    host_name = esgf_host
+
+    try:
+        os.makedirs("/etc/tempcerts")
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    os.chdir("/etc/tempcerts")
+    shutil.rmtree(os.path.join(os.getcwd(), "CA"))
+    extensions_to_delete = (".pem", ".gz", ".ans", ".tmpl")
+    files = os.listdir(os.getcwd())
+    for file in files:
+        if file.endswith(extensions_to_delete):
+            os.remove(os.path.join(os.getcwd(), file))
+
+    os.mkdir("CA")    
+
     pass
 
 def setup_root_app():
@@ -2137,6 +2162,24 @@ def setup_root_app():
 
 
     pass
+
+def write_ca_ans_templ():
+    file = open("setupca.ans.tmpl", "w+")
+    file.write('''
+
+        placeholder.fqdn-CA
+
+
+        ''')
+
+def write_reqhost_ans_templ():
+    file = open("reqhost.ans.tmpl", "w+")
+    file.write('''
+
+        placeholder.fqdn
+
+
+        ''')
 
 def migrate_tomcat_credentials_to_esgf():
     pass

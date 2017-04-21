@@ -203,6 +203,7 @@ init() {
     #NOTE: This root dir should match a root set in the thredds setup
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
+    esgf_stats_api_dist_url=${esg_dist_url}/esgf-stats-api/esgf-stats-api.war 
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
     show_summary_latch=0
     source_latch=0

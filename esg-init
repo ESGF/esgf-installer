@@ -39,17 +39,17 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.9"}
+    esgf_security_version=${esgf_security_version:-"2.7.10"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.9.2"}
+    esg_orp_version=${esg_orp_version:-"2.9.3"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.7.4"}
+    esgf_idp_version=${esgf_idp_version:-"2.7.6"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"4.11.3"}
+    esg_search_version=${esg_search_version:-"4.12.0"}
 
     #see esgf-web-fe project:
 

@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.5.1-devel"
+script_version="v2.5.2-devel-release"
 script_maj_version="2.5"
-script_release="Demogorgon"
+script_release="Midgard"
 envfile="/etc/esg.env"
 
 #--------------

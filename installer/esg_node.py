@@ -2101,9 +2101,96 @@ def setup_temp_ca():
         if file.endswith(extensions_to_delete):
             os.remove(os.path.join(os.getcwd(), file))
 
-    os.mkdir("CA")    
+    os.mkdir("CA")
+    write_ca_ans_templ() 
+    write_reqhost_ans_templ()
 
-    pass
+    setuphost_ans = open("setuphost.ans", "w+")
+    setuphost_ans.write("y\ny")
+    setuphost_ans.close()
+
+    setupca_ans_tmpl = open("setupca.ans.tmpl", "r")
+    setupca_ans = open("setupca.ans", "w+")
+    for line in setupca_ans_tmpl:
+        setupca_ans.write(line.replace("placeholder.fqdn", host_name))
+    setupca_ans_tmpl.close()
+    setupca_ans.close()
+
+    reqhost_ans_tmpl = open("reqhost.ans.tmpl", "r")
+    reqhost_ans = open("setupca.ans", "w+")
+    for line in reqhost_ans_tmpl:
+        reqhost_ans.write(line.replace("placeholder.fqdn", host_name))
+    reqhost_ans_tmpl.close()
+    reqhost_ans.close()
+
+    if devel:
+        urllib.urlretrieve("{esg_dist_url_root}/devel/esgf-installer/CA.pl", "CA.pl")
+        urllib.urlretrieve("{esg_dist_url_root}/devel/esgf-installer/openssl.cnf", "openssl.cnf")
+        urllib.urlretrieve("{esg_dist_url_root}/devel/esgf-installer/myproxy-server.config", "myproxy-server.config")
+    else:
+        urllib.urlretrieve("{esg_dist_url_root}/esgf-installer/CA.pl", "CA.pl")
+        urllib.urlretrieve("{esg_dist_url_root}/esgf-installer/openssl.cnf", "openssl.cnf")
+        urllib.urlretrieve("{esg_dist_url_root}/esgf-installer/myproxy-server.config", "myproxy-server.config")
+
+    subprocess.call(shlex.split("perl CA.pl -newca <setupca.ans"))
+    subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem"))
+    subprocess.call(shlex.split("perl CA.pl -newreq-nodes <reqhost.ans"))
+    subprocess.call(shlex.split("perl CA.pl -sign <setuphost.ans"))
+    subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem"))
+    subprocess.call(shlex.split("cp CA/private/cakey.pem cakey.pem"))
+    subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
+    subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
+
+    os.chmod("cakey.pem", 0400)
+    os.chmod("hostkey.pem", 0400)
+
+    subprocess.call(shlex.split("rm -f new*.pem"))
+
+    ESGF_OPENSSL="/usr/bin/openssl"
+    cert = "cacert.pem"
+    temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+    quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
+
+    cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
+    quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
+    print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
+
+    local_hash = subprocess.check_output("`{ESGF_OPENSSL} x509 -in {cert} -noout -hash`".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert))
+
+    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash)
+    os.mkdir(target_directory)
+    shutil.copyfile(cert, os.path.join(target_directory, local_hash, ".0"))
+
+    print_templ()
+
+    subprocess.call(shlex.split('sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;'))
+    shutil.copyfile(os.path.join(target_directory,local_hash,".signing_policy"), "signing_policy")
+
+    subprocess.call(shlex.split("tar -cvzf globus_simple_ca_{local_hash}_setup-0.tar.gz {target_directory};".format(local_hash = local_hash, target_directory = target_directory)))
+    subprocess.call(shlex.split("rm -rf {target_directory};".format(target_directory = target_directory)))
+    subprocess.call(shlex.split("rm -f signing_policy_template;"))
+
+
+    try:
+        os.makedirs("/etc/certs")
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    shutil.copyfile("openssl.cnf", os.path.join("etc", "certs"))
+    subprocess.call(shlex.split("cp host*.pem /etc/certs/"))
+    shutil.copyfile("cacerts.pem", os.path.join("etc", "certs", "cachain.pem"))
+
+    try:
+        os.makedirs("/etc/esgfcerts")
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+
 
 def setup_root_app():
 
@@ -2171,6 +2258,7 @@ def write_ca_ans_templ():
 
 
         ''')
+    file.close()
 
 def write_reqhost_ans_templ():
     file = open("reqhost.ans.tmpl", "w+")
@@ -2180,6 +2268,48 @@ def write_reqhost_ans_templ():
 
 
         ''')
+    file.close()
+
+def print_templ():
+    file = open("signing_policy_template", "w+")
+    file.write('''
+        # ca-signing-policy.conf, see ca-signing-policy.doc for more information
+        #
+        # This is the configuration file describing the policy for what CAs are
+        # allowed to sign whoses certificates.
+        #
+        # This file is parsed from start to finish with a given CA and subject
+        # name.
+        # subject names may include the following wildcard characters:
+        #    *    Matches any number of characters.
+        #    ?    Matches any single character.
+        #
+        # CA names must be specified (no wildcards). Names containing whitespaces
+        # must be included in single quotes, e.g. 'Certification Authority'. 
+        # Names must not contain new line symbols. 
+        # The value of condition attribute is represented as a set of regular 
+        # expressions. Each regular expression must be included in double quotes.  
+        #
+        # This policy file dictates the following policy:
+        #   -The Globus CA can sign Globus certificates
+        #
+        # Format:
+        #------------------------------------------------------------------------
+        #  token type  | def.authority |                value              
+        #--------------|---------------|-----------------------------------------
+        # EACL entry #1|
+
+         access_id_CA      X509         '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+
+         pos_rights        globus        CA:sign
+
+         cond_subjects     globus       '"/O=ESGF/OU=ESGF.ORG/*"'
+
+        # end of EACL
+
+        ''')
+    file.close()
+
 
 def migrate_tomcat_credentials_to_esgf():
     pass

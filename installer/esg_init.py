@@ -441,9 +441,7 @@ class EsgInit(object):
         # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
         internal_script_variables["show_summary_latch"] = 0
         internal_script_variables["source_latch"] = "0"
-        # scripts_dir=${install_prefix}/bin
         internal_script_variables["scripts_dir"] = self.install_prefix + "/bin"
-        # esg_installarg_file=${scripts_dir}/esg-installarg
         internal_script_variables["esg_installarg_file"] = internal_script_variables[
             "scripts_dir"] + "/esg-installarg"
         internal_script_variables[
@@ -455,13 +453,12 @@ class EsgInit(object):
         # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
         internal_script_variables["tomcat_users_file"] = self.config_dictionary[
             "tomcat_conf_dir"] + "/tomcat-users.xml"
-        # keystore_file=${tomcat_conf_dir}/keystore-tomcat
         internal_script_variables["keystore_file"] = self.config_dictionary[
             "tomcat_conf_dir"] + "/keystore-tomcat"
-        # keystore_alias=${keystore_alias:-my_esgf_node}
         internal_script_variables["keystore_alias"] = esg_bash2py.Expand.colonMinus(
             "keystore_alias", "my_esgf_node")
         # keystore_password=${keystore_password}
+        internal_script_variables["keystore_password"] = esg_bash2py.Expand.colonMinus("keystore_password", "")
         internal_script_variables["truststore_file"] = self.config_dictionary[
             "tomcat_conf_dir"] + "/esg-truststore.ts"
         internal_script_variables["truststore_password"] = esg_bash2py.Expand.colonMinus(

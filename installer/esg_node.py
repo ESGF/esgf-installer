@@ -20,6 +20,8 @@ import urllib
 import shlex
 import errno
 import fileinput
+import xmltodict
+import untangle
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2013,7 +2015,7 @@ def configure_tomcat(keystore_password, esg_dist_url):
                 java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
                 {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
                 -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"], 
-                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = keystore_password)
+                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file = config.config_dictionary["keystore_file"], keystore_password = keystore_password)
                 keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
                 if keytool_return_code != 0:
                     print " ERROR: keytool genkey command failed" 
@@ -2074,7 +2076,215 @@ def configure_tomcat(keystore_password, esg_dist_url):
     os.chdir(starting_directory)
 
 
-def add_my_cert_to_truststore(keystore_pass):
+def add_my_cert_to_truststore(action, value):
+    '''
+        This takes our certificate from the keystore and adds it to the
+        truststore.  This is done for other services that use originating
+        from this server talking to another service on this same host.  This
+        is the interaction scenario with part of the ORP security mechanism.
+        The param here is the password of the *keystore*  <----Stale comment; doesn't match functionality
+    '''
+    _glean_keystore_info()
+
+    #TODO: refactor to better name
+    local_keystore_file = config.config_dictionary["keystore_file"]
+    local_keystore_password = config.config_dictionary["keystore_password"]
+    local_keystore_alias = config.config_dictionary["keystore_alias"]
+    local_truststore_file = config.config_dictionary["truststore_file"]
+    local_truststore_password = config.config_dictionary["truststore_password"]
+    check_private_keystore_flag = True
+
+    if action in ["--keystore", "-ks"]:
+        local_keystore_file = value
+        logger.debug("keystore_file: %s", local_keystore_file)
+    elif action in ["--keystore-pass", "-kpass"]:
+        local_keystore_password = value
+        logger.debug("keystore_pass_value: %s", local_keystore_password)
+    elif action in ["alias", "-a"]:
+        local_keystore_password = value
+        logger.debug("key_alias_value: %s", local_keystore_password)
+    elif action in ["--truststore", "-ts"]:
+        local_truststore_file = value
+        logger.debug("truststore_file_value: %s", local_truststore_file)
+    elif action in ["--truststore-pass", "-tpass"]:
+        local_truststore_file = value
+        logger.debug("truststore_pass_value: %s", local_truststore_file)
+    elif action in ["--no-check"]:
+        check_private_keystore_flag = False
+    else:
+        logger.error("Invalid action given: %s", action)
+        return False
+
+    logger.debug("keystore_file: %s", local_keystore_file)
+    logger.debug("keystore_pass_value: %s", local_keystore_password)
+    logger.debug("key_alias_value: %s", local_keystore_alias)
+    logger.debug("truststore_file_value: %s", local_truststore_file)
+    logger.debug("truststore_pass_value: %s", local_truststore_password)
+    logger.debug("check_private_keystore_flag: %s", check_private_keystore_flag)
+
+
+    with open(config.ks_secret_file, 'rb') as f:
+        keystore_password_in_file = f.read().strip()
+
+    if keystore_password_in_file != local_keystore_file:
+        while True:
+            store_password_input = raw_input("Please enter the password for this keystore   : ")
+            if store_password_input == "changeit":
+                break
+            if not store_password_input:
+                print "Invalid password [{store_password_input}]".format(store_password_input = store_password_input)
+                continue
+            store_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
+            if store_password_input == store_password_input_confirmation:
+                java_keytool_command = "{java_install_dir}/bin/keytool -list -keystore {local_keystore_file} \
+                -storepass ${local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+                    keystore_file = local_keystore_file, keystore_password = local_keystore_password)
+                keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+                if keytool_return_code != 0:
+                    print "([FAIL]) Could not access private keystore ${local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
+                    continue
+                local_keystore_password = store_password_input
+                break
+            else:
+                print "Sorry, values did not match"
+
+    if check_private_keystore_flag:
+        #only making this call to test password
+        java_keytool_command = "{java_install_dir}/bin/keytool -v -list -keystore {local_keystore_file} \
+                -storepass ${local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+                    keystore_file = local_keystore_file, keystore_password = local_keystore_password)
+        keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+        if keytool_return_code != 0:
+            print "([FAIL]) Could not access private keystore ${local_keystore_file} with provided password. (re-run --add-my-cert-to-truststore)".format(local_keystore_file = local_keystore_file)
+            return False
+        else:
+            logger.info("[OK]")
+
+        logger.debug("Peforming checks against configured values...")
+        keystore_password_hasher = hashlib.md5()
+        keystore_password_hasher.update(config.config_dictionary["keystore_password"])
+        keystore_password_md5 = keystore_password_hasher.hexdigest()
+
+        local_keystore_password_hasher = hashlib.md5()
+        local_keystore_password_hasher.update(local_keystore_password)
+        local_keystore_password_md5 = local_keystore_password_hasher.hexdigest()
+        logger.debug(keystore_password_md5 == local_keystore_password_md5)
+
+        if config.config_dictionary["keystore_password"] != local_keystore_password:
+            logger.info("\nWARNING: password entered does not match what's in the app server's configuration file\n")
+            # Update server.xml
+            server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+            server_xml_object.Server.Connector[1]["keystorePass"] = local_keystore_password
+            print "  Adjusted app server's config file... "
+            config.config_dictionary["keystore_password"] = server_xml_object.Server.Connector[1]["keystorePass"]
+            if config.config_dictionary["keystore_password"] != local_keystore_password:
+                logger.info("[OK]")
+            else:
+                logger.error("[FAIL]")
+
+    #----------------------------------------------------------------
+    #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
+    #----------------------------------------------------------------
+    if os.path.exists(local_truststore_file):
+        print "Re-Integrating keystore's certificate into truststore.... "
+        print "Extracting keystore's certificate... "
+        java_keytool_command = "{java_install_dir}/bin/keytool -export -alias {local_keystore_alias}  -file {local_keystore_file}.cer -keystore {local_keystore_file} \
+        -storepass ${local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+        keystore_file = local_keystore_file, keystore_password = local_keystore_password, local_keystore_alias =  local_keystore_alias)
+        keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+        if keytool_return_code == 0:
+            logger.info("[OK]")
+        else:
+            logger.error("[FAIL]")
+            sys.exit(1)
+
+    java_keytool_command = "{java_install_dir}/bin/keytool -v -list -keystore {local_truststore_file} \
+        -storepass ${local_truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${local_keystore_alias}'$'".format(java_install_dir = config.config_dictionary["java_install_dir"],
+        local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password, local_keystore_alias = local_keystore_alias)
+    keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+    if keytool_return_code == 0:
+        print "Detected Alias \"${local_keystore_alias}\" Present... Removing... Making space for certificate... ".format(keystore_alias = local_keystore_alias)
+        delete_keytool_alias_command = "{java_install_dir}/bin/keytool -delete -alias {local_keystore_alias} -keystore {local_truststore_file} \
+        -storepass ${local_truststore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+        local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password, local_keystore_alias =  local_keystore_alias)
+        delete_keytool_alias_return_code = subprocess.call(shlex.split(delete_keytool_alias_command))
+        if delete_keytool_alias_return_code != 1:
+            logger.error(" ERROR: problem deleting %s key from keystore!", local_keystore_alias)
+            return False
+
+    print "Importing keystore's certificate into truststore... "
+    import_keystore_cert_command = "{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {local_keystore_alias} -keypass {local_keystore_password} -file {local_keystore_file}.cer -keystore {local_truststore_file} \
+        -storepass ${local_truststore_password} -noprompt".format(java_install_dir = config.config_dictionary["java_install_dir"], local_keystore_alias = local_keystore_alias, 
+        local_keystore_password = local_keystore_password, local_keystore_file = local_keystore_file,
+        local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password)
+    import_keystore_cert_return_code = subprocess.call(shlex.split(import_keystore_cert_command))
+    if import_keystore_cert_return_code == 0:
+        logger.info("[OK]")
+    else:
+        logger.error("[FAIL]")
+        sys.exit(1)
+    sync_with_java_truststore(local_truststore_file)
+    print "cleaning up after ourselves... "
+    try:
+        os.remove(local_keystore_file+".cer")
+    except Exception, error:
+        logger.error("[FAIL]: %s", error)
+
+    os.chown(local_truststore_file, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+            config.config_dictionary["tomcat_group"]).gr_gid)
+
+
+    return True
+
+
+
+    # def _define_acceptable_arguments():
+    #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
+    # truststore_arg_parser = argparse.ArgumentParser()
+    # truststore_arg_parser.add_argument("--keystore", "-ks" dest="keystore", help="Goes through the installation process and automatically starts up node services", action="store_true")
+    # truststore_arg_parser.add_argument("--keystore-pass", "-kpass", dest= "keystorepass" help="Updates the node manager", action="store_true")
+    # truststore_arg_parser.add_argument("--alias", "-a", dest="alias" help="Upgrade the node manager", action="store_true")
+    # truststore_arg_parser.add_argument("--truststore", "-ts", dest="truststore", help="Install local certificates", action="store_true")
+    # truststore_arg_parser.add_argument("--truststore-pass", "-tpass", dest="truststorepass", help="Install local certificates", action="store_true")
+    # truststore_arg_parser.add_argument("--no-check", dest="nocheck", help="Install local certificates", action="store_true")
+
+
+
+def _glean_keystore_info():
+    '''
+        Util "private" function for use **AFTER** tomcat has been configured!!!!
+        Reads tomcat's server.xml file at sets the appropriate vars based on contained values
+        Will *only* set global vars if it was successfully gleaned from server.xml.
+    '''
+    if not os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"), os.R_OK):
+        logger.debug("inspecting tomcat config file ")
+
+        server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+
+        config.config_dictionary["keystore_file"] = server_xml_object.Server.Connector[1]["keystoreFile"]
+        logger.debug("keystore_file_value: %s", config.config_dictionary["keystore_file"])
+
+        config.config_dictionary["keystore_password"] = server_xml_object.Server.Connector[1]["keystorePass"]
+        logger.debug("keystore_pass_value: %s", config.config_dictionary["keystore_password"])
+
+        config.config_dictionary["keystore_alias"] = server_xml_object.Server.Connector[1]["keyAlias"]
+        logger.debug("key_alias_value: %s", config.config_dictionary["keystore_alias"])
+
+        config.config_dictionary["truststore_file"] = server_xml_object.Server.Connector[1]["truststoreFile"]
+        logger.debug("truststore_file_value: %s", config.config_dictionary["truststore_file"])
+
+        config.config_dictionary["truststore_password"] = server_xml_object.Server.Connector[1]["truststorePass"]
+        logger.debug("truststore_pass_value: %s", config.config_dictionary["truststore_password"])
+
+        return True
+    else:
+        print "Could not glean values store... :-("
+        return False
+
+
+
+
+
     pass
 
 def setup_temp_ca():

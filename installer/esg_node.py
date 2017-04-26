@@ -2268,7 +2268,7 @@ def sync_with_java_truststore(external_truststore = config.config_dictionary["tr
     shutil.copyfile(external_truststore, java_truststore)
     os.chmod(java_truststore, 0644)
     os.chown(java_truststore, config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
-    
+
 
 def _glean_keystore_info():
     '''
@@ -2301,11 +2301,6 @@ def _glean_keystore_info():
         print "Could not glean values store... :-("
         return False
 
-
-
-
-
-    pass
 
 def setup_temp_ca():
     try:

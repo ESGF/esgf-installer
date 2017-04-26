@@ -31,3 +31,5 @@ pyxdg==0.25
 coverage==4.3.4
 Sphinx==1.4.8
 setuptools==27.2.0
+xmltodict-0.10.2
+untangle-1.1.0

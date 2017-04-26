@@ -22,6 +22,7 @@ import errno
 import fileinput
 import xmltodict
 import untangle
+import filecmp
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2249,6 +2250,25 @@ def add_my_cert_to_truststore(action, value):
     # truststore_arg_parser.add_argument("--no-check", dest="nocheck", help="Install local certificates", action="store_true")
 
 
+def sync_with_java_truststore(external_truststore = config.config_dictionary["truststore_file"]):
+    if not os.path.exists(os.path.join(os.environ["JAVA_HOME"], "jre", "lib", "security", "jssecacerts")) and os.path.exists(os.path.join(os.environ["JAVA_HOME"], "jre", "lib", "security", "cacerts")):
+        shutil.copyfile(os.path.join(os.environ["JAVA_HOME"], "jre", "lib", "security", "cacerts"), os.path.join(os.environ["JAVA_HOME"], "jre", "lib", "security", "jssecacerts"))
+
+    java_truststore = os.path.join(os.environ["JAVA_HOME"], "jre", "lib", "security", "jssecacerts")
+    print "Syncing {external_truststore} with {java_truststore} ... ".format(external_truststore = external_truststore, java_truststore = java_truststore)
+    if not os.path.exists(external_truststore):
+        logger.error("[FAIL]: Cannot locate %s", external_truststore)
+        return False
+
+    if filecmp.cmp(external_truststore, java_truststore):
+        logger.info("Files are equivalent: [OK]")
+        return True
+    if os.path.exists(java_truststore):
+        shutil.copyfile(java_truststore, java_truststore+".bak")
+    shutil.copyfile(external_truststore, java_truststore)
+    os.chmod(java_truststore, 0644)
+    os.chown(java_truststore, config.config_dictionary["installer_uid"], config.config_dictionary["installer_gid"])
+    
 
 def _glean_keystore_info():
     '''

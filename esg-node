@@ -968,7 +968,6 @@ _housekeeping_cdat_to_uvcdat() {
     dedup ${envfile} && source ${envfile}
 }
 
-
 #####
 # ESGCET Package
 #####
@@ -1183,8 +1182,11 @@ setup_esgcet() {
 
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
       choice=$(echo ${choice} | tr 'A-Z' 'a-z')
+      if [ -z $choice ] ; then
+          choice="n"
+      fi
       if [ $choice == "y" ] ; then
-        conda install -y -c pcmdi -c conda-forge -c uvcdat cmor cfchecker
+        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor cfchecker
         pip install esgfpid   
         pushd $install_dir
         git clone https://github.com/PCMDI/cmip6-cmor-tables
@@ -1542,7 +1544,9 @@ EOF
 }
 
 update_apache_conf() {
-	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
+
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"} 
+    conf_file=/etc/httpd/conf/esgf-httpd.conf
 	pushd $localworkdir;
 	if [ ! -d apache_frontend ]; then
 		mkdir apache_frontend && pushd apache_frontend && git clone ${apache_frontend_repo} && popd
@@ -1554,10 +1558,24 @@ update_apache_conf() {
 	fi
 	pushd apache_frontend/apache-frontend;
 	if [ $devel -eq 1 ]; then
-		git checkout $apache_frontend_version;
+		git checkout $apache_frontend_tag;
 	else
 		git checkout master;
 	fi
+
+    if [ -f $conf_file ] ; then
+        echo "Backing up previous version of $conf_file"
+        datestr=`date +%y%m%d%`
+
+        conf_file_backup="${conf_file}.${datestr}.bak"
+        if [ -f $conf_file_backup ] ; then
+            echo "WARNING:  esgf-httpd.conf already backed up today."
+            cp $conf_file_backup "${conf_file_backup}.1"
+        fi
+
+        cp $conf_file $conf_file_backup
+
+    fi
 
 	quotedwsgipath=`echo "/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so"|sed 's/[./*?|"]/\\\\&/g'`
 	allowedips=`sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf|grep Allow|sort -u`;
@@ -1647,7 +1665,7 @@ setup_apache_frontend() {
 	if [ $? -eq 0 ]; then
 		cd apache-frontend;
 		if [ $devel -eq 1 ]; then
-			git checkout $apache_frontend_version;
+			git checkout $apache_frontend_tag;
 			else
 			git checkout master;
 		fi
@@ -1678,6 +1696,26 @@ setup_apache_frontend() {
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
+    else
+        conf_file=/etc/httpd/conf/esgf-httpd.conf
+        if [ -f $conf_file ] ; then
+             esgf_httpd_ver=`grep ESGF-HTTPD-CONF esgf-httpd.conf.tmpl~ | awk '{print $4}'`
+             if [-z $esgf_httpd_ver ] ; then
+                echo "esgf-httpd.conf is missing versioning, attempting to update."
+             else
+                check_version_atleast $esgf_httpd_ver $apache_frontend_version
+                if [ $? == 0 ] ; then
+                    echo "esgf-httpd.conf version is sufficient"
+                else
+                    echo "esgf-httpd version is out-of-date, attempting to update."
+                    update_apache_conf()
+                fi
+             fi
+        else
+            echo "esgf-httpd.conf file not found, attempting to update. This condition is not expected to occur and should be reported to ESGF support"
+            update_apache_conf()
+        fi
+
 	fi
 }	
 #helper function to poke at tomcat ports...
@@ -6939,6 +6977,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
 
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
         
         # Compute Languages and Tools Setup

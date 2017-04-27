@@ -1717,8 +1717,9 @@ def setup_tomcat(upgrade_flag = False):
     tomcat_dist_dir = re.sub("\.tar.gz", "", tomcat_dist_file)
 
     #There is this pesky case of having a zero sized dist file...
-    if os.stat(tomcat_dist_file).st_size == 0:
-        os.remove(tomcat_dist_file)
+    if os.path.exists(tomcat_dist_file):
+        if os.stat(tomcat_dist_file).st_size == 0:
+            os.remove(tomcat_dist_file)
 
     #Check to see if we have a tomcat distribution directory
     tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"])

@@ -2471,10 +2471,6 @@ def setup_root_app():
         os.chdir(starting_directory)
         return True
 
-
-
-    pass
-
 def write_ca_ans_templ():
     file = open("setupca.ans.tmpl", "w+")
     file.write('''
@@ -2632,8 +2628,39 @@ def tomcat_port_check():
     return_all = True
     protocol = "http"
     print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(config.config_dictionary["tomcat_install_dir"])
+    server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+            # server_xml_object.Server.Connector[1]["keystorePass"] = local_keystore_password
+    for connector in server_xml_object.Server.Connector:
+        if connector["port"] == "8223":
+            continue
+        if connector["port"] == "8443":
+            protocol="https"
+        print "checking localhost port [${port}]"
+        wait_time = 5
+        return_code = None
+        while wait_time > 0:
+            return_code = subprocess.call("curl -k {protocol}://localhost:{port} >& /dev/null".format(protocol = protocol, port = connector["port"]))
+            if return_code == 0:
+                break
+            sleep(1)
+            wait_time -= 1
+        if return_code == 0:
+            logger.info("[OK]")
+        else:
+            logger.error("[FAIL]")
 
-    pass
+        #We only care about reporting a failure for ports below 1024
+        #specifically 80 (http) and 443 (https)
+        if connector.has_key("protocol") and "http" in connector["protocol"].lower():
+            esgf_http_port = connector["port"]
+        if connector.has_key("SSLEnabled"):
+            esgf_https_port = connector["port"]
+
+        if connector["port"] < 1024:
+            return_all += return_code
+
+    return return_all
+
 
 def write_tomcat_env():
     pass

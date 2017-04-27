@@ -1699,21 +1699,22 @@ setup_apache_frontend() {
     else
         conf_file=/etc/httpd/conf/esgf-httpd.conf
         if [ -f $conf_file ] ; then
-             esgf_httpd_ver=`grep ESGF-HTTPD-CONF esgf-httpd.conf.tmpl~ | awk '{print $4}'`
+             esgf_httpd_ver=`grep ESGF-HTTPD-CONF $conf_file | awk '{print $4}'`
              if [-z $esgf_httpd_ver ] ; then
                 echo "esgf-httpd.conf is missing versioning, attempting to update."
+                update_apache_conf
              else
                 check_version_atleast $esgf_httpd_ver $apache_frontend_version
                 if [ $? == 0 ] ; then
                     echo "esgf-httpd.conf version is sufficient"
                 else
                     echo "esgf-httpd version is out-of-date, attempting to update."
-                    update_apache_conf()
+                    update_apache_conf
                 fi
              fi
         else
             echo "esgf-httpd.conf file not found, attempting to update. This condition is not expected to occur and should be reported to ESGF support"
-            update_apache_conf()
+            update_apache_conf
         fi
 
 	fi

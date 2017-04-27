@@ -1728,7 +1728,7 @@ def setup_tomcat(upgrade_flag = False):
             os.remove(tomcat_dist_file)
 
     #Check to see if we have a tomcat distribution directory
-    tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"])
+    tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"]).group()
     logger.info("tomcat_parent_dir: %s", tomcat_parent_dir)
     logger.info("tomcat_dist_dir: %s", tomcat_dist_dir)
 

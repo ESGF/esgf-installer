@@ -1390,6 +1390,8 @@ def symlink_force(target, link_name):
             raise e
 
 def setup_java():
+    if os.path.exists(os.path.join("usr", "java", "jdk1.8.0_92")):
+        logger.info("Found existing Java installation.  Skipping set up.")
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm'
     subprocess.call(shlex.split(download_oracle_java_string))
     command_list = ["yum", "-y", "localinstall", "jdk-8u92-linux-x64.rpm"]
@@ -1680,7 +1682,7 @@ def setup_tomcat(upgrade_flag = False):
         else:
             continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [y/N]") or default
 
-        if not continue_installation_answer.lower() == "y" or not continue_installation_answer.lower() == "yes":
+        if continue_installation_answer.lower() != "y" or not continue_installation_answer.lower() != "yes":
             print "Skipping tomcat installation and setup - will assume tomcat is setup properly"
             return 0
 
@@ -1696,7 +1698,7 @@ def setup_tomcat(upgrade_flag = False):
     starting_directory = os.getcwd()
     os.chdir(config.config_dictionary["workdir"])
 
-    tomcat_dist_file = esg_functions.trim_string_from_head(config.config_dictionary["tomcat_dist_url"])
+    tomcat_dist_file = config.config_dictionary["tomcat_dist_url"].rsplit("/",1)[-1]
     tomcat_dist_dir = re.sub("\.tar.gz", "", tomcat_dist_file)
 
     #There is this pesky case of having a zero sized dist file...

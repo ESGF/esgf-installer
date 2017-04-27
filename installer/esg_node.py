@@ -166,9 +166,9 @@ def setup_esgcet(upgrade_mode=None):
         mode = "install"
 
     print '''
-        *******************************
-        Setting up ESGCET Package...(%s) [%s]
-        *******************************
+    *******************************
+    Setting up ESGCET Package...(%s) [%s]
+    *******************************
      ''' % (config.config_dictionary["esgcet_egg_file"], mode)
 
     if mode == "upgrade":
@@ -532,9 +532,9 @@ def write_esgcet_install_log():
 
 def test_esgcet():
     print '''
-        ----------------------------
-        ESGCET Test... 
-        ----------------------------
+    ----------------------------
+    ESGCET Test... 
+    ----------------------------
     '''
     starting_directory = os.getcwd()
     os.chdir(config.config_dictionary["workdir"])
@@ -1234,9 +1234,10 @@ def main():
     
 
 
-    print  '''-----------------------------------
-                ESGF Node Installation Program
-            -----------------------------------'''
+    print '''
+    -----------------------------------
+    ESGF Node Installation Program
+    -----------------------------------'''
 
     logger.debug("node_type_bit & INSTALL_BIT != 0: %s", node_type_bit & INSTALL_BIT != 0)
     logger.debug("node_type_bit: %i, %s", node_type_bit, type(node_type_bit))
@@ -1390,8 +1391,13 @@ def symlink_force(target, link_name):
             raise e
 
 def setup_java():
+    print '''
+    *******************************
+    Setting up Java 1.8.0_92
+    ******************************* '''
     if os.path.exists(os.path.join("usr", "java", "jdk1.8.0_92")):
         logger.info("Found existing Java installation.  Skipping set up.")
+        return
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm'
     subprocess.call(shlex.split(download_oracle_java_string))
     command_list = ["yum", "-y", "localinstall", "jdk-8u92-linux-x64.rpm"]
@@ -1404,6 +1410,10 @@ def setup_java():
 	# print "yum_install_java return code: ", yum_install_java.returncode
 
 def setup_ant():
+    print '''
+    *******************************
+    Setting up Ant
+    ******************************* '''
     command_list = ["yum", "-y", "install", "ant"]
     yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
     stream_subprocess_output(yum_install_ant)
@@ -1411,6 +1421,10 @@ def setup_ant():
 	# print "yum_install_ant return code: ", yum_install_ant.returncode
 
 def setup_postgres():
+    print '''
+    *******************************
+    Setting up Postgres
+    ******************************* '''
     if esg_setup._is_managed_db():
         return True
 
@@ -1624,8 +1638,9 @@ def setup_cdat():
     except ImportError, error:
         logger.error(error)
 
-    print '''*******************************
-     Setting up CDAT - (Python + CDMS)... ${cdat_version}
+    print '''
+    *******************************
+    Setting up CDAT - (Python + CDMS)... ${cdat_version}
     ******************************* '''.format(cdat_version = config.config_dictionary["cdat_version"])
 
     if os.access(os.path.join(config.config_dictionary["cdat_home"], "/bin/uvcdat"), os.X_OK):

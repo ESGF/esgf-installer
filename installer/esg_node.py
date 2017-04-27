@@ -1646,7 +1646,7 @@ def setup_cdat():
     Setting up CDAT - (Python + CDMS)... ${cdat_version}
     ******************************* '''.format(cdat_version = config.config_dictionary["cdat_version"])
 
-    if os.access(os.path.join(config.config_dictionary["cdat_home"], "/bin/uvcdat"), os.X_OK):
+    if os.access(os.path.join(config.config_dictionary["cdat_home"], "bin", "uvcdat"), os.X_OK):
         print "Detected an existing CDAT installation..."
         cdat_setup_choice = raw_input("Do you want to continue with CDAT installation and setup? [y/N] ")
         if cdat_setup_choice.lower() != "y" or cdat_setup_choice.lower() != "yes":
@@ -1726,6 +1726,8 @@ def setup_tomcat(upgrade_flag = False):
 
     #Check to see if we have a tomcat distribution directory
     tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"])
+    logger.info("tomcat_parent_dir: %s", tomcat_parent_dir)
+    logger.info("tomcat_dist_dir: %s", tomcat_dist_dir)
 
     if not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
         print "Don't see tomcat distribution dir {tomcat_parent_dir}/{tomcat_dist_dir}".format(tomcat_parent_dir = tomcat_parent_dir, tomcat_dist_dir =  tomcat_dist_dir)

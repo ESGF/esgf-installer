@@ -1306,11 +1306,40 @@ def main():
     #---------------------------------------
     #Installation of prerequisites.
     #---------------------------------------
+    install_prerequisites()
+    
 
+    #---------------------------------------
+    #Setup ESGF RPM repository
+    #---------------------------------------    
     print '''
     *******************************
-	Installing prerequisites
-	******************************* 
+    Setting up ESGF RPM repository
+    ******************************* '''
+
+    #---------------------------------------
+    #Installation of basic system components.
+    # (Only when one setup in the sequence is okay can we move to the next)
+    #---------------------------------------
+    if node_type_bit & INSTALL_BIT !=0:
+        setup_java()
+        setup_ant()
+        setup_postgres()
+        setup_cdat()
+        logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
+        if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
+            setup_esgcet()
+        setup_tomcat()
+    # setup_esgcet()
+    # test_esgcet()
+    
+    # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
+
+def install_prerequisites():
+    print '''
+    *******************************
+    Installing prerequisites
+    ******************************* 
     '''
     yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE)
     stream_subprocess_output(yum_remove_rpm_forge)
@@ -1341,32 +1370,6 @@ def main():
     #     print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
     #     sys.exit(1)
 
-
-    #---------------------------------------
-    #Setup ESGF RPM repository
-    #---------------------------------------    
-    print '''
-    *******************************
-    Setting up ESGF RPM repository
-    ******************************* '''
-
-    #---------------------------------------
-    #Installation of basic system components.
-    # (Only when one setup in the sequence is okay can we move to the next)
-    #---------------------------------------
-    if node_type_bit & INSTALL_BIT !=0:
-        setup_java()
-        setup_ant()
-        setup_postgres()
-        setup_cdat()
-        logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
-        if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
-            setup_esgcet()
-        setup_tomcat()
-    # setup_esgcet()
-    # test_esgcet()
-    
-    # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 def stream_subprocess_output(subprocess_object):
 	with subprocess_object.stdout:

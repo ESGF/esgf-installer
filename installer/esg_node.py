@@ -1306,6 +1306,7 @@ def main():
     #---------------------------------------
     #Installation of prerequisites.
     #---------------------------------------
+    #TODO: Uncomment this; only removed for testing speedup
     # install_prerequisites()
     
 

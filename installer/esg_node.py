@@ -1306,7 +1306,7 @@ def main():
     #---------------------------------------
     #Installation of prerequisites.
     #---------------------------------------
-    install_prerequisites()
+    # install_prerequisites()
     
 
     #---------------------------------------

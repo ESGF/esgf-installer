@@ -1901,7 +1901,7 @@ def setup_tomcat(upgrade_flag = False):
     esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
     esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
 
-    migrate_tomcat_credentials_to_esgf()
+    migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url)
     sleep(1)
     esg_functions.start_tomcat()
 
@@ -2536,8 +2536,93 @@ def print_templ():
     file.close()
 
 
-def migrate_tomcat_credentials_to_esgf():
-    pass
+def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
+    '''
+    Move selected config files into esgf tomcat's config dir (certificate et al)
+    Ex: /esg/config/tomcat
+    -rw-r--r-- 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
+    -r-------- 1 tomcat tomcat    887 Apr 22 19:32 hostkey.pem
+    -rw-r--r-- 1 tomcat tomcat   1276 Apr 22 19:32 keystore-tomcat
+    -rw-r--r-- 1 tomcat tomcat    590 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.csr
+    -rw-r--r-- 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
+    -rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
+
+    Only called when migration conditions are present.    
+    '''
+    tomcat_install_conf = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf") 
+
+    if tomcat_install_conf != config.config_dictionary["tomcat_conf_dir"]:
+        if not os.path.exists(config.config_dictionary["tomcat_conf_dir"]):
+            try:
+                os.makedirs(config.config_dictionary["tomcat_conf_dir"])
+            except OSError, exception:
+                if exception.errno != 17:
+                    raise
+                sleep(1)
+                pass
+        
+        esg_functions.backup(tomcat_install_conf)
+        
+        logger.debug("Moving credential files into node's tomcat configuration dir: %s", config.config_dictionary["tomcat_conf_dir"])
+        truststore_file_name = esg_functions.trim_string_from_head(config.config_dictionary["truststore_file"])
+        # i.e. /usr/local/tomcat/conf/esg-truststore.ts
+        if os.path.exists(os.path.join(tomcat_install_conf, truststore_file_name)) and not os.path.exists(config.config_dictionary["truststore_file"]):
+            shutil.move(os.path.join(tomcat_install_conf, truststore_file_name), config.config_dictionary["truststore_file"])
+            print "+"
+
+        keystore_file_name = esg_functions.trim_string_from_head(config.config_dictionary["keystore_file"])
+        if os.path.exists(os.path.join(tomcat_install_conf, keystore_file_name)) and not os.path.exists(config.config_dictionary["keystore_file"]):
+            shutil.move(os.path.join(tomcat_install_conf, keystore_file_name), config.config_dictionary["keystore_file"])
+            print "+"
+
+        tomcat_users_file_name = esg_functions.trim_string_from_head(config.config_dictionary["tomcat_users_file"])
+        if os.path.exists(os.path.join(tomcat_install_conf, tomcat_users_file_name)) and not os.path.exists(config.config_dictionary["tomcat_users_file"]):
+            shutil.move(os.path.join(tomcat_install_conf, tomcat_users_file_name), config.config_dictionary["tomcat_users_file"])
+            print "+"
+
+        if os.path.exists(os.path.join(tomcat_install_conf, "hostkey.pem")) and not os.path.exists(os.path.join(config.config_dictionary["tomcat_conf_dir"], "hostkey.pem")):
+            shutil.move(os.path.join(tomcat_install_conf, "hostkey.pem"), os.path.join(config.config_dictionary["tomcat_conf_dir"], "hostkey.pem"))
+            print "+"
+
+        try:
+            if os.path.exists(os.path.join(tomcat_install_conf, config.config_dictionary["esgf_host"] +"-esg-node.csr")) and not os.path.exists(os.path.join(config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["esgf_host"] +"-esg-node.csr")):
+                shutil.move(os.path.join(tomcat_install_conf, config.config_dictionary["esgf_host"] +"-esg-node.csr"), os.path.join(config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["esgf_host"] +"-esg-node.csr"))
+
+            if os.path.exists(os.path.join(tomcat_install_conf, config.config_dictionary["esgf_host"] +"-esg-node.pem")) and not os.path.exists(os.path.join(config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["esgf_host"] +"-esg-node.pem")):
+                shutil.move(os.path.join(tomcat_install_conf, config.config_dictionary["esgf_host"] +"-esg-node.pem"), os.path.join(config.config_dictionary["tomcat_conf_dir"], config.config_dictionary["esgf_host"] +"-esg-node.pem"))
+        except KeyError:
+            if os.path.exists(os.path.join(tomcat_install_conf, socket.getfqdn() +"-esg-node.csr")) and not os.path.exists(os.path.join(config.config_dictionary["tomcat_conf_dir"], socket.getfqdn() +"-esg-node.csr")):
+                shutil.move(os.path.join(tomcat_install_conf, socket.getfqdn() +"-esg-node.csr"), os.path.join(config.config_dictionary["tomcat_conf_dir"], socket.getfqdn() +"-esg-node.csr"))
+
+            if os.path.exists(os.path.join(tomcat_install_conf, socket.getfqdn() +"-esg-node.pem")) and not os.path.exists(os.path.join(config.config_dictionary["tomcat_conf_dir"], socket.getfqdn() +"-esg-node.pem")):
+                shutil.move(os.path.join(tomcat_install_conf, socket.getfqdn() +"-esg-node.pem"), os.path.join(config.config_dictionary["tomcat_conf_dir"], socket.getfqdn() +"-esg-node.pem"))
+        
+        os.chown(config.config_dictionary["tomcat_conf_dir"], pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+
+        #Be sure that the server.xml file contains the explicit Realm specification needed.
+        server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+        if not server_xml_object.Realm:
+            fetch_file_name = "server.xml"
+            fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
+
+            if esg_functions.checked_get(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_functions.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
+                # os.chdir(starting_directory)
+                esg_functions.checked_done(1)
+            os.chmod(fetch_file_path, 0600)
+            os.chown(fetch_file_path, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+
+        #SET the server.xml variables to contain proper values
+        logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
+        for line in fileinput.FileInput(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"), inplace=True, backup='.bak'):
+        # for line in file:
+            # print line.replace(textToSearch, textToReplace), end='' 
+            print re.sub("pathname=\S+", "pathname={tomcat_users_file}".format(tomcat_users_file = config.config_dictionary["tomcat_users_file"]), line)
+            print re.sub("truststoreFile=\S+", "truststoreFile={truststore_file}".format(truststore_file = config.config_dictionary["truststore_file"]), line)
+            print re.sub("truststorePass=\S+", "truststorePass={truststore_password}".format(truststore_password = config.config_dictionary["truststore_password"]), line)
+            print re.sub("keystoreFile=\S+", "keystoreFile={keystore_file}".format(keystore_file = config.config_dictionary["keystore_file"]), line)
+            print re.sub("keystorePass=\S+", "keystorePass={keystore_password}".format(keystore_password = keystore_password), line)
+            print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
+
 
 def tomcat_port_check():
     ''' 

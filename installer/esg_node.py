@@ -1395,7 +1395,7 @@ def setup_java():
     *******************************
     Setting up Java 1.8.0_92
     ******************************* '''
-    if os.path.exists(os.path.join("usr", "java", "jdk1.8.0_92")):
+    if os.path.exists(os.path.join("/usr", "java", "jdk1.8.0_92")):
         logger.info("Found existing Java installation.  Skipping set up.")
         return
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u92-b14/jdk-8u92-linux-x64.rpm'

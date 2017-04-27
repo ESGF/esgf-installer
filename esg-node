@@ -1565,7 +1565,7 @@ update_apache_conf() {
 
     if [ -f $conf_file ] ; then
         echo "Backing up previous version of $conf_file"
-        datestr=`date +%y%m%d%`
+        datestr=`date +%y%m%d`
 
         conf_file_backup="${conf_file}.${datestr}.bak"
         if [ -f $conf_file_backup ] ; then
@@ -1700,7 +1700,7 @@ setup_apache_frontend() {
         conf_file=/etc/httpd/conf/esgf-httpd.conf
         if [ -f $conf_file ] ; then
              esgf_httpd_ver=`grep ESGF-HTTPD-CONF $conf_file | awk '{print $4}'`
-             if [-z $esgf_httpd_ver ] ; then
+             if [ -z $esgf_httpd_ver ] ; then
                 echo "esgf-httpd.conf is missing versioning, attempting to update."
                 update_apache_conf
              else

@@ -1830,7 +1830,7 @@ def setup_tomcat(upgrade_flag = False):
     except KeyError, error:
         logger.error(error)
 
-    if not os.access(os.path.join("./", "jsvc"), os.X_OK):
+    if os.access(os.path.join("./", "jsvc"), os.X_OK):
         print "Found jsvc; no need to build"
         print "[OK]"
     else:
@@ -1843,16 +1843,24 @@ def setup_tomcat(upgrade_flag = False):
             tar = tarfile.open("commons-daemon-native.tar.gz")
             tar.extractall()
             tar.close()
-            os.chdir("commons-daemon-1.0.15-native-src")
-            #It turns out they shipped with a conflicting .o file in there (oops) so I have to remove it manually.
-            os.remove("./native/libservice.a")
+            try:
+                os.chdir("commons-daemon-1.0.15-native-src")
+                #It turns out they shipped with a conflicting .o file in there (oops) so I have to remove it manually.
+                logger.debug("Changed directory to %s", os.getcwd())
+                os.remove("./native/libservice.a")
+            except OSError, error:
+                logger.error(error)
             subprocess.call(shlex.split("make clean"))
         elif os.path.isfile("jsvc.tar.gz "):
             print "unpacking jsvc.tar.gz..."
             tar = tarfile.open("jsvc.tar.gz")
             tar.extractall()
             tar.close()
-            os.chdir("jsvc-src")
+            try:
+                os.chdir("jsvc-src")
+                logger.debug("Changed directory to %s", os.getcwd())
+            except OSError, error:
+                logger.error(error)
             subprocess.call("autoconf")
         else:
             print "NOT ABLE TO INSTALL JSVC!"

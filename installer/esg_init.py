@@ -124,9 +124,9 @@ class EsgInit(object):
         external_program_versions["openssl_max_version"] = esg_bash2py.Expand.colonMinus(
             "openssl_max_version", "0.9.9z")
         external_program_versions["java_version"] = esg_bash2py.Expand.colonMinus(
-            "java_version", "1.8.0_92")
+            "java_version", "1.8.0_112")
         external_program_versions["java_min_version"] = esg_bash2py.Expand.colonMinus(
-            "java_min_version", "1.8.0_92")
+            "java_min_version", "1.8.0_112")
         external_program_versions["ant_version"] = esg_bash2py.Expand.colonMinus(
             "ant_version", "1.9.1")
         external_program_versions["ant_min_version"] = esg_bash2py.Expand.colonMinus(
@@ -136,9 +136,9 @@ class EsgInit(object):
         external_program_versions["postgress_min_version"] = esg_bash2py.Expand.colonMinus(
             "postgress_min_version", "8.4.20")
         external_program_versions["tomcat_version"] = esg_bash2py.Expand.colonMinus(
-            "tomcat_version", "8.0.33")
+            "tomcat_version", "8.5.9")
         external_program_versions["tomcat_min_version"] = esg_bash2py.Expand.colonMinus(
-            "tomcat_min_version", "8.0.33")
+            "tomcat_min_version", "8.5.9")
         external_program_versions["tds_version"] = esg_bash2py.Expand.colonMinus(
             "tds_version", "5.0.0")
         external_program_versions["tds_min_version"] = esg_bash2py.Expand.colonMinus(

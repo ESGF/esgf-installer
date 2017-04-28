@@ -1853,6 +1853,8 @@ def setup_tomcat(upgrade_flag = False):
         os.chmod("./configure", 0755)
     except OSError, error:
         logger.error(error)
+        logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
+        sys.exit(1)
     configure_string = "./configure --with-java={java_install_dir}".format(java_install_dir = config.config_dictionary["java_install_dir"])
     subprocess.call(shlex.split(configure_string))
     subprocess.call(shlex.split(" make -j " + config.config_dictionary["number_of_cpus"]))

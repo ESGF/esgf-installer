@@ -1849,7 +1849,10 @@ def setup_tomcat(upgrade_flag = False):
             print "NOT ABLE TO INSTALL JSVC!"
             esg_functions.checked_done(1)
 
-    os.chmod("./configure", 0755)
+    try:
+        os.chmod("./configure", 0755)
+    except OSError, error:
+        logger.error(error)
     configure_string = "./configure --with-java={java_install_dir}".format(java_install_dir = config.config_dictionary["java_install_dir"])
     subprocess.call(shlex.split(configure_string))
     subprocess.call(shlex.split(" make -j " + config.config_dictionary["number_of_cpus"]))

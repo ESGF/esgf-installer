@@ -688,7 +688,9 @@ def check_esgf_httpd_process():
         return 1
 
 def check_tomcat_process():
-    if os.path.isfile(config.config_dictionary["tomcat_install_dir"]+"/conf/server.xml"):
+    server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml")
+    logger.debug("server_xml_path: %s", server_xml_path)
+    if os.path.isfile(server_xml_path):
         try:
             esgf_host_ip
         except NameError:

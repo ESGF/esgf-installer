@@ -1758,6 +1758,7 @@ def setup_tomcat(upgrade_flag = False):
         # shutil.move(tomcat_dist_file, tomcat_parent_dir)
 
     if not os.path.exists(config.config_dictionary["tomcat_install_dir"]):
+        logger.info("Did not find existing Tomcat installation directory.  Creating %s ", config.config_dictionary["tomcat_install_dir"])
         os.chdir(tomcat_parent_dir)
         try:
             os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
@@ -1767,6 +1768,7 @@ def setup_tomcat(upgrade_flag = False):
         finally:
             os.chdir(config.config_dictionary["workdir"])
     else:
+        logger.info("Found previous Tomcat installation directory. Creating new symlink from %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
         try:
             os.unlink(config.config_dictionary["tomcat_install_dir"])
         except OSError, error:

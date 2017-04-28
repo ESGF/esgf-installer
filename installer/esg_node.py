@@ -1806,14 +1806,21 @@ def setup_tomcat(upgrade_flag = False):
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 
-
-    os.chdir(config.config_dictionary["tomcat_install_dir"])
+    try:
+        os.chdir(config.config_dictionary["tomcat_install_dir"])
+        logger.debug("Changed directory to %s", os.getcwd())
+    except OSError, error:
+        logger.error(error)
 
     #----------
     #build jsvc (if necessary)
     #----------
     print "Checking for jsvc... "
-    os.chdir("bin")
+    try:
+        os.chdir("bin")
+        logger.debug("Changed directory to %s", os.getcwd())
+    except OSError, error:
+        logger.error(error)
 
     #https://issues.apache.org/jira/browse/DAEMON-246
     try:

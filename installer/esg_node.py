@@ -1742,10 +1742,10 @@ def setup_tomcat(upgrade_flag = False):
             urllib.urlretrieve(config.config_dictionary["tomcat_dist_url"], tomcat_dist_file)
             # logger.info("tomcat_dist_file_archive: %s", tomcat_dist_file_archive)
             print "unpacking {tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
-            tar = tarfile.open(os.path.join(config.config_dictionary["tomcat_install_dir"], tomcat_dist_file))
-            tar.extractall()
+            tar = tarfile.open(tomcat_dist_file)
+            tar.extractall(tomcat_parent_dir)
             tar.close()
-            shutil.move(tomcat_dist_file, tomcat_parent_dir)
+            # shutil.move(tomcat_dist_file, tomcat_parent_dir)
 
 
     #If you don't see the directory but see the tar.gz distribution
@@ -1753,9 +1753,9 @@ def setup_tomcat(upgrade_flag = False):
     if os.path.isfile(tomcat_dist_file) and not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
         print "unpacking ${tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
         tar = tarfile.open(tomcat_dist_file)
-        tar.extractall()
+        tar.extractall(tomcat_parent_dir)
         tar.close()
-        shutil.move(tomcat_dist_file, tomcat_parent_dir)
+        # shutil.move(tomcat_dist_file, tomcat_parent_dir)
 
     if not os.path.exists(config.config_dictionary["tomcat_install_dir"]):
         os.chdir(tomcat_parent_dir)

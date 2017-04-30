@@ -1398,7 +1398,7 @@ def setup_java():
     print '''
     *******************************
     Setting up Java {java_version}
-    ******************************* '''.format(config.config_dictionary["java_version"])
+    ******************************* '''.format(java_version = config.config_dictionary["java_version"])
     if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version = config.config_dictionary["java_version"]))):
         logger.info("Found existing Java installation.  Skipping set up.")
         return

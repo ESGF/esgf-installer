@@ -702,7 +702,8 @@ def check_tomcat_process():
                 line = line.rstrip() # remove trailing whitespace such as '\n'
                 port_descriptor = re.search('(port=)(\S+)', line)
                 if port_descriptor != None:
-                    ports.append(port_descriptor.groups(1).replace('"', ''))
+                    port_number = port_descriptor.group(2)
+                    ports.append(port_number.replace('"', ''))
 
         # server_xml_object = untangle.parse(server_xml_path)
         # ports = []

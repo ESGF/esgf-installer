@@ -705,18 +705,13 @@ def check_tomcat_process():
                     port_number = port_descriptor.group(2)
                     ports.append(port_number.replace('"', ''))
 
-        # server_xml_object = untangle.parse(server_xml_path)
-        # ports = []
-        # for connector in server_xml_object.Server.Connector:
-        #     logger.debug("port: %s", connector["port"])
-        #     ports.append(connector["port"])
-
-        # ports_command = "$(sed -n 's/.*Connector.*port=\"\([0-9]*\)\".*/\1/p' {server_xml_path} | tr '\n' ',' | sed 's/,$//')".format(server_xml_path = server_xml_path)
-        # ports= subprocess.check_output(shlex.split(ports_command))
         logger.debug("ports: %s", ports)
-        procs = subprocess.check_output("$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'"+ esgf_host_ip+ "'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)")
-        if not procs:
+        list_running_processes_command = "$(lsof -Pni TCP:{ports} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)".format(ports = ports, esgf_host_ip = esgf_host_ip)
+        processes = subprocess.check_output(shlex.split(list_running_processes_command))
+        logger.info("processes: %s", processes)
+        if not processes:
             #No process running on ports
+            logger.info("No running processes found")
             return 1
         procs_expression = subprocess.check_output("$(expr \"$procs\" : '.*jsvc.*')")
         if procs_expression > 0:

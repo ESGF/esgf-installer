@@ -1536,7 +1536,14 @@ def setup_postgres():
 
 
     #Create the database:
-    os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "data"))
+    try:
+        os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "data"))
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+    
     try:
         os.chown(os.path.join(config.config_dictionary["postgress_install_dir"], "data"), pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, -1)
     except:

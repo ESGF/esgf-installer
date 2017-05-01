@@ -621,7 +621,7 @@ def start_postgress():
     print "Starting Postgress..."
     for file in os.listdir("/etc/init.d/"):
     	if "postgresql" in file:
-    		postgresql_executable_name = file_name
+    		postgresql_executable_name = file
     		logger.info("postgresql_executable_name: %s", postgresql_executable_name)
     status = subprocess.Popen("/etc/init.d/postgresql start",
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)

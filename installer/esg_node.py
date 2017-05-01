@@ -617,17 +617,25 @@ def test_esgcet():
 def start_postgress():
     if esg_functions.check_postgress_process() == 0:
         print "Postgres is already running"
-        return 1
+        return True
     print "Starting Postgress..."
-    status = subprocess.Popen("/etc/init.d/postgresql start",
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    for file in os.listdir("/etc/init.d/"):
+    	if "postgresql" in file:
+    		postgresql_executable_name = file
+    		logger.info("postgresql_executable_name: %s", postgresql_executable_name)
+    postgres_start_command = shlex.split("/etc/init.d/{postgresql_executable_name} start".format(postgresql_executable_name = postgresql_executable_name))
+    status = subprocess.Popen(postgres_start_command)
     status_output, err = status.communicate()
-    print "status_output: ", status_output
+    # print "status_output: ", status_output
+    logger.info("status_output: %s", status_output)
+    logger.error("err: %s ", err)
     sleep(3)
     progress_process_status = subprocess.Popen(
         "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()
+    logger.info("progress_process_status_tuple: %s", progress_process_status_tuple)
     esg_functions.checked_done(0)
+    return True
 
 def stop_postgress():
     if esg_setup._is_managed_db:
@@ -1398,7 +1406,7 @@ def setup_java():
     print '''
     *******************************
     Setting up Java {java_version}
-    ******************************* '''.format(config.config_dictionary["java_version"])
+    ******************************* '''.format(java_version = config.config_dictionary["java_version"])
     if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version = config.config_dictionary["java_version"]))):
         logger.info("Found existing Java installation.  Skipping set up.")
         return
@@ -1438,11 +1446,16 @@ def setup_postgres():
         return True
 
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config.config_dictionary["postgress_min_version"])
-    found_valid_version = esg_functions.check_for_acceptible_version(os.path.join(config.config_dictionary["postgress_bin_dir"], "postgres"), config.config_dictionary["postgress_min_version"])
-    if found_valid_version and not force_install:
-        print "Valid existing Postgres installation found"
-        print "[OK]"
-        return True
+    postgres_binary_path = os.path.join(config.config_dictionary["postgress_bin_dir"], "postgres")
+    logger.debug("postgres_binary_path: %s", postgres_binary_path)
+    try:
+	    found_valid_version = esg_functions.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"])
+	    if found_valid_version and not force_install:
+	        print "Valid existing Postgres installation found"
+	        print "[OK]"
+	        return True
+    except OSError, error:
+		logger.error(error)
 
     # upgrade  = None
     # if not found_valid_version:
@@ -1529,7 +1542,14 @@ def setup_postgres():
 
 
     #Create the database:
-    os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "data"))
+    try:
+        os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "data"))
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+    
     try:
         os.chown(os.path.join(config.config_dictionary["postgress_install_dir"], "data"), pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, -1)
     except:
@@ -1539,7 +1559,14 @@ def setup_postgres():
     os.chmod(os.path.join(config.config_dictionary["postgress_install_dir"], "data"), 0700)
     initialize_db_command = 'su $pg_sys_acct -c "$postgress_bin_dir/initdb -D $postgress_install_dir/data"'
     subprocess.call(initialize_db_command, shell = True)
-    os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "log"))
+    try:
+        os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "log"))
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+    
     try:
         os.chown(os.path.join(config.config_dictionary["postgress_install_dir"], "log"), pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, -1)
     except:
@@ -1555,8 +1582,11 @@ def setup_postgres():
     #Check to see if there is a ${postgress_user} already on the system if not, make one
     try:
         conn=psycopg2.connect("dbname='postgres' user='postgres' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config.config_dictionary["pg_sys_acct_passwd"])) 
-    except:
+    except Exception, error:
+    	logger.error(error)
         print "I am unable to connect to the database."
+        esg_functions.checked_done(1)
+
     cur = conn.cursor()
     cur.execute("select count(*) from pg_roles where rolname={postgress_user}".format(postgress_user = config.config_dictionary["postgress_user"]))
     rows = cur.fetchall()

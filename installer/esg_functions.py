@@ -46,7 +46,7 @@ def checked_done(status):
     '''
     # print "sys.argv[1]: ", sys.argv[1]
     # print "type: ", type(sys.argv[1])
-    if int(status) != 0:
+    if int(status) != 0 and status != True:
         print(
             ""
             "Sorry... \n"

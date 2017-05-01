@@ -1553,7 +1553,14 @@ def setup_postgres():
     os.chmod(os.path.join(config.config_dictionary["postgress_install_dir"], "data"), 0700)
     initialize_db_command = 'su $pg_sys_acct -c "$postgress_bin_dir/initdb -D $postgress_install_dir/data"'
     subprocess.call(initialize_db_command, shell = True)
-    os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "log"))
+    try:
+        os.mkdir(os.path.join(config.config_dictionary["postgress_install_dir"], "log"))
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+    
     try:
         os.chown(os.path.join(config.config_dictionary["postgress_install_dir"], "log"), pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, -1)
     except:

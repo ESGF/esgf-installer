@@ -623,9 +623,8 @@ def start_postgress():
     	if "postgresql" in file:
     		postgresql_executable_name = file
     		logger.info("postgresql_executable_name: %s", postgresql_executable_name)
-    # postgres_start_command = shlex.split()
-    status = subprocess.Popen("/etc/init.d/{postgresql_executable_name} start".format(postgresql_executable_name = postgresql_executable_name),
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    postgres_start_command = shlex.split("/etc/init.d/{postgresql_executable_name} start".format(postgresql_executable_name = postgresql_executable_name))
+    status = subprocess.Popen(postgres_start_command)
     status_output, err = status.communicate()
     # print "status_output: ", status_output
     logger.info("status_output: %s", status_output)

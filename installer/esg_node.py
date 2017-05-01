@@ -617,7 +617,7 @@ def test_esgcet():
 def start_postgress():
     if esg_functions.check_postgress_process() == 0:
         print "Postgres is already running"
-        return 1
+        return True
     print "Starting Postgress..."
     status = subprocess.Popen("/etc/init.d/postgresql start",
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -627,7 +627,9 @@ def start_postgress():
     progress_process_status = subprocess.Popen(
         "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()
+    logger.info("progress_process_status_tuple: %s", progress_process_status_tuple)
     esg_functions.checked_done(0)
+    return True
 
 def stop_postgress():
     if esg_setup._is_managed_db:

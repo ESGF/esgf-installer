@@ -696,14 +696,22 @@ def check_tomcat_process():
             esgf_host_ip
         except NameError:
              esgf_host_ip = get_property("esgf_host_ip")
-        server_xml_object = untangle.parse(server_xml_path)
         ports = []
-        for connector in server_xml_object.Server.Connector:
-            logger.debug("port: %s", connector["port"])
-            ports.append(connector["port"])
+        with open(server_xml_path, "r+") as server_xml_file:
+            for line in server_xml_file:
+                line = line.rstrip() # remove trailing whitespace such as '\n'
+                port_descriptor = re.search('(port=)(\S+)', line)
+                if port_descriptor != None:
+                    ports.append(port_descriptor.groups(1).replace('"', ''))
 
-        ports_command = "$(sed -n 's/.*Connector.*port=\"\([0-9]*\)\".*/\1/p' {server_xml_path} | tr '\n' ',' | sed 's/,$//')".format(server_xml_path = server_xml_path)
-        ports= subprocess.check_output(shlex.split(ports_command))
+        # server_xml_object = untangle.parse(server_xml_path)
+        # ports = []
+        # for connector in server_xml_object.Server.Connector:
+        #     logger.debug("port: %s", connector["port"])
+        #     ports.append(connector["port"])
+
+        # ports_command = "$(sed -n 's/.*Connector.*port=\"\([0-9]*\)\".*/\1/p' {server_xml_path} | tr '\n' ',' | sed 's/,$//')".format(server_xml_path = server_xml_path)
+        # ports= subprocess.check_output(shlex.split(ports_command))
         logger.debug("ports: %s", ports)
         procs = subprocess.check_output("$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'"+ esgf_host_ip+ "'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)")
         if not procs:

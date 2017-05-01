@@ -18,6 +18,7 @@ import stat
 import hashlib
 import logging
 import shlex
+import untangle
 from time import sleep
 from collections import OrderedDict
 from esg_init import EsgInit
@@ -695,7 +696,13 @@ def check_tomcat_process():
             esgf_host_ip
         except NameError:
              esgf_host_ip = get_property("esgf_host_ip")
-        ports_command = "$(sed -n 's/.*Connector.*port=\"\([0-9]*\)\".*/\1/p' {tomcat_install_dir}/conf/server.xml | tr '\n' ',' | sed 's/,$//')".format(tomcat_install_dir = config.config_dictionary["tomcat_install_dir"])
+        server_xml_object = untangle.parse(server_xml_path)
+        ports = []
+        for connector in server_xml_object.Server.Connector:
+            logger.debug("port: %s", connector["port"])
+            ports.append(connector["port"])
+
+        ports_command = "$(sed -n 's/.*Connector.*port=\"\([0-9]*\)\".*/\1/p' {server_xml_path} | tr '\n' ',' | sed 's/,$//')".format(server_xml_path = server_xml_path)
         ports= subprocess.check_output(shlex.split(ports_command))
         logger.debug("ports: %s", ports)
         procs = subprocess.check_output("$(lsof -Pni TCP:$ports | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'"+ esgf_host_ip+ "'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)")

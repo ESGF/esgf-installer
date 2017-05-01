@@ -622,7 +622,9 @@ def start_postgress():
     status = subprocess.Popen("/etc/init.d/postgresql start",
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     status_output, err = status.communicate()
-    print "status_output: ", status_output
+    # print "status_output: ", status_output
+    logger.info("status_output: %s", status_output)
+    logger.error("err: %s ", err)
     sleep(3)
     progress_process_status = subprocess.Popen(
         "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
@@ -1576,8 +1578,11 @@ def setup_postgres():
     #Check to see if there is a ${postgress_user} already on the system if not, make one
     try:
         conn=psycopg2.connect("dbname='postgres' user='postgres' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config.config_dictionary["pg_sys_acct_passwd"])) 
-    except:
+    except Exception, error:
+    	logger.error(error)
         print "I am unable to connect to the database."
+        esg_functions.checked_done(1)
+
     cur = conn.cursor()
     cur.execute("select count(*) from pg_roles where rolname={postgress_user}".format(postgress_user = config.config_dictionary["postgress_user"]))
     rows = cur.fetchall()

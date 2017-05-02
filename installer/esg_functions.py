@@ -706,12 +706,33 @@ def check_tomcat_process():
                     ports.append(port_number.replace('"', ''))
 
         logger.debug("ports: %s", ports)
-        list_running_processes_command = "$(lsof -Pni TCP:{ports} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk {awk_print} | sort -u | xargs)".format(ports = ports, esgf_host_ip = esgf_host_ip, awk_print = '{print $1}')
-        processes = subprocess.Popen(shlex.split(list_running_processes_command))
-        stdout_processes, stderr_processes = processes.communicate()
-        logger.info("stdout_processes: %s", stdout_processes)
-        logger.info("stderr_processes: %s", stderr_processes)
-        if not processes:
+        process_list = []
+        
+        for port in ports:
+            proc1 = subprocess.Popen(shlex.split('lsof -Pni TCP:{port}'.format(port = port)), stdout = subprocess.PIPE)
+            proc2 = subprocess.Popen(shlex.split('tail -n +2'), stdin = proc1.stdout, stdout = subprocess.PIPE)
+            proc3 = subprocess.Popen(shlex.split('grep LISTEN'), stdin = proc2.stdout, stdout = subprocess.PIPE)
+            # proc4 = subprocess.Popen(shlex.split("sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'".format(esgf_host_ip = esgf_host_ip)), stdin = proc3.stdout, stdout = subprocess.PIPE)
+            # proc5 = subprocess.Popen(shlex.split("awk {awk_print}".format(awk_print = '{print $1}')), stdin = proc4.stdout, stdout = subprocess.PIPE)
+            # proc6 = subprocess.Popen(shlex.split('sort -u'), stdin = proc5.stdout, stdout = subprocess.PIPE)
+            # proc7 = subprocess.Popen(shlex.split('xargs'), stdin = proc6.stdout, stdout = subprocess.PIPE)
+
+            # Allow proc1 to receive a SIGPIPE if proc2 exits.
+            proc1.stdout.close()
+            # Allow proc2 to receive a SIGPIPE if proc3 exits.
+            proc2.stdout.close()
+
+            stdout_processes, stderr_processes = proc3.communicate()
+            logger.info("stdout_processes: %s", stdout_processes)
+            logger.info("stderr_processes: %s", stderr_processes)
+
+            # list_running_processes_command = "lsof -Pni TCP:{port} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk {awk_print} | sort -u | xargs".format(port = port, esgf_host_ip = esgf_host_ip, awk_print = '{print $1}')
+            # processes_found = subprocess.Popen(shlex.split(list_running_processes_command),stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # stdout_processes, stderr_processes = processes_found.communicate()
+            if stdout_processes:
+                process_list.append(stdout_processes)
+        logger.debug("process_list: %s", process_list)
+        if not process_list:
             #No process running on ports
             logger.info("No running processes found")
             return 1

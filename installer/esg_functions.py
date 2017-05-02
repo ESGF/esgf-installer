@@ -706,9 +706,11 @@ def check_tomcat_process():
                     ports.append(port_number.replace('"', ''))
 
         logger.debug("ports: %s", ports)
-        list_running_processes_command = "$(lsof -Pni TCP:{ports} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk '{print $1}' | sort -u | xargs)".format(ports = ports, esgf_host_ip = esgf_host_ip)
-        processes = subprocess.check_output(shlex.split(list_running_processes_command))
-        logger.info("processes: %s", processes)
+        list_running_processes_command = "$(lsof -Pni TCP:{ports} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk {awk_print} | sort -u | xargs)".format(ports = ports, esgf_host_ip = esgf_host_ip, awk_print = '{print $1}')
+        processes = subprocess.Popen(shlex.split(list_running_processes_command))
+        stdout_processes, stderr_processes = processes.communicate()
+        logger.info("stdout_processes: %s", stdout_processes)
+        logger.info("stderr_processes: %s", stderr_processes)
         if not processes:
             #No process running on ports
             logger.info("No running processes found")

@@ -1945,10 +1945,13 @@ def setup_tomcat(upgrade_flag = False):
 
         print "upgrade migration complete"
     else:
-        if os.stat(config.ks_secret_file).st_size != 0:
-            with open(config.ks_secret_file, 'rb') as f:
-                keystore_password = f.read().strip()
-            configure_tomcat(keystore_password)
+        try:
+            if os.stat(config.ks_secret_file).st_size != 0:
+                with open(config.ks_secret_file, 'rb') as f:
+                    keystore_password = f.read().strip()
+                configure_tomcat(keystore_password)
+            except OSError, error:
+                logger.error(error)
         else:
             with open(config.esgf_secret_file, 'rb') as f:
                 security_admin_password = f.read().strip()

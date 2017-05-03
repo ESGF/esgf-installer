@@ -1906,7 +1906,7 @@ def setup_tomcat(upgrade_flag = False):
         sys.exit(1)
     configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
     subprocess.call(shlex.split(configure_string))
-    subprocess.call(shlex.split(" make -j " + config.config_dictionary["number_of_cpus"]))
+    subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
 
     if not os.path.isfile("/usr/lib/libcap.so") and os.path.isfile("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"])):
         os.symlink("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"]), "/usr/lib/libcap.so")

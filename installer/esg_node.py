@@ -1896,7 +1896,8 @@ def setup_tomcat(upgrade_flag = False):
             print "NOT ABLE TO INSTALL JSVC!"
             esg_functions.checked_done(1)
 
-    tomcat_configure_script_path = esg_functions.readlinkf("./configure")
+    tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
+    logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
     try:
         os.chmod(tomcat_configure_script_path, 0755)
     except OSError, error:

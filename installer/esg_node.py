@@ -26,6 +26,7 @@ import filecmp
 from git import Repo
 from collections import deque
 from time import sleep
+from OpenSSL import crypto
 import esg_functions
 import esg_bash2py
 import esg_setup
@@ -2467,11 +2468,14 @@ def setup_temp_ca():
     ESGF_OPENSSL="/usr/bin/openssl"
     cert = "cacert.pem"
     temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
-    quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
+    # quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
 
-    cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
-    quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
-    print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
+    # cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
+    cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
+    cert_subject = cert_info.get_subject()
+    logger.info("cert_subject: %s", cert_subject)
+    # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
+    # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
 
     local_hash = subprocess.check_output("`{ESGF_OPENSSL} x509 -in {cert} -noout -hash`".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert))
 
@@ -2481,6 +2485,7 @@ def setup_temp_ca():
 
     print_templ()
 
+    #Find and replace the temp_subject with the cert_subject in the signing_policy_template and rewrite to new file.
     subprocess.call(shlex.split('sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;'))
     shutil.copyfile(os.path.join(target_directory,local_hash,".signing_policy"), "signing_policy")
 

@@ -1949,13 +1949,13 @@ def setup_tomcat(upgrade_flag = False):
             if os.stat(config.ks_secret_file).st_size != 0:
                 with open(config.ks_secret_file, 'rb') as f:
                     keystore_password = f.read().strip()
-                configure_tomcat(keystore_password)
-            except OSError, error:
-                logger.error(error)
-        else:
+                configure_tomcat(keystore_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
+        except OSError, error:
+            logger.error(error)
+            logger.info("Attempting to get configure Tomcat with the security_admin_password")
             with open(config.esgf_secret_file, 'rb') as f:
                 security_admin_password = f.read().strip()
-            configure_tomcat(security_admin_password)
+            configure_tomcat(security_admin_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
             config.config_dictionary["tomcat_group"]).gr_gid)

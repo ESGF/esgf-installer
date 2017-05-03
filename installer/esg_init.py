@@ -374,7 +374,7 @@ class EsgInit(object):
         internal_script_variables["esgf_dist_mirror"] = "aims1.llnl.gov/esgf"
         internal_script_variables["esg_dist_url_root"] = internal_script_variables["esgf_dist_mirror"]+ "/dist"
         internal_script_variables["esgf_coffee_dist_mirror"] = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
-        internal_script_variables["esg_cofee_dist_url_root"] = internal_script_variables["esgf_coffee_dist_mirror"]+ "/dist"
+        internal_script_variables["esg_coffee_dist_url_root"] = internal_script_variables["esgf_coffee_dist_mirror"]+ "/dist"
         # java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
         java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (internal_script_variables["esg_dist_url_root"], self.config_dictionary["java_version"], self.config_dictionary["java_version"], internal_script_variables["word_size"])
         java_rpm_url = "{esg_dist_url_root}/java/{java_version}/jdk-8u112-linux-x64.rpm".format(esg_dist_url_root = internal_script_variables["esg_dist_url_root"], java_version = self.config_dictionary["java_version"])

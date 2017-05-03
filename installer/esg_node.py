@@ -2437,13 +2437,13 @@ def setup_temp_ca():
     reqhost_ans.close()
 
     if devel:
-        urllib.urlretrieve("{esg_dist_url_root}/devel/esgf-installer/CA.pl".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"]), "CA.pl")
-        urllib.urlretrieve("{esg_dist_url_root}/devel/esgf-installer/openssl.cnf".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"]), "openssl.cnf")
-        urllib.urlretrieve("{esg_dist_url_root}/devel/esgf-installer/myproxy-server.config".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"]), "myproxy-server.config")
+        urllib.urlretrieve("{esg_coffee_dist_url_root}/devel/esgf-installer/CA.pl".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "CA.pl")
+        urllib.urlretrieve("{esg_coffee_dist_url_root}/devel/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
+        urllib.urlretrieve("{esg_coffee_dist_url_root}/devel/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
     else:
-        urllib.urlretrieve("{esg_dist_url_root}/esgf-installer/CA.pl".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"]), "CA.pl")
-        urllib.urlretrieve("{esg_dist_url_root}/esgf-installer/openssl.cnf".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"]), "openssl.cnf")
-        urllib.urlretrieve("{esg_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"]), "myproxy-server.config")
+        urllib.urlretrieve("{esg_coffee_dist_url_root}/esgf-installer/CA.pl".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "CA.pl")
+        urllib.urlretrieve("{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
+        urllib.urlretrieve("{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
     subprocess.call(shlex.split("perl CA.pl -newca <setupca.ans"))
     subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem"))

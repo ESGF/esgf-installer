@@ -2407,6 +2407,8 @@ def setup_temp_ca():
         pass
 
     os.chdir("/etc/tempcerts")
+    logger.debug("Changed directory to %s", os.getcwd())
+
     shutil.rmtree(os.path.join(os.getcwd(), "CA"))
     extensions_to_delete = (".pem", ".gz", ".ans", ".tmpl")
     files = os.listdir(os.getcwd())
@@ -2454,8 +2456,11 @@ def setup_temp_ca():
     subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
     subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
 
-    os.chmod("cakey.pem", 0400)
-    os.chmod("hostkey.pem", 0400)
+    try:
+        os.chmod("cakey.pem", 0400)
+        os.chmod("hostkey.pem", 0400)
+    except OSError, error:
+        logger.error(error)
 
     subprocess.call(shlex.split("rm -f new*.pem"))
 

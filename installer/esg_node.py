@@ -2415,7 +2415,11 @@ def setup_temp_ca():
     files = os.listdir(os.getcwd())
     for file in files:
         if file.endswith(extensions_to_delete):
-            os.remove(os.path.join(os.getcwd(), file))
+            try:
+                os.remove(os.path.join(os.getcwd(), file))
+                logger.debug("removed %s", os.path.join(os.getcwd(), file))
+            except OSError, error:
+                logger.error(error)
 
     os.mkdir("CA")
     write_ca_ans_templ() 

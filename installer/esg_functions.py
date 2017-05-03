@@ -736,18 +736,17 @@ def check_tomcat_process():
             #No process running on ports
             logger.info("No running processes found")
             return 1
-        procs_expression = subprocess.check_output("$(expr \"$procs\" : '.*jsvc.*')")
-        if procs_expression > 0:
+        # procs_expression = subprocess.check_output("$(expr \"$procs\" : '.*jsvc.*')")
+        if "jsvc" in process_list:
             print "Tomcat (jsvc) process is running... " 
             return 0
         else:
-            print " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [%s] ?? " % (procs)
-            subprocess.Popen("lsof -Pni TCP:"+ports+" | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'"+esgf_host_ip+"'\)/\0/p'")
+            print " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [%s] ?? " % (process_list)
             return 3
     else:
         print " Warning Cannot find %s/conf/server.xml file!" % (config.config_dictionary["tomcat_install_dir"])
         print " Using alternative method for checking on tomcat process..."
-        status_value = subprocess.check_output("$(ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }')")
+        status_value = subprocess.Popen(shlex.split("ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }'"))
 
 #----------------------------------------------------------
 # Postgresql informational functions

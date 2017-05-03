@@ -375,6 +375,7 @@ class EsgInit(object):
         internal_script_variables["esg_dist_url_root"] = internal_script_variables["esgf_dist_mirror"]+ "/dist"
         # java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
         java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (internal_script_variables["esg_dist_url_root"], self.config_dictionary["java_version"], self.config_dictionary["java_version"], internal_script_variables["word_size"])
+        java_rpm_url = "{esg_dist_url_root}/java/{java_version}/jdk-8u112-linux-x64.rpm".format(esg_dist_url_root = internal_script_variables["esg_dist_url_root"], java_version = self.config_dictionary["java_version"])
         # ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
         internal_script_variables["ant_dist_url"] = "http://archive.apache.org/dist/ant/binaries/apache-ant-" + \
             self.config_dictionary["ant_version"] + "-bin.tar.gz"

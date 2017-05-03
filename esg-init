@@ -55,8 +55,8 @@ init() {
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.4"}
-    esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.1"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5"}
+    esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:
     esgf_desktop_version=${esgf_desktop_version:-"0.0.22"}

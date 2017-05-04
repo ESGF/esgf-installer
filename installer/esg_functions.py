@@ -1622,13 +1622,13 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
 @contextmanager
 def pushd(new_dir):
-'''
-    Usage:
-    with pushd(some_dir):
-        print os.getcwd() # "some_dir"
-        some_actions
-    print os.getcwd() # "starting_directory"
-'''
+    '''
+        Usage:
+        with pushd(some_dir):
+            print os.getcwd() # "some_dir"
+            some_actions
+        print os.getcwd() # "starting_directory"
+    '''
     previous_dir = os.getcwd()
     os.chdir(new_dir)
     yield

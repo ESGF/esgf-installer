@@ -2453,17 +2453,11 @@ def setup_temp_ca():
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
     #pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
-    #new_ca_process.stdin.write("setupca.ans")
-
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "), stdout = subprocess.PIPE)
 
     stdout_processes, stderr_processes = new_ca_process.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
     logger.info("stderr_processes: %s", stderr_processes)
-    # new_ca_output, new_ca_err = new_ca_process.communicate()
-    # logger.debug("new_ca_output: %s", new_ca_output)
-    # logger.debug("new_ca_err: %s", new_ca_err)
-    # logger.debug("new_ca_returncode: %s", new_ca_process.returncode)
     if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
@@ -2473,11 +2467,9 @@ def setup_temp_ca():
         subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
     with open("cacert.pem", "wb") as cacert_file:
         subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)
-    # subprocess.call(shlex.split("cp CA/private/cakey.pem cakey.pem"))
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
     with open("hostcert.pem", "wb") as hostcert_file:
         subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem"), stdout = hostcert_file )
-    # subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
     shutil.move("newkey.pem", "hostkey.pem")
 
     try:
@@ -2500,9 +2492,11 @@ def setup_temp_ca():
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
 
-    local_hash = subprocess.check_output("`{ESGF_OPENSSL} x509 -in {cert} -noout -hash`".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert))
-
-    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash)
+    local_hash = subprocess.Popen("`{ESGF_OPENSSL} x509 -in {cert} -noout -hash`".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert), stdout = subprocess.PIPE)
+    local_hash_output, local_hash_err = local_hash.communicate()
+    logger.debug("local_hash_output: %s", local_hash_output)
+    logger.debug("local_hash_err: %s", local_hash_err)
+    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output)
     os.mkdir(target_directory)
     shutil.copyfile(cert, os.path.join(target_directory, local_hash, ".0"))
 

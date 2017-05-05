@@ -2437,7 +2437,7 @@ def setup_temp_ca():
     setupca_ans.close()
 
     reqhost_ans_tmpl = open("reqhost.ans.tmpl", "r")
-    reqhost_ans = open("setupca.ans", "w+")
+    reqhost_ans = open("reqhost.ans", "w+")
     for line in reqhost_ans_tmpl:
         reqhost_ans.write(line.replace("placeholder.fqdn", host_name))
     reqhost_ans_tmpl.close()
@@ -2452,18 +2452,33 @@ def setup_temp_ca():
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca <setupca.ans"))
-    new_ca_output, new_ca_err = new_ca_process.communicate()
-    logger.debug("new_ca_output: %s", new_ca_output)
-    logger.debug("new_ca_err: %s", new_ca_err)
-    logger.debug("new_ca_returncode: %s", new_ca_process.returncode)
-    subprocess.Popen(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem"))
-    subprocess.Popen(shlex.split("perl CA.pl -newreq-nodes <reqhost.ans"))
-    subprocess.Popen(shlex.split("perl CA.pl -sign <setuphost.ans"))
-    subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem"))
-    subprocess.Popen(shlex.split("cp CA/private/cakey.pem cakey.pem"))
-    subprocess.Popen(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
-    subprocess.Popen(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
+    #pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    #new_ca_process.stdin.write("setupca.ans")
+
+
+    stdout_processes, stderr_processes = new_ca_process.communicate()
+    logger.info("stdout_processes: %s", stdout_processes)
+    logger.info("stderr_processes: %s", stderr_processes)
+    # new_ca_output, new_ca_err = new_ca_process.communicate()
+    # logger.debug("new_ca_output: %s", new_ca_output)
+    # logger.debug("new_ca_err: %s", new_ca_err)
+    # logger.debug("new_ca_returncode: %s", new_ca_process.returncode)
+    if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
+        logger.debug("moving clearkey")
+        shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
+    with open("reqhost.ans", "wb") as reqhost_ans_file:
+        subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
+    with open("setuphost.ans", "wb") as setuphost_ans_file:
+        subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
+    with open("cacert.pem", "wb") as cacert_file:
+        subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)
+    # subprocess.call(shlex.split("cp CA/private/cakey.pem cakey.pem"))
+    shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
+    with open("hostcert.pem", "wb") as hostcert_file:
+        subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem"), stdout = hostcert_file )
+    # subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem"))
+    shutil.move("newkey.pem", "hostkey.pem")
 
     try:
         os.chmod("cakey.pem", 0400)

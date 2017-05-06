@@ -2490,6 +2490,7 @@ def setup_temp_ca():
     # cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
     cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
     cert_subject = cert_info.get_subject()
+    cert_subject = re.sub(" <X509Name object '|'>", cert_subject).strip()
     logger.info("cert_subject: %s", cert_subject)
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
@@ -2514,8 +2515,17 @@ def setup_temp_ca():
     print_templ()
 
     #Find and replace the temp_subject with the cert_subject in the signing_policy_template and rewrite to new file.
-    subprocess.call(shlex.split('sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;'))
-    shutil.copyfile(os.path.join(target_directory,local_hash_output,".signing_policy"), "signing_policy")
+
+    # subprocess.call(shlex.split('sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;'))
+    
+    signing_policy_template = open("signing_policy_template", "r")
+    signing_policy = open("signing_policy", "w+")
+    for line in signing_policy_template:
+        signing_policy.write(line.replace(temp_subject, cert_subject))
+    signing_policy_template.close()
+    signing_policy.close()
+
+    # shutil.copyfile(os.path.join(target_directory,local_hash_output,".signing_policy"), "signing_policy")
 
     subprocess.call(shlex.split("tar -cvzf globus_simple_ca_{local_hash}_setup-0.tar.gz {target_directory};".format(local_hash = local_hash_output, target_directory = target_directory)))
     subprocess.call(shlex.split("rm -rf {target_directory};".format(target_directory = target_directory)))

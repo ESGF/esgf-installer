@@ -2496,10 +2496,11 @@ def setup_temp_ca():
 
     local_hash = subprocess.Popen(shlex.split("{ESGF_OPENSSL} x509 -in {cert} -noout -hash".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert)), stdout = subprocess.PIPE)
     local_hash_output, local_hash_err = local_hash.communicate()
+    local_hash_output = local_hash_output.strip()
     logger.debug("local_hash_output: %s", local_hash_output)
     logger.debug("local_hash_err: %s", local_hash_err)
     
-    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output.strip())
+    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output)
     try:
         os.makedirs(target_directory)
     except OSError, exception:

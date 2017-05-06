@@ -2509,7 +2509,7 @@ def setup_temp_ca():
         sleep(1)
         pass
 
-    shutil.copyfile(cert, os.path.join(target_directory, local_hash_output, ".0"))
+    shutil.copyfile(cert, os.path.join(target_directory, "{local_hash}.0".format(local_hash = local_hash_output)))
 
     print_templ()
 

@@ -2515,9 +2515,9 @@ def setup_temp_ca():
 
     #Find and replace the temp_subject with the cert_subject in the signing_policy_template and rewrite to new file.
     subprocess.call(shlex.split('sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;'))
-    shutil.copyfile(os.path.join(target_directory,local_hash,".signing_policy"), "signing_policy")
+    shutil.copyfile(os.path.join(target_directory,local_hash_output,".signing_policy"), "signing_policy")
 
-    subprocess.call(shlex.split("tar -cvzf globus_simple_ca_{local_hash}_setup-0.tar.gz {target_directory};".format(local_hash = local_hash, target_directory = target_directory)))
+    subprocess.call(shlex.split("tar -cvzf globus_simple_ca_{local_hash}_setup-0.tar.gz {target_directory};".format(local_hash = local_hash_output, target_directory = target_directory)))
     subprocess.call(shlex.split("rm -rf {target_directory};".format(target_directory = target_directory)))
     subprocess.call(shlex.split("rm -f signing_policy_template;"))
 

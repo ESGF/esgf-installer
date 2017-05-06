@@ -2454,11 +2454,12 @@ def setup_temp_ca():
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
     #pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "), stdout = subprocess.PIPE)
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    stream_subprocess_output(new_ca_process)
 
-    stdout_processes, stderr_processes = new_ca_process.communicate()
-    logger.info("stdout_processes: %s", stdout_processes)
-    logger.info("stderr_processes: %s", stderr_processes)
+    # stdout_processes, stderr_processes = new_ca_process.communicate()
+    # logger.info("stdout_processes: %s", stdout_processes)
+    # logger.info("stderr_processes: %s", stderr_processes)
     if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")

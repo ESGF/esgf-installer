@@ -2455,7 +2455,7 @@ def setup_temp_ca():
 
     #pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
-    # stream_subprocess_output(new_ca_process)
+    # x(new_ca_process)
 
     stdout_processes, stderr_processes = new_ca_process.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
@@ -2494,7 +2494,7 @@ def setup_temp_ca():
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
 
-    local_hash = subprocess.Popen("`{ESGF_OPENSSL} x509 -in {cert} -noout -hash`".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert), stdout = subprocess.PIPE)
+    local_hash = subprocess.Popen(shlex.split("`{ESGF_OPENSSL} x509 -in {cert} -noout -hash`".format(ESGF_OPENSSL =  ESGF_OPENSSL, cert = cert)), stdout = subprocess.PIPE)
     local_hash_output, local_hash_err = local_hash.communicate()
     logger.debug("local_hash_output: %s", local_hash_output)
     logger.debug("local_hash_err: %s", local_hash_err)

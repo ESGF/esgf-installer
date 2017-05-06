@@ -2498,9 +2498,17 @@ def setup_temp_ca():
     local_hash_output, local_hash_err = local_hash.communicate()
     logger.debug("local_hash_output: %s", local_hash_output)
     logger.debug("local_hash_err: %s", local_hash_err)
-    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output)
-    os.mkdir(target_directory)
-    shutil.copyfile(cert, os.path.join(target_directory, local_hash, ".0"))
+    
+    target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output.strip())
+    try:
+        os.makedirs(target_directory)
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
+
+    shutil.copyfile(cert, os.path.join(target_directory, local_hash_output, ".0"))
 
     print_templ()
 

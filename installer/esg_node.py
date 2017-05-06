@@ -1448,10 +1448,10 @@ def setup_postgres():
         return True
 
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config.config_dictionary["postgress_min_version"])
-    postgres_binary_path = os.path.join(config.config_dictionary["postgress_bin_dir"], version_command = "-V")
+    postgres_binary_path = os.path.join(config.config_dictionary["postgress_bin_dir"], "postgres")
     logger.debug("postgres_binary_path: %s", postgres_binary_path)
     try:
-	    found_valid_version = esg_functions.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"])
+	    found_valid_version = esg_functions.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"], version_command = "-V")
 	    if found_valid_version and not force_install:
 	        print "Valid existing Postgres installation found"
 	        print "[OK]"

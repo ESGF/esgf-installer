@@ -245,6 +245,7 @@ def check_for_acceptible_version(binary_file_name, min_version, max_version=None
     found_version.wait()
     current_version = None
     version_tuple = found_version.communicate()
+    logger.debug("version_tuple: %s", version_tuple)
     found_version.wait()
     for version in version_tuple:
         version_number = re.search(r'(\d+\.+\d*\.*\d*[.-_@+#]*\d*).*', version)

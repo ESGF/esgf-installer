@@ -2490,7 +2490,7 @@ def setup_temp_ca():
     # cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
     cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
     cert_subject = cert_info.get_subject()
-    cert_subject = re.sub(" <X509Name object '|'>", "", cert_subject).strip()
+    cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
     logger.info("cert_subject: %s", cert_subject)
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)

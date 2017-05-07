@@ -2528,7 +2528,7 @@ def setup_temp_ca():
 
     # shutil.copyfile(os.path.join(target_directory,local_hash_output,".signing_policy"), "signing_policy")
 
-    subprocess.call(shlex.split("tar -cvzf globus_simple_ca_{local_hash}_setup-0.tar.gz {target_directory};".format(local_hash = local_hash_output, target_directory = target_directory)))
+    subprocess.call(shlex.split("tar -cvzf globus_simple_ca_{local_hash}_setup-0.tar.gz {target_directory}".format(local_hash = local_hash_output, target_directory = target_directory)))
     subprocess.call(shlex.split("rm -rf {target_directory};".format(target_directory = target_directory)))
     subprocess.call(shlex.split("rm -f signing_policy_template;"))
 
@@ -2541,8 +2541,8 @@ def setup_temp_ca():
         sleep(1)
         pass
 
-    shutil.copyfile("openssl.cnf", os.path.join("/etc", "certs"))
-    shutil.copyfile(glob.glob("host*.pem"), os.path.join("/etc", "certs"))
+    shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
+    shutil.copy(glob.glob("host*.pem"), os.path.join("/etc", "certs"))
     shutil.copyfile("cacerts.pem", os.path.join("etc", "certs", "cachain.pem"))
 
     try:

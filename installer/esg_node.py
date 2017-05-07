@@ -2370,7 +2370,7 @@ def _glean_keystore_info():
         Reads tomcat's server.xml file at sets the appropriate vars based on contained values
         Will *only* set global vars if it was successfully gleaned from server.xml.
     '''
-    if not os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"), os.R_OK):
+    if os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"), os.R_OK):
         logger.debug("inspecting tomcat config file ")
 
         server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))

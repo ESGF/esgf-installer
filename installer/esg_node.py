@@ -23,6 +23,7 @@ import fileinput
 import xmltodict
 import untangle
 import filecmp
+import glob
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2540,8 +2541,8 @@ def setup_temp_ca():
         sleep(1)
         pass
 
-    shutil.copyfile("openssl.cnf", os.path.join("etc", "certs"))
-    subprocess.call(shlex.split("cp host*.pem /etc/certs/"))
+    shutil.copyfile("openssl.cnf", os.path.join("/etc", "certs"))
+    shutil.copyfile(glob.glob("host*.pem"), os.path.join("/etc", "certs"))
     shutil.copyfile("cacerts.pem", os.path.join("etc", "certs", "cachain.pem"))
 
     try:

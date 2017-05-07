@@ -508,20 +508,20 @@ def write_esgcet_env():
     # print
     datafile = open(config.envfile, "a+")
     try:
-	    datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
-	    esg_functions.deduplicate_settings_in_file(config.envfile)
+        datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
+        esg_functions.deduplicate_settings_in_file(config.envfile)
     finally:
-    	datafile.close()
+        datafile.close()
 
 
 def write_esgcet_install_log():
     datafile = open(config.install_manifest, "a+")
     try:
-	    datafile.write(str(datetime.date.today()) + "python:esgcet=" +
-	                   config.config_dictionary["esgcet_version"] + "\n")
-	    esg_functions.deduplicate_settings_in_file(config.install_manifest)
+        datafile.write(str(datetime.date.today()) + "python:esgcet=" +
+                       config.config_dictionary["esgcet_version"] + "\n")
+        esg_functions.deduplicate_settings_in_file(config.install_manifest)
     finally:
-    	datafile.close()
+        datafile.close()
 
     esg_functions.write_as_property(
         "publisher_config", config.config_dictionary["publisher_config"])
@@ -622,9 +622,9 @@ def start_postgress():
         return True
     print "Starting Postgress..."
     for file in os.listdir("/etc/init.d/"):
-    	if "postgresql" in file:
-    		postgresql_executable_name = file
-    		logger.info("postgresql_executable_name: %s", postgresql_executable_name)
+        if "postgresql" in file:
+            postgresql_executable_name = file
+            logger.info("postgresql_executable_name: %s", postgresql_executable_name)
     postgres_start_command = shlex.split("/etc/init.d/{postgresql_executable_name} start".format(postgresql_executable_name = postgresql_executable_name))
     status = subprocess.Popen(postgres_start_command)
     status_output, err = status.communicate()
@@ -1383,16 +1383,16 @@ def install_prerequisites():
 
 
 def stream_subprocess_output(subprocess_object):
-	with subprocess_object.stdout:
-		for line in iter(subprocess_object.stdout.readline, b''):
-			print line,
-	subprocess_object.wait() # wait for the subprocess to exit
-	# for stdout_line in iter(subprocess_object.stdout.readline, ""):
-	#     yield stdout_line 
-	# subprocess_object.stdout.close()
-	# return_code = subprocess_object.wait()
-	# if return_code:
-	#     raise subprocess.CalledProcessError(return_code, command_list)
+    with subprocess_object.stdout:
+        for line in iter(subprocess_object.stdout.readline, b''):
+            print line,
+    subprocess_object.wait() # wait for the subprocess to exit
+    # for stdout_line in iter(subprocess_object.stdout.readline, ""):
+    #     yield stdout_line 
+    # subprocess_object.stdout.close()
+    # return_code = subprocess_object.wait()
+    # if return_code:
+    #     raise subprocess.CalledProcessError(return_code, command_list)
 
 def symlink_force(target, link_name):
     try:
@@ -1423,8 +1423,8 @@ def setup_java():
     stream_subprocess_output(yum_install_java)
     # os.symlink("/usr/java/jdk1.8.0_92/", config.config_dictionary["java_install_dir"])
     symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
-	# print "yum_install_java: ", yum_install_java.communicate()[0]
-	# print "yum_install_java return code: ", yum_install_java.returncode
+    # print "yum_install_java: ", yum_install_java.communicate()[0]
+    # print "yum_install_java return code: ", yum_install_java.returncode
 
 def setup_ant():
     print '''
@@ -1437,8 +1437,8 @@ def setup_ant():
     command_list = ["yum", "-y", "install", "ant"]
     yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
     stream_subprocess_output(yum_install_ant)
-	# print "yum_install_ant: ", yum_install_ant.communicate()[0]
-	# print "yum_install_ant return code: ", yum_install_ant.returncode
+    # print "yum_install_ant: ", yum_install_ant.communicate()[0]
+    # print "yum_install_ant return code: ", yum_install_ant.returncode
 
 def setup_postgres():
     print '''
@@ -1452,13 +1452,13 @@ def setup_postgres():
     postgres_binary_path = os.path.join(config.config_dictionary["postgress_bin_dir"], "postgres")
     logger.debug("postgres_binary_path: %s", postgres_binary_path)
     try:
-	    found_valid_version = esg_functions.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"], version_command = "-V")
-	    if found_valid_version and not force_install:
-	        print "Valid existing Postgres installation found"
-	        print "[OK]"
-	        return True
+        found_valid_version = esg_functions.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"], version_command = "-V")
+        if found_valid_version and not force_install:
+            print "Valid existing Postgres installation found"
+            print "[OK]"
+            return True
     except OSError, error:
-		logger.error(error)
+        logger.error(error)
 
     # upgrade  = None
     # if not found_valid_version:
@@ -1586,7 +1586,7 @@ def setup_postgres():
     try:
         conn=psycopg2.connect("dbname='postgres' user='postgres' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config.config_dictionary["pg_sys_acct_passwd"])) 
     except Exception, error:
-    	logger.error(error)
+        logger.error(error)
         print "I am unable to connect to the database."
         esg_functions.checked_done(1)
 
@@ -2541,13 +2541,15 @@ def setup_temp_ca():
         sleep(1)
         pass
     try:
-	    shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
-	    logger.info("glob_list: %s", glob.glob("host*.pem"))
-	    for file in glob.glob("host*.pem"):
-	    	shutil.copy(file, os.path.join("/etc", "certs"))
-    	shutil.copyfile("cacert.pem", os.path.join("/etc", "certs", "cachain.pem"))
+        shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
+
+        logger.info("glob_list: %s", glob.glob("host*.pem"))
+        for file in glob.glob("host*.pem"):
+            shutil.copy(file, os.path.join("/etc", "certs"))
+
+        shutil.copyfile("cacert.pem", os.path.join("/etc", "certs", "cachain.pem"))
     except IOError, error:
-    	logger.error(error)
+        logger.error(error)
 
     try:
         os.makedirs("/etc/esgfcerts")

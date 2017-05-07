@@ -2214,9 +2214,12 @@ def add_my_cert_to_truststore(action, value):
     logger.debug("truststore_pass_value: %s", local_truststore_password)
     logger.debug("check_private_keystore_flag: %s", check_private_keystore_flag)
 
-
-    with open(config.ks_secret_file, 'rb') as f:
-        keystore_password_in_file = f.read().strip()
+    try:
+        with open(config.ks_secret_file, 'rb') as f:
+            keystore_password_in_file = f.read().strip()
+    except IOError, error:
+        logger.error(error)
+        keystore_password_in_file = None
 
     if keystore_password_in_file != local_keystore_file:
         while True:

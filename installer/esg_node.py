@@ -2147,7 +2147,7 @@ def configure_tomcat(keystore_password, esg_dist_url):
         # print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
 
 
-    add_my_cert_to_truststore(keystore_pass = keystore_password)
+    add_my_cert_to_truststore("--keystore-pass",keystore_password)
 
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(

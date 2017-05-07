@@ -2542,7 +2542,9 @@ def setup_temp_ca():
         pass
 
     shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
-    shutil.copy(glob.glob("host*.pem"), os.path.join("/etc", "certs"))
+    logger.info("glob_list: %s", glob.glob("host*.pem"))
+    for file in glob.glob("host*.pem"):
+    	shutil.copy(file, os.path.join("/etc", "certs"))
     shutil.copyfile("cacerts.pem", os.path.join("etc", "certs", "cachain.pem"))
 
     try:

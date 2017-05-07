@@ -2540,12 +2540,14 @@ def setup_temp_ca():
             raise
         sleep(1)
         pass
-
-    shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
-    logger.info("glob_list: %s", glob.glob("host*.pem"))
-    for file in glob.glob("host*.pem"):
-    	shutil.copy(file, os.path.join("/etc", "certs"))
-    shutil.copyfile("cacerts.pem", os.path.join("etc", "certs", "cachain.pem"))
+    try:
+	    shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
+	    logger.info("glob_list: %s", glob.glob("host*.pem"))
+	    for file in glob.glob("host*.pem"):
+	    	shutil.copy(file, os.path.join("/etc", "certs"))
+    	shutil.copyfile("cacert.pem", os.path.join("/etc", "certs", "cachain.pem"))
+    except IOError, error:
+    	logger.error(error)
 
     try:
         os.makedirs("/etc/esgfcerts")

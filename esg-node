@@ -1185,7 +1185,7 @@ setup_esgcet() {
           choice="n"
       fi
       if [ $choice == "y" ] ; then
-        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor cfchecker
+        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor
         pip install esgfpid   
         pushd $install_dir
         git clone https://github.com/PCMDI/cmip6-cmor-tables

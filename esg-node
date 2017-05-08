@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.5.4-devel-release"
-script_maj_version="2.5"
-script_release="Midgard"
+script_version="v2.0-RC5.4.0-devel"
+script_maj_version="2.0"
+script_release="Centaur"
 envfile="/etc/esg.env"
 
 #--------------
@@ -195,7 +195,6 @@ write_paths() {
     echo "export ESGF_INSTALL_PREFIX=${install_prefix}" >> ${envfile}
     echo "export PATH=$myPATH:\$PATH" >> ${envfile}
     echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
-
     dedup ${envfile} && source ${envfile}
 }
 
@@ -2035,7 +2034,11 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
                 fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
+            if [ "$node_peer_group" = "esgf-test" ]; then
+                checked_get ${truststore_file} ${esg_dist_url_root}/certs/test-federation/${fetch_file} $((force_install))
+            else
                 checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
+            fi
                 if (( $? > 1 )); then
                     echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
                     echo "(note - the truststore password will probably not match!)"
@@ -3201,8 +3204,13 @@ fetch_esgf_certificates() {
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    if [ "$node_peer_group" = "esgf-test" ]; then
+        debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/test-federation/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+        curl -s -L --insecure ${esg_dist_url_root}/certs/test-federation/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    else
+        debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+        curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    fi
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -3238,11 +3246,19 @@ fetch_esgf_truststore() {
     local truststore_file_=${1:-${truststore_file}}
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
-    checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
+    if [ "$node_peer_group" = "esgf-test" ]; then
+        checked_get ${truststore_file} ${esg_dist_url_root}/certs/test-federation/${truststore_file_##*/}
+    else
+        checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
+    fi
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 	apache_truststore='/etc/certs/esgf-ca-bundle.crt'
     [ -e "${apache_truststore}" ] && mv -v ${apache_truststore}{,.bak}
-    checked_get ${apache_truststore} ${esg_dist_url_root}/certs/${apache_truststore##*/}
+    if [ "$node_peer_group" = "esgf-test" ]; then
+        checked_get ${apache_truststore} ${esg_dist_url_root}/certs/test-federation/${apache_truststore##*/}
+    else
+        checked_get ${apache_truststore} ${esg_dist_url_root}/certs/${apache_truststore##*/}
+    fi
     (( $? > 1 )) && [FAIL] && mv -v ${apache_truststore}{.bak,} || [OK] && cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 
     # For the IDP it is good to trust yourself ;-)...

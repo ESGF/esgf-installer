@@ -2757,7 +2757,8 @@ def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
         for line in fileinput.FileInput(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"), inplace=True, backup='.bak'):
         # for line in file:
-            # print line.replace(textToSearch, textToReplace), end='' 
+            # print line.replace(textToSearch, textToReplace), end=''
+            logger.debug("line: %s", line) 
             print re.sub("pathname=\S+", "pathname={tomcat_users_file}".format(tomcat_users_file = config.config_dictionary["tomcat_users_file"]), line)
             print re.sub("truststoreFile=\S+", "truststoreFile={truststore_file}".format(truststore_file = config.config_dictionary["truststore_file"]), line)
             print re.sub("truststorePass=\S+", "truststorePass={truststore_password}".format(truststore_password = config.config_dictionary["truststore_password"]), line)

@@ -24,6 +24,7 @@ import xmltodict
 import untangle
 import filecmp
 import glob
+import xml.etree.ElementTree
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2135,16 +2136,21 @@ def configure_tomcat(keystore_password, esg_dist_url):
     #Edit the server.xml file to contain proper location of certificates
 
     logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
-    for line in fileinput.FileInput(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"), inplace=True, backup='.bak'):
-        # for line in file:
-            # print line.replace(textToSearch, textToReplace), end='' 
-        print re.sub("pathname=\S+", "pathname={tomcat_users_file}".format(tomcat_users_file = config.config_dictionary["tomcat_users_file"]), line)
-        print re.sub("truststoreFile=\S+", "truststoreFile={truststore_file}".format(truststore_file = config.config_dictionary["truststore_file"]), line)
-        print re.sub("truststorePass=\S+", "truststorePass={truststore_password}".format(truststore_password = config.config_dictionary["truststore_password"]), line)
-        print re.sub("keystoreFile=\S+", "keystoreFile={keystore_file}".format(keystore_file = config.config_dictionary["keystore_file"]), line)
-        print re.sub("keystorePass=\S+", "keystorePass={keystore_password}".format(keystore_password = keystore_password), line)
-        print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
-        # print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
+    #TODO: Refactor to separate function
+    et = xml.etree.ElementTree.parse(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"))
+    root = et.getroot()
+    pathname = root.find(".//Resource[@pathname]")
+    logger.info("pathname: %s", xml.etree.ElementTree.tostring(pathname))
+    pathname.set('pathname', config.config_dictionary["tomcat_users_file"])
+    logger.info("pathname: %s",xml.etree.ElementTree.tostring(root.find(".//Resource[@pathname]")))
+    connector_element = root.find(".//Connector[@truststoreFile]")
+    connector_element.set('truststoreFile', config.config_dictionary["truststore_file"])
+    connector_element.set('truststorePass', config.config_dictionary["truststore_password"])
+    connector_element.set('keystoreFile', config.config_dictionary["keystore_file"])
+    connector_element.set('keystorePass', keystore_password)
+    connector_element.set('keyAlias', config.config_dictionary["keystore_alias"])
+    logger.info("connector_element: %s",xml.etree.ElementTree.tostring(connector_element))
+    et.write(open(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml", 'wb')))
 
 
     add_my_cert_to_truststore("--keystore-pass",keystore_password)

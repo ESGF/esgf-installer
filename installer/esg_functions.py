@@ -698,7 +698,7 @@ def check_tomcat_process():
         except NameError:
              esgf_host_ip = get_property("esgf_host_ip")
         ports = []
-        with open(server_xml_path, "r+") as server_xml_file:
+        with open(server_xml_path, "r") as server_xml_file:
             for line in server_xml_file:
                 line = line.rstrip() # remove trailing whitespace such as '\n'
                 port_descriptor = re.search('(port=)(\S+)', line)
@@ -724,8 +724,8 @@ def check_tomcat_process():
             proc2.stdout.close()
 
             stdout_processes, stderr_processes = proc3.communicate()
-            logger.info("stdout_processes: %s", stdout_processes)
-            logger.info("stderr_processes: %s", stderr_processes)
+            logger.info("port %s stdout_processes: %s", port, stdout_processes)
+            logger.info("port %s stderr_processes: %s", port, stderr_processes)
 
             # list_running_processes_command = "lsof -Pni TCP:{port} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk {awk_print} | sort -u | xargs".format(port = port, esgf_host_ip = esgf_host_ip, awk_print = '{print $1}')
             # processes_found = subprocess.Popen(shlex.split(list_running_processes_command),stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

@@ -1546,11 +1546,11 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     if force_get == 1:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
-            logger.info("No updates available")
+            logger.info("No updates available.")
             return 1
 
     if os.path.isfile(local_file) and make_backup_file == 1:
-        shutil.copyfile(local_file, os.path.join(local_file,".bak"))
+        shutil.copyfile(local_file, local_file + ".bak")
         os.chmod(local_file+".bak", 600)
 
     '''

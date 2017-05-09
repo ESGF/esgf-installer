@@ -1454,7 +1454,7 @@ def check_for_update(filename_1, filename_2 =None):
         return 0
     return 1
 
-def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = 1 ):
+def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = 1, use_local_files = False ):
     '''
 
      If an update is available then pull it down... then check the md5 sums again!
@@ -1521,28 +1521,11 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         print "remote_file in checked_get: ", remote_file
         print "local_file in checked_get: ", local_file
 
-    '''
-        if (_is_in_git "${local_file}") ; then
-        printf "${local_file} is controlled by Git, not updating"
-        return 0
-    fi
-    '''
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
         return 0
 
-    '''
-        if ((use_local_files)) && [ -e "${local_file}" ]; then
-        printf "
-    ***************************************************************************
-    ALERT....
-    NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
-    file: $(readlink -f ${local_file})
-    ***************************************************************************\n\n"
-        return 0
-    fi
-    '''
-    if os.path.isfile(local_file):
+    if os.path.isfile(local_file) and use_local_files:
         print '''
             ***************************************************************************
             ALERT....
@@ -1563,16 +1546,11 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     if force_get == 1:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
+            logger.info("No updates available")
             return 1
 
-    '''
-        if [ -e ${local_file} ] && ((make_backup_file)) ; then
-        cp -v ${local_file} ${local_file}.bak
-        chmod 600 ${local_file}.bak
-    fi
-    '''
     if os.path.isfile(local_file) and make_backup_file == 1:
-        shutil.copyfile(local_file, local_file+".bak")
+        shutil.copyfile(local_file, os.path.join(local_file,".bak"))
         os.chmod(local_file+".bak", 600)
 
     '''

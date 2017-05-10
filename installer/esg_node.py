@@ -29,6 +29,7 @@ from git import Repo
 from collections import deque
 from time import sleep
 from OpenSSL import crypto
+from lxml import etree
 import esg_functions
 import esg_bash2py
 import esg_setup
@@ -2134,25 +2135,8 @@ def configure_tomcat(keystore_password, esg_dist_url):
 
     #NOTE: The truststore uses the java default password: "changeit"
     #Edit the server.xml file to contain proper location of certificates
-
     logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
-    #TODO: Refactor to separate function
-    server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
-    et = xml.etree.ElementTree.parse(server_xml_path)
-    root = et.getroot()
-    pathname = root.find(".//Resource[@pathname]")
-    logger.info("pathname: %s", xml.etree.ElementTree.tostring(pathname))
-    pathname.set('pathname', config.config_dictionary["tomcat_users_file"])
-    logger.info("pathname: %s",xml.etree.ElementTree.tostring(root.find(".//Resource[@pathname]")))
-    connector_element = root.find(".//Connector[@truststoreFile]")
-    connector_element.set('truststoreFile', config.config_dictionary["truststore_file"])
-    connector_element.set('truststorePass', config.config_dictionary["truststore_password"])
-    connector_element.set('keystoreFile', config.config_dictionary["keystore_file"])
-    connector_element.set('keystorePass', keystore_password)
-    connector_element.set('keyAlias', config.config_dictionary["keystore_alias"])
-    logger.info("connector_element: %s",xml.etree.ElementTree.tostring(connector_element))
-    et.write(open(server_xml_path, "wb"))
-    et.write(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "test_output.xml"))
+    edit_tomcat_server_xml(keystore_password)
 
 
     add_my_cert_to_truststore("--keystore-pass",keystore_password)
@@ -2174,6 +2158,29 @@ def configure_tomcat(keystore_password, esg_dist_url):
         esg_functions.checked_done(1)
 
     os.chdir(starting_directory)
+
+
+def edit_tomcat_server_xml(keystore_password):
+    server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
+    tree = etree.parse(server_xml_path)
+    root = tree.getroot()
+    logger.info("root: %s", etree.tostring(root))
+
+    # et = xml.etree.ElementTree.parse(server_xml_path)
+    # root = et.getroot()
+    pathname = root.find(".//Resource[@pathname]")
+    logger.info("pathname: %s", etree.tostring(pathname))
+    pathname.set('pathname', config.config_dictionary["tomcat_users_file"])
+    logger.info("pathname: %s",etree.tostring(root.find(".//Resource[@pathname]")))
+    connector_element = root.find(".//Connector[@truststoreFile]")
+    connector_element.set('truststoreFile', config.config_dictionary["truststore_file"])
+    connector_element.set('truststorePass', config.config_dictionary["truststore_password"])
+    connector_element.set('keystoreFile', config.config_dictionary["keystore_file"])
+    connector_element.set('keystorePass', keystore_password)
+    connector_element.set('keyAlias', config.config_dictionary["keystore_alias"])
+    logger.info("connector_element: %s",etree.tostring(connector_element))
+    tree.write(open(server_xml_path, "wb"), pretty_print = True)
+    tree.write(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "test_output.xml"), pretty_print = True)
 
 
 def add_my_cert_to_truststore(action, value):
@@ -2763,17 +2770,7 @@ def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
 
         #SET the server.xml variables to contain proper values
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
-        for line in fileinput.FileInput(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"), inplace=True, backup='.bak'):
-        # for line in file:
-            # print line.replace(textToSearch, textToReplace), end=''
-            logger.debug("line: %s", line) 
-            print re.sub("pathname=\S+", "pathname={tomcat_users_file}".format(tomcat_users_file = config.config_dictionary["tomcat_users_file"]), line)
-            print re.sub("truststoreFile=\S+", "truststoreFile={truststore_file}".format(truststore_file = config.config_dictionary["truststore_file"]), line)
-            print re.sub("truststorePass=\S+", "truststorePass={truststore_password}".format(truststore_password = config.config_dictionary["truststore_password"]), line)
-            print re.sub("keystoreFile=\S+", "keystoreFile={keystore_file}".format(keystore_file = config.config_dictionary["keystore_file"]), line)
-            print re.sub("keystorePass=\S+", "keystorePass={keystore_password}".format(keystore_password = keystore_password), line)
-            print re.sub("keyAlias=\S+", "keyAlias={keystore_alias}".format(keystore_alias = config.config_dictionary["keystore_alias"]), line)
-
+        edit_tomcat_server_xml(keystore_password)
 
 def tomcat_port_check():
     ''' 

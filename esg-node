@@ -2292,6 +2292,30 @@ test_tomcat() {
     checked_done 0
 }
 
+setup_slcs(){
+    yum  -y install ansible
+
+    start_postgress
+    export PGPASSWORD=`cat /esg/config/.esg_pg_pass` && createdb -U dbsuper slcsdb
+    pushd /usr/local
+
+    git clone https://github.com/cedadev/esgf-slcs-server-playbook.git
+    chown -R apache:apache esgf-slcs-server-playbook
+
+    pushd esgf-slcs-server-playbook
+
+    chgrp -R apache /var/lib/globus-connect-server/myproxy-ca/
+    chmod g+rx /var/lib/globus-connect-server/myproxy-ca/
+    chmod g+rx /var/lib/globus-connect-server/myproxy-ca/private
+    chmod g+r /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem  
+
+    ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml 
+
+    
+
+    
+}
+
 #called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags
 select_idp_peer() {
 
@@ -7041,6 +7065,9 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
     [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
+
+    #OAuth SLCS setup
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && setup_slcs
 
     #---------------------------------------
     # Index type install...

@@ -2137,7 +2137,8 @@ def configure_tomcat(keystore_password, esg_dist_url):
 
     logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
     #TODO: Refactor to separate function
-    et = xml.etree.ElementTree.parse(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml"))
+    server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
+    et = xml.etree.ElementTree.parse(server_xml_path)
     root = et.getroot()
     pathname = root.find(".//Resource[@pathname]")
     logger.info("pathname: %s", xml.etree.ElementTree.tostring(pathname))
@@ -2150,7 +2151,8 @@ def configure_tomcat(keystore_password, esg_dist_url):
     connector_element.set('keystorePass', keystore_password)
     connector_element.set('keyAlias', config.config_dictionary["keystore_alias"])
     logger.info("connector_element: %s",xml.etree.ElementTree.tostring(connector_element))
-    et.write(open(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml", 'wb')))
+    et.write(open(server_xml_path, "wb"))
+    et.write(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "test_output.xml"))
 
 
     add_my_cert_to_truststore("--keystore-pass",keystore_password)

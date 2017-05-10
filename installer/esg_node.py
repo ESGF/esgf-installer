@@ -2247,7 +2247,7 @@ def add_my_cert_to_truststore(action, value):
             store_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
             if store_password_input == store_password_input_confirmation:
                 java_keytool_command = "{java_install_dir}/bin/keytool -list -keystore {local_keystore_file} \
-                -storepass ${local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+                -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
                     local_keystore_file = local_keystore_file, local_keystore_password = local_keystore_password)
                 keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
                 if keytool_return_code != 0:
@@ -2388,21 +2388,24 @@ def _glean_keystore_info():
     if os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"), os.R_OK):
         logger.debug("inspecting tomcat config file ")
 
-        server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+        server_xml_object = etree.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+        root = server_xml_object.getroot()
+        connector_element = root.find(".//Connector[@truststoreFile]")
 
-        config.config_dictionary["keystore_file"] = server_xml_object.Server.Connector[1]["keystoreFile"]
+        logger.info("keystoreFile: %s", connector_element.get('keystoreFile'))
+        config.config_dictionary["keystore_file"] = connector_element.get('keystoreFile')
         logger.debug("keystore_file_value: %s", config.config_dictionary["keystore_file"])
 
-        config.config_dictionary["keystore_password"] = server_xml_object.Server.Connector[1]["keystorePass"]
+        config.config_dictionary["keystore_password"] = connector_element.get('keystorePass')
         logger.debug("keystore_pass_value: %s", config.config_dictionary["keystore_password"])
 
-        config.config_dictionary["keystore_alias"] = server_xml_object.Server.Connector[1]["keyAlias"]
+        config.config_dictionary["keystore_alias"] = connector_element.get('keyAlias')
         logger.debug("key_alias_value: %s", config.config_dictionary["keystore_alias"])
 
-        config.config_dictionary["truststore_file"] = server_xml_object.Server.Connector[1]["truststoreFile"]
+        config.config_dictionary["truststore_file"] = connector_element.get('truststoreFile')
         logger.debug("truststore_file_value: %s", config.config_dictionary["truststore_file"])
 
-        config.config_dictionary["truststore_password"] = server_xml_object.Server.Connector[1]["truststorePass"]
+        config.config_dictionary["truststore_password"] = connector_element.get('truststorePass')
         logger.debug("truststore_pass_value: %s", config.config_dictionary["truststore_password"])
 
         return True

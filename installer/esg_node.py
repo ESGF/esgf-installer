@@ -2312,11 +2312,21 @@ def add_my_cert_to_truststore(action, value):
             sys.exit(1)
 
     java_keytool_command = "{java_install_dir}/bin/keytool -v -list -keystore {local_truststore_file} \
-        -storepass ${local_truststore_password} | egrep -i '^Alias[ ]+name:[ ]+'${local_keystore_alias}'$'".format(java_install_dir = config.config_dictionary["java_install_dir"],
-        local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password, local_keystore_alias = local_keystore_alias)
-    keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-    if keytool_return_code == 0:
-        print "Detected Alias \"${local_keystore_alias}\" Present... Removing... Making space for certificate... ".format(keystore_alias = local_keystore_alias)
+        -storepass {local_truststore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+        local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password)
+    grep_for_alias_commmand = "egrep -i '^Alias[ ]+name:[ ]+'{local_keystore_alias}'$'".format(local_keystore_alias = local_keystore_alias)
+    keytool_subprocess = subprocess.Popen(shlex.split(java_keytool_command), stdout = subprocess.PIPE)
+    grep_for_alias_subprocess = subprocess.Popen(shlex.split(grep_for_alias_commmand), stdin = keytool_subprocess)
+
+    # Allow proc1 to receive a SIGPIPE if proc2 exits.
+    keytool_subprocess.stdout.close()
+    stdout_processes, stderr_processes = grep_for_alias_subprocess.communicate() 
+    logger.info("stdout_processes: %s", stdout_processes)
+    logger.info("stderr_processes: %s", stderr_processes)
+    logger.info("grep_for_alias_subprocess.returncode: %s", grep_for_alias_subprocess.returncode)
+
+    if grep_for_alias_subprocess.returncode == 0:
+        print "Detected Alias \"{local_keystore_alias}\" Present... Removing... Making space for certificate... ".format(keystore_alias = local_keystore_alias)
         delete_keytool_alias_command = "{java_install_dir}/bin/keytool -delete -alias {local_keystore_alias} -keystore {local_truststore_file} \
         -storepass ${local_truststore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
         local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password, local_keystore_alias =  local_keystore_alias)
@@ -2327,7 +2337,7 @@ def add_my_cert_to_truststore(action, value):
 
     print "Importing keystore's certificate into truststore... "
     import_keystore_cert_command = "{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {local_keystore_alias} -keypass {local_keystore_password} -file {local_keystore_file}.cer -keystore {local_truststore_file} \
-        -storepass ${local_truststore_password} -noprompt".format(java_install_dir = config.config_dictionary["java_install_dir"], local_keystore_alias = local_keystore_alias, 
+        -storepass {local_truststore_password} -noprompt".format(java_install_dir = config.config_dictionary["java_install_dir"], local_keystore_alias = local_keystore_alias, 
         local_keystore_password = local_keystore_password, local_keystore_file = local_keystore_file,
         local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password)
     import_keystore_cert_return_code = subprocess.call(shlex.split(import_keystore_cert_command))

@@ -2316,7 +2316,7 @@ def add_my_cert_to_truststore(action, value):
         local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password)
     grep_for_alias_commmand = "egrep -i '^Alias[ ]+name:[ ]+'{local_keystore_alias}'$'".format(local_keystore_alias = local_keystore_alias)
     keytool_subprocess = subprocess.Popen(shlex.split(java_keytool_command), stdout = subprocess.PIPE)
-    grep_for_alias_subprocess = subprocess.Popen(shlex.split(grep_for_alias_commmand), stdin = keytool_subprocess)
+    grep_for_alias_subprocess = subprocess.Popen(shlex.split(grep_for_alias_commmand), stdin = keytool_subprocess.stdout, stdout = subprocess.PIPE)
 
     # Allow proc1 to receive a SIGPIPE if proc2 exits.
     keytool_subprocess.stdout.close()
@@ -2326,9 +2326,9 @@ def add_my_cert_to_truststore(action, value):
     logger.info("grep_for_alias_subprocess.returncode: %s", grep_for_alias_subprocess.returncode)
 
     if grep_for_alias_subprocess.returncode == 0:
-        print "Detected Alias \"{local_keystore_alias}\" Present... Removing... Making space for certificate... ".format(keystore_alias = local_keystore_alias)
+        print "Detected Alias \"{local_keystore_alias}\" Present... Removing... Making space for certificate... ".format(local_keystore_alias = local_keystore_alias)
         delete_keytool_alias_command = "{java_install_dir}/bin/keytool -delete -alias {local_keystore_alias} -keystore {local_truststore_file} \
-        -storepass ${local_truststore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+        -storepass {local_truststore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
         local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password, local_keystore_alias =  local_keystore_alias)
         delete_keytool_alias_return_code = subprocess.call(shlex.split(delete_keytool_alias_command))
         if delete_keytool_alias_return_code != 1:

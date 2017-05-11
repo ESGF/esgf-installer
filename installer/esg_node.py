@@ -2302,7 +2302,7 @@ def add_my_cert_to_truststore(action, value):
         print "Extracting keystore's certificate... "
         java_keytool_command = "{java_install_dir}/bin/keytool -export -alias {local_keystore_alias}  -file {local_keystore_file}.cer -keystore {local_keystore_file} \
 -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
-        local_keystore_file = local_keystore_file, keystore_password = local_keystore_password, local_keystore_alias =  local_keystore_alias)
+        local_keystore_file = local_keystore_file, local_keystore_password = local_keystore_password, local_keystore_alias =  local_keystore_alias)
         logger.debug("java_keytool_command: %s", java_keytool_command)
         keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
         if keytool_return_code == 0:

@@ -1336,7 +1336,7 @@ def main():
     #---------------------------------------
     if node_type_bit & INSTALL_BIT !=0:
         esg_setup.setup_java()
-        setup_ant()
+        esg_setup.setup_ant()
         setup_postgres()
         setup_cdat()
         logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
@@ -1407,20 +1407,6 @@ def symlink_force(target, link_name):
             raise e
 
 
-
-def setup_ant():
-    print '''
-    *******************************
-    Setting up Ant
-    ******************************* '''
-    if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        logger.info("Found existing Ant installation.  Skipping set up.")
-        return
-    command_list = ["yum", "-y", "install", "ant"]
-    yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
-    stream_subprocess_output(yum_install_ant)
-    # print "yum_install_ant: ", yum_install_ant.communicate()[0]
-    # print "yum_install_ant return code: ", yum_install_ant.returncode
 
 def setup_postgres():
     print '''

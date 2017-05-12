@@ -1616,4 +1616,13 @@ def pushd(new_dir):
     os.chdir(previous_dir)
 
 
+def symlink_force(target, link_name):
+    try:
+        os.symlink(target, link_name)
+    except OSError, e:
+        if e.errno == errno.EEXIST:
+            os.remove(link_name)
+            os.symlink(target, link_name)
+        else:
+            raise e
 

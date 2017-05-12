@@ -139,7 +139,6 @@ except KeyError:
 #   target = open(config.config_dictionary['envfile'], 'w')
 #   target.write("export JAVA_HOME="+config.config_dictionary["java_install_dir"])
 
-
 def setup_sensible_confs():
     pass
 
@@ -2302,7 +2301,6 @@ def subprocess_pipe_commands(command_list):
         else:
             subprocess_stdout, subprocess_stderr = process.communicate()
     return subprocess_stdout
-
 
 if __name__ == '__main__':
     main()

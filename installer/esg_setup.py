@@ -1020,6 +1020,9 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
 
 def setup_java():
+    '''
+        Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.
+    '''
     print '''
     *******************************
     Setting up Java {java_version}
@@ -1052,7 +1055,7 @@ def setup_ant():
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         logger.info("Found existing Ant installation.  Skipping set up.")
         return
-    
+
     command_list = ["yum", "-y", "install", "ant"]
     yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
     stream_subprocess_output(yum_install_ant)

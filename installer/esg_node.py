@@ -2327,9 +2327,12 @@ def add_my_cert_to_truststore(action, value):
 
     if grep_for_alias_subprocess.returncode == 0:
         print "Detected Alias \"{local_keystore_alias}\" Present... Removing... Making space for certificate... ".format(local_keystore_alias = local_keystore_alias)
+
         delete_keytool_alias_command = "{java_install_dir}/bin/keytool -delete -alias {local_keystore_alias} -keystore {local_truststore_file} \
         -storepass {local_truststore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
         local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password, local_keystore_alias =  local_keystore_alias)
+        logger.debug("delete_keytool_alias_command: %s", delete_keytool_alias_command)
+
         delete_keytool_alias_return_code = subprocess.call(shlex.split(delete_keytool_alias_command))
         if delete_keytool_alias_return_code != 1:
             logger.error(" ERROR: problem deleting %s key from keystore!", local_keystore_alias)
@@ -2595,11 +2598,14 @@ def setup_temp_ca():
 
 
 def setup_root_app():
-
-    if os.path.isdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")) and 'REFRESH' in open(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html")).read():
-        print "ROOT app in place... [OK]"
-        return True
-    else:
+    try:
+        if os.path.isdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")) and 'REFRESH' in open(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html")).read():
+            print "ROOT app in place... [OK]"
+            return True
+        else:
+            raise OSError
+    except OSError, error:
+        logger.error(error)
         print "Oops, Don't see ESGF ROOT web application"
         esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))
 

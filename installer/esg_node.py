@@ -1349,6 +1349,9 @@ def main():
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 def install_prerequisites():
+    '''
+        Install prerequisite modules via yum
+    '''
     print '''
     *******************************
     Installing prerequisites

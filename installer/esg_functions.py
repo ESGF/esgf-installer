@@ -1626,3 +1626,11 @@ def symlink_force(target, link_name):
         else:
             raise e
 
+def stream_subprocess_output(subprocess_object):
+    with subprocess_object.stdout:
+        for line in iter(subprocess_object.stdout.readline, b''):
+            print line,
+    # wait for the subprocess to exit
+    subprocess_object.wait() 
+
+

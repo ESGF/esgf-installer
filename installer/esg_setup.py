@@ -1042,7 +1042,7 @@ def setup_java():
     stream_subprocess_output(yum_install_java)
     
     logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(java_version = config.config_dictionary["java_version"], java_install_dir = config.config_dictionary["java_install_dir"]))
-    symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
+    esg_functions.symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
         
 
 def setup_ant():

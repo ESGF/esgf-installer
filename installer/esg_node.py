@@ -2610,7 +2610,7 @@ def setup_root_app():
         esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))
 
         print "*******************************"
-        print "Setting up Apache Tomcat...(v${tomcat_version}) ROOT webapp"
+        print "Setting up Apache Tomcat...(v{tomcat_version}) ROOT webapp"
         print "*******************************"
 
         esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
@@ -2633,7 +2633,7 @@ def setup_root_app():
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 
-        print "unpacking ${root_app_dist_url}...".format(root_app_dist_url = esg_functions.trim_string_from_tail(root_app_dist_url))
+        print "unpacking {root_app_dist_url}...".format(root_app_dist_url = esg_functions.trim_string_from_tail(root_app_dist_url))
         try:
             tar = tarfile.open(esg_functions.trim_string_from_tail(root_app_dist_url))
             tar.extractall()

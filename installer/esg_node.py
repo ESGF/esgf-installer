@@ -2603,8 +2603,8 @@ def setup_root_app():
             print "ROOT app in place... [OK]"
             return True
         else:
-            raise OSError
-    except OSError, error:
+            raise IOError
+    except IOError, error:
         logger.error(error)
         print "Oops, Don't see ESGF ROOT web application"
         esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))

@@ -1019,90 +1019,26 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         return 0
 
 
-# def setup_java():
+def setup_java():
+    print '''
+    *******************************
+    Setting up Java {java_version}
+    ******************************* '''.format(java_version = config.config_dictionary["java_version"])
+    if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version = config.config_dictionary["java_version"]))):
+        logger.info("Found existing Java installation.  Skipping set up.")
+        return
+    java_major_version = config.config_dictionary["java_version"].split(".")[1]
+    java_minor_version = config.config_dictionary["java_version"].split("_")[1]
+     # wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
+    download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(java_major_version =  java_major_version, java_minor_version = java_minor_version)
+    subprocess.call(shlex.split(download_oracle_java_string))
 
-#   "Checking for java >= %s and valid JAVA_HOME... " % (config.config_dictionary["java_min_version"])
-#   print subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT)
-
-#   if os.path.isdir(config.config_dictionary["java_install_dir"]):
-#       java_version_check = esg_functions.check_version(config.config_dictionary["java_install_dir"]+"bin/java", config.config_dictionary["java_min_version"], version_command="-version")
-
-#       if java_version_check == 0:
-#           print "[OK]"
-#           return 0
-
-#   print '''*******************************
-#             Setting up Java... %s
-#            *******************************    
-#        ''' % (config.config_dictionary["java_min_version"])
-
-#   last_java_truststore_file = None
-#   default = "Y"
-#   dosetup = None
-
-#   if os.path.isdir(config.config_dictionary["java_install_dir"]+"bin/java"):
-#       print "Detected an existing java installation..."
-#       dosetup = raw_input("Do you want to continue with Java installation and setup? [Y/n]") or default
-#       if dosetup != "Y" or dosetup !="y":
-#           print "Skipping Java installation and setup - will assume Java is setup properly"
-#           return 0
-#   last_java_truststore_file = esg_functions._readlinkf(config.config_dictionary["truststore_file"])
-
-#   os.mkdir(config.config_dictionary["workdir"])
-#   starting_directory = os.getcwd()
-#   os.chdir(config.config_dictionary["workdir"])
-#    # source_backup_name = re.search("\w+$", source).group()
-
-#   java_dist_file = re.search("\w+$", config.config_dictionary["java_dist_url"]).group()
-#   #strip off -(32|64).tar.gz at the end
-#   java_dist_dir = re.search("(.+)-(32|64.*)", config.config_dictionary["java_dist_file"]).group(1)
-
-#   if not os.path.isdir(config.config_dictionary["java_install_dir"]+ java_dist_dir):
-#       print "Don't see java distribution dir %s/%s" % (config.config_dictionary["java_install_dir"], java_dist_dir)
-#       if not os.path.isfile(java_dist_file):
-#           print "Don't see java distribution file %s/%s either" % (os.getcwd(), java_dist_file)
-#           print "Downloading Java from %s" % (config.config_dictionary["java_dist_url"])
-#           if checked_get(config.config_dictionary["java_dist_file"],config.config_dictionary["java_dist_url"]) != 0:
-#               print " ERROR: Could not download Java" 
-#               os.chdir(starting_directory)
-#               esg_functions.checked_done(1)
-#           else:
-#               print "unpacking %s..." % (config.config_dictionary["java_dist_file"])
-#               extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
-#               try:
-#                   tar = tarfile.open(config.config_dictionary["java_dist_file"])
-#                   tar.extractall(extraction_location) 
-#                   tar.close()
-#                   print "Extracted in %s" % (extraction_location)
-#               except tarfile.TarError:
-#                   print " ERROR: Could not extract Java"
-#                   os.chdir(starting_directory)
-#                   esg_functions.checked_done(1)
-
-#     #If you don't see the directory but see the tar.gz distribution
-#     #then expand it
-
-#     '''
-#   if [ -e ${java_dist_file} ] && [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
-#         echo "unpacking ${java_dist_file}..."
-#         tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
-#         [ $? != 0 ] && echo " ERROR: Could not extract Java..." && popd && checked_done 1
-#     fi    
-#     '''
-#     if os.path.isfile(java_dist_file) and not os.path.isdir(re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])+"/"+config.config_dictionary["java_install_dir"]):
-#       print "unpacking %s..." % (java_dist_file)
-#       extraction_location = re.search("/\w*/\w*[^.*]", config.config_dictionary["java_dist_url"])
-#       try:
-#           tar = tarfile.open(config.config_dictionary["java_dist_file"])
-#           tar.extractall(extraction_location) 
-#           tar.close()
-#           print "Extracted in %s" % (extraction_location)
-#       except tarfile.TarError:
-#           print " ERROR: Could not extract Java"
-#           os.chdir(starting_directory)
-#           esg_functions.checked_done(1)
-
-#   if not os.path.isdir(config.config_dictionary["java_install_dir"]):
+    command_list = ["yum", "-y", "localinstall", "jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm".format(java_major_version =  java_major_version, java_minor_version = java_minor_version)]
+    yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
+    stream_subprocess_output(yum_install_java)
+    
+    logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(java_version = config.config_dictionary["java_version"], java_install_dir = config.config_dictionary["java_install_dir"]))
+    symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
         
 
 def setup_ant():

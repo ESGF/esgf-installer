@@ -1335,7 +1335,7 @@ def main():
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
     if node_type_bit & INSTALL_BIT !=0:
-        setup_java()
+        esg_setup.setup_java()
         setup_ant()
         setup_postgres()
         setup_cdat()
@@ -1406,27 +1406,7 @@ def symlink_force(target, link_name):
         else:
             raise e
 
-def setup_java():
-    print '''
-    *******************************
-    Setting up Java {java_version}
-    ******************************* '''.format(java_version = config.config_dictionary["java_version"])
-    if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version = config.config_dictionary["java_version"]))):
-        logger.info("Found existing Java installation.  Skipping set up.")
-        return
-    java_major_version = config.config_dictionary["java_version"].split(".")[1]
-    java_minor_version = config.config_dictionary["java_version"].split("_")[1]
-     # wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
-    download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(java_major_version =  java_major_version, java_minor_version = java_minor_version)
-    subprocess.call(shlex.split(download_oracle_java_string))
-    command_list = ["yum", "-y", "localinstall", "jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm".format(java_major_version =  java_major_version, java_minor_version = java_minor_version)]
-    # urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u121-b13/jdk-8u121-linux-x64.rpm", "jdk-8u121-linux-x64.rpm")
-    yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
-    stream_subprocess_output(yum_install_java)
-    # os.symlink("/usr/java/jdk1.8.0_92/", config.config_dictionary["java_install_dir"])
-    symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
-    # print "yum_install_java: ", yum_install_java.communicate()[0]
-    # print "yum_install_java return code: ", yum_install_java.returncode
+
 
 def setup_ant():
     print '''
@@ -1997,7 +1977,7 @@ def setup_tomcat(upgrade_flag = False):
     # if os.stat(config.ks_secret_file).st_size != 0:
     #     with open(config.ks_secret_file, 'rb') as f:
     #         keystore_password = f.read().strip()
-    migrate_tomcat_credentials_to_esgf(config.config_dictionary["keystore_password"], esg_dist_url)
+    migrate_tomcat_credentials_to_esgf(esg_dist_url)
     sleep(1)
     esg_functions.start_tomcat()
 
@@ -2724,7 +2704,7 @@ def print_templ():
     file.close()
 
 
-def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
+def migrate_tomcat_credentials_to_esgf(esg_dist_url):
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
     Ex: /esg/config/tomcat
@@ -2801,7 +2781,7 @@ def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
 
         #SET the server.xml variables to contain proper values
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
-        edit_tomcat_server_xml(keystore_password)
+        edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
 
 def tomcat_port_check():
     ''' 

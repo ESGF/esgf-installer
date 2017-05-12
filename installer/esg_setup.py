@@ -1043,7 +1043,21 @@ def setup_java():
         
 
 def setup_ant():
-    pass
+    '''
+        Install ant via yum. Does nothing if a version of Ant is already installed.
+    '''
+    print '''
+    *******************************
+    Setting up Ant
+    ******************************* '''
+    if os.path.exists(os.path.join("/usr", "bin", "ant")):
+        logger.info("Found existing Ant installation.  Skipping set up.")
+        return
+    
+    command_list = ["yum", "-y", "install", "ant"]
+    yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
+    stream_subprocess_output(yum_install_ant)
+    
 
 # def 
 

@@ -1994,6 +1994,9 @@ def setup_tomcat(upgrade_flag = False):
     esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
     esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
 
+    if os.stat(config.ks_secret_file).st_size != 0:
+        with open(config.ks_secret_file, 'rb') as f:
+            keystore_password = f.read().strip()
     migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url)
     sleep(1)
     esg_functions.start_tomcat()

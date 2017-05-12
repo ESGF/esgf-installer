@@ -1359,16 +1359,10 @@ def install_prerequisites():
     ******************************* 
     '''
     yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE)
-    stream_subprocess_output(yum_remove_rpm_forge)
-    # print "yum_remove_rpm_forge_output: ", yum_remove_rpm_forge.communicate()[0]
-    # print "remove_return_code: ", yum_remove_rpm_forge.returncode
+    esg_functions.stream_subprocess_output(yum_remove_rpm_forge)
     
     yum_install_epel = subprocess.Popen(["yum", "-y", "install", "epel-release"], stdout=subprocess.PIPE)
-    stream_subprocess_output(yum_install_epel)
-    # print "yum_install_epel: ", yum_install_epel.communicate()[0]
-    # if yum_install_epel.returncode != 0:
-    #     print "$([FAIL]) \n\tCould not configure epel repository\n\n"
-    #     sys.exit(1)
+    esg_functions.stream_subprocess_output(yum_install_epel)
 
     yum_install_list = ["yum", "-y", "install", "yum-plugin-priorities", "sqlite-devel", "freetype-devel", "git", "curl-devel", 
     "autoconf", "automake", "bison", "file", "flex", "gcc", "gcc-c++", 
@@ -1381,36 +1375,7 @@ def install_prerequisites():
     "mod_ssl", "libjpeg-turbo-devel", "myproxy", '*ExtUtils*']
 
     yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
-    stream_subprocess_output(yum_install_prerequisites)
-    # print "yum_install_from_list: ", yum_install_prerequisites.communicate()[0]
-    # if yum_install_prerequisites.returncode != 0:
-    #     print "$([FAIL]) \n\tCould not install or update prerequisites\n\n"
-    #     sys.exit(1)
-
-
-def stream_subprocess_output(subprocess_object):
-    with subprocess_object.stdout:
-        for line in iter(subprocess_object.stdout.readline, b''):
-            print line,
-    subprocess_object.wait() # wait for the subprocess to exit
-    # for stdout_line in iter(subprocess_object.stdout.readline, ""):
-    #     yield stdout_line 
-    # subprocess_object.stdout.close()
-    # return_code = subprocess_object.wait()
-    # if return_code:
-    #     raise subprocess.CalledProcessError(return_code, command_list)
-
-def symlink_force(target, link_name):
-    try:
-        os.symlink(target, link_name)
-    except OSError, e:
-        if e.errno == errno.EEXIST:
-            os.remove(link_name)
-            os.symlink(target, link_name)
-        else:
-            raise e
-
-
+    esg_functions.stream_subprocess_output(yum_install_prerequisites)
 
 def setup_postgres():
     print '''

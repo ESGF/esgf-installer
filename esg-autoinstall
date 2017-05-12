@@ -159,6 +159,10 @@ expect {
     "Enter certificate to add to trusted keystore" {
         send \n ; exp_continue
     }
+    "Would you like to configure this node for CMIP6 publishing" {
+        send Y\n ; exp_continue
+    }
+
     # For --type all, Globus is set up twice, once as a gateway, and
     # once as a datanode.  Unfortunately, on the second pass of this
     # the prompt defaults to N because it detects the installation of
@@ -274,6 +278,9 @@ expect {
     }
     "Are you sure you wish to add a NEW replica index" {
         send ${SOLRREINDEX}\n ; exp_continue
+    }
+    "Automatic peer with super-node" {
+        send \n ; exp_continue
     }
 
     # Victory conditions

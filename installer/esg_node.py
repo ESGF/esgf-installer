@@ -1953,8 +1953,8 @@ def setup_tomcat(upgrade_flag = False):
         try:
             if os.stat(config.ks_secret_file).st_size != 0:
                 with open(config.ks_secret_file, 'rb') as f:
-                    keystore_password = f.read().strip()
-                configure_tomcat(keystore_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
+                    config.config_dictionary["keystore_password"] = f.read().strip()
+                configure_tomcat(config.config_dictionary["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
         except OSError, error:
             logger.error(error)
             logger.info("Attempting to get configure Tomcat with the security_admin_password")
@@ -1994,10 +1994,10 @@ def setup_tomcat(upgrade_flag = False):
     esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
     esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
 
-    if os.stat(config.ks_secret_file).st_size != 0:
-        with open(config.ks_secret_file, 'rb') as f:
-            keystore_password = f.read().strip()
-    migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url)
+    # if os.stat(config.ks_secret_file).st_size != 0:
+    #     with open(config.ks_secret_file, 'rb') as f:
+    #         keystore_password = f.read().strip()
+    migrate_tomcat_credentials_to_esgf(config.config_dictionary["keystore_password"], esg_dist_url)
     sleep(1)
     esg_functions.start_tomcat()
 
@@ -2046,14 +2046,19 @@ def configure_tomcat(keystore_password, esg_dist_url):
     #Create a keystore in $tomcat_conf_dir
     print "Keystore setup: "
 
-    if not keystore_password:
+    try:
+        config.config_dictionary["keystore_password"]
+    except KeyError, error:
         with open(config.ks_secret_file, 'rb') as f:
-            keystore_password = f.read().strip()
+            config.config_dictionary["keystore_password"] = f.read().strip()
+    # if not keystore_password:
+    #     with open(config.ks_secret_file, 'rb') as f:
+    #         keystore_password = f.read().strip()
 
     if not os.path.isfile(config.config_dictionary["keystore_file"]):
         print "Launching Java's keytool:"
 
-        if not len(keystore_password) > 0:
+        if not len(config.config_dictionary["keystore_password"]) > 0:
             verify_password = None
             while True:
                 keystore_password_input = raw_input("Please enter the password for this keystore   : ")
@@ -2063,7 +2068,7 @@ def configure_tomcat(keystore_password, esg_dist_url):
 
                 keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
                 if keystore_password_input == keystore_password_input_confirmation:
-                    keystore_password = keystore_password_input
+                    config.config_dictionary["keystore_password"] = keystore_password_input
                     break
                 else:
                     print "Sorry, values did not match. Please try again."
@@ -2093,8 +2098,8 @@ def configure_tomcat(keystore_password, esg_dist_url):
         if not distinguished_name or use_distinguished_name.lower == "n":
             java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias ${keystore_alias} -keyalg RSA \
             -keystore ${keystore_file} \
-            -validity 365 -storepass ${keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
-                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = keystore_password)
+            -validity 365 -storepass {keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
+                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = config.config_dictionary["keystore_password"])
             keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
             if keytool_return_code != 0:
                 print " ERROR: keytool genkey command failed" 
@@ -2139,10 +2144,10 @@ def configure_tomcat(keystore_password, esg_dist_url):
     #NOTE: The truststore uses the java default password: "changeit"
     #Edit the server.xml file to contain proper location of certificates
     logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
-    edit_tomcat_server_xml(keystore_password)
+    edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
 
 
-    add_my_cert_to_truststore("--keystore-pass",keystore_password)
+    add_my_cert_to_truststore("--keystore-pass",config.config_dictionary["keystore_password"])
 
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
@@ -2241,14 +2246,14 @@ def add_my_cert_to_truststore(action, value):
 
     if keystore_password_in_file != local_keystore_file:
         while True:
-            store_password_input = raw_input("Please enter the password for this keystore   : ")
-            if store_password_input == "changeit":
+            keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+            if keystore_password_input == "changeit":
                 break
-            if not store_password_input:
-                print "Invalid password [{store_password_input}]".format(store_password_input = store_password_input)
+            if not keystore_password_input:
+                print "Invalid password [{keystore_password_input}]".format(keystore_password_input = keystore_password_input)
                 continue
             store_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
-            if store_password_input == store_password_input_confirmation:
+            if keystore_password_input == store_password_input_confirmation:
                 java_keytool_command = "{java_install_dir}/bin/keytool -list -keystore {local_keystore_file} \
                 -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
                 local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
@@ -2257,7 +2262,7 @@ def add_my_cert_to_truststore(action, value):
                 if keytool_return_code != 0:
                     print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
                     continue
-                local_keystore_password = store_password_input
+                local_keystore_password = keystore_password_input
                 break
             else:
                 print "Sorry, values did not match"

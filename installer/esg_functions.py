@@ -1517,7 +1517,9 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
     if remote_file == None:
         remote_file = local_file
-        local_file = re.search("\w+-\w+$", local_file).group()
+        # local_file = re.search("\w+-\w+$", local_file).group()
+        #Get the last subpath from the absolute path
+        local_file = local_file.split("/")[-1]
         print "remote_file in checked_get: ", remote_file
         print "local_file in checked_get: ", local_file
 

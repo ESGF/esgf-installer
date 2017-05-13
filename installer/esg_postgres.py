@@ -238,7 +238,7 @@ def setup_postgres(force_install = False):
 
     os.chdir(starting_directory)
 
-    check_shmmax()
+    esg_functions.check_shmmax()
     write_postgress_env()
     write_postgress_install_log()
     esg_functions.checked_done(0)
@@ -281,7 +281,7 @@ def stop_postgress():
     status_output, err = status.communicate()
     print "status_output: ", status_output
     sleep(3)
-    check_shmmax()
+    esg_functions.check_shmmax()
     progress_process_status = subprocess.Popen(
         "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()

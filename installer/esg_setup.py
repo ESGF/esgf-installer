@@ -1061,33 +1061,51 @@ def setup_ant():
     yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
     stream_subprocess_output(yum_install_ant)
     
+def setup_cdat():
+    print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version = config.config_dictionary["cdat_version"])
+    try:
+        sys.path.insert(0, os.path.join(config.config_dictionary["cdat_home"], "bin", "python"))
+        import cdat_info
+        if esg_functions.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
+            print "CDAT already installed [OK]"
+            return True
+    except ImportError, error:
+        logger.error(error)
 
-# def 
+    print '''
+    *******************************
+    Setting up CDAT - (Python + CDMS)... {cdat_version}
+    ******************************* '''.format(cdat_version = config.config_dictionary["cdat_version"])
 
+    if os.access(os.path.join(config.config_dictionary["cdat_home"], "bin", "uvcdat"), os.X_OK):
+        print "Detected an existing CDAT installation..."
+        cdat_setup_choice = raw_input("Do you want to continue with CDAT installation and setup? [y/N] ")
+        if cdat_setup_choice.lower() != "y" or cdat_setup_choice.lower() != "yes":
+            print "Skipping CDAT installation and setup - will assume CDAT is setup properly"
+            return True
 
-# yb=yum.YumBase()
-# inst = yb.rpmdb.returnPackages()
-# installed=[x.name for x in inst]
-# print "installed: ", installed
+    try:
+        os.makedirs(config.config_dictionary["workdir"])
+    except OSError, exception:
+        if exception.errno != 17:
+            raise
+        sleep(1)
+        pass
 
-# yb.install("java")
-# yb.resolveDeps()
-# yb.buildTransaction()
-# yb.processTransaction()
+    starting_directory = os.getcwd()
+    os.chdir(config.config_dictionary["workdir"])
 
-# packages=['bla1', 'bla2', 'bla3']
+    yum_install_uvcdat = subprocess.Popen(["yum", "-y", "install", "uvcdat"],stdout=subprocess.PIPE)
+    print "yum_install_uvcdat_output: ", yum_install_uvcdat.communicate()[0]
+    print "yum_install_return_code: ", yum_install_uvcdat.returncode
+    if yum_install_uvcdat.returncode != 0:
+        print "[FAIL] \n\tCould not install or update uvcdat\n\n"
+        return False
 
-# for package in packages:
-#         if package in installed:
-#                 print('{0} is already installed'.format(package))
-#         else:
-#                 print('Installing {0}'.format(package))
-#                 kwarg = {
-#                         'name':package
-#                 }
-#                 yb.install(**kwarg)
-#                 yb.resolveDeps()
-#                 yb.buildTransaction()
-#                 yb.processTransaction()
+    curl_output = subprocess.call("curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
+    setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(cdat_home = config.config_dictionary["cdat_home"]), shell=True)
+    pip_setup_output = subprocess.call("{cdat_home}/bin/easy_install pip".format(cdat_home = config.config_dictionary["cdat_home"]), shell=True)
 
-    pass
+    os.chdir(starting_directory)
+
+    return True

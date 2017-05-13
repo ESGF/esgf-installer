@@ -837,7 +837,6 @@ def install_prerequisites():
     yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
     esg_functions.stream_subprocess_output(yum_install_prerequisites)
 
-
 def setup_tomcat(upgrade_flag = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])

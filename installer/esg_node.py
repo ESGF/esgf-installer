@@ -616,24 +616,6 @@ def test_esgcet():
     esg_functions.checked_done(0)
 
 
-def check_shmmax(min_shmmax = 48):
-    '''
-       NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
-       arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
-    '''
-    kernel_shmmax = esg_functions.get_property("kernel_shmmax", 48)
-    set_value_mb = min_shmmax
-    set_value_bytes = set_value_mb *1024*1024
-    cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)
-    cur_value_bytes = cur_value_bytes.strip()
-
-    if cur_value_bytes < set_value_bytes:
-        print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes = cur_value_bytes, set_value_bytes = set_value_bytes)
-        subprocess.call("sysctl -w kernel.shmmax=${set_value_bytes}".format(set_value_bytes = set_value_bytes))
-        subprocess.call("sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
-        esg_functions.write_as_property("kernal_shmmax", set_value_mb)
-
-
 def setup_sensible_confs():
     pass
 
@@ -807,7 +789,7 @@ def process_arguments():
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
         logger.debug("START SERVICES: %s", node_type_bit)
-        init_structure()
+        esg_setup.init_structure()
         start(node_type_bit)
         sys.exit(0)
     elif args.stop:
@@ -815,7 +797,7 @@ def process_arguments():
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
         logger.debug("STOP SERVICES")
-        init_structure()
+        esg_setup.init_structure()
         stop(node_type_bit)
         sys.exit(0)
     elif args.restart:
@@ -823,7 +805,7 @@ def process_arguments():
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
         logger.debug("RESTARTING SERVICES")
-        init_structure()
+        esg_setup.init_structure()
         stop(node_type_bit)
         sleep(2)
         start(node_type_bit)
@@ -840,7 +822,7 @@ def process_arguments():
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
-        init_structure()
+        esg_setup.init_structure()
         update_script(args[1], args[2])
         sys.exit(0)
     elif args.updateapacheconf:
@@ -1294,7 +1276,7 @@ def main():
         esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()
-        setup_cdat()
+        esg_setup.setup_cdat()
         logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             setup_esgcet()
@@ -1332,58 +1314,7 @@ def install_prerequisites():
     yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
     esg_functions.stream_subprocess_output(yum_install_prerequisites)
 
-def setup_cdat():
-    print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version = config.config_dictionary["cdat_version"])
-    try:
-        sys.path.insert(0, os.path.join(config.config_dictionary["cdat_home"], "bin", "python"))
-        import cdat_info
-        if esg_functions.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
-            print "CDAT already installed [OK]"
-            return True
-    except ImportError, error:
-        logger.error(error)
-
-    print '''
-    *******************************
-    Setting up CDAT - (Python + CDMS)... ${cdat_version}
-    ******************************* '''.format(cdat_version = config.config_dictionary["cdat_version"])
-
-    if os.access(os.path.join(config.config_dictionary["cdat_home"], "bin", "uvcdat"), os.X_OK):
-        print "Detected an existing CDAT installation..."
-        cdat_setup_choice = raw_input("Do you want to continue with CDAT installation and setup? [y/N] ")
-        if cdat_setup_choice.lower() != "y" or cdat_setup_choice.lower() != "yes":
-            print "Skipping CDAT installation and setup - will assume CDAT is setup properly"
-            return True
-
-    try:
-        os.makedirs(config.config_dictionary["workdir"])
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
-
-    starting_directory = os.getcwd()
-    os.chdir(config.config_dictionary["workdir"])
-
-    yum_install_uvcdat = subprocess.Popen(["yum", "-y", "install", "uvcdat"],stdout=subprocess.PIPE)
-    print "yum_install_uvcdat_output: ", yum_install_uvcdat.communicate()[0]
-    print "yum_install_return_code: ", yum_install_uvcdat.returncode
-    if yum_install_uvcdat.returncode != 0:
-        print "[FAIL] \n\tCould not install or update uvcdat\n\n"
-        return False
-
-    curl_output = subprocess.call("curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
-    setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(cdat_home = config.config_dictionary["cdat_home"]), shell=True)
-    pip_setup_output = subprocess.call("{cdat_home}/bin/easy_install pip".format(cdat_home = config.config_dictionary["cdat_home"]), shell=True)
-
-    os.chdir(starting_directory)
-
-    return True
-
 def setup_tomcat(upgrade_flag = False):
-    # print "Checking for tomcat >= ${tomcat_min_version} ".format(tomcat_min_version = config.config_dictionary["tomcat_min_version"])
-    # esg_functions.check_app
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
     print "*******************************"

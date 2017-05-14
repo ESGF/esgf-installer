@@ -2623,7 +2623,7 @@ def setup_root_app():
         esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))
 
         print "*******************************"
-        print "Setting up Apache Tomcat...(v{tomcat_version}) ROOT webapp"
+        print "Setting up Apache Tomcat...(v{tomcat_version}) ROOT webapp".format(tomcat_version = config.config_dictionary["tomcat_version"])
         print "*******************************"
 
         esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
@@ -2793,8 +2793,14 @@ def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
         os.chown(config.config_dictionary["tomcat_conf_dir"], pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
 
         #Be sure that the server.xml file contains the explicit Realm specification needed.
-        server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
-        if not server_xml_object.Realm:
+        server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
+        tree = etree.parse(server_xml_path)
+        root = tree.getroot()
+        realm_element = root.find(".//Realm")
+        logger.info("realm_element: %s",etree.tostring(realm_element))
+        if not realm_element:
+        # server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
+        # if not server_xml_object.Realm:
             fetch_file_name = "server.xml"
             fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
 

@@ -19,6 +19,7 @@ import hashlib
 import logging
 import shlex
 import untangle
+import glob
 from time import sleep
 from collections import OrderedDict
 from esg_init import EsgInit
@@ -619,31 +620,40 @@ def start_tomcat():
     # os.chdir(config.config_dictionary["tomcat_install_dir"])
     with pushd(config.config_dictionary["tomcat_install_dir"]):
         logger.info("changed directory to %s", config.config_dictionary["tomcat_install_dir"])
-        copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
+        class_path_absolute_path = readlinkf(os.path.join(os.getcwd(), "bin"))
+        logger.debug("class_path_absolute_path: %s", class_path_absolute_path)
+        logger.info("glob_list: %s", glob.glob("*.jar"))
+        class_paths = ":".join(glob.glob("*.jar"))
+        logger.debug("class_paths: %s", class_paths)
+        # copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
         jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
-            "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
+            "-Dcatalina.home=%s -pidfile %s -classpath %s -outfile %s/logs/catalina.out" 
             "-errfile %s/logs/catalina.err "
             "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
-            "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
+            "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], class_paths, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
         # if [ $? != 0 ]; then
         #     echo " ERROR: Could not start up tomcat"
         #     tail ./logs/catalina.err
         #     popd >& /dev/null
         #     checked_done 1
         # fi
-    if jsvc_launch_command != 0:
-        print " ERROR: Could not start up tomcat"
-        f = subprocess.Popen(['tail',"./logs/catalina.err"],\
-                stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        # while True:
-        #     line = f.stdout.readline()
-        #     print line
+        if jsvc_launch_command != 0:
+            print " ERROR: Could not start up tomcat"
+            f = subprocess.Popen(['tail',"./logs/catalina.err"],\
+                    stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            # while True:
+            #     line = f.stdout.readline()
+            #     print line
         os.chdir(current_directory)
         checked_done(1)
     #Don't wait forever, but give tomcat some time before it starts
     # pcheck 10 2 1 -- check_tomcat_process
     # [ $? != 0 ] && echo "Tomcat couldn't be started."
     # sleep 2
+
+def invoke_jsvc(jsvc_arguments):
+
+    pass
 
 def stop_tomcat():
     # check_tomcat_process

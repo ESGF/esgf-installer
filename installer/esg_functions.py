@@ -604,24 +604,33 @@ def start_tomcat():
     # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
     # chmod 755 ${tomcat_install_dir}/work
     # chmod 755 ${tomcat_install_dir}/work/Catalina
-    os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    try:
+        os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    except OSError, e:
+        if e.errno != 17:
+            raise
+        sleep(1)
+        pass
+
     os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
     os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
 
     current_directory = os.getcwd()
-    os.chdir(config.config_dictionary["tomcat_install_dir"])
-    copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
-    jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
-        "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
-        "-errfile %s/logs/catalina.err "
-        "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
-        "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
-    # if [ $? != 0 ]; then
-    #     echo " ERROR: Could not start up tomcat"
-    #     tail ./logs/catalina.err
-    #     popd >& /dev/null
-    #     checked_done 1
-    # fi
+    # os.chdir(config.config_dictionary["tomcat_install_dir"])
+    with pushd(config.config_dictionary["tomcat_install_dir"]):
+        logger.info("changed directory to %s", config.config_dictionary["tomcat_install_dir"])
+        copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
+        jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
+            "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
+            "-errfile %s/logs/catalina.err "
+            "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
+            "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
+        # if [ $? != 0 ]; then
+        #     echo " ERROR: Could not start up tomcat"
+        #     tail ./logs/catalina.err
+        #     popd >& /dev/null
+        #     checked_done 1
+        # fi
     if jsvc_launch_command != 0:
         print " ERROR: Could not start up tomcat"
         f = subprocess.Popen(['tail',"./logs/catalina.err"],\

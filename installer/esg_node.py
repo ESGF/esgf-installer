@@ -2798,7 +2798,7 @@ def migrate_tomcat_credentials_to_esgf(keystore_password, esg_dist_url):
         root = tree.getroot()
         realm_element = root.find(".//Realm")
         logger.info("realm_element: %s",etree.tostring(realm_element))
-        if not realm_element:
+        if realm_element is None:
         # server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
         # if not server_xml_object.Realm:
             fetch_file_name = "server.xml"

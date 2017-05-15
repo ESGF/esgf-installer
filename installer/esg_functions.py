@@ -644,8 +644,11 @@ def start_tomcat():
             # while True:
             #     line = f.stdout.readline()
             #     print line
-        os.chdir(current_directory)
-        checked_done(1)
+        # os.chdir(current_directory)
+        else:
+            logger.info("Started Tomcat")
+            return True
+    checked_done(1)
     #Don't wait forever, but give tomcat some time before it starts
     # pcheck 10 2 1 -- check_tomcat_process
     # [ $? != 0 ] && echo "Tomcat couldn't be started."

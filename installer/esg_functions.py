@@ -55,47 +55,12 @@ def checked_done(status):
 # Process checking utility functions
 #-------------------------------
 
-def check_postgress_process():
-    '''
-        #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
-
-    '''
-    status = subprocess.Popen("/etc/init.d/postgresql status", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    status_output, err = status.communicate()
-    if "running" in status_output:
-        return 0
-    else:
-        return 1
-
-
 def check_esgf_httpd_process():
     status = subprocess.check_output(["service", "esgf-httpd", "status"])
     if status:
         return 0
     else: 
         return 1
-
-#----------------------------------------------------------
-# Postgresql informational functions
-#
-# These functions require that Postgresql be already installed and
-# running correctly.
-#----------------------------------------------------------
-# TODO: Could not find any instances of Postgres functions being used
-def postgres_create_db():
-    pass
-
-def postgres_list_db_schemas():
-    pass
-
-def postgres_list_schemas_tables():
-    pass
-
-def postgres_list_dbs():
-    pass
-
-def  postgres_clean_schema_migration():
-    pass
 
 #----------------------------------------------------------
 # Process Launching and Checking...

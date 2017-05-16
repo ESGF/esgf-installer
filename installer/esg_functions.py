@@ -95,12 +95,18 @@ def pcheck(function_name, num_of_iterations =5, wait_time_in_seconds=1, return_o
     return return_code
 
 # TODO: Not used anywhere; maybe deprecate
-def get_md5sum():
+def get_md5sum(file_name):
     '''
         #Utility function, wraps md5sum so it may be used on either mac or
         #linux machines
     '''
-    pass
+    hasher = hashlib.md5()
+    with open(file_name, 'rb') as file_handle:
+        buf = file_handle.read()
+        hasher.update(buf)
+        file_name_md5 = hasher.hexdigest()
+        logger.debug("local_file_md5 : %s", file_name_md5)
+    return file_name_md5
 #----------------------------------------------------------
 # Path munging...
 #----------------------------------------------------------
@@ -332,7 +338,7 @@ def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of
         with tarfile.open(backup_filename, "w:gz") as tar:
             tar.add(source)
     except:
-        print " ERROR: Problem with creating backup archive: ${backup_filename}"
+        print "ERROR: Problem with creating backup archive: {backup_filename}".format(backup_filename = backup_filename)
         os.chdir(current_directory)
         return 1
     if os.path.isfile(backup_filename):
@@ -460,13 +466,8 @@ def check_for_update(filename_1, filename_2 =None):
 
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
-    local_file_md5 = None
-
-    hasher = hashlib.md5()
-    with open(local_file, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-        local_file_md5 = hasher.hexdigest()
+    
+    local_file_md5 =  get_md5sum(local_file)
 
     if local_file_md5 != remote_file_md5:
         print " Update Available @ %s" % (remote_file)
@@ -547,22 +548,16 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
             file = open(local_file, "w")
             file.write(r.content)
             file.close()
-    except requests.exceptions.RequestException, e:
+    except requests.exceptions.RequestException, error:
         print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
-        print e
+        print error
         sys.exit()
 
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
     print "remote_file_md5 in checked_get: ", remote_file_md5
-    local_file_md5 = None
-
-    hasher = hashlib.md5()
-    with open(local_file, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-        local_file_md5 = hasher.hexdigest()
-        print "local_file_md5 in checked_get: ", local_file_md5
+    
+    local_file_md5 = get_md5sum(local_file)
 
     if local_file_md5 != remote_file_md5:
         print " WARNING: Could not verify this file! %s" % (local_file)

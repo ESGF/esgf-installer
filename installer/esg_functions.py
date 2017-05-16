@@ -502,71 +502,36 @@ def is_in_git(file_name):
     
      Returns 1 otherwise
     '''
-    # test = git.Repo("/Users/williamhill/Development/esgf-installer/installer/esg_init.py").git_dir
-
-    '''
-        debug_print "DEBUG: Checking to see if ${1} is in a git repository..."
-
-        REALDIR=$(dirname $(readlinkf ${1}))
-    '''
     try:
         is_git_installed = subprocess.check_output(["which", "git"])
     except subprocess.CalledProcessError, e:
         print "Ping stdout output:\n", e.output
         print "git is not available to finish checking for a repository -- assuming there isn't one!"
 
-
-
     print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
     absolute_path = readlinkf(file_name)
     one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
-    print "absolute_path: ", absolute_path
-    print "parent_path: ", os.path.abspath(os.path.join(absolute_path, os.pardir))
     two_directories_up = os.path.abspath(os.path.join(one_directory_up, os.pardir))
-    print "two_directories_up: ", two_directories_up
 
-    '''
-        if [ ! -e $1 ] ; then
-        debug_print "DEBUG: ${1} does not exist yet, allowing creation"
-        return 1
-    fi
-    '''
     if not os.path.isfile(file_name):
         print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
         return 1
 
-    '''
-        if [ -d "${REALDIR}/.git" ] ; then
-        debug_print "DEBUG: ${1} is in a git repository"
-        return 0
-    fi
-
-    '''
     if os.path.isdir(one_directory_up+"/.git"):
         print "%s is in a git repository" % file_name
         return 0
 
-    '''
-        if [ -d "${REALDIR}/../.git" ] ; then
-        debug_print "DEBUG: ${1} is in a git repository"
-        return 0
-    fi
-    '''
     if os.path.isdir(two_directories_up+"/.git"):
         print "%s is in a git repository" % file_name
         return 0
 
 def check_for_update(filename_1, filename_2 =None):
-    # local_file = None
-    # remote_file = None
 
     if filename_2 == None:
         remote_file = filename_1
         local_file = os.path.realpath(re.search("\w+-\w+$", filename_1).group())
         local_file = local_file + ".py"
         local_file = re.sub(r'\-(?=[^-]*$)', "_", local_file)
-        # print "remote_file: ", remote_file
-        # print "local_file: ", local_file
     else:
         local_file = filename_1
         remote_file = filename_2
@@ -581,7 +546,6 @@ def check_for_update(filename_1, filename_2 =None):
 
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
-    # print "remote_file_md5 in check_for_update: ", remote_file_md5
     local_file_md5 = None
 
     hasher = hashlib.md5()
@@ -589,7 +553,6 @@ def check_for_update(filename_1, filename_2 =None):
         buf = f.read()
         hasher.update(buf)
         local_file_md5 = hasher.hexdigest()
-        # print "local_file_md5 in check_for_update: ", local_file_md5
 
     if local_file_md5 != remote_file_md5:
         print " Update Available @ %s" % (remote_file)

@@ -305,51 +305,6 @@ def prefix_to_path(path, prepend_value):
     os.environ[path] = path_unique(prepend_value)+":"+path
     return path_unique(prepend_value)+":"+path
 
-def trim_string_from_head(string_name):
-    '''
-        Mimics Bash's ##* Parameter Expansion
-        Example:
-            (Bash)
-            esg_installarg_file="/usr/local/bin/esg_installarg_file"
-            echo ${esg_installarg_file##*/}
-
-                output - > esg_installarg_file
-
-            (Python)
-            path = "/usr/local/bin/esg_installarg_file"
-            print trim_string_from_tail(path)
-
-                output -> esg_installarg_file
-    '''
-    string_regex = r"\w*-*\w+$" 
-    return re.search(string_regex, string_name).group()
-
-def trim_string_from_tail(string_name):
-    '''
-        Mimics Bash's %%* Parameter Expansion
-        Example:
-            (Bash)
-            tomcat_version="8.0.33"
-            echo ${tomcat_version%%.*}
-
-                output -> 8
-
-            (Python)
-            tomcat_version="8.0.33"
-            print  trim_string_from_tail(tomcat_version)
-
-            output -> 8
-
-    '''
-    string_regex = r"^\w+"
-    return re.search(string_regex, string_name).group()
-
-def touch(path):
-    ''' 
-        Mimics Bash's touch command
-    '''
-    with open(path, 'a'):
-        os.utime(path, None)
 
 def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of_backups=config.config_dictionary["num_backups_to_keep"]):
     '''
@@ -759,30 +714,6 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         return 0
 
 
-@contextmanager
-def pushd(new_dir):
-    '''
-        Usage:
-        with pushd(some_dir):
-            print os.getcwd() # "some_dir"
-            some_actions
-        print os.getcwd() # "starting_directory"
-    '''
-    previous_dir = os.getcwd()
-    os.chdir(new_dir)
-    yield
-    os.chdir(previous_dir)
-
-
-def symlink_force(target, link_name):
-    try:
-        os.symlink(target, link_name)
-    except OSError, e:
-        if e.errno == errno.EEXIST:
-            os.remove(link_name)
-            os.symlink(target, link_name)
-        else:
-            raise e
 
 def stream_subprocess_output(subprocess_object):
     with subprocess_object.stdout:
@@ -797,7 +728,7 @@ def check_shmmax(min_shmmax = 48):
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
     '''
-    kernel_shmmax = esg_functions.get_property("kernel_shmmax", 48)
+    kernel_shmmax = get_property("kernel_shmmax", 48)
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb *1024*1024
     cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)
@@ -807,5 +738,5 @@ def check_shmmax(min_shmmax = 48):
         print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes = cur_value_bytes, set_value_bytes = set_value_bytes)
         subprocess.call("sysctl -w kernel.shmmax=${set_value_bytes}".format(set_value_bytes = set_value_bytes))
         subprocess.call("sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
-        esg_functions.write_as_property("kernal_shmmax", set_value_mb)
+        write_as_property("kernal_shmmax", set_value_mb)
 

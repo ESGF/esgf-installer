@@ -4,8 +4,7 @@ import sys
 import os
 import errno
 import re
-import subprocess
-import signal
+from contextlib import contextmanager
 
 
 class Bash2PyException(Exception):
@@ -157,3 +156,74 @@ class Expand(object):
       if (ret is None or ret == ''):
           return ''
       return value
+
+def touch(path):
+    ''' 
+        Mimics Bash's touch command
+    '''
+    with open(path, 'a'):
+        os.utime(path, None)
+
+def trim_string_from_head(string_name):
+    '''
+        Mimics Bash's ##* Parameter Expansion
+        Example:
+            (Bash)
+            esg_installarg_file="/usr/local/bin/esg_installarg_file"
+            echo ${esg_installarg_file##*/}
+
+                output - > esg_installarg_file
+
+            (Python)
+            path = "/usr/local/bin/esg_installarg_file"
+            print trim_string_from_tail(path)
+
+                output -> esg_installarg_file
+    '''
+    string_regex = r"\w*-*\w+$" 
+    return re.search(string_regex, string_name).group()
+
+def trim_string_from_tail(string_name):
+    '''
+        Mimics Bash's %%* Parameter Expansion
+        Example:
+            (Bash)
+            tomcat_version="8.0.33"
+            echo ${tomcat_version%%.*}
+
+                output -> 8
+
+            (Python)
+            tomcat_version="8.0.33"
+            print  trim_string_from_tail(tomcat_version)
+
+            output -> 8
+
+    '''
+    string_regex = r"^\w+"
+    return re.search(string_regex, string_name).group()
+
+@contextmanager
+def pushd(new_dir):
+    '''
+        Usage:
+        with pushd(some_dir):
+            print os.getcwd() # "some_dir"
+            some_actions
+        print os.getcwd() # "starting_directory"
+    '''
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    yield
+    os.chdir(previous_dir)
+
+
+def symlink_force(target, link_name):
+    try:
+        os.symlink(target, link_name)
+    except OSError, e:
+        if e.errno == errno.EEXIST:
+            os.remove(link_name)
+            os.symlink(target, link_name)
+        else:
+            raise e

@@ -711,6 +711,25 @@ def check_esgf_httpd_process():
     else: 
         return 1
 
+# TODO: Might refactor this to use xml.ElementTree
+def find_tomcat_ports(server_xml_path):
+    '''
+        Return a list of ports in the Tomcat server.xml file
+    '''
+    ports = []
+    with open(server_xml_path, "r") as server_xml_file:
+        for line in server_xml_file:
+            line = line.rstrip() # remove trailing whitespace such as '\n'
+            port_descriptor = re.search('(port=)(\S+)', line)
+            if port_descriptor != None:
+                port_number = port_descriptor.group(2)
+                ports.append(port_number.replace('"', ''))
+
+    logger.debug("ports: %s", ports)
+    return ports
+
+
+
 def check_tomcat_process():
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml")
     logger.debug("server_xml_path: %s", server_xml_path)
@@ -719,16 +738,7 @@ def check_tomcat_process():
             esgf_host_ip
         except NameError:
              esgf_host_ip = get_property("esgf_host_ip")
-        ports = []
-        with open(server_xml_path, "r") as server_xml_file:
-            for line in server_xml_file:
-                line = line.rstrip() # remove trailing whitespace such as '\n'
-                port_descriptor = re.search('(port=)(\S+)', line)
-                if port_descriptor != None:
-                    port_number = port_descriptor.group(2)
-                    ports.append(port_number.replace('"', ''))
-
-        logger.debug("ports: %s", ports)
+        ports = find_tomcat_ports(server_xml_path)
         process_list = []
         
         for port in ports:

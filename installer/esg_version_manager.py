@@ -1,3 +1,6 @@
+'''
+    Component Version Management Utility Functions
+'''
 import os
 import subprocess
 import re

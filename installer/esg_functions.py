@@ -1,13 +1,12 @@
 #!/usr/bin/local/env python
 ''' esg-functions: ESGF Node Application Stack Functions
-    description: Installer Functions for the ESGF Node application stack '''
+    description: Installer Functions for the ESGF Node application stack 
+'''
 import sys
 import os
 import subprocess
 import pwd
 import re
-# import math
-# import pylint
 import mmap
 import shutil
 from OpenSSL import crypto
@@ -31,22 +30,12 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 config = EsgInit()
 
-# print "config.config_dictionary: ", config.config_dictionary["tomcat_users_file"]
-# esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
-# esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
-
-
-# subprocess.call(['ls', '-1'], shell=True)
-# subprocess.call('echo $HOME', shell=True)
-# subprocess.check_call('echo $PATH', shell=True)
 
 #TODO: Come up with better function name
 def checked_done(status):
     '''
-            if positional parameter at position 1 is non-zero, then print error message.
+        if positional parameter at position 1 is non-zero, then print error message.
     '''
-    # print "sys.argv[1]: ", sys.argv[1]
-    # print "type: ", type(sys.argv[1])
     if int(status) != 0 and status != True:
         print(
             ""
@@ -85,7 +74,6 @@ def version_comp(input_version1, input_version2):
 
     # TODO: replace with ternary operator
     if version1:
-        # print "version1: ", version1.groups()
         epoch_a = version1.group(1)
     else:
         epoch_a = -1
@@ -292,9 +280,6 @@ def check_version_with(program_name, version_command, min_version, max_version=N
 
         Returns 2 if running the specified command results in an error
     '''
-    # print "test math version: ", math.__version__
-    
-    # print "pylint version:",  pylint.__version__
     command_list = version_command.split()
     found_version = subprocess.Popen(
         command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -372,30 +357,9 @@ def get_current_webapp_version(webapp_name, version_command = None):
                 line = line.rstrip() # remove trailing whitespace such as '\n'
                 version_number = re.search(reg_ex, line)
                 if version_number != None:
-                    # print "version number: ", version_number
                     name, version = version_number.group(1).split(":")
                     return version.strip()
     return 1
-    # f = open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF")
-    # s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-    # print "type(s): ", type(s)
-    # if s.find(version_property) != -1:
-    #     result = s.readline()
-    #     print "result: ", result
-    #     key, value = result.split(":")
-    #     if not value:
-    #         print "No version number found"
-    #         return 1
-    #     else:
-    #         return value
-
-    # version = subprocess.check_output("$(echo $(sed -n '/^'"+version_property+"':[ ]*\(.*\)/p'"+config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF | awk '{print $2}' | xargs 2> /dev/null))", shell=True)
-    # print "version: ", version
-    # if version:
-    #     print "version: ", version
-    #     return 0
-    # else:
-    #     return 1
 
 def check_webapp_version(webapp_name, min_version, version_command=None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
@@ -417,17 +381,12 @@ def check_webapp_version(webapp_name, min_version, version_command=None):
 #----------------------------------------------------------
 # Environment Management Utility Functions
 #----------------------------------------------------------
-#TODO: Fix sed statement
 def remove_env(env_name):
     print "removing %s's environment from %s" % (env_name, config.envfile)
-    # target = open(config.config_dictionary["envfile"], "r+")
-    # # target.write(temp)
-    # target.close()
     found_in_env_file = False
     datafile = open(config.envfile, "r+")
     searchlines = datafile.readlines()
     datafile.seek(0)
-    # datafile.close()
     for line in searchlines:
         if env_name not in line:
             datafile.write(line)
@@ -436,14 +395,12 @@ def remove_env(env_name):
     datafile.truncate()
     datafile.close()
     return found_in_env_file
-    # subprocess.check_output("sed -i '/'${env_name}'/d' ${envfile}", shell = True)
 
 #TODO: Fix sed statement
 def remove_install_log_entry(entry):
     print "removing %s's install log entry from %s" % (entry, config.config_dictionary["install_manifest"])
     subprocess.check_output("sed -i '/[:]\?'${key}'=/d' ${install_manifest}")
 
-#TODO: fix tac and awk statements
 def deduplicate_settings_in_file(envfile = None):
     '''
     Environment variable files of the form
@@ -479,42 +436,9 @@ def deduplicate_settings_in_file(envfile = None):
     except IOError, error:
         logger.error(error)
         sys.exit(0)
-    # if not os.path.isfile(infile):
-    #     print "WARNING: dedup() - unable to locate %s does it exist?" % (infile)
-    #     return 1
-    # if not os.access(infile, os.W_OK):
-    #     "WARNING: dedup() - unable to write to %s" % (infile)
-    #     return 1
-    # else:
-    #     datafile = open(infile, "r+")
-    #     searchlines = datafile.readlines()
-    #     print "searchlines: ", searchlines
-    #     print "type(searchlines): ", type(searchlines)
-    #     print "searchlines.reverse(): ", searchlines[::-1]
-    #     datafile.seek(0)
-
-    #     my_set = set()
-    #     res = []
-
-    #     for e in reversed(searchlines):
-    #         print "e: ", e.split("=")
-    #         key, value = e.split("=")
-    #        # key = key.split()[1]
-    #         print "key: ", key
-    #         print "value: ", value
-    #         if key not in my_set:
-    #             res.append(key+ "=" + value)
-    #             my_set.add(key)
-    #     res.reverse()
-    #     for setting in res:
-    #         datafile.write(setting)
-    #     print "final res: ", res
-    #     return 0
 
 
-#TODO: fix tac and awk statements
 def deduplicate_properties(properties_file = None):
-    # infile=${1:-${config_file}}
     infile = esg_bash2py.Expand.colonMinus(properties_file, config.config_dictionary["config_file"])
     try:
         my_set = set()
@@ -522,7 +446,6 @@ def deduplicate_properties(properties_file = None):
         with open(infile, 'r+') as prop_file:
             property_settings = prop_file.readlines()
             for prop in reversed(property_settings):
-                # logger.debug(prop.split("="))
                 if not prop.isspace():
                     key, value = prop.split("=")
                     logger.debug("key: %s", key)
@@ -539,41 +462,6 @@ def deduplicate_properties(properties_file = None):
     except IOError, error:
         logger.error(error)
         sys.exit(0)
-    # if not os.path.isfile(infile):
-    #     print "WARNING: dedup_properties() - unable to locate %s does it exist?" % (infile)
-    #     return 1
-    # if not os.access(infile, os.W_OK):
-    #     "WARNING: dedup_properties() - unable to write to %s" % (infile)
-    #     return 1
-    # else:
-    #     datafile = open(infile, "r+")
-    #     searchlines = datafile.readlines()
-    #     print "searchlines: ", searchlines
-    #     print "type(searchlines): ", type(searchlines)
-    #     print "searchlines.reverse(): ", searchlines[::-1]
-    #     datafile.seek(0)
-
-        # my_set = set()
-        # res = []
-
-        # for e in reversed(searchlines):
-        #     print "e: ", e.split("=")
-        #     key, value = e.split("=")
-        #    # key = key.split()[1]
-        #     print "key: ", key
-        #     print "value: ", value
-        #     if key not in my_set:
-        #         res.append(key+ "=" + value)
-        #         my_set.add(key)
-        # res.reverse()
-        # print "final res: ", res
-
-        # return 0
-        # temp = subprocess.check_output("$(tac " + infile + " | awk 'BEGIN {FS=\"[ =]\"} !($1 in a) {a[$1];print $0}' | sort -k1,1)")
-        # target = open(infile, 'w')
-        # target.write(temp)
-        # target.close()
-        # subprocess.Popen("'$tmp' > ${infile}")
 
 #TODO: fix awk statements
 # def get_config_ip(interface_value):
@@ -601,10 +489,6 @@ def start_tomcat():
 
     print "Starting Tomcat (jsvc)..."
 
-    # mkdir -p ${tomcat_install_dir}/work/Catalina
-    # chown -R ${tomcat_user}.${tomcat_group} ${tomcat_install_dir}/work
-    # chmod 755 ${tomcat_install_dir}/work
-    # chmod 755 ${tomcat_install_dir}/work/Catalina
     try:
         os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
     except OSError, e:
@@ -617,6 +501,7 @@ def start_tomcat():
     os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
 
     current_directory = os.getcwd()
+    
     # os.chdir(config.config_dictionary["tomcat_install_dir"])
     with pushd(config.config_dictionary["tomcat_install_dir"]):
         logger.info("changed directory to %s", config.config_dictionary["tomcat_install_dir"])
@@ -649,6 +534,7 @@ def start_tomcat():
             logger.info("Started Tomcat")
             return True
     checked_done(1)
+
     #Don't wait forever, but give tomcat some time before it starts
     # pcheck 10 2 1 -- check_tomcat_process
     # [ $? != 0 ] && echo "Tomcat couldn't be started."
@@ -659,15 +545,13 @@ def invoke_jsvc(jsvc_arguments):
     pass
 
 def stop_tomcat():
-    # check_tomcat_process
-    # [ $? != 0 ] && return 1
+    '''
+        Stops Tomcat server from running. Does nothing if Tomcat is not currently running.
+    '''
     if check_tomcat_process() !=0:
         return 1
 
-    # pushd $tomcat_install_dir >& /dev/null
-    # echo
-    # echo "stop tomcat: ${tomcat_install_dir}/bin/jsvc -pidfile $tomcat_pid_file -stop org.apache.catalina.startup.Bootstrap"
-    # echo "(please wait)"
+    #TODO: modify to use pushd()
     current_directory = os.getcwd()
     os.chdir(config.config_dictionary["tomcat_install_dir"])
     print "stop tomcat: %s/bin/jsvc -pidfile %s -stop org.apache.catalina.startup.Bootstrap" % (config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"])
@@ -731,6 +615,9 @@ def find_tomcat_ports(server_xml_path):
 
 
 def check_tomcat_process():
+    '''
+        Checks for the status of the Tomcat process
+    '''
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml")
     logger.debug("server_xml_path: %s", server_xml_path)
     if os.path.isfile(server_xml_path):
@@ -745,10 +632,6 @@ def check_tomcat_process():
             proc1 = subprocess.Popen(shlex.split('lsof -Pni TCP:{port}'.format(port = port)), stdout = subprocess.PIPE)
             proc2 = subprocess.Popen(shlex.split('tail -n +2'), stdin = proc1.stdout, stdout = subprocess.PIPE)
             proc3 = subprocess.Popen(shlex.split('grep LISTEN'), stdin = proc2.stdout, stdout = subprocess.PIPE)
-            # proc4 = subprocess.Popen(shlex.split("sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'".format(esgf_host_ip = esgf_host_ip)), stdin = proc3.stdout, stdout = subprocess.PIPE)
-            # proc5 = subprocess.Popen(shlex.split("awk {awk_print}".format(awk_print = '{print $1}')), stdin = proc4.stdout, stdout = subprocess.PIPE)
-            # proc6 = subprocess.Popen(shlex.split('sort -u'), stdin = proc5.stdout, stdout = subprocess.PIPE)
-            # proc7 = subprocess.Popen(shlex.split('xargs'), stdin = proc6.stdout, stdout = subprocess.PIPE)
 
             # Allow proc1 to receive a SIGPIPE if proc2 exits.
             proc1.stdout.close()
@@ -759,9 +642,6 @@ def check_tomcat_process():
             logger.info("port %s stdout_processes: %s", port, stdout_processes)
             logger.info("port %s stderr_processes: %s", port, stderr_processes)
 
-            # list_running_processes_command = "lsof -Pni TCP:{port} | tail -n +2 | grep LISTEN | sed -n 's/\(\*\|'{esgf_host_ip}'\)/\0/p'  | awk {awk_print} | sort -u | xargs".format(port = port, esgf_host_ip = esgf_host_ip, awk_print = '{print $1}')
-            # processes_found = subprocess.Popen(shlex.split(list_running_processes_command),stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            # stdout_processes, stderr_processes = processes_found.communicate()
             if stdout_processes:
                 process_list.append(stdout_processes)
         logger.debug("process_list: %s", process_list)
@@ -769,7 +649,6 @@ def check_tomcat_process():
             #No process running on ports
             logger.info("No running processes found")
             return 1
-        # procs_expression = subprocess.check_output("$(expr \"$procs\" : '.*jsvc.*')")
         if "jsvc" in process_list:
             print "Tomcat (jsvc) process is running... " 
             return 0
@@ -860,9 +739,6 @@ def path_unique(path_string = os.environ["PATH"], path_separator=":"):
         otherwise defaults to ':'
         
     '''
-
-    # local path_string=${1:-${PATH}}
-    # local pathsep=${2:-":"}
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
 
@@ -914,18 +790,15 @@ def load_properties(property_file = config.config_dictionary["config_file"]):
     '''
     if not os.access(property_file, os.R_OK):
         return False
-    # dedup_properties ${property_file}
     deduplicate_properties(property_file)
     separator = "="
     count = 0
     with open(property_file) as f:
         for line in f:
             key,value = line.split(separator)
-            # [ -z "${key}" ] && continue
             print  "loading... "
             print  "[%s] -> " % (key)
             print "[%s]" % (value)
-            # eval "${key}=\"${value}\""
             count+=1
     print "Loaded (imported) %i properties from %s" % (count, property_file)
     return 0
@@ -951,15 +824,7 @@ def get_property(property_name, default_value = None):
                 return default_value.strip()
             else:
                 return value.strip()
-    # s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-    # if s.find(property_name) != -1:
-    #     result = s.readline()
-    #     print "result: ", result
-    #     key, value = result.split("=")
-    #     if not value and default_value:
-    #         return default_value
-    #     else:
-    #         return value
+
 # TODO: Not used anywhere; maybe deprecate
 def get_property_as():
     '''
@@ -975,12 +840,11 @@ def remove_property(key):
     '''
         Removes a given variable's property representation from the property file
     '''
-    print "removing $1's property from %s" % (config.config_dictionary["config_file"])
+    print "removing %s's property from %s" % (key, config.config_dictionary["config_file"])
     property_found = False
     datafile = open(config.config_dictionary["config_file"], "r+")
     searchlines = datafile.readlines()
     datafile.seek(0)
-    # datafile.close()
     for line in searchlines:
         if key not in line:
             datafile.write(line)
@@ -1533,23 +1397,9 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
                 exit 1
             fi
     '''
-    # try:
- #      force_get = str(sys.argv[3])
-    # except IndexError:
- #      force_get = '0'
-
- #    try:
- #      make_backup_file = str(sys.argv[4])
-    # except IndexError:
- #      make_backup_file = '-1'
-    # force_get = esg_bash2py.Expand.colonMinus(str(sys.argv[3]), "0")
-    # make_backup_file = esg_bash2py.Expand.colonMinus(str(sys.argv[4]), "-1")
-    # local_file = None
-    # remote_file = None
 
     if remote_file == None:
         remote_file = local_file
-        # local_file = re.search("\w+-\w+$", local_file).group()
         #Get the last subpath from the absolute path
         local_file = local_file.split("/")[-1]
         print "remote_file in checked_get: ", remote_file
@@ -1571,12 +1421,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
     logger.debug("local file : %s", local_file)
     logger.debug("remote file: %s", remote_file)
-    '''
-        if ((force_get == 0)); then
-        check_for_update $@
-        [ $? != 0 ] && return 1
-    fi
-    '''
+
     if force_get == 1:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
@@ -1586,16 +1431,6 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
     if os.path.isfile(local_file) and make_backup_file == 1:
         shutil.copyfile(local_file, local_file + ".bak")
         os.chmod(local_file+".bak", 600)
-
-    '''
-        echo "Fetching file from ${remote_file} -to-> ${local_file}"
-    wget --no-check-certificate --progress=bar:force -O ${local_file} ${remote_file}
-    [ $? != 0 ] && echo " ERROR: Problem pulling down [${remote_file##*/}] from esg distribution site" && return 2
-    diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure ${remote_file}.md5 |head -1| tr -s " " | cut -d " " -f 1) >& /dev/null
-    [ $? != 0 ] && echo " WARNING: Could not verify file! ${local_file}" && return 3
-    echo "[VERIFIED]"
-    return 0
-    '''
 
     print "Fetching file from %s -to-> %s" % (remote_file, local_file)
     try:

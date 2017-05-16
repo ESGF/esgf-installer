@@ -2259,8 +2259,8 @@ def add_my_cert_to_truststore(action, value):
                 local_keystore_file = local_keystore_file.strip(), local_keystore_password = keystore_password_input)
                 logger.debug("java_keytool_command: %s", java_keytool_command)
 
-                keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-                if keytool_return_code != 0:
+                keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
+                if keytool_return_code.returncode != 0:
                     print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
                     continue
                 local_keystore_password = keystore_password_input
@@ -2274,8 +2274,8 @@ def add_my_cert_to_truststore(action, value):
         -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
         local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
         logger.debug("java_keytool_command: %s", java_keytool_command)
-        keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-        if keytool_return_code != 0:
+        keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
+        if keytool_return_code.returncode != 0:
             print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. (re-run --add-my-cert-to-truststore)".format(local_keystore_file = local_keystore_file)
             return False
         else:

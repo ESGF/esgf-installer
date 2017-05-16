@@ -2821,7 +2821,7 @@ def tomcat_port_check():
     '''
     return_all = True
     protocol = "http"
-    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(config.config_dictionary["tomcat_install_dir"])
+    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir = config.config_dictionary["tomcat_install_dir"])
     server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
             # server_xml_object.Server.Connector[1]["keystorePass"] = local_keystore_password
     for connector in server_xml_object.Server.Connector:

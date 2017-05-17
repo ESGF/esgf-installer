@@ -2299,29 +2299,30 @@ setup_slcs(){
     export PGPASSWORD=`cat /esg/config/.esg_pg_pass` && createdb -U dbsuper slcsdb
     pushd /usr/local/src
 
-    git clone https://github.com/cedadev/esgf-slcs-server-playbook.git
+    git clone https://github.com/ESGF/esgf-slcs-server-playbook.git
     chown -R apache:apache esgf-slcs-server-playbook
 
     pushd esgf-slcs-server-playbook
-    [devel == 1] && git checkout devel
-
-
+    if [ $devel -eq 1 ]; then
+        git checkout devel;
+    fi
     chgrp -R apache /var/lib/globus-connect-server/myproxy-ca/
     chmod g+rx /var/lib/globus-connect-server/myproxy-ca/
     chmod g+rx /var/lib/globus-connect-server/myproxy-ca/private
-    chmod g+r /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem  
+    chmod g+r /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
 
-    sed -i "s/esgf-dev2.llnl.gov/$(hostname --fqdn)" playbook/overrides/production_venv_only.yml
-    sed -i "s/hill119@llnl.gov/$(get_property mail_admin_address)" playbook/overrides/production_venv_only.yml
-    sed -i "s/abc123/$(cat /esg/config/.esg_pg_pass)"/g playbook/overrides/production_venv_only.yml
+    sed -i "s/esgf-dev2.llnl.gov/$(hostname --fqdn)/" playbook/overrides/production_venv_only.yml
+    sed -i "s/hill119@llnl.gov/$(get_property mail_admin_address)/" playbook/overrides/production_venv_only.yml
+    sed -i "s/abc123/$(cat /esg/config/.esg_pg_pass)/g" playbook/overrides/production_venv_only.yml
 
 
-    ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml 
+    ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml
 
     popd
     popd
-    
+
 }
+
 
 #called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags
 select_idp_peer() {

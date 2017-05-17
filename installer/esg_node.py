@@ -2834,12 +2834,14 @@ def tomcat_port_check():
             continue
         if port == "8443":
             protocol="https"
-        print "checking localhost port [${port}]"
+        print "checking localhost port [{port}]"
         wait_time = 5
         return_code = None
         while wait_time > 0:
-            return_code = subprocess.call("curl -k {protocol}://localhost:{port} >& /dev/null".format(protocol = protocol, port = connector["port"]))
-            if return_code == 0:
+            curl_port_process = subprocess.Popen("curl -k {protocol}://localhost:{port} >& /dev/null".format(protocol = protocol, port = "port"))
+            stdout_processes, stderr_processes = curl_port_process.communicate()
+            if curl_port_process.returncode == 0:
+                return_code = curl_port_process.returncode
                 break
             sleep(1)
             wait_time -= 1
@@ -2852,15 +2854,17 @@ def tomcat_port_check():
         root = tree.getroot()
         logger.info("root: %s", etree.tostring(root))
 
-        http_connector_element = root.find(".//Connector[@port]")
+        http_connector_element = root.find(".//Connector[@port={port}]".format(port = port))
+        logger.debug("http_connector_element: %s", http_connector_element)
         #We only care about reporting a failure for ports below 1024
         #specifically 80 (http) and 443 (https)
-        esgf_http_port = http_connector_element.get("protocol")
+        esgf_http_port_protocol = http_connector_element.get("protocol")
+        logger.debug("esgf_http_port_protocol: %s", esgf_http_port_protocol)
 
-        if connector.has_key("SSLEnabled"):
-            esgf_https_port = connector["port"]
+        if http_connector_element.get("SSLEnabled"):
+            esgf_https_port = port
 
-        if connector["port"] < 1024:
+        if port < 1024:
             return_all += return_code
 
     return return_all

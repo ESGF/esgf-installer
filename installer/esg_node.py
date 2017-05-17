@@ -2844,39 +2844,21 @@ def tomcat_port_check():
         except socket.error, e:
             print "Connection to %s on port %s failed: %s" % ("localhost", port, e)
             failed_connections +=1
-            # return False
-        # wait_time = 5
-        # return_code = None
-        # while wait_time > 0:
-        #     curl_port_process = subprocess.Popen("curl -k {protocol}://localhost:{port} >& /dev/null".format(protocol = protocol, port = "port"))
-        #     stdout_processes, stderr_processes = curl_port_process.communicate()
-        #     if curl_port_process.returncode == 0:
-        #         return_code = curl_port_process.returncode
-        #         break
-        #     sleep(1)
-        #     wait_time -= 1
-        # if return_code == 0:
-        #     logger.info("[OK]")
-        # else:
-        #     logger.error("[FAIL]")
-
-
-        # if port < 1024:
-        #     return_all += return_code
+            logger.debug("failed_connections after increment: %s", failed_connections)
 
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
-    # logger.info("root: %s", etree.tostring(root))
     http_port_element = root.find(".//Connector[@protocol='HTTP/1.1']")
     esgf_http_port = http_port_element.get("port")
     logger.debug("esgf_http_port: %s", esgf_http_port)
-    # http_connector_element = root.find(".//Connector[@port={port}]".format(port = port))
+
     esgf_https_port_element = root.find(".//Connector[@SSLEnabled]")
     esgf_https_port = esgf_https_port_element.get("port")
     logger.debug("esgf_https_port: %s", esgf_https_port)
     #We only care about reporting a failure for ports below 1024
     #specifically 80 (http) and 443 (https)
 
+    logger.debug("failed_connections: %s", failed_connections)
     if failed_connections > 0:
         return False
     return True

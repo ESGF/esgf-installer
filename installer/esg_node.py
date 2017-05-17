@@ -2826,13 +2826,13 @@ def tomcat_port_check():
     '''
     return_all = True
     protocol = "http"
-    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir = config.config_dictionary["tomcat_install_dir"])
-    server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
-            # server_xml_object.Server.Connector[1]["keystorePass"] = local_keystore_password
-    for connector in server_xml_object.Server.Connector:
-        if connector["port"] == "8223":
+    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
+    server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
+    ports = esg_functions.find_tomcat_ports(server_xml_path)
+    for port in ports:
+        if port == "8223":
             continue
-        if connector["port"] == "8443":
+        if port == "8443":
             protocol="https"
         print "checking localhost port [${port}]"
         wait_time = 5
@@ -2848,10 +2848,15 @@ def tomcat_port_check():
         else:
             logger.error("[FAIL]")
 
+        tree = etree.parse(server_xml_path)
+        root = tree.getroot()
+        logger.info("root: %s", etree.tostring(root))
+
+        http_connector_element = root.find(".//Connector[@port]")
         #We only care about reporting a failure for ports below 1024
         #specifically 80 (http) and 443 (https)
-        if connector.has_key("protocol") and "http" in connector["protocol"].lower():
-            esgf_http_port = connector["port"]
+        esgf_http_port = http_connector_element.get("protocol")
+
         if connector.has_key("SSLEnabled"):
             esgf_https_port = connector["port"]
 

@@ -2293,33 +2293,44 @@ test_tomcat() {
 }
 
 setup_slcs(){
-    yum  -y install ansible
 
-    start_postgress
-    export PGPASSWORD=`cat /esg/config/.esg_pg_pass` && createdb -U dbsuper slcsdb
-    pushd /usr/local/src
+    read -e -p "Would you like to install the SLCS OAuth server on this node? [y/N] " choice
+      choice=$(echo ${choice} | tr 'A-Z' 'a-z')
+      if [ -z $choice ] ; then
+          choice="n"
+      fi
+      if [ $choice == "y" ] ; then
+        yum  -y install ansible
 
-    git clone https://github.com/ESGF/esgf-slcs-server-playbook.git
-    chown -R apache:apache esgf-slcs-server-playbook
+        start_postgress
+        export PGPASSWORD=`cat /esg/config/.esg_pg_pass` && createdb -U dbsuper slcsdb
+        pushd /usr/local/src
 
-    pushd esgf-slcs-server-playbook
-    if [ $devel -eq 1 ]; then
-        git checkout devel;
+        git clone https://github.com/ESGF/esgf-slcs-server-playbook.git
+        chown -R apache:apache esgf-slcs-server-playbook
+
+        pushd esgf-slcs-server-playbook
+        if [ $devel -eq 1 ]; then
+            git checkout devel;
+        fi
+        chgrp -R apache /var/lib/globus-connect-server/myproxy-ca/
+        chmod g+rx /var/lib/globus-connect-server/myproxy-ca/
+        chmod g+rx /var/lib/globus-connect-server/myproxy-ca/private
+        chmod g+r /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
+
+        sed -i "s/test_server_name/$(hostname --fqdn)/" playbook/overrides/production_venv_only.yml
+        get_property mail_admin_address
+        sed -i "s/test_email/$mail_admin_address/" playbook/overrides/production_venv_only.yml
+        sed -i "s/abc123/$(cat /esg/config/.esg_pg_pass)/g" playbook/overrides/production_venv_only.yml
+
+        mkdir -p /usr/local/esgf-slcs-server
+        chown -R apache:apache /usr/local/esgf-slcs-server
+
+        ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml
+
+        popd
+        popd
     fi
-    chgrp -R apache /var/lib/globus-connect-server/myproxy-ca/
-    chmod g+rx /var/lib/globus-connect-server/myproxy-ca/
-    chmod g+rx /var/lib/globus-connect-server/myproxy-ca/private
-    chmod g+r /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
-
-    sed -i "s/esgf-dev2.llnl.gov/$(hostname --fqdn)/" playbook/overrides/production_venv_only.yml
-    sed -i "s/hill119@llnl.gov/$(get_property mail_admin_address)/" playbook/overrides/production_venv_only.yml
-    sed -i "s/abc123/$(cat /esg/config/.esg_pg_pass)/g" playbook/overrides/production_venv_only.yml
-
-
-    ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml
-
-    popd
-    popd
 
 }
 

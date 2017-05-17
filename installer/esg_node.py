@@ -2838,7 +2838,7 @@ def tomcat_port_check():
         print "checking localhost port [{port}]".format(port = port)
         tcp_socket = socket.socket()
         try:
-            tcp_socket.connect(("localhost", port))
+            tcp_socket.connect(("localhost", int(port)))
             print "Connected to %s on port %s" % ("localhost", port)
             # return True
         except socket.error, e:
@@ -2867,11 +2867,11 @@ def tomcat_port_check():
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
     # logger.info("root: %s", etree.tostring(root))
-    http_port_element = root.find(".//Connector[@protocal=HTTP/1.1]")
+    http_port_element = root.find(".//Connector[@protocol='HTTP/1.1']")
     esgf_http_port = http_port_element.get("port")
     logger.debug("esgf_http_port: %s", esgf_http_port)
     # http_connector_element = root.find(".//Connector[@port={port}]".format(port = port))
-    esgf_https_port_element = root.find(".//Connector[SSLEnabled]")
+    esgf_https_port_element = root.find(".//Connector[@SSLEnabled]")
     esgf_https_port = esgf_https_port_element.get("port")
     logger.debug("esgf_https_port: %s", esgf_https_port)
     #We only care about reporting a failure for ports below 1024

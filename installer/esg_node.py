@@ -1416,7 +1416,8 @@ def setup_java():
         return
     java_major_version = config.config_dictionary["java_version"].split(".")[1]
     java_minor_version = config.config_dictionary["java_version"].split("_")[1]
-     # wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
+    # wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
+    logger.info("Downloading {java_version}").format(java_version = config.config_dictionary["java_version"])
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(java_major_version =  java_major_version, java_minor_version = java_minor_version)
     subprocess.call(shlex.split(download_oracle_java_string))
     command_list = ["yum", "-y", "localinstall", "jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm".format(java_major_version =  java_major_version, java_minor_version = java_minor_version)]
@@ -2246,7 +2247,7 @@ def add_my_cert_to_truststore(action, value):
 
     if keystore_password_in_file != local_keystore_file:
         while True:
-            keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+            keystore_password_input = raw_input("Please enter the password for this keystore: ")
             if keystore_password_input == "changeit":
                 break
             if not keystore_password_input:
@@ -2259,8 +2260,10 @@ def add_my_cert_to_truststore(action, value):
                 local_keystore_file = local_keystore_file.strip(), local_keystore_password = keystore_password_input)
                 logger.debug("java_keytool_command: %s", java_keytool_command)
 
-                keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-                if keytool_return_code != 0:
+                keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
+                keytool_return_code_processes, stderr_processes = keytool_return_code.communicate()
+                logger.debug("keytool_return_code_processes: %s", keytool_return_code_processes)
+                if keytool_return_code.returncode != 0:
                     print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
                     continue
                 local_keystore_password = keystore_password_input
@@ -2274,8 +2277,10 @@ def add_my_cert_to_truststore(action, value):
         -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
         local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
         logger.debug("java_keytool_command: %s", java_keytool_command)
-        keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-        if keytool_return_code != 0:
+        keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
+        keytool_return_code_processes, stderr_processes = keytool_return_code.communicate()
+        logger.debug("keytool_return_code_processes: %s", keytool_return_code_processes)
+        if keytool_return_code.returncode != 0:
             print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. (re-run --add-my-cert-to-truststore)".format(local_keystore_file = local_keystore_file)
             return False
         else:

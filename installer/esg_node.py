@@ -2825,6 +2825,7 @@ def tomcat_port_check():
         Port testing for http and https
     '''
     return_all = True
+    failed_connections = 0
     protocol = "http"
     print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
@@ -2834,40 +2835,51 @@ def tomcat_port_check():
             continue
         if port == "8443":
             protocol="https"
-        print "checking localhost port [{port}]"
-        wait_time = 5
-        return_code = None
-        while wait_time > 0:
-            curl_port_process = subprocess.Popen("curl -k {protocol}://localhost:{port} >& /dev/null".format(protocol = protocol, port = "port"))
-            stdout_processes, stderr_processes = curl_port_process.communicate()
-            if curl_port_process.returncode == 0:
-                return_code = curl_port_process.returncode
-                break
-            sleep(1)
-            wait_time -= 1
-        if return_code == 0:
-            logger.info("[OK]")
-        else:
-            logger.error("[FAIL]")
+        print "checking localhost port [{port}]".format(port = port)
+        tcp_socket = socket.socket()
+        try:
+            tcp_socket.connect(("localhost", port))
+            print "Connected to %s on port %s" % ("localhost", port)
+            # return True
+        except socket.error, e:
+            print "Connection to %s on port %s failed: %s" % ("localhost", port, e)
+            failed_connections +=1
+            # return False
+        # wait_time = 5
+        # return_code = None
+        # while wait_time > 0:
+        #     curl_port_process = subprocess.Popen("curl -k {protocol}://localhost:{port} >& /dev/null".format(protocol = protocol, port = "port"))
+        #     stdout_processes, stderr_processes = curl_port_process.communicate()
+        #     if curl_port_process.returncode == 0:
+        #         return_code = curl_port_process.returncode
+        #         break
+        #     sleep(1)
+        #     wait_time -= 1
+        # if return_code == 0:
+        #     logger.info("[OK]")
+        # else:
+        #     logger.error("[FAIL]")
 
-        tree = etree.parse(server_xml_path)
-        root = tree.getroot()
-        logger.info("root: %s", etree.tostring(root))
 
-        http_connector_element = root.find(".//Connector[@port={port}]".format(port = port))
-        logger.debug("http_connector_element: %s", http_connector_element)
-        #We only care about reporting a failure for ports below 1024
-        #specifically 80 (http) and 443 (https)
-        esgf_http_port_protocol = http_connector_element.get("protocol")
-        logger.debug("esgf_http_port_protocol: %s", esgf_http_port_protocol)
+        # if port < 1024:
+        #     return_all += return_code
 
-        if http_connector_element.get("SSLEnabled"):
-            esgf_https_port = port
+    tree = etree.parse(server_xml_path)
+    root = tree.getroot()
+    # logger.info("root: %s", etree.tostring(root))
+    http_port_element = root.find(".//Connector[@protocal=HTTP/1.1]")
+    esgf_http_port = http_port_element.get("port")
+    logger.debug("esgf_http_port: %s", esgf_http_port)
+    # http_connector_element = root.find(".//Connector[@port={port}]".format(port = port))
+    esgf_https_port_element = root.find(".//Connector[SSLEnabled]")
+    esgf_https_port = esgf_https_port_element.get("port")
+    logger.debug("esgf_https_port: %s", esgf_https_port)
+    #We only care about reporting a failure for ports below 1024
+    #specifically 80 (http) and 443 (https)
 
-        if port < 1024:
-            return_all += return_code
-
-    return return_all
+    if failed_connections > 0:
+        return False
+    return True
 
 
 def write_tomcat_env():

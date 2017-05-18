@@ -5,24 +5,15 @@
 import sys
 import os
 import subprocess
-import pwd
 import re
-import mmap
 import shutil
-from OpenSSL import crypto
 import datetime
 import tarfile
 import requests
-import stat
 import hashlib
 import logging
-import shlex
-import untangle
-import glob
 from time import sleep
-from collections import OrderedDict
 from esg_init import EsgInit
-from contextlib import contextmanager
 import esg_bash2py
 import esg_property_manager
 
@@ -489,7 +480,7 @@ def check_shmmax(min_shmmax = 48):
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
     '''
-    kernel_shmmax = get_property("kernel_shmmax", 48)
+    kernel_shmmax = esg_property_manager.get_property("kernel_shmmax", 48)
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb *1024*1024
     cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)

@@ -305,7 +305,6 @@ def _choose_postgres_user_password():
             else:
                 return postgres_user_password
 
-
 def check_postgress_process():
     '''
         #This function "succeeds" (is true; returns 0)  if there *are* running processes found running

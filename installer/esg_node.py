@@ -29,6 +29,7 @@ import git
 import ca_py
 from git import Repo
 from collections import deque
+from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 from OpenSSL import crypto
 from lxml import etree
@@ -364,15 +365,6 @@ def process_arguments():
             #empty out contents of the file
             open(envfile, 'w').close()
 
-class UnprivilegedUserError(Exception):
-    pass
-
-class WrongOSError(Exception):
-    pass
-
-class UnverifiedScriptError(Exception):
-    pass
-
 def _verify_against_remote(esg_dist_url_root):
     python_script_name = os.path.basename(__file__)
     python_script_md5_name = re.sub(r'_', "-", python_script_name)
@@ -473,7 +465,7 @@ def check_prerequisites():
     print "Checking that you have root privs on %s... " % (socket.gethostname())
     root_check = os.geteuid()
     if root_check != 0:
-        raise UnprivilegedUserError 
+        raise UnprivilegedUserError
     print "[OK]"
 
     #----------------------------------------

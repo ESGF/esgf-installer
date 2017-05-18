@@ -24,6 +24,7 @@ from collections import OrderedDict
 from esg_init import EsgInit
 from contextlib import contextmanager
 import esg_bash2py
+import esg_property_manager
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -517,7 +518,7 @@ def check_shmmax(min_shmmax = 48):
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
     '''
-    kernel_shmmax = esg_functions.get_property("kernel_shmmax", 48)
+    kernel_shmmax = esg_property_manager.get_property("kernel_shmmax", 48)
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb *1024*1024
     cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)
@@ -527,5 +528,12 @@ def check_shmmax(min_shmmax = 48):
         print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes = cur_value_bytes, set_value_bytes = set_value_bytes)
         subprocess.call("sysctl -w kernel.shmmax=${set_value_bytes}".format(set_value_bytes = set_value_bytes))
         subprocess.call("sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
-        write_as_property("kernal_shmmax", set_value_mb)
+        esg_property_manager.write_as_property("kernal_shmmax", set_value_mb)
+
+def get_esg_root_id():
+    try:
+        esg_root_id = config.config_dictionary["esg_root_id"]
+    except KeyError:
+        esg_root_id = esg_property_manager.get_property("esg_root_id")
+    return esg_root_id
 

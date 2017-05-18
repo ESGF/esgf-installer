@@ -1,12 +1,8 @@
-#!/usr/bin/python2.6
-
 import sys
 import os
 import subprocess
 import pwd
 import re
-# import math
-# import pylint
 import mmap
 import shutil
 from OpenSSL import crypto
@@ -20,12 +16,12 @@ import platform
 import netifaces
 import tld
 import grp
-# import yum
 from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
 import esg_functions
 import esg_bootstrap
+import esg_env_manager
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

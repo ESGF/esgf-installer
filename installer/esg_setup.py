@@ -1043,6 +1043,11 @@ def setup_java():
     
     logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(java_version = config.config_dictionary["java_version"], java_install_dir = config.config_dictionary["java_install_dir"]))
     esg_functions.symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
+
+def write_java_env():
+  config.config_dictionary["show_summary_latch"]++
+  target = open(config.config_dictionary['envfile'], 'w')
+  target.write("export JAVA_HOME="+config.config_dictionary["java_install_dir"])
         
 
 def setup_ant():

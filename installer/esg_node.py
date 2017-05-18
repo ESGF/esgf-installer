@@ -121,23 +121,9 @@ install_prefix = esg_bash2py.Expand.colonMinus(
 
 esg_root_id = esg_functions.get_esg_root_id()
 
-# write_java_env() {
-#     ((show_summary_latch++))
-#     echo "export JAVA_HOME=${java_install_dir}" >> ${envfile}
-#     prefix_to_path PATH ${java_install_dir}/bin >> ${envfile}
-#     dedup ${envfile} && source ${envfile}
-#     return 0
-# }
-
-# def write_java_env():
-#   config.config_dictionary["show_summary_latch"]++
-#   # target = open(filename, 'w')
-#   target = open(config.config_dictionary['envfile'], 'w')
-#   target.write("export JAVA_HOME="+config.config_dictionary["java_install_dir"])
 
 def setup_sensible_confs():
     pass
-
 
 def install_local_certs():
     pass

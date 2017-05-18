@@ -1044,7 +1044,7 @@ def setup_java():
     esg_functions.symlink_force("/usr/java/jdk{java_version}/".format(java_version = config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
 
 def write_java_env():
-  config.config_dictionary["show_summary_latch"]++
+  config.config_dictionary["show_summary_latch"] += 1
   target = open(config.config_dictionary['envfile'], 'w')
   target.write("export JAVA_HOME="+config.config_dictionary["java_install_dir"])
         

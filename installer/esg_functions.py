@@ -5,24 +5,15 @@
 import sys
 import os
 import subprocess
-import pwd
 import re
-import mmap
 import shutil
-from OpenSSL import crypto
 import datetime
 import tarfile
 import requests
-import stat
 import hashlib
 import logging
-import shlex
-import untangle
-import glob
 from time import sleep
-from collections import OrderedDict
 from esg_init import EsgInit
-from contextlib import contextmanager
 import esg_bash2py
 import esg_property_manager
 
@@ -475,35 +466,6 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         return 0
 
 
-
-def stream_subprocess_output(subprocess_object):
-    with subprocess_object.stdout:
-        for line in iter(subprocess_object.stdout.readline, b''):
-            print line,
-    # wait for the subprocess to exit
-    subprocess_object.wait() 
-
-
-def check_shmmax(min_shmmax = 48):
-    '''
-       NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
-       arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
-    '''
-    kernel_shmmax = get_property("kernel_shmmax", 48)
-    set_value_mb = min_shmmax
-    set_value_bytes = set_value_mb *1024*1024
-    cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)
-    cur_value_bytes = cur_value_bytes.strip()
-
-def symlink_force(target, link_name):
-    try:
-        os.symlink(target, link_name)
-    except OSError, e:
-        if e.errno == errno.EEXIST:
-            os.remove(link_name)
-            os.symlink(target, link_name)
-        else:
-            raise e
 
 def stream_subprocess_output(subprocess_object):
     with subprocess_object.stdout:

@@ -211,7 +211,7 @@ def write_paths():
     datafile.truncate()
     datafile.close()
 
-    esg_functions.deduplicate_settings_in_file(config.envfile)
+    esg_env_manager.deduplicate_settings_in_file(config.envfile)
 
 def _select_ip_address():
     choice = int(raw_input(""))

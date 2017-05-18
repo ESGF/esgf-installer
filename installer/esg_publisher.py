@@ -174,7 +174,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         except KeyError:
             esgf_host = esg_functions.get_property("esgf_host")
 
-        global esg_root_id
+        esg_root_id = get_esg_root_id()
         org_id_input = raw_input(
             "What is your organization's id? [%s]: " % esg_root_id)
         if org_id_input:

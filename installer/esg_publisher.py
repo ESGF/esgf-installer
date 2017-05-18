@@ -10,6 +10,8 @@ import subprocess
 import grp
 import datetime
 import esg_postgres
+import esg_functions
+import esg_property_manager
 from time import sleep
 from git import Repo
 from esg_init import EsgInit
@@ -22,7 +24,7 @@ config = EsgInit()
 try:
     node_short_name = config.config_dictionary["node_short_name"]
 except:
-    node_short_name = esg_functions.get_property("node_short_name")
+    node_short_name = esg_property_manager.get_property("node_short_name")
 
 def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1, DEBUG = False):
     print "Checking for esgcet (publisher) %s " % (config.config_dictionary["esgcet_version"])
@@ -172,7 +174,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         try:
             esgf_host = config.config_dictionary["esgf_host"]
         except KeyError:
-            esgf_host = esg_functions.get_property("esgf_host")
+            esgf_host = esg_property_manager.get_property("esgf_host")
 
         esg_root_id = get_esg_root_id()
         org_id_input = raw_input(
@@ -250,7 +252,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
     try:
         publisher_db_user = config.config_dictionary["publisher_db_user"]
     except KeyError:
-        publisher_db_user = esg_functions.get_property("publisher_db_user")
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
 
     if mode == "install":
         #Makes call to esgsetup - > Setup the ESG publication configuration

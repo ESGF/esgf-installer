@@ -12,6 +12,8 @@ import datetime
 import esg_postgres
 import esg_functions
 import esg_property_manager
+import esg_version_manager
+import esg_env_manager
 from time import sleep
 from git import Repo
 from esg_init import EsgInit
@@ -20,6 +22,7 @@ logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logg
 logger = logging.getLogger(__name__)
 
 config = EsgInit()
+esg_root_id = esg_functions.get_esg_root_id()
 
 try:
     node_short_name = config.config_dictionary["node_short_name"]
@@ -29,7 +32,7 @@ except:
 def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1, DEBUG = False):
     print "Checking for esgcet (publisher) %s " % (config.config_dictionary["esgcet_version"])
     # TODO: come up with better name
-    publisher_module_check = esg_functions.check_module_version(
+    publisher_module_check = esg_version_manager.check_module_version(
         "esgcet", config.config_dictionary["esgcet_version"])
 
     # TODO: implement this if block
@@ -176,7 +179,6 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         except KeyError:
             esgf_host = esg_property_manager.get_property("esgf_host")
 
-        esg_root_id = get_esg_root_id()
         org_id_input = raw_input(
             "What is your organization's id? [%s]: " % esg_root_id)
         if org_id_input:
@@ -394,7 +396,7 @@ def write_esgcet_env():
     datafile = open(config.envfile, "a+")
     try:
         datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
-        esg_functions.deduplicate_settings_in_file(config.envfile)
+        esg_env_manager.deduplicate_settings_in_file(config.envfile)
     finally:
         datafile.close()
 
@@ -404,15 +406,15 @@ def write_esgcet_install_log():
     try:
         datafile.write(str(datetime.date.today()) + "python:esgcet=" +
                        config.config_dictionary["esgcet_version"] + "\n")
-        esg_functions.deduplicate_settings_in_file(config.install_manifest)
+        esg_env_manager.deduplicate_settings_in_file(config.install_manifest)
     finally:
         datafile.close()
 
-    esg_functions.write_as_property(
+    esg_property_manager.write_as_property(
         "publisher_config", config.config_dictionary["publisher_config"])
-    esg_functions.write_as_property(
+    esg_property_manager.write_as_property(
         "publisher_home", config.config_dictionary["publisher_home"])
-    esg_functions.write_as_property("monitor.esg.ini", os.path.join(config.config_dictionary[
+    esg_property_manager.write_as_property("monitor.esg.ini", os.path.join(config.config_dictionary[
                                     "publisher_home"], config.config_dictionary["publisher_config"]))
     return 0
 

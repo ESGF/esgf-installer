@@ -119,11 +119,7 @@ install_prefix = esg_bash2py.Expand.colonMinus(
 
 # os.environ['UVCDAT_ANONYMOUS_LOG'] = False
 
-esg_root_id = None
-try:
-    esg_root_id = config.config_dictionary["esg_root_id"]
-except KeyError:
-    esg_root_id = esg_functions.get_property("esg_root_id")
+esg_root_id = esg_functions.get_esg_root_id()
 
 # write_java_env() {
 #     ((show_summary_latch++))

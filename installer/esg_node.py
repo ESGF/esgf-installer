@@ -2905,11 +2905,11 @@ def setup_apache_frontend():
         logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
         sys.exit(1)
         os.chdir("apache-frontend")
-        publisher_repo_local = Repo("apache-frontend")
+        apache_frontend_repo_local = Repo("apache-frontend")
         if devel == 1:
-            publisher_repo_local.git.checkout("devel")
+            apache_frontend_repo_local.git.checkout("devel")
         else:
-            publisher_repo_local.git.checkout("devel")
+            apache_frontend_repo_local.git.checkout("master")
 
         try:
             host_name = esgf_host

@@ -1343,6 +1343,7 @@ def main():
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             setup_esgcet()
         setup_tomcat()
+        setup_apache_frontend()
     # setup_esgcet()
     # test_esgcet()
     
@@ -2886,5 +2887,94 @@ def _choose_postgres_user_password():
                 return postgres_user_password
 def backup_db():
     pass
+
+
+def setup_apache_frontend():
+    old_directory = os.getcwd()
+    try:
+        local_work_directory = os.environ["ESGF_INSTALL_WORKDIR"]
+    except KeyError, error:
+        logger.debug(error)
+        local_work_directory = os.path.join(config.config_dictionary["installer_home"], "workbench", "esg")
+
+    os.chdir(local_work_directory)
+    esg_bash2py.mkdir_p("apache_frontend")
+    os.chdir("apache_frontend")
+    print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
+    Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+    if os.path.isdir(os.path.join("apache_frontend", ".git")):
+        logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
+        sys.exit(1)
+        os.chdir("apache-frontend")
+        publisher_repo_local = Repo("apache-frontend")
+        if devel == 1:
+            publisher_repo_local.git.checkout("devel")
+        else:
+            publisher_repo_local.git.checkout("devel")
+
+        try:
+            host_name = esgf_host
+        except NameError, error:
+            logger.error(error)
+            host_name = socket.gethostname()
+
+        stop_httpd_command = "/etc/init.d/httpd stop"
+        stop_httpd_process = subprocess.Popen(shlex.split(stop_httpd_command))
+        stop_httpd_process_stdout, stop_httpd_process_stderr =  stop_httpd_process.communicate()
+
+        check_config_command = "chkconfig --levels 2345 httpd off"
+        check_config_process = subprocess.Popen(shlex.split(check_config_command))
+        check_config_process_stdout, check_config_process_stderr =  check_config_process.communicate()
+
+        ip_addresses = []
+
+        while True:
+            ip_address = raw_input("Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses: ")
+            ip_addresses.append(ip_address)
+
+            add_more_ips = raw_input("Do you wish to allow more ip addresses to access admin restricted pages? y/n")
+            if add_more_ips.lower() != "y":
+                break
+
+        allowed_ip_address_string = "\t Allow from".join(ip_addresses)
+        logger.debug("allowed_ip_address_string: %s", allowed_ip_address_string)
+
+        add_ips_to_conf_file_command = 'sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf'
+        add_ips_to_conf_file_process = subprocess.Popen(shlex.split(add_ips_to_conf_file_command))
+        add_ips_to_conf_file_stdout, add_ips_to_conf_file_stderr = add_ips_to_conf_file_process.communicate()
+
+        #Write the contents of /etc/tempcerts/cacert.pem  to /etc/certs/esgf-ca-bundle.crt
+        esgf_ca_bundle_file = open("/etc/certs/esgf-ca-bundle.crt", "a")
+        with open ("/etc/tempcerts/cacert.pem", "r") as cacert_file:
+            cacert_contents = cacert_file.read()
+            esgf_ca_bundle_file.write(cacert_contents)
+        esgf_ca_bundle_file.close()
+
+        start_httpd_command = "/etc/init.d/esgf-httpd start"
+        start_httpd_process = subprocess.Popen(shlex.split(start_httpd_command))
+        start_httpd_stdout, start_httpd_stderr = start_httpd_process.communicate()
+    else:
+        config_file = "/etc/httpd/conf/esgf-httpd.conf"
+        if os.path.isfile(config_file):
+            esgf_httpd_version_command = "`grep ESGF-HTTPD-CONF $conf_file | awk '{print $4}'`"
+            esgf_httpd_version_process = subprocess.Popen(shlex.split(esgf_httpd_version_command))
+            esgf_httpd_version_stdout, esgf_httpd_version_stderr = esgf_httpd_version_process.communicate()
+            if not esgf_httpd_version_stdout:
+                logger.error("esgf-httpd.conf is missing versioning, attempting to update.")
+                update_apache_conf()
+            else:
+                if esg_functions.check_version_atleast(esgf_httpd_version_stdout, config.config_dictionary["apache_frontend_version"]) == 0:
+                    logger.info("esgf-httpd.conf version is sufficient")
+                else:
+                    logger.info("esgf-httpd version is out-of-date, attempting to update.")
+                    update_apache_conf()
+        else:
+            logger.info("esgf-httpd.conf file not found, attempting to update. This condition is not expected to occur and should be reported to ESGF support")
+            update_apache_conf()
+
+
+
+    pass
+
 if __name__ == '__main__':
     main()

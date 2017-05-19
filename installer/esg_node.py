@@ -719,8 +719,7 @@ def update_script(script_name, script_directory):
         usage: update_script security orp - looks for the script esg-security in the distriubtion directory "orp"
     '''
     pass
-def update_apache_conf():
-    pass
+
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
     parser = argparse.ArgumentParser()
@@ -2974,7 +2973,99 @@ def setup_apache_frontend():
 
 
 
-    pass
+def update_apache_conf():
+    try:
+        local_work_directory = os.environ["ESGF_INSTALL_WORKDIR"]
+    except KeyError, error:
+        logger.debug(error)
+        local_work_directory = os.path.join(config.config_dictionary["installer_home"], "workbench", "esg")
+
+    config_file = "/etc/httpd/conf/esgf-httpd.conf"
+
+    with esg_functions.pushd(local_work_directory):
+        logger.debug("changed to directory: %s", os.getcwd())
+        if not os.path.isdir("apache_frontend"):
+            esg_bash2py.mkdir_p("apache_frontend")
+            with esg_functions.pushd("apache_frontend"):
+                logger.debug("changed to directory: %s", os.getcwd())
+                Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+            logger.debug("changed to directory: %s", os.getcwd())
+        else:
+            with esg_functions.pushd("apache_frontend"):
+                logger.debug("changed to directory: %s", os.getcwd())
+                shutil.rmtree("apache-frontend")
+                Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+            logger.debug("changed to directory: %s", os.getcwd())
+        with esg_functions.pushd("apache_frontend/apache-frontend"):
+            logger.debug("changed to directory: %s", os.getcwd())
+            apache_frontend_repo_local = Repo("apache-frontend")
+            if devel == 1:
+                apache_frontend_repo_local.git.checkout("devel")
+            else:
+                apache_frontend_repo_local.git.checkout("master")
+
+            if os.path.isfile(config_file):
+                logger.info("Backing up previous version of %s", config_file)
+                date_string = str(datetime.date.today())
+                config_file_backup_name = config_file+date_string+".bak"
+                if os.path.isfile(config_file_backup_name):
+                    logger.info("WARNING:  esgf-httpd.conf already backed up today.")
+                    shutil.copyfile(config_file_backup_name, config_file_backup_name+".1")
+                else:
+                    shutil.copyfile(config_file, config_file_backup_name)
+
+            wsgi_path = "/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so"
+            allowed_ips_sed_process = subprocess.Popen(shlex.split("sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf"), stdout=subprocess.PIPE)
+            allowed_ips_grep_process = subprocess.Popen(shlex.split("grep Allow"), stdin = allowed_ips_sed_process.stdout, stdout=subprocess.PIPE)
+            allowed_ips_sort_process = subprocess.Popen(shlex.split("sort -u"), stdin = allowed_ips_grep_process)
+
+            allowed_ips_sed_process.stdout.close()
+            allowed_ips_grep_process.stdout.close()
+            allowed_ips_stdout, allowed_ips_stderr = allowed_ips_sort_process.communicate()
+            logger.debug("allowed_ips_stdout: %s", allowed_ips_stdout)
+            logger.debug("allowed_ips_stderr: %s", allowed_ips_stderr)
+
+            permitted_ips_command = 'sed "s/\#permitted-ips-end-here/\#permitted-ips-end-here\n\t\#insert-permitted-ips-here/" /etc/httpd/conf/esgf-httpd.conf >etc/httpd/conf/esgf-httpd.conf;'
+            permitted_ips_process = subprocess.Popen(shlex.split(permitted_ips_command))
+            permitted_ips_stdout, permitted_ips_stderr = permitted_ips_process.communicate()
+            logger.debug("permitted_ips_stdout: %s", permitted_ips_stdout)
+            logger.debug("permitted_ips_stderr: %s", permitted_ips_stderr)
+            with open("etc/httpd/conf/esgf-httpd.conf", "a") as httpd_conf_file:
+                httpd_conf_file.write(permitted_ips_stdout)
+
+            wsgi_path_module_sed_command = 'sed -i "s/\(.*\)LoadModule wsgi_module {wsgi_path}\(.*\)/\1LoadModule wsgi_module placeholder_so\2/" etc/httpd/conf/esgf-httpd.conf;'.format(wsgi_path = wsgi_path)
+            wsgi_path_module_sed_process = subprocess.Popen(shlex.split(wsgi_path_module_sed_command))
+            wsgi_path_module_sed_stdout, wsgi_path_module_sed_stderr = wsgi_path_module_sed_process.communicate()
+            logger.debug("wsgi_path_module_sed_stdout: %s", wsgi_path_module_sed_stdout)
+            logger.debug("wsgi_path_module_sed_stderr: %s", wsgi_path_module_sed_stderr)
+
+            #TODO: Terrible names; figure out what they are representing and rename 
+            incs_file = "Include /etc/httpd/conf/esgf-httpd-locals.conf"
+            inc_file = "Include /etc/httpd/conf/esgf-httpd-local.conf"
+
+            #TODO: Another terrible name
+            uncommented_incs_file = False
+            uncommented_inc_file = False
+
+
+def subprocess_pipe_commands(command_list):
+    subprocess_list = []
+    for index, command in enumerate(command_list):
+        if index > 0:
+            subprocess_command = subprocess.Popen(command, stdin = subprocess_list[index -1].stdout, stdout=subprocess.PIPE)
+            subprocess_list.append(subprocess_command)
+        else:
+            subprocess_command = subprocess.Popen(command, stdout=subprocess.PIPE)
+            subprocess_list.append(subprocess_command)
+    subprocess_list_length = len(subprocess_list)
+    for index ,process in enumerate(subprocess_list):
+        if index != subprocess_list_length -1:
+            process.stdout.close()
+        else:
+            subprocess_stdout, subprocess_stderr = process.communicate()
+    return subprocess_stdout
+
+
 
 if __name__ == '__main__':
     main()

@@ -3040,12 +3040,103 @@ def update_apache_conf():
             logger.debug("wsgi_path_module_sed_stderr: %s", wsgi_path_module_sed_stderr)
 
             #TODO: Terrible names; figure out what they are representing and rename 
-            incs_file = "Include /etc/httpd/conf/esgf-httpd-locals.conf"
-            inc_file = "Include /etc/httpd/conf/esgf-httpd-local.conf"
+            include_httpd_locals_file = "Include /etc/httpd/conf/esgf-httpd-locals.conf"
+            include_httpd_local_file = "Include /etc/httpd/conf/esgf-httpd-local.conf"
 
             #TODO: Another terrible name
-            uncommented_incs_file = False
-            uncommented_inc_file = False
+            uncommented_include_httpd_locals_file = False
+            uncommented_include_httpd_local_file = False
+
+            #TODO: for now, adding full path to avoid confusion with the two etc directories
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "r") as file:
+                filedata = file.read()
+                if not "#Include /etc/httpd/conf/esgf-httpd-locals.conf" in filedata:
+                    uncommented_include_httpd_locals_file = True
+                    filedata = filedata.replace("Include /etc/httpd/conf/esgf-httpd-locals.conf", "#Include /etc/httpd/conf/esgf-httpd-locals.conf")
+                if not '#Include /etc/httpd/conf/esgf-httpd-local.conf' in filedata:
+                    uncommented_include_httpd_local_file = True 
+                    filedata = filedata.replace("Include /etc/httpd/conf/esgf-httpd-local.conf", "#Include /etc/httpd/conf/esgf-httpd-local.conf")
+            
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "w") as file:
+                file.write(filedata)
+
+            #Write first 22 lines? to different file
+            original_server_lines_file = open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/original_server_lines", "w")
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "r") as esgf_httpd_conf_file:
+                for i in range(22):
+                    original_server_lines_file.write(esgf_httpd_conf_file.readline())
+
+            original_server_lines_file.close()
+
+            default_server_lines_file = open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/default_server_lines", "w")
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/tc/httpd/conf/esgf-httpd.conf.tmpl", "r") as esgf_httpd_conf_template:
+                for i in range(22):
+                    default_server_lines_file.write(esgf_httpd_conf_template.readline())
+
+
+            #delete lines 1 through 22 from the files
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "r") as esgf_httpd_conf_file:
+                lines = esgf_httpd_conf_file.readlines()
+            lines = lines[22:]
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "w") as esgf_httpd_conf_file:
+                esgf_httpd_conf_file.write(lines)
+
+            with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf.tmpl", "r") as esgf_httpd_conf_template:
+                lines = esgf_httpd_conf_file.readlines()
+            lines = lines[22:]
+            esgf_httpd_conf_template.write(lines)
+
+            #check if esgf-httpd.conf and esgf-httpd.conf.tmpl are equivalent, i.e. take the diff
+            if filecmp.cmp("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf.tmpl"):
+                #we have changes; add allowed ips, ext file selection and wsgi path to latest template and apply
+                logger.info("Detected changes. Will update and reapply customizations. An esg-node restart would be needed to read in the changes.")
+
+                #write /etc/httpd/conf/esgf-httpd.conf.tmpl into /etc/httpd/conf/origsrvlines
+                original_server_lines_file = open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/original_server_lines", "a")
+                with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf.tmpl") as esgf_httpd_conf_template:
+                    content = esgf_httpd_conf_template.read()
+                original_server_lines_file.write(content)
+                original_server_lines_file.close()
+
+                shutil.move("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/original_server_lines", "/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf.tmpl")
+                shutil.copyfile("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf.tmpl", "/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf")
+
+                replace_wsgi_module_placeholder_command = 'sed -i "s/\(.*\)LoadModule wsgi_module placeholder_so\(.*\)/\1LoadModule wsgi_module {wsgi_path}\2/" etc/httpd/conf/esgf-httpd.conf;'.format(wsgi_path = wsgi_path)
+                replace_wsgi_module_placeholder_process = subprocess.Popen(shlex.split(replace_wsgi_module_placeholder_command))
+                replace_wsgi_module_placeholder_stdout, replace_wsgi_module_placeholder_stderr = replace_wsgi_module_placeholder_process.communicate()
+
+                insert_permitted_ips_command = 'sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n{allowed_ips}\n\t#permitted-ips-end-here/" etc/httpd/conf/esgf-httpd.conf;'.format(allowed_ips = allowed_ips_stdout)
+                insert_permitted_ips_process = subprocess.Popen(shlex.split(insert_permitted_ips_command))
+                insert_permitted_ips_stdout, insert_permitted_ips_stderr = insert_permitted_ips_process.communicate()
+
+                if uncommented_include_httpd_locals_file or uncommented_include_httpd_local_file:
+                    with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "r") as file:
+                        filedata = file.read()
+                        filedata = filedata.replace("#Include /etc/httpd/conf/esgf-httpd-locals.conf", "Include /etc/httpd/conf/esgf-httpd-locals.conf") 
+                        filedata = filedata.replace("#Include /etc/httpd/conf/esgf-httpd-local.conf", "Include /etc/httpd/conf/esgf-httpd-local.conf")
+                    
+                    with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "w") as file:
+                        file.write(filedata)
+
+                shutil.copyfile("/etc/httpd/conf/esgf-httpd.conf", "/etc/httpd/conf/esgf-httpd.conf.bak")
+                shutil.copyfile("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "/etc/httpd/conf/esgf-httpd.conf")
+            else:
+                logger.info("No changes detected in apache frontend conf.")
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def subprocess_pipe_commands(command_list):

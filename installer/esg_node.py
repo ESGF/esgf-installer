@@ -2521,7 +2521,8 @@ def setup_temp_ca():
     stdout_processes, stderr_processes = new_ca_process.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
     logger.info("stderr_processes: %s", stderr_processes)
-    if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
+    if call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass") == 0:
+    # if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
     with open("reqhost.ans", "wb") as reqhost_ans_file:
@@ -3167,11 +3168,12 @@ def update_apache_conf():
 
 
 def call_subprocess(command_string):
-    # stop_httpd_command = "/etc/init.d/httpd stop"
+    logger.debug("command_string: %s", command_string)
     command_process = subprocess.Popen(shlex.split(command_string))
     command_process_stdout, command_process_stderr =  command_process.communicate()
     logger.debug("command_process_stdout: %s", command_process_stdout)
     logger.debug("command_process_stderr: %s", command_process_stderr)
+    logger.debug("command_process.returncode: %s", command_process.returncode)
     return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
 
 

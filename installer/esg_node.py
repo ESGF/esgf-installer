@@ -2099,7 +2099,7 @@ def configure_tomcat(keystore_password, esg_dist_url):
         logger.debug("distinguished_name = %s", distinguished_name)
 
         if not distinguished_name or use_distinguished_name.lower == "n":
-            java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias ${keystore_alias} -keyalg RSA \
+            java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias {keystore_alias} -keyalg RSA \
             -keystore ${keystore_file} \
             -validity 365 -storepass {keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
                 keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = config.config_dictionary["keystore_password"])
@@ -2435,6 +2435,7 @@ def _glean_keystore_info():
         config.config_dictionary["keystore_password"] = connector_element.get('keystorePass')
         logger.debug("keystore_pass_value: %s", config.config_dictionary["keystore_password"])
 
+        logger.debug("connector_element.get('keyAlias'): %s", connector_element.get('keyAlias'))
         config.config_dictionary["keystore_alias"] = connector_element.get('keyAlias')
         logger.debug("key_alias_value: %s", config.config_dictionary["keystore_alias"])
 

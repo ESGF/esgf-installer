@@ -25,6 +25,7 @@ import untangle
 import filecmp
 import glob
 import xml.etree.ElementTree
+import git
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2905,7 +2906,7 @@ def setup_apache_frontend():
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
     try:
         Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
-    except GitCommandError, error:
+    except git.exc.GitCommandError, error:
         logger.error(error)
         logger.error("Git repo already exists.")
 

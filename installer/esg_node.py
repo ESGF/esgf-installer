@@ -2919,8 +2919,8 @@ def setup_apache_frontend():
 
     if os.path.isdir(os.path.join("apache_frontend", ".git")):
         logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
-        os.chdir("apache-frontend")
-        logger.debug("changed directory to %s:", os.getcwd())
+        # os.chdir("apache-frontend")
+        # logger.debug("changed directory to %s:", os.getcwd())
         apache_frontend_repo_local = Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend")
         if devel == 1:
             apache_frontend_repo_local.git.checkout("devel")

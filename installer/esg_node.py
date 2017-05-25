@@ -2957,6 +2957,8 @@ def setup_apache_frontend():
         add_ips_to_conf_file_command = 'sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n{allowed_ip_address_string}\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf'.format(allowed_ip_address_string = allowed_ip_address_string)
         add_ips_to_conf_file_process = subprocess.Popen(shlex.split(add_ips_to_conf_file_command))
         add_ips_to_conf_file_stdout, add_ips_to_conf_file_stderr = add_ips_to_conf_file_process.communicate()
+        logger.debug("add_ips_to_conf_file_stdout: %s", add_ips_to_conf_file_stdout)
+        logger.debug("add_ips_to_conf_file_stderr: %s", add_ips_to_conf_file_stderr)
 
         #Write the contents of /etc/tempcerts/cacert.pem  to /etc/certs/esgf-ca-bundle.crt
         esgf_ca_bundle_file = open("/etc/certs/esgf-ca-bundle.crt", "a")

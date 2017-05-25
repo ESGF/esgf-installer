@@ -2897,7 +2897,7 @@ def setup_apache_frontend():
     *******************************
     Setting up Apache Frontend
     ******************************* \n'''
-    
+
     old_directory = os.getcwd()
     try:
         local_work_directory = os.environ["ESGF_INSTALL_WORKDIR"]
@@ -2954,7 +2954,7 @@ def setup_apache_frontend():
         allowed_ip_address_string = "\t Allow from".join(ip_addresses)
         logger.debug("allowed_ip_address_string: %s", allowed_ip_address_string)
 
-        add_ips_to_conf_file_command = 'sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf'
+        add_ips_to_conf_file_command = 'sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n{allowed_ip_address_string}\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf'.format(allowed_ip_address_string = allowed_ip_address_string)
         add_ips_to_conf_file_process = subprocess.Popen(shlex.split(add_ips_to_conf_file_command))
         add_ips_to_conf_file_stdout, add_ips_to_conf_file_stderr = add_ips_to_conf_file_process.communicate()
 

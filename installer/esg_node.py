@@ -2521,7 +2521,7 @@ def setup_temp_ca():
     stdout_processes, stderr_processes = new_ca_process.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
     logger.info("stderr_processes: %s", stderr_processes)
-    if call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass") == 0:
+    if call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
     # if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")

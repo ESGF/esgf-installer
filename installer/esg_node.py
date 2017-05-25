@@ -3172,7 +3172,7 @@ def call_subprocess(command_string):
     command_process_stdout, command_process_stderr =  command_process.communicate()
     logger.debug("command_process_stdout: %s", command_process_stdout)
     logger.debug("command_process_stderr: %s", command_process_stderr)
-    return (command_process_stdout, command_process_stderr)
+    return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
 
 
 

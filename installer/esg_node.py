@@ -2893,6 +2893,11 @@ def backup_db():
 
 
 def setup_apache_frontend():
+    print '''
+    *******************************
+    Setting up Apache Frontend
+    ******************************* \n'''
+    
     old_directory = os.getcwd()
     try:
         local_work_directory = os.environ["ESGF_INSTALL_WORKDIR"]

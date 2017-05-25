@@ -2531,7 +2531,12 @@ def setup_temp_ca():
         subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
     with open("hostcert.pem", "wb") as hostcert_file:
-        subprocess.call(shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem"), stdout = hostcert_file )
+        #inform = input format; set to pem.  outform = output format; set to pem
+        hostcert_ssl_command = shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem")
+        hostcert_ssl_process = subprocess.Popen(hostcert_ssl_command, stdout = hostcert_file)
+        hostcert_ssl_stdout, hostcert_ssl_stderr = hostcert_ssl_process.communicate()
+        logger.debug("hostcert_ssl_stdout: %s", hostcert_ssl_stdout)
+        logger.debug("hostcert_ssl_stderr: %s", hostcert_ssl_stderr)
     shutil.move("newkey.pem", "hostkey.pem")
 
     try:

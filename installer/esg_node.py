@@ -2951,7 +2951,7 @@ def setup_apache_frontend():
             if add_more_ips.lower() != "y":
                 break
 
-        allowed_ip_address_string = "\t Allow from".join(ip_addresses)
+        allowed_ip_address_string = "".join("Allow from " + address + "\t" for address in ip_addresses)
         logger.debug("allowed_ip_address_string: %s", allowed_ip_address_string)
 
         add_ips_to_conf_file_command = "sed -i 's/\#insert-permitted-ips-here/\#permitted-ips-start-here\n{allowed_ip_address_string}\t\#permitted-ips-end-here/' /etc/httpd/conf/esgf-httpd.conf".format(allowed_ip_address_string = allowed_ip_address_string)

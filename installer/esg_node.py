@@ -1422,7 +1422,8 @@ def setup_java():
     # wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
     logger.info("Downloading {java_version}").format(java_version = config.config_dictionary["java_version"])
     download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(java_major_version =  java_major_version, java_minor_version = java_minor_version)
-    subprocess.call(shlex.split(download_oracle_java_string))
+    call_subprocess(download_oracle_java_string)
+    # subprocess.call(shlex.split(download_oracle_java_string))
     command_list = ["yum", "-y", "localinstall", "jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm".format(java_major_version =  java_major_version, java_minor_version = java_minor_version)]
     # urllib.urlretrieve("http://download.oracle.com/otn-pub/java/jdk/8u121-b13/jdk-8u121-linux-x64.rpm", "jdk-8u121-linux-x64.rpm")
     yum_install_java = subprocess.Popen(command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
@@ -3169,6 +3170,8 @@ def call_subprocess(command_string):
     # stop_httpd_command = "/etc/init.d/httpd stop"
     command_process = subprocess.Popen(shlex.split(command_string))
     command_process_stdout, command_process_stderr =  command_process.communicate()
+    logger.debug("command_process_stdout: %s", command_process_stdout)
+    logger.debug("command_process_stderr: %s", command_process_stderr)
     return (command_process_stdout, command_process_stderr)
 
 

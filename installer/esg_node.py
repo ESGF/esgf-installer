@@ -2901,8 +2901,10 @@ def setup_apache_frontend():
         local_work_directory = os.path.join(config.config_dictionary["installer_home"], "workbench", "esg")
 
     os.chdir(local_work_directory)
+    logger.debug("changed directory to %s:", os.getcwd())
     esg_bash2py.mkdir_p("apache_frontend")
     os.chdir("apache_frontend")
+    logger.debug("changed directory to %s:", os.getcwd())
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
     try:
         Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
@@ -2913,6 +2915,7 @@ def setup_apache_frontend():
     if os.path.isdir(os.path.join("apache_frontend", ".git")):
         logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
         os.chdir("apache-frontend")
+        logger.debug("changed directory to %s:", os.getcwd())
         apache_frontend_repo_local = Repo("apache-frontend")
         if devel == 1:
             apache_frontend_repo_local.git.checkout("devel")

@@ -41,6 +41,8 @@ logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logg
 logger = logging.getLogger(__name__)
 
 config = EsgInit()
+
+logger.info("keystore_alias: %s", config.config_dictionary["keystore_alias"])
 # os.environ['DISCOVERONLY'] = Expand.colonMinus("DISCOVERONLY")
 os.environ['LANG'] = "POSIX"
 os.umask(022)

@@ -458,8 +458,7 @@ class EsgInit(object):
             "tomcat_conf_dir"] + "/tomcat-users.xml"
         internal_script_variables["keystore_file"] = self.config_dictionary[
             "tomcat_conf_dir"] + "/keystore-tomcat"
-        internal_script_variables["keystore_alias"] = esg_bash2py.Expand.colonMinus(
-            "keystore_alias", "my_esgf_node")
+        internal_script_variables["keystore_alias"] = "my_esgf_node"
         # keystore_password=${keystore_password}
         internal_script_variables["keystore_password"] = esg_bash2py.Expand.colonMinus("keystore_password", "")
         internal_script_variables["truststore_file"] = self.config_dictionary[

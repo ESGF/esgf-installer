@@ -895,6 +895,8 @@ setup_cdat() {
 
     # create a default environment for the publisher with cduitl (and cdms2)
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
+    unset LD_LIBRARY_PATH
+    
 	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1	
     fi   
@@ -1034,6 +1036,7 @@ setup_esgcet() {
 
     echo "$(pwd)"
 
+    unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
     conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient
     
@@ -1696,6 +1699,11 @@ setup_apache_frontend() {
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
     else
+        export LD_LIBRARY_PATH=/opt/esgf/python/lib:/opt/esgf/python/lib/python2.7:/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server
+        /opt/esgf/python/bin/pip install --upgrade pip
+        /opt/esgf/python/bin/pip install --upgrade virtualenv
+        unset LD_LIBRARY_PATH
+
         conf_file=/etc/httpd/conf/esgf-httpd.conf
         if [ -f $conf_file ] ; then
              esgf_httpd_ver=`grep ESGF-HTTPD-CONF $conf_file | awk '{print $4}'`

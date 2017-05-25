@@ -2903,7 +2903,12 @@ def setup_apache_frontend():
     esg_bash2py.mkdir_p("apache_frontend")
     os.chdir("apache_frontend")
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
-    Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+    try:
+        Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+    except GitCommandError, error:
+        logger.error(error)
+        logger.error("Git repo already exists.")
+
     if os.path.isdir(os.path.join("apache_frontend", ".git")):
         logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
         os.chdir("apache-frontend")

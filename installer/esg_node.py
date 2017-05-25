@@ -3165,8 +3165,11 @@ def update_apache_conf():
 
 
 
-
-
+def call_subprocess(command_string):
+    # stop_httpd_command = "/etc/init.d/httpd stop"
+    command_process = subprocess.Popen(shlex.split(command_string))
+    command_process_stdout, command_process_stderr =  command_process.communicate()
+    return (command_process_stdout, command_process_stderr)
 
 
 

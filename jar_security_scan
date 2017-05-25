@@ -34,7 +34,7 @@ use XML::Twig;
 my $tomcatdir = '/usr/local/tomcat';
 my $cvrfdir = '/tmp';
 my $cvrfprefix = '/allitems-cvrf-year-';
-my @cvrf_years = ( '2015','2016' );
+my @cvrf_years = ( '2015','2016','2017' );
 my %cvrf_twigs;
 
 # %jar_searchregex is a hash of jar names to regular expressions that
@@ -434,6 +434,7 @@ my %falsepositives = (
     'CVE-2016-2045' => 'zed: unrelated (PHPMyAdmin)',
     'CVE-2016-2099' => 'zed: unrelated (Apache Xerces C++)',
     'CVE-2016-2170' => 'zed: duplicate (Apache Commons Collections, CVE-2015-6420)',
+    'CVE-2016-2173' => 'zed: oldversion (Spring AMQP)',
     'CVE-2016-2162' => 'zed: oldversion (Apache Struts < 2.3.25)',
     'CVE-2016-2212' => 'zed: unrelated (Magento)',
     'CVE-2016-2425' => 'zed: unrelated (AOSP Mail for Android)',
@@ -486,6 +487,7 @@ my %falsepositives = (
     'CVE-2016-4463' => 'zed: unrelated (Apache Xerces C++)',
     'CVE-2016-4465' => 'zed: oldversion (Apache Struts < 2.3.28.1)',
     'CVE-2016-4814' => 'zed: unrelated (Geospatial Information Authority of Japan)',
+    'CVE-2016-4849' => 'zed: unrelated (Geeklog IVYWE)',
     'CVE-2016-4974' => 'zed: unrelated (Apache Qpid)',
     'CVE-2016-5160' => 'zed: unrelated (Google Chrome)',
     'CVE-2016-5162' => 'zed: unrelated (Google Chrome)',
@@ -503,6 +505,22 @@ my %falsepositives = (
     'CVE-2016-7964' => 'zed: unrelated (DokuWiki)',
     'CVE-2016-8905' => 'zed: unrelated (dotCMS)',
     'CVE-2016-9318' => 'zed: unrelated (LibXML2)',
+    'CVE-2017-3503' => 'zed: unrealted (Oracle Primavera Products Suite)',
+    'CVE-2017-3604' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3605' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3606' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3607' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3608' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3609' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3610' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3611' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3612' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3613' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3614' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3615' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3616' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-3617' => 'zed: unrelated (Berkeley DB)',
+    'CVE-2017-5586' => 'zed: unrelated (OpenText Documentum D2)',
    );
 
 

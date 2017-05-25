@@ -2906,7 +2906,6 @@ def setup_apache_frontend():
     Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
     if os.path.isdir(os.path.join("apache_frontend", ".git")):
         logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
-        sys.exit(1)
         os.chdir("apache-frontend")
         apache_frontend_repo_local = Repo("apache-frontend")
         if devel == 1:

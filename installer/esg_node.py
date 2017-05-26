@@ -2515,7 +2515,7 @@ def setup_temp_ca():
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
-    pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
+    # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
     # ca.newca()
     # x(new_ca_process)
@@ -2535,8 +2535,10 @@ def setup_temp_ca():
         call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
         # subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
 
-    with open("setuphost.ans", "wb") as setuphost_ans_file:
-        subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
+    with open("setuphost.ans", "rb") as setuphost_ans_file:
+        call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
+        # subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
+
     with open("cacert.pem", "wb") as cacert_file:
         subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")

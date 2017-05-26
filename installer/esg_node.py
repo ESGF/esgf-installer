@@ -26,7 +26,7 @@ import filecmp
 import glob
 import xml.etree.ElementTree
 import git
-import ca
+import ca_py
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2534,7 +2534,7 @@ def setup_temp_ca():
         logger.debug("reqhost_ans_file contents: %s", reqhost_ans_file.read())
         call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
         # subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
-        
+
     with open("setuphost.ans", "wb") as setuphost_ans_file:
         subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
     with open("cacert.pem", "wb") as cacert_file:

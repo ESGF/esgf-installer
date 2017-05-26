@@ -2527,12 +2527,14 @@ def setup_temp_ca():
     # if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
-    with open("reqhost.ans", "wb") as reqhost_ans_file:
+
+    with open("reqhost.ans", "rb") as reqhost_ans_file:
         #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
         logger.debug("reqhost_ans_file: %s", reqhost_ans_file)
         logger.debug("reqhost_ans_file contents: %s", reqhost_ans_file.read())
-        call_subprocess("perl CA.pl -newreq-nodes")
+        call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
         # subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
+        
     with open("setuphost.ans", "wb") as setuphost_ans_file:
         subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
     with open("cacert.pem", "wb") as cacert_file:
@@ -3175,8 +3177,11 @@ def update_apache_conf():
 
 def call_subprocess(command_string, command_stdin = None):
     logger.debug("command_string: %s", command_string)
-    command_process = subprocess.Popen(shlex.split(command_string), stdin = command_stdin)
-    command_process_stdout, command_process_stderr =  command_process.communicate()
+    command_process = subprocess.Popen(shlex.split(command_string), stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    if command_stdin:
+        command_process_stdout, command_process_stderr =  command_process.communicate(input = command_stdin)
+    else:
+        command_process_stdout, command_process_stderr =  command_process.communicate()
     logger.debug("command_process_stdout: %s", command_process_stdout)
     logger.debug("command_process_stderr: %s", command_process_stderr)
     logger.debug("command_process.returncode: %s", command_process.returncode)

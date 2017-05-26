@@ -26,6 +26,7 @@ import filecmp
 import glob
 import xml.etree.ElementTree
 import git
+import ca
 from git import Repo
 from collections import deque
 from time import sleep
@@ -2514,8 +2515,9 @@ def setup_temp_ca():
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
-    #pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
+    pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    # ca.newca()
     # x(new_ca_process)
 
     stdout_processes, stderr_processes = new_ca_process.communicate()
@@ -2526,7 +2528,10 @@ def setup_temp_ca():
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
     with open("reqhost.ans", "wb") as reqhost_ans_file:
-        call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file)
+        #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
+        logger.debug("reqhost_ans_file: %s", reqhost_ans_file)
+        logger.debug("reqhost_ans_file contents: %s", reqhost_ans_file.read())
+        call_subprocess("perl CA.pl -newreq-nodes")
         # subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
     with open("setuphost.ans", "wb") as setuphost_ans_file:
         subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)

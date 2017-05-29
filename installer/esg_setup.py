@@ -1043,8 +1043,6 @@ def install_prerequisites():
     yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
     esg_functions.stream_subprocess_output(yum_install_prerequisites)
 
-
-
 def setup_java():
     '''
         Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.

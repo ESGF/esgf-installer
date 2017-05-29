@@ -590,13 +590,7 @@ def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
 
-    try:
-        os.makedirs(config.esg_config_dir)
-    except OSError, e:
-        if e.errno != 17:
-            raise
-        sleep(1)
-        pass
+    esg_bash2py.mkdir_p(config.esg_config_dir)
 
     starting_directory = os.getcwd()
 

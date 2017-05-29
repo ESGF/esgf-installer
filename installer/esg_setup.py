@@ -707,79 +707,6 @@ def _is_managed_db():
         return False
 
 
-def is_in_git(file_name):
-    '''
-     This determines if a specified file is in a git repository.
-     This function will resolve symlinks and check for a .git
-     directory in the directory of the actual file as well as its
-     parent to avoid attempting to call git unless absolutely needed,
-     so as to be able to detect some common cases on a system without
-     git actually installed and in the path.
-    
-     Accepts as an argument the file to be checked
-    
-     Returns 0 if the specified file is in a git repository
-    
-     Returns 2 if it could not detect a git repository purely by file
-     position and git was not available to complete a rev-parse test
-    
-     Returns 1 otherwise
-    '''
-    # test = git.Repo("/Users/williamhill/Development/esgf-installer/installer/esg_init.py").git_dir
-
-    '''
-        debug_print "DEBUG: Checking to see if ${1} is in a git repository..."
-
-        REALDIR=$(dirname $(_readlinkf ${1}))
-    '''
-    try:
-        is_git_installed = subprocess.check_output(["which", "git"])
-    except subprocess.CalledProcessError, e:
-        print "Ping stdout output:\n", e.output
-        print "git is not available to finish checking for a repository -- assuming there isn't one!"
-
-
-
-    print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
-    absolute_path = esg_functions._readlinkf(file_name)
-    one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
-    print "absolute_path: ", absolute_path
-    print "parent_path: ", os.path.abspath(os.path.join(absolute_path, os.pardir))
-    two_directories_up = os.path.abspath(os.path.join(one_directory_up, os.pardir))
-    print "two_directories_up: ", two_directories_up
-
-    '''
-        if [ ! -e $1 ] ; then
-        debug_print "DEBUG: ${1} does not exist yet, allowing creation"
-        return 1
-    fi
-    '''
-    if not os.path.isfile(file_name):
-        print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
-        return 1
-
-    '''
-        if [ -d "${REALDIR}/.git" ] ; then
-        debug_print "DEBUG: ${1} is in a git repository"
-        return 0
-    fi
-
-    '''
-    if os.path.isdir(one_directory_up+"/.git"):
-        print "%s is in a git repository" % file_name
-        return 0
-
-    '''
-        if [ -d "${REALDIR}/../.git" ] ; then
-        debug_print "DEBUG: ${1} is in a git repository"
-        return 0
-    fi
-    '''
-    if os.path.isdir(two_directories_up+"/.git"):
-        print "%s is in a git repository" % file_name
-        return 0
-
-
 def check_for_update(filename_1, filename_2 =None):
     '''
          Does an md5 check between local and remote resource
@@ -900,7 +827,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         return 0
     fi
     '''
-    if is_in_git(local_file) == 0:
+    if esg_functions.is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
 
     '''

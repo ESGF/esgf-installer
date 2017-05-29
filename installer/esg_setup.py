@@ -31,27 +31,14 @@ config = EsgInit()
 use_local_files=0
 force_install = False
 
-def source(script, update=1):
-    pipe = subprocess.Popen(". %s; env" % script, stdout=subprocess.PIPE, shell=True)
-    data = pipe.communicate()[0]
-
-    env = dict((line.split("=", 1) for line in data.splitlines()))
-    if update:
-        os.environ.update(env)
-
-    return env
 
 esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
 esg_init_file="/Users/hill119/Development/esgf-installer/esg-init"
 
 
 if os.path.isfile(esg_functions_file):
-    print "found file: ", esg_functions_file
-    # subprocess.call('source ${esg_functions_file}', shell=True)
-    source(esg_init_file)
-    source(esg_functions_file)
-    print "sourcing from:", esg_functions_file
-    print "Checking for java >= ${java_min_version} and valid JAVA_HOME... "
+    esg_bash2py.source(esg_init_file)
+    esg_bash2py.source(esg_functions_file)
 else:
     print "file not found"
 

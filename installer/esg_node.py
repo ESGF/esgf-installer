@@ -783,33 +783,6 @@ def main():
     
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
-def install_prerequisites():
-    '''
-        Install prerequisite modules via yum
-    '''
-    print '''
-    *******************************
-    Installing prerequisites
-    ******************************* 
-    '''
-    yum_remove_rpm_forge = subprocess.Popen(["yum", "-y", "remove", "rpmforge-release"],stdout=subprocess.PIPE)
-    esg_functions.stream_subprocess_output(yum_remove_rpm_forge)
-    
-    yum_install_epel = subprocess.Popen(["yum", "-y", "install", "epel-release"], stdout=subprocess.PIPE)
-    esg_functions.stream_subprocess_output(yum_install_epel)
-
-    yum_install_list = ["yum", "-y", "install", "yum-plugin-priorities", "sqlite-devel", "freetype-devel", "git", "curl-devel", 
-    "autoconf", "automake", "bison", "file", "flex", "gcc", "gcc-c++", 
-    "gettext-devel", "libtool", "uuid-devel", "libuuid-devel", "libxml2", 
-    "libxml2-devel", "libxslt", "libxslt-devel", "lsof", "make", 
-    "openssl-devel", "pam-devel", "pax", "readline-devel", "tk-devel", 
-    "wget", "zlib-devel", "perl-Archive-Tar", "perl-XML-Parser", 
-    "libX11-devel", "libtool-ltdl-devel", "e2fsprogs-devel", "gcc-gfortran",
-    "libicu-devel", "libgtextutils-devel", "httpd,"" httpd-devel", 
-    "mod_ssl", "libjpeg-turbo-devel", "myproxy", '*ExtUtils*']
-
-    yum_install_prerequisites = subprocess.Popen(yum_install_list, stdout=subprocess.PIPE)
-    esg_functions.stream_subprocess_output(yum_install_prerequisites)
 
 def setup_tomcat(upgrade_flag = False):
     print "*******************************"

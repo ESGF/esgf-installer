@@ -4,6 +4,7 @@ import sys
 import os
 import errno
 import re
+import subprocess
 from contextlib import contextmanager
 
 
@@ -227,3 +228,14 @@ def symlink_force(target, link_name):
             os.symlink(target, link_name)
         else:
             raise e
+
+def source(script, update=1):
+  ''' Mimics Bash's source function '''
+  pipe = subprocess.Popen(". %s; env" % script, stdout=subprocess.PIPE, shell=True)
+  data = pipe.communicate()[0]
+
+  env = dict((line.split("=", 1) for line in data.splitlines()))
+  if update:
+      os.environ.update(env)
+
+  return env

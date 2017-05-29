@@ -1,21 +1,17 @@
 import sys
 import os
 import subprocess
-import pwd
 import re
-import mmap
 import shutil
 from OpenSSL import crypto
-import datetime
-import tarfile
 import logging
 import requests
-import stat
 import socket
 import platform
 import netifaces
 import tld
 import grp
+import shlex
 from time import sleep
 from esg_init import EsgInit
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError

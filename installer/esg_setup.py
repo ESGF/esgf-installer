@@ -41,23 +41,9 @@ def source(script, update=1):
 
     return env
 
-
-# esg_functions_file = "/usr/local/bin/esg-functions"
 esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
 esg_init_file="/Users/hill119/Development/esgf-installer/esg-init"
 
-def print_hello():
-    print "hello world"
-
-
-# subprocess.call(['ls', '-1'], shell=True)
-# subprocess.call('echo $HOME', shell=True)
-# subprocess.check_call('echo $PATH', shell=True)
-
-
-output = subprocess.check_output(['ls', '-1'])
-print 'Have %d bytes in output' % len(output)
-print output
 
 if os.path.isfile(esg_functions_file):
     print "found file: ", esg_functions_file
@@ -106,14 +92,12 @@ def check_prerequisites():
      # checking for OS, architecture, distribution and version
 
     print "Checking operating system....."
-    OS = platform.system()
-    MACHINE = platform.machine()
-    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()
-    logger.debug("Release Version: %s", RELEASE_VERSION)
-    if "6" not in  RELEASE_VERSION[1]:
+    release_version = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()
+    logger.debug("Release Version: %s", release_version)
+    if "6" not in release_version[1]:
         raise WrongOSError
     else:
-        print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
+        print "Operating System = {OS} {version}".format(OS=release_version[0], version=release_version[1])
         print "[OK]"
 
 
@@ -599,12 +583,6 @@ def initial_setup_questionnaire():
     db_properties_dict = {"db_user": None,"db_host": None, "db_port": None, "db_database": None, "db_managed": None}
     for key, value in db_properties_dict.items():
         db_properties_dict[key] = esg_functions.get_property(key)
-
-    # db_user = esg_functions.get_property("db_user")
-    # db_host = esg_functions.get_property("db_host")
-    # db_port = esg_functions.get_property("db_port")
-    # db_database = esg_functions.get_property("db_database")
-    # db_managed = esg_functions.get_property("db_managed")
 
     if not all(db_properties_dict) or force_install:
         _is_managed_db()

@@ -18,6 +18,7 @@ import tld
 import grp
 from time import sleep
 from esg_init import EsgInit
+from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 import esg_bash2py
 import esg_functions
 import esg_bootstrap
@@ -67,6 +68,53 @@ if os.path.isfile(esg_functions_file):
     print "Checking for java >= ${java_min_version} and valid JAVA_HOME... "
 else:
     print "file not found"
+
+def check_prerequisites():
+    '''
+        Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for
+    '''
+    print '''
+        \033[01;31m
+      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
+      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
+    \033[0m
+    '''
+
+    print "Checking that you have root privileges on %s... " % (socket.gethostname())
+    root_check = os.geteuid()
+    if root_check != 0:
+        raise UnprivilegedUserError
+    print "[OK]"
+
+    #----------------------------------------
+    print "Checking requisites... "
+
+     # checking for OS, architecture, distribution and version
+
+    print "Checking operating system....."
+    OS = platform.system()
+    MACHINE = platform.machine()
+    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()
+    logger.debug("Release Version: %s", RELEASE_VERSION)
+    if "6" not in  RELEASE_VERSION[1]:
+        raise WrongOSError
+    else:
+        print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
+        print "[OK]"
 
 
 def init_structure():
@@ -263,50 +311,6 @@ def check_for_my_ip(force_install=False):
     esg_functions.write_as_property("esgf_host_ip", my_ip_address)
     esgf_host_ip = esg_functions.get_property("esgf_host_ip")
     return esgf_host_ip
-
-#checking for what we expect to be on the system a-priori
-#that we are not going to install or be responsible for
-def check_prerequisites():
-    print '''
-        \033[01;31m
-      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
-      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
-      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
-      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
-        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
-    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
-        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
-        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
-        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
-        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
-    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
-        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
-      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
-      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
-      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
-      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
-    \033[0m
-    '''
-
-    print "Checking that you have root privs on %s... " % (socket.gethostname())
-    root_check = os.geteuid()
-    if root_check != 0:
-        print "$([FAIL]) \n\tMust run this program with root's effective UID\n\n"
-        return 1
-    print "[OK]"
-
-    #----------------------------------------
-    print "Checking requisites... "
-
-     # checking for OS, architecture, distribution and version
-
-    OS = platform.system()
-    MACHINE = platform.machine()
-    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()[2]
-
-    if RELEASE_VERSION[0] != "6":
-        print "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" 
-        return 1
 
 def _choose_fqdn(esgf_host):
     if not esgf_host or force_install:

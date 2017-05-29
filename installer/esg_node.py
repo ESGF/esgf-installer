@@ -437,52 +437,6 @@ def self_verify(esg_dist_url_root, update_action = None):
 
     return True
 
-def check_prerequisites():
-    '''
-        Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for
-    '''
-    print '''
-        \033[01;31m
-      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
-      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
-      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
-      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
-        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
-    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
-        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
-        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
-        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
-        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
-    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
-        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
-      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
-      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
-      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
-      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
-    \033[0m
-    '''
-
-    print "Checking that you have root privs on %s... " % (socket.gethostname())
-    root_check = os.geteuid()
-    if root_check != 0:
-        raise UnprivilegedUserError
-    print "[OK]"
-
-    #----------------------------------------
-    print "Checking requisites... "
-
-     # checking for OS, architecture, distribution and version
-
-    print "Checking operating system....."
-    OS = platform.system()
-    MACHINE = platform.machine()
-    RELEASE_VERSION = re.search("(centos|redhat)-(\S*)-", platform.platform()).groups()
-    logger.debug("Release Version: %s", RELEASE_VERSION)
-    if "6" not in  RELEASE_VERSION[1]:
-        raise WrongOSError
-    else:
-        print "Operating System = {OS} {version}".format(OS=RELEASE_VERSION[0], version=RELEASE_VERSION[1])
-        print "[OK]"
 
 #TODO: Refactor this to return value vs using global variable
 def get_previous_node_type_config():
@@ -666,7 +620,7 @@ def main():
     #process command line arguments
     process_arguments()
     try:
-        check_prerequisites()
+        esg_setup.check_prerequisites()
     except UnprivilegedUserError:
         logger.info("$([FAIL]) \n\tMust run this program with root's effective UID\n\n")
         sys.exit(1)

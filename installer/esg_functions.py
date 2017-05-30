@@ -469,6 +469,7 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
 
 def _verify_against_mirror(esg_dist_url_root, script_maj_version):
+    ''' Verify that the local script matches the remote script on the distribution mirror '''
     python_script_name = os.path.basename(__file__)
     python_script_md5_name = re.sub(r'_', "-", python_script_name)
     python_script_md5_name = re.search("\w*-\w*", python_script_md5_name)
@@ -477,14 +478,7 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
     remote_file_md5 = requests.get("{esg_dist_url_root}/esgf-installer/{script_maj_version}/{python_script_md5_name}.md5".format(esg_dist_url_root= esg_dist_url_root, script_maj_version= script_maj_version, python_script_md5_name= python_script_md5_name ) ).content
     remote_file_md5 = remote_file_md5.split()[0].strip()
 
-    local_file_md5 = None
-
-    hasher = hashlib.md5()
-    with open(python_script_name, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-        local_file_md5 = hasher.hexdigest()
-        print "local_file_md5: ", local_file_md5.strip()
+    local_file_md5 = get_md5sum(python_script_name)
 
     if local_file_md5 != remote_file_md5:
         raise UnverifiedScriptError

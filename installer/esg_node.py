@@ -705,30 +705,6 @@ def update_apache_conf():
                 logger.info("No changes detected in apache frontend conf.")
     
 
-
-
-
-
-
-
-
-
-
-def call_subprocess(command_string, command_stdin = None):
-    logger.debug("command_string: %s", command_string)
-    command_process = subprocess.Popen(shlex.split(command_string), stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    if command_stdin:
-        command_process_stdout, command_process_stderr =  command_process.communicate(input = command_stdin)
-    else:
-        command_process_stdout, command_process_stderr =  command_process.communicate()
-    logger.debug("command_process_stdout: %s", command_process_stdout)
-    logger.debug("command_process_stderr: %s", command_process_stderr)
-    logger.debug("command_process.returncode: %s", command_process.returncode)
-    return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
-
-
-
-
 def subprocess_pipe_commands(command_list):
     subprocess_list = []
     for index, command in enumerate(command_list):

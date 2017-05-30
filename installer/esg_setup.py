@@ -19,6 +19,7 @@ import esg_bash2py
 import esg_functions
 import esg_bootstrap
 import esg_env_manager
+import esg_property_manager
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ def check_prerequisites():
 def init_structure():
 
     if not os.path.isfile(config.config_dictionary["config_file"]):
-        esg_functions.touch(config.config_dictionary["config_file"])
+        esg_bash2py.touch(config.config_dictionary["config_file"])
 
     config_check = 7
     directories_to_check = [config.config_dictionary["scripts_dir"], config.config_dictionary["esg_backup_dir"], config.config_dictionary["esg_tools_dir"],
@@ -128,22 +129,22 @@ def init_structure():
     try:
         esgf_host = config.config_dictionary["esgf_host"]
     except KeyError:
-        esgf_host = esg_functions.get_property("esgf_host")
+        esgf_host = esg_property_manager.get_property("esgf_host")
 
     try:
         esgf_default_peer = config.config_dictionary["esgf_default_peer"]
     except KeyError:
-        esgf_default_peer = esg_functions.get_property("esgf_default_peer")
+        esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
 
     try:
         esgf_idp_peer_name = config.config_dictionary["esgf_idp_peer_name"]
     except KeyError:
-        esgf_idp_peer_name = esg_functions.get_property("esgf_idp_peer_name")
+        esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
 
     try:
         esgf_idp_peer = config.config_dictionary["esgf_idp_peer"]
     except KeyError:
-        esgf_idp_peer = esg_functions.get_property("esgf_idp_peer")
+        esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
 
     # logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer))
     if not esgf_idp_peer:
@@ -156,22 +157,22 @@ def init_structure():
         config.config_dictionary["myproxy_port"]
     except KeyError:
         myproxy_port = esg_bash2py.Expand.colonMinus(
-            esg_functions.get_property("myproxy_port"), "7512")
+            esg_property_manager.get_property("myproxy_port"), "7512")
 
     try:
         esg_root_id = config.config_dictionary["esg_root_id"]
     except KeyError:
-        esg_root_id = esg_functions.get_property("esg_root_id")
+        esg_root_id = esg_property_manager.get_property("esg_root_id")
 
     try:
         node_peer_group = config.config_dictionary["node_peer_group"]
     except KeyError:
-        node_peer_group = esg_functions.get_property("node_peer_group")
+        node_peer_group = esg_property_manager.get_property("node_peer_group")
 
     try:
         config.config_dictionary["node_short_name"]
     except KeyError:
-        node_short_name = esg_functions.get_property("node_short_name")
+        node_short_name = esg_property_manager.get_property("node_short_name")
 
     # NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
     # this is actually an issue with dedup_properties that gets called in the
@@ -185,24 +186,24 @@ def init_structure():
     try:
         dname = config.config_dictionary["dname"]
     except KeyError:
-        dname = esg_functions.get_property("dname")
+        dname = esg_property_manager.get_property("dname")
 
     try:
         gridftp_config = config.config_dictionary["gridftp_config"]
     except KeyError:
-        gridftp_config = esg_functions.get_property(
+        gridftp_config = esg_property_manager.get_property(
             "gridftp_config", "bdm end-user")
 
     try:
         publisher_config = config.config_dictionary["publisher_config"]
     except KeyError:
-        publisher_config = esg_functions.get_property(
+        publisher_config = esg_property_manager.get_property(
             "publisher_config", "esg.ini")
 
     try:
         publisher_home = config.config_dictionary["publisher_home"]
     except KeyError:
-        publisher_home = esg_functions.get_property(
+        publisher_home = esg_property_manager.get_property(
             "publisher_home", config.esg_config_dir + "/esgcet")
 
     # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
@@ -260,7 +261,7 @@ def check_for_my_ip(force_install=False):
     try:
         esgf_host_ip
     except NameError:
-        esgf_host_ip = esg_functions.get_property("esgf_host_ip")
+        esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
 
     if esgf_host_ip and not force_install:
         logger.info("Using IP: %s", esgf_host_ip)
@@ -289,8 +290,8 @@ def check_for_my_ip(force_install=False):
         else:
             my_ip_address = ip_addresses[0]
 
-    esg_functions.write_as_property("esgf_host_ip", my_ip_address)
-    esgf_host_ip = esg_functions.get_property("esgf_host_ip")
+    esg_property_manager.write_as_property("esgf_host_ip", my_ip_address)
+    esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
     return esgf_host_ip
 
 
@@ -309,10 +310,10 @@ def _choose_fqdn(esgf_host):
             default_host_name=default_host_name)) or default_host_name
         esgf_host = default_host_name
         logger.info("esgf_host = [%s]", esgf_host)
-        esg_functions.write_as_property("esgf_host", esgf_host)
+        esg_property_manager.write_as_property("esgf_host", esgf_host)
     else:
         logger.info("esgf_host = [%s]", esgf_host)
-        esg_functions.write_as_property("esgf_host", esgf_host)
+        esg_property_manager.write_as_property("esgf_host", esgf_host)
 
 
 def _is_valid_password(password_input):
@@ -388,7 +389,7 @@ def _update_password_files_permissions():
             logger.error(error)
 
     if not os.path.isfile(config.pg_secret_file):
-        esg_functions.touch(config.pg_secret_file)
+        esg_bash2py.touch(config.pg_secret_file)
         try:
             with open(config.pg_secret_file, "w") as secret_file:
                 secret_file.write(config.config_dictionary[
@@ -430,7 +431,7 @@ def _choose_admin_password():
 
 
 def _choose_organization_name():
-    esg_root_id = esg_functions.get_property("esg_root_id")
+    esg_root_id = esg_property_manager.get_property("esg_root_id")
     if not esg_root_id or force_install:
         while True:
             default_org_name = tld.get_tld(
@@ -438,14 +439,14 @@ def _choose_organization_name():
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ", format(
                 default_org_name=default_org_name)) or default_org_name
             org_name_input.replace("", "_")
-            esg_functions.write_as_property("esg_root_id", esg_root_id)
+            esg_property_manager.write_as_property("esg_root_id", esg_root_id)
             break
     else:
         logger.info("esg_root_id = [%s]", esg_root_id)
 
 
 def _choose_node_short_name():
-    node_short_name = esg_functions.get_property("node_short_name")
+    node_short_name = esg_property_manager.get_property("node_short_name")
     if not node_short_name or force_install:
         while True:
             node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(
@@ -459,12 +460,12 @@ def _choose_node_short_name():
 
 
 def _choose_node_long_name():
-    node_long_name = esg_functions.get_property("node_long_name")
+    node_long_name = esg_property_manager.get_property("node_long_name")
     if not node_long_name or force_install:
         while True:
             node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
                 node_long_name=node_long_name)) or node_long_name
-            esg_functions.write_as_property(
+            esg_property_manager.write_as_property(
                 "node_long_name", node_long_name_input)
             break
     else:
@@ -472,7 +473,7 @@ def _choose_node_long_name():
 
 
 def _choose_node_namespace():
-    node_namespace = esg_functions.get_property("node_namespace")
+    node_namespace = esg_property_manager.get_property("node_namespace")
     if not node_namespace or force_install:
         top_level_domain = tld.get_tld(
             "http://" + socket.gethostname(), as_object=True)
@@ -495,7 +496,7 @@ def _choose_node_namespace():
 
 
 def _choose_node_peer_group():
-    node_peer_group = esg_functions.get_property("node_peer_group")
+    node_peer_group = esg_property_manager.get_property("node_peer_group")
     if not node_peer_group or force_install:
         try:
             node_peer_group
@@ -509,7 +510,7 @@ def _choose_node_peer_group():
                 print "Please choose either esgf-test or esgf-prod"
                 continue
             else:
-                esg_functions.write_as_property(
+                esg_property_manager.write_as_property(
                     "node_peer_group", node_peer_group_input)
                 break
     else:
@@ -517,7 +518,7 @@ def _choose_node_peer_group():
 
 
 def _choose_esgf_default_peer():
-    esgf_default_peer = esg_functions.get_property("esgf_default_peer")
+    esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
     if not esgf_default_peer or force_install:
         try:
             default_esgf_default_peer = esgf_host
@@ -526,31 +527,31 @@ def _choose_esgf_default_peer():
 
         esgf_default_peer_input = raw_input("What is the default peer to this node? [{default_esgf_default_peer}]: ".format(
             default_esgf_default_peer=default_esgf_default_peer)) or default_esgf_default_peer
-        esg_functions.write_as_property(
+        esg_property_manager.write_as_property(
             "esgf_default_peer", esgf_default_peer_input)
     else:
         logger.info("esgf_default_peer = [%s]", esgf_default_peer)
 
 
 def _choose_esgf_index_peer():
-    esgf_index_peer = esg_functions.get_property("esgf_index_peer")
+    esgf_index_peer = esg_property_manager.get_property("esgf_index_peer")
     if not esgf_index_peer or force_install:
         default_esgf_index_peer = esgf_default_peer or esgf_host or socket.getfqdn()
         esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
             default_esgf_index_peer=default_esgf_index_peer)) or default_esgf_index_peer
-        esg_functions.write_as_property(
+        esg_property_manager.write_as_property(
             "esgf_index_peer", esgf_index_peer_input)
     else:
         logger.info("esgf_index_peer = [%s]", esgf_index_peer)
 
 
 def _choose_mail_admin_address():
-    mail_admin_address = esg_functions.get_property("mail_admin_address")
+    mail_admin_address = esg_property_manager.get_property("mail_admin_address")
     if not mail_admin_address or force_install:
         mail_admin_address_input = raw_input(
             "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=mail_admin_address))
         if mail_admin_address_input:
-            esg_functions.write_as_property(
+            esg_property_manager.write_as_property(
                 "mail_admin_address", mail_admin_address_input)
         else:
             print " (The notification system will not be enabled without an email address)"
@@ -560,12 +561,12 @@ def _choose_mail_admin_address():
 
 def _choose_publisher_db_user():
     default_publisher_db_user = None
-    publisher_db_user = esg_functions.get_property("publisher_db_user")
+    publisher_db_user = esg_property_manager.get_property("publisher_db_user")
     if not publisher_db_user or force_install:
         default_publisher_db_user = publisher_db_user or "esgcet"
         publisher_db_user_input = raw_input(
             "What is the (low priv) db account for publisher? [${default}]: ") or default_publisher_db_user
-        esg_functions.write_as_property(
+        esg_property_manager.write_as_property(
             "publisher_db_user", publisher_db_user_input)
     else:
         logger.info("publisher_db_user: %s", publisher_db_user)
@@ -580,7 +581,7 @@ def _choose_publisher_db_user_passwd():
                 secret_file.write(publisher_db_user_passwd_input)
 
     if not os.path.isfile(config.pub_secret_file):
-        esg_functions.touch(config.pub_secret_file)
+        esg_bash2py.touch(config.pub_secret_file)
         with open(config.pub_secret_file, "w") as secret_file:
             secret_file.write(config.config_dictionary[
                               "publisher_db_user_passwd"])
@@ -729,7 +730,7 @@ def _is_managed_db():
     '''
     db_managed_default = None
     default_selection_output = None
-    db_managed = esg_functions.get_property("db_managed")
+    db_managed = esg_property_manager.get_property("db_managed")
     if not force_install:
         if db_managed == "yes":
             return True
@@ -752,13 +753,13 @@ def _is_managed_db():
             "Is the database external to this node? " + default_selection_output)
         if not external_db_input:
             db_managed = db_managed_default
-            esg_functions.write_as_property("db_managed", db_managed)
+            esg_property_manager.write_as_property("db_managed", db_managed)
         else:
             if external_db_input.lower() == "y" or external_db_input.lower() == "yes":
                 db_managed == "yes"
             else:
                 db_managed == "no"
-            esg_functions.write_as_property("db_managed", db_managed)
+            esg_property_manager.write_as_property("db_managed", db_managed)
     else:
         logger.info("db_managed = [%s]", db_managed)
 
@@ -1035,7 +1036,7 @@ def setup_java():
         java_major_version=java_major_version, java_minor_version=java_minor_version)]
     yum_install_java = subprocess.Popen(
         command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
-    stream_subprocess_output(yum_install_java)
+    esg_functions.stream_subprocess_output(yum_install_java)
 
     logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(
         java_version=config.config_dictionary["java_version"], java_install_dir=config.config_dictionary["java_install_dir"]))
@@ -1064,7 +1065,7 @@ def setup_ant():
 
     command_list = ["yum", "-y", "install", "ant"]
     yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
-    stream_subprocess_output(yum_install_ant)
+    esg_functions.stream_subprocess_output(yum_install_ant)
 
 
 def setup_cdat():

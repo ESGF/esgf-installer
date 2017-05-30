@@ -39,6 +39,8 @@ import esg_setup
 import esg_postgres
 import esg_publisher
 import esg_cli_argument_manager
+import esg_tomcat_manager
+import esg_version_manager
 from esg_init import EsgInit
 
 
@@ -457,7 +459,7 @@ def main():
         logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             esg_publisher.setup_esgcet()
-        setup_tomcat()
+        esg_tomcat_manager.setup_tomcat()
         setup_apache_frontend()
     # setup_esgcet()
     # test_esgcet()
@@ -562,7 +564,7 @@ def setup_apache_frontend():
                 logger.error("esgf-httpd.conf is missing versioning, attempting to update.")
                 update_apache_conf()
             else:
-                if esg_functions.check_version_atleast(esgf_httpd_version_stdout, config.config_dictionary["apache_frontend_version"]) == 0:
+                if esg_version_manager.check_version_atleast(esgf_httpd_version_stdout, config.config_dictionary["apache_frontend_version"]) == 0:
                     logger.info("esgf-httpd.conf version is sufficient")
                 else:
                     logger.info("esgf-httpd version is out-of-date, attempting to update.")
@@ -582,21 +584,21 @@ def update_apache_conf():
 
     config_file = "/etc/httpd/conf/esgf-httpd.conf"
 
-    with esg_functions.pushd(local_work_directory):
+    with esg_bash2py.pushd(local_work_directory):
         logger.debug("changed to directory: %s", os.getcwd())
         if not os.path.isdir("apache_frontend"):
             esg_bash2py.mkdir_p("apache_frontend")
-            with esg_functions.pushd("apache_frontend"):
+            with esg_bash2py.pushd("apache_frontend"):
                 logger.debug("changed to directory: %s", os.getcwd())
                 Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
             logger.debug("changed to directory: %s", os.getcwd())
         else:
-            with esg_functions.pushd("apache_frontend"):
+            with esg_bash2py.pushd("apache_frontend"):
                 logger.debug("changed to directory: %s", os.getcwd())
                 shutil.rmtree("apache-frontend")
                 Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
             logger.debug("changed to directory: %s", os.getcwd())
-        with esg_functions.pushd("apache_frontend/apache-frontend"):
+        with esg_bash2py.pushd("apache_frontend/apache-frontend"):
             logger.debug("changed to directory: %s", os.getcwd())
             apache_frontend_repo_local = Repo("apache-frontend")
             if devel == 1:

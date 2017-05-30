@@ -12,6 +12,7 @@ import netifaces
 import tld
 import grp
 import shlex
+import hashlib
 from time import sleep
 from esg_init import EsgInit
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
@@ -150,7 +151,7 @@ def init_structure():
     if not esgf_idp_peer:
         myproxy_endpoint = None
     else:
-        myproxy_endpoint = esg_functions.trim_string_from_tail(esgf_idp_peer)
+        myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
     # re.search("/\w+", source)
 
     try:
@@ -452,7 +453,7 @@ def _choose_node_short_name():
             node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(
                 node_short_name=node_short_name)) or node_short_name
             node_short_name_input.replace("", "_")
-            esg_functions.write_as_property(
+            esg_property_manager.write_as_property(
                 "node_short_name", node_short_name_input)
             break
     else:
@@ -488,7 +489,7 @@ def _choose_node_namespace():
                 print "Namespace entered is not in a valid format.  Valid format is [suffix].[domain].  Example: gov.llnl"
                 continue
             else:
-                esg_functions.write_as_property(
+                esg_property_manager.write_as_property(
                     "node_namespace", node_namespace_input)
                 break
     else:
@@ -1040,7 +1041,7 @@ def setup_java():
 
     logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(
         java_version=config.config_dictionary["java_version"], java_install_dir=config.config_dictionary["java_install_dir"]))
-    esg_functions.symlink_force("/usr/java/jdk{java_version}/".format(
+    esg_bash2py.symlink_force("/usr/java/jdk{java_version}/".format(
         java_version=config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
 
 

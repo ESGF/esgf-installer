@@ -147,32 +147,11 @@ def update_script(script_name, script_directory):
     pass
 
 
-def _verify_against_remote(esg_dist_url_root):
-    python_script_name = os.path.basename(__file__)
-    python_script_md5_name = re.sub(r'_', "-", python_script_name)
-    python_script_md5_name = re.search("\w*-\w*", python_script_md5_name)
-    logger.info("python_script_name: %s", python_script_md5_name)
 
-    remote_file_md5 = requests.get("{esg_dist_url_root}/esgf-installer/{script_maj_version}/{python_script_md5_name}.md5".format(esg_dist_url_root= esg_dist_url_root, script_maj_version= script_maj_version, python_script_md5_name= python_script_md5_name ) ).content
-    remote_file_md5 = remote_file_md5.split()[0].strip()
 
-    local_file_md5 = None
 
-    hasher = hashlib.md5()
-    with open(python_script_name, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-        local_file_md5 = hasher.hexdigest()
-        print "local_file_md5: ", local_file_md5.strip()
-
-    if local_file_md5 != remote_file_md5:
-        raise UnverifiedScriptError
-    else:
-        print "[VERIFIED]"
-        return True
-
-#TODO: Rename and refactor this; there is already a function in esg_bootstrap.py called self_verify()
-def self_verify(esg_dist_url_root, update_action = None):
+def verify_esg_node_script(esg_dist_url_root, update_action = None):
+    ''' Verify the esg_node script is the most current version '''
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
     if esg_functions.is_in_git(os.path.basename(__file__)) == 0:
         logger.info("Git repository detected; not checking checksum of esg-node")
@@ -185,7 +164,7 @@ def self_verify(esg_dist_url_root, update_action = None):
         devel = 1
         remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
     try:
-        _verify_against_remote(remote_url)
+        esg_functions._verify_against_mirror(remote_url, script_maj_version)
     except UnverifiedScriptError:
         logger.info('''WARNING: %s could not be verified!! \n(This file, %s, may have been tampered
             with or there is a newer version posted at the distribution server.
@@ -357,7 +336,7 @@ def main():
         logger.info("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" )
         sys.exit(1)
     
-    self_verify(esg_dist_url)
+    verify_esg_node_script(esg_dist_url)
 
     logger.debug("node_type_bit: %s", node_type_bit)
     

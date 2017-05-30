@@ -162,6 +162,9 @@ expect {
     "Would you like to configure this node for CMIP6 publishing" {
         send Y\n ; exp_continue
     }
+    "Would you like to install the SLCS OAuth server on this node" {
+        send Y\n ; exp_continue
+    }
 
     # For --type all, Globus is set up twice, once as a gateway, and
     # once as a datanode.  Unfortunately, on the second pass of this

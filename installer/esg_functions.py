@@ -12,6 +12,7 @@ import tarfile
 import requests
 import hashlib
 import logging
+import shlex
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 from esg_init import EsgInit
@@ -499,6 +500,19 @@ def stream_subprocess_output(subprocess_object):
             print line,
     # wait for the subprocess to exit
     subprocess_object.wait() 
+
+def call_subprocess(command_string, command_stdin = None):
+    ''' Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn't have subprocess.call() '''
+    logger.debug("command_string: %s", command_string)
+    command_process = subprocess.Popen(shlex.split(command_string), stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    if command_stdin:
+        command_process_stdout, command_process_stderr =  command_process.communicate(input = command_stdin)
+    else:
+        command_process_stdout, command_process_stderr =  command_process.communicate()
+    logger.debug("command_process_stdout: %s", command_process_stdout)
+    logger.debug("command_process_stderr: %s", command_process_stderr)
+    logger.debug("command_process.returncode: %s", command_process.returncode)
+    return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
 
 
 def check_shmmax(min_shmmax = 48):

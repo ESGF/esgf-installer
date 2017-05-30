@@ -945,7 +945,7 @@ def setup_temp_ca():
     stdout_processes, stderr_processes = new_ca_process.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
     logger.info("stderr_processes: %s", stderr_processes)
-    if call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
+    if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
     # if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
@@ -954,11 +954,11 @@ def setup_temp_ca():
         #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
         logger.debug("reqhost_ans_file: %s", reqhost_ans_file)
         logger.debug("reqhost_ans_file contents: %s", reqhost_ans_file.read())
-        call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
+        esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
         # subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
 
     with open("setuphost.ans", "rb") as setuphost_ans_file:
-        call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
+        esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
         # subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
 
     with open("cacert.pem", "wb") as cacert_file:

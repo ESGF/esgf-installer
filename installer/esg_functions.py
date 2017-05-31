@@ -495,6 +495,7 @@ def stream_subprocess_output(subprocess_object):
     # wait for the subprocess to exit
     subprocess_object.wait() 
 
+
 def call_subprocess(command_string, command_stdin = None):
     ''' Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn't have subprocess.call() '''
     logger.debug("command_string: %s", command_string)
@@ -507,6 +508,24 @@ def call_subprocess(command_string, command_stdin = None):
     logger.debug("command_process_stderr: %s", command_process_stderr)
     logger.debug("command_process.returncode: %s", command_process.returncode)
     return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
+
+
+def subprocess_pipe_commands(command_list):
+    subprocess_list = []
+    for index, command in enumerate(command_list):
+        if index > 0:
+            subprocess_command = subprocess.Popen(command, stdin = subprocess_list[index -1].stdout, stdout=subprocess.PIPE)
+            subprocess_list.append(subprocess_command)
+        else:
+            subprocess_command = subprocess.Popen(command, stdout=subprocess.PIPE)
+            subprocess_list.append(subprocess_command)
+    subprocess_list_length = len(subprocess_list)
+    for index ,process in enumerate(subprocess_list):
+        if index != subprocess_list_length -1:
+            process.stdout.close()
+        else:
+            subprocess_stdout, subprocess_stderr = process.communicate()
+    return subprocess_stdout
 
 
 def check_shmmax(min_shmmax = 48):

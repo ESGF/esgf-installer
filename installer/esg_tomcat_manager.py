@@ -17,7 +17,7 @@ import urllib
 import shlex
 import filecmp
 import glob
-import xml.etree.ElementTree
+from lxml import etree
 from time import sleep
 from OpenSSL import crypto
 from lxml import etree
@@ -87,7 +87,6 @@ def check_tomcat_process():
         status_value = subprocess.Popen(shlex.split("ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }'"))
 
 def start_tomcat():
-    pass
     status = check_tomcat_process()
     if status == 0:
         return 1
@@ -559,7 +558,7 @@ def configure_tomcat(keystore_password, esg_dist_url):
     #(first try getting it from distribution server otherwise copy Java's)
     if not os.path.isfile(config.config_dictionary["truststore_file"]):
         # i.e. esg-truststore.ts
-        truststore_file_name = esg_functions.trim_string_from_tail(config.config_dictionary["truststore_file"])
+        truststore_file_name = esg_bash2py.trim_string_from_tail(config.config_dictionary["truststore_file"])
         if esg_functions.checked_get(truststore_file_name, "http://{esg_dist_url_root}/certs/${fetch_file_name}".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"], fetch_file_name = fetch_file_name)) > 1:
             print " INFO: Could not download certificates ${fetch_file_name} for tomcat - will copy local java certificate file".format(fetch_file_name = fetch_file_name)
             print "(note - the truststore password will probably not match!)"

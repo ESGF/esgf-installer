@@ -1,3 +1,22 @@
+import os
+import subprocess
+import shutil
+import datetime
+import logging
+import socket
+import shlex
+import filecmp
+import git
+import esg_bash2py
+import esg_version_manager
+from esg_init import EsgInit
+
+
+logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+config = EsgInit()
+
 def setup_apache_frontend():
     print '''
     *******************************

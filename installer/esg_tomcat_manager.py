@@ -86,6 +86,19 @@ def check_tomcat_process():
         print " Using alternative method for checking on tomcat process..."
         status_value = subprocess.Popen(shlex.split("ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }'"))
 
+
+def find_jars_in_directory(directory):
+    ''' find the jar files in a given directory; return a string of colon delimited jar file names '''
+    jar_string = ""
+    files_in_directory = os.listdir(directory)
+    for file in files_in_directory:
+        if file.endswith(".jar"):
+            if not jar_string:
+                jar_string += file
+            else:
+                jar_string += (":"+file)
+    return jar_string
+
 def start_tomcat():
     status = check_tomcat_process()
     if status == 0:
@@ -102,12 +115,13 @@ def start_tomcat():
 
     current_directory = os.getcwd()
     os.chdir(config.config_dictionary["tomcat_install_dir"])
-    copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
+    # copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
+    tomcat_jars = find_jars_in_directory(config.config_dictionary["tomcat_install_dir"])
     jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
         "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
         "-errfile %s/logs/catalina.err "
         "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
-        "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], copy_result, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
+        "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], tomcat_jars, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
     if jsvc_launch_command != 0:
         print " ERROR: Could not start up tomcat"
         f = subprocess.Popen(['tail',"./logs/catalina.err"],\
@@ -184,6 +198,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False):
     starting_directory = os.getcwd()
     os.chdir(config.config_dictionary["workdir"])
 
+    #TODO: maybe replace trim_from_tail with this
     tomcat_dist_file = config.config_dictionary["tomcat_dist_url"].rsplit("/",1)[-1]
     tomcat_dist_dir = re.sub("\.tar.gz", "", tomcat_dist_file)
 
@@ -1279,7 +1294,7 @@ def find_tomcat_ports(server_xml_path):
 
     logger.debug("ports: %s", ports)
     return ports
-    
+
 def tomcat_port_check():
     ''' 
         Helper function to poke at tomcat ports...
@@ -1290,7 +1305,7 @@ def tomcat_port_check():
     protocol = "http"
     print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
-    ports = esg_functions.find_tomcat_ports(server_xml_path)
+    ports = find_tomcat_ports(server_xml_path)
     for port in ports:
         if port == "8223":
             continue

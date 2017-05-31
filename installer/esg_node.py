@@ -41,6 +41,7 @@ import esg_publisher
 import esg_cli_argument_manager
 import esg_tomcat_manager
 import esg_version_manager
+import esg_mirror_manager
 from esg_init import EsgInit
 
 
@@ -276,6 +277,67 @@ def esgf_node_info():
 
     '''
 
+
+def select_distribution_mirror(install_type):
+     # Determining ESGF distribution mirror
+    logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+    if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
+        logger.debug("interactive")
+        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror("interactive", install_type)
+    else:
+        logger.debug("fastest")
+        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror("fastest", install_type)
+
+    logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+
+def set_esg_dist_url():
+     # # Setting esg_dist_url with previously gathered information
+    esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
+    logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
+    if devel is True:
+        esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
+    else:
+        esg_dist_url = esg_dist_url_root
+
+    logger.debug("esg_dist_url: %s", esg_dist_url)
+
+def download_esg_installarg(esg_dist_url):
+    # # Downloading esg-installarg file
+    if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
+        esg_installarg_file_name = esg_bash2py.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
+        esg_functions.checked_get(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
+        try:
+            if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
+                os.remove(config.config_dictionary["esg_installarg_file"])
+            esg_bash2py.touch(config.config_dictionary["esg_installarg_file"])
+        except IOError, error:
+            logger.error(error)
+
+def check_selected_node_type():
+    ''' Make sure a valid node_type has been selected before performing and install '''
+    if node_type_bit & INSTALL_BIT != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
+        print '''
+                Sorry no suitable node type has been selected
+                Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
+                (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
+
+                Ex:  esg-node --set-type data
+                esg-node install
+
+                or do so as a single command line:
+
+                Ex:  esg-node --type data install
+
+                Use the --help | -h option for more information
+
+                Note: The type value is recorded upon successfully starting the node.
+                the value is used for subsequent launches so the type value does not have to be
+                always specified.  A simple \"esg-node start\" will launch with the last type used
+                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
+                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
+              '''
+        sys.exit(1)
+
 def main():
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     
@@ -294,36 +356,10 @@ def main():
     else:
         install_type = "master"
 
-    # Determining ESGF distribution mirror
-    # logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
-    # if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
-    #     logger.debug("interactive")
-    #     config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("interactive", install_type)
-    # else:
-    #     logger.debug("fastest")
-    #     config.config_dictionary["esgf_dist_mirror"] = esg_functions.get_esgf_dist_mirror("fastest", install_type)
-
-    # logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
-
-    # # Setting esg_dist_url with previously gathered information
-    # esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
-    # logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
-    # if devel is True:
-    #     esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
-    # else:
-    #     esg_dist_url = esg_dist_url_root
-
-    # logger.debug("esg_dist_url: %s", esg_dist_url)
-    # # Downloading esg-installarg file
-    # if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-    #     esg_installarg_file_name = esg_functions.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
-    #     esg_functions.checked_get(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
-    #     try:
-    #         if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
-    #             os.remove(config.config_dictionary["esg_installarg_file"])
-    #         esg_functions.touch(config.config_dictionary["esg_installarg_file"])
-    #     except IOError, error:
-    #         logger.error(error)
+    # select_distribution_mirror(install_type)
+    # set_esg_dist_url()    
+    # download_esg_installarg()
+    
 
     #process command line arguments
     esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_bit)
@@ -356,31 +392,7 @@ def main():
 
         
     esg_cli_argument_manager.get_previous_node_type_config()
-    
-    #TODO: Break this into a function
-    #If we are doing an install - make sure a type is selected
-    if node_type_bit & INSTALL_BIT != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
-        print '''
-                Sorry no suitable node type has been selected
-                Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
-                (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
-
-                Ex:  esg-node --set-type data
-                esg-node install
-
-                or do so as a single command line:
-
-                Ex:  esg-node --type data install
-
-                Use the --help | -h option for more information
-
-                Note: The type value is recorded upon successfully starting the node.
-                the value is used for subsequent launches so the type value does not have to be
-                always specified.  A simple \"esg-node start\" will launch with the last type used
-                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
-              '''
-        sys.exit(1)
+    check_selected_node_type()
 
     esgf_node_info()
 

@@ -37,7 +37,7 @@ def setup_apache_frontend(devel = False):
     logger.debug("changed directory to %s:", os.getcwd())
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
     try:
-        Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+        git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
     except git.exc.GitCommandError, error:
         logger.error(error)
         logger.error("Git repo already exists.")
@@ -46,7 +46,7 @@ def setup_apache_frontend(devel = False):
         logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
         # os.chdir("apache-frontend")
         # logger.debug("changed directory to %s:", os.getcwd())
-        apache_frontend_repo_local = Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache_frontend")
+        apache_frontend_repo_local = git.Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache_frontend")
         if devel == 1:
             apache_frontend_repo_local.git.checkout("devel")
         else:
@@ -140,17 +140,17 @@ def update_apache_conf(devel = False):
             esg_bash2py.mkdir_p("apache_frontend")
             with esg_bash2py.pushd("apache_frontend"):
                 logger.debug("changed to directory: %s", os.getcwd())
-                Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+                git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
             logger.debug("changed to directory: %s", os.getcwd())
         else:
             with esg_bash2py.pushd("apache_frontend"):
                 logger.debug("changed to directory: %s", os.getcwd())
                 shutil.rmtree("apache-frontend")
-                Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+                git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
             logger.debug("changed to directory: %s", os.getcwd())
         with esg_bash2py.pushd("apache_frontend/apache-frontend"):
             logger.debug("changed to directory: %s", os.getcwd())
-            apache_frontend_repo_local = Repo("apache-frontend")
+            apache_frontend_repo_local = git.Repo("apache-frontend")
             if devel == 1:
                 apache_frontend_repo_local.git.checkout("devel")
             else:

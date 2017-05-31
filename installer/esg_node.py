@@ -80,7 +80,7 @@ node_type_bit = 0
 
 
 
-devel = esg_bash2py.Expand.colonMinus("devel", 0)
+devel = esg_bash2py.Expand.colonMinus("devel", True)
 recommended_setup = 1
 custom_setup = 0
 use_local_files = 0
@@ -156,10 +156,10 @@ def verify_esg_node_script(esg_dist_url_root, update_action = None):
         return
 
     if "devel" in script_version:
-        devel = 0
+        devel = True
         remote_url = "{esg_dist_url_root}/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
     else:
-        devel = 1
+        devel = False
         remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
     try:
         esg_functions._verify_against_mirror(remote_url, script_maj_version)
@@ -177,10 +177,10 @@ def verify_esg_node_script(esg_dist_url_root, update_action = None):
         elif update_action in ["U".lower(), "update", "--update"]:
             print "Updating local script with script from distribution server..."
 
-            if devel == 0:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap"
-            else:
+            if devel is True:
                 bootstrap_path = "/usr/local/bin/esg-bootstrap --devel"
+            else:
+                bootstrap_path = "/usr/local/bin/esg-bootstrap"
             invoke_bootstrap = subprocess.Popen(bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             invoke_bootstrap.communicate()
             # if invoke_bootstrap.returncode == 0:
@@ -394,7 +394,7 @@ def main():
     esgf_node_info()
 
     default_install_answer = "Y"
-    if devel == 1:
+    if devel is True:
         print "(Installing DEVELOPMENT tree...)"
     while True:
         begin_installation = raw_input("Are you ready to begin the installation? [Y/n] ") or default_install_answer
@@ -448,7 +448,7 @@ def main():
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             esg_publisher.setup_esgcet()
         esg_tomcat_manager.setup_tomcat()
-        esg_apache_manager.setup_apache_frontend()
+        esg_apache_manager.setup_apache_frontend(devel)
     # setup_esgcet()
     # test_esgcet()
     

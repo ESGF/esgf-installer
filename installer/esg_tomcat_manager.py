@@ -1261,6 +1261,25 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
         edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
 
+
+
+# TODO: Might refactor this to use xml.ElementTree
+def find_tomcat_ports(server_xml_path):
+    '''
+        Return a list of ports in the Tomcat server.xml file
+    '''
+    ports = []
+    with open(server_xml_path, "r") as server_xml_file:
+        for line in server_xml_file:
+            line = line.rstrip() # remove trailing whitespace such as '\n'
+            port_descriptor = re.search('(port=)(\S+)', line)
+            if port_descriptor != None:
+                port_number = port_descriptor.group(2)
+                ports.append(port_number.replace('"', ''))
+
+    logger.debug("ports: %s", ports)
+    return ports
+    
 def tomcat_port_check():
     ''' 
         Helper function to poke at tomcat ports...

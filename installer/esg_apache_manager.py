@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 config = EsgInit()
 
-def setup_apache_frontend():
+def setup_apache_frontend(devel = False):
     print '''
     *******************************
     Setting up Apache Frontend
@@ -112,20 +112,20 @@ def setup_apache_frontend():
             esgf_httpd_version_stdout, esgf_httpd_version_stderr = esgf_httpd_version_process.communicate()
             if not esgf_httpd_version_stdout:
                 logger.error("esgf-httpd.conf is missing versioning, attempting to update.")
-                update_apache_conf()
+                update_apache_conf(devel)
             else:
                 if esg_version_manager.check_version_atleast(esgf_httpd_version_stdout, config.config_dictionary["apache_frontend_version"]) == 0:
                     logger.info("esgf-httpd.conf version is sufficient")
                 else:
                     logger.info("esgf-httpd version is out-of-date, attempting to update.")
-                    update_apache_conf()
+                    update_apache_conf(devel)
         else:
             logger.info("esgf-httpd.conf file not found, attempting to update. This condition is not expected to occur and should be reported to ESGF support")
             update_apache_conf()
 
 
 
-def update_apache_conf():
+def update_apache_conf(devel = False):
     try:
         local_work_directory = os.environ["ESGF_INSTALL_WORKDIR"]
     except KeyError, error:

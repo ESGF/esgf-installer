@@ -574,3 +574,52 @@ def get_security_admin_password():
         security_admin_password = f.read().strip()
         return security_admin_password
 
+
+def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version, script_maj_version, devel, update_action = None):
+    ''' Verify the esg_node script is the most current version '''
+    # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
+    if is_in_git(esg_node_filename == 0):
+        logger.info("Git repository detected; not checking checksum of esg-node")
+        return
+
+    if "devel" in script_version:
+        devel = True
+        remote_url = "{esg_dist_url_root}/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
+    else:
+        devel = False
+        remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
+    try:
+        _verify_against_mirror(remote_url, script_maj_version)
+    except UnverifiedScriptError:
+        logger.info('''WARNING: %s could not be verified!! \n(This file, %s, may have been tampered
+            with or there is a newer version posted at the distribution server.
+            \nPlease update this script.)\n\n''', os.path.basename(__file__), os.path.basename(__file__))
+
+        if update_action is None:
+            update_action = raw_input("Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: ")
+
+        if update_action in ["C".lower(), "Y".lower()]:
+            print  "Continuing..."
+            return
+        elif update_action in ["U".lower(), "update", "--update"]:
+            print "Updating local script with script from distribution server..."
+
+            if devel is True:
+                bootstrap_path = "/usr/local/bin/esg-bootstrap --devel"
+            else:
+                bootstrap_path = "/usr/local/bin/esg-bootstrap"
+            invoke_bootstrap = subprocess.Popen(bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            invoke_bootstrap.communicate()
+            # if invoke_bootstrap.returncode == 0:
+            #     esg_functions.checked_get()
+            print "Please re-run this updated script: {current_script_name}".format(current_script_name = esg_node_filename)
+            sys.exit(invoke_bootstrap.returncode)
+        elif update_action is "X".lower():
+            print "Exiting..."
+            sys.exit(1)
+        else:
+            print "Unknown option: {update_action} - Exiting".format(update_action = update_action)
+            sys.exit(1)
+
+    return True
+

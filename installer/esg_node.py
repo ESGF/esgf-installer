@@ -78,56 +78,6 @@ install_prefix = esg_bash2py.Expand.colonMinus(
 esg_root_id = esg_functions.get_esg_root_id()
 
 
-def verify_esg_node_script(esg_dist_url_root, update_action = None):
-    ''' Verify the esg_node script is the most current version '''
-    # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
-    if esg_functions.is_in_git(os.path.basename(__file__)) == 0:
-        logger.info("Git repository detected; not checking checksum of esg-node")
-        return
-
-    if "devel" in script_version:
-        devel = True
-        remote_url = "{esg_dist_url_root}/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
-    else:
-        devel = False
-        remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(esg_dist_url_root = esg_dist_url_root, script_maj_version = script_maj_version)
-    try:
-        esg_functions._verify_against_mirror(remote_url, script_maj_version)
-    except UnverifiedScriptError:
-        logger.info('''WARNING: %s could not be verified!! \n(This file, %s, may have been tampered
-            with or there is a newer version posted at the distribution server.
-            \nPlease update this script.)\n\n''', os.path.basename(__file__), os.path.basename(__file__))
-
-        if update_action is None:
-            update_action = raw_input("Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: ")
-
-        if update_action in ["C".lower(), "Y".lower()]:
-            print  "Continuing..."
-            return
-        elif update_action in ["U".lower(), "update", "--update"]:
-            print "Updating local script with script from distribution server..."
-
-            if devel is True:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap --devel"
-            else:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap"
-            invoke_bootstrap = subprocess.Popen(bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            invoke_bootstrap.communicate()
-            # if invoke_bootstrap.returncode == 0:
-            #     esg_functions.checked_get()
-            print "Please re-run this updated script: {current_script_name}".format(current_script_name = os.path.basename(__file__))
-            sys.exit(invoke_bootstrap.returncode)
-        elif update_action is "X".lower():
-            print "Exiting..."
-            sys.exit(1)
-        else:
-            print "Unknown option: {update_action} - Exiting".format(update_action = update_action)
-            sys.exit(1)
-
-    return True
-
-
-
 def esgf_node_info():
 
     print '''
@@ -232,7 +182,7 @@ def download_esg_installarg(esg_dist_url):
     # # Downloading esg-installarg file
     if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_bash2py.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
-        esg_functions.checked_get(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
+        esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
         try:
             if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
                 os.remove(config.config_dictionary["esg_installarg_file"])
@@ -299,7 +249,7 @@ def main():
         logger.info("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" )
         sys.exit(1)
     
-    verify_esg_node_script(esg_dist_url)
+    esg_functions.verify_esg_node_script(os.path.basename(__file__), esg_dist_url, script_version, script_maj_version, devel)
 
     logger.debug("node_type_bit: %s", node_type_bit)
     

@@ -427,7 +427,7 @@ def _choose_admin_password():
             break
 
     if changed is True:
-        _update_admin_password_file()
+        _update_admin_password_file(password_input)
 
     _update_password_files_permissions()
 

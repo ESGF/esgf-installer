@@ -346,11 +346,18 @@ def is_in_git(file_name):
         print "%s is in a git repository" % file_name
         return 0
 
-def check_for_update(filename_1, filename_2 =None):
+def check_for_update(filename_1, filename_2=None):
+    '''
+         Does an md5 check between local and remote resource
+         returns 0 (success) iff there is no match and thus indicating that
+         an update is available.
+         USAGE: checked_for_update [file] http://www.foo.com/file
 
-    if filename_2 == None:
+    '''
+
+    if filename_2 is None:
         remote_file = filename_1
-        local_file = os.path.realpath(re.search("\w+-\w+$", filename_1).group())
+        local_file = os.path.realpath(re.search(r"\w+-\w+$", filename_1).group())
         local_file = local_file + ".py"
         local_file = re.sub(r'\-(?=[^-]*$)', "_", local_file)
     else:
@@ -363,54 +370,52 @@ def check_for_update(filename_1, filename_2 =None):
     if not os.access(local_file, os.X_OK):
         print " WARNING: local file %s not executible" % (local_file)
         os.chmod(local_file, 0755)
- 
 
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
-    
-    local_file_md5 =  get_md5sum(local_file)
+    local_file_md5 = get_md5sum(local_file)
 
     if local_file_md5 != remote_file_md5:
         print " Update Available @ %s" % (remote_file)
         return 0
     return 1
 
-def download_update(local_file, remote_file = None, force_download = False, make_backup_file = False, use_local_files = False ):
+def download_update(local_file, remote_file=None, force_download=False, make_backup_file=False, use_local_files=False):
     '''
 
-     If an update is available then pull it down... then check the md5 sums again!
+    If an update is available then pull it down... then check the md5 sums again!
     
-      Yes, this results in 3 network calls to pull down a file, but it
-      saves total bandwidth and it also allows the updating from the
-      network process to be cronttab-able while parsimonious with
-      resources.  It is also very good practice to make sure that code
-      being executed is the RIGHT code!
-    
-      The 3rd token is the "force" flag value 1|0.
-      1 = do not check for update, directly go and fetch the file regardless
-      0 = first check for update availability. (default)
-    
-      The 4th token is for indicated whether a backup file should be made flag value 1|0.
-      1 = yes, create a .bak file if the file is already there before fetching new
-      0 = no, do NOT make a .bak file even if the file is already there, overwrite it
-    
-      (When using the force flag you MUST specify the first two args!!)
-    
-     NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
-           A return value of 1 only means that the file is up-to-date and there
-           Is no reason to fetch it.
-    
-     USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
+    Yes, this results in 3 network calls to pull down a file, but it
+    saves total bandwidth and it also allows the updating from the
+    network process to be cronttab-able while parsimonious with
+    resources.  It is also very good practice to make sure that code
+    being executed is the RIGHT code!
+
+    The 3rd token is the "force" flag value 1|0.
+    1 = do not check for update, directly go and fetch the file regardless
+    0 = first check for update availability. (default)
+
+    The 4th token is for indicated whether a backup file should be made flag value 1|0.
+    1 = yes, create a .bak file if the file is already there before fetching new
+    0 = no, do NOT make a .bak file even if the file is already there, overwrite it
+
+    (When using the force flag you MUST specify the first two args!!)
+
+    NOTE: Has multiple return values test for (( $? > 1 )) when looking or errors
+       A return value of 1 only means that the file is up-to-date and there
+       Is no reason to fetch it.
+
+    USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
     
     '''
 
-    if remote_file == None:
+    if remote_file is None:
         remote_file = local_file
         #Get the last subpath from the absolute path
         local_file = local_file.split("/")[-1]
 
     logger.debug("local file : %s", local_file)
-    logger.debug("remote file: %s", remote_file) 
+    logger.debug("remote file: %s", remote_file)
 
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)

@@ -538,6 +538,8 @@ def _choose_esgf_default_peer():
 
 def _choose_esgf_index_peer():
     esgf_index_peer = esg_property_manager.get_property("esgf_index_peer")
+    esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
+    esgf_host = esg_property_manager.get_property("esgf_host")
     if not esgf_index_peer or force_install:
         default_esgf_index_peer = esgf_default_peer or esgf_host or socket.getfqdn()
         esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
@@ -631,8 +633,8 @@ def initial_setup_questionnaire():
         db_properties_dict[key] = esg_property_manager.get_property(key)
 
     if not all(db_properties_dict) or force_install:
-        _is_managed_db()
-        _get_db_conn_str_questionnaire()
+        _is_managed_db(db_properties_dict)
+        _get_db_conn_str_questionnaire(db_properties_dict)
     else:
         if db_properties_dict["db_host"] == esgf_host or db_properties_dict["db_host"] == "localhost":
             print "db_connection_string = {db_user}@localhost".format(db_user=db_properties_dict["db_user"])
@@ -656,12 +658,12 @@ def initial_setup_questionnaire():
     os.chown(config.esgf_secret_file, config.config_dictionary[
              "installer_uid"], tomcat_group_id)
 
-    if db_properties_dict["db_host"] == db_properties_dict["db_host"] or db_host == "localhost":
+    if db_properties_dict["db_host"] == esgf_host or db_properties_dict["db_host"] == "localhost":
         logger.info("db publisher connection string %s@localhost",
                     db_properties_dict["db_user"])
     else:
         logger.info("db publisher connection string %s@%s:%s/%s",
-                    db_properties_dict["db_user"], db_host, db_port, db_database)
+                    db_properties_dict["db_user"], db_properties_dict["db_host"], db_properties_dict["db_port"], db_properties_dict["db_database"])
 
     esg_env_manager.deduplicate_properties(
         config.config_dictionary["config_file"])
@@ -671,7 +673,7 @@ def initial_setup_questionnaire():
     return True
 
 
-def _get_db_conn_str_questionnaire():
+def _get_db_conn_str_questionnaire(db_properties_dict):
     # postgresql://esgcet@localhost:5432/esgcet
     user_ = None
     host_ = None
@@ -683,9 +685,10 @@ def _get_db_conn_str_questionnaire():
     # Note the values referenced here should have been set by prior get_property *** calls
     # that sets these values in the script scope. (see the call in
     # questionnaire function - above)
-    if not db_user or not db_host or not db_port or not db_database:
-        if not db_host:
-            if db_host == esgf_host or db_host == "localhost":
+    esgf_host = esg_property_manager.get_property("esgf_host")
+    if not db_properties_dict["db_user"] or not db_properties_dict["db_host"] or not db_properties_dict["db_port"] or not db_properties_dict["db_database"]:
+        if not db_properties_dict["db_host"]:
+            if db_properties_dict["db_host"] == esgf_host or db_properties_dict["db_host"] == "localhost":
                 connstring_ = "{db_user}@localhost"
             else:
                 connstring_ = "{db_user}@{db_host}:{db_port}/{db_database}"
@@ -721,7 +724,7 @@ def _get_db_conn_str_questionnaire():
     return valid_connection_string
 
 
-def _is_managed_db():
+def _is_managed_db(db_properties_dict):
     '''
         responds true (returns 0) if this IS intended to be a managed database
         is expecting the vars:
@@ -742,11 +745,12 @@ def _is_managed_db():
             return False
 
     if not db_managed:
+        esgf_host = esg_property_manager.get_property("esgf_host")
         logger.debug("esgf_host = %s", esgf_host)
-        logger.debug("db_host = %s", db_host)
+        logger.debug("db_host = %s", db_properties_dict["db_host"])
 
         # Try to come up with some "sensible" default value for the user...
-        if db_host == esgf_host or db_host == "localhost" or not db_host:
+        if db_properties_dict["db_host"] == esgf_host or db_properties_dict["db_host"] == "localhost" or not db_properties_dict["db_host"]:
             db_managed_default = "no"
             default_selection_output = "[y/N]:"
         else:
@@ -768,13 +772,13 @@ def _is_managed_db():
         logger.info("db_managed = [%s]", db_managed)
 
     if db_managed == "yes":
-        print "Set to use externally \"managed\" database on host: {db_host}".format(db_host=db_host)
+        print "Set to use externally \"managed\" database on host: {db_host}".format(db_host=db_properties_dict["db_host"])
         return True
     else:
         logger.debug("(hmm... setting db_host to localhost)")
         # Note: if not managed and on the local machine... always use
         # "localhost"
-        db_host = "localhost"
+        db_properties_dict["db_host"] = "localhost"
         return False
 
 

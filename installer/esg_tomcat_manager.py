@@ -396,12 +396,12 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
             if os.stat(config.ks_secret_file).st_size != 0:
                 with open(config.ks_secret_file, 'rb') as f:
                     config.config_dictionary["keystore_password"] = f.read().strip()
-                configure_tomcat(config.config_dictionary["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel)
+                configure_tomcat(config.config_dictionary["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel=devel)
         except OSError, error:
             logger.error(error)
             logger.info("Attempting to get configure Tomcat with the security_admin_password")
             security_admin_password = esg_functions.get_security_admin_password()
-            configure_tomcat(security_admin_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
+            configure_tomcat(security_admin_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel=devel)
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
             config.config_dictionary["tomcat_group"]).gr_gid)
@@ -456,7 +456,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
 
     return True
 
-def configure_tomcat(keystore_password, esg_dist_url, devel):
+def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     #----------------------------
     # TOMCAT Configuration...
     #----------------------------

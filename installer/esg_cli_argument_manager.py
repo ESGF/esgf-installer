@@ -46,6 +46,47 @@ logger = logging.getLogger(__name__)
 bit_dictionary = {"INSTALL_BIT":1, "TEST_BIT":2, "DATA_BIT":4, "INDEX_BIT":8, "IDP_BIT":16, "COMPUTE_BIT":32, "WRITE_ENV_BIT":64, "MIN_BIT":4, "MAX_BIT":64, "ALL_BIT":60}
 
 
+def setup_sensible_confs():
+    pass
+
+def install_local_certs():
+    pass
+
+def generate_esgf_csrs():
+    pass
+
+def generate_esgf_csrs_ext():
+    pass
+def cert_howto():
+    pass
+
+def test_postgress():
+    pass
+def test_cdat():
+    pass
+def test_tomcat():
+    pass
+def test_tds():
+    pass
+def show_type():
+    pass
+def start(node_bit):
+    pass
+def stop(node_bit):
+    pass
+def get_node_status():
+    ''' 
+        Return a tuple with the node's status and a numeric return code
+    '''
+    pass
+def update_script(script_name, script_directory):
+    '''
+        arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
+        arg (2) - directory on the distribution site where script is fetched from Ex: orp
+        usage: update_script security orp - looks for the script esg-security in the distriubtion directory "orp"
+    '''
+    pass
+
 def get_bit_value(node_type):
     if node_type == "install":
         return bit_dictionary["INSTALL_BIT"]

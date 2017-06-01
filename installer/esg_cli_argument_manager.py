@@ -38,6 +38,7 @@ import esg_bash2py
 import esg_setup
 import esg_postgres
 import esg_publisher
+import esg_apache_manager
 from esg_init import EsgInit
 
 logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
@@ -334,7 +335,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         sys.exit(0)
     elif args.updateapacheconf:
         logger.debug("checking for updated apache frontend configuration")
-        update_apache_conf()
+        esg_apache_manager.update_apache_conf()
         sys.exit(0)
     elif args.writeenv:
         if node_type_bit & bit_dictionary["WRITE_ENV_BIT"] == 0:

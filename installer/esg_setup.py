@@ -21,6 +21,7 @@ import esg_functions
 import esg_bootstrap
 import esg_env_manager
 import esg_property_manager
+import esg_version_manager
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -918,7 +919,7 @@ def checked_get(local_file, remote_file=None, force_get=0, make_backup_file=1):
             NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE
             file: %s
             ***************************************************************************\n\n
-        ''' % (esg_functions._readlinkf(local_file))
+        ''' % (esg_functions.readlinkf(local_file))
 
     '''
         if ((force_get == 0)); then
@@ -1076,7 +1077,7 @@ def setup_cdat():
         sys.path.insert(0, os.path.join(
             config.config_dictionary["cdat_home"], "bin", "python"))
         import cdat_info
-        if esg_functions.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
+        if esg_version_manager.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
             print "CDAT already installed [OK]"
             return True
     except ImportError, error:

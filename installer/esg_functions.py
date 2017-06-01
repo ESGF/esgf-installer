@@ -578,7 +578,8 @@ def get_security_admin_password():
 def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version, script_maj_version, devel, update_action = None):
     ''' Verify the esg_node script is the most current version '''
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
-    if is_in_git(esg_node_filename == 0):
+    logger.info("esg_node_filename: %s", esg_node_filename)
+    if is_in_git(esg_node_filename) == 0:
         logger.info("Git repository detected; not checking checksum of esg-node")
         return
 

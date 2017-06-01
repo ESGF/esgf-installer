@@ -552,3 +552,8 @@ def get_esg_root_id():
         esg_root_id = esg_property_manager.get_property("esg_root_id")
     return esg_root_id
 
+def get_security_admin_password():
+    with open(config.esgf_secret_file, 'rb') as f:
+        security_admin_password = f.read().strip()
+        return security_admin_password
+

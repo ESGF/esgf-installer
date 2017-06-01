@@ -245,9 +245,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
     esg_postgres.start_postgress()
 
     # security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null)
-    security_admin_password = None
-    with open(config.esgf_secret_file, 'rb') as f:
-        security_admin_password = f.read().strip()
+    security_admin_password = esg_functions.get_security_admin_password()
 
     # get_property publisher_db_user ${publisher_db_user}
     publisher_db_user = None
@@ -321,9 +319,7 @@ def generate_esg_config_file(recommended_setup = 1):
     except KeyError:
         publisher_db_user = esg_functions.get_property("publisher_db_user")
 
-    security_admin_password = None
-    with open(config.esgf_secret_file, 'rb') as f:
-        security_admin_password = f.read().strip()
+    security_admin_password = esg_functions.get_security_admin_password()
 
     generate_esg_ini_command = "{cdat_home}/bin/esgsetup --db".format(cdat_home=config.config_dictionary["cdat_home"])
     if recommended_setup == 1:

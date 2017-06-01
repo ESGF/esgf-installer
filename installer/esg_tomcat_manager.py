@@ -400,8 +400,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False):
         except OSError, error:
             logger.error(error)
             logger.info("Attempting to get configure Tomcat with the security_admin_password")
-            with open(config.esgf_secret_file, 'rb') as f:
-                security_admin_password = f.read().strip()
+            security_admin_password = esg_functions.get_security_admin_password()
             configure_tomcat(security_admin_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(

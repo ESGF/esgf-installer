@@ -378,7 +378,7 @@ def main():
         logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             esg_publisher.setup_esgcet()
-        esg_tomcat_manager.setup_tomcat()
+        esg_tomcat_manager.setup_tomcat(devel)
         esg_apache_manager.setup_apache_frontend(devel)
     # setup_esgcet()
     # test_esgcet()

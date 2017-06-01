@@ -577,6 +577,7 @@ def _choose_publisher_db_user():
 
 def _choose_publisher_db_user_passwd():
     if not config.config_dictionary["publisher_db_user_passwd"] or force_install:
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
         publisher_db_user_passwd_input = raw_input(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
         if publisher_db_user_passwd_input:

@@ -152,13 +152,12 @@ def _define_acceptable_arguments():
 
 
 #TODO: Refactor this to return value vs using global variable
-def get_previous_node_type_config():
+def get_previous_node_type_config(node_type_bit):
     ''' 
         Helper method for reading the last state of node type config from config dir file "config_type"
         Every successful, explicit call to --type|-t gets recorded in the "config_type" file
         If the configuration type is not explicity set the value is read from this file.
     '''
-    global node_type_bit
     if node_type_bit < bit_dictionary["MIN_BIT"] or node_type_bit > bit_dictionary["MAX_BIT"]:
         logger.info("node_type_bit is out of range: %s", node_type_bit)
         logger.info("Acceptable range is between %s and %s", bit_dictionary["MIN_BIT"], bit_dictionary["MAX_BIT"])

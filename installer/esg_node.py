@@ -268,7 +268,7 @@ def main():
     logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
 
         
-    esg_cli_argument_manager.get_previous_node_type_config()
+    esg_cli_argument_manager.get_previous_node_type_config(node_type_bit)
     check_selected_node_type()
 
     esgf_node_info()

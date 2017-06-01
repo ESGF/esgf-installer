@@ -13,6 +13,7 @@ import tld
 import grp
 import shlex
 import hashlib
+import urlparse
 from time import sleep
 from esg_init import EsgInit
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
@@ -715,10 +716,10 @@ def _get_db_conn_str_questionnaire(db_properties_dict):
     logger.debug("database = %s", dbname_)
 
     # write vars to property file
-    esg_functions.write_as_property("db_user", user_)
-    esg_functions.write_as_property("db_host", host_)
-    esg_functions.write_as_property("db_port", port_)
-    esg_functions.write_as_property("db_database", dbname_)
+    esg_property_manager.write_as_property("db_user", user_)
+    esg_property_manager.write_as_property("db_host", host_)
+    esg_property_manager.write_as_property("db_port", port_)
+    esg_property_manager.write_as_property("db_database", dbname_)
 
     logger.debug("valid_connection_string: %s",  valid_connection_string)
     return valid_connection_string

@@ -163,7 +163,7 @@ def stop_tomcat():
     os.chdir(current_directory)
     return 0
 
-def setup_tomcat(upgrade_flag = False, force_install = False):
+def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
     print "*******************************"
@@ -396,7 +396,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False):
             if os.stat(config.ks_secret_file).st_size != 0:
                 with open(config.ks_secret_file, 'rb') as f:
                     config.config_dictionary["keystore_password"] = f.read().strip()
-                configure_tomcat(config.config_dictionary["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist")
+                configure_tomcat(config.config_dictionary["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel)
         except OSError, error:
             logger.error(error)
             logger.info("Attempting to get configure Tomcat with the security_admin_password")
@@ -456,7 +456,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False):
 
     return True
 
-def configure_tomcat(keystore_password, esg_dist_url):
+def configure_tomcat(keystore_password, esg_dist_url, devel):
     #----------------------------
     # TOMCAT Configuration...
     #----------------------------
@@ -573,7 +573,7 @@ def configure_tomcat(keystore_password, esg_dist_url):
     if not os.path.isfile(config.config_dictionary["truststore_file"]):
         # i.e. esg-truststore.ts
         truststore_file_name = esg_bash2py.trim_string_from_tail(config.config_dictionary["truststore_file"])
-        if esg_functions.checked_get(truststore_file_name, "http://{esg_dist_url_root}/certs/${fetch_file_name}".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"], fetch_file_name = fetch_file_name)) > 1:
+        if esg_functions.download_update(truststore_file_name, "http://{esg_dist_url_root}/certs/${fetch_file_name}".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"], fetch_file_name = fetch_file_name)) > 1:
             print " INFO: Could not download certificates ${fetch_file_name} for tomcat - will copy local java certificate file".format(fetch_file_name = fetch_file_name)
             print "(note - the truststore password will probably not match!)"
             try:
@@ -889,11 +889,11 @@ def _glean_keystore_info():
         return False
 
 
-def setup_temp_ca():
+def setup_temp_ca(devel):
     try:
         esgf_host = config.config_dictionary["esgf_host"]
     except KeyError:
-        esgf_host = esg_functions.get_property("esgf_host")
+        esgf_host = esg_property_manager.get_property("esgf_host")
 
     host_name = esgf_host
 

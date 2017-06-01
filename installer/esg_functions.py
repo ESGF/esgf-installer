@@ -375,7 +375,7 @@ def check_for_update(filename_1, filename_2 =None):
         return 0
     return 1
 
-def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = False, use_local_files = False ):
+def download_update(local_file, remote_file = None, force_download = False, make_backup_file = False, use_local_files = False ):
     '''
 
      If an update is available then pull it down... then check the md5 sums again!
@@ -426,11 +426,11 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         ''' % (readlinkf(local_file))
         return 0
 
-    if force_get == 1:
+    if not force_download:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
             logger.info("No updates available.")
-            return 1
+            return False
 
     if os.path.isfile(local_file) and make_backup_file:
         create_backup_file(local_file)

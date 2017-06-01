@@ -62,7 +62,6 @@ progname = "esg-node"
 script_version = "v2.0-RC5.4.0-devel"
 script_maj_version = "2.0"
 script_release = "Centaur"
-envfile = "/etc/esg.env"
 force_install = False
 
 

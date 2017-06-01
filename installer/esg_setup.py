@@ -282,7 +282,7 @@ def check_for_my_ip(force_install=False):
         if len(ip_addresses) > 1:
             # ask the user to choose...
             while True:
-                _render_ip_address_menu()
+                _render_ip_address_menu(ip_addresses)
                 default = 0
                 choice = _select_ip_address() or default
                 my_ip_address = ip_addresses[choice]

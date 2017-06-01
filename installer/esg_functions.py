@@ -454,6 +454,10 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         print error
         sys.exit()
 
+    return verify_checksum(local_file, remote_file)
+
+
+def verify_checksum(local_file, remote_file):
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
     print "remote_file_md5 in checked_get: ", remote_file_md5
@@ -462,10 +466,10 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
     if local_file_md5 != remote_file_md5:
         print " WARNING: Could not verify this file! %s" % (local_file)
-        return 3
+        return False
     else:
         print "[VERIFIED]"
-        return 0
+        return True
 
 
 def _verify_against_mirror(esg_dist_url_root, script_maj_version):

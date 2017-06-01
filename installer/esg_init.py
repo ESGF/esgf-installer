@@ -271,19 +271,19 @@ class EsgInit(object):
         self.myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
             "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + self.install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
         
-        logger.debug("myPath: %s", self.myPATH)
+        # logger.debug("myPath: %s", self.myPATH)
         self.myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
             os.environ["GLOBUS_LOCATION"] + "/lib:" + \
             self.install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
         os.environ["PATH"] = self.myPATH+':'+os.environ["PATH"]
-        logger.debug("os.environ['PATH']: %s", os.environ["PATH"])
+        # logger.debug("os.environ['PATH']: %s", os.environ["PATH"])
         try:
             os.environ["LD_LIBRARY_PATH"] = self.myLD_LIBRARY_PATH+':'+os.environ["LD_LIBRARY_PATH"]
         except KeyError, error:
             logger.error(error)
             os.environ["LD_LIBRARY_PATH"] = self.myLD_LIBRARY_PATH
-            logger.debug("LD_LIBRARY_PATH: %s", os.environ["LD_LIBRARY_PATH"])
+            # logger.debug("LD_LIBRARY_PATH: %s", os.environ["LD_LIBRARY_PATH"])
 
         # os.environ["PATH"] = esg_functions.path_unique()
         # export PATH=$(_path_unique $myPATH:$PATH)

@@ -408,8 +408,9 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         remote_file = local_file
         #Get the last subpath from the absolute path
         local_file = local_file.split("/")[-1]
-        print "remote_file in checked_get: ", remote_file
-        print "local_file in checked_get: ", local_file
+
+    logger.debug("local file : %s", local_file)
+    logger.debug("remote file: %s", remote_file) 
 
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
@@ -425,9 +426,6 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         ''' % (readlinkf(local_file))
         return 0
 
-    logger.debug("local file : %s", local_file)
-    logger.debug("remote file: %s", remote_file)
-
     if force_get == 1:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
@@ -438,6 +436,13 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         create_backup_file(local_file)
 
     print "Fetching file from %s -to-> %s" % (remote_file, local_file)
+    fetch_remote_file(local_file, remote_file)
+
+    return verify_checksum(local_file, remote_file)
+
+
+def fetch_remote_file(local_file, remote_file):
+    ''' Download a remote file from a distribution mirror and write its contents to the local_file '''
     try:
         r = requests.get(remote_file)
         if not r.status_code == requests.codes.ok:
@@ -452,9 +457,6 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
         print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
         print error
         sys.exit()
-
-    return verify_checksum(local_file, remote_file)
-
 
 def create_backup_file(file_name):
     try:

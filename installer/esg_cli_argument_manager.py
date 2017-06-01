@@ -43,6 +43,13 @@ from esg_init import EsgInit
 logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+config = EsgInit()
+
+progname = "esg-node"
+script_version = "v2.0-RC5.4.0-devel"
+script_maj_version = "2.0"
+script_release = "Centaur"
+
 bit_dictionary = {"INSTALL_BIT":1, "TEST_BIT":2, "DATA_BIT":4, "INDEX_BIT":8, "IDP_BIT":16, "COMPUTE_BIT":32, "WRITE_ENV_BIT":64, "MIN_BIT":4, "MAX_BIT":64, "ALL_BIT":60}
 
 
@@ -130,7 +137,7 @@ def _define_acceptable_arguments():
     parser.add_argument("--status", help="Status on node's services", action="store_true")
     parser.add_argument("--update-sub-installer", dest="updatesubinstaller", help="Update a specified installation script", nargs=2, metavar=('script_name', 'script_directory'))
     parser.add_argument("--update-apache-conf", dest="updateapacheconf", help="Update Apache configuration", action="store_true")
-    parser.add_argument("--write-env", dest="writeenv", help="Writes the necessary environment variables to file {envfile}".format(envfile = envfile), action="store_true")
+    parser.add_argument("--write-env", dest="writeenv", help="Writes the necessary environment variables to file {envfile}".format(envfile = config.envfile), action="store_true")
     parser.add_argument("-v","--version", dest="version", help="Displays the version of this script", action="store_true")
     parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
     parser.add_argument("--custom_setup", dest="customsetup", help="Sets esgsetup to use a custom, user-defined setup", action="store_true")
@@ -151,9 +158,9 @@ def get_previous_node_type_config():
         If the configuration type is not explicity set the value is read from this file.
     '''
     global node_type_bit
-    if node_type_bit < MIN_BIT or node_type_bit > MAX_BIT:
+    if node_type_bit < bit_dictionary["MIN_BIT"] or node_type_bit > bit_dictionary["MAX_BIT"]:
         logger.info("node_type_bit is out of range: %s", node_type_bit)
-        logger.info("Acceptable range is between %s and %s", MIN_BIT, MAX_BIT)
+        logger.info("Acceptable range is between %s and %s", bit_dictionary["MIN_BIT"], bit_dictionary["MAX_BIT"])
         try:
             last_config_type = open(config.esg_config_type_file)
             node_type_bit += int(last_config_type.readline())
@@ -176,12 +183,12 @@ def set_node_type_config(node_type_bit):
 
     #valididty check for type... in range power of 2
     #MIN and MAX BIT range... if so then valid and an be written down.
-    if node_type_bit < MIN_BIT or node_type_bit > MAX_BIT:
+    if node_type_bit < bit_dictionary["MIN_BIT"] or node_type_bit > bit_dictionary["MAX_BIT"]:
         logger.debug("WARNING: Selection %s is out of range $MIN_BIT - $MAX_BIT", node_type_bit)
 
     #Check if the new sel has any bits turned on in the range of our type bits
-    type_bit = MIN_BIT
-    while type_bit <= MAX_BIT:
+    type_bit = bit_dictionary["MIN_BIT"]
+    while type_bit <= bit_dictionary["MAX_BIT"]:
         if node_type_bit & type_bit != 0:
             hit_bits += type_bit
         type_bit *= 2
@@ -330,8 +337,8 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit):
         update_apache_conf()
         sys.exit(0)
     elif args.writeenv:
-        if node_type_bit & WRITE_ENV_BIT == 0:
-            node_type_bit += WRITE_ENV_BIT
+        if node_type_bit & bit_dictionary["WRITE_ENV_BIT"] == 0:
+            node_type_bit += bit_dictionary["WRITE_ENV_BIT"]
     elif args.version:
         logger.info("Version: %s", script_version)
         logger.info("Release: %s", script_release)
@@ -355,7 +362,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit):
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
-        if os.path.isfile(envfile):
-            shutil.move(envfile, envfile+".bak")
+        if os.path.isfile(config.envfile):
+            shutil.move(config.envfile, config.envfile+".bak")
             #empty out contents of the file
-            open(envfile, 'w').close()
+            open(config.envfile, 'w').close()

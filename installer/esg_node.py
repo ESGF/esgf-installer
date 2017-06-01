@@ -79,48 +79,6 @@ install_prefix = esg_bash2py.Expand.colonMinus(
 esg_root_id = esg_functions.get_esg_root_id()
 
 
-def setup_sensible_confs():
-    pass
-
-def install_local_certs():
-    pass
-
-def generate_esgf_csrs():
-    pass
-
-def generate_esgf_csrs_ext():
-    pass
-def cert_howto():
-    pass
-
-def test_postgress():
-    pass
-def test_cdat():
-    pass
-def test_tomcat():
-    pass
-def test_tds():
-    pass
-def show_type():
-    pass
-def start(node_bit):
-    pass
-def stop(node_bit):
-    pass
-def get_node_status():
-    ''' 
-        Return a tuple with the node's status and a numeric return code
-    '''
-    pass
-def update_script(script_name, script_directory):
-    '''
-        arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
-        arg (2) - directory on the distribution site where script is fetched from Ex: orp
-        usage: update_script security orp - looks for the script esg-security in the distriubtion directory "orp"
-    '''
-    pass
-
-
 def verify_esg_node_script(esg_dist_url_root, update_action = None):
     ''' Verify the esg_node script is the most current version '''
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification

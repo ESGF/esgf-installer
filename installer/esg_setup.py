@@ -777,55 +777,6 @@ def _is_managed_db():
         return False
 
 
-def check_for_update(filename_1, filename_2=None):
-    '''
-         Does an md5 check between local and remote resource
-         returns 0 (success) iff there is no match and thus indicating that
-         an update is available.
-         USAGE: checked_for_update [file] http://www.foo.com/file
-
-    '''
-    # local_file = None
-    # remote_file = None
-
-    if filename_2 == None:
-        remote_file = filename_1
-        local_file = os.path.realpath(
-            re.search("\w+-\w+$", filename_1).group())
-        local_file = local_file + ".py"
-        local_file = re.sub(r'\-(?=[^-]*$)', "_", local_file)
-        # print "remote_file: ", remote_file
-        # print "local_file: ", local_file
-    else:
-        local_file = filename_1
-        remote_file = filename_2
-
-    if not os.path.isfile(local_file):
-        print " WARNING: Could not find local file %s" % (local_file)
-        return 0
-    if not os.access(local_file, os.X_OK):
-        print " WARNING: local file %s not executible" % (local_file)
-        os.chmod(local_file, 0755)
-
-    remote_file_md5 = requests.get(remote_file + '.md5').content
-    remote_file_md5 = remote_file_md5.split()[0].strip()
-    # print "remote_file_md5 in check_for_update: ", remote_file_md5
-    local_file_md5 = None
-
-    hasher = hashlib.md5()
-    with open(local_file, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-        local_file_md5 = hasher.hexdigest()
-        # print "local_file_md5 in check_for_update: ", local_file_md5
-
-    if local_file_md5 != remote_file_md5:
-        print " Update Available @ %s" % (remote_file)
-        return 0
-    return 1
-
-
-
 def install_prerequisites():
     '''
         Install prerequisite modules via yum

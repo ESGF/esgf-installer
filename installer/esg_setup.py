@@ -360,7 +360,7 @@ def _add_user_group(group_name):
     except subprocess.CalledProcessError as error:
         logger.error(error)
         print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
-        os.chdir(starting_directory)
+        # os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
 
@@ -411,6 +411,7 @@ def _choose_admin_password():
         password_input = raw_input(
             "What is the admin password to use for this installation? (alpha-numeric only)")
 
+        security_admin_password = esg_functions.get_security_admin_password()
         if force_install and len(password_input) == 0 and len(security_admin_password) > 0:
             changed = False
             break
@@ -598,7 +599,7 @@ def initial_setup_questionnaire():
 
     os.chdir(config.esg_config_dir)
 
-    esgf_host = esg_functions.get_property("esgf_host")
+    esgf_host = esg_property_manager.get_property("esgf_host")
     _choose_fqdn(esgf_host)
 
     try:
@@ -625,7 +626,7 @@ def initial_setup_questionnaire():
     db_properties_dict = {"db_user": None, "db_host": None,
                           "db_port": None, "db_database": None, "db_managed": None}
     for key, value in db_properties_dict.items():
-        db_properties_dict[key] = esg_functions.get_property(key)
+        db_properties_dict[key] = esg_property_manager.get_property(key)
 
     if not all(db_properties_dict) or force_install:
         _is_managed_db()
@@ -660,7 +661,7 @@ def initial_setup_questionnaire():
         logger.info("db publisher connection string %s@%s:%s/%s",
                     db_properties_dict["db_user"], db_host, db_port, db_database)
 
-    esg_functions.deduplicate_properties(
+    esg_env_manager.deduplicate_properties(
         config.config_dictionary["config_file"])
 
     os.chdir(starting_directory)
@@ -689,7 +690,7 @@ def _get_db_conn_str_questionnaire():
     while True:
         print "Please enter the database connection string..."
         print " (form: postgresql://[username]@[host]:[port]/esgcet)"
-        db_managed = get_property("db_managed")
+        db_managed = esg_property_manager.get_property("db_managed")
         #(if it is a not a force install and we are using a LOCAL (NOT MANAGED) database then db_managed == "no")
         if not connstring_ and db_managed != "yes" and not force_install:
             connstring_ = "dbsuper@localhost:5432/esgcet"

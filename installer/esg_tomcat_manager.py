@@ -432,8 +432,8 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     setup_root_app()
 
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
-    esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
-    esg_functions.checked_get(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
+    esg_functions.download_update(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
+    esg_functions.download_update(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
 
     # if os.stat(config.ks_secret_file).st_size != 0:
     #     with open(config.ks_secret_file, 'rb') as f:
@@ -471,7 +471,7 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     fetch_file_name = "server.xml"
     fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
 
-    if esg_functions.checked_get(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_bash2py.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
+    if esg_functions.download_update(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_bash2py.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
@@ -1102,7 +1102,7 @@ def setup_root_app():
         os.chdir(config.config_dictionary["workdir"])
 
         print "Downloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
-        if esg_functions.checked_get(root_app_dist_url) > 0:
+        if esg_functions.download_update(root_app_dist_url) > 0:
             print " ERROR: Could not download ROOT app archive"
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
@@ -1265,7 +1265,7 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
             fetch_file_name = "server.xml"
             fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
 
-            if esg_functions.checked_get(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_functions.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
+            if esg_functions.download_update(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_functions.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
                 # os.chdir(starting_directory)
                 esg_functions.checked_done(1)
             os.chmod(fetch_file_path, 0600)

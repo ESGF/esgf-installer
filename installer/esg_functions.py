@@ -375,7 +375,7 @@ def check_for_update(filename_1, filename_2 =None):
         return 0
     return 1
 
-def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = 1, use_local_files = False ):
+def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file = False, use_local_files = False ):
     '''
 
      If an update is available then pull it down... then check the md5 sums again!
@@ -434,9 +434,8 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
             logger.info("No updates available.")
             return 1
 
-    if os.path.isfile(local_file) and make_backup_file == 1:
-        shutil.copyfile(local_file, local_file + ".bak")
-        os.chmod(local_file+".bak", 600)
+    if os.path.isfile(local_file) and make_backup_file:
+        create_backup_file(local_file)
 
     print "Fetching file from %s -to-> %s" % (remote_file, local_file)
     try:
@@ -456,6 +455,13 @@ def checked_get(local_file, remote_file = None, force_get = 0, make_backup_file 
 
     return verify_checksum(local_file, remote_file)
 
+
+def create_backup_file(file_name):
+    try:
+        shutil.copyfile(file_name, file_name + ".bak")
+        os.chmod(file_name+".bak", 600)
+    except OSError, error:
+        logger.error(error)
 
 def verify_checksum(local_file, remote_file):
     remote_file_md5 = requests.get(remote_file+ '.md5').content

@@ -203,7 +203,7 @@ def set_node_type_config(node_type_bit):
         except IOError, error:
             logger.error(error)
 
-def process_arguments(install_mode, upgrade_mode, node_type_bit):
+def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist_url):
     selection_string = ""
 
     args, parser = _define_acceptable_arguments()
@@ -226,7 +226,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit):
             if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
                 node_type_bit += get_bit_value("install")
             logger.debug("Update Services")
-            self_verify("update")
+            esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
     if args.fixperms:
         logger.debug("fixing permissions")
         setup_sensible_confs
@@ -257,7 +257,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit):
         logger.debug("node_type_bit = %s", node_type_bit)
         test_postgress()
         test_cdat()
-        test_esgcet()
+        # test_esgcet()
         test_tomcat()
         test_tds()
         sys.exit(0)
@@ -325,7 +325,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit):
         #TODO: Exit with status code dependent on what is returned from get_node_status()
         sys.exit(0)
     elif args.updatesubinstaller:
-        self_verify("update")
+        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
@@ -358,7 +358,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit):
     elif args.prod:
         devel = 0
     elif args.clearenvstate:
-        self_verify("clear")
+        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"clear")
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)

@@ -239,7 +239,7 @@ def main():
     
 
     #process command line arguments
-    esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_bit)
+    esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist_url)
     try:
         esg_setup.check_prerequisites()
     except UnprivilegedUserError:

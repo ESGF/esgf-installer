@@ -165,6 +165,7 @@ def get_previous_node_type_config(node_type_bit):
             last_config_type = open(config.esg_config_type_file)
             node_type_bit += int(last_config_type.readline())
             logger.debug("node_type_bit is now: %i", node_type_bit)
+            return node_type_bit
         except IOError, error:
             logger.error(error)
 

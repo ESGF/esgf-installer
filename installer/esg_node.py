@@ -215,7 +215,7 @@ def check_selected_node_type():
               '''
         sys.exit(1)
 
-def main():
+def main(node_type_bit):
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     
 
@@ -239,6 +239,7 @@ def main():
     
 
     #process command line arguments
+    node_type_bit = esg_cli_argument_manager.get_previous_node_type_config(node_type_bit)
     esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist_url)
     try:
         esg_setup.check_prerequisites()
@@ -319,6 +320,7 @@ def main():
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
+    logger.debug(node_type_bit & INSTALL_BIT)
     if node_type_bit & INSTALL_BIT !=0:
         esg_setup.setup_java()
         esg_setup.setup_ant()
@@ -336,4 +338,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(node_type_bit)

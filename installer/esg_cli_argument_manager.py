@@ -233,17 +233,17 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        get_previous_node_type_config()
+        get_previous_node_type_config(node_type_bit)
         install_local_certs()
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        get_previous_node_type_config()
+        get_previous_node_type_config(node_type_bit)
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        get_previous_node_type_config()
+        get_previous_node_type_config(node_type_bit)
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -287,7 +287,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         set_node_type_config(node_type_bit)
         sys.exit(0)
     elif args.gettype:
-        get_previous_node_type_config()
+        get_previous_node_type_config(node_type_bit)
         show_type()
         sys.exit(0)
     elif args.start:

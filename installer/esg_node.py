@@ -31,25 +31,31 @@ os.umask(022)
 
 DEBUG = esg_bash2py.Expand.colonMinus("DEBUG", False)
 VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
-INSTALL_BIT=1
-TEST_BIT=2
-DATA_BIT=4
-INDEX_BIT=8
-IDP_BIT=16
-COMPUTE_BIT=32
-WRITE_ENV_BIT=64
+# INSTALL_BIT=1
+# TEST_BIT=2
+# DATA_BIT=4
+# INDEX_BIT=8
+# IDP_BIT=16
+# COMPUTE_BIT=32
+# WRITE_ENV_BIT=64
 #PRIVATE_BIT=128
 #NOTE: remember to adjust (below) when adding new bits!!
-MIN_BIT=4
-MAX_BIT=64
-ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
+# MIN_BIT=4
+# MAX_BIT=64
+# ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
 
-# bit_boolean_dictionary = "INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64, "ALL_BIT":False}
+bit_boolean_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
+ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]  
 install_mode = 0
 upgrade_mode = 0
 
-node_type_bit = 0
+node_type_list = []
+
+def get_node_type():
+    for key, value in bit_boolean_dictionary.items():
+        if value:
+            node_type_list.append(key)
 
 
 
@@ -192,7 +198,12 @@ def download_esg_installarg(esg_dist_url):
 
 def check_selected_node_type():
     ''' Make sure a valid node_type has been selected before performing and install '''
-    if node_type_bit & INSTALL_BIT != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
+    node_options = bit_boolean_dictionary.keys()
+    for option in node_options:
+        if option in node_type_list:
+            return True
+    # return False
+    # if node_type_bit and bit_boolean_dictionary["INSTALL_BIT"] != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
         print '''
                 Sorry no suitable node type has been selected
                 Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install

@@ -179,8 +179,8 @@ def set_node_type_config(node_type_list, config_file):
     if node_type_list:
         try:
             config_type_file = open(config_file, "w")
-            logger.debug("Writing %s to file as new node_type_string", node_type_list.split())
-            config_type_file.write(node_type_list.split())
+            logger.debug("Writing %s to file as new node_type_string", "".join(node_type_list))
+            config_type_file.write("".join(node_type_list))
         except IOError, error:
             logger.error(error)
 

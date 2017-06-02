@@ -173,12 +173,12 @@ def get_previous_node_type_config(node_type_bit):
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
         sys.exit(1)
 
-def set_node_type_config(node_type_list):
+def set_node_type_config(node_type_list, config_file):
     '''Write the node type list as a string to file '''
     logger.debug("new node_type_bit: %s", node_type_list)
     if node_type_list:
         try:
-            config_type_file = open(config.esg_config_type_file, "w")
+            config_type_file = open(config_file, "w")
             logger.debug("Writing %s to file as new node_type_string", node_type_list.split())
             config_type_file.write(node_type_list.split())
         except IOError, error:
@@ -265,7 +265,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
             except IOError, error:
                 logger.error(error)
         logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
-        set_node_type_config(node_type_bit)
+        set_node_type_config(node_type_bit, config.esg_config_type_file)
         sys.exit(0)
     elif args.gettype:
         get_previous_node_type_config(node_type_bit)

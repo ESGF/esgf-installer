@@ -43,7 +43,6 @@ class EsgInit(object):
     # #--------------
 
     def __init__(self):
-        print "initializing"
         self.populate_internal_esgf_node_code_versions()
         self.populate_external_programs_versions()
         self.populate_external_script_variables()
@@ -330,7 +329,7 @@ class EsgInit(object):
             os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
             del os.environ["SUDO_GID"]
 
-        print "%s:%s:%s:%s" % (id_settings["installer_user"], id_settings["installer_uid"], id_settings["installer_gid"],
+        logger.debug("%s:%s:%s:%s", id_settings["installer_user"], id_settings["installer_uid"], id_settings["installer_gid"],
                                id_settings["installer_home"])
 
         self.config_dictionary.update(id_settings)

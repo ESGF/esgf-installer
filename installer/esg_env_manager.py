@@ -49,16 +49,16 @@ def deduplicate_settings_in_file(envfile = None):
             env_settings = environment_file.readlines()
 
             for setting in reversed(env_settings):
-                logger.debug(setting.split("="))
+                # logger.debug(setting.split("="))
                 key, value = setting.split("=")
-                logger.debug("key: %s", key)
-                logger.debug("value: %s", value)
+                # logger.debug("key: %s", key)
+                # logger.debug("value: %s", value)
 
                 if key not in my_set:
                     deduplicated_list.append(key+ "=" + value)
                     my_set.add(key)
             deduplicated_list.reverse()
-            logger.debug("deduplicated_list: %s", str(deduplicated_list))
+            # logger.debug("deduplicated_list: %s", str(deduplicated_list))
             environment_file.seek(0)
             for setting in deduplicated_list:
                 environment_file.write(setting)
@@ -78,13 +78,13 @@ def deduplicate_properties(properties_file = None):
             for prop in reversed(property_settings):
                 if not prop.isspace():
                     key, value = prop.split("=")
-                    logger.debug("key: %s", key)
-                    logger.debug("value: %s", value)
+                    # logger.debug("key: %s", key)
+                    # logger.debug("value: %s", value)
                 if key not in my_set:
                     deduplicated_list.append(key+ "=" + value)
                     my_set.add(key)
             deduplicated_list.reverse()
-            logger.debug("deduplicated_list: %s", str(deduplicated_list))
+            # logger.debug("deduplicated_list: %s", str(deduplicated_list))
             prop_file.seek(0)
             for setting in deduplicated_list:
                 prop_file.write(setting)

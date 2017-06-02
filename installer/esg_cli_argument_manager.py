@@ -151,7 +151,6 @@ def _define_acceptable_arguments():
     return (args, parser)
 
 
-#TODO: Refactor this to return value vs using global variable
 def get_previous_node_type_config(node_type_bit):
     ''' 
         Helper method for reading the last state of node type config from config dir file "config_type"
@@ -174,33 +173,14 @@ def get_previous_node_type_config(node_type_bit):
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
         sys.exit(1)
 
-def set_node_type_config(node_type_bit):
-    '''
-            Write the node type numeric value to file
-            (Yes... gratuitous error and bounds checking)
-    '''
-    logger.debug("new node_type_bit: %s", node_type_bit)
-    hit_bits = 0
-
-    #valididty check for type... in range power of 2
-    #MIN and MAX BIT range... if so then valid and an be written down.
-    if node_type_bit < bit_dictionary["MIN_BIT"] or node_type_bit > bit_dictionary["MAX_BIT"]:
-        logger.debug("WARNING: Selection %s is out of range $MIN_BIT - $MAX_BIT", node_type_bit)
-
-    #Check if the new sel has any bits turned on in the range of our type bits
-    type_bit = bit_dictionary["MIN_BIT"]
-    while type_bit <= bit_dictionary["MAX_BIT"]:
-        if node_type_bit & type_bit != 0:
-            hit_bits += type_bit
-        type_bit *= 2
-
-    logger.debug("[hit_bits = %s] =? [node_type_bit = %s]", hit_bits, node_type_bit)
-
-    if hit_bits:
+def set_node_type_config(node_type_list):
+    '''Write the node type list as a string to file '''
+    logger.debug("new node_type_bit: %s", node_type_list)
+    if node_type_list:
         try:
             config_type_file = open(config.esg_config_type_file, "w")
-            logger.debug("Writing %s to file as new node_type_bit", hit_bits)
-            config_type_file.write(str(hit_bits))
+            logger.debug("Writing %s to file as new node_type_string", node_type_list.split())
+            config_type_file.write(node_type_list.split())
         except IOError, error:
             logger.error(error)
 

@@ -151,24 +151,21 @@ def _define_acceptable_arguments():
     return (args, parser)
 
 
-def get_previous_node_type_config(node_type_bit):
+def get_previous_node_type_config(config_file):
     ''' 
         Helper method for reading the last state of node type config from config dir file "config_type"
         Every successful, explicit call to --type|-t gets recorded in the "config_type" file
         If the configuration type is not explicity set the value is read from this file.
     '''
-    if node_type_bit < bit_dictionary["MIN_BIT"] or node_type_bit > bit_dictionary["MAX_BIT"]:
-        logger.info("node_type_bit is out of range: %s", node_type_bit)
-        logger.info("Acceptable range is between %s and %s", bit_dictionary["MIN_BIT"], bit_dictionary["MAX_BIT"])
-        try:
-            last_config_type = open(config.esg_config_type_file)
-            node_type_bit += int(last_config_type.readline())
-            logger.debug("node_type_bit is now: %i", node_type_bit)
-            return node_type_bit
-        except IOError, error:
-            logger.error(error)
+    try:
+        last_config_type = open(config_file)
+        node_type_list = last_config_type.readlines()
+        logger.debug("node_type_list is now: %i", node_type_list)
+        return node_type_list
+    except IOError, error:
+        logger.error(error)
 
-    if node_type_bit == 0:
+    if not node_type_list:
         print '''ERROR: No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag 
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
         sys.exit(1)
@@ -214,17 +211,17 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config(config.esg_config_type_file)
         install_local_certs()
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config(config.esg_config_type_file)
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config(config.esg_config_type_file)
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -268,7 +265,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         set_node_type_config(node_type_bit, config.esg_config_type_file)
         sys.exit(0)
     elif args.gettype:
-        get_previous_node_type_config(node_type_bit)
+        get_previous_node_type_config(config.esg_config_type_file)
         show_type()
         sys.exit(0)
     elif args.start:

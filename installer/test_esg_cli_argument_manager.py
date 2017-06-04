@@ -8,11 +8,11 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
     def setUp(self):
         self.node_type_list = ["data"]
 
-    def tearDown(self):
-        os.remove('test_config.txt')
-    # @classmethod
-    # def tearDownClass(cls):
+    # def tearDown(self):
     #     os.remove('test_config.txt')
+    @classmethod
+    def tearDownClass(cls):
+        os.remove('test_config.txt')
 
     def test_set_node_type_config(self):
         esg_cli_argument_manager.set_node_type_config(self.node_type_list, 'test_config.txt')
@@ -27,6 +27,15 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
         node_list_from_file = esg_cli_argument_manager.get_previous_node_type_config('test_config.txt')
         print "node_list_from_file:", node_list_from_file
         self.assertEqual(self.node_type_list, node_list_from_file)
+
+    def test_set_node_type_value(self):
+        print "esg_cli_argument_manager.node_type_dictionary:", esg_cli_argument_manager.node_type_dictionary
+
+        esg_cli_argument_manager.set_node_type_value("install", True)
+        self.assertEqual(esg_cli_argument_manager.node_type_dictionary["INSTALL_BIT"], True)
+
+        esg_cli_argument_manager.set_node_type_value("data", True)
+        self.assertEqual(esg_cli_argument_manager.node_type_dictionary["DATA_BIT"], True)
 
 
 if __name__ == '__main__':

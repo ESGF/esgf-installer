@@ -51,7 +51,7 @@ script_version = "v2.0-RC5.4.0-devel"
 script_maj_version = "2.0"
 script_release = "Centaur"
 
-bit_dictionary = {"INSTALL_BIT":1, "TEST_BIT":2, "DATA_BIT":4, "INDEX_BIT":8, "IDP_BIT":16, "COMPUTE_BIT":32, "WRITE_ENV_BIT":64, "MIN_BIT":4, "MAX_BIT":64, "ALL_BIT":60}
+node_type_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
 
 
 def setup_sensible_confs():
@@ -95,27 +95,28 @@ def update_script(script_name, script_directory):
     '''
     pass
 
-def get_bit_value(node_type):
+#Formerly get_bit_value
+def set_node_type_value(node_type, boolean_value):
     if node_type == "install":
-        return bit_dictionary["INSTALL_BIT"]
+        node_type_dictionary["INSTALL_BIT"] = True
     elif node_type == "data":
-        return bit_dictionary["DATA_BIT"]
+        node_type_dictionary["DATA_BIT"] = True
     elif node_type == "index":
-        return bit_dictionary["INDEX_BIT"]
+        node_type_dictionary["INDEX_BIT"] = True
     elif node_type == "idp":
-        return bit_dictionary["IDP_BIT"]
+        node_type_dictionary["IDP_BIT"] = True
     elif node_type == "compute":
-        return bit_dictionary["COMPUTE_BIT"]
+        node_type_dictionary["COMPUTE_BIT"] = True
     elif node_type == "write_env":
-        return bit_dictionary["WRITE_ENV_BIT"]
+        node_type_dictionary["WRITE_ENV_BIT"] = True
     elif node_type == "min":
-        return bit_dictionary["MIN_BIT"]
+        node_type_dictionary["MIN_BIT"] = True
     elif node_type == "max":
-        return bit_dictionary["MAX_BIT"]
-    elif node_type == "all":
-        return bit_dictionary["ALL_BIT"]
+        node_type_dictionary["MAX_BIT"] = True
+    # elif node_type == "all":
+    #     node_type_dictionary["ALL_BIT"] = True
     else:
-        raise ValueError("Invalid bit reference")
+        raise ValueError("Invalid node type reference")
 
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists

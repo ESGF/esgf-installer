@@ -3,8 +3,8 @@ import os
 import subprocess
 import pwd
 import sys
-import magic
 import logging
+import platform
 import multiprocessing
 # from pwd import getpwnam
 import esg_functions
@@ -353,7 +353,8 @@ class EsgInit(object):
         internal_script_variables["workdir"] = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus(
             "ESGF_INSTALL_WORKDIR", self.config_dictionary["installer_home"] + "/workbench/esg"))
 
-        internal_script_variables["word_size"] = re.search(r'(\d\d)-bit?', magic.from_file("/bin/bash")).group(1)
+        internal_script_variables["word_size"] = platform.architecture()[0].split('bit')[0]
+
         internal_script_variables["number_of_cpus"] = multiprocessing.cpu_count()
         # date_format="+%Y_%m_%d_%H%M%S"
         internal_script_variables["date_format"] = "+%Y_%m_%d_%H%M%S"

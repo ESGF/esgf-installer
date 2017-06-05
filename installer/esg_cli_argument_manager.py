@@ -234,7 +234,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
             except IOError, error:
                 logger.error(error)
         # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
-        set_node_type_config(node_type_bit, config.esg_config_type_file)
+        set_node_type_config(node_type_list, config.esg_config_type_file)
         sys.exit(0)
     elif args.gettype:
         get_previous_node_type_config(config.esg_config_type_file)
@@ -245,9 +245,9 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
-        logger.debug("START SERVICES: %s", node_type_bit)
+        logger.debug("START SERVICES: %s", node_type_list)
         esg_setup.init_structure()
-        start(node_type_bit)
+        start(node_type_list)
         sys.exit(0)
     elif args.stop:
         # if check_prerequisites() is not 0:
@@ -255,7 +255,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         #     sys.exit(1)
         logger.debug("STOP SERVICES")
         esg_setup.init_structure()
-        stop(node_type_bit)
+        stop(node_type_list)
         sys.exit(0)
     elif args.restart:
         # if check_prerequisites() is not 0:
@@ -263,9 +263,9 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         #     sys.exit(1)
         logger.debug("RESTARTING SERVICES")
         esg_setup.init_structure()
-        stop(node_type_bit)
+        stop(node_type_list)
         sleep(2)
-        start(node_type_bit)
+        start(node_type_list)
         sys.exit(0)
     elif args.status:
         # if check_prerequisites() is not 0:

@@ -195,15 +195,17 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 0
             install_mode = 1
-            if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
-                node_type_bit += get_bit_value("install")
+            set_node_type_value("install", True)
+            # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
+            #     node_type_bit += get_bit_value("install")
             logger.debug("Install Services")
     if args.update or args.upgrade:
         if install_mode + upgrade_mode == 0:
             upgrade_mode = 1 
             install_mode = 0
-            if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
-                node_type_bit += get_bit_value("install")
+            set_node_type_value("install", True)
+            # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
+            #     node_type_bit += get_bit_value("install")
             logger.debug("Update Services")
             esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
     if args.fixperms:
@@ -231,8 +233,9 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         sys.exit(0)
     elif args.verify:
         logger.debug("Verify Services")
-        if node_type_bit & get_bit_value("test") == 0:
-            node_type_bit += get_bit_value("test")
+        set_node_type_value("test", True)
+        # if node_type_bit & get_bit_value("test") == 0:
+        #     node_type_bit += get_bit_value("test")
         logger.debug("node_type_bit = %s", node_type_bit)
         test_postgress()
         test_cdat()
@@ -245,18 +248,20 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         logger.debug("args.type: %s", args.type)
         for arg in args.type:
             #TODO: refactor conditional to function with descriptive name
-            if node_type_bit & get_bit_value(arg) == 0:
-                node_type_bit += get_bit_value(arg)
-                selection_string += " "+arg
+            set_node_type_value(arg, True)
+            # if node_type_bit & get_bit_value(arg) == 0:
+            #     node_type_bit += get_bit_value(arg)
+                # selection_string += " "+arg
         logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
         for arg in args.settype:
+            set_node_type_value(arg, True)
             #TODO: refactor conditional to function with descriptive name
-            if node_type_bit & get_bit_value(arg) == 0:
-                node_type_bit += get_bit_value(arg)
-                selection_string += " "+arg
+            # if node_type_bit & get_bit_value(arg) == 0:
+            #     node_type_bit += get_bit_value(arg)
+            #     selection_string += " "+arg
         if not os.path.isdir(config.esg_config_dir):
             try:
                 os.mkdir(config.esg_config_dir)
@@ -316,8 +321,10 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         esg_apache_manager.update_apache_conf()
         sys.exit(0)
     elif args.writeenv:
-        if node_type_bit & bit_dictionary["WRITE_ENV_BIT"] == 0:
-            node_type_bit += bit_dictionary["WRITE_ENV_BIT"]
+        if node_type_dictionary["WRITE_ENV_BIT"]:
+            print 'node_type_dictionary["WRITE_ENV_BIT"]', node_type_dictionary["WRITE_ENV_BIT"]
+        # if node_type_bit & bit_dictionary["WRITE_ENV_BIT"] == 0:
+        #     node_type_bit += bit_dictionary["WRITE_ENV_BIT"]
     elif args.version:
         logger.info("Version: %s", script_version)
         logger.info("Release: %s", script_release)

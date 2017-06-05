@@ -1,43 +1,11 @@
 import os
-import subprocess
-import requests
 import sys
-import pip
-import hashlib
 import shutil
-import grp
-import datetime
 import logging
-import socket
-import urlparse
 import argparse
-import platform
-import re
-import pwd
-import psycopg2
-import tarfile
-import urllib
-import shlex
-import errno
-import fileinput
-import xmltodict
-import untangle
-import filecmp
-import glob
-import xml.etree.ElementTree
-import git
-import ca_py
-from git import Repo
-from collections import deque
-from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
-from OpenSSL import crypto
-from lxml import etree
 import esg_functions
-import esg_bash2py
 import esg_setup
-import esg_postgres
-import esg_publisher
 import esg_apache_manager
 from esg_init import EsgInit
 

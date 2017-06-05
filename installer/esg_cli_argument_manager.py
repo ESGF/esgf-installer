@@ -20,7 +20,7 @@ script_maj_version = "2.0"
 script_release = "Centaur"
 
 node_type_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
-
+installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
 
 def setup_sensible_confs():
     pass
@@ -154,14 +154,15 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
     selection_string = ""
 
     args, parser = _define_acceptable_arguments()
+    print "type of args:", type(args)
 
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)
 
     if args.install:
-            upgrade_mode = False
-            install_mode = True
+            installater_mode_dictionary["upgrade_mode"] = False
+            installater_mode_dictionary["install_mode"] = True
             set_node_type_value("install", True)
             # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
             #     node_type_bit += get_bit_value("install")

@@ -3,7 +3,6 @@ import subprocess
 import sys
 import logging
 import socket
-import ca_py
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from lxml import etree
 import esg_functions

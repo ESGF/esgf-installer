@@ -188,7 +188,7 @@ def download_esg_installarg(esg_dist_url):
     # # Downloading esg-installarg file
     if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_bash2py.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
-        esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_get=force_install)
+        esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
         try:
             if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
                 os.remove(config.config_dictionary["esg_installarg_file"])
@@ -272,12 +272,12 @@ def main(node_type_bit):
     ESGF Node Installation Program
     -----------------------------------'''
 
-    logger.debug("node_type_bit & INSTALL_BIT != 0: %s", node_type_bit & INSTALL_BIT != 0)
-    logger.debug("node_type_bit: %i, %s", node_type_bit, type(node_type_bit))
-    logger.debug("MIN_BIT: %i, %s", MIN_BIT, type(MIN_BIT))
-    logger.debug("MAX_BIT: %i", MAX_BIT)
-    logger.debug("node_type_bit >= MIN_BIT: %s",  node_type_bit >= MIN_BIT)
-    logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
+    # logger.debug("node_type_bit & INSTALL_BIT != 0: %s", node_type_bit & INSTALL_BIT != 0)
+    # logger.debug("node_type_bit: %i, %s", node_type_bit, type(node_type_bit))
+    # logger.debug("MIN_BIT: %i, %s", MIN_BIT, type(MIN_BIT))
+    # logger.debug("MAX_BIT: %i", MAX_BIT)
+    # logger.debug("node_type_bit >= MIN_BIT: %s",  node_type_bit >= MIN_BIT)
+    # logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
 
         
     esg_cli_argument_manager.get_previous_node_type_config(node_type_bit)

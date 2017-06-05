@@ -150,7 +150,7 @@ def set_node_type_config(node_type_list, config_file):
         except IOError, error:
             logger.error(error)
 
-def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist_url):
+def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url):
     selection_string = ""
 
     args, parser = _define_acceptable_arguments()
@@ -160,17 +160,15 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         sys.exit(0)
 
     if args.install:
-        if install_mode + upgrade_mode == 0:
-            upgrade_mode = 0
-            install_mode = 1
+            upgrade_mode = False
+            install_mode = True
             set_node_type_value("install", True)
             # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
             #     node_type_bit += get_bit_value("install")
             logger.debug("Install Services")
     if args.update or args.upgrade:
-        if install_mode + upgrade_mode == 0:
-            upgrade_mode = 1 
-            install_mode = 0
+            upgrade_mode = True 
+            install_mode = False
             set_node_type_value("install", True)
             # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
             #     node_type_bit += get_bit_value("install")
@@ -204,7 +202,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         set_node_type_value("test", True)
         # if node_type_bit & get_bit_value("test") == 0:
         #     node_type_bit += get_bit_value("test")
-        logger.debug("node_type_bit = %s", node_type_bit)
+        # logger.debug("node_type_bit = %s", node_type_bit)
         test_postgress()
         test_cdat()
         # test_esgcet()
@@ -220,7 +218,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
             # if node_type_bit & get_bit_value(arg) == 0:
             #     node_type_bit += get_bit_value(arg)
                 # selection_string += " "+arg
-        logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
+        # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
@@ -235,7 +233,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
                 os.mkdir(config.esg_config_dir)
             except IOError, error:
                 logger.error(error)
-        logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
+        # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         set_node_type_config(node_type_bit, config.esg_config_type_file)
         sys.exit(0)
     elif args.gettype:
@@ -300,17 +298,17 @@ def process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist
         logger.info("ESGF Node Installation Script")
         sys.exit(0)
     elif args.recommendedsetup:
-        recommended_setup = 1
-        custom_setup = 0
+        recommended_setup = True
+        custom_setup = False
     elif args.customsetup:
-        recommended_setup = 0
-        custom_setup = 1
+        recommended_setup = False
+        custom_setup = True
     elif args.uselocalfiles:
-        use_local_files = 1
+        use_local_files = True
     elif args.devel:
-        devel = 1
+        devel = True
     elif args.prod:
-        devel = 0
+        devel = False
     elif args.clearenvstate:
         esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"clear")
         # if check_prerequisites() is not 0:

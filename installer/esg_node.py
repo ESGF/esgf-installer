@@ -199,11 +199,12 @@ def download_esg_installarg(esg_dist_url):
 def check_selected_node_type(bit_boolean_dictionary, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
     # node_options = 
-    node_options_modified = [node_option.split("_BIT")[0].lower for node_option in bit_boolean_dictionary.keys()]
+    node_options_modified = [node_option.split("_BIT")[0].lower() for node_option in bit_boolean_dictionary.keys()]
+    logger.debug("node_options_modified: %s", node_options_modified)
     for option in node_type_list:
         logger.debug("option: %s", option)
         if option in node_options_modified:
-            return True
+            continue
 
     # return False
     # if node_type_bit and bit_boolean_dictionary["INSTALL_BIT"] != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
@@ -228,6 +229,7 @@ def check_selected_node_type(bit_boolean_dictionary, node_type_list):
                 (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
               '''
         sys.exit(1)
+    return True
 
 def main(node_type_list):
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"

@@ -250,6 +250,7 @@ def main(node_type_list):
 
     #process command line arguments
     node_type_list = esg_cli_argument_manager.get_previous_node_type_config(node_type_list)
+    logger.debug("node_type_list: %s", node_type_list)
     esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)
     try:
         esg_setup.check_prerequisites()
@@ -301,13 +302,17 @@ def main(node_type_list):
 
     if force_install:
         logger.info("(force install is ON)")
-    if node_type_bit & DATA_BIT != 0:
+    # if node_type_bit & DATA_BIT != 0:
+    if bit_boolean_dictionary["DATA_BIT"]:
         logger.info("(data node type selected)")
-    if node_type_bit & INDEX_BIT != 0:
+    if bit_boolean_dictionary["INDEX_BIT"]:
+    # if node_type_bit & INDEX_BIT != 0:
         logger.info("(index node type selected)")
-    if node_type_bit & IDP_BIT != 0:
+    if bit_boolean_dictionary["IDP_BIT"]:
+    # if node_type_bit & IDP_BIT != 0:
         logger.info("(idp node type selected)")
-    if node_type_bit & COMPUTE_BIT != 0:
+    if bit_boolean_dictionary["COMPUTE_BIT"]:
+    # if node_type_bit & COMPUTE_BIT != 0:
         logger.info("(compute node type selected)")
 
     esg_setup.initial_setup_questionnaire()
@@ -331,13 +336,15 @@ def main(node_type_list):
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
     # logger.debug(node_type_bit & INSTALL_BIT)
-    if node_type_bit & INSTALL_BIT !=0:
+    # if node_type_bit & INSTALL_BIT !=0:
+    if bit_boolean_dictionary["INSTALL_BIT"]:
         esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()
         esg_setup.setup_cdat()
-        logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
-        if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
+        # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
+        if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
+        # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             esg_publisher.setup_esgcet()
         esg_tomcat_manager.setup_tomcat(devel)
         esg_apache_manager.setup_apache_frontend(devel)
@@ -348,4 +355,4 @@ def main(node_type_list):
 
 
 if __name__ == '__main__':
-    main(node_type_bit)
+    main(node_type_list)

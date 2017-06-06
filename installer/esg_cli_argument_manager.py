@@ -20,7 +20,7 @@ script_version = "v2.0-RC5.4.0-devel"
 script_maj_version = "2.0"
 script_release = "Centaur"
 
-node_type_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
+node_type_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT": False, "MAX_BIT": False}
 installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
 
 def setup_sensible_confs():
@@ -154,8 +154,8 @@ def set_node_type_config(node_type_list, config_file):
     if node_type_list:
         try:
             config_type_file = open(config_file, "w")
-            logger.debug("Writing %s to file as new node_type_string", "".join(node_type_list))
-            config_type_file.write("".join(node_type_list))
+            logger.debug("Writing %s to file as new node_type_string", " ".join(node_type_list))
+            config_type_file.write(" ".join(node_type_list))
         except IOError, error:
             logger.error(error)
 
@@ -238,6 +238,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         logger.debug("Selecting type for next start up")
         for arg in args.settype:
             logger.debug("arg: %s", arg)
+            node_type_list = []
             node_type_list = set_node_type_value(arg, node_type_list, True)
             #TODO: refactor conditional to function with descriptive name
             # if node_type_bit & get_bit_value(arg) == 0:

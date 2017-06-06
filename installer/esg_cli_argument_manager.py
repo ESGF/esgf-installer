@@ -3,6 +3,7 @@ import sys
 import shutil
 import logging
 import argparse
+import pprint
 from time import sleep
 import esg_functions
 import esg_setup
@@ -129,7 +130,7 @@ def get_previous_node_type_config(config_file):
     try:
         last_config_type = open(config_file)
         node_type_list = last_config_type.readlines()
-        logger.debug("node_type_list is now: %i", node_type_list)
+        logger.debug("node_type_list is now: %s", "".join(node_type_list))
         return node_type_list
     except IOError, error:
         logger.error(error)
@@ -156,6 +157,9 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
     args, parser = _define_acceptable_arguments()
     print "type of args:", type(args)
 
+    logging.debug(pprint.pformat(args))
+    logger.info("args: %s", args)
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)
@@ -168,8 +172,8 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
             #     node_type_bit += get_bit_value("install")
             logger.debug("Install Services")
     if args.update or args.upgrade:
-            upgrade_mode = True 
-            install_mode = False
+            installater_mode_dictionary["upgrade_mode"]= True 
+            installater_mode_dictionary["install_mode"] = False
             set_node_type_value("install", True)
             # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
             #     node_type_bit += get_bit_value("install")

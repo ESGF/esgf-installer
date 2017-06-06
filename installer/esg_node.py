@@ -195,10 +195,12 @@ def download_esg_installarg(esg_dist_url):
         except IOError, error:
             logger.error(error)
 
-def check_selected_node_type():
+#TODO: make this accept a parameter
+def check_selected_node_type(bit_boolean_dictionary, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
     node_options = bit_boolean_dictionary.keys()
     for option in node_options:
+        logger.debug("option: %s", option)
         if option in node_type_list:
             return True
     # return False

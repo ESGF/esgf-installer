@@ -92,7 +92,9 @@ def set_node_type_value(node_type, node_type_list, boolean_value):
 def get_node_type(node_type_list):
     for key, value in node_type_dictionary.items():
         if value:
-            node_type_list.append(key)
+            node_type = key.split("_BIT")[0].lower()
+            logger.debug("node_type: %s", node_type)
+            node_type_list.append(node_type)
     return node_type_list
 
 def _define_acceptable_arguments():

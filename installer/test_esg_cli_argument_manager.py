@@ -1,13 +1,17 @@
 import unittest
 import esg_cli_argument_manager
 import os
+import sys
+import pprint
 
 
 class test_ESG_CLI_Argument_Manager(unittest.TestCase):
 
     def setUp(self):
         self.node_type_list = ["data"]
-
+        self.installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
+        self.devel = True
+        self.esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     # def tearDown(self):
     #     os.remove('test_config.txt')
     @classmethod
@@ -36,6 +40,22 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
 
         esg_cli_argument_manager.set_node_type_value("data", True)
         self.assertEqual(esg_cli_argument_manager.node_type_dictionary["DATA_BIT"], True)
+
+
+    def test_process_arguments_install(self):
+        sys.argv.append("--install")
+        pprint.pprint(sys.argv)
+
+        esg_cli_argument_manager.process_arguments(self.installater_mode_dictionary["install_mode"], self.installater_mode_dictionary["upgrade_mode"], self.node_type_list, self.devel, self.esg_dist_url)
+        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["install_mode"], True)
+        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["upgrade_mode"], False)
+
+    def test_process_arguments_upgrade(self):
+        sys.argv.append("--upgrade")
+
+        esg_cli_argument_manager.process_arguments(self.installater_mode_dictionary["install_mode"], self.installater_mode_dictionary["upgrade_mode"], self.node_type_list, self.devel, self.esg_dist_url)
+        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["install_mode"], False)
+        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["upgrade_mode"], True)
 
 
 if __name__ == '__main__':

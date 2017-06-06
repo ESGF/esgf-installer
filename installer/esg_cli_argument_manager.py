@@ -128,7 +128,7 @@ def get_previous_node_type_config(config_file):
         If the configuration type is not explicity set the value is read from this file.
     '''
     try:
-        last_config_type = open(config_file)
+        last_config_type = open(config_file, "r")
         node_type_list = last_config_type.readlines()
         logger.debug("node_type_list is now: %s", "".join(node_type_list))
         return node_type_list

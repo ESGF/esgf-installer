@@ -65,7 +65,7 @@ def update_script(script_name, script_directory):
     pass
 
 #Formerly get_bit_value
-def set_node_type_value(node_type, boolean_value):
+def set_node_type_value(node_type, node_type_list, boolean_value):
     if node_type == "install":
         node_type_dictionary["INSTALL_BIT"] = True
     elif node_type == "data":
@@ -86,6 +86,14 @@ def set_node_type_value(node_type, boolean_value):
     #     node_type_dictionary["ALL_BIT"] = True
     else:
         raise ValueError("Invalid node type reference")
+
+    return get_node_type(node_type_list)
+
+def get_node_type(node_type_list):
+    for key, value in node_type_dictionary.items():
+        if value:
+            node_type_list.append(key)
+    return node_type_list
 
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
@@ -142,7 +150,7 @@ def get_previous_node_type_config(config_file):
 
 def set_node_type_config(node_type_list, config_file):
     '''Write the node type list as a string to file '''
-    logger.debug("new node_type_bit: %s", node_type_list)
+    logger.debug("new node_type_list: %s", node_type_list)
     if node_type_list:
         try:
             config_type_file = open(config_file, "w")
@@ -153,6 +161,7 @@ def set_node_type_config(node_type_list, config_file):
 
 def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url):
     selection_string = ""
+    logger.debug("node_type_list at start of process_arguments: %s", node_type_list)
 
     args, parser = _define_acceptable_arguments()
     print "type of args:", type(args)
@@ -167,14 +176,14 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
     if args.install:
             installater_mode_dictionary["upgrade_mode"] = False
             installater_mode_dictionary["install_mode"] = True
-            set_node_type_value("install", True)
+            set_node_type_value("install", node_type_list, True)
             # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
             #     node_type_bit += get_bit_value("install")
             logger.debug("Install Services")
     if args.update or args.upgrade:
             installater_mode_dictionary["upgrade_mode"]= True 
             installater_mode_dictionary["install_mode"] = False
-            set_node_type_value("install", True)
+            set_node_type_value("install", node_type_list, True)
             # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
             #     node_type_bit += get_bit_value("install")
             logger.debug("Update Services")
@@ -204,7 +213,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         sys.exit(0)
     elif args.verify:
         logger.debug("Verify Services")
-        set_node_type_value("test", True)
+        set_node_type_value("test", node_type_list, True)
         # if node_type_bit & get_bit_value("test") == 0:
         #     node_type_bit += get_bit_value("test")
         # logger.debug("node_type_bit = %s", node_type_bit)
@@ -219,7 +228,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         logger.debug("args.type: %s", args.type)
         for arg in args.type:
             #TODO: refactor conditional to function with descriptive name
-            set_node_type_value(arg, True)
+            set_node_type_value(arg, node_type_list, True)
             # if node_type_bit & get_bit_value(arg) == 0:
             #     node_type_bit += get_bit_value(arg)
                 # selection_string += " "+arg
@@ -228,7 +237,8 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
     elif args.settype:
         logger.debug("Selecting type for next start up")
         for arg in args.settype:
-            set_node_type_value(arg, True)
+            logger.debug("arg: %s", arg)
+            node_type_list = set_node_type_value(arg, node_type_list, True)
             #TODO: refactor conditional to function with descriptive name
             # if node_type_bit & get_bit_value(arg) == 0:
             #     node_type_bit += get_bit_value(arg)

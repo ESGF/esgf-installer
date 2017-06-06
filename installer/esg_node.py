@@ -225,7 +225,7 @@ def check_selected_node_type():
               '''
         sys.exit(1)
 
-def main(node_type_bit):
+def main(node_type_list):
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     
 
@@ -249,8 +249,8 @@ def main(node_type_bit):
     
 
     #process command line arguments
-    node_type_bit = esg_cli_argument_manager.get_previous_node_type_config(node_type_bit)
-    esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_bit, devel, esg_dist_url)
+    node_type_list = esg_cli_argument_manager.get_previous_node_type_config(node_type_list)
+    esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)
     try:
         esg_setup.check_prerequisites()
     except UnprivilegedUserError:
@@ -262,7 +262,7 @@ def main(node_type_bit):
     
     esg_functions.verify_esg_node_script(os.path.basename(__file__), esg_dist_url, script_version, script_maj_version, devel)
 
-    logger.debug("node_type_bit: %s", node_type_bit)
+    logger.debug("node_type_list: %s", node_type_list)
     
 
 
@@ -279,7 +279,7 @@ def main(node_type_bit):
     # logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
 
         
-    esg_cli_argument_manager.get_previous_node_type_config(node_type_bit)
+    esg_cli_argument_manager.get_previous_node_type_config(node_type_list)
     check_selected_node_type()
 
     esgf_node_info()
@@ -330,7 +330,7 @@ def main(node_type_bit):
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
-    logger.debug(node_type_bit & INSTALL_BIT)
+    # logger.debug(node_type_bit & INSTALL_BIT)
     if node_type_bit & INSTALL_BIT !=0:
         esg_setup.setup_java()
         esg_setup.setup_ant()

@@ -343,7 +343,7 @@ def main(node_type_list):
     #---------------------------------------
     # logger.debug(node_type_bit & INSTALL_BIT)
     # if node_type_bit & INSTALL_BIT !=0:
-    if bit_boolean_dictionary["INSTALL_BIT"]:
+    if "install" in node_type_list:
         esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()

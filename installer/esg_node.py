@@ -287,7 +287,7 @@ def main(node_type_list):
 
         
     esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
-    check_selected_node_type()
+    check_selected_node_type(bit_boolean_dictionary, node_type_list)
 
     esgf_node_info()
 

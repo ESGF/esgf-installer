@@ -6,6 +6,7 @@ import pwd
 import psycopg2
 import esg_functions
 import esg_setup
+import esg_version_manager
 import shlex
 from esg_init import EsgInit
 from time import sleep
@@ -28,7 +29,7 @@ def setup_postgres(force_install = False):
     postgres_binary_path = os.path.join(config.config_dictionary["postgress_bin_dir"], "postgres")
     logger.debug("postgres_binary_path: %s", postgres_binary_path)
     try:
-        found_valid_version = esg_functions.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"], version_command = "-V")
+        found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config.config_dictionary["postgress_min_version"], version_command = "-V")
         if found_valid_version and not force_install:
             print "Valid existing Postgres installation found"
             print "[OK]"
@@ -188,13 +189,13 @@ def setup_postgres(force_install = False):
     #Get files
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     hba_conf_file = "pg_hba.conf"
-    if esg_functions.checked_get(hba_conf_file, os.path.join(esg_dist_url,"externals", "bootstrap",hba_conf_file), force_install) > 1:
+    if esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url,"externals", "bootstrap",hba_conf_file), force_install) > 1:
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
     os.chmod(hba_conf_file, 0600)
 
     postgres_conf_file = "postgresql.conf"
-    if esg_functions.checked_get(postgres_conf_file, os.path.join(esg_dist_url,"externals", "bootstrap",postgres_conf_file), force_install) > 1:
+    if esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url,"externals", "bootstrap",postgres_conf_file), force_install) > 1:
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
     os.chmod(postgres_conf_file, 0600)
@@ -247,7 +248,7 @@ def setup_postgres(force_install = False):
 # returns 1 if it is already running (if check_postgress_process returns 0
 # - true)
 def start_postgress():
-    if esg_functions.check_postgress_process() == 0:
+    if check_postgress_process() == 0:
         print "Postgres is already running"
         return True
     print "Starting Postgress..."
@@ -273,7 +274,7 @@ def stop_postgress():
     if esg_setup._is_managed_db:
         print "Please be sure external database is NOT running at this point..."
         return True
-    if esg_functions.check_postgress_process() == 1:
+    if check_postgress_process() == 1:
         print "Postgres already stopped"
         return True
     print "Stopping Postgres...."

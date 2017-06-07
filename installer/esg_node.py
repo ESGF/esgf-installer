@@ -195,40 +195,40 @@ def download_esg_installarg(esg_dist_url):
         except IOError, error:
             logger.error(error)
 
-#TODO: make this accept a parameter
+def create_new_list_from_keys(dictionary):
+    return [node_option.split("_BIT")[0].lower() for node_option in dictionary.keys()]
+
 def check_selected_node_type(bit_boolean_dictionary, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
-    # node_options = 
-    node_options_modified = [node_option.split("_BIT")[0].lower() for node_option in bit_boolean_dictionary.keys()]
+
+    node_options_modified = create_new_list_from_keys(bit_boolean_dictionary)
     logger.debug("node_options_modified: %s", node_options_modified)
     for option in node_type_list:
         logger.debug("option: %s", option)
         if option in node_options_modified:
             continue
+        else:    
+            print '''
+                    Sorry no suitable node type has been selected
+                    Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
+                    (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
 
-    # return False
-    # if node_type_bit and bit_boolean_dictionary["INSTALL_BIT"] != 0 and not (node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT):
-        print '''
-                Sorry no suitable node type has been selected
-                Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
-                (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
+                    Ex:  esg-node --set-type data
+                    esg-node install
 
-                Ex:  esg-node --set-type data
-                esg-node install
+                    or do so as a single command line:
 
-                or do so as a single command line:
+                    Ex:  esg-node --type data install
 
-                Ex:  esg-node --type data install
+                    Use the --help | -h option for more information
 
-                Use the --help | -h option for more information
-
-                Note: The type value is recorded upon successfully starting the node.
-                the value is used for subsequent launches so the type value does not have to be
-                always specified.  A simple \"esg-node start\" will launch with the last type used
-                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
-              '''
-        sys.exit(1)
+                    Note: The type value is recorded upon successfully starting the node.
+                    the value is used for subsequent launches so the type value does not have to be
+                    always specified.  A simple \"esg-node start\" will launch with the last type used
+                    that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
+                    (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
+                  '''
+            sys.exit(1)
     return True
 
 def main(node_type_list):

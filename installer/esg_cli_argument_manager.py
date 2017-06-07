@@ -139,7 +139,8 @@ def get_previous_node_type_config(config_file):
     '''
     try:
         last_config_type = open(config_file, "r")
-        node_type_list = last_config_type.readlines()
+        # logger.debug("readlines from file: %s", last_config_type.readlines())
+        node_type_list = last_config_type.read().split()
         logger.debug("node_type_list is now: %s", "".join(node_type_list))
         return node_type_list
     except IOError, error:

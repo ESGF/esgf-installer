@@ -20,7 +20,8 @@ def setup_postgres(force_install = False):
     *******************************
     Setting up Postgres
     ******************************* '''
-    if esg_setup._is_managed_db():
+    db_properties = esg_setup.get_db_properties()
+    if esg_setup._is_managed_db(db_properties):
         return True
 
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config.config_dictionary["postgress_min_version"])

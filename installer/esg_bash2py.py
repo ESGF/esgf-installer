@@ -38,9 +38,9 @@ class Bash2Py(object):
         self.val += inc
         return tmp
 
-def mkdir_p(path):
+def mkdir_p(path, mode = 0777):
     try:
-        os.makedirs(path)
+        os.makedirs(path, mode)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass

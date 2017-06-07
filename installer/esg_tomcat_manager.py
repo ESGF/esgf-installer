@@ -108,8 +108,7 @@ def start_tomcat():
         esg_functions.checked_done(status)
 
     print "Starting Tomcat (jsvc)..."
-
-    os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    esg_bash2py.mkdir_p(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
     os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
     os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
 

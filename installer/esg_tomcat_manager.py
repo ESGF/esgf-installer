@@ -1115,7 +1115,7 @@ def setup_root_app():
             shutil.move(esg_bash2py.trim_string_from_tail(root_app_dist_url), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
         except Exception, error:
             logger.error(error)
-            print " ERROR: Could not extract {root_app_dist_url}".format(root_app_dist_url = esg_functions.readlinkf(esg_functions.trim_string_from_tail(root_app_dist_url)))
+            print " ERROR: Could not extract {root_app_dist_url}".format(root_app_dist_url = esg_functions.readlinkf(esg_bash2py.trim_string_from_tail(root_app_dist_url)))
 
         if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
             shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))

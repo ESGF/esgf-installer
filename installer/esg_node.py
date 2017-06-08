@@ -28,8 +28,6 @@ logger.info("keystore_alias: %s", config.config_dictionary["keystore_alias"])
 os.environ['LANG'] = "POSIX"
 os.umask(022)
 
-# I traced the Expand.colonMinus function from esg_bash2py.py module
-# and only got a overall idea of what it does. Does this create and assign values variables? 
 DEBUG = esg_bash2py.Expand.colonMinus("DEBUG", False)
 VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
 # INSTALL_BIT=1
@@ -48,15 +46,12 @@ VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
 
 bit_boolean_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
 ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]  
-install_mode = 0  # are we using booleans are indices? 
+install_mode = 0  
 upgrade_mode = 0
 
-node_type_list = [] # empty node list
+node_type_list = [] 
 
-# Do we need this function?
-# - This function is adding the keys from the dictionary into an empty list.
-#  I don't see it playing a major role since the empty list will hold the values
-#  obtained from the user/system arguements. 
+
 def get_node_type():
     for key, value in bit_boolean_dictionary.items():
         if value:
@@ -64,8 +59,8 @@ def get_node_type():
 
 
 
-devel = esg_bash2py.Expand.colonMinus("devel", True)  # Create variable "devel" and set value to "true"?
-recommended_setup = 1 # booleans or indices?
+devel = esg_bash2py.Expand.colonMinus("devel", True)
+recommended_setup = 1
 custom_setup = 0
 use_local_files = 0
 
@@ -167,10 +162,6 @@ def esgf_node_info():
 
     '''
 
-
-## How is this function selecting the best mirror to use? 
-## Aren't the mirrors hardcoded in the get_esgf_dist_mirror function 
-## inside the esg_mirror_manager.py?
 def select_distribution_mirror(install_type):
      # Determining ESGF distribution mirror
     logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
@@ -183,7 +174,6 @@ def select_distribution_mirror(install_type):
 
     logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
 
-## Talk about in next meeting
 def set_esg_dist_url():
      # # Setting esg_dist_url with previously gathered information
     esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
@@ -247,25 +237,11 @@ def check_selected_node_type(bit_boolean_dictionary, node_type_list):
     return True
 
 
-# example for comment below 
-# def user_answer():
-#   while True:
-#       begin_installation = raw_input("Are you ready to begin the installation? [Y/n] ") or default_install_answer
+###############################
+###### Edits to main() ########
+###############################
 
-#       if begin_installation.lower() == "n" or begin_installation.lower() == "no":
-#           print "Canceling installation"
-#           sys.exit(0)
-#       elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
-#           return "y"
-#       else:
-#           print "Invalid option.  Please select a valid option [Y/n]"
-
-
-
-def main(node_type_list):
-    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" # default distribution_url?
-    
-## an init() method can handle this 
+def init_connection():
     logger.info("esg-node initializing...")
     try:
         logger.info(socket.getfqdn())
@@ -273,19 +249,42 @@ def main(node_type_list):
         logger.error("Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command")
         sys.exit()
 
-## lets make this a funcion that returns a value 
+def get_installation_type(version):
     # Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
     if "devel" in script_version:
         logger.debug("Using devel version")
-        install_type = "devel"
+        return "devel"
     else:
-        install_type = "master"
+        return "master"
+
+# get the user input answer 
+def get_user_response():
+    while True:
+        default_install_answer = "Y"
+        begin_installation = raw_input("Are you ready to begin the installation? [Y/n] ") or default_install_answer
+
+        if begin_installation.lower() == "n" or begin_installation.lower() == "no":
+            print "Canceling installation"
+            sys.exit(0)
+        elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
+            break
+            #return "y"
+        else:
+            print "Invalid option.  Please select a valid option [Y/n]"
+
+
+
+def main(node_type_list):
+    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" # default distribution_url?
+    install_type = get_installation_type(script_version)
+    
+    # start connection 
+    init_connection()
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()    
     # download_esg_installarg()
     
-
     #process command line arguments
     node_type_list = esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
     logger.debug("node_type_list: %s", node_type_list)
@@ -321,27 +320,16 @@ def main(node_type_list):
     esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
     check_selected_node_type(bit_boolean_dictionary, node_type_list)
 
+    # Display node information to user
     esgf_node_info()
 
-    default_install_answer = "Y"
     if devel is True:
         print "(Installing DEVELOPMENT tree...)"
-    ## this can turn into a standalone function - see comment above main for example
-    # the user_answer() function can simply return or break out the while loop
-    while True:
-        begin_installation = raw_input("Are you ready to begin the installation? [Y/n] ") or default_install_answer
-        if begin_installation.lower() == "n" or begin_installation.lower() == "no":
-            print "Canceling installation"
-            sys.exit(0)
-        elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
-            break
-        else:
-            print "Invalid option.  Please select a valid option [Y/n]"
+
+    get_user_response()
 
     esg_setup.init_structure()
 
-# can be turned into a function that takes two parameters 
-# force_install and bit_boolean_dictionary and be used a checker
     if force_install:
         logger.info("(force install is ON)")
     # if node_type_bit & DATA_BIT != 0:

@@ -17,7 +17,6 @@ import urllib
 import shlex
 import filecmp
 import glob
-from lxml import etree
 from time import sleep
 from OpenSSL import crypto
 from lxml import etree
@@ -31,6 +30,22 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 config = EsgInit()
 
+def find_tomcat_ports(server_xml_path):
+    '''
+        Return a list of ports in the Tomcat server.xml file
+    '''
+    ports = []
+
+    tree = etree.parse(server_xml_path)
+    root = tree.getroot()
+    port_list = root.findall(".//Connector")
+    for port in port_list:         
+        port_number = port.get("port")
+        ports.append(port_number)
+
+    logger.debug("ports: %s", ports)
+    return ports
+
 def check_tomcat_process():
     '''
         Checks for the status of the Tomcat process
@@ -42,16 +57,9 @@ def check_tomcat_process():
             esgf_host_ip
         except NameError:
              esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
-        ports = []
-        with open(server_xml_path, "r") as server_xml_file:
-            for line in server_xml_file:
-                line = line.rstrip() # remove trailing whitespace such as '\n'
-                port_descriptor = re.search('(port=)(\S+)', line)
-                if port_descriptor != None:
-                    port_number = port_descriptor.group(2)
-                    ports.append(port_number.replace('"', ''))
 
-        logger.debug("ports: %s", ports)
+        ports = find_tomcat_ports(server_xml_path)
+
         process_list = []
         
         for port in ports:
@@ -108,8 +116,7 @@ def start_tomcat():
         esg_functions.checked_done(status)
 
     print "Starting Tomcat (jsvc)..."
-
-    os.mkdir(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
+    esg_bash2py.mkdir_p(config.config_dictionary["tomcat_install_dir"]+"/work/Catalina", 0755)
     os.chown(config.config_dictionary["tomcat_install_dir"]+"/work", pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_gid)
     os.chmod(config.config_dictionary["tomcat_install_dir"]+"/work", 0755)
 
@@ -445,6 +452,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     if tomcat_port_check():
         print "Tomcat ports checkout [OK]"
     else:
+        logger.error("Tomcat Port Check failed")
         print "[FAIL]"
         os.chdir(starting_directory)
         esg_functions.checked_done(1)
@@ -1274,25 +1282,6 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
         #SET the server.xml variables to contain proper values
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
         edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
-
-
-
-# TODO: Might refactor this to use xml.ElementTree
-def find_tomcat_ports(server_xml_path):
-    '''
-        Return a list of ports in the Tomcat server.xml file
-    '''
-    ports = []
-    with open(server_xml_path, "r") as server_xml_file:
-        for line in server_xml_file:
-            line = line.rstrip() # remove trailing whitespace such as '\n'
-            port_descriptor = re.search('(port=)(\S+)', line)
-            if port_descriptor != None:
-                port_number = port_descriptor.group(2)
-                ports.append(port_number.replace('"', ''))
-
-    logger.debug("ports: %s", ports)
-    return ports
 
 def tomcat_port_check():
     ''' 

@@ -268,6 +268,18 @@ def _configure_tomcat_with_java():
     subprocess.call(shlex.split(configure_string))
     subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
 
+def check_for_previous_tomcat_install(default_answer):
+    if os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "bin", "jsvc"), os.X_OK):
+        print "Detected an existing tomcat installation..."
+        if default_answer == "y":
+            continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [Y/n]") or default_answer
+        else:
+            continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [y/N]") or default_answer
+
+        if continue_installation_answer.lower() != "y" or not continue_installation_answer.lower() != "yes":
+            print "Skipping tomcat installation and setup - will assume tomcat is setup properly"
+            return True
+
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
@@ -280,17 +292,8 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     else:
         default = "n"
 
-    if os.access(os.path.join(config.config_dictionary["tomcat_install_dir"], "bin", "jsvc"), os.X_OK):
-        print "Detected an existing tomcat installation..."
-        if default == "y":
-            continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [Y/n]") or default
-        else:
-            continue_installation_answer = raw_input( "Do you want to continue with Tomcat installation and setup? [y/N]") or default
-
-        if continue_installation_answer.lower() != "y" or not continue_installation_answer.lower() != "yes":
-            print "Skipping tomcat installation and setup - will assume tomcat is setup properly"
-            return 0
-
+    if check_for_previous_tomcat_install(default):
+        return True
 
     try:
         os.makedirs(config.config_dictionary["workdir"])

@@ -174,19 +174,19 @@ def stop_tomcat():
         stop_tomcat_stdout, stop_tomcat_stderr = stop_tomcat_command.communicate()
         logger.info("stop_tomcat_stdout: %s", stop_tomcat_stdout)
         logger.info("stop_tomcat_stderr: %s", stop_tomcat_stderr)
+        if stop_tomcat_command.returncode != 0:
+            kill_status = 0
+            print " WARNING: Unable to stop tomcat, (nicely)"
+            print " Hmmm...  okay no more mr nice guy... issuing "
+            print  "\"pkill -9 $(cat ${tomcat_pid_file})\""
+            kill_return_code = subprocess.check_output("kill -9 $(cat ${tomcat_pid_file}) >& /dev/null")
+            kill_status += kill_return_code
+            if kill_status != 0:
+                print "Hmmm... still could not shutdown... process may have already been stopped"
     except OSError, error:
         logger.error("Could not stop Tomcat with jsvc script.")
         logger.error(error)
     # stop_tomcat_status = subprocess.check_output(config.config_dictionary["tomcat_install_dir"]+"/bin/jsvc -pidfile"+ config.config_dictionary["tomcat_pid_file"] +" -stop org.apache.catalina.startup.Bootstrap")
-    if stop_tomcat_command.returncode != 0:
-        kill_status = 0
-        print " WARNING: Unable to stop tomcat, (nicely)"
-        print " Hmmm...  okay no more mr nice guy... issuing "
-        print  "\"pkill -9 $(cat ${tomcat_pid_file})\""
-        kill_return_code = subprocess.check_output("kill -9 $(cat ${tomcat_pid_file}) >& /dev/null")
-        kill_status += kill_return_code
-        if kill_status != 0:
-            print "Hmmm... still could not shutdown... process may have already been stopped"
     subprocess.call("/bin/ps -elf | grep jsvc | grep -v grep")
     os.chdir(current_directory)
     return 0
@@ -340,7 +340,11 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
         print "[OK]"
     else:
         print "jsvc Not Found"
-        stop_tomcat()
+        #TODO: Bash quirk where this would fail silently, must be changed as far as handling
+        try:
+            stop_tomcat()
+        except:
+            logger.error("Could not stop Tomcat before building jsvc")
         print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
 
         if os.path.isfile("commons-daemon-native.tar.gz"):

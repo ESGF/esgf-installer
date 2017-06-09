@@ -219,10 +219,11 @@ def build_jsvc():
             #TODO: Bash quirk where this would fail silently, must be changed as far as handling
             if not stop_tomcat():
                 logger.error("Could not stop Tomcat before building jsvc")
-                
+
             print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
             logger.debug("current directory: %s", os.getcwd())
-
+            os.chdir("bin")
+            logger.debug("current directory: %s", os.getcwd())
             if os.path.isfile("commons-daemon-native.tar.gz"):
                 print "unpacking commons-daemon-native.tar.gz..."
                 tar = tarfile.open("commons-daemon-native.tar.gz")
@@ -250,6 +251,22 @@ def build_jsvc():
             else:
                 print "NOT ABLE TO INSTALL JSVC!"
                 esg_functions.checked_done(1)
+
+        configure_tomcat_with_java()
+
+def configure_tomcat_with_java():
+    logger.debug("current directory for configure_tomcat_with_java(): %s", os.getcwd())
+    tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
+    logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
+    try:
+        os.chmod(tomcat_configure_script_path, 0755)
+    except OSError, error:
+        logger.error(error)
+        logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
+        sys.exit(1)
+    configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
+    subprocess.call(shlex.split(configure_string))
+    subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
 
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
@@ -381,17 +398,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
 
     build_jsvc()
 
-    tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
-    logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
-    try:
-        os.chmod(tomcat_configure_script_path, 0755)
-    except OSError, error:
-        logger.error(error)
-        logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
-        sys.exit(1)
-    configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
-    subprocess.call(shlex.split(configure_string))
-    subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
+    
 
     if not os.path.isfile("/usr/lib/libcap.so") and os.path.isfile("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"])):
         os.symlink("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"]), "/usr/lib/libcap.so")

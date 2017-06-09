@@ -255,19 +255,18 @@ def build_jsvc():
         _configure_tomcat_with_java()
 
 def _configure_tomcat_with_java():
-    with esg_bash2py.pushd("bin"):
-        logger.debug("current directory for configure_tomcat_with_java(): %s", os.getcwd())
-        tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
-        logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
-        try:
-            os.chmod(tomcat_configure_script_path, 0755)
-        except OSError, error:
-            logger.error(error)
-            logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
-            sys.exit(1)
-        configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
-        subprocess.call(shlex.split(configure_string))
-        subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
+    logger.debug("current directory for configure_tomcat_with_java(): %s", os.getcwd())
+    tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
+    logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
+    try:
+        os.chmod(tomcat_configure_script_path, 0755)
+    except OSError, error:
+        logger.error(error)
+        logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
+        sys.exit(1)
+    configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
+    subprocess.call(shlex.split(configure_string))
+    subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
 
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"

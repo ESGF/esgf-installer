@@ -252,21 +252,21 @@ def build_jsvc():
                 print "NOT ABLE TO INSTALL JSVC!"
                 esg_functions.checked_done(1)
 
-        configure_tomcat_with_java()
 
 def configure_tomcat_with_java():
-    logger.debug("current directory for configure_tomcat_with_java(): %s", os.getcwd())
-    tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
-    logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
-    try:
-        os.chmod(tomcat_configure_script_path, 0755)
-    except OSError, error:
-        logger.error(error)
-        logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
-        sys.exit(1)
-    configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
-    subprocess.call(shlex.split(configure_string))
-    subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
+    with esg_bash2py.pushd("bin"):
+        logger.debug("current directory for configure_tomcat_with_java(): %s", os.getcwd())
+        tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
+        logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)
+        try:
+            os.chmod(tomcat_configure_script_path, 0755)
+        except OSError, error:
+            logger.error(error)
+            logger.error("Check if /usr/local/tomcat/configure script exists or if it is symlinked.")
+            sys.exit(1)
+        configure_string = "{configure} --with-java={java_install_dir}".format(configure = tomcat_configure_script_path, java_install_dir = config.config_dictionary["java_install_dir"])
+        subprocess.call(shlex.split(configure_string))
+        subprocess.call(shlex.split(" make -j {number_of_cpus}".format(number_of_cpus = config.config_dictionary["number_of_cpus"])))
 
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
@@ -397,8 +397,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
         logger.error(error)
 
     build_jsvc()
-
-    
+    configure_tomcat_with_java()
 
     if not os.path.isfile("/usr/lib/libcap.so") and os.path.isfile("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"])):
         os.symlink("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"]), "/usr/lib/libcap.so")

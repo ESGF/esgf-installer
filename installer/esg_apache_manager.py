@@ -72,7 +72,7 @@ def setup_apache_frontend(devel = False):
             ip_address = raw_input("Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses: ")
             ip_addresses.append(ip_address)
 
-            add_more_ips = raw_input("Do you wish to allow more ip addresses to access admin restricted pages? y/n")
+            add_more_ips = raw_input("Do you wish to allow more ip addresses to access admin restricted pages? y/n:")
             if add_more_ips.lower() != "y":
                 break
 

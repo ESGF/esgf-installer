@@ -280,6 +280,51 @@ def check_for_previous_tomcat_install(default_answer):
             print "Skipping tomcat installation and setup - will assume tomcat is setup properly"
             return True
 
+def _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_file):
+    if not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
+        print "Don't see tomcat distribution dir {tomcat_parent_dir}/{tomcat_dist_dir}".format(tomcat_parent_dir = tomcat_parent_dir, tomcat_dist_dir =  tomcat_dist_dir)
+        if not os.path.isfile(tomcat_dist_file):
+            print "Don't see tomcat distribution file {pwd}/{tomcat_dist_file} either".format(pwd = os.getcwd(), tomcat_dist_file = tomcat_dist_file)
+            print "Downloading Tomcat from {tomcat_dist_url}".format(tomcat_dist_url = config.config_dictionary["tomcat_dist_url"])
+            urllib.urlretrieve(config.config_dictionary["tomcat_dist_url"], tomcat_dist_file)
+            print "unpacking {tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
+            tar = tarfile.open(tomcat_dist_file)
+            tar.extractall(tomcat_parent_dir)
+            tar.close()
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it
+    if os.path.isfile(tomcat_dist_file) and not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
+        print "unpacking ${tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
+        tar = tarfile.open(tomcat_dist_file)
+        tar.extractall(tomcat_parent_dir)
+        tar.close()
+
+    if not os.path.exists(config.config_dictionary["tomcat_install_dir"]):
+        logger.info("Did not find existing Tomcat installation directory.  Creating %s ", config.config_dictionary["tomcat_install_dir"])
+        os.chdir(tomcat_parent_dir)
+        try:
+            os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+        except OSError, error:
+            logger.error(" ERROR: Could not create sym link %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+            logger.error(error)
+        finally:
+            os.chdir(config.config_dictionary["workdir"])
+    else:
+        logger.info("Found previous Tomcat installation directory. Creating new symlink from %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+        try:
+            os.unlink(config.config_dictionary["tomcat_install_dir"])
+        except OSError, error:
+            shutil.move(config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"] + "." + str(datetime.date.today())+".bak")
+        finally:
+            os.chdir(tomcat_parent_dir)
+            try:
+                os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+            except OSError, error:
+                logger.error(" ERROR: Could not create sym link %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+                logger.error(error)
+            finally:
+                os.chdir(config.config_dictionary["workdir"])
+
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
@@ -311,58 +356,8 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
 
     #Check to see if we have a tomcat distribution directory
     tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"]).group()
-    logger.info("tomcat_parent_dir: %s", tomcat_parent_dir)
-    logger.info("tomcat_dist_dir: %s", tomcat_dist_dir)
 
-    if not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
-        print "Don't see tomcat distribution dir {tomcat_parent_dir}/{tomcat_dist_dir}".format(tomcat_parent_dir = tomcat_parent_dir, tomcat_dist_dir =  tomcat_dist_dir)
-        if not os.path.isfile(tomcat_dist_file):
-            print "Don't see tomcat distribution file {pwd}/{tomcat_dist_file} either".format(pwd = os.getcwd(), tomcat_dist_file = tomcat_dist_file)
-            print "Downloading Tomcat from {tomcat_dist_url}".format(tomcat_dist_url = config.config_dictionary["tomcat_dist_url"])
-            # tomcat_dist_file_archive = requests.get(config.config_dictionary["tomcat_dist_url"])
-            urllib.urlretrieve(config.config_dictionary["tomcat_dist_url"], tomcat_dist_file)
-            # logger.info("tomcat_dist_file_archive: %s", tomcat_dist_file_archive)
-            print "unpacking {tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
-            tar = tarfile.open(tomcat_dist_file)
-            tar.extractall(tomcat_parent_dir)
-            tar.close()
-            # shutil.move(tomcat_dist_file, tomcat_parent_dir)
-
-
-    #If you don't see the directory but see the tar.gz distribution
-    #then expand it
-    if os.path.isfile(tomcat_dist_file) and not os.path.exists(os.path.join(tomcat_parent_dir, tomcat_dist_dir)):
-        print "unpacking ${tomcat_dist_file}...".format(tomcat_dist_file = tomcat_dist_file)
-        tar = tarfile.open(tomcat_dist_file)
-        tar.extractall(tomcat_parent_dir)
-        tar.close()
-        # shutil.move(tomcat_dist_file, tomcat_parent_dir)
-
-    if not os.path.exists(config.config_dictionary["tomcat_install_dir"]):
-        logger.info("Did not find existing Tomcat installation directory.  Creating %s ", config.config_dictionary["tomcat_install_dir"])
-        os.chdir(tomcat_parent_dir)
-        try:
-            os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
-        except OSError, error:
-            logger.error(" ERROR: Could not create sym link %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
-            logger.error(error)
-        finally:
-            os.chdir(config.config_dictionary["workdir"])
-    else:
-        logger.info("Found previous Tomcat installation directory. Creating new symlink from %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
-        try:
-            os.unlink(config.config_dictionary["tomcat_install_dir"])
-        except OSError, error:
-            shutil.move(config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"] + "." + str(datetime.date.today())+".bak")
-        finally:
-            os.chdir(tomcat_parent_dir)
-            try:
-                os.symlink(tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
-            except OSError, error:
-                logger.error(" ERROR: Could not create sym link %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
-                logger.error(error)
-            finally:
-                os.chdir(config.config_dictionary["workdir"])
+    _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_file)
 
     #If there is no tomcat user on the system create one (double check that usradd does the right thing)
     if not pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid:

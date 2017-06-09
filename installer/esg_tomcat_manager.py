@@ -191,6 +191,65 @@ def stop_tomcat():
     os.chdir(current_directory)
     return 0
 
+def build_jsvc():
+    #----------
+    #build jsvc (if necessary)
+    #----------
+    print "Checking for jsvc... "
+    with esg_bash2py.pushd("bin"):
+        logger.debug("Changed directory to %s", os.getcwd())
+        # try:
+        #     os.chdir("bin")
+        #     logger.debug("Changed directory to %s", os.getcwd())
+        # except OSError, error:
+        #     logger.error(error)
+
+        #https://issues.apache.org/jira/browse/DAEMON-246
+        try:
+            os.environ["LD_LIBRARY_PATH"]=os.environ["LD_LIBRARY_PATH"] + ":/lib" + config.config_dictionary["word_size"]
+        except KeyError, error:
+            logger.error(error)
+
+        if os.access(os.path.join("./", "jsvc"), os.X_OK):
+            print "Found jsvc; no need to build"
+            print "[OK]"
+        else:
+            print "jsvc Not Found"
+            #TODO: Bash quirk where this would fail silently, must be changed as far as handling
+            try:
+                stop_tomcat()
+            except:
+                logger.error("Could not stop Tomcat before building jsvc")
+            print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
+            logger.debug("current directory: %s", os.getcwd())
+            if os.path.isfile("commons-daemon-native.tar.gz"):
+                print "unpacking commons-daemon-native.tar.gz..."
+                tar = tarfile.open("commons-daemon-native.tar.gz")
+                tar.extractall()
+                tar.close()
+                try:
+                    os.chdir("commons-daemon-1.0.15-native-src")
+                    #It turns out they shipped with a conflicting .o file in there (oops) so I have to remove it manually.
+                    logger.debug("Changed directory to %s", os.getcwd())
+                    os.remove("./native/libservice.a")
+                except OSError, error:
+                    logger.error(error)
+                subprocess.call(shlex.split("make clean"))
+            elif os.path.isfile("jsvc.tar.gz "):
+                print "unpacking jsvc.tar.gz..."
+                tar = tarfile.open("jsvc.tar.gz")
+                tar.extractall()
+                tar.close()
+                try:
+                    os.chdir("jsvc-src")
+                    logger.debug("Changed directory to %s", os.getcwd())
+                except OSError, error:
+                    logger.error(error)
+                subprocess.call("autoconf")
+            else:
+                print "NOT ABLE TO INSTALL JSVC!"
+                esg_functions.checked_done(1)
+
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
@@ -319,61 +378,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     except OSError, error:
         logger.error(error)
 
-    #----------
-    #build jsvc (if necessary)
-    #----------
-    print "Checking for jsvc... "
-    try:
-        os.chdir("bin")
-        logger.debug("Changed directory to %s", os.getcwd())
-    except OSError, error:
-        logger.error(error)
-
-    #https://issues.apache.org/jira/browse/DAEMON-246
-    try:
-        os.environ["LD_LIBRARY_PATH"]=os.environ["LD_LIBRARY_PATH"] + ":/lib" + config.config_dictionary["word_size"]
-    except KeyError, error:
-        logger.error(error)
-
-    if os.access(os.path.join("./", "jsvc"), os.X_OK):
-        print "Found jsvc; no need to build"
-        print "[OK]"
-    else:
-        print "jsvc Not Found"
-        #TODO: Bash quirk where this would fail silently, must be changed as far as handling
-        try:
-            stop_tomcat()
-        except:
-            logger.error("Could not stop Tomcat before building jsvc")
-        print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
-
-        if os.path.isfile("commons-daemon-native.tar.gz"):
-            print "unpacking commons-daemon-native.tar.gz..."
-            tar = tarfile.open("commons-daemon-native.tar.gz")
-            tar.extractall()
-            tar.close()
-            try:
-                os.chdir("commons-daemon-1.0.15-native-src")
-                #It turns out they shipped with a conflicting .o file in there (oops) so I have to remove it manually.
-                logger.debug("Changed directory to %s", os.getcwd())
-                os.remove("./native/libservice.a")
-            except OSError, error:
-                logger.error(error)
-            subprocess.call(shlex.split("make clean"))
-        elif os.path.isfile("jsvc.tar.gz "):
-            print "unpacking jsvc.tar.gz..."
-            tar = tarfile.open("jsvc.tar.gz")
-            tar.extractall()
-            tar.close()
-            try:
-                os.chdir("jsvc-src")
-                logger.debug("Changed directory to %s", os.getcwd())
-            except OSError, error:
-                logger.error(error)
-            subprocess.call("autoconf")
-        else:
-            print "NOT ABLE TO INSTALL JSVC!"
-            esg_functions.checked_done(1)
+    build_jsvc()
 
     tomcat_configure_script_path = os.path.join(os.getcwd(), "unix", "configure")
     logger.info("tomcat_configure_script_path: %s", tomcat_configure_script_path)

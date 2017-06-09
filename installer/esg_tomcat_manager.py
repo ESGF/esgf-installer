@@ -295,13 +295,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     if check_for_previous_tomcat_install(default):
         return True
 
-    try:
-        os.makedirs(config.config_dictionary["workdir"])
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
+    esg_bash2py.mkdir_p(config.config_dictionary["workdir"])
 
     starting_directory = os.getcwd()
     os.chdir(config.config_dictionary["workdir"])

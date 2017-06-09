@@ -84,7 +84,7 @@ def check_tomcat_process():
             logger.info("No running processes found")
             return False
         if "jsvc" in process_list:
-            print "Tomcat (jsvc) process is running... " 
+            print "Tomcat (jsvc) process is running... "
             return True
         else:
             print " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [%s] ?? " % (process_list)
@@ -92,10 +92,10 @@ def check_tomcat_process():
     else:
         print " Warning Cannot find %s/conf/server.xml file!" % (config.config_dictionary["tomcat_install_dir"])
         print " Using alternative method for checking on tomcat process..."
-        ps_process = subprocess.Popen(shlex.split("ps -elf"), stdout = subprocess.PIPE)
-        grep_process = subprocess.Popen(shlex.split("grep jsvc"), stdin = ps_process.stdout, stdout = subprocess.PIPE)
-        grep_process_2 = subprocess.Popen(shlex.split("grep -v grep"), stdin = grep_process.stdout, stdout = subprocess.PIPE)
-        awk_process = subprocess.Popen(shlex.split("awk ' END { print NR }'"), stdin = grep_process_2.stdout, stdout = subprocess.PIPE)
+        ps_process = subprocess.Popen(shlex.split("ps -elf"), stdout=subprocess.PIPE)
+        grep_process = subprocess.Popen(shlex.split("grep jsvc"), stdin=ps_process.stdout, stdout=subprocess.PIPE)
+        grep_process_2 = subprocess.Popen(shlex.split("grep -v grep"), stdin=grep_process.stdout, stdout=subprocess.PIPE)
+        awk_process = subprocess.Popen(shlex.split("awk ' END { print NR }'"), stdin=grep_process_2.stdout, stdout=subprocess.PIPE)
 
         ps_process.stdout.close()
         grep_process.stdout.close()
@@ -105,7 +105,7 @@ def check_tomcat_process():
         logger.info("tomcat_process_stdout: %s", tomcat_process_stdout)
         logger.info("tomcat_process_stderr: %s", tomcat_process_stderr)
 
-        status_value = subprocess.Popen(shlex.split("ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }'"))
+        # status_value = subprocess.Popen(shlex.split("ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }'"))
 
 
 def find_jars_in_directory(directory):
@@ -169,8 +169,12 @@ def stop_tomcat():
     print "stop tomcat: %s/bin/jsvc -pidfile %s -stop org.apache.catalina.startup.Bootstrap" % (config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"])
     print "(please wait)"
     sleep(1)
-    status = subprocess.check_output(config.config_dictionary["tomcat_install_dir"]+"/bin/jsvc -pidfile"+ config.config_dictionary["tomcat_pid_file"] +" -stop org.apache.catalina.startup.Bootstrap")
-    if status != 0:
+    stop_tomcat_command = subprocess.Popen("{tomcat_install_dir}/bin/jsvc -pidfile {tomcat_pid_file} -stop org.apache.catalina.startup.Bootstrap")
+    stop_tomcat_stdout, stop_tomcat_stderr = stop_tomcat_command.communicate()
+    logger.info("stop_tomcat_stdout: %s", stop_tomcat_stdout)
+    logger.info("stop_tomcat_stderr: %s", stop_tomcat_stderr)
+    # stop_tomcat_status = subprocess.check_output(config.config_dictionary["tomcat_install_dir"]+"/bin/jsvc -pidfile"+ config.config_dictionary["tomcat_pid_file"] +" -stop org.apache.catalina.startup.Bootstrap")
+    if stop_tomcat_command.returncode != 0:
         kill_status = 0
         print " WARNING: Unable to stop tomcat, (nicely)"
         print " Hmmm...  okay no more mr nice guy... issuing "

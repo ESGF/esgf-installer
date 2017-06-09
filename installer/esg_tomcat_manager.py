@@ -169,7 +169,7 @@ def stop_tomcat():
     print "stop tomcat: %s/bin/jsvc -pidfile %s -stop org.apache.catalina.startup.Bootstrap" % (config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"])
     print "(please wait)"
     sleep(1)
-    stop_tomcat_command = subprocess.Popen("{tomcat_install_dir}/bin/jsvc -pidfile {tomcat_pid_file} -stop org.apache.catalina.startup.Bootstrap".format(tomcat_install_dir=config.config_dictionary["tomcat_install_dir"], tomcat_pid_file=config.config_dictionary["tomcat_pid_file"]))
+    stop_tomcat_command = subprocess.Popen(shlex.split("{tomcat_install_dir}/bin/jsvc -pidfile {tomcat_pid_file} -stop org.apache.catalina.startup.Bootstrap".format(tomcat_install_dir=config.config_dictionary["tomcat_install_dir"], tomcat_pid_file=config.config_dictionary["tomcat_pid_file"])))
     stop_tomcat_stdout, stop_tomcat_stderr = stop_tomcat_command.communicate()
     logger.info("stop_tomcat_stdout: %s", stop_tomcat_stdout)
     logger.info("stop_tomcat_stderr: %s", stop_tomcat_stderr)

@@ -217,11 +217,9 @@ def build_jsvc():
         else:
             print "jsvc Not Found"
             #TODO: Bash quirk where this would fail silently, must be changed as far as handling
-            try:
-                stop_tomcat()
-            except:
+            if not stop_tomcat():
                 logger.error("Could not stop Tomcat before building jsvc")
-
+                
             print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
             logger.debug("current directory: %s", os.getcwd())
 

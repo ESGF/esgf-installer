@@ -82,16 +82,29 @@ def check_tomcat_process():
         if not process_list:
             #No process running on ports
             logger.info("No running processes found")
-            return 1
+            return False
         if "jsvc" in process_list:
             print "Tomcat (jsvc) process is running... " 
-            return 0
+            return True
         else:
             print " WARNING: There is another process running on expected Tomcat (jsvc) ports!!!! [%s] ?? " % (process_list)
-            return 3
+            return False
     else:
         print " Warning Cannot find %s/conf/server.xml file!" % (config.config_dictionary["tomcat_install_dir"])
         print " Using alternative method for checking on tomcat process..."
+        ps_process = subprocess.Popen(shlex.split("ps -elf"), stdout = subprocess.PIPE)
+        grep_process = subprocess.Popen(shlex.split("grep jsvc"), stdin = ps_process.stdout, stdout = subprocess.PIPE)
+        grep_process_2 = subprocess.Popen(shlex.split("grep -v grep"), stdin = grep_process.stdout, stdout = subprocess.PIPE)
+        awk_process = subprocess.Popen(shlex.split("awk ' END { print NR }'"), stdin = grep_process_2.stdout, stdout = subprocess.PIPE)
+
+        ps_process.stdout.close()
+        grep_process.stdout.close()
+        grep_process_2.stdout.close()
+
+        tomcat_process_stdout, tomcat_process_stderr = awk_process.communicate()
+        logger.info("tomcat_process_stdout: %s", tomcat_process_stdout)
+        logger.info("tomcat_process_stderr: %s", tomcat_process_stderr)
+
         status_value = subprocess.Popen(shlex.split("ps -elf | grep jsvc | grep -v grep | awk ' END { print NR }'"))
 
 

@@ -186,10 +186,11 @@ def stop_tomcat():
     except OSError, error:
         logger.error("Could not stop Tomcat with jsvc script.")
         logger.error(error)
+        return False
     # stop_tomcat_status = subprocess.check_output(config.config_dictionary["tomcat_install_dir"]+"/bin/jsvc -pidfile"+ config.config_dictionary["tomcat_pid_file"] +" -stop org.apache.catalina.startup.Bootstrap")
     subprocess.call("/bin/ps -elf | grep jsvc | grep -v grep")
     os.chdir(current_directory)
-    return 0
+    return True
 
 def build_jsvc():
     #----------
@@ -220,8 +221,10 @@ def build_jsvc():
                 stop_tomcat()
             except:
                 logger.error("Could not stop Tomcat before building jsvc")
+
             print "Building jsvc... (JAVA_HOME={java_install_dir})".format(java_install_dir = config.config_dictionary["java_install_dir"])
             logger.debug("current directory: %s", os.getcwd())
+
             if os.path.isfile("commons-daemon-native.tar.gz"):
                 print "unpacking commons-daemon-native.tar.gz..."
                 tar = tarfile.open("commons-daemon-native.tar.gz")

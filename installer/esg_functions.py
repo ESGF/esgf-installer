@@ -41,6 +41,8 @@ def checked_done(status):
             "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
             ""
         )
+        #Move back to starting directory
+        os.chdir(config.config_dictionary["install_prefix"])
         sys.exit()
     else:
         return 0

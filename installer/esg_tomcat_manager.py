@@ -346,12 +346,40 @@ def _create_tomcat_user():
             print "ERROR: Could not add tomcat system account user {tomcat_user}".format(tomcat_user = config.config_dictionary["tomcat_user"])
             esg_functions.checked_done(1)
 
+def _upgrade_tomcat_version(existing_tomcat_directory):
+    previous_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(existing_tomcat_directory))
+    new_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
+    print "Upgrading tomcat installation from {previous_tomcat_version} to {new_tomcat_version}".format(previous_tomcat_version = previous_tomcat_version, new_tomcat_version = new_tomcat_version)
+
+    print "copying webapps... "
+    src_files = os.listdir(os.path.join(existing_tomcat_directory, "webapps"))
+    for file_name in src_files:
+        full_file_name = os.path.join(existing_tomcat_directory, file_name)
+        if os.path.isfile(full_file_name):
+            shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
+
+    print "copying configuration... "
+    src_files = os.listdir(os.path.join(existing_tomcat_directory, "conf"))
+    for file_name in src_files:
+        full_file_name = os.path.join(existing_tomcat_directory, file_name)
+        if os.path.isfile(full_file_name):
+            shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
+
+    print "copying logs... "
+    src_files = os.listdir(os.path.join(existing_tomcat_directory, "logs"))
+    for file_name in src_files:
+        full_file_name = os.path.join(existing_tomcat_directory, file_name)
+        if os.path.isfile(full_file_name):
+            shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
+
+    print "upgrade migration complete"
+
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
     print "*******************************"
 
-    last_install_directory = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"])
+    existing_tomcat_directory = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"])
 
     if force_install:
         default = "y"
@@ -403,32 +431,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     #----------------------------------
     if upgrade_flag:
         stop_tomcat()
-        previous_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(last_install_directory))
-        new_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
-        print "Upgrading tomcat installation from {previous_tomcat_version} to {new_tomcat_version}".format(previous_tomcat_version = previous_tomcat_version, new_tomcat_version = new_tomcat_version)
-
-        print "copying webapps... "
-        src_files = os.listdir(os.path.join(last_install_directory, "webapps"))
-        for file_name in src_files:
-            full_file_name = os.path.join(last_install_directory, file_name)
-            if os.path.isfile(full_file_name):
-                shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
-
-        print "copying configuration... "
-        src_files = os.listdir(os.path.join(last_install_directory, "conf"))
-        for file_name in src_files:
-            full_file_name = os.path.join(last_install_directory, file_name)
-            if os.path.isfile(full_file_name):
-                shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
-
-        print "copying logs... "
-        src_files = os.listdir(os.path.join(last_install_directory, "logs"))
-        for file_name in src_files:
-            full_file_name = os.path.join(last_install_directory, file_name)
-            if os.path.isfile(full_file_name):
-                shutil.copy(full_file_name, config.config_dictionary["tomcat_install_dir"])
-
-        print "upgrade migration complete"
+        _upgrade_tomcat_version(existing_tomcat_directory)
     else:
         try:
             if os.stat(config.ks_secret_file).st_size != 0:

@@ -325,6 +325,27 @@ def _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_f
             finally:
                 os.chdir(config.config_dictionary["workdir"])
 
+def _create_tomcat_user():
+    if not pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid:
+        logger.info(" WARNING: There is no tomcat user \"%s\" present on system", config.config_dictionary["tomcat_user"])
+        #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
+        try:
+            tomcat_group_check = grp.getgrnam(
+                config.config_dictionary["tomcat_group"])
+        except KeyError:
+            groupadd_command = "/usr/sbin/groupadd -r %s" % (
+                config.config_dictionary["tomcat_group"])
+            groupadd_output = subprocess.call(groupadd_command, shell=True)
+            if groupadd_output != 0 or groupadd_output != 9:
+                print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
+                esg_functions.checked_done(1)
+
+        useradd_command = '''/usr/sbin/useradd -r -c'Tomcat Server Identity' -g {tomcat_group} {tomcat_user} '''.format(tomcat_group = config.config_dictionary["tomcat_group"], tomcat_user = config.config_dictionary["tomcat_user"])
+        useradd_output = subprocess.call(useradd_command, shell=True)
+        if useradd_output != 0 or useradd_output != 9:
+            print "ERROR: Could not add tomcat system account user {tomcat_user}".format(tomcat_user = config.config_dictionary["tomcat_user"])
+            esg_functions.checked_done(1)
+
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
@@ -360,27 +381,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_file)
 
     #If there is no tomcat user on the system create one (double check that usradd does the right thing)
-    if not pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid:
-        logger.info(" WARNING: There is no tomcat user \"%s\" present on system", config.config_dictionary["tomcat_user"])
-        #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        try:
-            tomcat_group_check = grp.getgrnam(
-                config.config_dictionary["tomcat_group"])
-        except KeyError:
-            groupadd_command = "/usr/sbin/groupadd -r %s" % (
-                config.config_dictionary["tomcat_group"])
-            groupadd_output = subprocess.call(groupadd_command, shell=True)
-            if groupadd_output != 0 or groupadd_output != 9:
-                print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
-                os.chdir(starting_directory)
-                esg_functions.checked_done(1)
-
-        useradd_command = '''/usr/sbin/useradd -r -c'Tomcat Server Identity' -g {tomcat_group} {tomcat_user} '''.format(tomcat_group = config.config_dictionary["tomcat_group"], tomcat_user = config.config_dictionary["tomcat_user"])
-        useradd_output = subprocess.call(useradd_command, shell=True)
-        if useradd_output != 0 or useradd_output != 9:
-            print "ERROR: Could not add tomcat system account user {tomcat_user}".format(tomcat_user = config.config_dictionary["tomcat_user"])
-            os.chdir(starting_directory)
-            esg_functions.checked_done(1)
+    _create_tomcat_user()
 
     try:
         os.chdir(config.config_dictionary["tomcat_install_dir"])

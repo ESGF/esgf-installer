@@ -494,6 +494,18 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
 
     return True
 
+
+def download_server_config_file(esg_dist_url):
+    ''' Download the server.xml config file from the distribution mirror '''
+    config_file_name = "server.xml"
+    config_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", config_file_name)
+
+    if esg_functions.download_update(config_file_path, "{esg_dist_url}/externals/bootstrap/node.{config_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, config_file_name = config_file_name, tomcat_version = esg_bash2py.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
+        esg_functions.checked_done(1)
+
+    os.chmod(config_file_path, 0600)
+    os.chown(config_file_path, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+
 def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     #----------------------------
     # TOMCAT Configuration...
@@ -506,17 +518,9 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     starting_directory = os.getcwd()
     os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf"))
 
-    fetch_file_name = "server.xml"
-    fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
+    download_server_config_file(esg_dist_url)
 
-    if esg_functions.download_update(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_bash2py.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
-        os.chdir(starting_directory)
-        esg_functions.checked_done(1)
-
-    os.chmod(fetch_file_path, 0600)
-    os.chown(fetch_file_path, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
-
-    print "Looking for keystore [${keystore_file}]...".format(keystore_file = config.config_dictionary["keystore_file"])
+    print "Looking for keystore [{keystore_file}]...".format(keystore_file = config.config_dictionary["keystore_file"])
     if os.path.isfile(config.config_dictionary["keystore_file"]):
         print "Found keystore file"
     else:

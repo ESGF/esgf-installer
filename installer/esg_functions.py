@@ -572,9 +572,29 @@ def get_esg_root_id():
     return esg_root_id
 
 def get_security_admin_password():
-    with open(config.esgf_secret_file, 'rb') as f:
-        security_admin_password = f.read().strip()
+    ''' Gets the security_admin_password from the esgf_secret_file '''
+    with open(config.esgf_secret_file, 'rb') as password_file:
+        security_admin_password = password_file.read().strip()
         return security_admin_password
+
+def get_keystore_password():
+    ''' Gets the keystore_password from the saved ks_secret_file '''
+    with open(config.ks_secret_file, 'rb') as keystore_file:
+        keystore_password = keystore_file.read().strip()
+        return keystore_password
+
+def _check_keystore_password(keystore_password):
+    '''Utility function to check that a given password is valid for the global scoped ${keystore_file} '''
+    if not os.path.isfile(config.ks_secret_file):
+        logger.error("$([FAIL]) No keystore file present [%s]", config.ks_secret_file)
+        return False
+    keystore_password = get_keystore_password()
+    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config.config_dictionary["java_install_dir"], keystore_file=config.ks_secret_file, keystore_password=keystore_password)
+    keytool_list_process = call_subprocess(keytool_list_command)
+    if keytool_list_process["returncode"] != 0:
+        logger.error("$([FAIL]) Could not access private keystore %s with provided password. Try again...", config.ks_secret_file)
+        return False
+    return True
 
 
 def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version, script_maj_version, devel, update_action = None):

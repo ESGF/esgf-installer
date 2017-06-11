@@ -573,7 +573,6 @@ def create_keystore(keystore_password):
             keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = config.config_dictionary["keystore_password"])
         
         java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
-        # keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
         if java_keytool_process["returncode"] != 0:
             print " ERROR: keytool genkey command failed" 
         esg_functions.checked_done(1)
@@ -587,11 +586,27 @@ def create_keystore(keystore_password):
             -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"], 
             keystore_alias = config.config_dictionary["keystore_alias"], keystore_file = config.config_dictionary["keystore_file"], keystore_password = keystore_password)
             
-            # keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
             java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
             if java_keytool_process["returncode"] != 0:
                 print " ERROR: keytool genkey command failed" 
             esg_functions.checked_done(1)
+
+def _download_truststore_file():
+    #Fetch/Copy truststore to $tomcat_conf_dir
+    #(first try getting it from distribution server otherwise copy Java's)
+    if not os.path.isfile(config.config_dictionary["truststore_file"]):
+        # i.e. esg-truststore.ts
+        truststore_file_name = esg_bash2py.trim_string_from_tail(config.config_dictionary["truststore_file"])
+        if esg_functions.download_update(truststore_file_name, "http://{esg_dist_url_root}/certs/{truststore_file_name}".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"], truststore_file_name = truststore_file_name)) > 1:
+            print " INFO: Could not download certificates {truststore_file_name} for tomcat - will copy local java certificate file".format(truststore_file_name = truststore_file_name)
+            #NOTE: The truststore uses the java default password: "changeit"
+            try:
+                shutil.copyfile(os.path.join(config.config_dictionary["java_install_dir"], "jre", "lib", "security", "cacerts"), config.config_dictionary["truststore_file"])
+                logger.info("Copied default Java truststore")
+                print "(note - the truststore password will probably not match! The password for the default Java truststore is 'changeit')"
+            except Exception, error:
+                print " ERROR: Could not fetch or copy {truststore_file_name} for tomcat!!".format(truststore_file_name = truststore_file_name)
+                logger.error(error)
 
 def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     #----------------------------
@@ -617,31 +632,12 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
         print "Keystore setup: "
         create_keystore(keystore_password)
 
-    # try:
-    #     config.config_dictionary["keystore_password"]
-    # except KeyError, error:
-    #     config.config_dictionary["keystore_password"] = esg_functions.get_keystore_password()
-
-    setup_temp_ca()
-    #Fetch/Copy truststore to $tomcat_conf_dir
-    #(first try getting it from distribution server otherwise copy Java's)
-    if not os.path.isfile(config.config_dictionary["truststore_file"]):
-        # i.e. esg-truststore.ts
-        truststore_file_name = esg_bash2py.trim_string_from_tail(config.config_dictionary["truststore_file"])
-        if esg_functions.download_update(truststore_file_name, "http://{esg_dist_url_root}/certs/${fetch_file_name}".format(esg_dist_url_root = config.config_dictionary["esg_dist_url_root"], fetch_file_name = fetch_file_name)) > 1:
-            print " INFO: Could not download certificates ${fetch_file_name} for tomcat - will copy local java certificate file".format(fetch_file_name = fetch_file_name)
-            print "(note - the truststore password will probably not match!)"
-            try:
-                shutil.copyfile(os.path.join(config.config_dictionary["java_install_dir"], "jre", "lib", "security", "cacerts"), config.config_dictionary["truststore_file"])
-            except Exception, error:
-                print " ERROR: Could not fetch or copy {fetch_file_name} for tomcat!!".format(fetch_file_name = fetch_file_name)
-                logger.error(error)
-
-    #NOTE: The truststore uses the java default password: "changeit"
+    setup_temp_ca(devel)
+    _download_truststore_file()
+    
     #Edit the server.xml file to contain proper location of certificates
     logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
     edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
-
 
     add_my_cert_to_truststore("--keystore-pass",config.config_dictionary["keystore_password"])
 

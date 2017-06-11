@@ -449,8 +449,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     else:
         try:
             if os.stat(config.ks_secret_file).st_size != 0:
-                with open(config.ks_secret_file, 'rb') as f:
-                    config.config_dictionary["keystore_password"] = f.read().strip()
+                config.config_dictionary["keystore_password"] = esg_functions.get_keystore_password()
                 configure_tomcat(config.config_dictionary["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel=devel)
         except OSError, error:
             logger.error(error)
@@ -477,9 +476,6 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     esg_functions.download_update(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","robots.txt"), "{esg_dist_url}/robots.txt".format(esg_dist_url = esg_dist_url))
     esg_functions.download_update(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps","ROOT","favicon.ico"), "{esg_dist_url}/favicon.ico".format(esg_dist_url = esg_dist_url))
 
-    # if os.stat(config.ks_secret_file).st_size != 0:
-    #     with open(config.ks_secret_file, 'rb') as f:
-    #         keystore_password = f.read().strip()
     migrate_tomcat_credentials_to_esgf(esg_dist_url)
     sleep(1)
     start_tomcat()
@@ -489,7 +485,6 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     else:
         logger.error("Tomcat Port Check failed")
         print "[FAIL]"
-        os.chdir(starting_directory)
         esg_functions.checked_done(1)
 
 

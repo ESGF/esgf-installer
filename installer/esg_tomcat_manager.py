@@ -494,7 +494,6 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
 
     return True
 
-
 def download_server_config_file(esg_dist_url):
     ''' Download the server.xml config file from the distribution mirror '''
     config_file_name = "server.xml"
@@ -505,6 +504,94 @@ def download_server_config_file(esg_dist_url):
 
     os.chmod(config_file_path, 0600)
     os.chown(config_file_path, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+
+def _set_keystore_password():
+    while True:
+        keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+        if not keystore_password_input:
+            print "Invalid password"
+            continue
+
+        keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
+        if keystore_password_input == keystore_password_input_confirmation:
+            config.config_dictionary["keystore_password"] = keystore_password_input
+            break
+        else:
+            print "Sorry, values did not match. Please try again."
+            continue
+
+def _get_esgf_host():
+    ''' Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) '''
+    try:
+        esgf_host = config.config_dictionary["esgf_host"]
+    except KeyError:
+        esgf_host = socket.getfqdn()
+
+    return esgf_host
+
+def _set_distinguished_name(esgf_host):
+    #NOTE:
+    #As Reference on Distingueshed Names (DNs)
+    #http://download.oracle.com/javase/1.4.2/docs/tooldocs/windows/keytool.html
+    #According to that document, case does not matter but ORDER DOES!
+    #See script scope declaration of this variable (default_dname [suffix] = "OU=ESGF.ORG, O=ESGF")
+
+    use_distinguished_name = "Y"
+    try:
+        distinguished_name    
+    except NameError:
+        distinguished_name = config.config_dictionary["default_distinguished_name"]
+
+    distringuished_name_input = raw_input("Would you like to use the DN: [{distinguished_name}]?  [Y/n]".format(distinguished_name = distinguished_name))
+
+    if distringuished_name_input.lower in ("n", "no", "y", "yes"):
+        use_distinguished_name = distringuished_name_input
+
+    if distringuished_name_input.lower() in ["yes", "y"]:
+        distinguished_name = "CN={esgf_host}, {distinguished_name}".format(esgf_host = esgf_host, distinguished_name = distinguished_name)
+        print "Using keystore DN = {distinguished_name}".format(distinguished_name = distinguished_name)
+
+    logger.debug("Your selection is %s", use_distinguished_name)
+    logger.debug("distinguished_name = %s", distinguished_name)
+
+    return (distinguished_name, use_distinguished_name)
+
+def create_keystore(keystore_password):
+    ''' Use the Java Keytool to create a keystore '''
+    print "Launching Java's keytool:"
+
+    if not len(config.config_dictionary["keystore_password"]) > 0:
+        _set_keystore_password()
+
+    esgf_host = _get_esgf_host()
+    distinguished_name, use_distinguished_name = _set_distinguished_name(esgf_host)
+
+    if not distinguished_name or use_distinguished_name.lower() in ["n", "no"]:
+        java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias {keystore_alias} -keyalg RSA \
+        -keystore ${keystore_file} \
+        -validity 365 -storepass {keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
+            keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = config.config_dictionary["keystore_password"])
+        
+        java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
+        # keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+        if java_keytool_process["returncode"] != 0:
+            print " ERROR: keytool genkey command failed" 
+        esg_functions.checked_done(1)
+    else:
+        # distringuished_name_sed_output = subprocess.check_output("echo {distinguished_name} | sed -n 's#.*CN=\([^,]*\),.*#\1#p'".format(distinguished_name = distinguished_name))
+        logger.info("regex on distinguished_name: %s", re.search("(CN=)(\S+)(,)", distinguished_name).group(2))
+        if re.search("(CN=)(\S+)(,)", distinguished_name).group(2):
+
+            java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
+            {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
+            -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"], 
+            keystore_alias = config.config_dictionary["keystore_alias"], keystore_file = config.config_dictionary["keystore_file"], keystore_password = keystore_password)
+            
+            # keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
+            java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
+            if java_keytool_process["returncode"] != 0:
+                print " ERROR: keytool genkey command failed" 
+            esg_functions.checked_done(1)
 
 def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     #----------------------------
@@ -523,91 +610,17 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     print "Looking for keystore [{keystore_file}]...".format(keystore_file = config.config_dictionary["keystore_file"])
     if os.path.isfile(config.config_dictionary["keystore_file"]):
         print "Found keystore file"
+        print "Using existing keystore \"{keystore_file}\"".format(keystore_file =config.config_dictionary["keystore_file"])
     else:
         print "Could not find keystore file"
+        #Create a keystore in $tomcat_conf_dir
+        print "Keystore setup: "
+        create_keystore(keystore_password)
 
-    #Create a keystore in $tomcat_conf_dir
-    print "Keystore setup: "
-
-    try:
-        config.config_dictionary["keystore_password"]
-    except KeyError, error:
-        with open(config.ks_secret_file, 'rb') as f:
-            config.config_dictionary["keystore_password"] = f.read().strip()
-    # if not keystore_password:
-    #     with open(config.ks_secret_file, 'rb') as f:
-    #         keystore_password = f.read().strip()
-
-    if not os.path.isfile(config.config_dictionary["keystore_file"]):
-        print "Launching Java's keytool:"
-
-        if not len(config.config_dictionary["keystore_password"]) > 0:
-            verify_password = None
-            while True:
-                keystore_password_input = raw_input("Please enter the password for this keystore   : ")
-                if not keystore_password_input:
-                    print "Invalid password"
-                    continue
-
-                keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
-                if keystore_password_input == keystore_password_input_confirmation:
-                    config.config_dictionary["keystore_password"] = keystore_password_input
-                    break
-                else:
-                    print "Sorry, values did not match. Please try again."
-                    continue
-
-
-        #NOTE:
-        #As Reference on Distingueshed Names (DNs)
-        #http://download.oracle.com/javase/1.4.2/docs/tooldocs/windows/keytool.html
-        #According to that document, case does not matter but ORDER DOES!
-        #See script scope declaration of this variable (default_dname [suffix] = "OU=ESGF.ORG, O=ESGF")
-
-        use_distinguished_name = "Y"
-        try:
-            distinguished_name    
-        except NameError:
-            distinguished_name = config.config_dictionary["default_distinguished_name"]
-
-        distringuished_name_input = raw_input("Would you like to use the DN: [{distinguished_name}]?  [Y/n]".format(distinguished_name = distinguished_name))
-
-        if distringuished_name_input.lower in ("n", "no", "y", "yes"):
-            use_distinguished_name = distringuished_name_input
-
-        logger.debug("Your selection is %s", distringuished_name_input)
-        logger.debug("distinguished_name = %s", distinguished_name)
-
-        if not distinguished_name or use_distinguished_name.lower == "n":
-            java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias {keystore_alias} -keyalg RSA \
-            -keystore ${keystore_file} \
-            -validity 365 -storepass {keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
-                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = config.config_dictionary["keystore_password"])
-            keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-            if keytool_return_code != 0:
-                print " ERROR: keytool genkey command failed" 
-                os.chdir(starting_directory)
-            esg_functions.checked_done(1)
-        else:
-            # distringuished_name_sed_output = subprocess.check_output("echo {distinguished_name} | sed -n 's#.*CN=\([^,]*\),.*#\1#p'".format(distinguished_name = distinguished_name))
-            if re.search("(CN=)(\S+)(,)", distinguished_name).group(2):
-                try:
-                    esgf_host = config.config_dictionary["esgf_host"]
-                except KeyError:
-                    esgf_host = socket.getfqdn()
-                distinguished_name = "CN={esgf_host}, {distinguished_name}".format(esgf_host = esgf_host, distinguished_name = distinguished_name)
-                print "Using keystore DN = ${distinguished_name}".format(distinguished_name = distinguished_name)
-                java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
-                {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
-                -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"], 
-                keystore_alias = config.config_dictionary["keystore_alias"], keystore_file = config.config_dictionary["keystore_file"], keystore_password = keystore_password)
-                keytool_return_code = subprocess.call(shlex.split(java_keytool_command))
-                if keytool_return_code != 0:
-                    print " ERROR: keytool genkey command failed" 
-                    os.chdir(starting_directory)
-                esg_functions.checked_done(1)
-    else:
-        print "Using existing keystore \"{keystore_file}\"".format(keystore_file =config.config_dictionary["keystore_file"])
+    # try:
+    #     config.config_dictionary["keystore_password"]
+    # except KeyError, error:
+    #     config.config_dictionary["keystore_password"] = esg_functions.get_keystore_password()
 
     setup_temp_ca()
     #Fetch/Copy truststore to $tomcat_conf_dir

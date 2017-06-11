@@ -374,6 +374,22 @@ def _upgrade_tomcat_version(existing_tomcat_directory):
 
     print "upgrade migration complete"
 
+def _remove_unnecessary_webapps():
+    os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
+    print "Checking for unnecessary webapps with dubious security implications as a precaution..."
+    obsolete_directory_list =["examples", "docs",  "host-manager", "manager"]
+    for directory in obsolete_directory_list:
+        if not os.path.exists(directory):
+            continue
+        directory_full_path = esg_functions.readlinkf(directory)
+        print "Removing {directory_full_path}".format(directory_full_path = directory_full_path)
+        try:
+            shutil.rmtree(directory_full_path)
+            print "{directory_full_path} successfully deleted [OK]".format(directory_full_path = directory_full_path)
+        except Exception, error:
+            print "[FAIL]; Could not delete webapp"
+            logger.error(error)
+
 def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
@@ -419,8 +435,6 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
 
     build_jsvc()
 
-    
-
     if not os.path.isfile("/usr/lib/libcap.so") and os.path.isfile("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"])):
         os.symlink("/lib{word_size}/libcap.so".format(word_size = config.config_dictionary["word_size"]), "/usr/lib/libcap.so")
 
@@ -451,22 +465,9 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
         logger.error(error)
              
     #-------------------------------
-    # For Security Reasons...
+    # Remove unnecessary webapps for Security Reasons...
     #-------------------------------
-    os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
-    print "Checking for unnecessary webapps with dubious security implications as a precaution..."
-    obsolete_directory_list =["examples", "docs",  "host-manager", "manager"]
-    for directory in obsolete_directory_list:
-        if not os.path.exists(directory):
-            continue
-        directory_full_path = esg_functions.readlinkf(directory)
-        print "Removing {directory_full_path}".format(directory_full_path = directory_full_path)
-        try:
-            shutil.rmtree(directory_full_path)
-            print "{directory_full_path} successfully deleted [OK]".format(directory_full_path = directory_full_path)
-        except Exception, error:
-            print "[FAIL]"
-            logger.error(error)
+    _remove_unnecessary_webapps()
 
     os.chdir(config.config_dictionary["tomcat_install_dir"])
 

@@ -616,48 +616,49 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     print "*******************************"
     print "Configuring Tomcat... (for Node Manager)"
     print "*******************************"
+    with esg_bash2py.pushd(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf")):
+        logger.info("Changed directory to: %s", os.getcwd())
+        # starting_directory = os.getcwd()
+        # os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf"))
 
-    starting_directory = os.getcwd()
-    os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf"))
+        download_server_config_file(esg_dist_url)
 
-    download_server_config_file(esg_dist_url)
+        print "Looking for keystore [{keystore_file}]...".format(keystore_file = config.config_dictionary["keystore_file"])
+        if os.path.isfile(config.config_dictionary["keystore_file"]):
+            print "Found keystore file"
+            print "Using existing keystore \"{keystore_file}\"".format(keystore_file =config.config_dictionary["keystore_file"])
+        else:
+            print "Could not find keystore file"
+            #Create a keystore in $tomcat_conf_dir
+            print "Keystore setup: "
+            create_keystore(keystore_password)
 
-    print "Looking for keystore [{keystore_file}]...".format(keystore_file = config.config_dictionary["keystore_file"])
-    if os.path.isfile(config.config_dictionary["keystore_file"]):
-        print "Found keystore file"
-        print "Using existing keystore \"{keystore_file}\"".format(keystore_file =config.config_dictionary["keystore_file"])
-    else:
-        print "Could not find keystore file"
-        #Create a keystore in $tomcat_conf_dir
-        print "Keystore setup: "
-        create_keystore(keystore_password)
+        setup_temp_ca(devel)
+        _download_truststore_file()
+        
+        #Edit the server.xml file to contain proper location of certificates
+        logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
+        edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
 
-    setup_temp_ca(devel)
-    _download_truststore_file()
-    
-    #Edit the server.xml file to contain proper location of certificates
-    logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
-    edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
+        add_my_cert_to_truststore("--keystore-pass",config.config_dictionary["keystore_password"])
 
-    add_my_cert_to_truststore("--keystore-pass",config.config_dictionary["keystore_password"])
+        try:
+            os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+                config.config_dictionary["tomcat_group"]).gr_gid)
+        except Exception, error:
+            print "**WARNING**: Could not change owner/group of {tomcat_install_dir} successfully".format(tomcat_install_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
+            logger.error(error)
+            esg_functions.checked_done(1)
 
-    try:
-        os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
-            config.config_dictionary["tomcat_group"]).gr_gid)
-    except Exception, error:
-        print "**WARNING**: Could not change owner/group of {tomcat_install_dir} successfully".format(tomcat_install_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
-        logger.error(error)
-        esg_functions.checked_done(1)
+        try:
+            os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
+                config.config_dictionary["tomcat_group"]).gr_gid)
+        except Exception, error:
+            print "**WARNING**: Could not change owner/group of {tomcat_conf_dir} successfully".format(tomcat_conf_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]))
+            logger.error(error)
+            esg_functions.checked_done(1)
 
-    try:
-        os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
-            config.config_dictionary["tomcat_group"]).gr_gid)
-    except Exception, error:
-        print "**WARNING**: Could not change owner/group of {tomcat_conf_dir} successfully".format(tomcat_conf_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]))
-        logger.error(error)
-        esg_functions.checked_done(1)
-
-    os.chdir(starting_directory)
+        # os.chdir(starting_directory)
 
 
 def edit_tomcat_server_xml(keystore_password):

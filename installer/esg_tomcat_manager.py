@@ -508,6 +508,8 @@ def download_server_config_file(esg_dist_url):
 def _set_keystore_password():
     while True:
         keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+        if keystore_password_input == "changeit":
+                break
         if not keystore_password_input:
             print "Invalid password"
             continue
@@ -519,6 +521,7 @@ def _set_keystore_password():
         else:
             print "Sorry, values did not match. Please try again."
             continue
+    return True
 
 def _get_esgf_host():
     ''' Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) '''
@@ -618,8 +621,6 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
     print "*******************************"
     with esg_bash2py.pushd(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf")):
         logger.info("Changed directory to: %s", os.getcwd())
-        # starting_directory = os.getcwd()
-        # os.chdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf"))
 
         download_server_config_file(esg_dist_url)
 
@@ -657,9 +658,6 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
             print "**WARNING**: Could not change owner/group of {tomcat_conf_dir} successfully".format(tomcat_conf_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_conf_dir"]))
             logger.error(error)
             esg_functions.checked_done(1)
-
-        # os.chdir(starting_directory)
-
 
 def edit_tomcat_server_xml(keystore_password):
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
@@ -730,38 +728,22 @@ def add_my_cert_to_truststore(action, value):
     logger.debug("truststore_pass_value: %s", local_truststore_password)
     logger.debug("check_private_keystore_flag: %s", check_private_keystore_flag)
 
-    try:
-        with open(config.ks_secret_file, 'rb') as f:
-            keystore_password_in_file = f.read().strip()
-    except IOError, error:
-        logger.error(error)
-        keystore_password_in_file = None
+    keystore_password_in_file = esg_functions.get_keystore_password()
 
     if keystore_password_in_file != local_keystore_file:
-        while True:
-            keystore_password_input = raw_input("Please enter the password for this keystore: ")
-            if keystore_password_input == "changeit":
-                break
-            if not keystore_password_input:
-                print "Invalid password [{keystore_password_input}]".format(keystore_password_input = keystore_password_input)
-                continue
-            store_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
-            if keystore_password_input == store_password_input_confirmation:
-                java_keytool_command = "{java_install_dir}/bin/keytool -list -keystore {local_keystore_file} \
-                -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
-                local_keystore_file = local_keystore_file.strip(), local_keystore_password = keystore_password_input)
-                logger.debug("java_keytool_command: %s", java_keytool_command)
+        if _set_keystore_password():
+            local_keystore_password = esg_functions.get_keystore_password()
 
-                keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
-                keytool_return_code_processes, stderr_processes = keytool_return_code.communicate()
-                logger.debug("keytool_return_code_processes: %s", keytool_return_code_processes)
-                if keytool_return_code.returncode != 0:
-                    print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
-                    continue
-                local_keystore_password = keystore_password_input
-                break
-            else:
-                print "Sorry, values did not match"
+            keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {local_keystore_file} \
+            -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+            local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
+            logger.debug("keytool_list_command: %s", keytool_list_command)
+
+            keytool_list_process = esg_functions.call_subprocess(keytool_list_command)
+
+            if keytool_list_process["returncode"] != 0:
+                print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
+
 
     if check_private_keystore_flag:
         #only making this call to test password
@@ -1011,7 +993,6 @@ def setup_temp_ca(devel):
     logger.info("stdout_processes: %s", stdout_processes)
     logger.info("stderr_processes: %s", stderr_processes)
     if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
-    # if subprocess.call(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")) == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
 
@@ -1020,11 +1001,9 @@ def setup_temp_ca(devel):
         logger.debug("reqhost_ans_file: %s", reqhost_ans_file)
         logger.debug("reqhost_ans_file contents: %s", reqhost_ans_file.read())
         esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
-        # subprocess.call(shlex.split("perl CA.pl -newreq-nodes"), stdin = reqhost_ans_file)
 
     with open("setuphost.ans", "rb") as setuphost_ans_file:
         esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
-        # subprocess.call(shlex.split("perl CA.pl -sign "), stdin = setuphost_ans_file)
 
     with open("cacert.pem", "wb") as cacert_file:
         subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)

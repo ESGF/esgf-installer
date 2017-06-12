@@ -681,6 +681,17 @@ def edit_tomcat_server_xml(keystore_password):
     tree.write(open(server_xml_path, "wb"), pretty_print = True)
     tree.write(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "test_output.xml"), pretty_print = True)
 
+def java_keytool_list(java_install_dir, keystore_file, keystore_password):
+    ''' Runs the list option of the Java Keytool '''
+    keytool_list_command = "{java_install_dir}/bin/keytool -v -list -keystore {local_keystore_file} \
+    -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
+    local_keystore_file = keystore_file.strip(), local_keystore_password = keystore_password)
+    logger.debug("keytool_list_command: %s", keytool_list_command)
+
+    keytool_list_process = esg_functions.call_subprocess(keytool_list_command)
+
+    return keytool_list_process
+
 
 def add_my_cert_to_truststore(action, value):
     '''
@@ -734,12 +745,7 @@ def add_my_cert_to_truststore(action, value):
         if _set_keystore_password():
             local_keystore_password = esg_functions.get_keystore_password()
 
-            keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {local_keystore_file} \
-            -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
-            local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
-            logger.debug("keytool_list_command: %s", keytool_list_command)
-
-            keytool_list_process = esg_functions.call_subprocess(keytool_list_command)
+            keytool_list_process = java_keytool_list(config.config_dictionary["java_install_dir"], local_keystore_file, local_keystore_password)
 
             if keytool_list_process["returncode"] != 0:
                 print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. Try again...".format(local_keystore_file = local_keystore_file)
@@ -750,6 +756,7 @@ def add_my_cert_to_truststore(action, value):
         java_keytool_command = "{java_install_dir}/bin/keytool -v -list -keystore {local_keystore_file} \
         -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
         local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
+
         logger.debug("java_keytool_command: %s", java_keytool_command)
         keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
         keytool_return_code_processes, stderr_processes = keytool_return_code.communicate()

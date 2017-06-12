@@ -7,12 +7,13 @@ import logging
 import platform
 import multiprocessing
 # from pwd import getpwnam
-import esg_functions
+# import esg_functions
 import esg_bash2py
 
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+print "flag"
 class EsgInit(object):
 
     '''
@@ -26,18 +27,15 @@ class EsgInit(object):
     # _t=${0%.*} <-     Strip shortest match of $substring from back of $string
     # expected=${2:-0}  -> expected=Bash2Py(Expand.colonMinus("2","0"))
 
-    install_prefix = esg_bash2py.Expand.colonMinus(
-        "install_prefix", esg_bash2py.Expand.colonMinus("ESGF_INSTALL_PREFIX", "/usr/local"))
-    esg_root_dir = esg_bash2py.Expand.colonMinus(
-        "esg_root_dir", esg_bash2py.Expand.colonMinus("ESGF_HOME", "/esg"))
+    install_prefix =  "/usr/local"
+    esg_root_dir =  "/esg"
     esg_config_dir = esg_root_dir + "/config"
     esg_config_type_file = esg_config_dir + "/config_type"
     esgf_secret_file = esg_config_dir + "/.esgf_pass"
     pg_secret_file = esg_config_dir + "/.esg_pg_pass"
     pub_secret_file = esg_config_dir + "/.esg_pg_publisher_pass"
     ks_secret_file = esg_config_dir + "/.esg_keystore_pass"
-    install_manifest = esg_bash2py.Expand.colonMinus(
-        "install_manifest", esg_root_dir + "/esgf-install-manifest")
+    install_manifest = "install_manifest", esg_root_dir + "/esgf-install-manifest"
     envfile = "/etc/esg.env"
     config_dictionary = {}
     # #--------------
@@ -57,54 +55,38 @@ class EsgInit(object):
         #--------------------------------
         '''
         internal_code_versions = {}
-        internal_code_versions["apache_frontend_version"] = esg_bash2py.Expand.colonMinus(
-            "apache_frontend_version", "v1.02")
-        internal_code_versions["cdat_version"] = esg_bash2py.Expand.colonMinus(
-            "cdat_version", "2.2.0")
+        internal_code_versions["apache_frontend_version"] = "v1.02"
+        internal_code_versions["cdat_version"] = "2.2.0"
         #cdat_tag="1.5.1.esgf-v1.7.0"
-
-        internal_code_versions["esgcet_version"] = esg_bash2py.Expand.colonMinus(
-            "esgcet_version", "3.0.1")
-        internal_code_versions["publisher_tag"] = esg_bash2py.Expand.colonMinus(
-            "publisher_tag", "v3.0.1")
+        internal_code_versions["esgcet_version"] =  "3.0.1"
+        internal_code_versions["publisher_tag"] = "v3.0.1"
 
         # see esgf-node-manager project:
-        internal_code_versions["esgf_node_manager_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_node_manager_version", "0.7.16")
-        internal_code_versions["esgf_node_manager_db_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_node_manager_db_version", "0.1.5")
+        internal_code_versions["esgf_node_manager_version"] = "0.7.16"
+        internal_code_versions["esgf_node_manager_db_version"] = "0.1.5"
 
         # see esgf-security project:
-        internal_code_versions["esgf_security_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_security_version", "2.7.6")
-        internal_code_versions["esgf_security_db_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_security_db_version", "0.1.5")
+        internal_code_versions["esgf_security_version"] = "2.7.6"
+        internal_code_versions["esgf_security_db_version"] = "0.1.5"
 
         # see esg-orp project:
-        internal_code_versions["esg_orp_version"] = esg_bash2py.Expand.colonMinus(
-            "esg_orp_version", "2.8.10")
+        internal_code_versions["esg_orp_version"] = "2.8.10"
 
         # see esgf-idp project:
-        internal_code_versions["esgf_idp_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_idp_version", "2.7.2")
+        internal_code_versions["esgf_idp_version"] = "2.7.2"
 
         # see esg-search project:
-        internal_code_versions["esg_search_version"] = esg_bash2py.Expand.colonMinus(
-            "esg_search_version", "4.8.4")
+        internal_code_versions["esg_search_version"] = "4.8.4"
 
         # see esgf-web-fe project:
-        internal_code_versions["esgf_web_fe_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_web_fe_version", "2.6.5")
+        internal_code_versions["esgf_web_fe_version"] = "2.6.5"
 
         # see esgf-dashboard project:
-        internal_code_versions["esgf_dashboard_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_dashboard_version", "1.3.18")
-        internal_code_versions["esgf_dashboard_db_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_dashboard_db_version", "0.01")
+        internal_code_versions["esgf_dashboard_version"] = "1.3.18"
+        internal_code_versions["esgf_dashboard_db_version"] = "0.01"
 
         # see esgf-desktop project:
-        internal_code_versions["esgf_desktop_version"] = esg_bash2py.Expand.colonMinus(
-            "esgf_desktop_version", "0.0.20")
+        internal_code_versions["esgf_desktop_version"] = "0.0.20"
 
         self.config_dictionary.update(internal_code_versions)
         return internal_code_versions
@@ -116,34 +98,20 @@ class EsgInit(object):
         #--------------------------------
         '''
         external_program_versions = {}
-        external_program_versions["openssl_version"] = esg_bash2py.Expand.colonMinus(
-            "openssl_version", "0.9.8r")
-        external_program_versions["openssl_min_version"] = esg_bash2py.Expand.colonMinus(
-            "openssl_min_version", "0.9.8e")
-        external_program_versions["openssl_max_version"] = esg_bash2py.Expand.colonMinus(
-            "openssl_max_version", "0.9.9z")
-        external_program_versions["java_version"] = esg_bash2py.Expand.colonMinus(
-            "java_version", "1.8.0_112")
-        external_program_versions["java_min_version"] = esg_bash2py.Expand.colonMinus(
-            "java_min_version", "1.8.0_112")
-        external_program_versions["ant_version"] = esg_bash2py.Expand.colonMinus(
-            "ant_version", "1.9.1")
-        external_program_versions["ant_min_version"] = esg_bash2py.Expand.colonMinus(
-            "ant_min_version", "1.9.1")
-        external_program_versions["postgress_version"] = esg_bash2py.Expand.colonMinus(
-            "postgress_version", "8.4.20")
-        external_program_versions["postgress_min_version"] = esg_bash2py.Expand.colonMinus(
-            "postgress_min_version", "8.4.20")
-        external_program_versions["tomcat_version"] = esg_bash2py.Expand.colonMinus(
-            "tomcat_version", "8.5.9")
-        external_program_versions["tomcat_min_version"] = esg_bash2py.Expand.colonMinus(
-            "tomcat_min_version", "8.5.9")
-        external_program_versions["tds_version"] = esg_bash2py.Expand.colonMinus(
-            "tds_version", "5.0.0")
-        external_program_versions["tds_min_version"] = esg_bash2py.Expand.colonMinus(
-            "tds_min_version", "5.0.0")
-        external_program_versions["python_version"] = esg_bash2py.Expand.colonMinus(
-            "python_version", "2.7")
+        external_program_versions["openssl_version"] = "0.9.8r"
+        external_program_versions["openssl_min_version"] = "0.9.8e"
+        external_program_versions["openssl_max_version"] = "0.9.9z"
+        external_program_versions["java_version"] = "1.8.0_112"
+        external_program_versions["java_min_version"] = "1.8.0_112"
+        external_program_versions["ant_version"] =  "1.9.1"
+        external_program_versions["ant_min_version"] = "1.9.1"
+        external_program_versions["postgress_version"] =  "8.4.20"
+        external_program_versions["postgress_min_version"] = "8.4.20"
+        external_program_versions["tomcat_version"] = "8.5.9"
+        external_program_versions["tomcat_min_version"] =  "8.5.9"
+        external_program_versions["tds_version"] = "5.0.0"
+        external_program_versions["tds_min_version"] = "5.0.0"
+        external_program_versions["python_version"] = "2.7"
         self.config_dictionary.update(external_program_versions)
         return external_program_versions
         # cmake_version=${cmake_version:="2.8.12.2"} ; cmake_min_version=${cmake_min_version:="2.8.10.2"} ; cmake_max_version=${cmake_max_version:="2.8.12.2"}
@@ -158,22 +126,16 @@ class EsgInit(object):
         #--------------------------------
         '''
         external_script_variables = {}
-        external_script_variables["openssl_install_dir"] = esg_bash2py.Expand.colonMinus(
-            "OPENSSL_HOME", self.install_prefix + "/openssl")
-        external_script_variables["postgress_install_dir"] = esg_bash2py.Expand.colonMinus(
-            "PGHOME", "/var/lib/pgsql")
-        external_script_variables["postgress_bin_dir"] = esg_bash2py.Expand.colonMinus(
-            "PGBINDIR", "/usr/bin")
-        external_script_variables["postgress_lib_dir"] = esg_bash2py.Expand.colonMinus(
-            "PGLIBDIR", "/usr/lib64/pgsql")
-        external_script_variables[
-            "postgress_user"] = esg_bash2py.Expand.colonMinus("PGUSER", "dbsuper")
+        external_script_variables["openssl_install_dir"] = self.install_prefix + "/openssl"
+        external_script_variables["postgress_install_dir"] = "/var/lib/pgsql"
+        external_script_variables["postgress_bin_dir"] = "/usr/bin"
+        external_script_variables["postgress_lib_dir"] = "/usr/lib64/pgsql"
+        external_script_variables["postgress_user"] = "dbsuper"
 
         # local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
         # pg_secret = subprocess.check_output("cat " + pg_secret_file + " 2>/dev/null ") <- This redirects stderr to a named pipe called /dev/null; In the same way, command 2> file will change the standard error and will make it point to file. Standard error is used by applications to print errors. 
         # pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
-        external_script_variables["pg_sys_acct_passwd"] = esg_bash2py.Expand.colonMinus(
-            "pg_sys_acct_passwd", esg_bash2py.Expand.colonMinus("pg_secret", "changeme"))
+        external_script_variables["pg_sys_acct_passwd"] = "changeme"
         # del pg_secret
         # local pub_secret=$(cat ${pub_secret_file} 2> /dev/null)
         # pub_secret = subprocess.check_output("cat " + pub_secret_file + " 2>/dev/null ")
@@ -340,18 +302,13 @@ class EsgInit(object):
         # Script vars (internal)
         #--------------
         internal_script_variables = {}
-        internal_script_variables["esg_backup_dir"] = esg_bash2py.Expand.colonMinus(
-            "esg_backup_dir", self.esg_root_dir + "/backups")
+        internal_script_variables["esg_backup_dir"] = self.esg_root_dir + "/backups"
         # internal_script_variables["esg_config_dir"] = esg_bash2py.Expand.colonMinus(
         #     "esg_config_dir", self.esg_root_dir + "/config")
-        internal_script_variables["esg_log_dir"] = esg_bash2py.Expand.colonMinus(
-            "esg_log_dir", self.esg_root_dir + "/log")
-        internal_script_variables["esg_tools_dir"] = esg_bash2py.Expand.colonMinus(
-            "esg_tools_dir", self.esg_root_dir + "/tools")
-        internal_script_variables["esg_etc_dir"] = esg_bash2py.Expand.colonMinus(
-            "esg_etc_dir", self.esg_root_dir + "/etc")
-        internal_script_variables["workdir"] = esg_bash2py.Expand.colonMinus("workdir", esg_bash2py.Expand.colonMinus(
-            "ESGF_INSTALL_WORKDIR", self.config_dictionary["installer_home"] + "/workbench/esg"))
+        internal_script_variables["esg_log_dir"] = self.esg_root_dir + "/log"
+        internal_script_variables["esg_tools_dir"] = self.esg_root_dir + "/tools"
+        internal_script_variables["esg_etc_dir"] = self.esg_root_dir + "/etc"
+        internal_script_variables["workdir"] = self.config_dictionary["installer_home"] + "/workbench/esg"
 
         internal_script_variables["word_size"] = platform.architecture()[0].split('bit')[0]
 
@@ -359,14 +316,11 @@ class EsgInit(object):
         # date_format="+%Y_%m_%d_%H%M%S"
         internal_script_variables["date_format"] = "+%Y_%m_%d_%H%M%S"
         # num_backups_to_keep=${num_backups_to_keep:-7}
-        internal_script_variables["num_backups_to_keep"] = esg_bash2py.Expand.colonMinus(
-            "num_backups_to_keep", "7")
+        internal_script_variables["num_backups_to_keep"] = "7"
         # compress_extensions=".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
-        internal_script_variables[
-            "compress_extensions"] = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+        internal_script_variables["compress_extensions"] = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
         # certificate_extensions="pem|crt|cert|key"
-        internal_script_variables[
-            "certificate_extensions"] = "pem|crt|cert|key"
+        internal_script_variables["certificate_extensions"] = "pem|crt|cert|key"
 
         # openssl_dist_url=http://www.openssl.org/source/openssl-${openssl_version}.tar.gz
         internal_script_variables["openssl_dist_url"] = "http://www.openssl.org/source/openssl-" + \
@@ -376,8 +330,10 @@ class EsgInit(object):
         internal_script_variables["esgf_coffee_dist_mirror"] = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         internal_script_variables["esg_coffee_dist_url_root"] = internal_script_variables["esgf_coffee_dist_mirror"]+ "/dist"
         # java_dist_url=${esg_dist_url_root}/java/${java_version}/jdk${java_version}-${word_size}.tar.gz
-        java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (internal_script_variables["esg_dist_url_root"], self.config_dictionary["java_version"], self.config_dictionary["java_version"], internal_script_variables["word_size"])
-        java_rpm_url = "{esg_dist_url_root}/java/{java_version}/jdk-8u112-linux-x64.rpm".format(esg_dist_url_root = internal_script_variables["esg_dist_url_root"], java_version = self.config_dictionary["java_version"])
+        java_dist_url="$%s/java/$%s/jdk$%s-$%s.tar.gz" % (internal_script_variables["esg_dist_url_root"], 
+            self.config_dictionary["java_version"], self.config_dictionary["java_version"], internal_script_variables["word_size"])
+        java_rpm_url = "{esg_dist_url_root}/java/{java_version}/jdk-8u112-linux-x64.rpm".format(esg_dist_url_root = internal_script_variables["esg_dist_url_root"], 
+            java_version = self.config_dictionary["java_version"])
         # ant_dist_url=http://archive.apache.org/dist/ant/binaries/apache-ant-${ant_version}-bin.tar.gz
         internal_script_variables["ant_dist_url"] = "http://archive.apache.org/dist/ant/binaries/apache-ant-" + \
             self.config_dictionary["ant_version"] + "-bin.tar.gz"
@@ -390,35 +346,27 @@ class EsgInit(object):
         # bash_completion_url=${esg_dist_url}/thirdparty/bash-completion-20060301-1.noarch.rpm
         # bash_completion_url = esg_dist_url + "/thirdparty/bash-completion-20060301-1.noarch.rpm"
         # db_database=${ESGF_DB_NAME:-${db_database:-"esgcet"}}
-        internal_script_variables["db_database"] = esg_bash2py.Expand.colonMinus(
-            "ESGF_DB_NAME", esg_bash2py.Expand.colonMinus("db_database", "esgcet"))
+        internal_script_variables["db_database"] = "esgcet"
         # node_db_name=${db_database}
-        internal_script_variables[
-            "node_db_name"] = internal_script_variables["db_database"]
+        internal_script_variables["node_db_name"] = internal_script_variables["db_database"]
         # postgress_jar=postgresql-8.4-703.jdbc3.jar
-        internal_script_variables[
-            "postgress_jar"] = "postgresql-8.4-703.jdbc3.jar"
+        internal_script_variables["postgress_jar"] = "postgresql-8.4-703.jdbc3.jar"
         # postgress_driver=org.postgresql.Driver
         internal_script_variables["postgress_driver"] = "org.postgresql.Driver"
         # postgress_protocol=jdbc:postgresql:
         internal_script_variables["postgress_protocol"] = "jdbc:postgresql:"
         # pg_sys_acct=${pg_sys_acct:-postgres}
-        internal_script_variables["pg_sys_acct"] = esg_bash2py.Expand.colonMinus(
-            "pg_sys_acct", "postgres")
+        internal_script_variables["pg_sys_acct"] = "postgres"
         # pg_sys_acct_group=${pg_sys_acct_group:-$pg_sys_acct}
-        internal_script_variables["pg_sys_acct_group"] = esg_bash2py.Expand.colonMinus(
-            "pg_sys_acct_group", internal_script_variables["pg_sys_acct"])
+        internal_script_variables["pg_sys_acct_group"] = internal_script_variables["pg_sys_acct"]
         # #cmake_workdir=${workdir}/cmake
         # #cmake_repo=http://www.cmake.org/cmake.git
         # #cdat_repo=git://github.com/UV-CDAT/uvcdat.git
         # #cdat_repo_https=https://github.com/UV-CDAT/uvcdat.git
         # publisher_repo=git://github.com/ESGF/esg-publisher.git
-        internal_script_variables[
-            "publisher_repo"] = "git://github.com/ESGF/esg-publisher.git"
-        internal_script_variables[
-            "apache_frontend_repo"] = "https://github.com/ESGF/apache-frontend.git"
-        internal_script_variables[
-            "publisher_repo_https"] = "https://github.com/ESGF/esg-publisher.git"
+        internal_script_variables["publisher_repo"] = "git://github.com/ESGF/esg-publisher.git"
+        internal_script_variables["apache_frontend_repo"] = "https://github.com/ESGF/apache-frontend.git"
+        internal_script_variables["publisher_repo_https"] = "https://github.com/ESGF/esg-publisher.git"
         internal_script_variables["esgcet_egg_file"] = "esgcet-%s-py%s.egg" % (
             self.config_dictionary["esgcet_version"], self.config_dictionary["python_version"])
         internal_script_variables["esg_testdir"] = internal_script_variables[
@@ -432,12 +380,10 @@ class EsgInit(object):
         # thredds_dist_url=ftp://ftp.unidata.ucar.edu/pub/thredds/${tds_version%.*}/${tds_version}/thredds.war
         # thredds_esg_dist_url=${esg_dist_url}/thredds/${tds_version%.*}/${tds_version}/thredds.war
         # thredds_content_dir=${thredds_content_dir:-${esg_root_dir}/content}
-        internal_script_variables["thredds_content_dir"] = esg_bash2py.Expand.colonMinus(
-            "thredds_content_dir", self.esg_root_dir + "/content")
+        internal_script_variables["thredds_content_dir"] = self.esg_root_dir + "/content"
         # #NOTE: This root dir should match a root set in the thredds setup
         # thredds_root_dir=${esg_root_dir}/data
-        internal_script_variables[
-            "thredds_root_dir"] = self.esg_root_dir + "/data"
+        internal_script_variables["thredds_root_dir"] = self.esg_root_dir + "/data"
         # thredds_replica_dir=${thredds_root_dir}/replica
         internal_script_variables["thredds_replica_dir"] = internal_script_variables[
             "thredds_root_dir"] + "/replica"
@@ -447,10 +393,8 @@ class EsgInit(object):
         internal_script_variables["scripts_dir"] = self.install_prefix + "/bin"
         internal_script_variables["esg_installarg_file"] = internal_script_variables[
             "scripts_dir"] + "/esg-installarg"
-        internal_script_variables[
-            "no_globus"] = esg_bash2py.Expand.colonMinus("no_globus", "0")
-        internal_script_variables[
-            "force_install"] = esg_bash2py.Expand.colonMinus("force_install", "0")
+        internal_script_variables["no_globus"] = "0"
+        internal_script_variables["force_install"] = "0"
         # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
         # extkeytool_download_url= esg_dist_url + "/etc/idptools.tar.gz"
         # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
@@ -460,11 +404,10 @@ class EsgInit(object):
             "tomcat_conf_dir"] + "/keystore-tomcat"
         internal_script_variables["keystore_alias"] = "my_esgf_node"
         # keystore_password=${keystore_password}
-        internal_script_variables["keystore_password"] = esg_bash2py.Expand.colonMinus("keystore_password", "")
+        internal_script_variables["keystore_password"] = ""
         internal_script_variables["truststore_file"] = self.config_dictionary[
             "tomcat_conf_dir"] + "/esg-truststore.ts"
-        internal_script_variables["truststore_password"] = esg_bash2py.Expand.colonMinus(
-            "truststore_password", "changeit")
+        internal_script_variables["truststore_password"] = "changeit"
         # globus_global_certs_dir=/etc/grid-security/certificates
         internal_script_variables[
             "globus_global_certs_dir"] = "/etc/grid-security/certificates"

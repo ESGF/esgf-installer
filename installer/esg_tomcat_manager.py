@@ -754,7 +754,7 @@ def add_my_cert_to_truststore(action, value):
     if check_private_keystore_flag:
         #only making this call to test password
         keytool_list_process = java_keytool_list(config.config_dictionary["java_install_dir"], local_keystore_file, local_keystore_password)
-        
+
         if keytool_list_process["returncode"] != 0:
             print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. (re-run --add-my-cert-to-truststore)".format(local_keystore_file = local_keystore_file)
             return False
@@ -762,26 +762,24 @@ def add_my_cert_to_truststore(action, value):
             logger.info("[OK]")
 
         logger.debug("Peforming checks against configured values...")
-        keystore_password_hasher = hashlib.md5()
-        keystore_password_hasher.update(config.config_dictionary["keystore_password"])
-        keystore_password_md5 = keystore_password_hasher.hexdigest()
+        
+        keystore_password_md5 = esg_functions.get_md5sum_password(config.config_dictionary["keystore_password"])
+        local_keystore_password_md5 = esg_functions.get_md5sum_password(local_keystore_password)
 
-        local_keystore_password_hasher = hashlib.md5()
-        local_keystore_password_hasher.update(local_keystore_password)
-        local_keystore_password_md5 = local_keystore_password_hasher.hexdigest()
         logger.debug(keystore_password_md5 == local_keystore_password_md5)
 
         if config.config_dictionary["keystore_password"] != local_keystore_password:
             logger.info("\nWARNING: password entered does not match what's in the app server's configuration file\n")
+            
             # Update server.xml
             server_xml_object = etree.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
             root = server_xml_object.getroot()
             connector_element = root.find(".//Connector[@truststoreFile]")
             connector_element.set('keystorePass', local_keystore_password)
-            # server_xml_object.Server.Connector[1]["keystorePass"] = local_keystore_password
+
             print "  Adjusted app server's config file... "
-            # config.config_dictionary["keystore_password"] = server_xml_object.Server.Connector[1]["keystorePass"]
             config.config_dictionary["keystore_password"] = connector_element.get('keystorePass')
+
             if config.config_dictionary["keystore_password"] != local_keystore_password:
                 logger.info("[OK]")
             else:

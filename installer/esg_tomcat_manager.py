@@ -770,7 +770,7 @@ def add_my_cert_to_truststore(action, value):
 
         if config.config_dictionary["keystore_password"] != local_keystore_password:
             logger.info("\nWARNING: password entered does not match what's in the app server's configuration file\n")
-            
+
             # Update server.xml
             server_xml_object = etree.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
             root = server_xml_object.getroot()
@@ -850,20 +850,7 @@ def add_my_cert_to_truststore(action, value):
     os.chown(local_truststore_file, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
             config.config_dictionary["tomcat_group"]).gr_gid)
 
-
     return True
-
-
-
-    # def _define_acceptable_arguments():
-    #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
-    # truststore_arg_parser = argparse.ArgumentParser()
-    # truststore_arg_parser.add_argument("--keystore", "-ks" dest="keystore", help="Goes through the installation process and automatically starts up node services", action="store_true")
-    # truststore_arg_parser.add_argument("--keystore-pass", "-kpass", dest= "keystorepass" help="Updates the node manager", action="store_true")
-    # truststore_arg_parser.add_argument("--alias", "-a", dest="alias" help="Upgrade the node manager", action="store_true")
-    # truststore_arg_parser.add_argument("--truststore", "-ts", dest="truststore", help="Install local certificates", action="store_true")
-    # truststore_arg_parser.add_argument("--truststore-pass", "-tpass", dest="truststorepass", help="Install local certificates", action="store_true")
-    # truststore_arg_parser.add_argument("--no-check", dest="nocheck", help="Install local certificates", action="store_true")
 
 
 def sync_with_java_truststore(external_truststore = config.config_dictionary["truststore_file"]):

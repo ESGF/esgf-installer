@@ -1047,7 +1047,7 @@ setup_esgcet() {
 	pipcmd="pip install"
     fi
     
-    $pipcmd esgprep
+    $pipcmd esgprep==${esgprep_version}
     $pipcmd SQLAlchemy==0.7.10
     $pipcmd sqlalchemy_migrate
 

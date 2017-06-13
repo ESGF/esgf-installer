@@ -5463,7 +5463,7 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    #Turned off(source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
 
     source $esgf_nm_funcs_file && nm_stop
     stop_tomcat

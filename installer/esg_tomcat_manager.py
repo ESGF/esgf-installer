@@ -753,15 +753,9 @@ def add_my_cert_to_truststore(action, value):
 
     if check_private_keystore_flag:
         #only making this call to test password
-        java_keytool_command = "{java_install_dir}/bin/keytool -v -list -keystore {local_keystore_file} \
-        -storepass {local_keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
-        local_keystore_file = local_keystore_file.strip(), local_keystore_password = local_keystore_password)
-
-        logger.debug("java_keytool_command: %s", java_keytool_command)
-        keytool_return_code = subprocess.Popen(shlex.split(java_keytool_command))
-        keytool_return_code_processes, stderr_processes = keytool_return_code.communicate()
-        logger.debug("keytool_return_code_processes: %s", keytool_return_code_processes)
-        if keytool_return_code.returncode != 0:
+        keytool_list_process = java_keytool_list(config.config_dictionary["java_install_dir"], local_keystore_file, local_keystore_password)
+        
+        if keytool_list_process["returncode"] != 0:
             print "([FAIL]) Could not access private keystore {local_keystore_file} with provided password. (re-run --add-my-cert-to-truststore)".format(local_keystore_file = local_keystore_file)
             return False
         else:

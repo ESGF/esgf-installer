@@ -102,6 +102,12 @@ def get_md5sum(file_name):
         file_name_md5 = hasher.hexdigest()
         logger.debug("local_file_md5 : %s", file_name_md5)
     return file_name_md5
+
+def get_md5sum_password(password):
+    ''' Hash a password to get it's md5 value '''
+    password_hasher = hashlib.md5()
+    password_hasher.update(password)
+    return password_hasher.hexdigest()
 #----------------------------------------------------------
 # Path munging...
 #----------------------------------------------------------

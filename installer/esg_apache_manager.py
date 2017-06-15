@@ -17,6 +17,23 @@ logger = logging.getLogger(__name__)
 
 config = EsgInit()
 
+def clone_apache_repo(devel):
+    try:
+        git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+    except git.exc.GitCommandError, error:
+        logger.error(error)
+        logger.error("Git repo already exists.")
+
+    if os.path.isdir(os.path.join("apache_frontend", ".git")):
+        logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
+        # os.chdir("apache-frontend")
+        # logger.debug("changed directory to %s:", os.getcwd())
+        apache_frontend_repo_local = git.Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache_frontend")
+        if devel == 1:
+            apache_frontend_repo_local.git.checkout("devel")
+        else:
+            apache_frontend_repo_local.git.checkout("master")
+
 def setup_apache_frontend(devel = False):
     print '''
     *******************************
@@ -35,28 +52,15 @@ def setup_apache_frontend(devel = False):
     esg_bash2py.mkdir_p("apache_frontend")
     os.chdir("apache_frontend")
     logger.debug("changed directory to %s:", os.getcwd())
+    
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
+    clone_apache_repo(devel)
+
     try:
-        git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
-    except git.exc.GitCommandError, error:
+        host_name = esgf_host
+    except NameError, error:
         logger.error(error)
-        logger.error("Git repo already exists.")
-
-    if os.path.isdir(os.path.join("apache_frontend", ".git")):
-        logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
-        # os.chdir("apache-frontend")
-        # logger.debug("changed directory to %s:", os.getcwd())
-        apache_frontend_repo_local = git.Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache_frontend")
-        if devel == 1:
-            apache_frontend_repo_local.git.checkout("devel")
-        else:
-            apache_frontend_repo_local.git.checkout("master")
-
-        try:
-            host_name = esgf_host
-        except NameError, error:
-            logger.error(error)
-            host_name = socket.gethostname()
+        host_name = socket.gethostname()
 
         stop_httpd_command = "/etc/init.d/httpd stop"
         stop_httpd_process = subprocess.Popen(shlex.split(stop_httpd_command))

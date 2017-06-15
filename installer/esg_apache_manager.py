@@ -9,6 +9,7 @@ import filecmp
 import git
 import esg_bash2py
 import esg_version_manager
+import esg_functions
 from esg_init import EsgInit
 
 
@@ -34,6 +35,18 @@ def clone_apache_repo(devel):
         else:
             apache_frontend_repo_local.git.checkout("master")
 
+def stop_httpd():
+    stop_httpd_process = esg_functions.call_subprocess(shlex.split("/etc/init.d/httpd stop"))
+    if stop_httpd_process["returncode"] != 0:
+        logger.error("Could not stop the httpd process")
+
+def start_httpd():
+    #TODO: investigate why this uses a different binary than stop_httpd()
+    start_httpd_process = esg_functions.call_subprocess(shlex.split("/etc/init.d/esgf-httpd start"))
+    if start_httpd_process["returncode"] != 0:
+        logger.error("Could not start the httpd process")
+
+
 def setup_apache_frontend(devel = False):
     print '''
     *******************************
@@ -52,7 +65,7 @@ def setup_apache_frontend(devel = False):
     esg_bash2py.mkdir_p("apache_frontend")
     os.chdir("apache_frontend")
     logger.debug("changed directory to %s:", os.getcwd())
-    
+
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
     clone_apache_repo(devel)
 
@@ -62,10 +75,8 @@ def setup_apache_frontend(devel = False):
         logger.error(error)
         host_name = socket.gethostname()
 
-        stop_httpd_command = "/etc/init.d/httpd stop"
-        stop_httpd_process = subprocess.Popen(shlex.split(stop_httpd_command))
-        stop_httpd_process_stdout, stop_httpd_process_stderr =  stop_httpd_process.communicate()
-
+        stop_httpd()
+        
         check_config_command = "chkconfig --levels 2345 httpd off"
         check_config_process = subprocess.Popen(shlex.split(check_config_command))
         check_config_process_stdout, check_config_process_stderr =  check_config_process.communicate()

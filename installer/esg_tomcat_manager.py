@@ -390,7 +390,7 @@ def _remove_unnecessary_webapps():
             print "[FAIL]; Could not delete webapp"
             logger.error(error)
 
-def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
+def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
     print "*******************************"
     print "Setting up Apache Tomcat...(v{tomcat_version})".format(tomcat_version = config.config_dictionary["tomcat_version"])
     print "*******************************"

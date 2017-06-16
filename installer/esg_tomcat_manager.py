@@ -917,13 +917,7 @@ def setup_temp_ca(devel):
 
     host_name = esgf_host
 
-    try:
-        os.makedirs("/etc/tempcerts")
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
+    esg_bash2py.mkdir_p("/etc/tempcerts")
 
     os.chdir("/etc/tempcerts")
     logger.debug("Changed directory to %s", os.getcwd())
@@ -996,11 +990,13 @@ def setup_temp_ca(devel):
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
     with open("hostcert.pem", "wb") as hostcert_file:
         #inform = input format; set to pem.  outform = output format; set to pem
-        hostcert_ssl_command = shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem")
-        hostcert_ssl_process = subprocess.Popen(hostcert_ssl_command, stdout = hostcert_file)
-        hostcert_ssl_stdout, hostcert_ssl_stderr = hostcert_ssl_process.communicate()
-        logger.debug("hostcert_ssl_stdout: %s", hostcert_ssl_stdout)
-        logger.debug("hostcert_ssl_stderr: %s", hostcert_ssl_stderr)
+        hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
+        logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
+        # hostcert_ssl_command = shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem")
+        # hostcert_ssl_process = subprocess.Popen(hostcert_ssl_command, stdout = hostcert_file)
+        # hostcert_ssl_stdout, hostcert_ssl_stderr = hostcert_ssl_process.communicate()
+        # logger.debug("hostcert_ssl_stdout: %s", hostcert_ssl_stdout)
+        # logger.debug("hostcert_ssl_stderr: %s", hostcert_ssl_stderr)
     shutil.move("newkey.pem", "hostkey.pem")
 
     try:
@@ -1031,13 +1027,8 @@ def setup_temp_ca(devel):
     logger.debug("local_hash_err: %s", local_hash_err)
     
     target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output)
-    try:
-        os.makedirs(target_directory)
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
+
+    esg_bash2py.mkdir_p(target_directory)
 
     shutil.copyfile(cert, os.path.join(target_directory, "{local_hash}.0".format(local_hash = local_hash_output)))
 
@@ -1060,14 +1051,8 @@ def setup_temp_ca(devel):
     subprocess.call(shlex.split("rm -rf {target_directory};".format(target_directory = target_directory)))
     subprocess.call(shlex.split("rm -f signing_policy_template;"))
 
+    esg_bash2py.mkdir_p("/etc/certs")
 
-    try:
-        os.makedirs("/etc/certs")
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
     try:
         shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
 
@@ -1079,14 +1064,7 @@ def setup_temp_ca(devel):
     except IOError, error:
         logger.error(error)
 
-    try:
-        os.makedirs("/etc/esgfcerts")
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
-
+    esg_bash2py.mkdir_p("/etc/esgfcerts")
 
 def setup_root_app():
     try:
@@ -1107,13 +1085,7 @@ def setup_root_app():
         esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
         root_app_dist_url = "{esg_dist_url}/ROOT.tgz".format(esg_dist_url = esg_dist_url)
 
-        try:
-            os.makedirs(config.config_dictionary["workdir"])
-        except OSError, exception:
-            if exception.errno != 17:
-                raise
-            sleep(1)
-            pass
+        esg_bash2py.mkdir_p(config.config_dictionary["workdir"])
 
         starting_directory = os.getcwd()
         os.chdir(config.config_dictionary["workdir"])
@@ -1224,13 +1196,7 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
 
     if tomcat_install_conf != config.config_dictionary["tomcat_conf_dir"]:
         if not os.path.exists(config.config_dictionary["tomcat_conf_dir"]):
-            try:
-                os.makedirs(config.config_dictionary["tomcat_conf_dir"])
-            except OSError, exception:
-                if exception.errno != 17:
-                    raise
-                sleep(1)
-                pass
+            esg_bash2py.mkdir_p(config.config_dictionary["tomcat_conf_dir"])
         
         esg_functions.backup(tomcat_install_conf)
         

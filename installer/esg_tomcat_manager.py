@@ -944,6 +944,21 @@ def create_reqhost_ans_file(host_name):
     reqhost_ans_tmpl.close()
     reqhost_ans.close()
 
+
+def generate_new_ca():
+    ''' Create a new CA using the CA.pl perl script: Creates the CA directory and populates it 
+        From CA.pl script comment:
+        CA -newca ... will setup the right stuff;
+    '''
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    new_ca_process.communicate()
+
+def generate_rsa_key():
+    ''' Creates a new RSA key from the CA/private/cakey.pem and writes it out as clearkey.pem '''
+    if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
+        logger.debug("moving clearkey")
+        shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
+
 def setup_temp_ca(devel):
     try:
         esgf_host = config.config_dictionary["esgf_host"]
@@ -975,14 +990,9 @@ def setup_temp_ca(devel):
     # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     logger.debug("setup_temp_ca directory: %s", os.getcwd())
     # new_ca_process = esg_functions.call_subprocess("perl CA.pl -newca ")
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    generate_new_ca()
+    generate_rsa_key()
 
-    stdout_processes, stderr_processes = new_ca_process.communicate()
-    # logger.info("stdout_processes: %s", stdout_processes)
-    # logger.info("stderr_processes: %s", stderr_processes)
-    if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
-        logger.debug("moving clearkey")
-        shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
 
     with open("reqhost.ans", "rb") as reqhost_ans_file:
         #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem

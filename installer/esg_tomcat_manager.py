@@ -454,6 +454,7 @@ def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
             logger.error(error)
             logger.info("Attempting to get configure Tomcat with the security_admin_password")
             security_admin_password = esg_functions.get_security_admin_password()
+            logger.debug("security_admin_password: %s", security_admin_password)
             configure_tomcat(security_admin_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel=devel)
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(

@@ -442,7 +442,6 @@ def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
     #----------------------------------
     # Upgrade logic...
     #----------------------------------
-    logger.debug("upgrade_flag: %s", upgrade_flag)
     if upgrade_flag:
         stop_tomcat()
         _upgrade_tomcat_version(existing_tomcat_directory)
@@ -665,16 +664,13 @@ def edit_tomcat_server_xml(keystore_password):
     root = tree.getroot()
 
     pathname = root.find(".//Resource[@pathname]")
-    logger.info("pathname: %s", etree.tostring(pathname))
     pathname.set('pathname', config.config_dictionary["tomcat_users_file"])
-    logger.info("pathname: %s",etree.tostring(root.find(".//Resource[@pathname]")))
     connector_element = root.find(".//Connector[@truststoreFile]")
     connector_element.set('truststoreFile', config.config_dictionary["truststore_file"])
     connector_element.set('truststorePass', config.config_dictionary["truststore_password"])
     connector_element.set('keystoreFile', config.config_dictionary["keystore_file"])
     connector_element.set('keystorePass', keystore_password)
     connector_element.set('keyAlias', config.config_dictionary["keystore_alias"])
-    logger.info("connector_element: %s",etree.tostring(connector_element))
     tree.write(open(server_xml_path, "wb"), pretty_print = True)
     tree.write(os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "test_output.xml"), pretty_print = True)
 
@@ -976,7 +972,7 @@ def setup_temp_ca(devel):
     download_temp_ca_scripts(devel)
 
     # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
-    logger.debug("current directory: ", os.getcwd())
+    logger.debug("current directory: %s", os.getcwd())
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
 
     stdout_processes, stderr_processes = new_ca_process.communicate()
@@ -988,8 +984,6 @@ def setup_temp_ca(devel):
 
     with open("reqhost.ans", "rb") as reqhost_ans_file:
         #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
-        logger.debug("reqhost_ans_file: %s", reqhost_ans_file)
-        logger.debug("reqhost_ans_file contents: %s", reqhost_ans_file.read())
         esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
 
     with open("setuphost.ans", "rb") as setuphost_ans_file:
@@ -1062,7 +1056,6 @@ def setup_temp_ca(devel):
     try:
         shutil.copy("openssl.cnf", os.path.join("/etc", "certs"))
 
-        logger.info("glob_list: %s", glob.glob("host*.pem"))
         for file in glob.glob("host*.pem"):
             shutil.copy(file, os.path.join("/etc", "certs"))
 

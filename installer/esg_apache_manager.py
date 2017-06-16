@@ -42,7 +42,7 @@ def stop_httpd():
 
 def start_httpd():
     #TODO: investigate why this uses a different binary than stop_httpd()
-    start_httpd_process = esg_functions.call_subprocess(shlex.split("/etc/init.d/esgf-httpd start"))
+    start_httpd_process = esg_functions.call_subprocess("/etc/init.d/esgf-httpd start")
     if start_httpd_process["returncode"] != 0:
         logger.error("Could not start the httpd process")
 

@@ -36,7 +36,7 @@ def clone_apache_repo(devel):
             apache_frontend_repo_local.git.checkout("master")
 
 def stop_httpd():
-    stop_httpd_process = esg_functions.call_subprocess(shlex.split("/etc/init.d/httpd stop"))
+    stop_httpd_process = esg_functions.call_subprocess("/etc/init.d/httpd stop")
     if stop_httpd_process["returncode"] != 0:
         logger.error("Could not stop the httpd process")
 
@@ -116,9 +116,7 @@ def setup_apache_frontend(devel = False):
             esgf_ca_bundle_file.write(cacert_contents)
         esgf_ca_bundle_file.close()
 
-        start_httpd_command = "/etc/init.d/esgf-httpd start"
-        start_httpd_process = subprocess.Popen(shlex.split(start_httpd_command))
-        start_httpd_stdout, start_httpd_stderr = start_httpd_process.communicate()
+        start_httpd()
     else:
         config_file = "/etc/httpd/conf/esgf-httpd.conf"
         if os.path.isfile(config_file):

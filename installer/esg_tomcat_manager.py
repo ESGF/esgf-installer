@@ -1102,18 +1102,20 @@ def setup_root_app():
         print "Downloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
         if esg_functions.download_update(root_app_dist_url) > 0:
             print " ERROR: Could not download ROOT app archive"
-            os.chdir(starting_directory)
             esg_functions.checked_done(1)
 
-        print "unpacking {root_app_dist_url}...".format(root_app_dist_url = esg_bash2py.trim_string_from_tail(root_app_dist_url))
+        root_app_name = esg_bash2py.trim_string_from_head(root_app_dist_url)
+        logger.debug("root_app_name: %s", root_app_name)
+
+        print "unpacking {root_app_name}...".format(root_app_name = root_app_name)
         try:
-            tar = tarfile.open(esg_bash2py.trim_string_from_tail(root_app_dist_url))
+            tar = tarfile.open(root_app_name)
             tar.extractall()
             tar.close()
-            shutil.move(esg_bash2py.trim_string_from_tail(root_app_dist_url), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
+            shutil.move("ROOT", os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
         except Exception, error:
             logger.error(error)
-            print " ERROR: Could not extract {root_app_dist_url}".format(root_app_dist_url = esg_functions.readlinkf(esg_bash2py.trim_string_from_tail(root_app_dist_url)))
+            print " ERROR: Could not extract {root_app_name}".format(root_app_name = esg_functions.readlinkf(root_app_name))
 
         if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
             shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))

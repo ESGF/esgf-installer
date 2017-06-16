@@ -51,7 +51,6 @@ upgrade_mode = 0
 
 node_type_list = [] 
 
-
 def get_node_type():
     for key, value in bit_boolean_dictionary.items():
         if value:
@@ -59,13 +58,13 @@ def get_node_type():
 
 
 
+
 devel = esg_bash2py.Expand.colonMinus("devel", True)
 recommended_setup = 1
+
 custom_setup = 0
 use_local_files = 0
 
-
-# Installer basic info
 progname = "esg-node"
 script_version = "v2.0-RC5.4.0-devel"
 script_maj_version = "2.0"
@@ -77,7 +76,7 @@ force_install = False
 # User Defined / Settable (public)
 #--------------
 # install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
-install_prefix = esg_bash2py.Expand.colonMinus( q
+install_prefix = esg_bash2py.Expand.colonMinus(
     config.install_prefix, esg_bash2py.Expand.colonMinus("ESGF_INSTALL_PREFIX", "/usr/local"))
 #--------------
 
@@ -85,7 +84,6 @@ install_prefix = esg_bash2py.Expand.colonMinus( q
 
 esg_root_id = esg_functions.get_esg_root_id() 
 
-# Display Intaller guide
 def esgf_node_info():
 
     print '''
@@ -175,7 +173,7 @@ def select_distribution_mirror(install_type):
     logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
 
 def set_esg_dist_url():
-     # # Setting esg_dist_url with previously gathered information
+    # Setting esg_dist_url with previously gathered information
     esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
     logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
     if devel is True:
@@ -187,7 +185,7 @@ def set_esg_dist_url():
 
 
 def download_esg_installarg(esg_dist_url):
-    # # Downloading esg-installarg file
+    # Downloading esg-installarg file
     if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_bash2py.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
         esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
@@ -198,11 +196,9 @@ def download_esg_installarg(esg_dist_url):
         except IOError, error:
             logger.error(error)
 
-# return a list of options 
 def create_new_list_from_keys(dictionary):
     return [node_option.split("_BIT")[0].lower() for node_option in dictionary.keys()]
 
-# compare system arguements with available options 
 def check_selected_node_type(bit_boolean_dictionary, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
 
@@ -248,6 +244,7 @@ def init_connection():
     except socket.error:
         logger.error("Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command")
         sys.exit()
+
 
 def get_installation_type(version):
     # Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries

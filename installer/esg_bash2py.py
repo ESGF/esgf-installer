@@ -181,8 +181,10 @@ def trim_string_from_head(string_name):
 
                 output -> esg_installarg_file
     '''
-    string_regex = r"\w*-*\w+$" 
-    return re.search(string_regex, string_name).group()
+    #TODO: Might refactor to use this: config.config_dictionary["tomcat_dist_url"].rsplit("/",1)[-1]
+    # string_regex = r"\w*-*\w+$" 
+    # return re.search(string_regex, string_name).group()
+    return string_name.rsplit("/",1)[-1]
 
 def trim_string_from_tail(string_name):
     '''

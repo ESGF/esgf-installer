@@ -908,6 +908,23 @@ def _glean_keystore_info():
         print "Could not glean values store... :-("
         return False
 
+def delete_existing_temp_ca_files():
+    try:
+        shutil.rmtree(os.path.join(os.getcwd(), "CA"))
+    except OSError, error:
+        logger.error(error)
+        
+    extensions_to_delete = (".pem", ".gz", ".ans", ".tmpl")
+    files = os.listdir(os.getcwd())
+    for file_name in files:
+        if file_name.endswith(extensions_to_delete):
+            try:
+                os.remove(os.path.join(os.getcwd(), file_name))
+                logger.debug("removed %s", os.path.join(os.getcwd(), file_name))
+            except OSError, error:
+                logger.error(error)
+
+
 
 def setup_temp_ca(devel):
     try:
@@ -922,16 +939,7 @@ def setup_temp_ca(devel):
     os.chdir("/etc/tempcerts")
     logger.debug("Changed directory to %s", os.getcwd())
 
-    shutil.rmtree(os.path.join(os.getcwd(), "CA"))
-    extensions_to_delete = (".pem", ".gz", ".ans", ".tmpl")
-    files = os.listdir(os.getcwd())
-    for file in files:
-        if file.endswith(extensions_to_delete):
-            try:
-                os.remove(os.path.join(os.getcwd(), file))
-                logger.debug("removed %s", os.path.join(os.getcwd(), file))
-            except OSError, error:
-                logger.error(error)
+    delete_existing_temp_ca_files()
 
     os.mkdir("CA")
     write_ca_ans_templ() 
@@ -991,12 +999,8 @@ def setup_temp_ca(devel):
     with open("hostcert.pem", "wb") as hostcert_file:
         #inform = input format; set to pem.  outform = output format; set to pem
         hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
+        hostcert_file.write(hostcert_ssl_process["stdout"])
         logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
-        # hostcert_ssl_command = shlex.split("openssl x509 -in newcert.pem -inform pem -outform pem")
-        # hostcert_ssl_process = subprocess.Popen(hostcert_ssl_command, stdout = hostcert_file)
-        # hostcert_ssl_stdout, hostcert_ssl_stderr = hostcert_ssl_process.communicate()
-        # logger.debug("hostcert_ssl_stdout: %s", hostcert_ssl_stdout)
-        # logger.debug("hostcert_ssl_stderr: %s", hostcert_ssl_stderr)
     shutil.move("newkey.pem", "hostkey.pem")
 
     try:

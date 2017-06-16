@@ -950,12 +950,22 @@ def generate_new_ca():
         From CA.pl script comment:
         CA -newca ... will setup the right stuff;
     '''
+    print '''\n
+    *******************************
+    Generate New CA
+    ******************************* '''
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
     new_ca_process.communicate()
 
 def generate_rsa_key():
     ''' Creates a new RSA key from the CA/private/cakey.pem and writes it out as clearkey.pem '''
-    if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
+    print '''\n
+    *******************************
+    Generate New RSA Key
+    ******************************* '''
+    generate_rsa_key_process = subprocess.Popen(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass"))
+    generate_rsa_key_process.communicate()
+    if generate_rsa_key_process.returncode == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
 

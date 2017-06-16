@@ -347,8 +347,8 @@ def _create_tomcat_user():
             esg_functions.checked_done(1)
 
 def _upgrade_tomcat_version(existing_tomcat_directory):
-    previous_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(existing_tomcat_directory))
-    new_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
+    previous_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(existing_tomcat_directory)).group()
+    new_tomcat_version = re.search("tomcat-(\S+)", esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"])).group()
     print "Upgrading tomcat installation from {previous_tomcat_version} to {new_tomcat_version}".format(previous_tomcat_version = previous_tomcat_version, new_tomcat_version = new_tomcat_version)
 
     print "copying webapps... "
@@ -663,10 +663,7 @@ def edit_tomcat_server_xml(keystore_password):
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
-    logger.info("root: %s", etree.tostring(root))
 
-    # et = xml.etree.ElementTree.parse(server_xml_path)
-    # root = et.getroot()
     pathname = root.find(".//Resource[@pathname]")
     logger.info("pathname: %s", etree.tostring(pathname))
     pathname.set('pathname', config.config_dictionary["tomcat_users_file"])

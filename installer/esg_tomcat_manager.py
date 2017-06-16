@@ -979,9 +979,8 @@ def setup_temp_ca(devel):
     download_temp_ca_scripts(devel)
 
     # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
+    logger.debug("current directory: ", os.getcwd())
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
-    # ca.newca()
-    # x(new_ca_process)
 
     stdout_processes, stderr_processes = new_ca_process.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
@@ -1251,18 +1250,8 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
         tree = etree.parse(server_xml_path)
         root = tree.getroot()
         realm_element = root.find(".//Realm")
-        logger.info("realm_element: %s",etree.tostring(realm_element))
         if realm_element is None:
-        # server_xml_object = untangle.parse(os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", "server.xml"))
-        # if not server_xml_object.Realm:
-            fetch_file_name = "server.xml"
-            fetch_file_path = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf", fetch_file_name)
-
-            if esg_functions.download_update(fetch_file_path, "{esg_dist_url}/externals/bootstrap/node.{fetch_file_name}-v{tomcat_version}".format(esg_dist_url = esg_dist_url, fetch_file_name = fetch_file_name, tomcat_version = esg_functions.trim_string_from_tail(config.config_dictionary["tomcat_version"]))) != 0:
-                # os.chdir(starting_directory)
-                esg_functions.checked_done(1)
-            os.chmod(fetch_file_path, 0600)
-            os.chown(fetch_file_path, pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+            download_server_config_file(esg_dist_url)
 
         #SET the server.xml variables to contain proper values
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])

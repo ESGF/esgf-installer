@@ -991,9 +991,12 @@ def setup_temp_ca(devel):
         esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
 
     with open("cacert.pem", "wb") as cacert_file:
-        subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)
+        cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")
+        logger.debug("cacert_file_process: %s", cacert_file_process)
+        cacert_file.write(cacert_file_process["stdout"])
+        
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
-    with open("hostcert.pem", "wb") as hostcert_file:
+    with open("hostcert.pem", "w") as hostcert_file:
         #inform = input format; set to pem.  outform = output format; set to pem
         hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
         hostcert_file.write(hostcert_ssl_process["stdout"])

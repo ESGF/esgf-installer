@@ -969,6 +969,18 @@ def generate_rsa_key():
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
 
+def generate_request_cert():
+    #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
+    with open("reqhost.ans", "rb") as reqhost_ans_file:
+        reqhost_ans = reqhost_ans_file.read().strip()
+        logger.info("reqhost_ans: %s", reqhost_ans)
+
+        request_cert_process = subprocess.Popen(shlex.split("perl CA.pl -newreq-nodes"), stdin=subprocess.PIPE)
+        request_cert_process.stdin.write(reqhost_ans)
+        request_cert_process.communicate()
+        # esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
+
+
 def setup_temp_ca(devel):
     try:
         esgf_host = config.config_dictionary["esgf_host"]
@@ -1002,11 +1014,7 @@ def setup_temp_ca(devel):
     # new_ca_process = esg_functions.call_subprocess("perl CA.pl -newca ")
     generate_new_ca()
     generate_rsa_key()
-
-
-    with open("reqhost.ans", "rb") as reqhost_ans_file:
-        #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
-        esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
+    generate_request_cert()
 
     with open("setuphost.ans", "rb") as setuphost_ans_file:
         # CA -sign ... will sign the generated request and output 

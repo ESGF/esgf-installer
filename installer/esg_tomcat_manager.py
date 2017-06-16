@@ -974,9 +974,12 @@ def setup_temp_ca(devel):
 
     # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     logger.debug("setup_temp_ca directory: %s", os.getcwd())
-    new_ca_process = esg_functions.call_subprocess("perl CA.pl -newca")
-    logger.debug("new_ca_process: %s", new_ca_process)
-    
+    # new_ca_process = esg_functions.call_subprocess("perl CA.pl -newca ")
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+
+    stdout_processes, stderr_processes = new_ca_process.communicate()
+    # logger.info("stdout_processes: %s", stdout_processes)
+    # logger.info("stderr_processes: %s", stderr_processes)
     if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")

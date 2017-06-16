@@ -410,8 +410,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     starting_directory = os.getcwd()
     os.chdir(config.config_dictionary["workdir"])
 
-    #TODO: maybe replace trim_from_tail with this
-    tomcat_dist_file = config.config_dictionary["tomcat_dist_url"].rsplit("/",1)[-1]
+    tomcat_dist_file = esg_bash2py.trim_string_from_head(config.config_dictionary["tomcat_dist_url"])
     tomcat_dist_dir = re.sub("\.tar.gz", "", tomcat_dist_file)
 
     #There is this pesky case of having a zero sized dist file...
@@ -443,6 +442,7 @@ def setup_tomcat(upgrade_flag = False, force_install = False, devel = False):
     #----------------------------------
     # Upgrade logic...
     #----------------------------------
+    logger.debug("upgrade_flag: %s", upgrade_flag)
     if upgrade_flag:
         stop_tomcat()
         _upgrade_tomcat_version(existing_tomcat_directory)

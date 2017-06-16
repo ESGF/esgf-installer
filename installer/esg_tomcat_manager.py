@@ -973,12 +973,10 @@ def setup_temp_ca(devel):
     download_temp_ca_scripts(devel)
 
     # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
-    logger.debug("current directory: %s", os.getcwd())
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
-
-    stdout_processes, stderr_processes = new_ca_process.communicate()
-    logger.info("stdout_processes: %s", stdout_processes)
-    logger.info("stderr_processes: %s", stderr_processes)
+    logger.debug("setup_temp_ca directory: %s", os.getcwd())
+    new_ca_process = esg_functions.call_subprocess("perl CA.pl -newca")
+    logger.debug("new_ca_process: %s", new_ca_process)
+    
     if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
         logger.debug("moving clearkey")
         shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
@@ -988,13 +986,14 @@ def setup_temp_ca(devel):
         esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
 
     with open("setuphost.ans", "rb") as setuphost_ans_file:
+        # CA -sign ... will sign the generated request and output 
         esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
 
     with open("cacert.pem", "wb") as cacert_file:
         cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")
         logger.debug("cacert_file_process: %s", cacert_file_process)
         cacert_file.write(cacert_file_process["stdout"])
-        
+
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
     with open("hostcert.pem", "w") as hostcert_file:
         #inform = input format; set to pem.  outform = output format; set to pem

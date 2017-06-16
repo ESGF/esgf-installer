@@ -913,7 +913,7 @@ def delete_existing_temp_ca_files():
         shutil.rmtree(os.path.join(os.getcwd(), "CA"))
     except OSError, error:
         logger.error(error)
-        
+
     extensions_to_delete = (".pem", ".gz", ".ans", ".tmpl")
     files = os.listdir(os.getcwd())
     for file_name in files:
@@ -924,6 +924,15 @@ def delete_existing_temp_ca_files():
             except OSError, error:
                 logger.error(error)
 
+def download_temp_ca_scripts(devel):
+    if devel:
+        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/devel/esgf-installer/CA.pl".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "CA.pl")
+        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/devel/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
+        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/devel/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
+    else:
+        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/CA.pl".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "CA.pl")
+        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
+        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
 
 def setup_temp_ca(devel):
@@ -963,14 +972,7 @@ def setup_temp_ca(devel):
     reqhost_ans_tmpl.close()
     reqhost_ans.close()
 
-    if devel:
-        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/devel/esgf-installer/CA.pl".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "CA.pl")
-        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/devel/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
-        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/devel/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
-    else:
-        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/CA.pl".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "CA.pl")
-        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
-        urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
+    download_temp_ca_scripts(devel)
 
     # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))

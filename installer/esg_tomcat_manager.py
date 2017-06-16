@@ -934,6 +934,21 @@ def download_temp_ca_scripts(devel):
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/openssl.cnf".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "openssl.cnf")
         urllib.urlretrieve("http://{esg_coffee_dist_url_root}/esgf-installer/myproxy-server.config".format(esg_coffee_dist_url_root = config.config_dictionary["esg_coffee_dist_url_root"]), "myproxy-server.config")
 
+def create_setupca_ans_file(host_name):
+    setupca_ans_tmpl = open("setupca.ans.tmpl", "r")
+    setupca_ans = open("setupca.ans", "w+")
+    for line in setupca_ans_tmpl:
+        setupca_ans.write(line.replace("placeholder.fqdn", host_name))
+    setupca_ans_tmpl.close()
+    setupca_ans.close()
+
+def create_reqhost_ans_file(host_name):
+    reqhost_ans_tmpl = open("reqhost.ans.tmpl", "r")
+    reqhost_ans = open("reqhost.ans", "w+")
+    for line in reqhost_ans_tmpl:
+        reqhost_ans.write(line.replace("placeholder.fqdn", host_name))
+    reqhost_ans_tmpl.close()
+    reqhost_ans.close()
 
 def setup_temp_ca(devel):
     try:
@@ -958,19 +973,8 @@ def setup_temp_ca(devel):
     setuphost_ans.write("y\ny")
     setuphost_ans.close()
 
-    setupca_ans_tmpl = open("setupca.ans.tmpl", "r")
-    setupca_ans = open("setupca.ans", "w+")
-    for line in setupca_ans_tmpl:
-        setupca_ans.write(line.replace("placeholder.fqdn", host_name))
-    setupca_ans_tmpl.close()
-    setupca_ans.close()
-
-    reqhost_ans_tmpl = open("reqhost.ans.tmpl", "r")
-    reqhost_ans = open("reqhost.ans", "w+")
-    for line in reqhost_ans_tmpl:
-        reqhost_ans.write(line.replace("placeholder.fqdn", host_name))
-    reqhost_ans_tmpl.close()
-    reqhost_ans.close()
+    create_setupca_ans_file(host_name)
+    create_reqhost_ans_file(host_name)
 
     download_temp_ca_scripts(devel)
 

@@ -32,7 +32,7 @@ init() {
 
     esgcet_version=${esgcet_version:-"3.2.3"}
     publisher_tag=${publisher_tag:-"v3.2.3"}
-    esgprep_version="v2.7.4"
+    esgprep_version="2.7.5"
 
 
     #see esgf-node-manager project:

@@ -1038,7 +1038,7 @@ setup_esgcet() {
 
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient
+    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython
     
     if [ $ESGF_INSECURE > 0 ] ; then
 

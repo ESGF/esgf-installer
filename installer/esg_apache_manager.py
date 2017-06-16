@@ -9,6 +9,7 @@ import filecmp
 import git
 import esg_bash2py
 import esg_version_manager
+import esg_functions
 from esg_init import EsgInit
 
 
@@ -16,6 +17,35 @@ logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logg
 logger = logging.getLogger(__name__)
 
 config = EsgInit()
+
+def clone_apache_repo(devel):
+    try:
+        git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
+    except git.exc.GitCommandError, error:
+        logger.error(error)
+        logger.error("Git repo already exists.")
+
+    if os.path.isdir(os.path.join("apache_frontend", ".git")):
+        logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
+        # os.chdir("apache-frontend")
+        # logger.debug("changed directory to %s:", os.getcwd())
+        apache_frontend_repo_local = git.Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache_frontend")
+        if devel == 1:
+            apache_frontend_repo_local.git.checkout("devel")
+        else:
+            apache_frontend_repo_local.git.checkout("master")
+
+def stop_httpd():
+    stop_httpd_process = esg_functions.call_subprocess("/etc/init.d/httpd stop")
+    if stop_httpd_process["returncode"] != 0:
+        logger.error("Could not stop the httpd process")
+
+def start_httpd():
+    #TODO: investigate why this uses a different binary than stop_httpd()
+    start_httpd_process = esg_functions.call_subprocess("/etc/init.d/esgf-httpd start")
+    if start_httpd_process["returncode"] != 0:
+        logger.error("Could not start the httpd process")
+
 
 def setup_apache_frontend(devel = False):
     print '''
@@ -35,33 +65,18 @@ def setup_apache_frontend(devel = False):
     esg_bash2py.mkdir_p("apache_frontend")
     os.chdir("apache_frontend")
     logger.debug("changed directory to %s:", os.getcwd())
+
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
+    clone_apache_repo(devel)
+
     try:
-        git.Repo.clone_from(config.config_dictionary["apache_frontend_repo"], "apache_frontend")
-    except git.exc.GitCommandError, error:
+        host_name = esgf_host
+    except NameError, error:
         logger.error(error)
-        logger.error("Git repo already exists.")
+        host_name = socket.gethostname()
 
-    if os.path.isdir(os.path.join("apache_frontend", ".git")):
-        logger.error("Successfully cloned repo from %s", config.config_dictionary["apache_frontend_repo"])
-        # os.chdir("apache-frontend")
-        # logger.debug("changed directory to %s:", os.getcwd())
-        apache_frontend_repo_local = git.Repo("/usr/local/src/esgf/workbench/esg/apache_frontend/apache_frontend")
-        if devel == 1:
-            apache_frontend_repo_local.git.checkout("devel")
-        else:
-            apache_frontend_repo_local.git.checkout("master")
-
-        try:
-            host_name = esgf_host
-        except NameError, error:
-            logger.error(error)
-            host_name = socket.gethostname()
-
-        stop_httpd_command = "/etc/init.d/httpd stop"
-        stop_httpd_process = subprocess.Popen(shlex.split(stop_httpd_command))
-        stop_httpd_process_stdout, stop_httpd_process_stderr =  stop_httpd_process.communicate()
-
+        stop_httpd()
+        
         check_config_command = "chkconfig --levels 2345 httpd off"
         check_config_process = subprocess.Popen(shlex.split(check_config_command))
         check_config_process_stdout, check_config_process_stderr =  check_config_process.communicate()
@@ -72,7 +87,7 @@ def setup_apache_frontend(devel = False):
             ip_address = raw_input("Enter a single ip address which would be cleared to access admin restricted pages.\nYou will be prompted if you want to enter more ip-addresses: ")
             ip_addresses.append(ip_address)
 
-            add_more_ips = raw_input("Do you wish to allow more ip addresses to access admin restricted pages? y/n")
+            add_more_ips = raw_input("Do you wish to allow more ip addresses to access admin restricted pages? y/n:")
             if add_more_ips.lower() != "y":
                 break
 
@@ -101,9 +116,7 @@ def setup_apache_frontend(devel = False):
             esgf_ca_bundle_file.write(cacert_contents)
         esgf_ca_bundle_file.close()
 
-        start_httpd_command = "/etc/init.d/esgf-httpd start"
-        start_httpd_process = subprocess.Popen(shlex.split(start_httpd_command))
-        start_httpd_stdout, start_httpd_stderr = start_httpd_process.communicate()
+        start_httpd()
     else:
         config_file = "/etc/httpd/conf/esgf-httpd.conf"
         if os.path.isfile(config_file):

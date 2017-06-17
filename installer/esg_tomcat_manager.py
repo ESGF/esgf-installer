@@ -984,6 +984,18 @@ def generate_request_cert():
         request_cert_process.communicate()
         # esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
 
+def sign_certificate():
+    ''' Sign a generate certificate using the CA.pl perl script 
+        # CA -sign ... will sign the generated request and output 
+    '''
+    print '''\n
+    *******************************
+    Sign Certificate
+    ******************************* '''
+    sign_certificate_process = subprocess.Popen(shlex.split("perl CA.pl -sign"))
+    sign_certificate_process.communicate()
+    # with open("setuphost.ans", "rb") as setuphost_ans_file:
+    #     esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
 
 def setup_temp_ca(devel):
     try:
@@ -1013,16 +1025,12 @@ def setup_temp_ca(devel):
 
     download_temp_ca_scripts(devel)
 
-    # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
     logger.debug("setup_temp_ca directory: %s", os.getcwd())
-    # new_ca_process = esg_functions.call_subprocess("perl CA.pl -newca ")
     generate_new_ca()
     generate_rsa_key()
     generate_request_cert()
-
-    with open("setuphost.ans", "rb") as setuphost_ans_file:
-        # CA -sign ... will sign the generated request and output 
-        esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
+    sign_certificate()
+    
 
     with open("cacert.pem", "wb") as cacert_file:
         cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")

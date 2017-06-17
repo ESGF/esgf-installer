@@ -1010,9 +1010,6 @@ def write_to_ca_cert_pem():
         output_stdout, output_stderr = output_process.communicate()
         print output_stdout
         cacert_file.write(output_stdout)
-        # cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")
-        # logger.debug("cacert_file_process: %s", cacert_file_process)
-        # cacert_file.write(cacert_file_process["stdout"])
 
 def write_to_host_cert():
     print '''\n
@@ -1025,6 +1022,11 @@ def write_to_host_cert():
         hostcert_file.write(hostcert_ssl_process["stdout"])
         logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
     shutil.move("newkey.pem", "hostkey.pem")
+
+def delete_new_temp_cert():
+    for file_name in glob.glob("new*.pem"):
+        logger.debug("file_name: %s", file_name)
+        os.remove(file_name)
 
 def setup_temp_ca(devel):
     try:
@@ -1054,7 +1056,6 @@ def setup_temp_ca(devel):
 
     download_temp_ca_scripts(devel)
 
-    logger.debug("setup_temp_ca directory: %s", os.getcwd())
     generate_new_ca()
     generate_rsa_key()
     generate_request_cert()
@@ -1070,15 +1071,13 @@ def setup_temp_ca(devel):
     except OSError, error:
         logger.error(error)
 
-    #TODO use glob here
-    subprocess.call(shlex.split("rm -f new*.pem"))
+    delete_new_temp_cert()
 
     ESGF_OPENSSL = "/usr/bin/openssl"
     cert = "cacert.pem"
     temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
     # quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
 
-    # cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
     cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
     cert_subject = cert_info.get_subject()
     cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
@@ -1143,7 +1142,7 @@ def setup_root_app():
         print "Oops, Don't see ESGF ROOT web application"
         esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))
 
-        print "*******************************"
+        print "\n*******************************"
         print "Setting up Apache Tomcat...(v{tomcat_version}) ROOT webapp".format(tomcat_version = config.config_dictionary["tomcat_version"])
         print "*******************************"
 
@@ -1323,7 +1322,7 @@ def tomcat_port_check():
     return_all = True
     failed_connections = 0
     protocol = "http"
-    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
+    print "\nChecking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
     ports = find_tomcat_ports(server_xml_path)
     for port in ports:

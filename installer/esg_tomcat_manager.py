@@ -997,6 +997,19 @@ def sign_certificate():
     # with open("setuphost.ans", "rb") as setuphost_ans_file:
     #     esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
 
+def write_to_ca_cert_pem():
+    ''' The x509 command is a multi purpose certificate utility. It can be used to display certificate information, 
+        convert certificates to various forms, sign certificate
+        requests like a "mini CA" or edit certificate trust settings. '''
+    with open("cacert.pem", "wb") as cacert_file:
+        output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"))
+        output_stdout, output_stderr = output_process.communicate()
+        logger.info("output_stdout: %s",  output_stdout)
+        cacert_file.write(output_stdout)
+        # cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")
+        # logger.debug("cacert_file_process: %s", cacert_file_process)
+        # cacert_file.write(cacert_file_process["stdout"])
+
 def setup_temp_ca(devel):
     try:
         esgf_host = config.config_dictionary["esgf_host"]
@@ -1030,12 +1043,7 @@ def setup_temp_ca(devel):
     generate_rsa_key()
     generate_request_cert()
     sign_certificate()
-    
-
-    with open("cacert.pem", "wb") as cacert_file:
-        cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")
-        logger.debug("cacert_file_process: %s", cacert_file_process)
-        cacert_file.write(cacert_file_process["stdout"])
+    write_to_ca_cert_pem()    
 
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
     with open("hostcert.pem", "w") as hostcert_file:

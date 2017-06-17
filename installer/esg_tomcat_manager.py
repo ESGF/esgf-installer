@@ -954,7 +954,7 @@ def generate_new_ca():
     *******************************
     Generate New CA
     ******************************* '''
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca"))
     new_ca_process.communicate()
 
 def generate_rsa_key():
@@ -1014,6 +1014,18 @@ def write_to_ca_cert_pem():
         # logger.debug("cacert_file_process: %s", cacert_file_process)
         # cacert_file.write(cacert_file_process["stdout"])
 
+def write_to_host_cert():
+    print '''\n
+    *******************************
+    Write to hostcert.pem
+    ******************************* '''
+    with open("hostcert.pem", "w") as hostcert_file:
+        #inform = input format; set to pem.  outform = output format; set to pem
+        hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
+        hostcert_file.write(hostcert_ssl_process["stdout"])
+        logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
+    shutil.move("newkey.pem", "hostkey.pem")
+
 def setup_temp_ca(devel):
     try:
         esgf_host = config.config_dictionary["esgf_host"]
@@ -1050,12 +1062,7 @@ def setup_temp_ca(devel):
     write_to_ca_cert_pem()    
 
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
-    with open("hostcert.pem", "w") as hostcert_file:
-        #inform = input format; set to pem.  outform = output format; set to pem
-        hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
-        hostcert_file.write(hostcert_ssl_process["stdout"])
-        logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
-    shutil.move("newkey.pem", "hostkey.pem")
+    write_to_host_cert()
 
     try:
         os.chmod("cakey.pem", 0400)
@@ -1063,9 +1070,10 @@ def setup_temp_ca(devel):
     except OSError, error:
         logger.error(error)
 
+    #TODO use glob here
     subprocess.call(shlex.split("rm -f new*.pem"))
 
-    ESGF_OPENSSL="/usr/bin/openssl"
+    ESGF_OPENSSL = "/usr/bin/openssl"
     cert = "cacert.pem"
     temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
     # quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))

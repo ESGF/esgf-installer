@@ -1001,6 +1001,10 @@ def write_to_ca_cert_pem():
     ''' The x509 command is a multi purpose certificate utility. It can be used to display certificate information, 
         convert certificates to various forms, sign certificate
         requests like a "mini CA" or edit certificate trust settings. '''
+    print '''\n
+    *******************************
+    Write to cacert.pem
+    ******************************* '''
     with open("cacert.pem", "wb") as cacert_file:
         output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"))
         output_stdout, output_stderr = output_process.communicate()

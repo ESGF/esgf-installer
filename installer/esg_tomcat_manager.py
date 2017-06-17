@@ -1006,7 +1006,7 @@ def write_to_ca_cert_pem():
     Write to cacert.pem
     ******************************* '''
     with open("cacert.pem", "wb") as cacert_file:
-        output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"))
+        output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout=subprocess.PIPE)
         output_stdout, output_stderr = output_process.communicate()
         logger.info("output_stdout: %s",  output_stdout)
         logger.info("output_stderr: %s",  output_stderr)

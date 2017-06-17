@@ -1008,9 +1008,8 @@ def write_to_ca_cert_pem():
     with open("cacert.pem", "wb") as cacert_file:
         output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout=subprocess.PIPE)
         output_stdout, output_stderr = output_process.communicate()
-        logger.info("output_stdout: %s",  output_stdout)
-        logger.info("output_stderr: %s",  output_stderr)
-        cacert_file.write(output_stderr)
+        print output_stdout
+        cacert_file.write(output_stdout)
         # cacert_file_process = esg_functions.call_subprocess("openssl x509 -in CA/cacert.pem -inform pem -outform pem")
         # logger.debug("cacert_file_process: %s", cacert_file_process)
         # cacert_file.write(cacert_file_process["stdout"])

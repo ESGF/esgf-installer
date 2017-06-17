@@ -971,12 +971,16 @@ def generate_rsa_key():
 
 def generate_request_cert():
     #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
+    print '''\n
+    *******************************
+    Generate New Certificate Request
+    ******************************* '''
     with open("reqhost.ans", "rb") as reqhost_ans_file:
         reqhost_ans = reqhost_ans_file.read().strip()
         logger.info("reqhost_ans: %s", reqhost_ans)
 
         request_cert_process = subprocess.Popen(shlex.split("perl CA.pl -newreq-nodes"), stdin=subprocess.PIPE)
-        request_cert_process.stdin.write(reqhost_ans)
+        # request_cert_process.stdin.write(reqhost_ans)
         request_cert_process.communicate()
         # esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
 

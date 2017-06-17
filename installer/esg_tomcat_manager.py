@@ -979,7 +979,7 @@ def generate_request_cert():
         reqhost_ans = reqhost_ans_file.read().strip()
         logger.info("reqhost_ans: %s", reqhost_ans)
 
-        request_cert_process = subprocess.Popen(shlex.split("perl CA.pl -newreq-nodes"), stdin=subprocess.PIPE)
+        request_cert_process = subprocess.Popen(shlex.split("perl CA.pl -newreq-nodes"))
         # request_cert_process.stdin.write(reqhost_ans)
         request_cert_process.communicate()
         # esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())

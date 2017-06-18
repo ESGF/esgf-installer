@@ -420,6 +420,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     if remote_file is None:
         remote_file = local_file
         #Get the last subpath from the absolute path
+        #TODO: use esg_bash2py.trim_from_head() here
         local_file = local_file.split("/")[-1]
 
     logger.debug("local file : %s", local_file)
@@ -427,7 +428,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
 
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
-        return False
+        return True
 
     if os.path.isfile(local_file) and use_local_files:
         print '''
@@ -437,13 +438,13 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
             file: %s
             ***************************************************************************\n\n
         ''' % (readlinkf(local_file))
-        return False
+        return True
 
     if not force_download:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
             logger.info("No updates available.")
-            return False
+            return True
 
     if os.path.isfile(local_file) and make_backup_file:
         create_backup_file(local_file)

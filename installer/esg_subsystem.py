@@ -89,7 +89,7 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
             subsystem_full_name = "esg-{subsystem}".format(subsystem=subsystem)
             subsystem_remote_url = "{esg_dist_url}/{distribution_directory}/{subsystem_full_name}".format(esg_dist_url=esg_dist_url, distribution_directory=distribution_directory, subsystem_full_name=subsystem_full_name)
-            if esg_functions.download_update("./subsystem_full_name", subsystem_remote_url) >= 1:
+            if not esg_functions.download_update("{subsystem_full_name}".format(subsystem_full_name=subsystem_full_name), subsystem_remote_url):
                 logger.error("Could not download %s", subsystem_full_name)
                 return False
         os.chmod(subsystem_full_name, 0755)

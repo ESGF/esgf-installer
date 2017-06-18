@@ -1314,6 +1314,26 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
         edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
 
+def set_esgf_http_port(root):
+    print '''\n
+    *******************************
+    Set ESGF HTTP Port
+    *******************************'''
+    http_port_element = root.find(".//Connector[@protocol='HTTP/1.1']")
+    esgf_http_port = http_port_element.get("port")
+    logger.debug("esgf_http_port: %s", esgf_http_port)
+    return esgf_http_port
+
+def set_esgf_https_port(root):
+    print '''\n
+    *******************************
+    Set ESGF HTTPS Port
+    *******************************'''
+    esgf_https_port_element = root.find(".//Connector[@SSLEnabled]")
+    esgf_https_port = esgf_https_port_element.get("port")
+    logger.debug("esgf_https_port: %s", esgf_https_port)
+    return esgf_https_port
+
 def tomcat_port_check():
     ''' 
         Helper function to poke at tomcat ports...
@@ -1336,23 +1356,19 @@ def tomcat_port_check():
             tcp_socket.connect(("localhost", int(port)))
             print "Connected to %s on port %s" % ("localhost", port)
             # return True
-        except socket.error, e:
-            print "Connection to %s on port %s failed: %s" % ("localhost", port, e)
+        except socket.error, error:
+            print "Connection to %s on port %s failed: %s" % ("localhost", port, error)
             failed_connections +=1
             logger.debug("failed_connections after increment: %s", failed_connections)
 
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
-    http_port_element = root.find(".//Connector[@protocol='HTTP/1.1']")
-    esgf_http_port = http_port_element.get("port")
-    logger.debug("esgf_http_port: %s", esgf_http_port)
-
-    esgf_https_port_element = root.find(".//Connector[@SSLEnabled]")
-    esgf_https_port = esgf_https_port_element.get("port")
-    logger.debug("esgf_https_port: %s", esgf_https_port)
+    
+    esgf_http_port = set_esgf_http_port(root)
+    esgf_https_port = set_esgf_https_port(root)
+    
     #We only care about reporting a failure for ports below 1024
     #specifically 80 (http) and 443 (https)
-
     logger.debug("failed_connections: %s", failed_connections)
     if failed_connections > 0:
         return False

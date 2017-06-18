@@ -51,6 +51,8 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 #     #local dosetup
     if force_install:
         default = "y"
+    else:
+        default = "n"
 #     #if [ ! -e ${subsystem_install_script} ] || ((force_install)) ; then
 #     #    echo
 #     #    read -e -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup

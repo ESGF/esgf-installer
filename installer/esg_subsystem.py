@@ -63,9 +63,9 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 #     #fi
     if os.path.exists(subsystem_install_script_path) or force_install:
         if default.lower() in ["y", "yes"]:
-            run_installation = raw_input("Would you like to set up {subsystem} services? [Y/n]".format(subsystem=subsystem)) or "y"
+            run_installation = raw_input("Would you like to set up {subsystem} services? [Y/n]: ".format(subsystem=subsystem)) or "y"
         else:
-            run_installation = raw_input("Would you like to set up {subsystem} services? [y/N]".format(subsystem=subsystem)) or "n"
+            run_installation = raw_input("Would you like to set up {subsystem} services? [y/N]: ".format(subsystem=subsystem)) or "n"
 
         if run_installation.lower() in ["n", "no"]:
             print "Skipping installation of {subsystem}".format(subsystem=subsystem)
@@ -92,9 +92,13 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
             if not esg_functions.download_update("{subsystem_full_name}".format(subsystem_full_name=subsystem_full_name), subsystem_remote_url):
                 logger.error("Could not download %s", subsystem_full_name)
                 return False
-            os.chmod(subsystem_full_name, 0755)
+            try:
+                os.chmod(subsystem_full_name, 0755)
+            except OSError, error:
+                logger.error(error)
+                
 
-    logger.info("script_dir contents: %s", os.listdir())
+    logger.info("script_dir contents: %s", os.listdir(os.getcwd()))
 
 #     pushd ${scripts_dir} >& /dev/null
 #     local fetch_file=esg-${subsystem}

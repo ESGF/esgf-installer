@@ -92,7 +92,7 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
             if not esg_functions.download_update("{subsystem_full_name}".format(subsystem_full_name=subsystem_full_name), subsystem_remote_url):
                 logger.error("Could not download %s", subsystem_full_name)
                 return False
-        os.chmod(subsystem_full_name, 0755)
+            os.chmod(subsystem_full_name, 0755)
 
     logger.info("script_dir contents: %s", os.listdir())
 

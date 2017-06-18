@@ -458,15 +458,15 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
 def fetch_remote_file(local_file, remote_file):
     ''' Download a remote file from a distribution mirror and write its contents to the local_file '''
     try:
-        r = requests.get(remote_file)
-        if not r.status_code == requests.codes.ok:
+        remote_file_request = requests.get(remote_file)
+        if not remote_file_request.status_code == requests.codes.ok:
             print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
-            r.raise_for_status() 
+            remote_file_request.raise_for_status() 
             return 2
         else:
-            file = open(local_file, "w")
-            file.write(r.content)
-            file.close()
+            file_name = open(local_file, "w")
+            file_name.write(remote_file_request.content)
+            file_name.close()
     except requests.exceptions.RequestException, error:
         print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
         print error
@@ -482,7 +482,6 @@ def create_backup_file(file_name):
 def verify_checksum(local_file, remote_file):
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
-    print "remote_file_md5 in checked_get: ", remote_file_md5
     
     local_file_md5 = get_md5sum(local_file)
 
@@ -490,7 +489,7 @@ def verify_checksum(local_file, remote_file):
         print " WARNING: Could not verify this file! %s" % (local_file)
         return False
     else:
-        print "[VERIFIED]"
+        print "{local_file} checksum [VERIFIED]".format(local_file=local_file)
         return True
 
 

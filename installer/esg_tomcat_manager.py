@@ -1026,7 +1026,18 @@ def write_to_host_cert():
 def delete_new_temp_cert():
     for file_name in glob.glob("new*.pem"):
         logger.debug("file_name: %s", file_name)
-        os.remove(file_name)
+        try:
+            os.remove(file_name)
+            logger.debug("deleted: %s", file_name)
+        except OSError, error:
+            logger.error(error)
+
+def get_cert_subject(cert):
+    cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
+    cert_subject = cert_info.get_subject()
+    cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
+    logger.info("cert_subject: %s", cert_subject)
+    return cert_subject    
 
 def setup_temp_ca(devel):
     try:
@@ -1077,11 +1088,8 @@ def setup_temp_ca(devel):
     cert = "cacert.pem"
     temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
     # quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
-
-    cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
-    cert_subject = cert_info.get_subject()
-    cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
-    logger.info("cert_subject: %s", cert_subject)
+    cert_subject = get_cert_subject(cert)
+    
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
 
@@ -1130,6 +1138,30 @@ def setup_temp_ca(devel):
 
     esg_bash2py.mkdir_p("/etc/esgfcerts")
 
+def extract_root_app(root_app_name):
+    print '''\n
+    *******************************
+    unpacking {root_app_name}...
+    *******************************'''.format(root_app_name=root_app_name)
+    try:
+        tar = tarfile.open(root_app_name)
+        tar.extractall()
+        tar.close()
+        shutil.move("ROOT", os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
+    except Exception, error:
+        logger.error(error)
+        print "ERROR: Could not extract {root_app_name}".format(root_app_name=esg_functions.readlinkf(root_app_name))
+
+def copy_index_html_files():
+    print '''\n
+    *******************************
+    Copying index.html to node manager and web frontend directories
+    ******************************* '''
+    if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
+        shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))
+    if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-web-fe")):
+        shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.fe"))
+
 def setup_root_app():
     try:
         if os.path.isdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")) and 'REFRESH' in open(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html")).read():
@@ -1154,28 +1186,15 @@ def setup_root_app():
         starting_directory = os.getcwd()
         os.chdir(config.config_dictionary["workdir"])
 
-        print "Downloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
+        print "\nDownloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
         if esg_functions.download_update(root_app_dist_url) > 0:
-            print " ERROR: Could not download ROOT app archive"
+            print "ERROR: Could not download ROOT app archive"
             esg_functions.checked_done(1)
 
         root_app_name = esg_bash2py.trim_string_from_head(root_app_dist_url)
-        logger.debug("root_app_name: %s", root_app_name)
+        extract_root_app(root_app_name)
 
-        print "unpacking {root_app_name}...".format(root_app_name = root_app_name)
-        try:
-            tar = tarfile.open(root_app_name)
-            tar.extractall()
-            tar.close()
-            shutil.move("ROOT", os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
-        except Exception, error:
-            logger.error(error)
-            print " ERROR: Could not extract {root_app_name}".format(root_app_name = esg_functions.readlinkf(root_app_name))
-
-        if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
-            shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))
-        if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-web-fe")):
-            shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.fe"))
+        copy_index_html_files()
 
         os.chown(esg_functions.readlinkf(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
             config.config_dictionary["tomcat_group"]).gr_gid)

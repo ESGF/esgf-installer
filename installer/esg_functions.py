@@ -427,7 +427,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
 
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
-        return 0
+        return False
 
     if os.path.isfile(local_file) and use_local_files:
         print '''
@@ -437,7 +437,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
             file: %s
             ***************************************************************************\n\n
         ''' % (readlinkf(local_file))
-        return 0
+        return False
 
     if not force_download:
         updates_available = check_for_update(local_file, remote_file)

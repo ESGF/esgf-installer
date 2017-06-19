@@ -99,7 +99,9 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
 
     logger.info("script_dir contents: %s", os.listdir(config.config_dictionary["scripts_dir"]))
-    subsystem_process = esg_functions.call_subprocess("""source {scripts_dir}/{subsystem_full_name} && verbose_print ":-) " && setup_${subsystem//'-'/_}""".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name))
+    subsystem_underscore = subsystem.replace("-", "_")
+    logger.debug("subsystem_underscore: %s", subsystem_underscore)
+    subsystem_process = esg_functions.call_subprocess("""source {scripts_dir}/{subsystem_full_name} && verbose_print ":-) " && setup_{subsystem_underscore}""".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore))
     logger.debug("subsystem_process: %s", subsystem_process)
 
 #     pushd ${scripts_dir} >& /dev/null

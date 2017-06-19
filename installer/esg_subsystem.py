@@ -22,8 +22,6 @@ FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(format=FORMAT)
 logger.setLevel(logging.DEBUG)
 
-# logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
-# logger = logging.getLogger(__name__)
 
 config = EsgInit()
 
@@ -35,10 +33,6 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     usage: setup_subsystem security orp - looks for the script esg-security in the distriubtion dir orp
     '''
     
-#     local subsystem=$1
-#     [ -z "${subsystem}" ] && echo "setup_subsystem [${subsystem}] requires argument!!" && checked_done 1
-#     local server_dir=${2:?"Must provide the name of the distribution directory where subsystem script lives - perhaps ${subsystem}?"}
-#     local subsystem_install_script=${scripts_dir}/esg-${subsystem}
     subsystem_install_script_path = os.path.join(config.config_dictionary["scripts_dir"],"esg-{subsystem}".format(subsystem=subsystem))
 
 #     #---
@@ -46,21 +40,12 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 #     #if indeed you have we will assume you would like to proceed with setting up the latest...
 #     #Otherwise we just ask you first before you pull down new code to your machine...
 #     #---
-#     #local default="Y"
-#     #((force_install)) && default="Y"
-#     #local dosetup
+
     if force_install:
         default = "y"
     else:
         default = "n"
-#     #if [ ! -e ${subsystem_install_script} ] || ((force_install)) ; then
-#     #    echo
-#     #    read -e -p "Would you like to set up ${subsystem} services? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]")  " dosetup
-#     #    [ -z "${dosetup}" ] && dosetup=${default}
-#     #    if [ "${dosetup}" = "N" ] || [ "${dosetup}" = "n" ] || [ "${dosetup}" = "no" ]; then
-#     #        return 0
-#     #    fi
-#     #fi
+
     if os.path.exists(subsystem_install_script_path) or force_install:
         if default.lower() in ["y", "yes"]:
             run_installation = raw_input("Would you like to set up {subsystem} services? [Y/n]: ".format(subsystem=subsystem)) or "y"
@@ -71,13 +56,6 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
             print "Skipping installation of {subsystem}".format(subsystem=subsystem)
             return True
 
-
-#     echo
-#     echo "-------------------------------"
-#     echo "LOADING installer for ${subsystem}... "
-#     mkdir -p ${workdir}
-#     [ $? != 0 ] && checked_done 1
-#     pushd ${workdir} >& /dev/null
     print "-------------------------------"
     print "LOADING installer for {subsystem}... ".format(subsystem=subsystem)
     esg_bash2py.mkdir_p(config.config_dictionary["workdir"])
@@ -100,33 +78,9 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
     logger.info("script_dir contents: %s", os.listdir(config.config_dictionary["scripts_dir"]))
     subsystem_underscore = subsystem.replace("-", "_")
-    # logger.debug("subsystem_underscore: %s", subsystem_underscore)
-    # execute_setup_node_manager = ". {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore)
-    # # subprocess.Popen(['bash', '-c', '. foo.sh; go'])
-    # setup_node_manager_process = subprocess.Popen(['bash', '-c', execute_setup_node_manager])
-    # setup_node_manager_stdout, setup_node_manager_stderr = setup_node_manager_process.communicate()
-    # logger.debug("setup_node_manager_stdout: %s", setup_node_manager_stdout)
-    # logger.debug("setup_node_manager_stderr: %s", setup_node_manager_stderr)
-    subsystem_process = esg_functions.call_subprocess("""bash -c . {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}""".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore))
-    logger.debug("subsystem_process: %s", subsystem_process)
-
-#     pushd ${scripts_dir} >& /dev/null
-#     local fetch_file=esg-${subsystem}
-#     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
-#     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
-
-#     local ret=$?
-#     (( $ret > 1 )) && popd && return 1
-#     chmod 755 ${fetch_file}
-#     popd >& /dev/null
-
-#     #source subsystem file and go!
-#     shift && debug_print "-->>> "
-#     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
-#     debug_print "source ${scripts_dir}/${fetch_file} && setup_${subsystem//'-'/_} ${upgrade_mode} $@"
-#     (source ${scripts_dir}/${fetch_file} && verbose_print ":-) " && setup_${subsystem//'-'/_} ${upgrade_mode} $@ )
-#     checked_done $?
-#     echo "-------------------------------"
-#     echo
-#     echo
-# }
+    execute_setup_node_manager = ". {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore)
+    setup_node_manager_process = subprocess.Popen(['bash', '-c', execute_setup_node_manager])
+    setup_node_manager_stdout, setup_node_manager_stderr = setup_node_manager_process.communicate()
+    logger.debug("setup_node_manager_stdout: %s", setup_node_manager_stdout)
+    logger.debug("setup_node_manager_stderr: %s", setup_node_manager_stderr)
+    

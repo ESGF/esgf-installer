@@ -98,7 +98,7 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
                 logger.error(error)
                 
 
-    logger.info("script_dir contents: %s", os.listdir(os.getcwd()))
+    logger.info("script_dir contents: %s", os.listdir(config.config_dictionary["scripts_dir"]))
 
 #     pushd ${scripts_dir} >& /dev/null
 #     local fetch_file=esg-${subsystem}

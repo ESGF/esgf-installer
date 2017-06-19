@@ -79,7 +79,7 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 #     [ $? != 0 ] && checked_done 1
 #     pushd ${workdir} >& /dev/null
     print "-------------------------------"
-    print "LOADING installer for ${subsystem}... ".format(subsystem=subsystem)
+    print "LOADING installer for {subsystem}... ".format(subsystem=subsystem)
     esg_bash2py.mkdir_p(config.config_dictionary["workdir"])
     with esg_bash2py.pushd(config.config_dictionary["workdir"]):
         logger.debug("Changed directory to %s", os.getcwd())
@@ -96,9 +96,11 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
                 os.chmod(subsystem_full_name, 0755)
             except OSError, error:
                 logger.error(error)
-                
+
 
     logger.info("script_dir contents: %s", os.listdir(config.config_dictionary["scripts_dir"]))
+    subsystem_process = esg_functions.call_subprocess("""source {scripts_dir}/{subsystem_full_name} && verbose_print ":-) " && setup_${subsystem//'-'/_}""".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name))
+    logger.debug("subsystem_process: %s", subsystem_process)
 
 #     pushd ${scripts_dir} >& /dev/null
 #     local fetch_file=esg-${subsystem}

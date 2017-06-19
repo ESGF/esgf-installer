@@ -100,15 +100,15 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
     logger.info("script_dir contents: %s", os.listdir(config.config_dictionary["scripts_dir"]))
     subsystem_underscore = subsystem.replace("-", "_")
-    logger.debug("subsystem_underscore: %s", subsystem_underscore)
-    execute_setup_node_manager = ". {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore)
-    # subprocess.Popen(['bash', '-c', '. foo.sh; go'])
-    setup_node_manager_process = subprocess.Popen(['bash', '-c', execute_setup_node_manager])
-    setup_node_manager_stdout, setup_node_manager_stderr = setup_node_manager_process.communicate()
-    logger.debug("setup_node_manager_stdout: %s", setup_node_manager_stdout)
-    logger.debug("setup_node_manager_stderr: %s", setup_node_manager_stderr)
-    # subsystem_process = esg_functions.call_subprocess("""source {scripts_dir}/{subsystem_full_name} && verbose_print ":-) " && setup_{subsystem_underscore}""".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore))
-    # logger.debug("subsystem_process: %s", subsystem_process)
+    # logger.debug("subsystem_underscore: %s", subsystem_underscore)
+    # execute_setup_node_manager = ". {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore)
+    # # subprocess.Popen(['bash', '-c', '. foo.sh; go'])
+    # setup_node_manager_process = subprocess.Popen(['bash', '-c', execute_setup_node_manager])
+    # setup_node_manager_stdout, setup_node_manager_stderr = setup_node_manager_process.communicate()
+    # logger.debug("setup_node_manager_stdout: %s", setup_node_manager_stdout)
+    # logger.debug("setup_node_manager_stderr: %s", setup_node_manager_stderr)
+    subsystem_process = esg_functions.call_subprocess("""bash -c . {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}""".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore))
+    logger.debug("subsystem_process: %s", subsystem_process)
 
 #     pushd ${scripts_dir} >& /dev/null
 #     local fetch_file=esg-${subsystem}

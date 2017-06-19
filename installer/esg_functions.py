@@ -583,10 +583,42 @@ def get_security_admin_password():
         security_admin_password = password_file.read().strip()
         return security_admin_password
 
+def set_keyword_password():
+    while True:
+        keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+        if keystore_password_input == "changeit":
+                break
+        if not keystore_password_input:
+            print "Invalid password"
+            continue
+
+        keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
+        if keystore_password_input == keystore_password_input_confirmation:
+            config.config_dictionary["keystore_password"] = keystore_password_input
+            break
+        else:
+            print "Sorry, values did not match. Please try again."
+            continue
+    with open(config.ks_secret_file, 'w') as keystore_file:
+        keystore_file.write(config.config_dictionary["keystore_password"])
+    return True
+
 def get_keystore_password():
     ''' Gets the keystore_password from the saved ks_secret_file '''
-    with open(config.ks_secret_file, 'rb') as keystore_file:
-        keystore_password = keystore_file.read().strip()
+    try:
+        with open(config.ks_secret_file, 'rb') as keystore_file:
+            keystore_password = keystore_file.read().strip()
+        if not keystore_password:
+            set_keyword_password()
+
+        with open(config.ks_secret_file, 'rb') as keystore_file:
+            keystore_password = keystore_file.read().strip()
+        return keystore_password
+    except IOError, error:
+        logger.error(error)
+        set_keyword_password()
+        with open(config.ks_secret_file, 'rb') as keystore_file:
+            keystore_password = keystore_file.read().strip()
         return keystore_password
 
 def _check_keystore_password(keystore_password):

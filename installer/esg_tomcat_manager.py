@@ -454,6 +454,7 @@ def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
             logger.error(error)
             logger.info("Attempting to get configure Tomcat with the security_admin_password")
             security_admin_password = esg_functions.get_security_admin_password()
+            logger.debug("security_admin_password: %s", security_admin_password)
             configure_tomcat(security_admin_password, esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel=devel)
     try:
         os.chown(esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
@@ -943,6 +944,101 @@ def create_reqhost_ans_file(host_name):
     reqhost_ans_tmpl.close()
     reqhost_ans.close()
 
+
+def generate_new_ca():
+    ''' Create a new CA using the CA.pl perl script: Creates the CA directory and populates it 
+        From CA.pl script comment:
+        CA -newca ... will setup the right stuff;
+    '''
+    print '''\n
+    *******************************
+    Generate New CA
+    ******************************* '''
+    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca"))
+    new_ca_process.communicate()
+
+def generate_rsa_key():
+    ''' Creates a new RSA key from the CA/private/cakey.pem and writes it out as clearkey.pem '''
+    print '''\n
+    *******************************
+    Generate New RSA Key
+    ******************************* '''
+    generate_rsa_key_process = subprocess.Popen(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass"))
+    generate_rsa_key_process.communicate()
+    if generate_rsa_key_process.returncode == 0:
+        logger.debug("moving clearkey")
+        shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
+
+def generate_request_cert():
+    #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
+    print '''\n
+    *******************************
+    Generate New Certificate Request
+    ******************************* '''
+    with open("reqhost.ans", "rb") as reqhost_ans_file:
+        reqhost_ans = reqhost_ans_file.read().strip()
+        logger.info("reqhost_ans: %s", reqhost_ans)
+
+        request_cert_process = subprocess.Popen(shlex.split("perl CA.pl -newreq-nodes"))
+        # request_cert_process.stdin.write(reqhost_ans)
+        request_cert_process.communicate()
+        # esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
+
+def sign_certificate():
+    ''' Sign a generate certificate using the CA.pl perl script 
+        # CA -sign ... will sign the generated request and output 
+    '''
+    print '''\n
+    *******************************
+    Sign Certificate
+    ******************************* '''
+    sign_certificate_process = subprocess.Popen(shlex.split("perl CA.pl -sign"))
+    sign_certificate_process.communicate()
+    # with open("setuphost.ans", "rb") as setuphost_ans_file:
+    #     esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
+
+def write_to_ca_cert_pem():
+    ''' The x509 command is a multi purpose certificate utility. It can be used to display certificate information, 
+        convert certificates to various forms, sign certificate
+        requests like a "mini CA" or edit certificate trust settings. '''
+    print '''\n
+    *******************************
+    Write to cacert.pem
+    ******************************* '''
+    with open("cacert.pem", "wb") as cacert_file:
+        output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout=subprocess.PIPE)
+        output_stdout, output_stderr = output_process.communicate()
+        print output_stdout
+        cacert_file.write(output_stdout)
+
+def write_to_host_cert():
+    print '''\n
+    *******************************
+    Write to hostcert.pem
+    ******************************* '''
+    with open("hostcert.pem", "w") as hostcert_file:
+        #inform = input format; set to pem.  outform = output format; set to pem
+        hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
+        hostcert_file.write(hostcert_ssl_process["stdout"])
+        logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
+    shutil.move("newkey.pem", "hostkey.pem")
+
+def delete_new_temp_cert():
+    for file_name in glob.glob("new*.pem"):
+        logger.debug("file_name: %s", file_name)
+        try:
+            os.remove(file_name)
+            logger.debug("deleted: %s", file_name)
+        except OSError, error:
+            logger.error(error)
+
+def get_cert_subject(cert):
+    cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
+    cert_subject = cert_info.get_subject()
+    cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
+    logger.info("cert_subject: %s", cert_subject)
+    return cert_subject    
+
 def setup_temp_ca(devel):
     try:
         esgf_host = config.config_dictionary["esgf_host"]
@@ -971,33 +1067,14 @@ def setup_temp_ca(devel):
 
     download_temp_ca_scripts(devel)
 
-    # pipe_in_setup_ca = subprocess.Popen(shlex.split("setupca.ans"), stdout = subprocess.PIPE)
-    logger.debug("current directory: %s", os.getcwd())
-    new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca "))
+    generate_new_ca()
+    generate_rsa_key()
+    generate_request_cert()
+    sign_certificate()
+    write_to_ca_cert_pem()    
 
-    stdout_processes, stderr_processes = new_ca_process.communicate()
-    logger.info("stdout_processes: %s", stdout_processes)
-    logger.info("stderr_processes: %s", stderr_processes)
-    if esg_functions.call_subprocess("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass")["returncode"] == 0:
-        logger.debug("moving clearkey")
-        shutil.move("clearkey.pem", "/etc/tempcerts/CA/private/cakey.pem")
-
-    with open("reqhost.ans", "rb") as reqhost_ans_file:
-        #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
-        esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
-
-    with open("setuphost.ans", "rb") as setuphost_ans_file:
-        esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
-
-    with open("cacert.pem", "wb") as cacert_file:
-        subprocess.call(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout = cacert_file)
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
-    with open("hostcert.pem", "wb") as hostcert_file:
-        #inform = input format; set to pem.  outform = output format; set to pem
-        hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
-        hostcert_file.write(hostcert_ssl_process["stdout"])
-        logger.info("hostcert_ssl_process: %s", hostcert_ssl_process)
-    shutil.move("newkey.pem", "hostkey.pem")
+    write_to_host_cert()
 
     try:
         os.chmod("cakey.pem", 0400)
@@ -1005,18 +1082,14 @@ def setup_temp_ca(devel):
     except OSError, error:
         logger.error(error)
 
-    subprocess.call(shlex.split("rm -f new*.pem"))
+    delete_new_temp_cert()
 
-    ESGF_OPENSSL="/usr/bin/openssl"
+    ESGF_OPENSSL = "/usr/bin/openssl"
     cert = "cacert.pem"
     temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
     # quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
-
-    # cert_subject = subprocess.check_output("`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;")
-    cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, open(esg_functions.readlinkf(cert)).read())
-    cert_subject = cert_info.get_subject()
-    cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
-    logger.info("cert_subject: %s", cert_subject)
+    cert_subject = get_cert_subject(cert)
+    
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
 
@@ -1065,6 +1138,30 @@ def setup_temp_ca(devel):
 
     esg_bash2py.mkdir_p("/etc/esgfcerts")
 
+def extract_root_app(root_app_name):
+    print '''\n
+    *******************************
+    unpacking {root_app_name}...
+    *******************************'''.format(root_app_name=root_app_name)
+    try:
+        tar = tarfile.open(root_app_name)
+        tar.extractall()
+        tar.close()
+        shutil.move("ROOT", os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
+    except Exception, error:
+        logger.error(error)
+        print "ERROR: Could not extract {root_app_name}".format(root_app_name=esg_functions.readlinkf(root_app_name))
+
+def copy_index_html_files():
+    print '''\n
+    *******************************
+    Copying index.html to node manager and web frontend directories
+    ******************************* '''
+    if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
+        shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))
+    if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-web-fe")):
+        shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.fe"))
+
 def setup_root_app():
     try:
         if os.path.isdir(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")) and 'REFRESH' in open(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html")).read():
@@ -1077,7 +1174,7 @@ def setup_root_app():
         print "Oops, Don't see ESGF ROOT web application"
         esg_functions.backup(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT"))
 
-        print "*******************************"
+        print "\n*******************************"
         print "Setting up Apache Tomcat...(v{tomcat_version}) ROOT webapp".format(tomcat_version = config.config_dictionary["tomcat_version"])
         print "*******************************"
 
@@ -1089,28 +1186,15 @@ def setup_root_app():
         starting_directory = os.getcwd()
         os.chdir(config.config_dictionary["workdir"])
 
-        print "Downloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
+        print "\nDownloading ROOT application from {root_app_dist_url}".format(root_app_dist_url = root_app_dist_url)
         if esg_functions.download_update(root_app_dist_url) > 0:
-            print " ERROR: Could not download ROOT app archive"
+            print "ERROR: Could not download ROOT app archive"
             esg_functions.checked_done(1)
 
         root_app_name = esg_bash2py.trim_string_from_head(root_app_dist_url)
-        logger.debug("root_app_name: %s", root_app_name)
+        extract_root_app(root_app_name)
 
-        print "unpacking {root_app_name}...".format(root_app_name = root_app_name)
-        try:
-            tar = tarfile.open(root_app_name)
-            tar.extractall()
-            tar.close()
-            shutil.move("ROOT", os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps"))
-        except Exception, error:
-            logger.error(error)
-            print " ERROR: Could not extract {root_app_name}".format(root_app_name = esg_functions.readlinkf(root_app_name))
-
-        if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-node-manager")):
-            shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.nm"))
-        if os.path.exists(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "esgf-web-fe")):
-            shutil.copyfile(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html"), os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT","index.html.fe"))
+        copy_index_html_files()
 
         os.chown(esg_functions.readlinkf(os.path.join(config.config_dictionary["tomcat_install_dir"], "webapps", "ROOT")), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(
             config.config_dictionary["tomcat_group"]).gr_gid)
@@ -1249,6 +1333,26 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
         edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
 
+def set_esgf_http_port(root):
+    print '''\n
+    *******************************
+    Set ESGF HTTP Port
+    *******************************'''
+    http_port_element = root.find(".//Connector[@protocol='HTTP/1.1']")
+    esgf_http_port = http_port_element.get("port")
+    logger.debug("esgf_http_port: %s", esgf_http_port)
+    return esgf_http_port
+
+def set_esgf_https_port(root):
+    print '''\n
+    *******************************
+    Set ESGF HTTPS Port
+    *******************************'''
+    esgf_https_port_element = root.find(".//Connector[@SSLEnabled]")
+    esgf_https_port = esgf_https_port_element.get("port")
+    logger.debug("esgf_https_port: %s", esgf_https_port)
+    return esgf_https_port
+
 def tomcat_port_check():
     ''' 
         Helper function to poke at tomcat ports...
@@ -1257,7 +1361,7 @@ def tomcat_port_check():
     return_all = True
     failed_connections = 0
     protocol = "http"
-    print "checking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
+    print "\nChecking connection at all ports described in {tomcat_install_dir}/conf/server.xml".format(tomcat_install_dir =  config.config_dictionary["tomcat_install_dir"])
     server_xml_path = os.path.join(config.config_dictionary["tomcat_install_dir"],"conf", "server.xml")
     ports = find_tomcat_ports(server_xml_path)
     for port in ports:
@@ -1271,23 +1375,19 @@ def tomcat_port_check():
             tcp_socket.connect(("localhost", int(port)))
             print "Connected to %s on port %s" % ("localhost", port)
             # return True
-        except socket.error, e:
-            print "Connection to %s on port %s failed: %s" % ("localhost", port, e)
+        except socket.error, error:
+            print "Connection to %s on port %s failed: %s" % ("localhost", port, error)
             failed_connections +=1
             logger.debug("failed_connections after increment: %s", failed_connections)
 
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
-    http_port_element = root.find(".//Connector[@protocol='HTTP/1.1']")
-    esgf_http_port = http_port_element.get("port")
-    logger.debug("esgf_http_port: %s", esgf_http_port)
-
-    esgf_https_port_element = root.find(".//Connector[@SSLEnabled]")
-    esgf_https_port = esgf_https_port_element.get("port")
-    logger.debug("esgf_https_port: %s", esgf_https_port)
+    
+    esgf_http_port = set_esgf_http_port(root)
+    esgf_https_port = set_esgf_https_port(root)
+    
     #We only care about reporting a failure for ports below 1024
     #specifically 80 (http) and 443 (https)
-
     logger.debug("failed_connections: %s", failed_connections)
     if failed_connections > 0:
         return False

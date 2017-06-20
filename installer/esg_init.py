@@ -143,42 +143,26 @@ class EsgInit(object):
             with open(self.pub_secret_file, 'rb') as f:
                 external_script_variables["pub_secret"] = f.read().strip()
             # publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
-            external_script_variables["publisher_db_user_passwd"] = esg_bash2py.Expand.colonMinus(
-            "publisher_db_user_passwd", external_script_variables["pub_secret"])
+            external_script_variables["publisher_db_user_passwd"] = external_script_variables["pub_secret"]
         except IOError, error:
             logger.debug(error)
         
         # del pub_secret
-        external_script_variables[
-            "postgress_host"] = esg_bash2py.Expand.colonMinus("PGHOST", "localhost")
-        external_script_variables[
-            "postgress_port"] = esg_bash2py.Expand.colonMinus("PGPORT", "5432")
+        external_script_variables["postgress_host"] = "localhost"
+        external_script_variables["postgress_port"] =  "5432"
         # #cmake_install_dir=${CMAKE_HOME:-${install_prefix}/cmake}
-        external_script_variables["cdat_home"] = esg_bash2py.Expand.colonMinus(
-            "CDAT_HOME", self.install_prefix + "/uvcdat/" + esg_bash2py.Expand.colonMinus(
-                "cdat_version", "2.2.0"))
-        external_script_variables[
-            "java_opts"] = esg_bash2py.Expand.colonMinus("JAVA_OPTS", "")
-        external_script_variables["java_install_dir"] = esg_bash2py.Expand.colonMinus(
-            "JAVA_HOME", self.install_prefix + "/java")
-        external_script_variables["ant_install_dir"] = esg_bash2py.Expand.colonMinus(
-            "ANT_HOME", self.install_prefix + "/ant")
-        external_script_variables["tomcat_install_dir"] = esg_bash2py.Expand.colonMinus(
-            "CATALINA_HOME", self.install_prefix + "/tomcat")
-        external_script_variables[
-            "tomcat_conf_dir"] = self.esg_config_dir + "/tomcat"
-        external_script_variables[
-            "tomcat_opts"] = esg_bash2py.Expand.colonMinus("CATALINA_OPTS")
-        external_script_variables["tomcat_user"] = esg_bash2py.Expand.colonMinus(
-            "tomcat_user", "tomcat")
-        external_script_variables["tomcat_group"] = esg_bash2py.Expand.colonMinus(
-            "tomcat_group", external_script_variables["tomcat_user"])
-        external_script_variables["globus_location"] = esg_bash2py.Expand.colonMinus(
-            "GLOBUS_LOCATION", self.install_prefix + "/globus")
-        external_script_variables["mail_smtp_host"] = esg_bash2py.Expand.colonMinus(
-            "mail_smtp_host", "smtp.`hostname --domain`")
-        external_script_variables[
-            "mail_admin_address"] = esg_bash2py.Expand.colonMinus("mail_admin_address")
+        external_script_variables["cdat_home"] ="2.2.0"
+        external_script_variables["java_opts"] = ""
+        external_script_variables["java_install_dir"] = self.install_prefix + "/java"
+        external_script_variables["ant_install_dir"] = self.install_prefix + "/ant"
+        external_script_variables["tomcat_install_dir"] = self.install_prefix + "/tomcat"
+        external_script_variables["tomcat_conf_dir"] = self.esg_config_dir + "/tomcat"
+        external_script_variables["tomcat_opts"] = esg_bash2py.Expand.colonMinus("CATALINA_OPTS") # No default value
+        external_script_variables["tomcat_user"] = "tomcat"
+        external_script_variables["tomcat_group"] = external_script_variables["tomcat_user"]
+        external_script_variables["globus_location"] = self.install_prefix + "/globus"
+        external_script_variables["mail_smtp_host"] = "smtp.`hostname --domain`"
+        external_script_variables["mail_admin_address"] = esg_bash2py.Expand.colonMinus("mail_admin_address") # No default value
 
         # if [ -n "${ESGINI}" ]; then
         #     publisher_home=${ESGINI%/*} <-  Strip shortest match of $substring from back of $string
@@ -263,33 +247,9 @@ class EsgInit(object):
         '''
         id_settings = {}
         id_settings["installer_user"] = pwd.getpwuid(os.getuid())[0]
-        id_settings["installer_uid"] = esg_bash2py.Expand.colonMinus("ESG_USER_UID", esg_bash2py.Expand.colonMinus(
-            "SUDO_UID", pwd.getpwnam(id_settings["installer_user"]).pw_uid))
-        id_settings["installer_gid"] = esg_bash2py.Expand.colonMinus("ESG_USER_GID", esg_bash2py.Expand.colonMinus(
-            "SUDO_GID", pwd.getpwnam(id_settings["installer_user"]).pw_gid))
-        id_settings["installer_home"] = esg_bash2py.Expand.colonMinus(
-            "ESG_USER_HOME", "/usr/local/src/esgf")
-
-        # #deprecate SUDO_?ID so we only use one variable for all this
-        # [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID
-        try:
-            os.environ["SUDO_UID"]
-        except KeyError:
-            # print "SUDO_UID not found"
-            pass
-        else:
-            os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
-            del os.environ["SUDO_UID"]
-
-        # [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID
-        try:
-            os.environ["SUDO_GID"]
-        except KeyError:
-            # print "SUDO_GID not found"
-            pass
-        else:
-            os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
-            del os.environ["SUDO_GID"]
+        id_settings["installer_uid"] =  pwd.getpwnam(id_settings["installer_user"]).pw_uid
+        id_settings["installer_gid"] = pwd.getpwnam(id_settings["installer_user"]).pw_gid
+        id_settings["installer_home"] = "/usr/local/src/esgf"
 
         logger.debug("%s:%s:%s:%s", id_settings["installer_user"], id_settings["installer_uid"], id_settings["installer_gid"],
                                id_settings["installer_home"])
@@ -391,8 +351,7 @@ class EsgInit(object):
         internal_script_variables["show_summary_latch"] = 0
         internal_script_variables["source_latch"] = "0"
         internal_script_variables["scripts_dir"] = self.install_prefix + "/bin"
-        internal_script_variables["esg_installarg_file"] = internal_script_variables[
-            "scripts_dir"] + "/esg-installarg"
+        internal_script_variables["esg_installarg_file"] = internal_script_variables["scripts_dir"] + "/esg-installarg"
         internal_script_variables["no_globus"] = "0"
         internal_script_variables["force_install"] = "0"
         # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
@@ -409,8 +368,7 @@ class EsgInit(object):
             "tomcat_conf_dir"] + "/esg-truststore.ts"
         internal_script_variables["truststore_password"] = "changeit"
         # globus_global_certs_dir=/etc/grid-security/certificates
-        internal_script_variables[
-            "globus_global_certs_dir"] = "/etc/grid-security/certificates"
+        internal_script_variables["globus_global_certs_dir"] = "/etc/grid-security/certificates"
         # #NOTE: java keystore style DN...
         # default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to
         # allow prompting of user for fields!

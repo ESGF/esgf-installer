@@ -347,23 +347,18 @@ def generate_esg_config_file(recommended_setup = 1):
     return generate_esg_ini_command
 
 def write_esgcet_env():
-    # print
-    datafile = open(config.envfile, "a+")
-    try:
+    """ Write """
+    with open(config.envfile, "a+") as datafile:
         datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
         esg_env_manager.deduplicate_settings_in_file(config.envfile)
-    finally:
-        datafile.close()
 
 
 def write_esgcet_install_log():
-    datafile = open(config.install_manifest, "a+")
-    try:
+    """ Write"""
+    with open(config.install_manifest, "a+") as datafile:
         datafile.write(str(datetime.date.today()) + "python:esgcet=" +
                        config.config_dictionary["esgcet_version"] + "\n")
         esg_env_manager.deduplicate_settings_in_file(config.install_manifest)
-    finally:
-        datafile.close()
 
     esg_property_manager.write_as_property(
         "publisher_config", config.config_dictionary["publisher_config"])

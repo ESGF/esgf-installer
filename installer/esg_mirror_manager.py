@@ -71,6 +71,7 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     fastest = ranked_response_times.items()[0][0] # get the first element of the list
     logger.debug("fastest: %s", fastest)
 
+    # Debate on weather this should be its own function...
     outofsync = False
     if response_array[fastest] != master:
         print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest

@@ -109,6 +109,7 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
 
 
 def _render_distribution_mirror_menu(distribution_mirror_choices):
+    """ Display the mirrors from fastest (1) to slowest (4)"""
     print "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
     print "\t-------------------------------------------\n"
     for index, (key, _) in enumerate(distribution_mirror_choices.iteritems(),1):
@@ -116,7 +117,11 @@ def _render_distribution_mirror_menu(distribution_mirror_choices):
     print "\n\t-------------------------------------------\n"
 
 def _select_distribution_mirror():
+    """ Return the user selected mirror"""
     choice = int(raw_input("Enter mirror number: "))
     #Accounts for off by 1 error
+    while choice >= 5 and choice <= 0:
+        print "The selected mirror number does not exist."
+        choice = int(raw_input("Enter mirror number: "))
     choice = choice - 1
     return choice

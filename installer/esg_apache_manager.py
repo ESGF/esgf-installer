@@ -36,6 +36,9 @@ def clone_apache_repo(devel):
             apache_frontend_repo_local.git.checkout("master")
 
 def stop_httpd():
+    ''' HTTP Daemon (httpd) is a software program that runs in the background of a web server and waits for the incoming server requests. 
+    It is a piece of software that listens for network requests (which are expressed 
+    using the Hypertext Transfer Protocol) and responds to them. '''
     stop_httpd_process = esg_functions.call_subprocess("/etc/init.d/httpd stop")
     if stop_httpd_process["returncode"] != 0:
         logger.error("Could not stop the httpd process")

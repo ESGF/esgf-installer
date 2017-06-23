@@ -16,8 +16,8 @@ config = EsgInit()
 # List of mirror location
 esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
 
-def generate_response_array(install_type):
-    """ Check """
+def check_mirror_connection(install_type):
+    """ Check if mirrors are accessible."""
     response_array = {}
     for mirror in esgf_dist_mirrors_list:
         if install_type == "devel":
@@ -36,7 +36,7 @@ def generate_response_array(install_type):
 
     return response_array
 
-def get_success_or_fail_reponses():
+def get_success_or_fail__reponses():
     """ Return a dictionary tuple with seccessful and 
     unseccessful response times from mirrors. 
     """
@@ -66,8 +66,8 @@ def order_response_time():
 def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     """ Return the nearest mirror available. """
 
-    # Generate response array 
-    response_array = generate_response_array(install_type)
+    # Capture mirror connection
+    response_array = check_mirror_connection(install_type)
 
     # Get success and failed response 
     response_times, failed_requests = get_success_or_fail_reponses()

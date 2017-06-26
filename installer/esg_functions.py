@@ -13,6 +13,7 @@ import requests
 import hashlib
 import logging
 import shlex
+import socket
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 from esg_init import EsgInit
@@ -472,10 +473,10 @@ def fetch_remote_file(local_file, remote_file):
         print error
         sys.exit()
 
-def create_backup_file(file_name):
+def create_backup_file(file_name, backup_extension=".bak"):
     try:
-        shutil.copyfile(file_name, file_name + ".bak")
-        os.chmod(file_name+".bak", 600)
+        shutil.copyfile(file_name, file_name + backup_extension)
+        os.chmod(file_name + backup_extension, 600)
     except OSError, error:
         logger.error(error)
 
@@ -576,6 +577,15 @@ def get_esg_root_id():
     except KeyError:
         esg_root_id = esg_property_manager.get_property("esg_root_id")
     return esg_root_id
+
+def get_esgf_host():
+    ''' Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) '''
+    try:
+        esgf_host = config.config_dictionary["esgf_host"]
+    except KeyError:
+        esgf_host = socket.getfqdn()
+
+    return esgf_host
 
 def get_security_admin_password():
     ''' Gets the security_admin_password from the esgf_secret_file '''

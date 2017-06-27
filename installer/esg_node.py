@@ -18,7 +18,8 @@ import esg_apache_manager
 from esg_init import EsgInit
 
 
-logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
+logging.basicConfig(
+    format="%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 config = EsgInit()
@@ -37,19 +38,22 @@ VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
 # IDP_BIT=16
 # COMPUTE_BIT=32
 # WRITE_ENV_BIT=64
-#PRIVATE_BIT=128
-#NOTE: remember to adjust (below) when adding new bits!!
+# PRIVATE_BIT=128
+# NOTE: remember to adjust (below) when adding new bits!!
 # MIN_BIT=4
 # MAX_BIT=64
 # ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
 
-bit_boolean_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
-ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]  
-install_mode = 0  
+bit_boolean_dictionary = {"INSTALL_BIT": False, "TEST_BIT": False, "DATA_BIT": False, "INDEX_BIT": False,
+                          "IDP_BIT": False, "COMPUTE_BIT": False, "WRITE_ENV_BIT": False, "MIN_BIT": 4, "MAX_BIT": 64}
+ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary[
+    "INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]
+install_mode = 0
 upgrade_mode = 0
 
-node_type_list = [] 
+node_type_list = []
+
 
 def get_node_type():
     for key, value in bit_boolean_dictionary.items():
@@ -78,7 +82,8 @@ install_prefix = esg_bash2py.Expand.colonMinus(
 
 # os.environ['UVCDAT_ANONYMOUS_LOG'] = False
 
-esg_root_id = esg_functions.get_esg_root_id() 
+esg_root_id = esg_functions.get_esg_root_id()
+
 
 def esgf_node_info():
 
@@ -156,21 +161,28 @@ def esgf_node_info():
 
     '''
 
+
 def select_distribution_mirror(install_type):
      # Determining ESGF distribution mirror
-    logger.info("before selecting distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+    logger.info("before selecting distribution mirror: %s",
+                config.config_dictionary["esgf_dist_mirror"])
     if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
         logger.debug("interactive")
-        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror("interactive", install_type)
+        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror(
+            "interactive", install_type)
     else:
         logger.debug("fastest")
-        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror("fastest", install_type)
+        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror(
+            "fastest", install_type)
 
-    logger.info("selected distribution mirror: %s", config.config_dictionary["esgf_dist_mirror"])
+    logger.info("selected distribution mirror: %s",
+                config.config_dictionary["esgf_dist_mirror"])
+
 
 def set_esg_dist_url():
     # Setting esg_dist_url with previously gathered information
-    esg_dist_url_root = os.path.join("http://", config.config_dictionary["esgf_dist_mirror"], "dist")
+    esg_dist_url_root = os.path.join(
+        "http://", config.config_dictionary["esgf_dist_mirror"], "dist")
     logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
     if devel is True:
         esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
@@ -181,10 +193,12 @@ def set_esg_dist_url():
 
 
 def download_esg_installarg(esg_dist_url):
-    # Downloading esg-installarg file
+    ''' Downloading esg-installarg file '''
     if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-        esg_installarg_file_name = esg_bash2py.trim_string_from_head(config.config_dictionary["esg_installarg_file"])
-        esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
+        esg_installarg_file_name = esg_bash2py.trim_string_from_head(
+            config.config_dictionary["esg_installarg_file"])
+        esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(
+            esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
         try:
             if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
                 os.remove(config.config_dictionary["esg_installarg_file"])
@@ -192,9 +206,11 @@ def download_esg_installarg(esg_dist_url):
         except IOError, error:
             logger.error(error)
 
+
 def create_new_list_from_keys(dictionary):
     """ Return clean option list."""
     return [node_option.split("_BIT")[0].lower() for node_option in dictionary.keys()]
+
 
 def check_selected_node_type(bit_boolean_dictionary, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
@@ -205,7 +221,7 @@ def check_selected_node_type(bit_boolean_dictionary, node_type_list):
         logger.debug("option: %s", option)
         if option in node_options_modified:
             continue
-        else:    
+        else:
             print '''
                     Sorry no suitable node type has been selected
                     Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
@@ -231,105 +247,118 @@ def check_selected_node_type(bit_boolean_dictionary, node_type_list):
 
 
 def init_connection():
-  """ Initialize Connection to node."""
-  logger.info("esg-node initializing...")
-  try:
-      logger.info(socket.getfqdn())
-  except socket.error:
-      logger.error("Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command")
-      sys.exit()
+    """ Initialize Connection to node."""
+    logger.info("esg-node initializing...")
+    try:
+        logger.info(socket.getfqdn())
+    except socket.error:
+        logger.error(
+            "Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command")
+        sys.exit()
 
 
 def get_installation_type(script_version):
-  # Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
-  if "devel" in script_version:
-      logger.debug("Using devel version")
-      return "devel"
-  else:
-      return "master"
+    # Determining if devel or master directory of the ESGF distribution mirror
+    # will be use for download of binaries
+    if "devel" in script_version:
+        logger.debug("Using devel version")
+        return "devel"
+    else:
+        return "master"
+
 
 def get_user_response():
-  """ Capture user response. """
-  while True:
-    default_install_answer = "Y"
-    begin_installation = raw_input("Are you ready to begin the installation? [Y/n] ") or default_install_answer
+    """ Capture user response. """
+    while True:
+        default_install_answer = "Y"
+        begin_installation = raw_input(
+            "Are you ready to begin the installation? [Y/n] ") or default_install_answer
 
-    if begin_installation.lower() == "n" or begin_installation.lower() == "no":
-      print "Canceling installation"
-      sys.exit(0)
-    elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
-      break
-      #return "y"
-    else:
-      print "Invalid option.  Please select a valid option [Y/n]"
+        if begin_installation.lower() == "n" or begin_installation.lower() == "no":
+            print "Canceling installation"
+            sys.exit(0)
+        elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
+            break
+            # return "y"
+        else:
+            print "Invalid option.  Please select a valid option [Y/n]"
+
 
 def install_log_info():
-  if force_install:
-      logger.info("(force install is ON)")
-  # if node_type_bit & DATA_BIT != 0:
-  if bit_boolean_dictionary["DATA_BIT"]:
-      logger.info("(data node type selected)")
-  if bit_boolean_dictionary["INDEX_BIT"]:
-  # if node_type_bit & INDEX_BIT != 0:
-      logger.info("(index node type selected)")
-  if bit_boolean_dictionary["IDP_BIT"]:
-  # if node_type_bit & IDP_BIT != 0:
-      logger.info("(idp node type selected)")
-  if bit_boolean_dictionary["COMPUTE_BIT"]:
-  # if node_type_bit & COMPUTE_BIT != 0:
-      logger.info("(compute node type selected)")
+    if force_install:
+        logger.info("(force install is ON)")
+    # if node_type_bit & DATA_BIT != 0:
+    if bit_boolean_dictionary["DATA_BIT"]:
+        logger.info("(data node type selected)")
+    if bit_boolean_dictionary["INDEX_BIT"]:
+        # if node_type_bit & INDEX_BIT != 0:
+        logger.info("(index node type selected)")
+    if bit_boolean_dictionary["IDP_BIT"]:
+        # if node_type_bit & IDP_BIT != 0:
+        logger.info("(idp node type selected)")
+    if bit_boolean_dictionary["COMPUTE_BIT"]:
+        # if node_type_bit & COMPUTE_BIT != 0:
+        logger.info("(compute node type selected)")
+
 
 def system_component_installation():
-  #---------------------------------------
-  #Installation of basic system components.
-  # (Only when one setup in the sequence is okay can we move to the next)
-  #---------------------------------------
-  # logger.debug(node_type_bit & INSTALL_BIT)
-  # if node_type_bit & INSTALL_BIT !=0:
-  if "install" in node_type_list:
-      esg_setup.setup_java()
-      esg_setup.setup_ant()
-      esg_postgres.setup_postgres()
-      esg_setup.setup_cdat()
-      # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
-      if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
-      # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
-          esg_publisher.setup_esgcet()
-          esg_tomcat_manager.setup_tomcat(devel)
-          esg_apache_manager.setup_apache_frontend(devel)
-  # setup_esgcet()
-  # test_esgcet()
+    #---------------------------------------
+    # Installation of basic system components.
+    # (Only when one setup in the sequence is okay can we move to the next)
+    #---------------------------------------
+    # logger.debug(node_type_bit & INSTALL_BIT)
+    # if node_type_bit & INSTALL_BIT !=0:
+    if "install" in node_type_list:
+        esg_setup.setup_java()
+        esg_setup.setup_ant()
+        esg_postgres.setup_postgres()
+        esg_setup.setup_cdat()
+        # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
+        if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
+            # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
+            esg_publisher.setup_esgcet()
+            esg_tomcat_manager.setup_tomcat(devel)
+            esg_apache_manager.setup_apache_frontend(devel)
+    # setup_esgcet()
+    # test_esgcet()
+
 
 def main(node_type_list):
-    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist" # default distribution_url
-    
-    # initialize connection 
+    # default distribution_url
+    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+
+    # initialize connection
     init_connection()
 
     # determine installation type
     install_type = get_installation_type(script_version)
 
     # select_distribution_mirror(install_type)
-    # set_esg_dist_url()    
+    # set_esg_dist_url()
     # download_esg_installarg()
-    
-    #process command line arguments
-    node_type_list = esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
+
+    # process command line arguments
+    node_type_list = esg_cli_argument_manager.get_previous_node_type_config(
+        config.esg_config_type_file)
     logger.debug("node_type_list: %s", node_type_list)
-    esg_cli_argument_manager.process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)
+    esg_cli_argument_manager.process_arguments(
+        install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)
     try:
         esg_setup.check_prerequisites()
     except UnprivilegedUserError:
-        logger.info("$([FAIL]) \n\tMust run this program with root's effective UID\n\n")
+        logger.info(
+            "$([FAIL]) \n\tMust run this program with root's effective UID\n\n")
         sys.exit(1)
     except WrongOSError:
-        logger.info("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" )
+        logger.info(
+            "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems")
         sys.exit(1)
-    
-    esg_functions.verify_esg_node_script(os.path.basename(__file__), esg_dist_url, script_version, script_maj_version, devel)
+
+    esg_functions.verify_esg_node_script(os.path.basename(
+        __file__), esg_dist_url, script_version, script_maj_version, devel)
 
     logger.debug("node_type_list: %s", node_type_list)
-    
+
     print '''
     -----------------------------------
     ESGF Node Installation Program
@@ -342,7 +371,8 @@ def main(node_type_list):
     # logger.debug("node_type_bit >= MIN_BIT: %s",  node_type_bit >= MIN_BIT)
     # logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
 
-    esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
+    esg_cli_argument_manager.get_previous_node_type_config(
+        config.esg_config_type_file)
     check_selected_node_type(bit_boolean_dictionary, node_type_list)
 
     # Display node information to user
@@ -351,7 +381,7 @@ def main(node_type_list):
     if devel is True:
         print "(Installing DEVELOPMENT tree...)"
 
-    # Process User Response 
+    # Process User Response
     get_user_response()
 
     #
@@ -362,14 +392,14 @@ def main(node_type_list):
 
     esg_setup.initial_setup_questionnaire()
     #---------------------------------------
-    #Installation of prerequisites.
+    # Installation of prerequisites.
     #---------------------------------------
-    #TODO: Uncomment this; only removed for testing speedup
+    # TODO: Uncomment this; only removed for testing speedup
     # esg_setup.install_prerequisites()
-    
+
     #---------------------------------------
-    #Setup ESGF RPM repository
-    #---------------------------------------    
+    # Setup ESGF RPM repository
+    #---------------------------------------
     print '''
     *******************************
     Setting up ESGF RPM repository
@@ -377,7 +407,7 @@ def main(node_type_list):
 
     # install dependencies
     system_component_installation()
-    
+
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 

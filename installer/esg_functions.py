@@ -13,6 +13,7 @@ import requests
 import hashlib
 import logging
 import shlex
+import socket
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 from esg_init import EsgInit
@@ -420,6 +421,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     if remote_file is None:
         remote_file = local_file
         #Get the last subpath from the absolute path
+        #TODO: use esg_bash2py.trim_from_head() here
         local_file = local_file.split("/")[-1]
 
     logger.debug("local file : %s", local_file)
@@ -427,7 +429,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
 
     if is_in_git(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
-        return 0
+        return True
 
     if os.path.isfile(local_file) and use_local_files:
         print '''
@@ -437,13 +439,13 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
             file: %s
             ***************************************************************************\n\n
         ''' % (readlinkf(local_file))
-        return 0
+        return True
 
     if not force_download:
         updates_available = check_for_update(local_file, remote_file)
         if updates_available != 0:
             logger.info("No updates available.")
-            return False
+            return True
 
     if os.path.isfile(local_file) and make_backup_file:
         create_backup_file(local_file)
@@ -457,31 +459,30 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
 def fetch_remote_file(local_file, remote_file):
     ''' Download a remote file from a distribution mirror and write its contents to the local_file '''
     try:
-        r = requests.get(remote_file)
-        if not r.status_code == requests.codes.ok:
+        remote_file_request = requests.get(remote_file)
+        if not remote_file_request.status_code == requests.codes.ok:
             print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
-            r.raise_for_status() 
+            remote_file_request.raise_for_status() 
             return 2
         else:
-            file = open(local_file, "w")
-            file.write(r.content)
-            file.close()
+            file_name = open(local_file, "w")
+            file_name.write(remote_file_request.content)
+            file_name.close()
     except requests.exceptions.RequestException, error:
         print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
         print error
         sys.exit()
 
-def create_backup_file(file_name):
+def create_backup_file(file_name, backup_extension=".bak"):
     try:
-        shutil.copyfile(file_name, file_name + ".bak")
-        os.chmod(file_name+".bak", 600)
+        shutil.copyfile(file_name, file_name + backup_extension)
+        os.chmod(file_name + backup_extension, 600)
     except OSError, error:
         logger.error(error)
 
 def verify_checksum(local_file, remote_file):
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
-    print "remote_file_md5 in checked_get: ", remote_file_md5
     
     local_file_md5 = get_md5sum(local_file)
 
@@ -489,7 +490,7 @@ def verify_checksum(local_file, remote_file):
         print " WARNING: Could not verify this file! %s" % (local_file)
         return False
     else:
-        print "[VERIFIED]"
+        print "{local_file} checksum [VERIFIED]".format(local_file=local_file)
         return True
 
 
@@ -576,6 +577,15 @@ def get_esg_root_id():
     except KeyError:
         esg_root_id = esg_property_manager.get_property("esg_root_id")
     return esg_root_id
+
+def get_esgf_host():
+    ''' Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) '''
+    try:
+        esgf_host = config.config_dictionary["esgf_host"]
+    except KeyError:
+        esgf_host = socket.getfqdn()
+
+    return esgf_host
 
 def get_security_admin_password():
     ''' Gets the security_admin_password from the esgf_secret_file '''

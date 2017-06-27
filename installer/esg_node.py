@@ -15,6 +15,7 @@ import esg_tomcat_manager
 import esg_version_manager
 import esg_mirror_manager
 import esg_apache_manager
+import esg_subsystem
 from esg_init import EsgInit
 
 
@@ -408,6 +409,28 @@ def main(node_type_list):
     # install dependencies
     system_component_installation()
 
+    #---------------------------------------
+    #Installation of basic system components.
+    # (Only when one setup in the sequence is okay can we move to the next)
+    #---------------------------------------
+    # logger.debug(node_type_bit & INSTALL_BIT)
+    # if node_type_bit & INSTALL_BIT !=0:
+    if "install" in node_type_list:
+        esg_setup.setup_java()
+        esg_setup.setup_ant()
+        esg_postgres.setup_postgres()
+        esg_setup.setup_cdat()
+        # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
+        if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
+        # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
+            esg_publisher.setup_esgcet()
+        esg_tomcat_manager.setup_tomcat(devel)
+        esg_apache_manager.setup_apache_frontend(devel)
+        esg_subsystem.setup_subsystem("node-manager", "esgf-node-manager", esg_dist_url)
+    # setup_esgcet()
+    # test_esgcet()
+    
+>>>>>>> create_pylint_script
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 

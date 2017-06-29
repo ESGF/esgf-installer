@@ -148,12 +148,12 @@ def init():
 
     os.environ["PATH"] = myPATH + ':' + os.environ["PATH"]
     os.environ["LD_LIBRARY_PATH"] = None
-        try:
-            os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
-                ':' + os.environ["LD_LIBRARY_PATH"]
-        except KeyError, error:
-            logger.error(error)
-            os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
+    try:
+        os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
+            ':' + os.environ["LD_LIBRARY_PATH"]
+    except KeyError, error:
+        logger.error(error)
+        os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
 
 #--------------
 # ID Setting

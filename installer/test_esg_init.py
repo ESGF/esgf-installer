@@ -10,7 +10,11 @@ class Test_ESG_Init(unittest.TestCase):
         self.var = ["apache_frontend_version", "cdat_version"]
     def test_init(self):
         for x in esg_init.init():
-            self.assertTrue(x in self.var)
+            try:
+                self.assertTrue(x in self.var)
+            except TypeError, e:
+                print "error:", e
+                print "x:", x
 
 if __name__ == '__main__':
     unittest.main()

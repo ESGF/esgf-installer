@@ -11,7 +11,7 @@ class Test_ESG_Init(unittest.TestCase):
     def test_init(self):
         for x in esg_init.init():
             try:
-                self.assertTrue(x in self.var)
+                self.assertTrue(x in self.var, True)
             except TypeError, e:
                 print "error:", e
                 print "x:", x

@@ -216,7 +216,7 @@ def init():
     apache_frontend_repo = "https://github.com/ESGF/apache-frontend.git"
     publisher_repo_https = "https://github.com/ESGF/esg-publisher.git"
     esgcet_egg_file = "esgcet-%s-py%s.egg" % (esgcet_version, python_version)
-    internal_script_variables["esg_testdir"] = workdir + "/../esg_test"
+    esg_testdir = workdir + "/../esg_test"
     tomcat_major_version = tomcat_version.split(".")[0]
     tomcat_dist_url = "http://archive.apache.org/dist/tomcat/tomcat-{0}/v{1}/bin/apache-tomcat-{1}.tar.gz".format(
         tomcat_major_version, tomcat_version)

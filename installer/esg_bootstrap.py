@@ -7,17 +7,17 @@ import sys
 import esg_bash2py
 
 
-devel = esg_bash2py.Expand.colonMinus("devel", "0")
-install_prefix = esg_bash2py.Expand.colonMinus("prefix", "/usr/local")
-script_maj_version="2.0"
-esg_dist_url="http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+devel = "0"
+install_prefix = "/usr/local"
+script_maj_version = "2.0"
+esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
 
 def check_for_root_id():
 	'''
 		Checks to see if the user is currently root
 	'''
-	root_check = os.geteuid()
-	if root_check != 0:
+	root_id = os.geteuid()
+	if root_id != 0:
 		print "$([FAIL]) \n\tMust run this program with root's effective UID\n\n"
 		return 1
 	return 0

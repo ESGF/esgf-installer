@@ -172,7 +172,7 @@ def init():
     esg_log_dir = esg_root_dir + "/log"
     esg_tools_dir = esg_root_dir + "/tools"
     esg_etc_dir = esg_root_dir + "/etc"
-    workdir = config_dictionary["installer_home"] + "/workbench/esg"
+    workdir = installer_home + "/workbench/esg"
     word_size = platform.architecture()[0].split('bit')[0]
     number_of_cpus = multiprocessing.cpu_count()
     # date_format="+%Y_%m_%d_%H%M%S"

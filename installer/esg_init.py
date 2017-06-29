@@ -14,6 +14,7 @@ import multiprocessing
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def init():
     #--------------
     # User Defined / Settable (public)
@@ -121,42 +122,42 @@ def init():
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
-    GIT_SSL_NO_VERIFY = "1"
-    OPENSSL_HOME = openssl_install_dir
-    PGHOME = postgress_install_dir
-    PGBINDIR = postgress_bin_dir
-    PGLIBDIR = postgress_lib_dir
-    PGUSER = postgress_user
-    PGHOST = postgress_host
-    PGPORT = postgress_port
-    CDAT_HOME = cdat_home
-    JAVA_HOME = java_install_dir
-    JAVA_OPTS = java_opts
-    ANT_HOME = ant_install_dir
-    CATALINA_HOME = tomcat_install_dir
-    CATALINA_BASE = CATALINA_HOME
-    CATALINA_OPTS = stomcat_opts
-    GLOBUS_LOCATION = globus_location
+    os.environ["GIT_SSL_NO_VERIFY"] = "1"
+    os.environ["OPENSSL_HOME"] = openssl_install_dir
+    os.environ["PGHOME"] = postgress_install_dir
+    os.environ["PGBINDIR"] = postgress_bin_dir
+    os.environ["PGLIBDIR"] = postgress_lib_dir
+    os.environ["PGUSER"] = postgress_user
+    os.environ["PGHOST"] = postgress_host
+    os.environ["PGPORT"] = postgress_port
+    os.environ["CDAT_HOME"] = cdat_home
+    os.environ["JAVA_HOME"] = java_install_dir
+    os.environ["JAVA_OPTS"] = java_opts
+    os.environ["ANT_HOME"] = ant_install_dir
+    os.environ["CATALINA_HOME"] = tomcat_install_dir
+    os.environ["CATALINA_BASE"] = os.environ["CATALINA_HOME"]
+    os.environ["CATALINA_OPTS"] = tomcat_opts
+    os.environ["GLOBUS_LOCATION"] = globus_location
 
-    myPATH = OPENSSL_HOME + "/bin:" + JAVA_HOME + "/bin:" + ANT_HOME + "/bin:" + \
-        CDAT_HOME + "/bin:" + CDAT_HOME + "/Externals/bin:" + CATALINA_HOME + "/bin:" + \
-        GLOBUS_LOCATION + "/bin:" + install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
+    myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
+        "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
 
-    myLD_LIBRARY_PATH = OPENSSL_HOME + "/lib:" + CDAT_HOME + "/Externals/lib:" + \
-        GLOBUS_LOCATION + "/lib:" + \
+    myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
+        os.environ["GLOBUS_LOCATION"] + "/lib:" + \
         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
-    PATH = myPATH + ':' + PATH
-    LD_LIBRARY_PATH = None
-    try:
-        LD_LIBRARY_PATH = myLD_LIBRARY_PATH + ':' + LD_LIBRARY_PATH
-    except KeyError, error:
-        logger.error(error)
-        LD_LIBRARY_PATH = myLD_LIBRARY_PATH
+    os.environ["PATH"] = myPATH + ':' + os.environ["PATH"]
+    os.environ["LD_LIBRARY_PATH"] = None
+        try:
+            os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
+                ':' + os.environ["LD_LIBRARY_PATH"]
+        except KeyError, error:
+            logger.error(error)
+            os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
 
-    #--------------
-    # ID Setting
-    #--------------
+#--------------
+# ID Setting
+#--------------
     installer_user = pwd.getpwuid(os.getuid())[0]
     installer_uid = pwd.getpwnam(installer_user).pw_uid
     installer_gid = pwd.getpwnam(installer_user).pw_gid

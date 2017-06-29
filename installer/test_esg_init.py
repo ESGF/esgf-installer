@@ -7,7 +7,7 @@ import esg_version_manager
 
 class Test_ESG_Init(unittest.TestCase):
     def setup(self):
-        self.var = {"apache_frontend_version" : "v1.02", "cdat_version" : "2.2.0"}
+        self.var = ["apache_frontend_version", "cdat_version"]
     def test_init(self):
         for x in esg_init.init():
             self.assertTrue(x in self.var)

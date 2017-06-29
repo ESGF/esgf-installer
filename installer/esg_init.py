@@ -85,8 +85,8 @@ def init():
     postgress_lib_dir = "/usr/lib64/pgsql"
     postgress_user = "dbsuper"
     pg_sys_acct_passwd = "changeme"
-    pub_secret = None
-    publisher_db_user_passwd = None
+    pub_secret = ""
+    publisher_db_user_passwd = ""
     try:
         with open(pub_secret_file, 'rb') as f:
             pub_secret = f.read().strip()
@@ -103,15 +103,15 @@ def init():
     ant_install_dir = install_prefix + "/ant"
     tomcat_install_dir = install_prefix + "/tomcat"
     tomcat_conf_dir = esg_config_dir + "/tomcat"
-    tomcat_opts = None
+    tomcat_opts = ""
     tomcat_user = "tomcat"
     tomcat_group = tomcat_user
     globus_location = install_prefix + "/globus"
     mail_smtp_host = "smtp.`hostname --domain`"
-    mail_admin_address = None
-    publisher_home = None
-    publisher_config = None
-    ESGINI = None
+    mail_admin_address = ""
+    publisher_home = ""
+    publisher_config = ""
+    ESGINI = ""
     try:
         os.environ["ESGINI"]
     except KeyError:
@@ -147,7 +147,7 @@ def init():
         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
     os.environ["PATH"] = myPATH + ':' + os.environ["PATH"]
-    os.environ["LD_LIBRARY_PATH"] = None
+    os.environ["LD_LIBRARY_PATH"] = ""
     try:
         os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
             ':' + os.environ["LD_LIBRARY_PATH"]

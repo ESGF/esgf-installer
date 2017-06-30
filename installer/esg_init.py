@@ -5,30 +5,23 @@ import logging
 import platform
 import multiprocessing
 
-#import re
-#import subprocess
-# from pwd import getpwnam
-# import esg_functions
-#import esg_bash2py
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
 
 def init():
     #--------------
     # User Defined / Settable (public)
     #--------------
-    install_prefix = "/usr/local"
-    esg_root_dir = "/esg"
-    esg_config_dir = esg_root_dir + "/config"
-    esg_config_type_file = esg_config_dir + "/config_type"
-    esgf_secret_file = esg_config_dir + "/.esgf_pass"
-    pg_secret_file = esg_config_dir + "/.esg_pg_pass"
-    pub_secret_file = esg_config_dir + "/.esg_pg_publisher_pass"
-    ks_secret_file = esg_config_dir + "/.esg_keystore_pass"
-    install_manifest = esg_root_dir + "/esgf-install-manifest"
-    envfile = "/etc/esg.env"
+    install_prefix = os.path.join("usr","local")
+    esg_root_dir = os.path.join("esg")
+    esg_config_dir = os.path.join(esg_root_dir, "config")
+    esg_config_type_file = os.path.join(esg_config_dir, "config_type")
+    esgf_secret_file = os.path.join(esg_config_dir, ".esgf_pass")
+    pg_secret_file = os.path.join(esg_config_dir, ".esg_pg_pass")
+    pub_secret_file = os.path.join(esg_config_dir, ".esg_pg_publisher_pass")
+    ks_secret_file = os.path.join(esg_config_dir,".esg_keystore_pass")
+    install_manifest = os.path.join(esg_root_dir, "esgf-install-manifest")
+    envfile = os.path.join("etc","esg.env")
 
     #--------------------------------
     # Internal esgf node code versions
@@ -79,10 +72,10 @@ def init():
     #--------------------------------
     # Script vars (~external)
     #--------------------------------
-    openssl_install_dir = install_prefix + "/openssl"
-    postgress_install_dir = "/var/lib/pgsql"
-    postgress_bin_dir = "/usr/bin"
-    postgress_lib_dir = "/usr/lib64/pgsql"
+    openssl_install_dir = os.path.join(install_prefix, "openssl")
+    postgress_install_dir = os.path.join("var","lib","pgsql")
+    postgress_bin_dir = os.path.join("usr","bin")
+    postgress_lib_dir = os.path("usr","lib64","pgsql")
     postgress_user = "dbsuper"
     pg_sys_acct_passwd = "changeme"
     pub_secret = ""
@@ -97,16 +90,17 @@ def init():
 
     postgress_host = "localhost"
     postgress_port = "5432"
-    cdat_home = "2.2.0"
+    # Double Check HERE
+    cdat_home = os.path.join(install_prefix,"uvcdat","2.2.0")
     java_opts = ""
-    java_install_dir = install_prefix + "/java"
-    ant_install_dir = install_prefix + "/ant"
-    tomcat_install_dir = install_prefix + "/tomcat"
-    tomcat_conf_dir = esg_config_dir + "/tomcat"
+    java_install_dir = os.path.join(install_prefix,"java")
+    ant_install_dir = os.path.join(install_prefix, "ant")
+    tomcat_install_dir = os.path.join(install_prefix,"tomcat")
+    tomcat_conf_dir = os.path.join(esg_config_dir, "tomcat")
     tomcat_opts = ""
     tomcat_user = "tomcat"
     tomcat_group = tomcat_user
-    globus_location = install_prefix + "/globus"
+    globus_location = os.path.join(install_prefix,"globus")
     mail_smtp_host = "smtp.`hostname --domain`"
     mail_admin_address = ""
     publisher_home = ""
@@ -115,9 +109,9 @@ def init():
     try:
         os.environ["ESGINI"]
     except KeyError:
-        publisher_home = esg_config_dir + "/esgcet"
+        publisher_home = os.path.join(esg_config_dir,"esgcet")
         publisher_config = "esg.ini"
-        ESGINI = publisher_home + "/" + publisher_config
+        ESGINI = os.path.join(publisher_home, publisher_config)
 
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
@@ -161,7 +155,7 @@ def init():
     installer_user = pwd.getpwuid(os.getuid())[0]
     installer_uid = pwd.getpwnam(installer_user).pw_uid
     installer_gid = pwd.getpwnam(installer_user).pw_gid
-    installer_home = "/usr/local/src/esgf"
+    installer_home = os.path.join("usr","local","src","esgf")
     logger.debug("%s:%s:%s:%s", installer_user,
                  installer_uid, installer_gid, installer_home)
 

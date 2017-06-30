@@ -14,6 +14,7 @@ script_maj_version = "2.0"
 esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
 
 def setup_dir():
+	""" Setup main directory."""
 	# directory path
 	script_install_dir = os.path.join(install_prefix, "bin")
 	# create directory
@@ -36,6 +37,7 @@ def check_for_root_id():
 	return 0
 
 def confirm_file_status(return_value, fetch_file, starting_directory):
+	""" Check to see if the file is Updated or needs to be installed."""
 	if return_value == 1:
 		print "ESGF Node install script {} already up-to-date".format(fetch_file)
 	elif return_value == 0:

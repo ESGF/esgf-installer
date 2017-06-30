@@ -78,7 +78,7 @@ def init():
     openssl_install_dir = os.path.join(install_prefix, "openssl")
     postgress_install_dir = os.path.join("var", "lib", "pgsql")
     postgress_bin_dir = os.path.join("usr", "bin")
-    postgress_lib_dir = os.path("usr", "lib64", "pgsql")
+    postgress_lib_dir = os.path.join("usr", "lib64", "pgsql")
     postgress_user = "dbsuper"
     pg_sys_acct_passwd = "changeme"
     pub_secret = ""

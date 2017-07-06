@@ -1050,6 +1050,7 @@ setup_esgcet() {
     $pipcmd esgprep==${esgprep_version}
     $pipcmd SQLAlchemy==0.7.10
     $pipcmd sqlalchemy_migrate
+    $pipcmd cdf2cim
 
     #clone publisher
     local publisher_git_protocol="git://"

@@ -1193,6 +1193,13 @@ setup_esgcet() {
         pip install esgfpid   
         pushd /usr/local
         git clone https://github.com/PCMDI/cmip6-cmor-tables
+        esgf_pub_group="esgfpub"
+        if [ ! $(getent group ${esgf_pub_group}) ]; then
+            /usr/sbin/groupadd -r ${esgf_pub_group}
+            [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add esgf_pub system group: ${esgf_pub_roup}" && popd && checked_done 1
+        fi
+        chgrp -r ${esgf_pub_group} cmip6-cmor-tables
+        chmod -R g+rwx cmip6-cmor-tables
         popd 
       fi 
     fi

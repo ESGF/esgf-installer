@@ -1,6 +1,6 @@
 #!/usr/bin/local/env python
 ''' esg-functions: ESGF Node Application Stack Functions
-    description: Installer Functions for the ESGF Node application stack 
+    description: Installer Functions for the ESGF Node application stack
 '''
 import sys
 import os
@@ -19,10 +19,10 @@ from time import sleep
 from esg_init import EsgInit
 import esg_bash2py
 import esg_property_manager
+import esg_logging_manager
 
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 config = EsgInit()
 
 
@@ -56,7 +56,7 @@ def check_esgf_httpd_process():
     status = subprocess.check_output(["service", "esgf-httpd", "status"])
     if status:
         return 0
-    else: 
+    else:
         return 1
 
 #----------------------------------------------------------
@@ -67,14 +67,14 @@ def pcheck(function_name, num_of_iterations =5, wait_time_in_seconds=1, return_o
     This function is for repeatedly running a function until it returns
     true and/or the number of iterations have been reached.  The format of
     the args for this call are as follows:
-    
+
     pcheck <num_of_iterations> <wait_time_in_seconds> <return_on_true> -- [function name] <args...>
     The default operation is the run the function once a scecond for 5 seconds or until it returns true
     The default value of iterations is 5
     The default value of wait time is  1 (second)
     The default value of return on true is 1 (no more iterations after function/command succeeds)
     the "--" is a literal argument that MUST precede the function or command you wish to call
-    
+
     Ex:
     Run a function or command foo 3x waiting 2 seconds between and returning after function/command success
     pcheck 3 2 1 -- foo arg1 arg2
@@ -116,16 +116,16 @@ def get_md5sum_password(password):
 def path_unique(path_string = os.environ["PATH"], path_separator=":"):
     '''
         Prints a unique path string
-        
+
         The first (leftmost) instance of a path entry will be the one that
         is preserved.
-        
+
         If $1 is specified, it will be taken as the string to deduplicate,
         otherwise $PATH is used.
-        
+
         If $2 is specified, it will be taken as the path separator, which
         otherwise defaults to ':'
-        
+
     '''
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
@@ -136,7 +136,7 @@ def readlinkf(file_name):
     bash/zsh, following symlinks recursively until they end in a
     file, and will print the full dereferenced path of the specified
     file even if the file isn't a symlink.
-    
+
     Loop detection exists, but only as an abort after passing a
     maximum length.
     '''
@@ -165,7 +165,7 @@ def insert_file_at_pattern(target_file, input_file, pattern):
         f.close()
     except:
         e = sys.exc_info()[0]
-        print "<p>Error: %s</p>" % e 
+        print "<p>Error: %s</p>" % e
 
 
 
@@ -175,23 +175,23 @@ def append_to_path():
         Appends path components to a variable, deduplicates the list,
         then prints to stdout the export command required to append that
         list to that variable
-        
+
         Takes as arguments first a variable containing a colon-separated
         path to append to, then a space-separated collection of paths to
         append -- these path components MUST NOT contain spaces.
-        
+
         If insufficient arguments are present, a warning message is
         printed to stderr and nothing is printed to stdout.
-        
+
         Example:
           append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
-        
+
           Would result in the entry:
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/foo/lib:/bar/lib
-        
+
         NOTE: In the context of system setup this is usually
               NOT WHAT YOU WANT - use prefix_to_path (below)
-        
+
     '''
     pass
 
@@ -200,23 +200,23 @@ def prefix_to_path(path, prepend_value):
         Prepends path components to a variable, deduplicates the list,
         then prints to stdout the export command required to prepend
         that list to that variable.
-        
+
         Takes as arguments first a variable containing a colon-separated
         path to prepend to, then a space-separated collection of paths to
         prepend -- these path components MUST NOT contain spaces.
-        
+
         If insufficient arguments are present, a warning message is
         printed to stderr and nothing is printed to stdout.
-        
+
         Example:
           prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib
-        
+
           Would result in the entry:
             export LD_LIBRARY_PATH=/foo/lib:/bar/lib:$LD_LIBRARY_PATH
-        
+
         NOTE: In the context of system setup this is usually
               WHAT YOU WANT; that your libs are found before any user libs are
-        
+
     '''
     os.environ[path] = path_unique(prepend_value)+":"+path
     return path_unique(prepend_value)+":"+path
@@ -232,7 +232,7 @@ def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of
     source = readlinkf(path)
     print "Backup - Creating a backup archive of %s" % (source)
     current_directory = os.getcwd()
-    
+
     os.chdir(source)
     try:
         os.mkdir(backup_dir)
@@ -283,7 +283,7 @@ def get_node_id():
         this is only something for the testing phase for the most part.
     '''
     pass
-    
+
 # TODO: No uses found
 def git_tagrelease():
     '''
@@ -291,20 +291,20 @@ def git_tagrelease():
         release version string and codename, tags that commit with the
         version string, and then immediately makes another commit
         appending "-devel" to the version string.
-        
+
         This is to prepare for a release merge.  Note that the tag will
         not be against the correct revision after a merge to the release
         branch if it was not a fast-forward merge, so ensure that there
         are no unmerged changes from the release branch before using.
-        
+
         If that happens, delete the tag, issue a git reset --hard
         against the last commit before the tag, merge the release
         branch, and try again.
-        
+
         Arguments:
         $1: the release version string (mandatory)
         $2: the release codename (optional)
-        
+
         Examples:
           git-tagrelease v4.5.6 AuthenticGreekPizzaEdition
         or just
@@ -312,7 +312,7 @@ def git_tagrelease():
     '''
     pass
 
-    
+
 
 def is_in_git(file_name):
     '''
@@ -322,14 +322,14 @@ def is_in_git(file_name):
      parent to avoid attempting to call git unless absolutely needed,
      so as to be able to detect some common cases on a system without
      git actually installed and in the path.
-    
+
      Accepts as an argument the file to be checked
-    
+
      Returns 0 if the specified file is in a git repository
-    
+
      Returns 2 if it could not detect a git repository purely by file
      position and git was not available to complete a rev-parse test
-    
+
      Returns 1 otherwise
     '''
     try:
@@ -393,7 +393,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     '''
 
     If an update is available then pull it down... then check the md5 sums again!
-    
+
     Yes, this results in 3 network calls to pull down a file, but it
     saves total bandwidth and it also allows the updating from the
     network process to be cronttab-able while parsimonious with
@@ -415,7 +415,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
        Is no reason to fetch it.
 
     USAGE: checked_get [file] http://www.foo.com/file [<1|0>] [<1|0>]
-    
+
     '''
 
     if remote_file is None:
@@ -462,7 +462,7 @@ def fetch_remote_file(local_file, remote_file):
         remote_file_request = requests.get(remote_file)
         if not remote_file_request.status_code == requests.codes.ok:
             print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
-            remote_file_request.raise_for_status() 
+            remote_file_request.raise_for_status()
             return 2
         else:
             file_name = open(local_file, "w")
@@ -483,7 +483,7 @@ def create_backup_file(file_name, backup_extension=".bak"):
 def verify_checksum(local_file, remote_file):
     remote_file_md5 = requests.get(remote_file+ '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
-    
+
     local_file_md5 = get_md5sum(local_file)
 
     if local_file_md5 != remote_file_md5:
@@ -519,7 +519,7 @@ def stream_subprocess_output(subprocess_object):
         for line in iter(subprocess_object.stdout.readline, b''):
             print line,
     # wait for the subprocess to exit
-    subprocess_object.wait() 
+    subprocess_object.wait()
 
 
 def call_subprocess(command_string, command_stdin = None):
@@ -557,7 +557,7 @@ def subprocess_pipe_commands(command_list):
 def check_shmmax(min_shmmax = 48):
     '''
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
-       arg1 - min value of shmmax in MB (see: /etc/sysctl.conf) 
+       arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
     '''
     kernel_shmmax = esg_property_manager.get_property("kernel_shmmax", 48)
     set_value_mb = min_shmmax
@@ -693,4 +693,3 @@ def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version,
             sys.exit(1)
 
     return True
-

@@ -16,11 +16,12 @@ import esg_version_manager
 import esg_mirror_manager
 import esg_apache_manager
 import esg_subsystem
+import esg_node_manager
+import esg_logging_manager
 from esg_init import EsgInit
 
 
-logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 config = EsgInit()
 
@@ -46,7 +47,7 @@ VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
 
 
 bit_boolean_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT":4, "MAX_BIT":64}
-ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]  
+ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]
 install_mode = 0
 upgrade_mode = 0
 
@@ -137,7 +138,7 @@ def esgf_node_info():
 
      (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
 
-                                                                                    
+
 \033[01;31m
   EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
   E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
@@ -208,7 +209,7 @@ def check_selected_node_type(bit_boolean_dictionary, node_type_list):
         logger.debug("option: %s", option)
         if option in node_options_modified:
             continue
-        else:    
+        else:
             print '''
                     Sorry no suitable node type has been selected
                     Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
@@ -234,7 +235,7 @@ def check_selected_node_type(bit_boolean_dictionary, node_type_list):
 
 def main(node_type_list):
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
-    
+
 
     logger.info("esg-node initializing...")
     try:
@@ -251,9 +252,9 @@ def main(node_type_list):
         install_type = "master"
 
     # select_distribution_mirror(install_type)
-    # set_esg_dist_url()    
+    # set_esg_dist_url()
     # download_esg_installarg()
-    
+
 
     #process command line arguments
     node_type_list = esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
@@ -267,11 +268,11 @@ def main(node_type_list):
     except WrongOSError:
         logger.info("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" )
         sys.exit(1)
-    
+
     esg_functions.verify_esg_node_script(os.path.basename(__file__), esg_dist_url, script_version, script_maj_version, devel)
 
     logger.debug("node_type_list: %s", node_type_list)
-    
+
 
 
     print '''
@@ -286,7 +287,7 @@ def main(node_type_list):
     # logger.debug("node_type_bit >= MIN_BIT: %s",  node_type_bit >= MIN_BIT)
     # logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
 
-        
+
     esg_cli_argument_manager.get_previous_node_type_config(config.esg_config_type_file)
     check_selected_node_type(bit_boolean_dictionary, node_type_list)
 
@@ -328,11 +329,11 @@ def main(node_type_list):
     #---------------------------------------
     #TODO: Uncomment this; only removed for testing speedup
     # esg_setup.install_prerequisites()
-    
+
 
     #---------------------------------------
     #Setup ESGF RPM repository
-    #---------------------------------------    
+    #---------------------------------------
     print '''
     *******************************
     Setting up ESGF RPM repository
@@ -358,7 +359,7 @@ def main(node_type_list):
         esg_subsystem.setup_subsystem("node-manager", "esgf-node-manager", esg_dist_url)
     # setup_esgcet()
     # test_esgcet()
-    
+
     # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 

@@ -14,7 +14,7 @@ def create_rotating_log(name, path=PATH):
     handler = RotatingFileHandler(path, maxBytes=10000,
                                   backupCount=5
 
-    handler.setLevel(logging.DEBUG)
+    # handler.setLevel(logging.DEBUG)
 
     # create formatter
     formatter = logging.Formatter("%(levelname): %(lineno)s %(funcName)s: %(asctime)s", level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')

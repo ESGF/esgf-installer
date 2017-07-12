@@ -4,7 +4,6 @@ import subprocess
 import re
 import shutil
 from OpenSSL import crypto
-import logging
 import requests
 import socket
 import platform

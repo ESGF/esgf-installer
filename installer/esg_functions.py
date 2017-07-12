@@ -11,7 +11,6 @@ import datetime
 import tarfile
 import requests
 import hashlib
-import logging
 import shlex
 import socket
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError

@@ -3,7 +3,6 @@ import os
 import subprocess
 import pwd
 import sys
-import logging
 import platform
 import multiprocessing
 # from pwd import getpwnam

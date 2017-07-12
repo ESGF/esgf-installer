@@ -8,9 +8,9 @@ import stat
 import logging
 from collections import OrderedDict
 from esg_init import EsgInit
+import esg_logging_manager
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 config = EsgInit()
 
 
@@ -51,11 +51,11 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     if response_array[fastest] != master:
         print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest
         outofsync = True
-  
+
     if outofsync == True:
         # config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         return "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
-   
+
     try:
         if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
             print "using the fastest mirror %s" % ranked_response_times.items()[0][0]

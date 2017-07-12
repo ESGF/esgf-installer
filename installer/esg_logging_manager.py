@@ -7,7 +7,6 @@ def create_rotating_log(name, path=PATH):
     """
     Creates a rotating log
     """
-    logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s: %(asctime)s", level=logging.DEBUG)
     logger = logging.getLogger(name)
 
     # add a rotating handler
@@ -17,7 +16,7 @@ def create_rotating_log(name, path=PATH):
     # handler.setLevel(logging.DEBUG)
 
     # create formatter
-    formatter = logging.Formatter("%(levelname): %(lineno)s %(funcName)s: %(asctime)s", level=logging.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
+    formatter = logging.Formatter("%(levelname): %(lineno)s %(funcName)s: %(asctime)s", level=logging.DEBUG)
 
     # add formatter to handler
     handler.setFormatter(formatter)

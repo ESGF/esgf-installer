@@ -7,7 +7,7 @@ def create_rotating_log(name, path=PATH):
     """
     Creates a rotating log
     """
-    logger = logging.getLogger(name)
+    esgf_logger = logging.getLogger(name)
 
     # add a rotating handler
     handler = RotatingFileHandler(path, maxBytes=10000,
@@ -21,5 +21,5 @@ def create_rotating_log(name, path=PATH):
     # add formatter to handler
     handler.setFormatter(formatter)
 
-    logger.addHandler(handler)
-    return logger
+    esgf_logger.addHandler(handler)
+    return esgf_logger

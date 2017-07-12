@@ -16,7 +16,7 @@ def create_rotating_log(name, path=PATH):
     # handler.setLevel(logging.DEBUG)
 
     # create formatter
-    formatter = logging.Formatter("%(levelname): %(lineno)s %(funcName)s: %(asctime)s", level=logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # add formatter to handler
     handler.setFormatter(formatter)

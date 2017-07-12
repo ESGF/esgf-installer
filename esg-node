@@ -2339,6 +2339,8 @@ setup_slcs(){
         sed -i "s/test_email/$mail_admin_address/" playbook/overrides/production_venv_only.yml
         sed -i "s/abc123/$(cat /esg/config/.esg_pg_pass)/g" playbook/overrides/production_venv_only.yml
 
+        write_as_property short_lived_certificate_server $esgf_host
+
         mkdir -p /usr/local/esgf-slcs-server
         chown -R apache:apache /usr/local/esgf-slcs-server
 

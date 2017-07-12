@@ -17,9 +17,9 @@ import esg_env_manager
 from time import sleep
 from git import Repo
 from esg_init import EsgInit
+import esg_logging_manager
 
-logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 config = EsgInit()
 esg_root_id = esg_functions.get_esg_root_id()
@@ -197,7 +197,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         #generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration
         generate_esg_ini_command = '''
             {cdat_home}/bin/esgsetup --config $( (({recommended_setup} == 1 )) && echo "--minimal-setup" ) --rootid {esg_root_id}
-            sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config} 
+            sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}
             sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}
             '''.format(publisher_home=config.config_dictionary["publisher_home"], publisher_config=config.config_dictionary["publisher_config"], cdat_home=config.config_dictionary["cdat_home"],
                        recommended_setup=recommended_setup, esg_root_id=esg_root_id,
@@ -208,7 +208,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         if esg_ini_file_process.returncode != 0:
             logger.error("ESGINI.returncode did not equal 0: %s %s", esg_ini_file_process.returncode, generate_esg_ini_command)
             raise RuntimeError("%r failed, status code %s stdout %r stderr %r" % (
-                       generate_esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data)) 
+                       generate_esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data))
             os.chdir(starting_directory)
             esg_functions.checked_done(1)
 
@@ -258,17 +258,17 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         #Makes call to esgsetup - > Setup the ESG publication configuration
         if not DEBUG:
             generate_esg_ini_command = '''
-                %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" ) 
-                --db $( [ -n "%s" ] && echo "--db-name %s" ) 
-                $( [ -n "%s" ] && echo "--db-admin %s" ) 
-                $([ -n "${pg_sys_acct_passwd:=%s}" ] && echo "--db-admin-password %s") 
-                $( [ -n "%s" ] && echo "--db-user %s" ) 
-                $([ -n "%s" ] && echo "--db-user-password %s") 
-                $( [ -n "%s" ] && echo "--db-host %s" ) 
+                %s/%s %s/bin/esgsetup $( ((%s == 1 )) && echo "--minimal-setup" )
+                --db $( [ -n "%s" ] && echo "--db-name %s" )
+                $( [ -n "%s" ] && echo "--db-admin %s" )
+                $([ -n "${pg_sys_acct_passwd:=%s}" ] && echo "--db-admin-password %s")
+                $( [ -n "%s" ] && echo "--db-user %s" )
+                $([ -n "%s" ] && echo "--db-user-password %s")
+                $( [ -n "%s" ] && echo "--db-host %s" )
                 $( [ -n "%s" ] && echo "--db-port %s" )"
             '''.format(config.config_dictionary["publisher_home"], config.config_dictionary["publisher_config"], config.config_dictionary["cdat_home"], recommended_setup,
-            config.config_dictionary["db_database"], config.config_dictionary["db_database"], 
-            config.config_dictionary["postgress_user"], config.config_dictionary["postgress_user"], 
+            config.config_dictionary["db_database"], config.config_dictionary["db_database"],
+            config.config_dictionary["postgress_user"], config.config_dictionary["postgress_user"],
             security_admin_password, config.config_dictionary["pg_sys_acct_passwd"],
             publisher_db_user, publisher_db_user,
             config.config_dictionary["publisher_db_user_passwd"], config.config_dictionary["publisher_db_user_passwd"],
@@ -286,7 +286,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         if esg_ini_file_process.returncode != 0:
             logger.error("ESGINI.returncode did not equal 0: %s %s", esg_ini_file_process.returncode, esg_ini_command)
             raise RuntimeError("%r failed, status code %s stdout %r stderr %r" % (
-                       esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data)) 
+                       esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data))
 
     except Exception, exception:
         print "exception occured with ESGINI: ", str(exception)
@@ -377,7 +377,7 @@ def write_esgcet_install_log():
 def test_esgcet():
     print '''
     ----------------------------
-    ESGCET Test... 
+    ESGCET Test...
     ----------------------------
     '''
     starting_directory = os.getcwd()

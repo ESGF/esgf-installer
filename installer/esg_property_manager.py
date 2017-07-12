@@ -5,9 +5,9 @@ import os
 import re
 import logging
 from esg_init import EsgInit
+import esg_logging_manager
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 config = EsgInit()
 
 def load_properties(property_file = config.config_dictionary["config_file"]):

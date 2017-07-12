@@ -9,10 +9,11 @@ import multiprocessing
 # from pwd import getpwnam
 import esg_functions
 import esg_bash2py
+import esg_logging_manager
 
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
+
 class EsgInit(object):
 
     '''
@@ -170,7 +171,7 @@ class EsgInit(object):
             "postgress_user"] = esg_bash2py.Expand.colonMinus("PGUSER", "dbsuper")
 
         # local pg_secret=$(cat ${pg_secret_file} 2> /dev/null)
-        # pg_secret = subprocess.check_output("cat " + pg_secret_file + " 2>/dev/null ") <- This redirects stderr to a named pipe called /dev/null; In the same way, command 2> file will change the standard error and will make it point to file. Standard error is used by applications to print errors. 
+        # pg_secret = subprocess.check_output("cat " + pg_secret_file + " 2>/dev/null ") <- This redirects stderr to a named pipe called /dev/null; In the same way, command 2> file will change the standard error and will make it point to file. Standard error is used by applications to print errors.
         # pg_sys_acct_passwd=${pg_sys_acct_passwd:=${pg_secret:=changeme}}
         external_script_variables["pg_sys_acct_passwd"] = esg_bash2py.Expand.colonMinus(
             "pg_sys_acct_passwd", esg_bash2py.Expand.colonMinus("pg_secret", "changeme"))
@@ -185,7 +186,7 @@ class EsgInit(object):
             "publisher_db_user_passwd", external_script_variables["pub_secret"])
         except IOError, error:
             logger.debug(error)
-        
+
         # del pub_secret
         external_script_variables[
             "postgress_host"] = esg_bash2py.Expand.colonMinus("PGHOST", "localhost")
@@ -233,7 +234,7 @@ class EsgInit(object):
             #     "${ESGINI##*/}", shell=True)
             external_script_variables["publisher_config"] = "esg.ini"
             external_script_variables["ESGINI"] = external_script_variables["publisher_home"] + "/" + external_script_variables["publisher_config"]
-            
+
 
         self.config_dictionary.update(external_script_variables)
         return external_script_variables
@@ -269,7 +270,7 @@ class EsgInit(object):
 
         self.myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + os.environ[
             "CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + self.install_prefix + "/bin:/sbin:/usr/bin:/usr/sbin"
-        
+
         # logger.debug("myPath: %s", self.myPATH)
         self.myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + os.environ["CDAT_HOME"] + "/Externals/lib:" + \
             os.environ["GLOBUS_LOCATION"] + "/lib:" + \

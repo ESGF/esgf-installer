@@ -13,6 +13,7 @@ import esg_functions
 import esg_setup
 import esg_version_manager
 import esg_bash2py
+import esg_node_manager
 import shlex
 from esg_init import EsgInit
 from time import sleep
@@ -32,7 +33,7 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     arg (2) - directory on the distribution site where script is fetched from Ex: orp
     usage: setup_subsystem security orp - looks for the script esg-security in the distriubtion dir orp
     '''
-    
+
     subsystem_install_script_path = os.path.join(config.config_dictionary["scripts_dir"],"esg-{subsystem}".format(subsystem=subsystem))
 
 #     #---
@@ -83,4 +84,3 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     setup_subsystem_stdout, setup_subsystem_stderr = setup_subsystem_process.communicate()
     logger.debug("setup_subsystem_stdout: %s", setup_subsystem_stdout)
     logger.debug("setup_subsystem_stderr: %s", setup_subsystem_stderr)
-    

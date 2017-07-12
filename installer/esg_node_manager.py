@@ -27,10 +27,11 @@ import esg_env_manager
 import esg_property_manager
 import esg_version_manager
 import esg_postgres
+import esg_logging_manager
 from esg_tomcat_manager import stop_tomcat
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
+
 config = EsgInit()
 
 envfile = "/etc/esg.env"

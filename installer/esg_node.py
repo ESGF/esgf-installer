@@ -22,6 +22,7 @@ from esg_init import EsgInit
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
+print "logger:", logger
 
 config = EsgInit()
 

@@ -7,9 +7,9 @@ import re
 import logging
 from esg_init import EsgInit
 import esg_bash2py
+import esg_logging_manager
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 config = EsgInit()
 
 def version_comp(input_version1, input_version2):
@@ -323,12 +323,12 @@ def check_webapp_version(webapp_name, min_version, version_command=None):
         return 2
     else:
         current_version= str(get_current_webapp_version(webapp_name,version_property)).strip()
-        if not current_version: 
+        if not current_version:
             print " WARNING:(2) Could not detect version of %s" % (webapp_name)
         else:
             version_comparison = check_version_helper(current_version,min_version)
             if version_comparison == 0:
                 return version_comparison
-            else: 
+            else:
                 print "\nSorry, the detected version of %s %s is older than required minimum version %s \n" % (webapp_name, current_version, min_version)
                 return 1

@@ -8,10 +8,10 @@ import datetime
 import logging
 from esg_init import EsgInit
 import esg_bash2py
+import esg_logging_manager
 
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 config = EsgInit()
 
 expired=0
@@ -31,10 +31,10 @@ def print_cert(certificate_path):
     # subject = cert.get_subject()
     # issued_to = subject.CN    # the Common Name field
     # issuer = cert.get_issuer()
-    # issued_by = issuer.CN 
+    # issued_by = issuer.CN
 
 def check_cert_expiry(certificate_path):
-    
+
     print "inspecting %s" % (certificate_path)
     try:
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, open(certificate_path).read())
@@ -91,7 +91,7 @@ def trash_expired_cert(certificate_path):
     os.mkdir(trash_directory)
     shutil.move(certificate_path, trash_directory)
     print "Trashed expired certificate %s" % (certificate_path)
- 
+
 
 # TODO: No uses found
 def set_aside_web_app():

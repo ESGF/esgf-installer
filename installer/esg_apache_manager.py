@@ -3,6 +3,7 @@ import subprocess
 import shutil
 import datetime
 import logging
+import logging.handlers
 import socket
 import shlex
 import filecmp
@@ -10,11 +11,15 @@ import git
 import esg_bash2py
 import esg_version_manager
 import esg_functions
+import esg_logging_manager
 from esg_init import EsgInit
 
 
-logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
+
+# Add the log message handler to the logger
+handler = logging.handlers.RotatingFileHandler(
+              LOG_FILENAME, maxBytes=8000, backupCount=5)
 
 config = EsgInit()
 
@@ -36,8 +41,8 @@ def clone_apache_repo(devel):
             apache_frontend_repo_local.git.checkout("master")
 
 def stop_httpd():
-    ''' HTTP Daemon (httpd) is a software program that runs in the background of a web server and waits for the incoming server requests. 
-    It is a piece of software that listens for network requests (which are expressed 
+    ''' HTTP Daemon (httpd) is a software program that runs in the background of a web server and waits for the incoming server requests.
+    It is a piece of software that listens for network requests (which are expressed
     using the Hypertext Transfer Protocol) and responds to them. '''
     stop_httpd_process = esg_functions.call_subprocess("/etc/init.d/httpd stop")
     if stop_httpd_process["returncode"] != 0:
@@ -79,7 +84,7 @@ def setup_apache_frontend(devel = False):
         host_name = socket.gethostname()
 
         stop_httpd()
-        
+
         check_config_command = "chkconfig --levels 2345 httpd off"
         check_config_process = subprocess.Popen(shlex.split(check_config_command))
         check_config_process_stdout, check_config_process_stderr =  check_config_process.communicate()
@@ -207,7 +212,7 @@ def update_apache_conf(devel = False):
             logger.debug("wsgi_path_module_sed_stdout: %s", wsgi_path_module_sed_stdout)
             logger.debug("wsgi_path_module_sed_stderr: %s", wsgi_path_module_sed_stderr)
 
-            #TODO: Terrible names; figure out what they are representing and rename 
+            #TODO: Terrible names; figure out what they are representing and rename
             include_httpd_locals_file = "Include /etc/httpd/conf/esgf-httpd-locals.conf"
             include_httpd_local_file = "Include /etc/httpd/conf/esgf-httpd-local.conf"
 
@@ -222,9 +227,9 @@ def update_apache_conf(devel = False):
                     uncommented_include_httpd_locals_file = True
                     filedata = filedata.replace("Include /etc/httpd/conf/esgf-httpd-locals.conf", "#Include /etc/httpd/conf/esgf-httpd-locals.conf")
                 if not '#Include /etc/httpd/conf/esgf-httpd-local.conf' in filedata:
-                    uncommented_include_httpd_local_file = True 
+                    uncommented_include_httpd_local_file = True
                     filedata = filedata.replace("Include /etc/httpd/conf/esgf-httpd-local.conf", "#Include /etc/httpd/conf/esgf-httpd-local.conf")
-            
+
             with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "w") as file:
                 file.write(filedata)
 
@@ -280,9 +285,9 @@ def update_apache_conf(devel = False):
                 if uncommented_include_httpd_locals_file or uncommented_include_httpd_local_file:
                     with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "r") as file:
                         filedata = file.read()
-                        filedata = filedata.replace("#Include /etc/httpd/conf/esgf-httpd-locals.conf", "Include /etc/httpd/conf/esgf-httpd-locals.conf") 
+                        filedata = filedata.replace("#Include /etc/httpd/conf/esgf-httpd-locals.conf", "Include /etc/httpd/conf/esgf-httpd-locals.conf")
                         filedata = filedata.replace("#Include /etc/httpd/conf/esgf-httpd-local.conf", "Include /etc/httpd/conf/esgf-httpd-local.conf")
-                    
+
                     with open("/usr/local/src/esgf/workbench/esg/apache_frontend/apache-frontend/etc/httpd/conf/esgf-httpd.conf", "w") as file:
                         file.write(filedata)
 

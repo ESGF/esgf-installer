@@ -2,8 +2,6 @@ import os
 import subprocess
 import shutil
 import datetime
-import logging
-import logging.handlers
 import socket
 import shlex
 import filecmp
@@ -16,10 +14,6 @@ from esg_init import EsgInit
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
-
-# Add the log message handler to the logger
-handler = logging.handlers.RotatingFileHandler(
-              LOG_FILENAME, maxBytes=8000, backupCount=5)
 
 config = EsgInit()
 

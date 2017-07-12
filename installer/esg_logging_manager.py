@@ -10,7 +10,7 @@ def create_rotating_log(name, path=PATH):
     logger = logging.getLogger(name)
 
     # add a rotating handler
-    handler = RotatingFileHandler(path, maxBytes=10000,
+    handler = RotatingFileHandler(path, maxBytes=10*1024*1024,
                                   backupCount=5)
 
     # create formatter

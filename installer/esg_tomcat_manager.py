@@ -24,10 +24,10 @@ import esg_functions
 import esg_bash2py
 import esg_property_manager
 from esg_init import EsgInit
+import esg_logging_manager
 
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 config = EsgInit()
 
 def find_tomcat_ports(server_xml_path):
@@ -39,7 +39,7 @@ def find_tomcat_ports(server_xml_path):
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
     port_list = root.findall(".//Connector")
-    for port in port_list:         
+    for port in port_list:
         port_number = port.get("port")
         ports.append(port_number)
 
@@ -61,7 +61,7 @@ def check_tomcat_process():
         ports = find_tomcat_ports(server_xml_path)
 
         process_list = []
-        
+
         for port in ports:
             proc1 = subprocess.Popen(shlex.split('lsof -Pni TCP:{port}'.format(port = port)), stdout = subprocess.PIPE)
             proc2 = subprocess.Popen(shlex.split('tail -n +2'), stdin = proc1.stdout, stdout = subprocess.PIPE)
@@ -137,10 +137,10 @@ def start_tomcat():
     os.chdir(config.config_dictionary["tomcat_install_dir"])
     # copy_result = subprocess.check_output("$(find $(readlink -f `pwd`/bin/) | grep jar | xargs | perl -pe 's/ /:/g')", shell=True)
     tomcat_jars = find_jars_in_directory(config.config_dictionary["tomcat_install_dir"])
-    jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false" 
-        "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out" 
+    jsvc_launch_command=("JAVA_HOME=%s %s/bin/jsvc -Djava.awt.headless=true -Dcom.sun.enterprise.server.ss.ASQuickStartup=false"
+        "-Dcatalina.home=%s -pidfile %s -cp %s -outfile %s/logs/catalina.out"
         "-errfile %s/logs/catalina.err "
-        "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false" 
+        "-user %s %s %s -Dsun.security.ssl.allowUnsafeRenegotiation=false"
         "-Dtds.content.root.path=%s org.apache.catalina.startup.Bootstrap") % (config.config_dictionary["java_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_pid_file"], tomcat_jars, config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_install_dir"], config.config_dictionary["tomcat_user"], config.config_dictionary["tomcat_opts"], config.config_dictionary["java_opts"], config.config_dictionary["thredds_content_dir"])
     if jsvc_launch_command != 0:
         print " ERROR: Could not start up tomcat"
@@ -462,7 +462,7 @@ def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
     except Exception, error:
         print "**WARNING**: Could not change owner/group of {tomcat_install_dir} successfully".format(tomcat_install_dir = esg_functions.readlinkf(config.config_dictionary["tomcat_install_dir"]))
         logger.error(error)
-             
+
     #-------------------------------
     # Remove unnecessary webapps for Security Reasons...
     #-------------------------------
@@ -541,7 +541,7 @@ def _set_distinguished_name(esgf_host):
 
     use_distinguished_name = "Y"
     try:
-        distinguished_name    
+        distinguished_name
     except NameError:
         distinguished_name = config.config_dictionary["default_distinguished_name"]
 
@@ -572,12 +572,12 @@ def create_keystore(keystore_password):
     if not distinguished_name or use_distinguished_name.lower() in ["n", "no"]:
         java_keytool_command = "{java_install_dir}/bin/keytool -genkey -alias {keystore_alias} -keyalg RSA \
         -keystore ${keystore_file} \
-        -validity 365 -storepass {keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"], 
+        -validity 365 -storepass {keystore_password}".format(java_install_dir = config.config_dictionary["java_install_dir"],
             keystore_alias = config.config_dictionary["keystore_alias"], keystore_file =config.config_dictionary["keystore_file"], keystore_password = config.config_dictionary["keystore_password"])
-        
+
         java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
         if java_keytool_process["returncode"] != 0:
-            print " ERROR: keytool genkey command failed" 
+            print " ERROR: keytool genkey command failed"
         esg_functions.checked_done(1)
     else:
         # distringuished_name_sed_output = subprocess.check_output("echo {distinguished_name} | sed -n 's#.*CN=\([^,]*\),.*#\1#p'".format(distinguished_name = distinguished_name))
@@ -586,12 +586,12 @@ def create_keystore(keystore_password):
 
             java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
             {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
-            -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"], 
+            -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config.config_dictionary["java_install_dir"],
             keystore_alias = config.config_dictionary["keystore_alias"], keystore_file = config.config_dictionary["keystore_file"], keystore_password = keystore_password)
-            
+
             java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
             if java_keytool_process["returncode"] != 0:
-                print " ERROR: keytool genkey command failed" 
+                print " ERROR: keytool genkey command failed"
             esg_functions.checked_done(1)
 
 def _download_truststore_file():
@@ -636,7 +636,7 @@ def configure_tomcat(keystore_password, esg_dist_url, devel=False):
 
         setup_temp_ca(devel)
         _download_truststore_file()
-        
+
         #Edit the server.xml file to contain proper location of certificates
         logger.debug("Editing %s/conf/server.xml accordingly...", config.config_dictionary["tomcat_install_dir"])
         edit_tomcat_server_xml(config.config_dictionary["keystore_password"])
@@ -756,7 +756,7 @@ def add_my_cert_to_truststore(action, value):
             logger.info("[OK]")
 
         logger.debug("Peforming checks against configured values...")
-        
+
         keystore_password_md5 = esg_functions.get_md5sum_password(config.config_dictionary["keystore_password"])
         local_keystore_password_md5 = esg_functions.get_md5sum_password(local_keystore_password)
 
@@ -805,7 +805,7 @@ def add_my_cert_to_truststore(action, value):
 
     # Allow proc1 to receive a SIGPIPE if proc2 exits.
     keytool_subprocess.stdout.close()
-    stdout_processes, stderr_processes = grep_for_alias_subprocess.communicate() 
+    stdout_processes, stderr_processes = grep_for_alias_subprocess.communicate()
     logger.info("stdout_processes: %s", stdout_processes)
     logger.info("stderr_processes: %s", stderr_processes)
     logger.info("grep_for_alias_subprocess.returncode: %s", grep_for_alias_subprocess.returncode)
@@ -825,7 +825,7 @@ def add_my_cert_to_truststore(action, value):
 
     print "Importing keystore's certificate into truststore... "
     import_keystore_cert_command = "{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {local_keystore_alias} -keypass {local_keystore_password} -file {local_keystore_file}.cer -keystore {local_truststore_file} \
-        -storepass {local_truststore_password} -noprompt".format(java_install_dir = config.config_dictionary["java_install_dir"], local_keystore_alias = local_keystore_alias, 
+        -storepass {local_truststore_password} -noprompt".format(java_install_dir = config.config_dictionary["java_install_dir"], local_keystore_alias = local_keystore_alias,
         local_keystore_password = local_keystore_password, local_keystore_file = local_keystore_file,
         local_truststore_file = local_truststore_file, local_truststore_password = local_truststore_password)
     import_keystore_cert_return_code = subprocess.call(shlex.split(import_keystore_cert_command))
@@ -946,7 +946,7 @@ def create_reqhost_ans_file(host_name):
 
 
 def generate_new_ca():
-    ''' Create a new CA using the CA.pl perl script: Creates the CA directory and populates it 
+    ''' Create a new CA using the CA.pl perl script: Creates the CA directory and populates it
         From CA.pl script comment:
         CA -newca ... will setup the right stuff;
     '''
@@ -985,8 +985,8 @@ def generate_request_cert():
         # esg_functions.call_subprocess("perl CA.pl -newreq-nodes", command_stdin = reqhost_ans_file.read().strip())
 
 def sign_certificate():
-    ''' Sign a generate certificate using the CA.pl perl script 
-        # CA -sign ... will sign the generated request and output 
+    ''' Sign a generate certificate using the CA.pl perl script
+        # CA -sign ... will sign the generated request and output
     '''
     print '''\n
     *******************************
@@ -998,7 +998,7 @@ def sign_certificate():
     #     esg_functions.call_subprocess("perl CA.pl -sign ", command_stdin = setuphost_ans_file.read().strip())
 
 def write_to_ca_cert_pem():
-    ''' The x509 command is a multi purpose certificate utility. It can be used to display certificate information, 
+    ''' The x509 command is a multi purpose certificate utility. It can be used to display certificate information,
         convert certificates to various forms, sign certificate
         requests like a "mini CA" or edit certificate trust settings. '''
     print '''\n
@@ -1037,7 +1037,7 @@ def get_cert_subject(cert):
     cert_subject = cert_info.get_subject()
     cert_subject = re.sub(" <X509Name object '|'>", "", str(cert_subject)).strip()
     logger.info("cert_subject: %s", cert_subject)
-    return cert_subject    
+    return cert_subject
 
 def setup_temp_ca(devel):
     try:
@@ -1055,7 +1055,7 @@ def setup_temp_ca(devel):
     delete_existing_temp_ca_files()
 
     os.mkdir("CA")
-    write_ca_ans_templ() 
+    write_ca_ans_templ()
     write_reqhost_ans_templ()
 
     setuphost_ans = open("setuphost.ans", "w+")
@@ -1071,7 +1071,7 @@ def setup_temp_ca(devel):
     generate_rsa_key()
     generate_request_cert()
     sign_certificate()
-    write_to_ca_cert_pem()    
+    write_to_ca_cert_pem()
 
     shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
     write_to_host_cert()
@@ -1089,7 +1089,7 @@ def setup_temp_ca(devel):
     temp_subject = '/O=ESGF/OU=ESGF.ORG/CN=placeholder'
     # quoted_temp_subject = subprocess.check_output("`echo {temp_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(temp_subject = temp_subject))
     cert_subject = get_cert_subject(cert)
-    
+
     # quoted_cert_subject = subprocess.check_output("`echo {cert_subject} | sed 's/[./*?|]/\\\\&/g'`;".format(cert_subject = cert_subject))
     # print "quotedcertsubj=~{quoted_cert_subject}~".format(quoted_cert_subject = quoted_cert_subject)
 
@@ -1098,7 +1098,7 @@ def setup_temp_ca(devel):
     local_hash_output = local_hash_output.strip()
     logger.debug("local_hash_output: %s", local_hash_output)
     logger.debug("local_hash_err: %s", local_hash_err)
-    
+
     target_directory = "globus_simple_ca_{local_hash}_setup-0".format(local_hash = local_hash_output)
 
     esg_bash2py.mkdir_p(target_directory)
@@ -1110,7 +1110,7 @@ def setup_temp_ca(devel):
     #Find and replace the temp_subject with the cert_subject in the signing_policy_template and rewrite to new file.
 
     # subprocess.call(shlex.split('sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;'))
-    
+
     signing_policy_template = open("signing_policy_template", "r")
     signing_policy = open("signing_policy", "w+")
     for line in signing_policy_template:
@@ -1238,17 +1238,17 @@ def print_templ():
         #    ?    Matches any single character.
         #
         # CA names must be specified (no wildcards). Names containing whitespaces
-        # must be included in single quotes, e.g. 'Certification Authority'. 
-        # Names must not contain new line symbols. 
-        # The value of condition attribute is represented as a set of regular 
-        # expressions. Each regular expression must be included in double quotes.  
+        # must be included in single quotes, e.g. 'Certification Authority'.
+        # Names must not contain new line symbols.
+        # The value of condition attribute is represented as a set of regular
+        # expressions. Each regular expression must be included in double quotes.
         #
         # This policy file dictates the following policy:
         #   -The Globus CA can sign Globus certificates
         #
         # Format:
         #------------------------------------------------------------------------
-        #  token type  | def.authority |                value              
+        #  token type  | def.authority |                value
         #--------------|---------------|-----------------------------------------
         # EACL entry #1|
 
@@ -1275,16 +1275,16 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
     -rw-r--r-- 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
     -rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
 
-    Only called when migration conditions are present.    
+    Only called when migration conditions are present.
     '''
-    tomcat_install_conf = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf") 
+    tomcat_install_conf = os.path.join(config.config_dictionary["tomcat_install_dir"], "conf")
 
     if tomcat_install_conf != config.config_dictionary["tomcat_conf_dir"]:
         if not os.path.exists(config.config_dictionary["tomcat_conf_dir"]):
             esg_bash2py.mkdir_p(config.config_dictionary["tomcat_conf_dir"])
-        
+
         esg_functions.backup(tomcat_install_conf)
-        
+
         logger.debug("Moving credential files into node's tomcat configuration dir: %s", config.config_dictionary["tomcat_conf_dir"])
         truststore_file_name = esg_bash2py.trim_string_from_head(config.config_dictionary["truststore_file"])
         # i.e. /usr/local/tomcat/conf/esg-truststore.ts
@@ -1318,7 +1318,7 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url):
 
             if os.path.exists(os.path.join(tomcat_install_conf, socket.getfqdn() +"-esg-node.pem")) and not os.path.exists(os.path.join(config.config_dictionary["tomcat_conf_dir"], socket.getfqdn() +"-esg-node.pem")):
                 shutil.move(os.path.join(tomcat_install_conf, socket.getfqdn() +"-esg-node.pem"), os.path.join(config.config_dictionary["tomcat_conf_dir"], socket.getfqdn() +"-esg-node.pem"))
-        
+
         os.chown(config.config_dictionary["tomcat_conf_dir"], pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
 
         #Be sure that the server.xml file contains the explicit Realm specification needed.
@@ -1354,7 +1354,7 @@ def set_esgf_https_port(root):
     return esgf_https_port
 
 def tomcat_port_check():
-    ''' 
+    '''
         Helper function to poke at tomcat ports...
         Port testing for http and https
     '''
@@ -1382,10 +1382,10 @@ def tomcat_port_check():
 
     tree = etree.parse(server_xml_path)
     root = tree.getroot()
-    
+
     esgf_http_port = set_esgf_http_port(root)
     esgf_https_port = set_esgf_https_port(root)
-    
+
     #We only care about reporting a failure for ports below 1024
     #specifically 80 (http) and 443 (https)
     logger.debug("failed_connections: %s", failed_connections)
@@ -1399,6 +1399,3 @@ def write_tomcat_env():
 
 def write_tomcat_install_log():
     pass
-     
-
-

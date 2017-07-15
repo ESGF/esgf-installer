@@ -10,9 +10,9 @@ import esg_version_manager
 import shlex
 from esg_init import EsgInit
 from time import sleep
+import esg_logging_manager
 
-logging.basicConfig(format = "%(levelname): %(lineno)s %(funcName)s", level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 config = EsgInit()
 
@@ -39,13 +39,13 @@ def setup_postgres(force_install = False):
 
     # upgrade  = None
     # if not found_valid_version:
-    #     upgrade 
+    #     upgrade
 
     #---------------------------------------
     #Setup PostgreSQL RPM repository
     #---------------------------------------
 
-    backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]") 
+    backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]")
     if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
         backup_db()
 
@@ -81,10 +81,10 @@ def setup_postgres(force_install = False):
                     config.config_dictionary["pg_sys_acct_passwd"] = pg_sys_acct_passwd_input
                     break
         print "Creating account..."
-        useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF' 
-        -d $pg_sys_acct_homedir -g $pg_sys_acct_group -p 
+        useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF'
+        -d $pg_sys_acct_homedir -g $pg_sys_acct_group -p
         $pg_sys_acct_passwd -s /bin/bash $pg_sys_acct'''.format(pg_sys_acct_homedir = pg_sys_acct_homedir,
-           pg_sys_acct_group = config.config_dictionary["pg_sys_acct_group"], 
+           pg_sys_acct_group = config.config_dictionary["pg_sys_acct_group"],
            pg_sys_acct_passwd = config.config_dictionary["pg_sys_acct_passwd"],
            pg_sys_acct = config.config_dictionary["pg_sys_acct"] )
         useradd_output = subprocess.call(useradd_command, shell=True)
@@ -115,9 +115,9 @@ def setup_postgres(force_install = False):
     #double check that the account is really there!
     if not pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid:
         print " ERROR: Problem with $pg_sys_acct creation!!!"
-        esg_functions.checked_done(1) 
+        esg_functions.checked_done(1)
 
-    os.chown(config.config_dictionary["postgress_install_dir"], pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, 
+    os.chown(config.config_dictionary["postgress_install_dir"], pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid,
         grp.getgrnam(config.config_dictionary["pg_sys_acct_group"]).gr_gid)
 
 
@@ -129,7 +129,7 @@ def setup_postgres(force_install = False):
             raise
         sleep(1)
         pass
-    
+
     try:
         os.chown(os.path.join(config.config_dictionary["postgress_install_dir"], "data"), pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, -1)
     except:
@@ -146,7 +146,7 @@ def setup_postgres(force_install = False):
             raise
         sleep(1)
         pass
-    
+
     try:
         os.chown(os.path.join(config.config_dictionary["postgress_install_dir"], "log"), pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, -1)
     except:
@@ -157,11 +157,11 @@ def setup_postgres(force_install = False):
 
     if not os.access(os.path.join(config.config_dictionary["postgress_bin_dir"], "psql"), os.X_OK):
         print " ERROR: psql not found after install!"
-        esg_functions.checked_done(1) 
+        esg_functions.checked_done(1)
 
     #Check to see if there is a ${postgress_user} already on the system if not, make one
     try:
-        conn=psycopg2.connect("dbname='postgres' user='postgres' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config.config_dictionary["pg_sys_acct_passwd"])) 
+        conn=psycopg2.connect("dbname='postgres' user='postgres' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config.config_dictionary["pg_sys_acct_passwd"]))
     except Exception, error:
         logger.error(error)
         print "I am unable to connect to the database."
@@ -176,7 +176,7 @@ def setup_postgres(force_install = False):
         while True:
             postgres_user_password = _choose_postgres_user_password()
             try:
-                cur.execute("create user {postgress_user} with superuser password '{postgres_user_password}';".format(postgress_user = config.config_dictionary["postgress_user"], 
+                cur.execute("create user {postgress_user} with superuser password '{postgres_user_password}';".format(postgress_user = config.config_dictionary["postgress_user"],
                     postgres_user_password = postgres_user_password))
                 break
             except:
@@ -185,7 +185,7 @@ def setup_postgres(force_install = False):
 
     starting_directory = os.getcwd()
     os.chdir(os.path.join(config.config_dictionary["postgress_install_dir"], "data"))
-    
+
     #Get files
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
     hba_conf_file = "pg_hba.conf"
@@ -222,20 +222,20 @@ def setup_postgres(force_install = False):
 
     postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(postgress_port = config.config_dictionary["postgress_port"])) or  config.config_dictionary["postgress_port"]
     print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port = postgres_port_input)
-    postgres_port_returncode = subprocess.call('''eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/{postgress_port}/g' ${postgres_conf_file}" '''.format(postgress_port = config.config_dictionary["postgress_port"], postgres_conf_file = postgres_conf_file)) 
+    postgres_port_returncode = subprocess.call('''eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/{postgress_port}/g' ${postgres_conf_file}" '''.format(postgress_port = config.config_dictionary["postgress_port"], postgres_conf_file = postgres_conf_file))
     if postgres_port_returncode == 0:
         print "Postgres port set: [OK]"
     else:
         print "Postgres port set: [FAIL]"
 
-    print "Setting Postgress Log Dir: {postgress_install_dir} ".format(postgress_install_dir = config.config_dictionary["postgress_install_dir"])    
-    postgres_log_dir_returncode = subprocess.call('''eval "perl -p -i -e 's/\\@\\@postgress_install_dir\\@\\@/{postgress_install_dir}/g' ${postgres_conf_file}" '''.format(postgress_install_dir = config.config_dictionary["postgress_install_dir"], postgres_conf_file = postgres_conf_file)) 
+    print "Setting Postgress Log Dir: {postgress_install_dir} ".format(postgress_install_dir = config.config_dictionary["postgress_install_dir"])
+    postgres_log_dir_returncode = subprocess.call('''eval "perl -p -i -e 's/\\@\\@postgress_install_dir\\@\\@/{postgress_install_dir}/g' ${postgres_conf_file}" '''.format(postgress_install_dir = config.config_dictionary["postgress_install_dir"], postgres_conf_file = postgres_conf_file))
     if postgres_log_dir_returncode == 0:
         print "Postgres Log Dir set: [OK]"
     else:
         print "Postgres Log Dir set: [FAIL]"
 
-    os.chown(config.config_dictionary["postgress_install_dir"], pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid, 
+    os.chown(config.config_dictionary["postgress_install_dir"], pwd.getpwnam(config.config_dictionary["pg_sys_acct"]).pw_uid,
         grp.getgrnam(config.config_dictionary["pg_sys_acct_group"]).gr_gid)
 
     os.chdir(starting_directory)
@@ -343,4 +343,3 @@ def postgres_list_dbs():
 
 def postgres_clean_schema_migration():
     pass
-

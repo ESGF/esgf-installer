@@ -18,15 +18,15 @@ import esg_apache_manager
 import esg_subsystem
 import esg_node_manager
 import esg_logging_manager
-from esg_init import EsgInit
+import esg_init
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 print "logger:", logger
 
-config = EsgInit()
+config = esg_init.init()
 
-logger.info("keystore_alias: %s", config.config_dictionary["keystore_alias"])
+logger.info("keystore_alias: %s", config.keystore_alias)
 # os.environ['DISCOVERONLY'] = Expand.colonMinus("DISCOVERONLY")
 os.environ['LANG'] = "POSIX"
 os.umask(022)
@@ -167,24 +167,24 @@ def esgf_node_info():
 def select_distribution_mirror(install_type):
      # Determining ESGF distribution mirror
     logger.info("before selecting distribution mirror: %s",
-                config.config_dictionary["esgf_dist_mirror"])
+                config.esgf_dist_mirror)
     if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
         logger.debug("interactive")
-        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror(
+        config.esgf_dist_mirror = esg_mirror_manager.get_esgf_dist_mirror(
             "interactive", install_type)
     else:
         logger.debug("fastest")
-        config.config_dictionary["esgf_dist_mirror"] = esg_mirror_manager.get_esgf_dist_mirror(
+        config.esgf_dist_mirror = esg_mirror_manager.get_esgf_dist_mirror(
             "fastest", install_type)
 
     logger.info("selected distribution mirror: %s",
-                config.config_dictionary["esgf_dist_mirror"])
+                config.esgf_dist_mirror)
 
 
 def set_esg_dist_url():
     # Setting esg_dist_url with previously gathered information
     esg_dist_url_root = os.path.join(
-        "http://", config.config_dictionary["esgf_dist_mirror"], "dist")
+        "http://", config.esgf_dist_mirror, "dist")
     logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
     if devel is True:
         esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
@@ -196,15 +196,15 @@ def set_esg_dist_url():
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
-    if not os.path.isfile(config.config_dictionary["esg_installarg_file"]) or force_install or os.path.getmtime(config.config_dictionary["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
+    if not os.path.isfile(config.esg_installarg_file) or force_install or os.path.getmtime(config.esg_installarg_file) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_bash2py.trim_string_from_head(
-            config.config_dictionary["esg_installarg_file"])
-        esg_functions.download_update(config.config_dictionary["esg_installarg_file"], os.path.join(
+            config.esg_installarg_file)
+        esg_functions.download_update(config.esg_installarg_file, os.path.join(
             esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
         try:
-            if not os.path.getsize(config.config_dictionary["esg_installarg_file"]) > 0:
-                os.remove(config.config_dictionary["esg_installarg_file"])
-            esg_bash2py.touch(config.config_dictionary["esg_installarg_file"])
+            if not os.path.getsize(config.esg_installarg_file) > 0:
+                os.remove(config.esg_installarg_file)
+            esg_bash2py.touch(config.esg_installarg_file)
         except IOError, error:
             logger.error(error)
 

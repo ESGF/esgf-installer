@@ -1,18 +1,14 @@
-"""Something about module"""
+"""Initializes global configuration variables"""
 import os
 import pwd
 import platform
 import multiprocessing
-#import sys
 import esg_logging_manager
-
 
 LOGGER = esg_logging_manager.create_rotating_log(__name__)
 
-
-
 def init():
-    """ Return a list of all local vaiables."""
+    """ Return a list of all local variables."""
     #--------------
     # User Defined / Settable (public)
     #--------------

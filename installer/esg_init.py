@@ -4,6 +4,7 @@ import pwd
 import platform
 import multiprocessing
 import esg_logging_manager
+import yaml
 
 LOGGER = esg_logging_manager.create_rotating_log(__name__)
 
@@ -12,8 +13,8 @@ def init():
     #--------------
     # User Defined / Settable (public)
     #--------------
-    install_prefix = os.path.join("usr", "local")
-    esg_root_dir = os.path.join("esg")
+    install_prefix = os.path.join("/","usr", "local")
+    esg_root_dir = os.path.join("/","esg")
     esg_config_dir = os.path.join(esg_root_dir, "config")
     esg_config_type_file = os.path.join(esg_config_dir, "config_type")
     esgf_secret_file = os.path.join(esg_config_dir, ".esgf_pass")
@@ -21,7 +22,7 @@ def init():
     pub_secret_file = os.path.join(esg_config_dir, ".esg_pg_publisher_pass")
     ks_secret_file = os.path.join(esg_config_dir, ".esg_keystore_pass")
     install_manifest = os.path.join(esg_root_dir, "esgf-install-manifest")
-    envfile = os.path.join("etc", "esg.env")
+    envfile = os.path.join("/","etc", "esg.env")
 
     #--------------------------------
     # Internal esgf node code versions
@@ -73,7 +74,7 @@ def init():
     # Script vars (~external)
     #--------------------------------
     openssl_install_dir = os.path.join(install_prefix, "openssl")
-    postgress_install_dir = os.path.join("var", "lib", "pgsql")
+    postgress_install_dir = os.path.join("/","var", "lib", "pgsql")
     postgress_bin_dir = os.path.join("usr", "bin")
     postgress_lib_dir = os.path.join("usr", "lib64", "pgsql")
     postgress_user = "dbsuper"
@@ -257,4 +258,12 @@ def init():
     config_file = os.path.join(esg_config_dir, "esgf.properties")
     index_config = "master slave"
 
+
+    with open("esg_config.yaml", "w") as esg_config:
+        yaml.dump(locals(), esg_config)
+
+
     return locals()
+
+if __name__ == "__main__":
+    init()

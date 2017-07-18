@@ -347,7 +347,7 @@ def main(node_type_list):
     # logger.debug(node_type_bit & INSTALL_BIT)
     # if node_type_bit & INSTALL_BIT !=0:
     if "install" in node_type_list:
-        esg_setup.setup_java()
+        # esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()
         esg_setup.setup_cdat()
@@ -357,6 +357,7 @@ def main(node_type_list):
             esg_publisher.setup_esgcet()
         esg_tomcat_manager.setup_tomcat(devel)
         esg_apache_manager.setup_apache_frontend(devel)
+        esg_subsystem.setup_subsystem("security", "esgf-security", esg_dist_url)
         esg_subsystem.setup_subsystem("cog", "esgf-cog", esg_dist_url)
         # esg_subsystem.setup_subsystem("node-manager", "esgf-node-manager", esg_dist_url)
     # setup_esgcet()

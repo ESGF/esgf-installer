@@ -111,6 +111,9 @@ expect {
     "Do you want to continue with ESGF Dashboard IP installation and setup?" {
         send \n ; exp_continue
     }
+    "Do you want to continue with LAS installation and setup?"  {
+        send \n ; exp_continue
+    }
     "Would you like to use the DN: (OU=ESGF.ORG, O=ESGF)" {
         send \n ; exp_continue
     }

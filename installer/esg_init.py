@@ -123,9 +123,9 @@ class EsgInit(object):
         external_program_versions["openssl_max_version"] = esg_bash2py.Expand.colonMinus(
             "openssl_max_version", "0.9.9z")
         external_program_versions["java_version"] = esg_bash2py.Expand.colonMinus(
-            "java_version", "1.8.0_112")
+            "java_version", "1.8.0_131")
         external_program_versions["java_min_version"] = esg_bash2py.Expand.colonMinus(
-            "java_min_version", "1.8.0_112")
+            "java_min_version", "1.8.0_131")
         external_program_versions["ant_version"] = esg_bash2py.Expand.colonMinus(
             "ant_version", "1.9.1")
         external_program_versions["ant_min_version"] = esg_bash2py.Expand.colonMinus(

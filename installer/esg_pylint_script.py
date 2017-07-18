@@ -14,7 +14,6 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 esg_bash2py.mkdir_p("pylint_score_reports")
 
 esgf_python_scripts = glob.glob("esg*_**.py")
-print "esgf_python_scripts:", esgf_python_scripts
 
 # file_name = raw_input("Enter the script name to lint:")
 # if file_name in esgf_python_scripts

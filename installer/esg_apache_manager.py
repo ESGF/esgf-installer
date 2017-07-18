@@ -60,7 +60,7 @@ def start_httpd():
 
 def setup_apache_frontend(devel=False):
     print "*******************************"
-    print "Setting up Apache Frontend
+    print "Setting up Apache Frontend"
     print "*******************************\n"
 
     old_directory = os.getcwd()

@@ -6,7 +6,7 @@
 requests
 psycopg2
 numpy
-git
+GitPython
 lxml
 python-magic
 libmagic

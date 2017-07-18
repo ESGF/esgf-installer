@@ -1,1 +1,0 @@
-echo $(pwd)/esg*_**.py

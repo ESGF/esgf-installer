@@ -1,3 +1,5 @@
+#!/usr/local/bin/python2.7
+
 import glob
 import os
 import datetime
@@ -32,6 +34,3 @@ with open("pylint_score_reports/pylint_scores{date}.txt".format(date=time.strfti
         except KeyError, error:
             logger.error(error)
             logger.error("Can't find score for %s", script)
-
-
-

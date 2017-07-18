@@ -51,7 +51,11 @@ def deduplicate_settings_in_file(envfile = None):
 
             for setting in reversed(env_settings):
                 # logger.debug(setting.split("="))
-                key, value = setting.split("=")
+                try:
+                    key, value = setting.split("=")
+                except ValueError, error:
+                    logger.error(error)
+                    logger.error("setting: %s", setting)
                 # logger.debug("key: %s", key)
                 # logger.debug("value: %s", value)
 

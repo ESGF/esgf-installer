@@ -25,6 +25,7 @@ def clone_apache_repo(devel):
     except git.exc.GitCommandError, error:
         logger.error(error)
         logger.error("Git repo already exists.")
+        return False
 
     if os.path.isdir(os.path.join("apache_frontend", ".git")):
         logger.error("Successfully cloned repo from %s",
@@ -58,10 +59,9 @@ def start_httpd():
 
 
 def setup_apache_frontend(devel=False):
-    print '''
-    *******************************
-    Setting up Apache Frontend
-    ******************************* \n'''
+    print "*******************************"
+    print "Setting up Apache Frontend
+    print "*******************************\n"
 
     old_directory = os.getcwd()
     try:
@@ -78,7 +78,10 @@ def setup_apache_frontend(devel=False):
     logger.debug("changed directory to %s:", os.getcwd())
 
     print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
-    clone_apache_repo(devel)
+    if not clone_apache_repo(devel):
+        print "Apache Frontend Repo already exists; skipping setup."
+        return
+
 
     try:
         host_name = esgf_host

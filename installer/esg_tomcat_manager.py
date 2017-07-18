@@ -311,6 +311,7 @@ def _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_f
             os.chdir(config.config_dictionary["workdir"])
     else:
         logger.info("Found previous Tomcat installation directory. Creating new symlink from %s/%s -> %s", tomcat_parent_dir, tomcat_dist_dir, config.config_dictionary["tomcat_install_dir"])
+        return True
         try:
             os.unlink(config.config_dictionary["tomcat_install_dir"])
         except OSError, error:
@@ -421,7 +422,9 @@ def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
     #Check to see if we have a tomcat distribution directory
     tomcat_parent_dir = re.search("^/\w+/\w+", config.config_dictionary["tomcat_install_dir"]).group()
 
-    _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_file)
+    if _check_for_tomcat_dist_dir(tomcat_parent_dir, tomcat_dist_dir, tomcat_dist_file):
+        print "Previous Tomcat installation found, skipping setup"
+        return
 
     #If there is no tomcat user on the system create one (double check that usradd does the right thing)
     _create_tomcat_user()

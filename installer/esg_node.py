@@ -357,7 +357,8 @@ def main(node_type_list):
             esg_publisher.setup_esgcet()
         esg_tomcat_manager.setup_tomcat(devel)
         esg_apache_manager.setup_apache_frontend(devel)
-        esg_subsystem.setup_subsystem("node-manager", "esgf-node-manager", esg_dist_url)
+        esg_subsystem.setup_subsystem("cog", "esgf-cog", esg_dist_url)
+        # esg_subsystem.setup_subsystem("node-manager", "esgf-node-manager", esg_dist_url)
     # setup_esgcet()
     # test_esgcet()
 

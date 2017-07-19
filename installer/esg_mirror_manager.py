@@ -7,11 +7,12 @@ import requests
 import stat
 import logging
 from collections import OrderedDict
-from esg_init import EsgInit
 import esg_logging_manager
+import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 # List of mirror location
 esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
@@ -37,11 +38,11 @@ def check_mirror_connection(install_type):
     return response_array
 
 def get_success_or_fail__reponses():
-    """ Return a dictionary tuple with seccessful and 
-    unseccessful response times from mirrors. 
+    """ Return a dictionary tuple with seccessful and
+    unseccessful response times from mirrors.
     """
-    response_times = {} # Successful connections 
-    failed_requests = {} # Unsuccessful connection 
+    response_times = {} # Successful connections
+    failed_requests = {} # Unsuccessful connection
 
     for mirror in esgf_dist_mirrors_list:
         logger.debug("mirror: %s", mirror)
@@ -69,14 +70,14 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
     # Capture mirror connection
     response_array = check_mirror_connection(install_type)
 
-    # Get success and failed response 
+    # Get success and failed response
     response_times, failed_requests = get_success_or_fail_reponses()
 
-    # Order the response time of the mirrors 
+    # Order the response time of the mirrors
     ranked_response_times = order_response_time()
     logger.debug("ranked_response_times: %s", ranked_response_times)
 
-    master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf'] # get value of hard coded mirror 
+    master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf'] # get value of hard coded mirror
     fastest = ranked_response_times.items()[0][0] # get the first element of the list
     logger.debug("fastest: %s", fastest)
 
@@ -87,13 +88,13 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
         outofsync = True
 
     if outofsync == True:
-        # config.config_dictionary["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
+        # config["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         return "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
 
     try:
         if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
             print "using the fastest mirror %s" % ranked_response_times.items()[0][0]
-            # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+            # config["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
             return ranked_response_times.items()[0][0]
     except OSError, error:
         logger.warning(error)
@@ -106,14 +107,14 @@ def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
                 _render_distribution_mirror_menu(ranked_response_times)
                 choice = _select_distribution_mirror()
                 logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
-                # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
+                # config["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
                 return ranked_response_times.items()[choice][0]
             except IndexError, error:
                 logger.error("Invalid selection", exc_info=True)
                 continue
             break
     else:
-        # config.config_dictionary["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
+        # config["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
         return ranked_response_times.items()[0][0]
 
 

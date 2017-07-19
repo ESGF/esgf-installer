@@ -889,7 +889,7 @@ def setup_java():
                 try:
                     tar = tarfile.open(java_dist_file)
                     #extract to java_install_dir
-                    tar.extractall(config["java_install_dir"])
+                    tar.extractall(config["java_install_dir_parent"])
                     tar.close()
                 except tarfile.TarError, error:
                     logger.error(error)

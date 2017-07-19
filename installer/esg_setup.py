@@ -115,7 +115,7 @@ def init_structure():
             config_check -= 1
     if config_check != 0:
         print "ERROR: checklist incomplete $([FAIL])"
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
     else:
         print "checklist $([OK])"
 
@@ -364,7 +364,7 @@ def _add_user_group(group_name):
         logger.error(error)
         print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
         # os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
 
 def _update_password_files_permissions():
@@ -795,7 +795,7 @@ def install_prerequisites():
     print '''
     *******************************
     Installing prerequisites
-    ******************************* 
+    *******************************
     '''
     yum_remove_rpm_forge = subprocess.Popen(
         ["yum", "-y", "remove", "rpmforge-release"], stdout=subprocess.PIPE)

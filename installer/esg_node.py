@@ -31,7 +31,7 @@ with open('esg_config.yaml', 'r') as config_file:
 
 print "config:", config
 
-logger.info("keystore_alias: %s", config.keystore_alias)
+logger.info("keystore_alias: %s", config["keystore_alias"])
 # os.environ['DISCOVERONLY'] = Expand.colonMinus("DISCOVERONLY")
 os.environ['LANG'] = "POSIX"
 os.umask(022)

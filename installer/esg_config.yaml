@@ -54,12 +54,12 @@ installer_gid: 20
 installer_home: /usr/local/src/esgf
 installer_uid: 501
 installer_user: williamhill
-java_dist_url: aims1.llnl.gov/esgf/dist/java/$1.8.0_112/jdk1.8.0_112-64.tar.gz
+java_dist_url: aims1.llnl.gov/esgf/dist/java/1.8.0_131/jdk1.8.0_131-64.tar.gz
 java_install_dir: /usr/local/java
-java_min_version: 1.8.0_112
+java_min_version: 1.8.0_131
 java_opts: ''
-java_rpm_url: aims1.llnl.gov/esgf/dist/java/1.8.0_112/jdk-8u112-linux-x64.rpm
-java_version: 1.8.0_112
+java_rpm_url: aims1.llnl.gov/esgf/dist/java/1.8.0_112/jdk-8u131-linux-x64.rpm
+java_version: 1.8.0_131
 keystore_alias: my_esgf_node
 keystore_file: /esg/config/tomcat/keystore-tomcat
 keystore_password: ''

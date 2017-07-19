@@ -9,11 +9,13 @@ import esg_functions
 import esg_setup
 import esg_apache_manager
 import esg_logging_manager
-from esg_init import EsgInit
+import esg_init
+import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 progname = "esg-node"
 script_version = "v2.0-RC5.4.0-devel"

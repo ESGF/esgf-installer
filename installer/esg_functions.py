@@ -44,7 +44,7 @@ def exit_with_error(status):
             ""
         )
         #Move back to starting directory
-        os.chdir(config.config_dictionary["install_prefix"])
+        os.chdir(config["install_prefix"])
         sys.exit()
 
 #-------------------------------
@@ -222,7 +222,7 @@ def prefix_to_path(path, prepend_value):
     return path_unique(prepend_value)+":"+path
 
 
-def backup(path, backup_dir = config.config_dictionary["esg_backup_dir"], num_of_backups=config.config_dictionary["num_backups_to_keep"]):
+def backup(path, backup_dir = config["esg_backup_dir"], num_of_backups=config["num_backups_to_keep"]):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in
         arg1 - a filesystem path
@@ -573,7 +573,7 @@ def check_shmmax(min_shmmax = 48):
 
 def get_esg_root_id():
     try:
-        esg_root_id = config.config_dictionary["esg_root_id"]
+        esg_root_id = config["esg_root_id"]
     except KeyError:
         esg_root_id = esg_property_manager.get_property("esg_root_id")
     return esg_root_id
@@ -581,7 +581,7 @@ def get_esg_root_id():
 def get_esgf_host():
     ''' Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) '''
     try:
-        esgf_host = config.config_dictionary["esgf_host"]
+        esgf_host = config["esgf_host"]
     except KeyError:
         esgf_host = socket.getfqdn()
 
@@ -604,13 +604,13 @@ def set_keyword_password():
 
         keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
         if keystore_password_input == keystore_password_input_confirmation:
-            config.config_dictionary["keystore_password"] = keystore_password_input
+            config["keystore_password"] = keystore_password_input
             break
         else:
             print "Sorry, values did not match. Please try again."
             continue
     with open(config.ks_secret_file, 'w') as keystore_file:
-        keystore_file.write(config.config_dictionary["keystore_password"])
+        keystore_file.write(config["keystore_password"])
     return True
 
 def get_keystore_password():
@@ -637,7 +637,7 @@ def _check_keystore_password(keystore_password):
         logger.error("$([FAIL]) No keystore file present [%s]", config.ks_secret_file)
         return False
     keystore_password = get_keystore_password()
-    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config.config_dictionary["java_install_dir"], keystore_file=config.ks_secret_file, keystore_password=keystore_password)
+    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_file=config.ks_secret_file, keystore_password=keystore_password)
     keytool_list_process = call_subprocess(keytool_list_command)
     if keytool_list_process["returncode"] != 0:
         logger.error("$([FAIL]) Could not access private keystore %s with provided password. Try again...", config.ks_secret_file)

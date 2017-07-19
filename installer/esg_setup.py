@@ -843,11 +843,13 @@ def setup_java():
     if find_executable("java"):
         print "Detected an existing java installation..."
         java_version_stdout, _, _ = esg_functions.call_subprocess("{java_executable} -version".format(java_executable=find_executable("java")))
+        print java_version_stdout
         if force_install:
-            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]") or setup_java_answer
+            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or setup_java_answer
         else:
-            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [Y/n]") or setup_java_answer
-        if setup_java_answer.lower not in ["y", "yes"]:
+            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [Y/n]: ") or setup_java_answer
+        print "chosen setup_java_answer:", setup_java_answer
+        if setup_java_answer.lower().strip() not in ["y", "yes"]:
             print "Skipping Java installation and setup - will assume Java is setup properly"
             return
         last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
@@ -957,7 +959,7 @@ def setup_ant():
         Install ant via yum. Does nothing if a version of Ant is already installed.
     '''
 
-    print "*******************************"
+    print "\n*******************************"
     print "Setting up Ant"
     print "******************************* \n"
 
@@ -982,7 +984,7 @@ def setup_cdat():
     except ImportError, error:
         logger.error(error)
 
-    print "*******************************"
+    print "\n*******************************"
     print "Setting up CDAT - (Python + CDMS)... {cdat_version}".format(cdat_version=config["cdat_version"])
     print "******************************* \n"
 
@@ -991,17 +993,11 @@ def setup_cdat():
         print "Detected an existing CDAT installation..."
         cdat_setup_choice = raw_input(
             "Do you want to continue with CDAT installation and setup? [y/N] ")
-        if cdat_setup_choice.lower() != "y" or cdat_setup_choice.lower() != "yes":
+        if cdat_setup_choice.lower().strip() not in ["y", "yes"]:
             print "Skipping CDAT installation and setup - will assume CDAT is setup properly"
             return True
 
-    try:
-        os.makedirs(config["workdir"])
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
+    esg_bash2py.mkdir_p(config["workdir"])
 
     starting_directory = os.getcwd()
     os.chdir(config["workdir"])
@@ -1014,6 +1010,7 @@ def setup_cdat():
         print "[FAIL] \n\tCould not install or update uvcdat\n\n"
         return False
 
+    #TODO: Fix these to not use shell=True
     curl_output = subprocess.call(
         "curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
     setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(

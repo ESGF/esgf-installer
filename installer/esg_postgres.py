@@ -18,10 +18,9 @@ with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
 def setup_postgres(force_install = False):
-    print '''
-    *******************************
-    Setting up Postgres
-    ******************************* '''
+    print "\n*******************************"
+    print "Setting up Postgres"
+    print "******************************* \n"
     db_properties = esg_setup.get_db_properties()
     if esg_setup._is_managed_db(db_properties):
         return True

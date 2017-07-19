@@ -951,19 +951,21 @@ def generate_new_ca():
         From CA.pl script comment:
         CA -newca ... will setup the right stuff;
     '''
-    print '''\n
-    *******************************
-    Generate New CA
-    ******************************* '''
+
+    print "\n*******************************"
+    print "Generate New CA"
+    print "******************************* \n"
+
     new_ca_process = subprocess.Popen(shlex.split("perl CA.pl -newca"))
     new_ca_process.communicate()
 
 def generate_rsa_key():
     ''' Creates a new RSA key from the CA/private/cakey.pem and writes it out as clearkey.pem '''
-    print '''\n
-    *******************************
-    Generate New RSA Key
-    ******************************* '''
+
+    print "\n*******************************"
+    print "Generate New RSA Key"
+    print "******************************* \n"
+
     generate_rsa_key_process = subprocess.Popen(shlex.split("openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass"))
     generate_rsa_key_process.communicate()
     if generate_rsa_key_process.returncode == 0:
@@ -972,10 +974,11 @@ def generate_rsa_key():
 
 def generate_request_cert():
     #-newreq: creates a new certificate request. The private key and request are written to the file newreq.pem
-    print '''\n
-    *******************************
-    Generate New Certificate Request
-    ******************************* '''
+
+    print "\n*******************************"
+    print "Generate New Certificate Request"
+    print "******************************* \n"
+
     with open("reqhost.ans", "rb") as reqhost_ans_file:
         reqhost_ans = reqhost_ans_file.read().strip()
         logger.info("reqhost_ans: %s", reqhost_ans)
@@ -989,10 +992,11 @@ def sign_certificate():
     ''' Sign a generate certificate using the CA.pl perl script
         # CA -sign ... will sign the generated request and output
     '''
-    print '''\n
-    *******************************
-    Sign Certificate
-    ******************************* '''
+
+    print "\n*******************************"
+    print "Sign Certificate"
+    print "******************************* \n"
+
     sign_certificate_process = subprocess.Popen(shlex.split("perl CA.pl -sign"))
     sign_certificate_process.communicate()
     # with open("setuphost.ans", "rb") as setuphost_ans_file:
@@ -1002,10 +1006,11 @@ def write_to_ca_cert_pem():
     ''' The x509 command is a multi purpose certificate utility. It can be used to display certificate information,
         convert certificates to various forms, sign certificate
         requests like a "mini CA" or edit certificate trust settings. '''
-    print '''\n
-    *******************************
-    Write to cacert.pem
-    ******************************* '''
+
+    print "\n*******************************"
+    print "Write to cacert.pem"
+    print "******************************* \n"
+
     with open("cacert.pem", "wb") as cacert_file:
         output_process = subprocess.Popen(shlex.split("openssl x509 -in CA/cacert.pem -inform pem -outform pem"), stdout=subprocess.PIPE)
         output_stdout, output_stderr = output_process.communicate()
@@ -1013,10 +1018,10 @@ def write_to_ca_cert_pem():
         cacert_file.write(output_stdout)
 
 def write_to_host_cert():
-    print '''\n
-    *******************************
-    Write to hostcert.pem
-    ******************************* '''
+    print "\n*******************************"
+    print "Write to hostcert.pem"
+    print "******************************* \n"
+
     with open("hostcert.pem", "w") as hostcert_file:
         #inform = input format; set to pem.  outform = output format; set to pem
         hostcert_ssl_process = esg_functions.call_subprocess("openssl x509 -in newcert.pem -inform pem -outform pem")
@@ -1177,7 +1182,7 @@ def setup_root_app():
 
         print "\n*******************************"
         print "Setting up Apache Tomcat...(v{tomcat_version}) ROOT webapp".format(tomcat_version = config["tomcat_version"])
-        print "*******************************"
+        print "******************************* \n"
 
         esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
         root_app_dist_url = "{esg_dist_url}/ROOT.tgz".format(esg_dist_url = esg_dist_url)

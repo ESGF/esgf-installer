@@ -124,7 +124,7 @@ def init_structure():
 
     os.chmod(config["esg_etc_dir"], 0777)
 
-    if os.access(config.envfile, os.W_OK):
+    if os.access(config["envfile"], os.W_OK):
         write_paths()
 
     #--------------

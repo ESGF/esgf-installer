@@ -13,7 +13,6 @@ with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
 print "config:", config
-# config = EsgInit()
 
 def load_properties(property_file = config["config_file"]):
     '''

@@ -1,21 +1,22 @@
 import sys
 import subprocess
 import logging
-from esg_init import EsgInit
+import yaml
 import esg_bash2py
 import esg_logging_manager
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 #----------------------------------------------------------
 # Environment Management Utility Functions
 #----------------------------------------------------------
 def remove_env(env_name):
-    print "removing %s's environment from %s" % (env_name, config.envfile)
+    print "removing %s's environment from %s" % (env_name, config["envfile"])
     found_in_env_file = False
-    datafile = open(config.envfile, "r+")
+    datafile = open(config["envfile"], "r+")
     searchlines = datafile.readlines()
     datafile.seek(0)
     for line in searchlines:
@@ -29,7 +30,7 @@ def remove_env(env_name):
 
 #TODO: Fix sed statement
 def remove_install_log_entry(entry):
-    print "removing %s's install log entry from %s" % (entry, config.config_dictionary["install_manifest"])
+    print "removing %s's install log entry from %s" % (entry, config["install_manifest"])
     subprocess.check_output("sed -i '/[:]\?'${key}'=/d' ${install_manifest}")
 
 def deduplicate_settings_in_file(envfile = None):
@@ -42,7 +43,7 @@ def deduplicate_settings_in_file(envfile = None):
     arg 1 - The environment file to dedup.
     '''
 
-    infile = esg_bash2py.Expand.colonMinus(envfile, config.envfile)
+    infile = esg_bash2py.Expand.colonMinus(envfile, config["envfile"])
     try:
         my_set = set()
         deduplicated_list = []
@@ -70,7 +71,7 @@ def deduplicate_settings_in_file(envfile = None):
 
 
 def deduplicate_properties(properties_file = None):
-    infile = esg_bash2py.Expand.colonMinus(properties_file, config.config_dictionary["config_file"])
+    infile = esg_bash2py.Expand.colonMinus(properties_file, config["config_file"])
     try:
         my_set = set()
         deduplicated_list = []

@@ -211,7 +211,7 @@ def init_structure():
         publisher_home = config["publisher_home"]
     except KeyError:
         publisher_home = esg_property_manager.get_property(
-            "publisher_home", config.esg_config_dir + "/esgcet")
+            "publisher_home", config["esg_config_dir"] + "/esgcet")
 
     # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
     # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
@@ -226,22 +226,22 @@ def init_structure():
 def write_paths():
     config["show_summary_latch"] += 1
 
-    datafile = open(config.envfile, "a+")
-    datafile.write("export ESGF_HOME=" + config.esg_root_dir + "\n")
+    datafile = open(config["envfile"], "a+")
+    datafile.write("export ESGF_HOME=" + config["esg_root_dir"] + "\n")
     datafile.write("export ESG_USER_HOME=" +
                    config["installer_home"] + "\n")
     datafile.write("export ESGF_INSTALL_WORKDIR=" +
                    config["workdir"] + "\n")
     datafile.write("export ESGF_INSTALL_PREFIX=" +
-                   config.install_prefix + "\n")
-    datafile.write("export PATH=" + config.myPATH +
+                   config["install_prefix"] + "\n")
+    datafile.write("export PATH=" + config["myPATH"] +
                    ":" + os.environ["PATH"] + "\n")
-    datafile.write("export LD_LIBRARY_PATH=" + config.myLD_LIBRARY_PATH +
+    datafile.write("export LD_LIBRARY_PATH=" + config["myLD_LIBRARY_PATH"] +
                    ":" + os.environ["LD_LIBRARY_PATH"] + "\n")
     datafile.truncate()
     datafile.close()
 
-    esg_env_manager.deduplicate_settings_in_file(config.envfile)
+    esg_env_manager.deduplicate_settings_in_file(config["envfile"])
 
 
 def _select_ip_address():
@@ -342,7 +342,7 @@ def _confirm_password(password_input, password_confirmation):
 
 def _update_admin_password_file(updated_password):
     try:
-        security_admin_password_file = open(config.esgf_secret_file, 'w+')
+        security_admin_password_file = open(config["esgf_secret_file"], 'w+')
         security_admin_password_file.write(updated_password)
     except IOError, error:
         logger.error(error)
@@ -371,7 +371,7 @@ def _add_user_group(group_name):
 
 
 def _update_password_files_permissions():
-    os.chmod(config.esgf_secret_file, 0640)
+    os.chmod(config["esgf_secret_file"], 0640)
 
     try:
         tomcat_group_info = grp.getgrnam(
@@ -382,31 +382,31 @@ def _update_password_files_permissions():
     tomcat_group_id = tomcat_group_info.gr_id
 
     try:
-        os.chown(config.esgf_secret_file, config[
+        os.chown(config["esgf_secret_file"], config[
                  "installer_uid"], tomcat_group_id)
     except OSError, error:
         logger.error(error)
 
-    if os.path.isfile(config.esgf_secret_file):
-        os.chmod(config.esgf_secret_file, 0640)
+    if os.path.isfile(config['esgf_secret_file']):
+        os.chmod(config['esgf_secret_file'], 0640)
         try:
-            os.chown(config.esgf_secret_file, config[
+            os.chown(config['esgf_secret_file'], config[
                      "installer_uid"], tomcat_group_id)
         except OSError, error:
             logger.error(error)
 
-    if not os.path.isfile(config.pg_secret_file):
-        esg_bash2py.touch(config.pg_secret_file)
+    if not os.path.isfile(config['pg_secret_file']):
+        esg_bash2py.touch(config['pg_secret_file'])
         try:
-            with open(config.pg_secret_file, "w") as secret_file:
+            with open(config['pg_secret_file'], "w") as secret_file:
                 secret_file.write(config[
                                   "pg_sys_acct_passwd"])
         except IOError, error:
             logger.error(error)
     else:
-        os.chmod(config.pg_secret_file, 0640)
+        os.chmod(config['pg_secret_file'], 0640)
         try:
-            os.chown(config.pg_secret_file, config[
+            os.chown(config['pg_secret_file'], config[
                      "installer_uid"], tomcat_group_id)
         except OSError, error:
             logger.error(error)
@@ -588,12 +588,12 @@ def _choose_publisher_db_user_passwd():
         publisher_db_user_passwd_input = raw_input(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
         if publisher_db_user_passwd_input:
-            with open(config.pub_secret_file, "w") as secret_file:
+            with open(config['pub_secret_file'], "w") as secret_file:
                 secret_file.write(publisher_db_user_passwd_input)
 
-    if not os.path.isfile(config.pub_secret_file):
-        esg_bash2py.touch(config.pub_secret_file)
-        with open(config.pub_secret_file, "w") as secret_file:
+    if not os.path.isfile(config['pub_secret_file']):
+        esg_bash2py.touch(config['pub_secret_file'])
+        with open(config['pub_secret_file'], "w") as secret_file:
             secret_file.write(config[
                               "publisher_db_user_passwd"])
 
@@ -609,17 +609,17 @@ def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
 
-    esg_bash2py.mkdir_p(config.esg_config_dir)
+    esg_bash2py.mkdir_p(config['esg_config_dir'])
 
     starting_directory = os.getcwd()
 
-    os.chdir(config.esg_config_dir)
+    os.chdir(config['esg_config_dir'])
 
     esgf_host = esg_property_manager.get_property("esgf_host")
     _choose_fqdn(esgf_host)
 
     try:
-        security_admin_password_file = open(config.esgf_secret_file, 'r')
+        security_admin_password_file = open(config['esgf_secret_file'], 'r')
         security_admin_password = security_admin_password_file.read()
     except IOError, error:
         logger.error(error)
@@ -660,11 +660,11 @@ def initial_setup_questionnaire():
     _choose_publisher_db_user()
     _choose_publisher_db_user_passwd()
 
-    os.chmod(config.pub_secret_file, 0640)
+    os.chmod(config['pub_secret_file'], 0640)
     tomcat_group_info = grp.getgrnam(
         config["tomcat_group"])
     tomcat_group_id = tomcat_group_info[2]
-    os.chown(config.esgf_secret_file, config[
+    os.chown(config['esgf_secret_file'], config[
              "installer_uid"], tomcat_group_id)
 
     if db_properties["db_host"] == esgf_host or db_properties["db_host"] == "localhost":

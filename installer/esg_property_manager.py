@@ -5,7 +5,6 @@ import os
 import re
 import logging
 import yaml
-from esg_init import EsgInit
 import esg_logging_manager
 
 logger = esg_logging_manager.create_rotating_log(__name__)

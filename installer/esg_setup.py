@@ -956,10 +956,11 @@ def setup_ant():
     '''
         Install ant via yum. Does nothing if a version of Ant is already installed.
     '''
-    print '''
-    *******************************
-    Setting up Ant
-    ******************************* '''
+
+    print "*******************************"
+    print "Setting up Ant"
+    print "******************************* \n"
+
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         logger.info("Found existing Ant installation.  Skipping set up.")
         return
@@ -981,10 +982,10 @@ def setup_cdat():
     except ImportError, error:
         logger.error(error)
 
-    print '''
-    *******************************
-    Setting up CDAT - (Python + CDMS)... {cdat_version}
-    ******************************* '''.format(cdat_version=config["cdat_version"])
+    print "*******************************"
+    print "Setting up CDAT - (Python + CDMS)... {cdat_version}".format(cdat_version=config["cdat_version"])
+    print "******************************* \n"
+
 
     if os.access(os.path.join(config["cdat_home"], "bin", "uvcdat"), os.X_OK):
         print "Detected an existing CDAT installation..."

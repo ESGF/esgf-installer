@@ -404,10 +404,9 @@ def main(node_type_list):
     #---------------------------------------
     # Setup ESGF RPM repository
     #---------------------------------------
-    print '''
-    *******************************
-    Setting up ESGF RPM repository
-    ******************************* '''
+    print "*******************************"
+    print "Setting up ESGF RPM repository"
+    print "******************************* \n"
 
     # install dependencies
     system_component_installation()

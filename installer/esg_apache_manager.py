@@ -10,17 +10,19 @@ import esg_bash2py
 import esg_version_manager
 import esg_functions
 import esg_logging_manager
-from esg_init import EsgInit
+import esg_init
+import yaml
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 
 def clone_apache_repo(devel):
     try:
-        git.Repo.clone_from(config.config_dictionary[
+        git.Repo.clone_from(config[
                             "apache_frontend_repo"], "apache_frontend")
     except git.exc.GitCommandError, error:
         logger.error(error)
@@ -28,7 +30,7 @@ def clone_apache_repo(devel):
 
     if os.path.isdir(os.path.join("apache_frontend", ".git")):
         logger.error("Successfully cloned repo from %s",
-                     config.config_dictionary["apache_frontend_repo"])
+                     config["apache_frontend_repo"])
         # os.chdir("apache-frontend")
         # logger.debug("changed directory to %s:", os.getcwd())
         apache_frontend_repo_local = git.Repo(
@@ -69,7 +71,7 @@ def setup_apache_frontend(devel=False):
     except KeyError, error:
         logger.debug(error)
         local_work_directory = os.path.join(
-            config.config_dictionary["installer_home"], "workbench", "esg")
+            config["installer_home"], "workbench", "esg")
 
     os.chdir(local_work_directory)
     logger.debug("changed directory to %s:", os.getcwd())
@@ -77,7 +79,7 @@ def setup_apache_frontend(devel=False):
     os.chdir("apache_frontend")
     logger.debug("changed directory to %s:", os.getcwd())
 
-    print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config.config_dictionary["apache_frontend_repo"])
+    print "Fetching the Apache Frontend Repo from GIT Repo... %s" % (config["apache_frontend_repo"])
     clone_apache_repo(devel)
 
     try:
@@ -146,7 +148,7 @@ def setup_apache_frontend(devel=False):
                     "esgf-httpd.conf is missing versioning, attempting to update.")
                 update_apache_conf(devel)
             else:
-                if esg_version_manager.check_version_atleast(esgf_httpd_version_stdout, config.config_dictionary["apache_frontend_version"]) == 0:
+                if esg_version_manager.check_version_atleast(esgf_httpd_version_stdout, config["apache_frontend_version"]) == 0:
                     logger.info("esgf-httpd.conf version is sufficient")
                 else:
                     logger.info(
@@ -164,7 +166,7 @@ def update_apache_conf(devel=False):
     except KeyError, error:
         logger.debug(error)
         local_work_directory = os.path.join(
-            config.config_dictionary["installer_home"], "workbench", "esg")
+            config["installer_home"], "workbench", "esg")
 
     config_file = "/etc/httpd/conf/esgf-httpd.conf"
 
@@ -174,14 +176,14 @@ def update_apache_conf(devel=False):
             esg_bash2py.mkdir_p("apache_frontend")
             with esg_bash2py.pushd("apache_frontend"):
                 logger.debug("changed to directory: %s", os.getcwd())
-                git.Repo.clone_from(config.config_dictionary[
+                git.Repo.clone_from(config[
                                     "apache_frontend_repo"], "apache_frontend")
             logger.debug("changed to directory: %s", os.getcwd())
         else:
             with esg_bash2py.pushd("apache_frontend"):
                 logger.debug("changed to directory: %s", os.getcwd())
                 shutil.rmtree("apache-frontend")
-                git.Repo.clone_from(config.config_dictionary[
+                git.Repo.clone_from(config[
                                     "apache_frontend_repo"], "apache_frontend")
             logger.debug("changed to directory: %s", os.getcwd())
         with esg_bash2py.pushd("apache_frontend/apache-frontend"):

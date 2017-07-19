@@ -236,8 +236,11 @@ def write_paths():
                    config["install_prefix"] + "\n")
     datafile.write("export PATH=" + config["myPATH"] +
                    ":" + os.environ["PATH"] + "\n")
-    datafile.write("export LD_LIBRARY_PATH=" + config["myLD_LIBRARY_PATH"] +
-                   ":" + os.environ["LD_LIBRARY_PATH"] + "\n")
+    try:
+        datafile.write("export LD_LIBRARY_PATH=" + config["myLD_LIBRARY_PATH"] +
+            ":" + os.environ["LD_LIBRARY_PATH"] + "\n")
+    except KeyError, error:
+        logger.error(error)
     datafile.truncate()
     datafile.close()
 

@@ -96,14 +96,14 @@ def check_prerequisites():
 
 def init_structure():
 
-    if not os.path.isfile(config.config_dictionary["config_file"]):
-        esg_bash2py.touch(config.config_dictionary["config_file"])
+    if not os.path.isfile(config["config_file"]):
+        esg_bash2py.touch(config["config_file"])
 
     config_check = 7
-    directories_to_check = [config.config_dictionary["scripts_dir"], config.config_dictionary["esg_backup_dir"], config.config_dictionary["esg_tools_dir"],
-                            config.config_dictionary[
-                                "esg_log_dir"], config.esg_config_dir, config.config_dictionary["esg_etc_dir"],
-                            config.config_dictionary["tomcat_conf_dir"]]
+    directories_to_check = [config["scripts_dir"], config["esg_backup_dir"], config["esg_tools_dir"],
+                            config[
+                                "esg_log_dir"], config.esg_config_dir, config["esg_etc_dir"],
+                            config["tomcat_conf_dir"]]
     for directory in directories_to_check:
         if not os.path.isdir(directory):
             try:
@@ -122,7 +122,7 @@ def init_structure():
     else:
         print "checklist $([OK])"
 
-    os.chmod(config.config_dictionary["esg_etc_dir"], 0777)
+    os.chmod(config["esg_etc_dir"], 0777)
 
     if os.access(config.envfile, os.W_OK):
         write_paths()
@@ -134,22 +134,22 @@ def init_structure():
     check_for_my_ip()
 
     try:
-        esgf_host = config.config_dictionary["esgf_host"]
+        esgf_host = config["esgf_host"]
     except KeyError:
         esgf_host = esg_property_manager.get_property("esgf_host")
 
     try:
-        esgf_default_peer = config.config_dictionary["esgf_default_peer"]
+        esgf_default_peer = config["esgf_default_peer"]
     except KeyError:
         esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
 
     try:
-        esgf_idp_peer_name = config.config_dictionary["esgf_idp_peer_name"]
+        esgf_idp_peer_name = config["esgf_idp_peer_name"]
     except KeyError:
         esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
 
     try:
-        esgf_idp_peer = config.config_dictionary["esgf_idp_peer"]
+        esgf_idp_peer = config["esgf_idp_peer"]
     except KeyError:
         esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
 
@@ -161,23 +161,23 @@ def init_structure():
     # re.search("/\w+", source)
 
     try:
-        config.config_dictionary["myproxy_port"]
+        config["myproxy_port"]
     except KeyError:
         myproxy_port = esg_bash2py.Expand.colonMinus(
             esg_property_manager.get_property("myproxy_port"), "7512")
 
     try:
-        esg_root_id = config.config_dictionary["esg_root_id"]
+        esg_root_id = config["esg_root_id"]
     except KeyError:
         esg_root_id = esg_property_manager.get_property("esg_root_id")
 
     try:
-        node_peer_group = config.config_dictionary["node_peer_group"]
+        node_peer_group = config["node_peer_group"]
     except KeyError:
         node_peer_group = esg_property_manager.get_property("node_peer_group")
 
     try:
-        config.config_dictionary["node_short_name"]
+        config["node_short_name"]
     except KeyError:
         node_short_name = esg_property_manager.get_property("node_short_name")
 
@@ -191,47 +191,47 @@ def init_structure():
     # XX=yy (micro->macro) scheme using "standard2java_dn" function
 
     try:
-        dname = config.config_dictionary["dname"]
+        dname = config["dname"]
     except KeyError:
         dname = esg_property_manager.get_property("dname")
 
     try:
-        gridftp_config = config.config_dictionary["gridftp_config"]
+        gridftp_config = config["gridftp_config"]
     except KeyError:
         gridftp_config = esg_property_manager.get_property(
             "gridftp_config", "bdm end-user")
 
     try:
-        publisher_config = config.config_dictionary["publisher_config"]
+        publisher_config = config["publisher_config"]
     except KeyError:
         publisher_config = esg_property_manager.get_property(
             "publisher_config", "esg.ini")
 
     try:
-        publisher_home = config.config_dictionary["publisher_home"]
+        publisher_home = config["publisher_home"]
     except KeyError:
         publisher_home = esg_property_manager.get_property(
             "publisher_home", config.esg_config_dir + "/esgcet")
 
     # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
-    # config.config_dictionary["keystore_alias"] = esg_functions.get_property("keystore_alias")
-    # logger.debug("keystore_alias in esg_setup: %s", config.config_dictionary["keystore_alias"])
+    # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
+    # logger.debug("keystore_alias in esg_setup: %s", config["keystore_alias"])
 
-    config.config_dictionary["ESGINI"] = os.path.join(
+    config["ESGINI"] = os.path.join(
         publisher_home, publisher_config)
 
     return 0
 
 
 def write_paths():
-    config.config_dictionary["show_summary_latch"] += 1
+    config["show_summary_latch"] += 1
 
     datafile = open(config.envfile, "a+")
     datafile.write("export ESGF_HOME=" + config.esg_root_dir + "\n")
     datafile.write("export ESG_USER_HOME=" +
-                   config.config_dictionary["installer_home"] + "\n")
+                   config["installer_home"] + "\n")
     datafile.write("export ESGF_INSTALL_WORKDIR=" +
-                   config.config_dictionary["workdir"] + "\n")
+                   config["workdir"] + "\n")
     datafile.write("export ESGF_INSTALL_PREFIX=" +
                    config.install_prefix + "\n")
     datafile.write("export PATH=" + config.myPATH +
@@ -350,7 +350,7 @@ def _update_admin_password_file(updated_password):
         security_admin_password_file.close()
 
     # Use the same password when creating the postgress account
-    config.config_dictionary["pg_sys_acct_passwd"] = updated_password
+    config["pg_sys_acct_passwd"] = updated_password
 
 # TODO: move this function to esg_functions
 
@@ -365,7 +365,7 @@ def _add_user_group(group_name):
         groupadd_output = subprocess.check_output(groupadd_command, shell=True)
     except subprocess.CalledProcessError as error:
         logger.error(error)
-        print "ERROR: *Could not add tomcat system group: %s" % (config.config_dictionary["tomcat_group"])
+        print "ERROR: *Could not add tomcat system group: %s" % (config["tomcat_group"])
         # os.chdir(starting_directory)
         esg_functions.exit_with_error(1)
 
@@ -375,14 +375,14 @@ def _update_password_files_permissions():
 
     try:
         tomcat_group_info = grp.getgrnam(
-            config.config_dictionary["tomcat_group"])
+            config["tomcat_group"])
     except KeyError:
-        _add_user_group(config.config_dictionary["tomcat_group"])
+        _add_user_group(config["tomcat_group"])
 
     tomcat_group_id = tomcat_group_info.gr_id
 
     try:
-        os.chown(config.esgf_secret_file, config.config_dictionary[
+        os.chown(config.esgf_secret_file, config[
                  "installer_uid"], tomcat_group_id)
     except OSError, error:
         logger.error(error)
@@ -390,7 +390,7 @@ def _update_password_files_permissions():
     if os.path.isfile(config.esgf_secret_file):
         os.chmod(config.esgf_secret_file, 0640)
         try:
-            os.chown(config.esgf_secret_file, config.config_dictionary[
+            os.chown(config.esgf_secret_file, config[
                      "installer_uid"], tomcat_group_id)
         except OSError, error:
             logger.error(error)
@@ -399,14 +399,14 @@ def _update_password_files_permissions():
         esg_bash2py.touch(config.pg_secret_file)
         try:
             with open(config.pg_secret_file, "w") as secret_file:
-                secret_file.write(config.config_dictionary[
+                secret_file.write(config[
                                   "pg_sys_acct_passwd"])
         except IOError, error:
             logger.error(error)
     else:
         os.chmod(config.pg_secret_file, 0640)
         try:
-            os.chown(config.pg_secret_file, config.config_dictionary[
+            os.chown(config.pg_secret_file, config[
                      "installer_uid"], tomcat_group_id)
         except OSError, error:
             logger.error(error)
@@ -583,7 +583,7 @@ def _choose_publisher_db_user():
 
 
 def _choose_publisher_db_user_passwd():
-    if not config.config_dictionary["publisher_db_user_passwd"] or force_install:
+    if not config["publisher_db_user_passwd"] or force_install:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user")
         publisher_db_user_passwd_input = raw_input(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
@@ -594,7 +594,7 @@ def _choose_publisher_db_user_passwd():
     if not os.path.isfile(config.pub_secret_file):
         esg_bash2py.touch(config.pub_secret_file)
         with open(config.pub_secret_file, "w") as secret_file:
-            secret_file.write(config.config_dictionary[
+            secret_file.write(config[
                               "publisher_db_user_passwd"])
 
 def get_db_properties():
@@ -662,9 +662,9 @@ def initial_setup_questionnaire():
 
     os.chmod(config.pub_secret_file, 0640)
     tomcat_group_info = grp.getgrnam(
-        config.config_dictionary["tomcat_group"])
+        config["tomcat_group"])
     tomcat_group_id = tomcat_group_info[2]
-    os.chown(config.esgf_secret_file, config.config_dictionary[
+    os.chown(config.esgf_secret_file, config[
              "installer_uid"], tomcat_group_id)
 
     if db_properties["db_host"] == esgf_host or db_properties["db_host"] == "localhost":
@@ -675,7 +675,7 @@ def initial_setup_questionnaire():
                     db_properties["db_user"], db_properties["db_host"], db_properties["db_port"], db_properties["db_database"])
 
     esg_env_manager.deduplicate_properties(
-        config.config_dictionary["config_file"])
+        config["config_file"])
 
     os.chdir(starting_directory)
 
@@ -830,13 +830,13 @@ def setup_java():
     print '''
     *******************************
     Setting up Java {java_version}
-    ******************************* \n'''.format(java_version=config.config_dictionary["java_version"])
+    ******************************* \n'''.format(java_version=config["java_version"])
 
-    if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version=config.config_dictionary["java_version"]))):
+    if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version=config["java_version"]))):
         logger.info("Found existing Java installation.  Skipping set up.")
         return
-    java_major_version = config.config_dictionary["java_version"].split(".")[1]
-    java_minor_version = config.config_dictionary["java_version"].split("_")[1]
+    java_major_version = config["java_version"].split(".")[1]
+    java_minor_version = config["java_version"].split("_")[1]
 
     # wget --no-check-certificate --no-cookies --header "Cookie:
     # oraclelicense=accept-securebackup-cookie"
@@ -845,9 +845,9 @@ def setup_java():
     # download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(
     #     java_major_version=java_major_version, java_minor_version=java_minor_version)
     # subprocess.call(shlex.split(download_oracle_java_string))
-    java_dist_file = esg_bash2py.trim_string_from_head(config.config_dictionary["java_dist_url"])
+    java_dist_file = esg_bash2py.trim_string_from_head(config["java_dist_url"])
     java_dist_dir = java_dist_file.split("-")[0]
-    java_install_dir_parent = config.config_dictionary["java_install_dir"].rsplit("/",1)[0]
+    java_install_dir_parent = config["java_install_dir"].rsplit("/",1)[0]
 
     #Check to see if we have an Java distribution directory
     if not os.path.exists(os.path.join(java_install_dir_parent, java_dist_dir)):
@@ -855,7 +855,7 @@ def setup_java():
 
         if not os.path.isfile(java_dist_file):
             print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_dist_file))
-            print "Downloading Java from ", config.config_dictionary["java_dist_url"]
+            print "Downloading Java from ", config["java_dist_url"]
 
             if esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install) > 0:
                 logger.error("ERROR: Could not download Java")
@@ -863,7 +863,7 @@ def setup_java():
             try:
                 tar = tarfile.open(java_dist_file)
                 #extract to java_install_dir
-                tar.extractall(config.config_dictionary["java_install_dir"])
+                tar.extractall(config["java_install_dir"])
                 tar.close()
             except Exception, error:
                 logger.error(error)
@@ -877,35 +877,35 @@ def setup_java():
         try:
             tar = tarfile.open(java_dist_file)
             #extract to java_install_dir
-            tar.extractall(config.config_dictionary["java_install_dir"])
+            tar.extractall(config["java_install_dir"])
             tar.close()
         except Exception, error:
             logger.error(error)
             print "ERROR: Could not extract Java:", java_dist_file
             esg_functions.exit_with_error(1)
 
-    if not os.path.exists(config.config_dictionary["java_install_dir"]):
-        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config.config_dictionary["java_install_dir"])
+    if not os.path.exists(config["java_install_dir"]):
+        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
     else:
         try:
-            os.unlink(config.config_dictionary["java_install_dir"])
+            os.unlink(config["java_install_dir"])
         except OSError, error:
             logger.error(error)
-            shutil.move(config.config_dictionary["java_install_dir"], config.config_dictionary["java_install_dir"]+str(datetime.date.today())+".bak")
-            esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config.config_dictionary["java_install_dir"])
+            shutil.move(config["java_install_dir"], config["java_install_dir"]+str(datetime.date.today())+".bak")
+            esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
 
-    os.chown(config.config_dictionary["java_install_dir"], config["installer_uid"], config["installer_gid"])
+    os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
     #recursively change permissions
-    for root, dirs, files in os.walk(esg_functions.readlinkf(config.config_dictionary["java_install_dir"])):
+    for root, dirs, files in os.walk(esg_functions.readlinkf(config["java_install_dir"])):
         for name in files:
             try:
                 os.chown(name, config["installer_uid"], config["installer_gid"])
             except OSError, error:
                 logger.error(error)
 
-    java_version_stdout, _, _ = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config.config_dictionary["java_install_dir"]))
+    java_version_stdout, _, _ = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config["java_install_dir"]))
     if not java_version_stdout:
-        print "cannot run {java_install_dir}/bin/java".format(java_install_dir=config.config_dictionary["java_install_dir"])
+        print "cannot run {java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"])
         esg_functions.exit_with_error(1)
 
 
@@ -917,16 +917,16 @@ def setup_java():
     # esg_functions.stream_subprocess_output(yum_install_java)
     #
     # logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(
-    #     java_version=config.config_dictionary["java_version"], java_install_dir=config.config_dictionary["java_install_dir"]))
+    #     java_version=config["java_version"], java_install_dir=config["java_install_dir"]))
     # esg_bash2py.symlink_force("/usr/java/jdk{java_version}/".format(
-    #     java_version=config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
+    #     java_version=config["java_version"]), config["java_install_dir"])
 
 
 def write_java_env():
-    config.config_dictionary["show_summary_latch"] += 1
-    target = open(config.config_dictionary['envfile'], 'w')
+    config["show_summary_latch"] += 1
+    target = open(config['envfile'], 'w')
     target.write("export JAVA_HOME=" +
-                 config.config_dictionary["java_install_dir"])
+                 config["java_install_dir"])
 
 
 def setup_ant():
@@ -947,12 +947,12 @@ def setup_ant():
 
 
 def setup_cdat():
-    print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config.config_dictionary["cdat_version"])
+    print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])
     try:
         sys.path.insert(0, os.path.join(
-            config.config_dictionary["cdat_home"], "bin", "python"))
+            config["cdat_home"], "bin", "python"))
         import cdat_info
-        if esg_version_manager.check_version_atleast(cdat_info.Version, config.config_dictionary["cdat_version"]) == 0 and not force_install:
+        if esg_version_manager.check_version_atleast(cdat_info.Version, config["cdat_version"]) == 0 and not force_install:
             print "CDAT already installed [OK]"
             return True
     except ImportError, error:
@@ -961,9 +961,9 @@ def setup_cdat():
     print '''
     *******************************
     Setting up CDAT - (Python + CDMS)... {cdat_version}
-    ******************************* '''.format(cdat_version=config.config_dictionary["cdat_version"])
+    ******************************* '''.format(cdat_version=config["cdat_version"])
 
-    if os.access(os.path.join(config.config_dictionary["cdat_home"], "bin", "uvcdat"), os.X_OK):
+    if os.access(os.path.join(config["cdat_home"], "bin", "uvcdat"), os.X_OK):
         print "Detected an existing CDAT installation..."
         cdat_setup_choice = raw_input(
             "Do you want to continue with CDAT installation and setup? [y/N] ")
@@ -972,7 +972,7 @@ def setup_cdat():
             return True
 
     try:
-        os.makedirs(config.config_dictionary["workdir"])
+        os.makedirs(config["workdir"])
     except OSError, exception:
         if exception.errno != 17:
             raise
@@ -980,7 +980,7 @@ def setup_cdat():
         pass
 
     starting_directory = os.getcwd()
-    os.chdir(config.config_dictionary["workdir"])
+    os.chdir(config["workdir"])
 
     yum_install_uvcdat = subprocess.Popen(
         ["yum", "-y", "install", "uvcdat"], stdout=subprocess.PIPE)
@@ -993,9 +993,9 @@ def setup_cdat():
     curl_output = subprocess.call(
         "curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
     setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(
-        cdat_home=config.config_dictionary["cdat_home"]), shell=True)
+        cdat_home=config["cdat_home"]), shell=True)
     pip_setup_output = subprocess.call("{cdat_home}/bin/easy_install pip".format(
-        cdat_home=config.config_dictionary["cdat_home"]), shell=True)
+        cdat_home=config["cdat_home"]), shell=True)
 
     os.chdir(starting_directory)
 

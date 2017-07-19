@@ -343,7 +343,7 @@ def main(node_type_list):
 
     # process command line arguments
     node_type_list = esg_cli_argument_manager.get_previous_node_type_config(
-        config.esg_config_type_file)
+        config["esg_config_type_file"])
     logger.debug("node_type_list: %s", node_type_list)
     esg_cli_argument_manager.process_arguments(
         install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)

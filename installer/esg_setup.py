@@ -903,9 +903,9 @@ def setup_java():
             try:
                 tar = tarfile.open(java_dist_file)
                 #extract to java_install_dir
-                tar.extractall(config["java_install_dir"])
+                tar.extractall(config["java_install_dir_parent"])
                 tar.close()
-            except Exception, error:
+            except TarError, error:
                 logger.error(error)
                 print "ERROR: Could not extract Java:", java_dist_file
                 esg_functions.exit_with_error(1)

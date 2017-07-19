@@ -14,6 +14,7 @@ import grp
 import shlex
 import hashlib
 import urlparse
+import datetime
 from time import sleep
 from esg_init import EsgInit
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError

@@ -910,15 +910,17 @@ def setup_java():
                 print "ERROR: Could not extract Java:", java_dist_file
                 esg_functions.exit_with_error(1)
 
-        if not os.path.exists(config["java_install_dir"]):
-            esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
-        else:
-            try:
-                os.unlink(config["java_install_dir"])
-            except OSError, error:
-                logger.error(error)
-                shutil.move(config["java_install_dir"], config["java_install_dir"]+str(datetime.date.today())+".bak")
-                esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
+        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
+        # if not os.path.exists(config["java_install_dir"]):
+        #     print "Creating symlink to"
+        #     esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
+        # else:
+        #     try:
+        #         os.unlink(config["java_install_dir"])
+        #     except OSError, error:
+        #         logger.error(error)
+        #         shutil.move(config["java_install_dir"], config["java_install_dir"]+str(datetime.date.today())+".bak")
+        #         esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
         #recursively change permissions

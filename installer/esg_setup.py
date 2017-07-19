@@ -15,7 +15,6 @@ import hashlib
 import urlparse
 import datetime
 from time import sleep
-from esg_init import EsgInit
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 import esg_bash2py
 import esg_functions
@@ -32,7 +31,7 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
-    
+
 use_local_files = 0
 force_install = False
 

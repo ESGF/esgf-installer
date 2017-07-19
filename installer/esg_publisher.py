@@ -140,7 +140,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
 
             if not os.path.isdir(os.path.join(config["workdir"], "esg-publisher", ".git")):
                 print "Could not fetch from cdat's repo (with git nor https protocol)"
-                esg_functions.checked_done(1)
+                esg_functions.exit_with_error(1)
 
     os.chdir(workdir_esg_publisher_directory)
     publisher_repo_local = Repo(workdir_esg_publisher_directory)
@@ -162,10 +162,10 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         output = subprocess.call(installation_command, shell=True)
         if output != 0:
             logger.error("Return code was %s for %s", output, installation_command)
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
     except Exception, exception:
         logger.error(exception)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     if mode == "install":
         choice = None
@@ -211,7 +211,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
             raise RuntimeError("%r failed, status code %s stdout %r stderr %r" % (
                        generate_esg_ini_command, esg_ini_file_process.returncode, stdout_data, stderr_data))
             os.chdir(starting_directory)
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
 
     logger.info("chown -R %s:%s %s", config["installer_uid"], config["installer_gid"], config["publisher_home"])
     try:
@@ -232,7 +232,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         if groupadd_output != 0 or groupadd_output != 9:
             print "ERROR: *Could not add tomcat system group: %s" % (config["tomcat_group"])
             os.chdir(starting_directory)
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
 
     try:
         tomcat_group_id = grp.getgrnam(
@@ -292,7 +292,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
     except Exception, exception:
         print "exception occured with ESGINI: ", str(exception)
         os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     try:
         #Call the esginitialize script -> Initialize the ESG node database.
@@ -301,7 +301,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         if esginitialize_output != 0:
             logger.error("esginitialize_output: %s", esginitialize_output)
             os.chdir(starting_directory)
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
     except Exception, exception:
         print "exception occurred with esginitialize_output: ", str(exception)
 
@@ -309,7 +309,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
     write_esgcet_env()
     write_esgcet_install_log()
 
-    esg_functions.checked_done(0)
+    esg_functions.exit_with_error(0)
 
 
 def generate_esg_config_file(recommended_setup = 1):
@@ -393,7 +393,7 @@ def test_esgcet():
         pass
     except Exception, exception:
         print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     os.chown(esgcet_testdir, config[
              "installer_uid"], config["installer_gid"])
@@ -407,7 +407,7 @@ def test_esgcet():
         pass
     except Exception, exception:
         print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     os.chown(config["thredds_replica_dir"], config[
              "installer_uid"], config["installer_gid"])
@@ -417,7 +417,7 @@ def test_esgcet():
     if esg_functions.checked_get(os.path.join(esgcet_testdir, fetch_file), "http://" + config["esg_dist_url_root"] + "/externals/" + fetch_file) > 0:
         print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
         os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     # Run test...
     print "%s/bin/esginitialize -c " % (config["cdat_home"])
@@ -433,7 +433,7 @@ def test_esgcet():
     if esgprep_output != 0:
         print " ERROR: ESG Mapfile generation failed"
         os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     print "{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(cdat_home=config["cdat_home"])
     esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(
@@ -441,7 +441,7 @@ def test_esgcet():
     if esgpublish_output != 0:
         print " ERROR: ESG publish failed"
         os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     os.chdir(starting_directory)
-    esg_functions.checked_done(0)
+    esg_functions.exit_with_error(0)

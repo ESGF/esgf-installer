@@ -57,7 +57,7 @@ def setup_postgres(force_install = False):
 
     print "Restarting Database..."
     stop_postgress()
-    esg_functions.checked_done(start_postgress())
+    esg_functions.exit_with_error(start_postgress())
 
     ########
     #Create the system account for postgress to run as.
@@ -71,7 +71,7 @@ def setup_postgres(force_install = False):
         groupadd_output = subprocess.call(groupadd_command, shell=True)
         if groupadd_output != 0 or groupadd_output != 9:
             print "ERROR: *Could not add postgres system group: %s" % (config["pg_sys_acct_group"])
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
         if not config["pg_sys_acct_passwd"]:
             while True:
                 pg_sys_acct_passwd_input = raw_input("Create password for postgress system account: ")
@@ -91,7 +91,7 @@ def setup_postgres(force_install = False):
         useradd_output = subprocess.call(useradd_command, shell=True)
         if useradd_output != 0 or useradd_output != 9:
             print "ERROR: Could not add postgres system account user"
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
         with open(config.pg_secret_file, "w") as secret_file:
             secret_file.write(config["pg_sys_acct_passwd"])
 
@@ -116,7 +116,7 @@ def setup_postgres(force_install = False):
     #double check that the account is really there!
     if not pwd.getpwnam(config["pg_sys_acct"]).pw_uid:
         print " ERROR: Problem with $pg_sys_acct creation!!!"
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
         grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
@@ -135,7 +135,7 @@ def setup_postgres(force_install = False):
         os.chown(os.path.join(config["postgress_install_dir"], "data"), pwd.getpwnam(config["pg_sys_acct"]).pw_uid, -1)
     except:
         print " ERROR: Could not change ownership of postgres' data to \"$pg_sys_acct\" user".format(pg_sys_acct = config["pg_sys_acct"])
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
     initialize_db_command = 'su $pg_sys_acct -c "$postgress_bin_dir/initdb -D $postgress_install_dir/data"'
@@ -158,7 +158,7 @@ def setup_postgres(force_install = False):
 
     if not os.access(os.path.join(config["postgress_bin_dir"], "psql"), os.X_OK):
         print " ERROR: psql not found after install!"
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     #Check to see if there is a ${postgress_user} already on the system if not, make one
     try:
@@ -166,7 +166,7 @@ def setup_postgres(force_install = False):
     except Exception, error:
         logger.error(error)
         print "I am unable to connect to the database."
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
 
     cur = conn.cursor()
     cur.execute("select count(*) from pg_roles where rolname={postgress_user}".format(postgress_user = config["postgress_user"]))
@@ -192,13 +192,13 @@ def setup_postgres(force_install = False):
     hba_conf_file = "pg_hba.conf"
     if esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url,"externals", "bootstrap",hba_conf_file), force_install) > 1:
         os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
     os.chmod(hba_conf_file, 0600)
 
     postgres_conf_file = "postgresql.conf"
     if esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url,"externals", "bootstrap",postgres_conf_file), force_install) > 1:
         os.chdir(starting_directory)
-        esg_functions.checked_done(1)
+        esg_functions.exit_with_error(1)
     os.chmod(postgres_conf_file, 0600)
 
 
@@ -244,7 +244,7 @@ def setup_postgres(force_install = False):
     esg_functions.check_shmmax()
     write_postgress_env()
     write_postgress_install_log()
-    esg_functions.checked_done(0)
+    esg_functions.exit_with_error(0)
 
 # returns 1 if it is already running (if check_postgress_process returns 0
 # - true)
@@ -268,7 +268,7 @@ def start_postgress():
         "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()
     logger.info("progress_process_status_tuple: %s", progress_process_status_tuple)
-    esg_functions.checked_done(0)
+    esg_functions.exit_with_error(0)
     return True
 
 def stop_postgress():
@@ -288,7 +288,7 @@ def stop_postgress():
     progress_process_status = subprocess.Popen(
         "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
     progress_process_status_tuple = progress_process_status.communicate()
-    esg_functions.checked_done(0)
+    esg_functions.exit_with_error(0)
 
 
 def backup_db():

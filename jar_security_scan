@@ -526,8 +526,9 @@ my %falsepositives = (
     'CVE-2016-8905' => 'zed: unrelated (dotCMS)',
     'CVE-2016-9108' => 'zed: unrelated (Artifex MuJS)',
     'CVE-2016-9318' => 'zed: unrelated (LibXML2)',
+    'CVE-2016-10132' => 'zed: unrelated (Artifex MuJS)',
     'CVE-2016-10141' => 'zed: unrelated (Artifex MuJS)',
-    'CVE-2017-3503' => 'zed: unrealted (Oracle Primavera Products Suite)',
+    'CVE-2017-3503' => 'zed: unrelated (Oracle Primavera Products Suite)',
     'CVE-2017-3241' => 'zed: oldversion (Oracle Java <= 8u112)',
     'CVE-2017-3252' => 'zed: oldversion (Oracle Java <= 8u112)',
     'CVE-2017-3253' => 'zed: oldversion (Oracle Java <= 8u112)',
@@ -555,9 +556,14 @@ my %falsepositives = (
     'CVE-2017-3616' => 'zed: unrelated (Berkeley DB)',
     'CVE-2017-3617' => 'zed: unrelated (Berkeley DB)',
     'CVE-2017-5586' => 'zed: unrelated (OpenText Documentum D2)',
+    'CVE-2017-5638' => 'zed: unrelated (Apache Struts < 2.5.10.1)',
     'CVE-2017-5656' => 'zed: unrelated (Apache CXF/STSClient)',
+    'CVE-2017-6711' => 'zed: unrelated (Cisco Ultra Services Framework)',
     'CVE-2017-9083' => 'zed: unrelated (Poppler)',
     'CVE-2017-9304' => 'zed: unrelated (YARA)',
+    'CVE-2017-9438' => 'zed: unrelated (YARA)',
+    'CVE-2017-9791' => 'zed: oldversion (Apache Struts 2.3.x)',
+    'CVE-2017-1000061' => 'zed: oldversion (xmlsec <= 1.2.23)',
    );
 
 
@@ -732,8 +738,8 @@ sub find_misc_jars {
     my $jarver;
 
     my %jardirs = (
-        '/usr/local/las-esgf/8.4.1/las-esgf-v8.4.1/lib'                    => 'las',
-        '/usr/local/las-esgf/8.4.1/las-esgf-v8.4.1/WebContent/WEB-INF/lib' => 'las-webcontent',
+        '/usr/local/las-esgf/8.6.1/las-esgf-v8.6.1/lib'                    => 'las',
+        '/usr/local/las-esgf/8.6.1/las-esgf-v8.6.1/WebContent/WEB-INF/lib' => 'las-webcontent',
         '/usr/local/solr/server/lib/'                                      => 'solr-server',
         '/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib'            => 'solr-webapp',
        );

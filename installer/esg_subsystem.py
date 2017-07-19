@@ -15,16 +15,15 @@ import esg_version_manager
 import esg_bash2py
 import esg_node_manager
 import shlex
-from esg_init import EsgInit
+import yaml
 from time import sleep
+import esg_logging_manager
 
-logger = logging.getLogger('root')
-FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-logging.basicConfig(format=FORMAT)
-logger.setLevel(logging.DEBUG)
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 
 def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_install=False):

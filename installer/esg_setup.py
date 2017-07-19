@@ -14,6 +14,7 @@ import shlex
 import hashlib
 import urlparse
 import datetime
+import tarfile
 from time import sleep
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable

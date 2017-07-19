@@ -82,9 +82,6 @@ force_install = False
 #--------------
 # User Defined / Settable (public)
 #--------------
-# install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
-install_prefix = esg_bash2py.Expand.colonMinus(
-    config.install_prefix, esg_bash2py.Expand.colonMinus("ESGF_INSTALL_PREFIX", "/usr/local"))
 #--------------
 
 # os.environ['UVCDAT_ANONYMOUS_LOG'] = False

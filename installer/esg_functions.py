@@ -13,16 +13,20 @@ import requests
 import hashlib
 import shlex
 import socket
+import yaml
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
-from esg_init import EsgInit
+# from esg_init import EsgInit
 import esg_bash2py
 import esg_property_manager
 import esg_logging_manager
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
-config = EsgInit()
+
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
+# config = EsgInit()
 
 
 #TODO: Come up with better function name

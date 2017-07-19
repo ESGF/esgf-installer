@@ -19,12 +19,17 @@ import esg_subsystem
 import esg_node_manager
 import esg_logging_manager
 import esg_init
+import yaml
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 print "logger:", logger
 
-config = esg_init.init()
+# config = esg_init.init()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
+
+print "config:", config
 
 logger.info("keystore_alias: %s", config.keystore_alias)
 # os.environ['DISCOVERONLY'] = Expand.colonMinus("DISCOVERONLY")

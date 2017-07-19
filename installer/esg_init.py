@@ -2,6 +2,7 @@
 import os
 import pwd
 import platform
+import socket
 import multiprocessing
 import esg_logging_manager
 import yaml
@@ -75,8 +76,8 @@ def init():
     #--------------------------------
     openssl_install_dir = os.path.join(install_prefix, "openssl")
     postgress_install_dir = os.path.join("/","var", "lib", "pgsql")
-    postgress_bin_dir = os.path.join("usr", "bin")
-    postgress_lib_dir = os.path.join("usr", "lib64", "pgsql")
+    postgress_bin_dir = os.path.join("/","usr", "bin")
+    postgress_lib_dir = os.path.join("/","usr", "lib64", "pgsql")
     postgress_user = "dbsuper"
     pg_sys_acct_passwd = "changeme"
     pub_secret = ""
@@ -84,7 +85,6 @@ def init():
     try:
         with open(pub_secret_file, 'rb') as filedata:
             pub_secret = filedata.read().strip()
-        # publisher_db_user_passwd=${publisher_db_user_passwd:-${pub_secret}}
         publisher_db_user_passwd = pub_secret
     except IOError, error:
         LOGGER.debug(error)
@@ -102,7 +102,7 @@ def init():
     tomcat_user = "tomcat"
     tomcat_group = tomcat_user
     globus_location = os.path.join(install_prefix, "globus")
-    mail_smtp_host = "smtp.`hostname --domain`"
+    mail_smtp_host = "smtp."+socket.getfqdn().split('.', 1)[1]
     mail_admin_address = ""
     publisher_home = ""
     publisher_config = ""
@@ -160,7 +160,7 @@ def init():
     installer_user = pwd.getpwuid(os.getuid())[0]
     installer_uid = pwd.getpwnam(installer_user).pw_uid
     installer_gid = pwd.getpwnam(installer_user).pw_gid
-    installer_home = os.path.join("usr", "local", "src", "esgf")
+    installer_home = os.path.join("/usr", "local", "src", "esgf")
     try:
         os.environ["SUDO_UID"]
     except KeyError:
@@ -179,9 +179,6 @@ def init():
     else:
         os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
         del os.environ["SUDO_GID"]
-
-    LOGGER.debug("%s:%s:%s:%s", installer_user,
-                 installer_uid, installer_gid, installer_home)
 
     #--------------
     # Script vars (internal)
@@ -203,7 +200,7 @@ def init():
     esg_dist_url_root = os.path.join(esgf_dist_mirror, "dist")
     esgf_coffee_dist_mirror = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
     esg_coffee_dist_url_root = os.path.join(esgf_coffee_dist_mirror, "dist")
-    java_dist_url = "$%s/java/$%s/jdk$%s-$%s.tar.gz" % (
+    java_dist_url = "%s/java/$%s/jdk%s-%s.tar.gz" % (
         esg_dist_url_root, java_version, java_version, word_size)
     java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
         esg_dist_url_root, java_version)
@@ -238,8 +235,8 @@ def init():
     source_latch = "0"
     scripts_dir = os.path.join(install_prefix, "bin")
     esg_installarg_file = os.path.join(scripts_dir, "esg-installarg")
-    no_globus = "0"
-    force_install = "0"
+    no_globus = False
+    force_install = False
     # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
     # extkeytool_download_url= esg_dist_url + "/etc/idptools.tar.gz"
     # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml

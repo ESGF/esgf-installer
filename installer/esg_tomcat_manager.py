@@ -448,7 +448,7 @@ def setup_tomcat(devel = False, upgrade_flag = False, force_install = False):
         _upgrade_tomcat_version(existing_tomcat_directory)
     else:
         try:
-            if os.stat(config.ks_secret_file).st_size != 0:
+            if os.stat(config['ks_secret_file']).st_size != 0:
                 config["keystore_password"] = esg_functions.get_keystore_password()
                 configure_tomcat(config["keystore_password"], esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", devel=devel)
         except OSError, error:

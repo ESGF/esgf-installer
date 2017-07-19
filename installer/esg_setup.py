@@ -840,7 +840,8 @@ def setup_java():
         setup_java_answer = "n"
     else:
         setup_java_answer = "y"
-    if find_executable("java"):
+
+    if find_executable("java", os.path.join(config["java_install_dir"],"bin")):
         print "Detected an existing java installation..."
         java_version_stdout = esg_functions.call_subprocess("{java_executable} -version".format(java_executable=find_executable("java")))
         print java_version_stdout

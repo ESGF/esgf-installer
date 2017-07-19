@@ -827,29 +827,96 @@ def setup_java():
     print '''
     *******************************
     Setting up Java {java_version}
-    ******************************* '''.format(java_version=config.config_dictionary["java_version"])
+    ******************************* \n'''.format(java_version=config.config_dictionary["java_version"])
+
     if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version=config.config_dictionary["java_version"]))):
         logger.info("Found existing Java installation.  Skipping set up.")
         return
     java_major_version = config.config_dictionary["java_version"].split(".")[1]
     java_minor_version = config.config_dictionary["java_version"].split("_")[1]
+
     # wget --no-check-certificate --no-cookies --header "Cookie:
     # oraclelicense=accept-securebackup-cookie"
     # http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
-    download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(
-        java_major_version=java_major_version, java_minor_version=java_minor_version)
-    subprocess.call(shlex.split(download_oracle_java_string))
 
-    command_list = ["yum", "-y", "localinstall", "jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm".format(
-        java_major_version=java_major_version, java_minor_version=java_minor_version)]
-    yum_install_java = subprocess.Popen(
-        command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
-    esg_functions.stream_subprocess_output(yum_install_java)
+    # download_oracle_java_string = 'wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/{java_major_version}u{java_minor_version}-b15/jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm'.format(
+    #     java_major_version=java_major_version, java_minor_version=java_minor_version)
+    # subprocess.call(shlex.split(download_oracle_java_string))
+    java_dist_file = esg_bash2py.trim_string_from_head(config.config_dictionary["java_dist_url"])
+    java_dist_dir = java_dist_file.split("-")[0]
+    java_install_dir_parent = config.config_dictionary["java_install_dir"].rsplit("/",1)[0]
 
-    logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(
-        java_version=config.config_dictionary["java_version"], java_install_dir=config.config_dictionary["java_install_dir"]))
-    esg_bash2py.symlink_force("/usr/java/jdk{java_version}/".format(
-        java_version=config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
+    #Check to see if we have an Java distribution directory
+    if not os.path.exists(os.path.join(java_install_dir_parent, java_dist_dir)):
+        print "Don't see java distribution dir: ", os.path.join(java_install_dir_parent, java_dist_dir)
+
+        if not os.path.isfile(java_dist_file):
+            print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_dist_file))
+            print "Downloading Java from ", config.config_dictionary["java_dist_url"]
+
+            if esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install) > 0:
+                logger.error("ERROR: Could not download Java")
+            print "unpacking", java_dist_file
+            try:
+                tar = tarfile.open(java_dist_file)
+                #extract to java_install_dir
+                tar.extractall(config.config_dictionary["java_install_dir"])
+                tar.close()
+            except Exception, error:
+                logger.error(error)
+                print "ERROR: Could not extract Java:", java_dist_file
+                esg_functions.exit_with_error()
+
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it
+    if os.path.isfile(java_dist_file) and not os.path.exists(os.path.join(java_install_dir_parent, java_dist_dir)):
+        print "unpacking", java_dist_file
+        try:
+            tar = tarfile.open(java_dist_file)
+            #extract to java_install_dir
+            tar.extractall(config.config_dictionary["java_install_dir"])
+            tar.close()
+        except Exception, error:
+            logger.error(error)
+            print "ERROR: Could not extract Java:", java_dist_file
+            esg_functions.exit_with_error(1)
+
+    if not os.path.exists(config.config_dictionary["java_install_dir"]):
+        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config.config_dictionary["java_install_dir"])
+    else:
+        try:
+            os.unlink(config.config_dictionary["java_install_dir"])
+        except OSError, error:
+            logger.error(error)
+            shutil.move(config.config_dictionary["java_install_dir"], config.config_dictionary["java_install_dir"]+str(datetime.date.today())+".bak")
+            esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config.config_dictionary["java_install_dir"])
+
+    os.chown(config.config_dictionary["java_install_dir"], config["installer_uid"], config["installer_gid"])
+    #recursively change permissions
+    for root, dirs, files in os.walk(esg_functions.readlinkf(config.config_dictionary["java_install_dir"])):
+        for name in files:
+            try:
+                os.chown(name, config["installer_uid"], config["installer_gid"])
+            except OSError, error:
+                logger.error(error)
+
+    java_version_stdout, _, _ = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config.config_dictionary["java_install_dir"]))
+    if not java_version_stdout:
+        print "cannot run {java_install_dir}/bin/java".format(java_install_dir=config.config_dictionary["java_install_dir"])
+        esg_functions.exit_with_error(1)
+
+
+
+    # command_list = ["yum", "-y", "localinstall", "jdk-{java_major_version}u{java_minor_version}-linux-x64.rpm".format(
+    #     java_major_version=java_major_version, java_minor_version=java_minor_version)]
+    # yum_install_java = subprocess.Popen(
+    #     command_list, stdout=subprocess.PIPE, universal_newlines=True, bufsize=1)
+    # esg_functions.stream_subprocess_output(yum_install_java)
+    #
+    # logger.debug("Creating symlink /usr/java/jdk{java_version}/ -> {java_install_dir}".format(
+    #     java_version=config.config_dictionary["java_version"], java_install_dir=config.config_dictionary["java_install_dir"]))
+    # esg_bash2py.symlink_force("/usr/java/jdk{java_version}/".format(
+    #     java_version=config.config_dictionary["java_version"]), config.config_dictionary["java_install_dir"])
 
 
 def write_java_env():

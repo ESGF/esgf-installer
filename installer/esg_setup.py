@@ -4,7 +4,6 @@ import subprocess
 import re
 import shutil
 from OpenSSL import crypto
-import logging
 import requests
 import socket
 import platform
@@ -24,11 +23,16 @@ import esg_bootstrap
 import esg_env_manager
 import esg_property_manager
 import esg_version_manager
+import esg_logging_manager
+import esg_init
+import yaml
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = esg_logging_manager.create_rotating_log(__name__)
 
-config = EsgInit()
+
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
+    
 use_local_files = 0
 force_install = False
 

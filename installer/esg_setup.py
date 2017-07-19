@@ -102,7 +102,7 @@ def init_structure():
     config_check = 7
     directories_to_check = [config["scripts_dir"], config["esg_backup_dir"], config["esg_tools_dir"],
                             config[
-                                "esg_log_dir"], config.esg_config_dir, config["esg_etc_dir"],
+                                "esg_log_dir"], config["esg_config_dir"], config["esg_etc_dir"],
                             config["tomcat_conf_dir"]]
     for directory in directories_to_check:
         if not os.path.isdir(directory):

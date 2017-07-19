@@ -609,38 +609,38 @@ def set_keyword_password():
         else:
             print "Sorry, values did not match. Please try again."
             continue
-    with open(config.ks_secret_file, 'w') as keystore_file:
+    with open(config['ks_secret_file'], 'w') as keystore_file:
         keystore_file.write(config["keystore_password"])
     return True
 
 def get_keystore_password():
     ''' Gets the keystore_password from the saved ks_secret_file '''
     try:
-        with open(config.ks_secret_file, 'rb') as keystore_file:
+        with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         if not keystore_password:
             set_keyword_password()
 
-        with open(config.ks_secret_file, 'rb') as keystore_file:
+        with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
     except IOError, error:
         logger.error(error)
         set_keyword_password()
-        with open(config.ks_secret_file, 'rb') as keystore_file:
+        with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
 
 def _check_keystore_password(keystore_password):
     '''Utility function to check that a given password is valid for the global scoped ${keystore_file} '''
-    if not os.path.isfile(config.ks_secret_file):
-        logger.error("$([FAIL]) No keystore file present [%s]", config.ks_secret_file)
+    if not os.path.isfile(config['ks_secret_file']):
+        logger.error("$([FAIL]) No keystore file present [%s]", config['ks_secret_file'])
         return False
     keystore_password = get_keystore_password()
-    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_file=config.ks_secret_file, keystore_password=keystore_password)
+    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_file=config['ks_secret_file'], keystore_password=keystore_password)
     keytool_list_process = call_subprocess(keytool_list_command)
     if keytool_list_process["returncode"] != 0:
-        logger.error("$([FAIL]) Could not access private keystore %s with provided password. Try again...", config.ks_secret_file)
+        logger.error("$([FAIL]) Could not access private keystore %s with provided password. Try again...", config['ks_secret_file'])
         return False
     return True
 

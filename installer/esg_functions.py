@@ -28,9 +28,7 @@ with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 # config = EsgInit()
 
-
-#TODO: Come up with better function name
-def checked_done(status):
+def exit_with_error(status):
     '''
         if positional parameter at position 1 is non-zero, then print error message.
     '''
@@ -48,8 +46,6 @@ def checked_done(status):
         #Move back to starting directory
         os.chdir(config.config_dictionary["install_prefix"])
         sys.exit()
-    else:
-        return 0
 
 #-------------------------------
 # Process checking utility functions
@@ -133,6 +129,7 @@ def path_unique(path_string = os.environ["PATH"], path_separator=":"):
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
 
+#TODO: Maybe move this to esg_bash2py
 def readlinkf(file_name):
     '''
     This is a portable implementation of GNU's "readlink -f" in

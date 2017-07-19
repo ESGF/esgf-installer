@@ -883,7 +883,6 @@ def setup_java():
             if not os.path.isfile(java_dist_file):
                 print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_dist_file))
                 print "Downloading Java from ", config["java_dist_url"]
-
                 if esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install) > 0:
                     logger.error("ERROR: Could not download Java")
                 print "unpacking", java_dist_file
@@ -892,7 +891,7 @@ def setup_java():
                     #extract to java_install_dir
                     tar.extractall(config["java_install_dir"])
                     tar.close()
-                except Exception, error:
+                except tarfile.TarError, error:
                     logger.error(error)
                     print "ERROR: Could not extract Java:", java_dist_file
                     esg_functions.exit_with_error(0)

@@ -376,7 +376,7 @@ def main(node_type_list):
     # logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
 
     esg_cli_argument_manager.get_previous_node_type_config(
-        config.esg_config_type_file)
+        config["esg_config_type_file"])
     check_selected_node_type(bit_boolean_dictionary, node_type_list)
 
     # Display node information to user

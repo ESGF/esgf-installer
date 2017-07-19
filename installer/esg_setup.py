@@ -842,7 +842,7 @@ def setup_java():
         setup_java_answer = "y"
     if find_executable("java"):
         print "Detected an existing java installation..."
-        java_version_stdout, _, _ = esg_functions.call_subprocess("{java_executable} -version".format(java_executable=find_executable("java")))
+        java_version_stdout = esg_functions.call_subprocess("{java_executable} -version".format(java_executable=find_executable("java")))
         print java_version_stdout
         if force_install:
             setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or setup_java_answer

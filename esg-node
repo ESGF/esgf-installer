@@ -1181,6 +1181,15 @@ setup_esgcet() {
 
     unset choice
 
+    has_cmor=`conda list | grep cmor | awk '{print $1}'`
+
+    if [ ! -z  $has_cmor ] ; then
+        echo  found cmor installation for PrePARE - upgrading to specified version ${cmor_version}
+
+
+        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
+    fi
+
     if [ ! -d /usr/local/cmip6-cmor-tables ] ; then
 
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
@@ -1189,7 +1198,7 @@ setup_esgcet() {
           choice="n"
       fi
       if [ $choice == "y" ] ; then
-        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor
+        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
         pip install esgfpid   
         pushd /usr/local
         git clone https://github.com/PCMDI/cmip6-cmor-tables

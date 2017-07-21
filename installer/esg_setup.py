@@ -911,27 +911,20 @@ def setup_java():
                 esg_functions.exit_with_error(1)
 
         esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
-        # if not os.path.exists(config["java_install_dir"]):
-        #     print "Creating symlink to"
-        #     esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
-        # else:
-        #     try:
-        #         os.unlink(config["java_install_dir"])
-        #     except OSError, error:
-        #         logger.error(error)
-        #         shutil.move(config["java_install_dir"], config["java_install_dir"]+str(datetime.date.today())+".bak")
-        #         esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
         #recursively change permissions
         for root, dirs, files in os.walk(esg_functions.readlinkf(config["java_install_dir"])):
+            for directory in dirs:
+                os.chown(os.path.join(root, directory), config["installer_uid"], config["installer_gid"])
             for name in files:
                 try:
-                    os.chown(name, config["installer_uid"], config["installer_gid"])
+                    os.chown(os.path.join(root, name), config["installer_uid"], config["installer_gid"])
                 except OSError, error:
                     logger.error(error)
 
-    java_version_stdout, _, _ = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config["java_install_dir"]))
+    java_version_stdout = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config["java_install_dir"]))
+    print java_version_stdout["stderr"]
     if not java_version_stdout:
         print "cannot run {java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"])
         esg_functions.exit_with_error(1)

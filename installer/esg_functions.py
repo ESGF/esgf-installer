@@ -16,7 +16,6 @@ import socket
 import yaml
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
-# from esg_init import EsgInit
 import esg_bash2py
 import esg_property_manager
 import esg_logging_manager
@@ -26,7 +25,6 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
-# config = EsgInit()
 
 def exit_with_error(status):
     '''
@@ -53,6 +51,7 @@ def exit_with_error(status):
 
 def check_esgf_httpd_process():
     status = subprocess.check_output(["service", "esgf-httpd", "status"])
+    print "httpd status:", status
     if status:
         return 0
     else:
@@ -681,8 +680,7 @@ def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version,
                 bootstrap_path = "/usr/local/bin/esg-bootstrap"
             invoke_bootstrap = subprocess.Popen(bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             invoke_bootstrap.communicate()
-            # if invoke_bootstrap.returncode == 0:
-            #     esg_functions.checked_get()
+
             print "Please re-run this updated script: {current_script_name}".format(current_script_name = esg_node_filename)
             sys.exit(invoke_bootstrap.returncode)
         elif update_action is "X".lower():

@@ -1,12 +1,10 @@
 #!/usr/local/bin/python2.7
 
 import glob
-import os
 import sys
 import datetime
 import time
 from pylint.lint import Run
-import pprint
 import esg_bash2py
 import esg_logging_manager
 

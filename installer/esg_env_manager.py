@@ -2,6 +2,8 @@ import sys
 import subprocess
 import logging
 import yaml
+from plumbum.cmd import grep, wc, cat, head, ifconfig, awk
+import netifaces
 import esg_bash2py
 import esg_logging_manager
 
@@ -40,7 +42,7 @@ def deduplicate_settings_in_file(envfile = None):
     Will have duplcate keys removed such that the
     last entry of that variable is the only one present
     in the final output.
-    arg 1 - The environment file to dedup.
+    envfile - The environment file to dedup.
     '''
 
     infile = esg_bash2py.Expand.colonMinus(envfile, config["envfile"])
@@ -65,6 +67,7 @@ def deduplicate_settings_in_file(envfile = None):
             for setting in deduplicated_list:
                 environment_file.write(setting)
             environment_file.truncate()
+            return True
     except IOError, error:
         logger.error(error)
         sys.exit(0)
@@ -91,17 +94,20 @@ def deduplicate_properties(properties_file = None):
             for setting in deduplicated_list:
                 prop_file.write(setting)
             prop_file.truncate()
+        return True
     except IOError, error:
         logger.error(error)
         sys.exit(0)
 
-#TODO: fix awk statements
-# def get_config_ip(interface_value):
-#     '''
-#     #####
-#     # Get Current IP Address - Needed (at least temporarily) for Mesos Master
-#     ####
-#     Takes a single interface value
-#     "eth0" or "lo", etc...
-#     '''
-    # return subprocess.check_output("ifconfig $1 | grep \"inet[^6]\" | awk '{ gsub (\" *inet [^:]*:\",\"\"); print $1}'")
+def get_config_ip(interface_value):
+    chain = ifconfig["eth3"] | grep["inet[^6]"] | awk['{ gsub (" *inet [^:]*:",""); print eth3}']
+    #     '''
+    #     #####
+    #     # Get Current IP Address - Needed (at least temporarily) for Mesos Master
+    #     ####
+    #     Takes a single interface value
+    #     "eth0" or "lo", etc...
+    #     '''
+    netifaces.ifaddresses(interface_value)
+    ip = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
+    return ip

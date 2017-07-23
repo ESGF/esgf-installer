@@ -2,51 +2,31 @@
 
 import unittest
 import esg_init
-import esg_version_manager
+#import esg_version_manager
 
 
-class test_ESG_Init(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.test = esg_init.EsgInit()
+class TestESGInit(unittest.TestCase):
+    """
+        Test class for the esg_init.py module
 
-    def test_populate_internal_esgf_node_code_versions(self):
-        output = self.test.populate_internal_esgf_node_code_versions()
-        # print "vars after populate_internal_esgf_node_code_versions call: ", vars(self.test)
-        # print "output: ", output
-        # self.assertNotEqual(output, None)
-        self.assertEqual("esgf_desktop_version" in output, True)
-        self.assertEqual(esg_version_manager.check_version_atleast(output["esgf_desktop_version"], '0.0.20'), 0)
+        Functions:
+            test_return_dictionary -> test the return value of the init method
+            test_contain_vars -> test if the returns value contains data
+    """
+    def test_return_dictionary(self):
+        """ Test if the return value of the init() function is a dictionary."""
+        self.assertEqual(type(esg_init.init()), type({}))
 
-    def test_populate_external_programs_versions(self):
-        output = self.test.populate_external_programs_versions()
-        # print "output: ", output
-        self.assertNotEqual(output, None)
-        self.assertEqual("java_version" in output, True)
-        self.assertEqual(esg_version_manager.check_version_atleast(output["java_version"], '1.8.0_92'), 0)
-        self.assertEqual(esg_version_manager.check_version_atleast(output["python_version"], '2.7'), 0)
+    def test_contain_vars(self):
+        """ The if the init() function contains a min of 100 variables."""
+        self.assertTrue(esg_init.init() > 100)
+        print "datatype: {}".format(type(esg_init.init()))
+        for key, value in esg_init.init().iteritems():
+            print "Key:{} Value: {}".format(key, value)
 
-    def test_populate_external_script_variables(self):
-        output = self.test.populate_external_script_variables()
-        # print "output: ", output
+    def test_vars_values(self):
+        """ Not Implimented."""
+        pass
 
-        self.assertEqual("openssl_install_dir" in output, True)
-        self.assertNotEqual(output, None)
-
-    def test_populate_environment_constants(self):
-        output = self.test.populate_environment_constants()
-
-        self.assertNotEqual(output, None)
-        self.assertEqual("JAVA_OPTS" in output, True)
-
-    # def test_populate_ID_settings(self):
-    #     output = self.test.populate_ID_settings()
-
-    #     self.assertEqual("installer_user" in output, True)
-
-    def test_populate_internal_script_variables(self):
-        output = self.test.populate_internal_script_variables()
-
-        self.assertEqual("esg_backup_dir" in output, True)
 if __name__ == '__main__':
     unittest.main()

@@ -5,12 +5,15 @@ import os
 import subprocess
 import re
 import logging
-from esg_init import EsgInit
 import esg_bash2py
 import esg_logging_manager
+import esg_init
+import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
-config = EsgInit()
+
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 def version_comp(input_version1, input_version2):
     '''
@@ -33,6 +36,7 @@ def version_comp(input_version1, input_version2):
     version1 = re.search(r'(.*):(.*)-(\w)', input_version1)
 
     # TODO: replace with ternary operator
+    #TODO: Use python split()
     if version1:
         epoch_a = version1.group(1)
     else:
@@ -289,10 +293,10 @@ def get_current_esgf_library_version(library_name):
         against the ESGF install manifest instead.
     '''
     version_number = ""
-    if not os.path.isfile("/esg/esgf-install-manifest"):
-        return 1
+    if not os.path.isfile(config["install_manifest"]):
+        return None
     else:
-        with open("/esg/esgf-install-manifest", "r") as manifest_file:
+        with open(config["install_manifest"], "r") as manifest_file:
             for line in manifest_file:
                 line = line.rstrip() # remove trailing whitespace such as '\n'
                 version_number = re.search(r'(library)\w+', line)
@@ -300,13 +304,13 @@ def get_current_esgf_library_version(library_name):
             print "version number: ", version_number
             return version_number
         else:
-            return 1
+            return None
 
 def get_current_webapp_version(webapp_name, version_command = None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
     print "version_property: ", version_property
     reg_ex = r"^(" + re.escape(version_property) + ".*)"
-    with open(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF", "r") as manifest_file:
+    with open(config["tomcat_install_dir"]+"/webapps/"+webapp_name+"/META-INF/MANIFEST.MF", "r") as manifest_file:
             for line in manifest_file:
                 line = line.rstrip() # remove trailing whitespace such as '\n'
                 version_number = re.search(reg_ex, line)
@@ -318,7 +322,7 @@ def get_current_webapp_version(webapp_name, version_command = None):
 
 def check_webapp_version(webapp_name, min_version, version_command=None):
     version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
-    if not os.path.isdir(config.config_dictionary["tomcat_install_dir"]+"/webapps/"+webapp_name):
+    if not os.path.isdir(config["tomcat_install_dir"]+"/webapps/"+webapp_name):
         print "Web Application %s is not present or cannot be detected!" % (webapp_name)
         return 2
     else:

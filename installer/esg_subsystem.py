@@ -15,16 +15,15 @@ import esg_version_manager
 import esg_bash2py
 import esg_node_manager
 import shlex
-from esg_init import EsgInit
+import yaml
 from time import sleep
+import esg_logging_manager
 
-logger = logging.getLogger('root')
-FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-logging.basicConfig(format=FORMAT)
-logger.setLevel(logging.DEBUG)
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 
 def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_install=False):
@@ -34,7 +33,7 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     usage: setup_subsystem security orp - looks for the script esg-security in the distriubtion dir orp
     '''
 
-    subsystem_install_script_path = os.path.join(config.config_dictionary["scripts_dir"],"esg-{subsystem}".format(subsystem=subsystem))
+    subsystem_install_script_path = os.path.join(config["scripts_dir"],"esg-{subsystem}".format(subsystem=subsystem))
 
 #     #---
 #     #check that you have at one point in time fetched the subsystem's installation script
@@ -59,11 +58,11 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
     print "-------------------------------"
     print "LOADING installer for {subsystem}... ".format(subsystem=subsystem)
-    esg_bash2py.mkdir_p(config.config_dictionary["workdir"])
-    with esg_bash2py.pushd(config.config_dictionary["workdir"]):
+    esg_bash2py.mkdir_p(config["workdir"])
+    with esg_bash2py.pushd(config["workdir"]):
         logger.debug("Changed directory to %s", os.getcwd())
 
-        with esg_bash2py.pushd(config.config_dictionary["scripts_dir"]):
+        with esg_bash2py.pushd(config["scripts_dir"]):
             logger.debug("Changed directory to %s", os.getcwd())
 
             subsystem_full_name = "esg-{subsystem}".format(subsystem=subsystem)
@@ -77,9 +76,9 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
                 logger.error(error)
 
 
-    logger.info("script_dir contents: %s", os.listdir(config.config_dictionary["scripts_dir"]))
+    logger.info("script_dir contents: %s", os.listdir(config["scripts_dir"]))
     subsystem_underscore = subsystem.replace("-", "_")
-    execute_subsystem_command = ". {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}".format(scripts_dir=config.config_dictionary["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore)
+    execute_subsystem_command = ". {scripts_dir}/{subsystem_full_name}; setup_{subsystem_underscore}".format(scripts_dir=config["scripts_dir"], subsystem_full_name=subsystem_full_name, subsystem_underscore=subsystem_underscore)
     setup_subsystem_process = subprocess.Popen(['bash', '-c', execute_subsystem_command])
     setup_subsystem_stdout, setup_subsystem_stderr = setup_subsystem_process.communicate()
     logger.debug("setup_subsystem_stdout: %s", setup_subsystem_stdout)

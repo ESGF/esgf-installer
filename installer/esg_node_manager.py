@@ -15,9 +15,8 @@ import hashlib
 import urlparse
 import glob
 import pwd
+import yaml
 from time import sleep
-from esg_init import EsgInit
-# import esg_init as config
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 import esg_bash2py
 import esg_functions
@@ -31,7 +30,8 @@ from esg_tomcat_manager import stop_tomcat
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-config = EsgInit()
+with open('esg_config.yaml', 'r') as config_file:
+    config = yaml.load(config_file)
 
 envfile = "/etc/esg.env"
 
@@ -50,7 +50,7 @@ esgf_host = esg_functions.get_esgf_host()
 
 node_manager_app_context_root = "esgf-node-manager"
 node_dist_url = "{esg_dist_url}/esgf-node-manager/esgf-node-manager-{esgf_node_manager_version}.tar.gz".format(
-    esg_dist_url=esg_dist_url, esgf_node_manager_version=config.config_dictionary["esgf_node_manager_version"])
+    esg_dist_url=esg_dist_url, esgf_node_manager_version=config["esgf_node_manager_version"])
 logger.debug("node_dist_url: %s", node_dist_url)
 
 
@@ -58,7 +58,7 @@ def init():
     #[ -n "${envfile}" ] && [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "node manager: sourcing environment from: ${envfile} \n"
 
     esgf_node_manager_egg_file = "esgf_node_manager-{esgf_node_manager_db_version}-py{python_version}.egg".format(
-        esgf_node_manager_db_version=config.config_dictionary["esgf_node_manager_db_version"], python_version=config.config_dictionary["python_version"])
+        esgf_node_manager_db_version=config["esgf_node_manager_db_version"], python_version=config["python_version"])
 
 
     # get_property node_use_ssl && [ -z "${node_use_ssl}" ] && write_as_property node_use_ssl true
@@ -68,7 +68,7 @@ def init():
     # get_property node_manager_service_app_home ${tomcat_install_dir}/webapps/${node_manager_app_context_root}
     # write_as_property node_manager_service_app_home
     node_manager_service_app_home = esg_property_manager.get_property("node_manager_service_app_home", "{tomcat_install_dir}/webapps/{node_manager_app_context_root}".format(
-        tomcat_install_dir=config.config_dictionary["tomcat_install_dir"], node_manager_app_context_root=node_manager_app_context_root))
+        tomcat_install_dir=config["tomcat_install_dir"], node_manager_app_context_root=node_manager_app_context_root))
     esg_property_manager.write_as_property(
         "node_manager_service_app_home", node_manager_service_app_home)
 
@@ -97,7 +97,7 @@ def init():
     # mail_smtp_host=${mail_smtp_host:-smtp.`hostname --domain`} #standard guess.
     # Overwrite mail_smtp_host value if already defined in props file
     # get_property mail_smtp_host ${mail_smtp_host}
-    config.config_dictionary["mail_smtp_host"] = esg_property_manager.get_property("mail_smtp_host")
+    config["mail_smtp_host"] = esg_property_manager.get_property("mail_smtp_host")
 
     # Launcher script for the esgf-sh
     esgf_shell_launcher = "esgf-sh"
@@ -114,7 +114,7 @@ def choose_mail_admin_address():
             "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=mail_admin_address))
     else:
         logger.info("mail_admin_address = [%s]", mail_admin_address)
-        config.config_dictionary["mail_admin_address"] = mail_admin_address
+        config["mail_admin_address"] = mail_admin_address
 
 
 def setup_node_manager(mode="install"):
@@ -127,8 +127,8 @@ def setup_node_manager(mode="install"):
     # In setup mode it is an idempotent install (default)
     # In update mode it will always pull down latest after archiving old
     #
-    print "Checking for node manager {esgf_node_manager_version}".format(esgf_node_manager_version=config.config_dictionary["esgf_node_manager_version"])
-    if esg_version_manager.check_webapp_version("esgf-node-manager", config.config_dictionary["esgf_node_manager_version"]) == 0 and not force_install:
+    print "Checking for node manager {esgf_node_manager_version}".format(esgf_node_manager_version=config["esgf_node_manager_version"])
+    if esg_version_manager.check_webapp_version("esgf-node-manager", config["esgf_node_manager_version"]) == 0 and not force_install:
         print "\n Found existing version of the node-manager [OK]"
         return True
 
@@ -175,15 +175,15 @@ def setup_node_manager(mode="install"):
 
         backup_db_default_answer = "Y"
         backup_db_answer = raw_input("Do you want to make a back up of the existing database [{node_db_name}:esgf_node_manager]?? [Y/n] ".format(
-            node_db_name=config.config_dictionary["node_db_name"])) or backup_db_default_answer
+            node_db_name=config["node_db_name"])) or backup_db_default_answer
 
         if backup_db_answer.lower() in ["yes", "y"]:
-            print "Creating a backup archive of the manager database schema [{node_db_name}:esgf_node_manager]".format(node_db_name=config.config_dictionary["node_db_name"])
+            print "Creating a backup archive of the manager database schema [{node_db_name}:esgf_node_manager]".format(node_db_name=config["node_db_name"])
             # TODO: Implement this
             # esg_postgres.backup_db() -db ${node_db_name} -s node_manager
 
-    esg_bash2py.mkdir_p(config.config_dictionary["workdir"])
-    with esg_bash2py.pushd(config.config_dictionary["workdir"]):
+    esg_bash2py.mkdir_p(config["workdir"])
+    with esg_bash2py.pushd(config["workdir"]):
         logger.debug("changed directory to : %s", os.getcwd())
 
         # strip off .tar.gz at the end
@@ -196,7 +196,7 @@ def setup_node_manager(mode="install"):
         # checked_get ${node_dist_file} ${node_dist_url} $((force_install))
         if not esg_functions.download_update(node_dist_file, node_dist_url, force_download=force_install):
             print "ERROR: Could not download {node_dist_url} :-(".format(node_dist_url=node_dist_url)
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
 
         # make room for new install
         if force_install:
@@ -207,7 +207,7 @@ def setup_node_manager(mode="install"):
             except IOError, error:
                 logger.error(error)
                 logger.error("Could not delete directory: %s", node_dist_dir)
-                esg_functions.checked_done(1)
+                esg_functions.exit_with_error(1)
 
             clean_node_manager_webapp_subsystem()
 
@@ -220,7 +220,7 @@ def setup_node_manager(mode="install"):
         except Exception, error:
             logger.error(error)
             print "ERROR: Could not extract the ESG Node: {node_dist_file}".format(node_dist_file=node_dist_file)
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
 
         # pushd ${node_dist_dir} >& /dev/null
         with esg_bash2py.pushd(node_dist_dir):
@@ -274,7 +274,7 @@ def setup_node_manager(mode="install"):
             except Exception, error:
                 logger.error(error)
                 print "ERROR: Could not extract the ESG Node: {node_war_file}".format(node_war_file=node_war_file)
-                esg_functions.checked_done(1)
+                esg_functions.exit_with_error(1)
 
             #----------------------------
             # Property file fetching and token replacement...
@@ -283,13 +283,13 @@ def setup_node_manager(mode="install"):
             with esg_bash2py.pushd("WEB-INF/classes"):
                 # cat ${fetch_file}.tmpl >> ${config_file}
                 with open(download_file_name + ".tmpl", "r") as download_file:
-                    with open(config.config_dictionary["config_file"], "w") as config_file:
+                    with open(config["config_file"], "w") as config_file:
                         download_file_contents = download_file.read()
                         config_file.write(download_file_contents)
 
                 # chown -R ${tomcat_user} ${node_manager_service_app_home}
                 # chgrp -R ${tomcat_group} ${node_manager_service_app_home}
-                os.chown(esg_functions.readlinkf(node_manager_service_app_home), pwd.getpwnam(config.config_dictionary["tomcat_user"]).pw_uid, grp.getgrnam(config.config_dictionary["tomcat_group"]).gr_gid)
+                os.chown(esg_functions.readlinkf(node_manager_service_app_home), pwd.getpwnam(config["tomcat_user"]).pw_uid, grp.getgrnam(config["tomcat_group"]).gr_gid)
             #----------------------------
 
     # popd >& /dev/null
@@ -310,7 +310,7 @@ def setup_node_manager(mode="install"):
 
     if db_set > 0:
         if write_node_manager_config() != 0 or configure_postgress() != 0:
-            esg_functions.checked_done(1)
+            esg_functions.exit_with_error(1)
 
     touch_generated_whitelist_files()
     write_node_manager_install_log()
@@ -323,7 +323,7 @@ def setup_node_manager(mode="install"):
 
     setup_nm_repo()
 
-    esg_functions.checked_done(0)
+    esg_functions.exit_with_error(0)
 
 
 def setup_nm_repo():

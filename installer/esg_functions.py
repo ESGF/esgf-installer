@@ -225,28 +225,22 @@ def prefix_to_path(path, prepend_value):
 def backup(path, backup_dir = config["esg_backup_dir"], num_of_backups=config["num_backups_to_keep"]):
     '''
         Given a directory the contents of the directory is backed up as a tar.gz file in
-        arg1 - a filesystem path
-        arg2 - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
-        arg3 - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
+        path - a filesystem path
+        backup_dir - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
+        num_of_backups - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
     '''
-    source = readlinkf(path)
-    print "Backup - Creating a backup archive of %s" % (source)
+    source_directory = readlinkf(path)
+    print "Backup - Creating a backup archive of %s" % (source_directory)
     current_directory = os.getcwd()
 
-    os.chdir(source)
-    try:
-        os.mkdir(backup_dir)
-    except OSError, e:
-        if e.errno != 17:
-            raise
-        sleep(1)
-        pass
+    os.chdir(source_directory)
+    esg_bash2py.mkdir_p(source_directory)
 
-    source_backup_name = re.search("\w+$", source).group()
+    source_backup_name = re.search("\w+$", source_directory).group()
     backup_filename=readlinkf(backup_dir)+"/"+source_backup_name + "." + str(datetime.date.today())+".tgz"
     try:
         with tarfile.open(backup_filename, "w:gz") as tar:
-            tar.add(source)
+            tar.add(source_directory)
     except:
         print "ERROR: Problem with creating backup archive: {backup_filename}".format(backup_filename = backup_filename)
         os.chdir(current_directory)

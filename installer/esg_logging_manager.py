@@ -9,7 +9,7 @@ def create_rotating_log(name, path=PATH):
     Creates a rotating log
     """
     logger = logging.getLogger(name)
-    coloredlogs.install(level='DEBUG', logger=logger)
+    coloredlogs.install(level='DEBUG', logger=logger, stream="esgf_colored_log.out")
 
     # add a rotating handler
     handler = RotatingFileHandler(path, maxBytes=10*1024*1024,

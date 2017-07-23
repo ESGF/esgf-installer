@@ -199,17 +199,17 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        get_previous_node_type_config(config.esg_config_type_file)
+        get_previous_node_type_config(config["esg_config_type_file"])
         install_local_certs()
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        get_previous_node_type_config(config.esg_config_type_file)
+        get_previous_node_type_config(config["esg_config_type_file"])
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        get_previous_node_type_config(config.esg_config_type_file)
+        get_previous_node_type_config(config["esg_config_type_file"])
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -249,16 +249,16 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
             # if node_type_bit & get_bit_value(arg) == 0:
             #     node_type_bit += get_bit_value(arg)
             #     selection_string += " "+arg
-        if not os.path.isdir(config.esg_config_dir):
+        if not os.path.isdir(config["esg_config_dir"]):
             try:
-                os.mkdir(config.esg_config_dir)
+                os.mkdir(config["esg_config_dir"])
             except IOError, error:
                 logger.error(error)
         # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
-        set_node_type_config(node_type_list, config.esg_config_type_file)
+        set_node_type_config(node_type_list, config["esg_config_type_file"])
         sys.exit(0)
     elif args.gettype:
-        get_previous_node_type_config(config.esg_config_type_file)
+        get_previous_node_type_config(config["esg_config_type_file"])
         show_type()
         sys.exit(0)
     elif args.start:
@@ -335,7 +335,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
-        if os.path.isfile(config.envfile):
-            shutil.move(config.envfile, config.envfile+".bak")
+        if os.path.isfile(config["envfile"]):
+            shutil.move(config["envfile"], config["envfile"]+".bak")
             #empty out contents of the file
-            open(config.envfile, 'w').close()
+            open(config["envfile"], 'w').close()

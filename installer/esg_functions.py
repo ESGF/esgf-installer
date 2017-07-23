@@ -169,7 +169,7 @@ def insert_file_at_pattern(target_file, input_file, pattern):
 
 
 # TODO: Not used anywhere; maybe deprecate
-def append_to_path():
+def append_to_path(path_variable, path_list):
     '''
         Appends path components to a variable, deduplicates the list,
         then prints to stdout the export command required to append that
@@ -192,7 +192,8 @@ def append_to_path():
               NOT WHAT YOU WANT - use prefix_to_path (below)
 
     '''
-    pass
+    for path in path_list:
+        os.environ[path_variable] = os.environ + path
 
 def prefix_to_path(path, prepend_value):
     '''

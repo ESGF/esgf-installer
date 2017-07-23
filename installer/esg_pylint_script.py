@@ -18,6 +18,9 @@ esg_bash2py.mkdir_p("pylint_score_reports")
 # get all files that contain the esg*_**.py pattern
 esgf_python_scripts = glob.glob("esg*_**.py")
 
+#TODO: Might do this set difference operation to remove this script (esg_pylint_script) from the linting
+# esgf_python_scripts = set(esgf_python_scripts) - set(glob("esg_pylint_script"))
+
 @contextmanager
 def suppress_stdout():
     '''Source: http://thesmithfam.org/blog/2012/10/25/temporarily-suppress-console-output-in-python/'''

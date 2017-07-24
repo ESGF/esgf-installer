@@ -28,6 +28,11 @@ def initalize_postgres():
     esg_functions.stream_subprocess_output("service postgresql-9.6 start")
     esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")
 
+def check_for_postgres_sys_acct():
+    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+    if not postgres_user_id:
+        print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct = config["pg_sys_acct"])
+
 def setup_postgres(force_install = False):
     print "\n*******************************"
     print "Setting up Postgres"
@@ -44,7 +49,7 @@ def setup_postgres(force_install = False):
     if not postgres_binary_path or not psql_path:
         print "Postgres not found on system"
 
-        backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]")
+        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
         if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
             backup_db()
 
@@ -81,15 +86,6 @@ def setup_postgres(force_install = False):
     #Setup PostgreSQL RPM repository
     #---------------------------------------
 
-
-
-    # yum_install_postgres = subprocess.Popen(["yum", "-y", "install", "postgresql", "postgresql-server", "postgresql-devel"], stdout=subprocess.PIPE)
-    # print "yum_install_postgres: ", yum_install_postgres.communicate()[0]
-    # print "yum_install_postgres return code: ", yum_install_postgres.returncode
-    #
-    # print "Restarting Database..."
-    # stop_postgress()
-    # esg_functions.exit_with_error(start_postgress())
 
     ########
     #Create the system account for postgress to run as.

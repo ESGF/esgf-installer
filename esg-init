@@ -20,12 +20,12 @@ logfile=${logfile:-"/tmp/${_t##*/}.out"}
 
 init() {
     #--------------------------------
-    # Internal esgf node code versions 
+    # Internal esgf node code versions
     #--------------------------------
 
     apache_frontend_version=${apache_frontend_version:-"1.0.7"}
     apache_frontend_tag=${apache_frontend_tag:-"v1.07"}
-	
+
     cdat_version=${cdat_version:-"2.2.0"}
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
@@ -41,28 +41,28 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.10"}
+    esgf_security_version=${esgf_security_version:-"2.7.15"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.9.3"}
+    esg_orp_version=${esg_orp_version:-"2.9.6"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.7.6"}
+    esgf_idp_version=${esgf_idp_version:-"2.7.11"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"4.12.0"}
+    esg_search_version=${esg_search_version:-"4.13.4"}
 
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.2"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.3"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:
     esgf_desktop_version=${esgf_desktop_version:-"0.0.22"}
 
-    esgf_stats_api_version=${esgf_stats_api_version:-"0.9"}
+    esgf_stats_api_version=${esgf_stats_api_version:-"1.0"}
 
     #--------------------------------
     # External programs' versions
@@ -206,7 +206,7 @@ init() {
     #NOTE: This root dir should match a root set in the thredds setup
     thredds_root_dir=${esg_root_dir}/data
     thredds_replica_dir=${thredds_root_dir}/replica
-    esgf_stats_api_dist_url=${esg_dist_url}/esgf-stats-api/esgf-stats-api.war 
+    esgf_stats_api_dist_url=${esg_dist_url}/esgf-stats-api/esgf-stats-api.war
     #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
     show_summary_latch=0
     source_latch=0

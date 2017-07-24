@@ -8,4 +8,4 @@ script:
   - cd installer 
   - python test_esg_functions.py
   - python test_esg_setup.py
-  - python esg_pylint_scripy.py -a
+  - python esg_pylint_script.py -a

@@ -18,6 +18,16 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
+
+def download_postgres():
+    esg_functions.call_subprocess("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
+    esg_functions.call_subprocess("yum -y install postgresql96-server postgresql96")
+
+def initalize_postgres():
+    esg_functions.call_subprocess("service postgresql-9.6 initdb")
+    esg_functions.call_subprocess("service postgresql-9.6 start")
+    esg_functions.call_subprocess("chkconfig postgresql-9.6 on")
+
 def setup_postgres(force_install = False):
     print "\n*******************************"
     print "Setting up Postgres"
@@ -29,31 +39,36 @@ def setup_postgres(force_install = False):
     postgres_binary_path = find_executable("postgres")
     psql_path = find_executable("psql")
 
+    print "postgres_binary_path:", postgres_binary_path
+
     try:
         found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config["postgress_min_version"], version_command = "-V")
         if found_valid_version and not force_install:
-            print "Valid existing Postgres installation found"
-            print "[OK]"
+            print "Valid existing Postgres installation found. Skipping setup."
+            postgres_version_found = esg_functions.call_subprocess("postgres --version")
+            print postgres_version_found["stdout"]
             return True
     except OSError, error:
         logger.error(error)
 
-    if postgres_binary_path and psql_path:
-        print "Existing postgres installation found"
-        postgres_version_found = esg_functions.call_subprocess("postgres --version")
+    if not postgres_binary_path or not psql_path:
+        print "Postgres not found on system"
 
+    backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]")
+    if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
+        backup_db()
 
-    esg_functions.call_subprocess("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
-    esg_functions.call_subprocess("yum -y install postgresql96-server postgresql96")
-    esg_functions.call_subprocess("service postgresql-9.6 initdb")
-
-
+    download_postgres()
     #start the postgres server
-    esg_functions.call_subprocess("service postgresql-9.6 start")
-    esg_functions.call_subprocess("chkconfig postgresql-9.6 on")
-    db_properties = esg_setup.get_db_properties()
-    if esg_setup._is_managed_db(db_properties):
-        return True
+    initalize_postgres()
+
+
+
+
+
+    # db_properties = esg_setup.get_db_properties()
+    # if esg_setup._is_managed_db(db_properties):
+    #     return True
 
     # upgrade  = None
     # if not found_valid_version:
@@ -63,9 +78,6 @@ def setup_postgres(force_install = False):
     #Setup PostgreSQL RPM repository
     #---------------------------------------
 
-    backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]")
-    if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
-        backup_db()
 
 
     # yum_install_postgres = subprocess.Popen(["yum", "-y", "install", "postgresql", "postgresql-server", "postgresql-devel"], stdout=subprocess.PIPE)

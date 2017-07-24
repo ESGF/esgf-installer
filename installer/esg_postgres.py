@@ -41,26 +41,29 @@ def setup_postgres(force_install = False):
 
     print "postgres_binary_path:", postgres_binary_path
 
-    try:
-        found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config["postgress_min_version"], version_command = "-V")
-        if found_valid_version and not force_install:
-            print "Valid existing Postgres installation found. Skipping setup."
-            postgres_version_found = esg_functions.call_subprocess("postgres --version")
-            print postgres_version_found["stdout"]
-            return True
-    except OSError, error:
-        logger.error(error)
-
     if not postgres_binary_path or not psql_path:
         print "Postgres not found on system"
 
-    backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]")
-    if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
-        backup_db()
+        backup_db_input = raw_input("Do you want to backup the curent database? [Y/n]")
+        if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
+            backup_db()
 
-    download_postgres()
-    #start the postgres server
-    initalize_postgres()
+        download_postgres()
+        #start the postgres server
+        initalize_postgres()
+
+    else:
+        try:
+            found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config["postgress_min_version"], version_command = "-V")
+            if found_valid_version and not force_install:
+                print "Valid existing Postgres installation found. Skipping setup."
+                postgres_version_found = esg_functions.call_subprocess("postgres --version")
+                print postgres_version_found["stdout"]
+                return True
+        except OSError, error:
+            logger.error(error)
+
+
 
 
 

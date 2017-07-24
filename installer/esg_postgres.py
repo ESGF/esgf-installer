@@ -20,13 +20,13 @@ with open('esg_config.yaml', 'r') as config_file:
 
 
 def download_postgres():
-    esg_functions.call_subprocess("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
-    esg_functions.call_subprocess("yum -y install postgresql96-server postgresql96")
+    esg_functions.stream_subprocess_output("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
+    esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96")
 
 def initalize_postgres():
-    esg_functions.call_subprocess("service postgresql-9.6 initdb")
-    esg_functions.call_subprocess("service postgresql-9.6 start")
-    esg_functions.call_subprocess("chkconfig postgresql-9.6 on")
+    esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")
+    esg_functions.stream_subprocess_output("service postgresql-9.6 start")
+    esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")
 
 def setup_postgres(force_install = False):
     print "\n*******************************"

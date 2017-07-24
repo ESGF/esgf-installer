@@ -508,12 +508,14 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
 
 
 
-def stream_subprocess_output(subprocess_object):
-    with subprocess_object.stdout:
-        for line in iter(subprocess_object.stdout.readline, b''):
+def stream_subprocess_output(command_string):
+    ''' Print out the stdout of the subprocess in real time '''
+    process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
+    with process.stdout:
+        for line in iter(process.stdout.readline, b''):
             print line,
     # wait for the subprocess to exit
-    subprocess_object.wait()
+    process.wait()
 
 
 def call_subprocess(command_string, command_stdin = None):

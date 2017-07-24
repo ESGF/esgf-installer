@@ -74,7 +74,7 @@ tomcat_group=${tomcat_group:-"tomcat"}
 ferret_envfile=${ferret_envfile:-${envfile}}
 
 ferret_version=${ferret_version:-"6.8"}
-las_version=${las_version:-"8.6.1"}
+las_version=${las_version:-"8.6.2"}
 #There seems to be two different variables keeping track of the LAS version; this makes no sense smh.
 VERSION=8.6.1
 
@@ -130,7 +130,7 @@ setup_product_server() {
     init_ferret && setup_ferret && init_las && setup_las
 
     rm -f $INSTALLPATH/$0
-    cp $0 $INSTALLPATH 
+    cp $0 $INSTALLPATH
 }
 
 
@@ -200,7 +200,7 @@ setup_las() {
     local default="Y"
     ((force_install)) && default="N"
     local dosetup
-    if [ -d ${tomcat_install_dir}/webapps/las ]; then 
+    if [ -d ${tomcat_install_dir}/webapps/las ]; then
 	echo "Detected an existing LAS installation..."
         read -p "Do you want to continue with LAS installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
         [ -z "${dosetup}" ] && dosetup=${default}
@@ -208,7 +208,7 @@ setup_las() {
 	    echo "Skipping LAS installation and setup - will assume it's setup properly"
 	    return 0
 	fi
-	
+
 	local dobackup="N"
 	read -p "Do you want to make a back up of the existing distribution?? [y/N] " dobackup
 	if [ "${dobackup}" = "Y" ] || [ "${dobackup}" = "y" ]; then
@@ -301,7 +301,7 @@ get_ferret() {
     if [ ! -e ${ferret_exec_file} ] || ((force_install)); then
         [ ! -e ${ferret_exec_file} ] && echo "Don't see Ferret executables file ${ferret_exec_file}"
 	echo "Downloading Ferret from ${ferret_exec_url} to ${ferret_exec_file}"
-	
+
 	wget -O ${ferret_exec_file} ${ferret_exec_url}
 	[ $? != 0 ] && echo " ERROR: Could not download Ferret:${ferret_exec_file}" && popd && checked_done 1
     fi
@@ -317,7 +317,7 @@ get_ferret() {
     if [ ! -e ${ferret_data_file} ] || ((force_install)) ; then
 	[ ! -e ${ferret_data_file} ] && echo "Don't see Ferret data file ${ferret_data_file}"
 	echo "Downloading Ferret from ${ferret_data_url}"
-        
+
 	wget -O ${ferret_data_file} ${ferret_data_url}
 	[ $? != 0 ] && echo " ERROR: Could not download Ferret:${ferret_data_file}" && popd && checked_done 1
     fi
@@ -331,7 +331,7 @@ setup_support_files() {
     pushd ${ferret_install_dir} > /dev/null
 
     tar -zxf ${ferret_env_file}
-    
+
     popd > /dev/null
     return 0
 }
@@ -342,7 +342,7 @@ setup_data_files() {
     pushd ${ferret_data_dir} > /dev/null
 
     tar -zxf ${ferret_data_file}
-    
+
     popd > /dev/null
     return 0
 }
@@ -357,7 +357,7 @@ set_ferret_environment() {
     export FER_DSETS=${ferret_data_dir}
 
     export PATH="$PATH:$FER_DIR/bin"
-    
+
     export FER_EXTERNAL_FUNCTIONS="$FER_DIR/ext_func/libs"
 
     export FER_GO=". $FER_DIR/go $FER_DIR/examples $FER_DIR/contrib"
@@ -440,7 +440,7 @@ install_las() {
     echo "Installing Live Access Server (LAS)... using local product server file"
 
     #Obliterate what is currently there (it would be prudent for them to have selected to do a backup)
-    if [ -d ${tomcat_install_dir}/webapps/las ]; then 
+    if [ -d ${tomcat_install_dir}/webapps/las ]; then
         stop_tomcat
         echo -n "removing current LAS installation ${tomcat_install_dir}/webapps/las "
         rm -rf ${tomcat_install_dir}/webapps/las && echo "[OK]" || (echo "[FAILED]" && checked_done 1)
@@ -508,17 +508,17 @@ clean_las_webapp_subsystem() {
 
 
 #######
-# 
+#
 #  To finish the LAS installation you need to complete the steps described here:
 #     http://ferret.pmel.noaa.gov/LAS/documentation/installer-documentation/installation/installing-and-integrating-tds-with-las/
-# 
+#
 #######
 integrate_into_tds() {
     echo "Integrating Product Server into Thredds..."
 
     stop_tomcat
 
-    
+
     #-------------------
     #Fetch templated thredds config file and edit it by token replacement
     #-------------------
@@ -528,7 +528,7 @@ integrate_into_tds() {
     local thredds_config_file_template=${thredds_config_file_template_url##*/}
     local thredds_config_file=${thredds_config_file_template%.*}
 
-    
+
     [ -e ${thredds_config_file} ] && echo "Backing up current thredds config file..." && mv -v ${thredds_config_file} ${thredds_config_file}.bak
     wget -O ${thredds_config_file_template} ${thredds_config_file_template_url}
     cp -vf ${thredds_config_file_template} ${thredds_config_file}
@@ -536,7 +536,7 @@ integrate_into_tds() {
     #The file with the insertion text (text to be inserted)
     wget -O ${thredds_config_file}.las ${esg_dist_url}/esgf-product-server/${thredds_config_file}.las
 
-    local esgf_las_entry_pattern="<!--@@esgf_las_entry@@-->" 
+    local esgf_las_entry_pattern="<!--@@esgf_las_entry@@-->"
 
     insert_file_at_pattern $(readlink -f ${thredds_config_file}) ${thredds_config_file}.las "${esgf_las_entry_pattern}"
 
@@ -551,11 +551,11 @@ integrate_into_tds() {
     #-------------------
     local las_config_file_template=${las_config_file_template_url##*/}
     local las_config_file=${las_config_file_template%.*}
-    
+
     [ -e ${las_config_file} ] && echo "backing up current las config file..." && mv -v ${las_config_file} ${las_config_file}.bak
     wget -O ${las_config_file_template} ${las_config_file_template_url}
     cp -v ${las_config_file_template} ${las_config_file}
-    
+
     eval "perl -p -i -e 's#\\@\\@las_server_dir\\@\\@#${las_server_dir}#g' ${las_config_file}"; echo -n "*"
     echo
 
@@ -573,7 +573,7 @@ integrate_into_tds() {
         echo -n "${tomcat_install_dir}/content/las is a symlink... to $(readlink -f ${tomcat_install_dir}/content/las) "
         [ $(readlink -f ${tomcat_install_dir}/content/las) = ${las_server_dir} ] && echo "[OK]" || (echo "[FAIL]" && popd >& /dev/null/ && return 1)
     else
-        echo 
+        echo
         echo "ERROR: Could not locate las' server directory ${tomcat_install_dir}/content/las/conf/server"
         echo "       This directory should have been created as part of the ferret/las installation"
         echo "       Check that the installation was performed successfully"

@@ -85,8 +85,13 @@ get_latest() {
         ((ret == 0)) && echo "Updated esg-autoinstall.conf script from ESGF distribution site"
         (( ret > 1 )) && popd >& /dev/null && return 1
         chmod 755 esg-autoinstall.conf
+
+        # Move esg-autoinstall to /usr/local/etc and change permissions
         mkdir -p /usr/local/etc
         mv esg-autoinstall.conf /usr/local/etc/esg-autoinstall.conf
+        chown root /usr/local/etc/esg-autoinstall.conf
+        chmod 600 /usr/local/etc/esg-autoinstall.conf
+
         yum install -y expect
 
     popd >& /dev/null

@@ -26,7 +26,7 @@ def download_postgres():
 
 def initialize_postgres():
     esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")
-    os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
+    os.chmod(os.path.join(config["postgress_install_dir"], "9.6", "data"), 0700)
 
 def check_for_postgres_sys_acct():
     postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid

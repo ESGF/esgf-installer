@@ -196,37 +196,30 @@ def download_config_files(force_install):
 def update_port_in_config_file():
     postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(postgress_port = config["postgress_port"])) or  config["postgress_port"]
     print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port = postgres_port_input)
-    with open('postgresql.conf', 'r') as file :
-        filedata = file.read()
+
+    with open('postgresql.conf', 'r') as pg_conf_file :
+        filedata = pg_conf_file.read()
     filedata = filedata.replace('@@postgress_port@@', config["postgress_port"])
 
     # Write the file out again
-    with open('postgresql.conf', 'w') as file:
-        file.write(filedata)
-
-    # update_port_perl_command = '''eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/{postgress_port}/g' {postgres_conf_file}" '''.format(postgress_port = config["postgress_port"], postgres_conf_file="postgresql.conf")
-    # postgres_port_output = esg_functions.call_subprocess(update_port_perl_command)
-    # if postgres_port_output["returncode"] == 0:
-    #     print "Postgres port set: [OK]"
-    #     print "Updated port in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
-    # else:
-    #     print "Postgres port set: [FAIL]"
-    #     print "Could not update port in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
+    with open('postgresql.conf', 'w') as pg_conf_file:
+        pg_conf_file.write(filedata)
 
 def update_log_dir_in_config_file():
-        ''' Edit postgres config file '''
-        print "Setting Postgress Log Dir in config_file: {postgress_install_dir} ".format(postgress_install_dir = config["postgress_install_dir"])
-        update_log_dir_command = '''eval "perl -p -i -e 's/\\@\\@postgress_install_dir\\@\\@/{postgress_install_dir}/g' {postgres_conf_file}" '''.format(postgress_install_dir = config["postgress_install_dir"], postgres_conf_file="postgresql.conf")
-        postgres_log_dir_output = esg_functions.call_subprocess(update_log_dir_command)
-        if postgres_log_dir_output['returncode'] == 0:
-            print "Postgres Log Dir set: [OK]"
-            print "Updated Log Dir in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
-        else:
-            print "Postgres Log Dir set: [FAIL]"
-            print "Could not update Log Dir in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
+    ''' Edit postgres config file '''
+    print "Setting Postgress Log Dir in config_file: {postgress_install_dir} ".format(postgress_install_dir = config["postgress_install_dir"])
 
-        os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
-            grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
+    with open('postgresql.conf', 'r') as pg_conf_file:
+        filedata = pg_conf_file.read()
+    filedata = filedata.replace('@@postgress_install_dir@@', config["postgress_install_dir"])
+
+    # Write the file out again
+    with open('postgresql.conf', 'w') as pg_conf_file:
+        pg_conf_file.write(filedata)
+
+
+    os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
+        grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 
 

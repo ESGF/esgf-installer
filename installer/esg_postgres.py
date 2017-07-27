@@ -196,14 +196,22 @@ def download_config_files(force_install):
 def update_port_in_config_file():
     postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(postgress_port = config["postgress_port"])) or  config["postgress_port"]
     print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port = postgres_port_input)
-    update_port_perl_command = '''eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/{postgress_port}/g' {postgres_conf_file}" '''.format(postgress_port = config["postgress_port"], postgres_conf_file="postgresql.conf")
-    postgres_port_output = esg_functions.call_subprocess(update_port_perl_command)
-    if postgres_port_output["returncode"] == 0:
-        print "Postgres port set: [OK]"
-        print "Updated port in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
-    else:
-        print "Postgres port set: [FAIL]"
-        print "Could not update port in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
+    with open('postgresql.conf', 'r') as file :
+        filedata = file.read()
+    filedata = filedata.replace('@@postgress_port@@', config["postgress_port"])
+
+    # Write the file out again
+    with open('postgresql.conf', 'w') as file:
+        file.write(filedata)
+
+    # update_port_perl_command = '''eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/{postgress_port}/g' {postgres_conf_file}" '''.format(postgress_port = config["postgress_port"], postgres_conf_file="postgresql.conf")
+    # postgres_port_output = esg_functions.call_subprocess(update_port_perl_command)
+    # if postgres_port_output["returncode"] == 0:
+    #     print "Postgres port set: [OK]"
+    #     print "Updated port in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
+    # else:
+    #     print "Postgres port set: [FAIL]"
+    #     print "Could not update port in {postgres_conf_file}".format(postgres_conf_file="postgresql.conf")
 
 def update_log_dir_in_config_file():
         ''' Edit postgres config file '''

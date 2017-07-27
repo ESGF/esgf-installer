@@ -131,14 +131,17 @@ def postgres_status():
     else:
         return False
 
+def restart_postgres():
+    esg_functions.call_subprocess("service postgresql-9.6 restart")
+
 def connect_to_db():
     ''' Connect to database '''
     try:
-        conn=psycopg2.connect("dbname='postgres' user='postgres' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
+        conn=psycopg2.connect("dbname='postgres' user='postgres' host='localhost' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
         print "Connected to postgres database as user 'postgres'"
     except Exception, error:
         logger.error(error)
-        print "error: "
+        print "error: ", error
         print "I am unable to connect to the database."
         esg_functions.exit_with_error(1)
 
@@ -276,6 +279,7 @@ def setup_postgres(force_install = False):
             download_config_files(force_install)
             update_port_in_config_file()
             update_log_dir_in_config_file()
+            restart_postgres()
 
         ''' function calls '''
         esg_functions.check_shmmax()

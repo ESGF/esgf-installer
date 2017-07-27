@@ -161,14 +161,14 @@ def connect_to_db():
 
 def check_for_postgres_db_user():
     ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''
-    check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='postgres'" postgres | tail -n +3 | head -n 1'''
+    check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='{postgress_user}'" postgres | tail -n +3 | head -n 1'''.format(postgress_user=config["postgress_user"])
     check_for_pg_user_output = esg_functions.call_subprocess(check_for_pg_user_command)
     print "check_for_postgres_db_user: ", check_for_pg_user_output
     count = int(check_for_pg_user_output["stdout"].strip().split("\n")[-2].strip())
     print "count: ", count
     print "count type: ", type(count)
     if count > 0:
-        print "postgres user found"
+        print "{postgress_user} user found".format(postgress_user=config["postgress_user"])
     else:
         create_postgres_db_user()
 
@@ -177,7 +177,7 @@ def create_postgres_db_user():
     create_pg_db_user_command = '''sudo -u postgres psql -c "create user {postgress_user} with superuser password '{postgres_db_user_password}';" '''.format(postgress_user=config["postgress_user"], postgres_db_user_password=postgres_db_user_password)
     create_pg_db_user_output = esg_functions.call_subprocess(create_pg_db_user_command)
     if create_pg_db_user_output["returncode"] == 0:
-        print "Successfully created postgres db user"
+        print "Successfully created {postgress_user} db user".format(postgress_user=config["postgress_user"])
 
 def download_config_files(force_install):
     ''' Download config files '''
@@ -304,51 +304,9 @@ def setup_postgres(force_install = False):
     # if not found_valid_version:
     #     upgrade
 
-    #
-
-# returns 1 if it is already running (if check_postgress_process returns 0
-# - true)
-def start_postgress():
-    if check_postgress_process() == 0:
-        print "Postgres is already running"
-        return True
-    print "Starting Postgress..."
-    for file in os.listdir("/etc/init.d/"):
-        if "postgresql" in file:
-            postgresql_executable_name = file
-            logger.info("postgresql_executable_name: %s", postgresql_executable_name)
-    postgres_start_command = shlex.split("/etc/init.d/{postgresql_executable_name} start".format(postgresql_executable_name = postgresql_executable_name))
-    status = subprocess.Popen(postgres_start_command)
-    status_output, err = status.communicate()
-    # print "status_output: ", status_output
-    logger.info("status_output: %s", status_output)
-    logger.error("err: %s ", err)
-    sleep(3)
-    progress_process_status = subprocess.Popen(
-        "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
-    progress_process_status_tuple = progress_process_status.communicate()
-    logger.info("progress_process_status_tuple: %s", progress_process_status_tuple)
-    esg_functions.exit_with_error(0)
-    return True
 
 def stop_postgress():
-    if esg_setup._is_managed_db:
-        print "Please be sure external database is NOT running at this point..."
-        return True
-    if check_postgress_process() == 1:
-        print "Postgres already stopped"
-        return True
-    print "Stopping Postgres...."
-    status = subprocess.Popen("/etc/init.d/postgresql stop",
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    status_output, err = status.communicate()
-    print "status_output: ", status_output
-    sleep(3)
-    esg_functions.check_shmmax()
-    progress_process_status = subprocess.Popen(
-        "/bin/ps -elf | grep postgres | grep -v grep", shell=True)
-    progress_process_status_tuple = progress_process_status.communicate()
-    esg_functions.exit_with_error(0)
+    esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
 
 
 def backup_db():
@@ -360,25 +318,14 @@ def write_postgress_install_log():
     pass
 def _choose_postgres_user_password():
     while True:
-            postgres_user_password = raw_input("Enter password for postgres user {postgress_user}: ".format(postgress_user=postgress_user))
-            postgres_user_password_confirmation = raw_input("Re-enter password for postgres user {postgress_user}: ".format(postgress_user=postgress_user))
-            if postgres_user_password != postgres_user_password_confirmation:
-                print "The passwords did not match. Enter same password twice."
-                continue
-            else:
-                return postgres_user_password
+        postgres_user_password = raw_input("Enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
+        postgres_user_password_confirmation = raw_input("Re-enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
+        if postgres_user_password != postgres_user_password_confirmation:
+            print "The passwords did not match. Enter same password twice."
+            continue
+        else:
+            return postgres_user_password
 
-def check_postgress_process():
-    '''
-        #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
-
-    '''
-    status = subprocess.Popen("/etc/init.d/postgresql status", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    status_output, err = status.communicate()
-    if "running" in status_output:
-        return 0
-    else:
-        return 1
 
 
 #----------------------------------------------------------
@@ -400,6 +347,11 @@ def postgres_list_schemas_tables():
     pass
 
 def postgres_list_dbs():
+    # This prints a list of all databases known to postgres.
+    # If $1 is specified, it is used a grep filter
+    # Returns the return value of the final grep
+    #
+    # 'psql' must be in the path for this to work
     pass
 
 def postgres_clean_schema_migration():

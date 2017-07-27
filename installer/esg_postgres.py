@@ -356,6 +356,9 @@ def postgres_list_dbs():
     # Returns the return value of the final grep
     #
     # 'psql' must be in the path for this to work
+    list_dbs_command = "psql -lat -U {postgress_user}".format(postgress_user=config["postgress_user"])
+    list_dbs_output = esg_functions.call_subprocess(list_dbs_command)
+    print "list_dbs_output: ", list_dbs_output
     pass
 
 def postgres_clean_schema_migration():

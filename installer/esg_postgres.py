@@ -166,6 +166,10 @@ def check_for_postgres_user():
     check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='postgres'" postgres | tail -n +3 | head -n 1'''
     check_for_pg_user_output = esg_functions.call_subprocess(check_for_pg_user_command)
     print "check_for_postgres_user: ", check_for_pg_user_output
+    count = check_for_pg_user_output["stdout"].strip().split("\n")[-2].strip()
+    print "count: ", count
+    if count > 0:
+        print "postgres user found"
 
 
 def download_config_files(force_install):

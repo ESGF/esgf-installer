@@ -119,6 +119,12 @@ def start_postgres():
     esg_functions.stream_subprocess_output("service postgresql-9.6 start")
     esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")
 
+    postgres_status()
+
+def postgres_status():
+    status = esg_functions.call_subprocess("service postgresql-9.6 status")
+    print "status:", status
+
 def connect_to_db():
     ''' Connect to database '''
     try:

@@ -64,7 +64,7 @@ def set_pg_sys_account_password():
 
         sleep(3)
 
-def create_postgres_user(pg_sys_acct_homedir):
+def create_postgres_system_user(pg_sys_acct_homedir):
     print "Creating account..."
     useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF'
     -d {pg_sys_acct_homedir} -g {pg_sys_acct_group} -p
@@ -159,19 +159,25 @@ def connect_to_db():
                 print "Could not create {postgress_user} account in database".format(postgress_user = config["postgress_user"])
                 continue
 
-    # starting_directory = os.getcwd()
-
-def check_for_postgres_user():
+def check_for_postgres_db_user():
     ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''
     check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='postgres'" postgres | tail -n +3 | head -n 1'''
     check_for_pg_user_output = esg_functions.call_subprocess(check_for_pg_user_command)
-    print "check_for_postgres_user: ", check_for_pg_user_output
+    print "check_for_postgres_db_user: ", check_for_pg_user_output
     count = int(check_for_pg_user_output["stdout"].strip().split("\n")[-2].strip())
     print "count: ", count
     print "count type: ", type(count)
     if count > 0:
         print "postgres user found"
+    else:
+        create_postgres_db_user()
 
+def create_postgres_db_user():
+    postgres_db_user_password = _choose_postgres_user_password()
+    create_pg_db_user_command = '''sudo -u postgres psql -c "create user {postgress_user} with superuser password '{postgres_db_user_password}';" '''.format(postgress_user=config["postgress_user"], postgres_db_user_password=postgres_db_user_password)
+    create_pg_db_user_output = esg_functions.call_subprocess(create_pg_db_user_command)
+    if create_pg_db_user_output["returncode"] == 0:
+        print "Successfully created postgres db user"
 
 def download_config_files(force_install):
     ''' Download config files '''
@@ -250,7 +256,7 @@ def setup_postgres(force_install = False):
             #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
             create_postgres_group()
             set_pg_sys_account_password()
-            create_postgres_user(pg_sys_acct_homedir)
+            create_postgres_system_user(pg_sys_acct_homedir)
 
         else:
             postgress_user_shell = get_postgres_user_shell()
@@ -263,9 +269,9 @@ def setup_postgres(force_install = False):
 
         #start the postgres server
         start_postgres()
-        check_for_postgres_user()
+        check_for_postgres_db_user()
         # connect_to_db()
-        with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "data")):
+        with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "9.6", "data")):
             download_config_files(force_install)
             update_port_in_config_file()
             update_log_dir_in_config_file()
@@ -353,8 +359,8 @@ def write_postgress_install_log():
     pass
 def _choose_postgres_user_password():
     while True:
-            postgres_user_password = raw_input("Enter password for postgres user $postgress_user: ")
-            postgres_user_password_confirmation = raw_input("Re-enter password for postgres user $postgress_user: ")
+            postgres_user_password = raw_input("Enter password for postgres user {postgress_user}: ".format(postgress_user=postgress_user))
+            postgres_user_password_confirmation = raw_input("Re-enter password for postgres user {postgress_user}: ".format(postgress_user=postgress_user))
             if postgres_user_password != postgres_user_password_confirmation:
                 print "The passwords did not match. Enter same password twice."
                 continue

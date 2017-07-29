@@ -344,17 +344,17 @@ def _choose_postgres_user_password():
 
 # TODO: Could not find any instances of Postgres functions being used
 def postgres_create_db(db_name):
-
-    conn = connect_to_db()
-    cur = conn.cursor()
-    print "Creating ESGF database: [{db_name}]".format(db_name=db_name)
-    try:
-        cur.execute("CREATE DATABASE %s;",db_name)
-    except Exception, error:
-        print "error:", error
-    pass
+    esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
 def postgres_list_db_schemas():
+    conn = connect_to_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("select schema_name from information_schema.schemata;")
+        schemas = cur.fetchall()
+        print "schemas: ", schemas
+    except Exception, error:
+        print "error:", error
     pass
 
 def postgres_list_schemas_tables():
@@ -362,14 +362,6 @@ def postgres_list_schemas_tables():
 
 def postgres_list_dbs():
     # This prints a list of all databases known to postgres.
-    # If $1 is specified, it is used a grep filter
-    # Returns the return value of the final grep
-    #
-    # 'psql' must be in the path for this to work
-    # list_dbs_command = "psql -lat -U {postgress_user}".format(postgress_user=config["postgress_user"])
-    # list_dbs_output = esg_functions.call_subprocess(list_dbs_command)
-    # print "list_dbs_output: ", list_dbs_output
-    # pass
     conn = connect_to_db()
     cur = conn.cursor()
     try:

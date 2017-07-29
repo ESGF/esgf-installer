@@ -353,12 +353,20 @@ def postgres_list_db_schemas():
         cur.execute("select schema_name from information_schema.schemata;")
         schemas = cur.fetchall()
         print "schemas: ", schemas
+        return schemas
     except Exception, error:
         print "error:", error
-    pass
 
 def postgres_list_schemas_tables():
-    pass
+    conn = connect_to_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
+        schemas_tables = cur.fetchall()
+        print "schemas_tables: ", schemas_tables
+        return schemas_tables
+    except Exception, error:
+        print "error:", error
 
 def postgres_list_dbs():
     # This prints a list of all databases known to postgres.

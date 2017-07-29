@@ -343,7 +343,15 @@ def _choose_postgres_user_password():
 
 
 # TODO: Could not find any instances of Postgres functions being used
-def postgres_create_db():
+def postgres_create_db(db_name):
+
+    conn = connect_to_db()
+    cur = conn.cursor()
+    print "Creating ESGF database: [{db_name}]".format(db_name=db_name)
+    try:
+        cur.execute("CREATE DATABASE %s;",db_name)
+    except Exception, error:
+        print "error:", error
     pass
 
 def postgres_list_db_schemas():
@@ -366,6 +374,8 @@ def postgres_list_dbs():
     cur = conn.cursor()
     try:
         cur.execute("SELECT datname FROM pg_database;")
+        databases = cur.fetchall()
+        return databases
     except Exception, error:
         print "error: ", error
 

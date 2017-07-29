@@ -137,7 +137,7 @@ def restart_postgres():
 def connect_to_db():
     ''' Connect to database '''
     try:
-        conn=psycopg2.connect("dbname='postgres' user='postgres' host='localhost' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
+        conn=psycopg2.connect("dbname='postgres' user='dbsuper' host='localhost' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
         print "Connected to postgres database as user 'postgres'"
     except Exception, error:
         logger.error(error)
@@ -145,22 +145,24 @@ def connect_to_db():
         print "I am unable to connect to the database."
         esg_functions.exit_with_error(1)
 
-    cur = conn.cursor()
-    cur.execute("select count(*) from pg_roles where rolname={postgress_user}".format(postgress_user = config["postgress_user"]))
-    rows = cur.fetchall()
-    logger.debug("rows: %s", rows)
-    if rows[0][0] > 0:
-        print "{postgress_user} exists!! :-)".format(config["postgress_user"])
-    else:
-        while True:
-            postgres_user_password = _choose_postgres_user_password()
-            try:
-                cur.execute("create user {postgress_user} with superuser password '{postgres_user_password}';".format(postgress_user = config["postgress_user"],
-                    postgres_user_password = postgres_user_password))
-                break
-            except:
-                print "Could not create {postgress_user} account in database".format(postgress_user = config["postgress_user"])
-                continue
+    return conn
+
+    # cur = conn.cursor()
+    # cur.execute("select count(*) from pg_roles where rolname={postgress_user}".format(postgress_user = config["postgress_user"]))
+    # rows = cur.fetchall()
+    # logger.debug("rows: %s", rows)
+    # if rows[0][0] > 0:
+    #     print "{postgress_user} exists!! :-)".format(config["postgress_user"])
+    # else:
+    #     while True:
+    #         postgres_user_password = _choose_postgres_user_password()
+    #         try:
+    #             cur.execute("create user {postgress_user} with superuser password '{postgres_user_password}';".format(postgress_user = config["postgress_user"],
+    #                 postgres_user_password = postgres_user_password))
+    #             break
+    #         except:
+    #             print "Could not create {postgress_user} account in database".format(postgress_user = config["postgress_user"])
+    #             continue
 
 def check_for_postgres_db_user():
     ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''
@@ -356,10 +358,17 @@ def postgres_list_dbs():
     # Returns the return value of the final grep
     #
     # 'psql' must be in the path for this to work
-    list_dbs_command = "psql -lat -U {postgress_user}".format(postgress_user=config["postgress_user"])
-    list_dbs_output = esg_functions.call_subprocess(list_dbs_command)
-    print "list_dbs_output: ", list_dbs_output
-    pass
+    # list_dbs_command = "psql -lat -U {postgress_user}".format(postgress_user=config["postgress_user"])
+    # list_dbs_output = esg_functions.call_subprocess(list_dbs_command)
+    # print "list_dbs_output: ", list_dbs_output
+    # pass
+    conn = connect_to_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT datname FROM pg_database;")
+    except Exception, error:
+        print "error: ", error
+
 
 def postgres_clean_schema_migration():
     pass

@@ -137,7 +137,7 @@ def restart_postgres():
 def connect_to_db():
     ''' Connect to database '''
     try:
-        conn=psycopg2.connect("dbname='postgres' user='dbsuper' host='localhost' password={pg_sys_acct_passwd}".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
+        conn=psycopg2.connect("dbname='postgres' user='dbsuper' host='localhost' password='password'".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
         print "Connected to postgres database as user 'postgres'"
     except Exception, error:
         logger.error(error)

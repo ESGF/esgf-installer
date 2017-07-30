@@ -1,17 +1,13 @@
 import os
-import subprocess
 import grp
 import pwd
 import psycopg2
 import esg_functions
-import esg_setup
 import esg_version_manager
 import esg_bash2py
-import shlex
 from time import sleep
 from distutils.spawn import find_executable
 import esg_logging_manager
-import esg_init
 import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -134,11 +130,11 @@ def postgres_status():
 def restart_postgres():
     esg_functions.call_subprocess("service postgresql-9.6 restart")
 
-def connect_to_db():
+def connect_to_db(db_name, user):
     ''' Connect to database '''
     try:
-        conn=psycopg2.connect("dbname='postgres' user='dbsuper' host='localhost' password='password'".format(pg_sys_acct_passwd = config["pg_sys_acct_passwd"]))
-        print "Connected to postgres database as user 'postgres'"
+        conn=psycopg2.connect("dbname={db_name} user={user} host='localhost' password='password'".format(db_name=db_name, user=user))
+        print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
     except Exception, error:
         logger.error(error)
         print "error: ", error
@@ -347,7 +343,7 @@ def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
 def postgres_list_db_schemas():
-    conn = connect_to_db()
+    conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")
@@ -358,7 +354,7 @@ def postgres_list_db_schemas():
         print "error:", error
 
 def postgres_list_schemas_tables():
-    conn = connect_to_db()
+    conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
         cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
@@ -370,7 +366,7 @@ def postgres_list_schemas_tables():
 
 def postgres_list_dbs():
     # This prints a list of all databases known to postgres.
-    conn = connect_to_db()
+    conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
         cur.execute("SELECT datname FROM pg_database;")

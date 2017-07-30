@@ -15,6 +15,7 @@ tld
 pylint
 pyyaml
 coloredlogs
+plumbum
 ###### Requirements with Version Specifiers ######
 jsonschema==2.5.1
 pytest==2.9.2

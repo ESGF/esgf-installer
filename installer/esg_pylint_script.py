@@ -2,9 +2,11 @@
 
 import glob
 import sys
+import os
 import datetime
 import time
 from pylint.lint import Run
+from contextlib import contextmanager
 import esg_bash2py
 import esg_logging_manager
 
@@ -15,6 +17,20 @@ esg_bash2py.mkdir_p("pylint_score_reports")
 
 # get all files that contain the esg*_**.py pattern
 esgf_python_scripts = glob.glob("esg*_**.py")
+
+#TODO: Might do this set difference operation to remove this script (esg_pylint_script) from the linting
+# esgf_python_scripts = set(esgf_python_scripts) - set(glob("esg_pylint_script"))
+
+@contextmanager
+def suppress_stdout():
+    '''Source: http://thesmithfam.org/blog/2012/10/25/temporarily-suppress-console-output-in-python/'''
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
 
 
 def usage():
@@ -31,7 +47,8 @@ def scan_all():
             print "script name:", script_name
             scores_file.write(
                 "script name: {script}".format(script=script_name) + "\n")
-            results = Run([script_name], exit=False)
+            with suppress_stdout():
+                results = Run([script_name], exit=False)
             try:
                 scores_file.write(
                     "score: " + str(results.linter.stats["global_note"]) + "\n")
@@ -48,7 +65,8 @@ def scan_one(script_name):
         if script_name in esgf_python_scripts:
             print "script name:", script_name
             scores_file.write("Evaluating: {}".format(script_name) + "\n")
-            results = Run([script_name], exit=False)
+            with suppress_stdout():
+                results = Run([script_name], exit=False)
             try:
                 scores_file.write(
                     "score: " + str(results.linter.stats["global_note"]) + "\n")

@@ -508,12 +508,14 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
 
 
 
-def stream_subprocess_output(subprocess_object):
-    with subprocess_object.stdout:
-        for line in iter(subprocess_object.stdout.readline, b''):
+def stream_subprocess_output(command_string):
+    ''' Print out the stdout of the subprocess in real time '''
+    process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
+    with process.stdout:
+        for line in iter(process.stdout.readline, b''):
             print line,
     # wait for the subprocess to exit
-    subprocess_object.wait()
+    process.wait()
 
 
 def call_subprocess(command_string, command_stdin = None):
@@ -533,6 +535,8 @@ def call_subprocess(command_string, command_stdin = None):
 def subprocess_pipe_commands(command_list):
     subprocess_list = []
     for index, command in enumerate(command_list):
+        print "index:", index
+        print "command:", command
         if index > 0:
             subprocess_command = subprocess.Popen(command, stdin = subprocess_list[index -1].stdout, stdout=subprocess.PIPE)
             subprocess_list.append(subprocess_command)
@@ -556,13 +560,15 @@ def check_shmmax(min_shmmax = 48):
     kernel_shmmax = esg_property_manager.get_property("kernel_shmmax", 48)
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb *1024*1024
-    cur_value_bytes = subprocess.check_output("sysctl -q kernel.shmmax | tr -s '='' | cut -d= -f2", stdout=subprocess.PIPE)
+    cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
+    print "cur_value_bytes:", cur_value_bytes
     cur_value_bytes = cur_value_bytes.strip()
 
     if cur_value_bytes < set_value_bytes:
         print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes = cur_value_bytes, set_value_bytes = set_value_bytes)
-        subprocess.call("sysctl -w kernel.shmmax=${set_value_bytes}".format(set_value_bytes = set_value_bytes))
-        subprocess.call("sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
+        call_subprocess("sysctl -w kernel.shmmax={set_value_bytes}".format(set_value_bytes = set_value_bytes))
+        #TODO: replace with Python to update file
+        call_subprocess("sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
         esg_property_manager.write_as_property("kernal_shmmax", set_value_mb)
 
 def get_esg_root_id():

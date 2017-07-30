@@ -143,23 +143,6 @@ def connect_to_db(db_name, user):
 
     return conn
 
-    # cur = conn.cursor()
-    # cur.execute("select count(*) from pg_roles where rolname={postgress_user}".format(postgress_user = config["postgress_user"]))
-    # rows = cur.fetchall()
-    # logger.debug("rows: %s", rows)
-    # if rows[0][0] > 0:
-    #     print "{postgress_user} exists!! :-)".format(config["postgress_user"])
-    # else:
-    #     while True:
-    #         postgres_user_password = _choose_postgres_user_password()
-    #         try:
-    #             cur.execute("create user {postgress_user} with superuser password '{postgres_user_password}';".format(postgress_user = config["postgress_user"],
-    #                 postgres_user_password = postgres_user_password))
-    #             break
-    #         except:
-    #             print "Could not create {postgress_user} account in database".format(postgress_user = config["postgress_user"])
-    #             continue
-
 def check_for_postgres_db_user():
     ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''
     check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='{postgress_user}'" postgres | tail -n +3 | head -n 1'''.format(postgress_user=config["postgress_user"])
@@ -234,8 +217,6 @@ def setup_postgres(force_install = False):
 
     postgres_binary_path = find_executable("postgres")
     psql_path = find_executable("psql")
-
-    print "postgres_binary_path:", postgres_binary_path
 
     if not postgres_binary_path or not psql_path:
         print "Postgres not found on system"
@@ -342,6 +323,7 @@ def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
 def postgres_list_db_schemas():
+    # This prints a list of all schemas known to postgres.
     conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
@@ -353,6 +335,8 @@ def postgres_list_db_schemas():
         print "error:", error
 
 def postgres_list_schemas_tables():
+    # List all Postgres tables in all schemas, in the schemaname.tablename
+    # format, in the ESGF database
     conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
@@ -375,5 +359,22 @@ def postgres_list_dbs():
         print "error: ", error
 
 
-def postgres_clean_schema_migration():
-    pass
+def postgres_clean_schema_migration(repository_id):
+    # Removes entries from the esgf_migrate_version table if any exist
+    # where repository_id matches an SQL LIKE to the first argument
+    #
+    # The SQL LIKE strings are generally defined in
+    # "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
+    # each relevant repository.
+    conn = connect_to_db(config["node_db_name"], config["postgress_user"])
+    cur = conn.cursor()
+
+    try:
+        cur.execute("select count(*) from esgf_migrate_version where repository_id LIKE '%$%s%'", repository_id)
+        results = cur.fetchall()
+
+        if results > 0:
+            print "cleaning out schema migration bookeeping for esgf_node_manager..."
+            cur.execute("delete from esgf_migrate_version where repository_id LIKE '%$%s%'", repository_id)
+    except Exception, error:
+        print "error: ", error

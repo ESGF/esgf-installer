@@ -338,7 +338,6 @@ def _choose_postgres_user_password():
 #----------------------------------------------------------
 
 
-# TODO: Could not find any instances of Postgres functions being used
 def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 

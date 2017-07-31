@@ -30,8 +30,8 @@ init() {
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
 
-    esgcet_version=${esgcet_version:-"3.2.5"}
-    publisher_tag=${publisher_tag:-"v3.2.5"}
+    esgcet_version=${esgcet_version:-"3.2.6"}
+    publisher_tag=${publisher_tag:-"v3.2.6"}
     esgprep_version="2.7.9"
     cmor_vesion="3.2.5"  # concidence its same as esgcet
 

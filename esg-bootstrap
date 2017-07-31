@@ -30,7 +30,7 @@ get_latest() {
 
     local ret
     verbose_print "Checking...."
-    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file} 
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file}
     ret=$?
     ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node install script ($fetch_file) from ESGF distribution site"
@@ -49,7 +49,7 @@ get_latest() {
     ((ret == 0)) && echo "Updated esg-init script (esg-init) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-init
-    
+
 	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-bootstrap
     ((ret == 1)) && echo "ESGF Node bootstrap script (esg-bootstrap) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node bootstrap script (esg-bootstrap) from ESGF distribution site"
@@ -61,18 +61,38 @@ get_latest() {
     ((ret == 0)) && echo "Updated Auto-install script (setup-autoinstall) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 setup-autoinstall
-	
+
 	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-purge.sh
     ((ret == 1)) && echo "ESGF Node Purge script (esg-purge.sh) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-purge.sh
-    
+
 	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/jar_security_scan
     ((ret == 1)) && echo "jar_security_scan script already up-to-date"
     ((ret == 0)) && echo "Updated jar_security_scan script from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 jar_security_scan
+
+    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-autoinstall
+      ((ret == 1)) && echo "esg-autoinstall script already up-to-date"
+      ((ret == 0)) && echo "Updated esg-autoinstall script from ESGF distribution site"
+      (( ret > 1 )) && popd >& /dev/null && return 1
+      chmod 755 esg-autoinstall
+
+      checked_get esg-autoinstall.conf ${esg_dist_url}/esgf-installer/$script_maj_version/esg-autoinstall.template
+        ((ret == 1)) && echo "esg-autoinstall.conf script already up-to-date"
+        ((ret == 0)) && echo "Updated esg-autoinstall.conf script from ESGF distribution site"
+        (( ret > 1 )) && popd >& /dev/null && return 1
+        chmod 755 esg-autoinstall.conf
+
+        # Move esg-autoinstall to /usr/local/etc and change permissions
+        mkdir -p /usr/local/etc
+        mv esg-autoinstall.conf /usr/local/etc/esg-autoinstall.conf
+        chown root /usr/local/etc/esg-autoinstall.conf
+        chmod 600 /usr/local/etc/esg-autoinstall.conf
+
+        yum install -y expect
 
     popd >& /dev/null
 }
@@ -92,8 +112,8 @@ check_for_update() {
     else
         echo "function \"checked_get\":  Called with incorrect number of args! (fatal)"
         exit 1
-    fi                      
-    
+    fi
+
     [ ! -e ${local_file} ] && echo " WARNING: Could not find local file ${local_file}" && return 0
     [ ! -x ${local_file} ] && echo " WARNING: local file ${local_file} not executible" && chmod 755 ${local_file}
     diff <(md5sum ${local_file} | tr -s " " | cut -d " " -f 1) <(curl -s ${remote_file}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
@@ -116,10 +136,10 @@ checked_get() {
     else
         echo "function \"checked_get\":  Called with incorrect number of args! (fatal)"
         exit 1
-    fi                      
-    
+    fi
+
     if [ -e ${local_file} ]; then
-	cp -v ${local_file} ${local_file}.bak 
+	cp -v ${local_file} ${local_file}.bak
 	chmod 600 ${local_file}.bak
     fi
     wget -O ${local_file} ${remote_file}
@@ -159,8 +179,8 @@ usage() {
 VERBOSE=0
 DEBUG=0
 
-while [ -n "$1" ]; do 
-    case $1 in 
+while [ -n "$1" ]; do
+    case $1 in
 	-v | --version)
 	    echo "Earth Systems Grid Federation (http://esgf.llnl.gov)"
 	    echo "ESGF Node Bootstrap Script"
@@ -184,7 +204,7 @@ while [ -n "$1" ]; do
     shift
 done
 
-if id_check 
+if id_check
 then
     (( devel == 1 )) && echo "(Setup to pull from DEVELOPMENT tree...)" && esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
     self_verify

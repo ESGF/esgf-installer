@@ -2513,7 +2513,7 @@ setup_tds() {
     echo -n "Checking for thredds (tds) >= ${tds_min_version} "
     check_webapp_version "thredds" ${tds_min_version} "Implementation-Version"
     local ret=$?
-    ((ret == 0)) && (( ! force_install )) && [OK] && return 0
+    # ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"

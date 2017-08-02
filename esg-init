@@ -33,7 +33,7 @@ init() {
     esgcet_version=${esgcet_version:-"3.2.6"}
     publisher_tag=${publisher_tag:-"v3.2.6"}
     esgprep_version="2.7.9"
-    cmor_vesion="3.2.5"  # concidence its same as esgcet
+    cmor_version="3.2.5"  # concidence its same as esgcet
 
 
     #see esgf-node-manager project:
@@ -62,7 +62,7 @@ init() {
     #see esgf-desktop project:
     esgf_desktop_version=${esgf_desktop_version:-"0.0.22"}
 
-    esgf_stats_api_version=${esgf_stats_api_version:-"1.0"}
+    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.1"}
 
     #--------------------------------
     # External programs' versions

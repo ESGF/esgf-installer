@@ -2526,8 +2526,8 @@ setup_tds() {
     local dosetup
     if [ -d ${tomcat_install_dir}/webapps/thredds ]; then
         echo "Detected an existing thredds installation..."
-        read -e -p "Do you want to continue with thredds installation and setup? [y/N] " dosetup
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+        read -e -p "Do you want to continue with thredds installation and setup? [Y/n] " dosetup
+        if [ "${dosetup}" == "N" ] || [ "${dosetup}" == "n" ]; then
             echo "Skipping thredds installation and setup - will assume thredds is setup properly"
             return 0
         fi

@@ -102,6 +102,9 @@ expect {
     "Do you want to continue with Tomcat installation and setup?" {
         send \n ; exp_continue
     }
+    "Do you want to continue with Java installation and setup?" {
+        send \n ; exp_continue
+    }
     "Do you want to continue with esgcet installation and setup?" {
         send \n ; exp_continue
     }

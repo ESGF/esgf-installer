@@ -1,0 +1,21 @@
+sudo: required
+env:
+  matrix:
+  - OS_TYPE=centos OS_VERSION=6
+
+services:
+  - docker
+
+
+before_install:
+  - sudo yum update
+  - sudo service docker restart
+  - sleep 5
+  - sudo docker pull centos:centos${OS_VERSION}
+
+
+script:
+ # Run tests in Container
+- cat /etc/redhat-release
+- pwd
+- ls

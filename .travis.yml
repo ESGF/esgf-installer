@@ -19,5 +19,5 @@ script:
 # - cat /etc/*-release
 # - pwd
 # - ls
-- docker run centos:6 /bin/bash -c "cat /etc/*-release"
-- pwd
+  - docker run centos:centos6 /bin/bash -c "cat /etc/*-release"
+  - pwd

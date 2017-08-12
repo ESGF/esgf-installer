@@ -19,5 +19,5 @@ script:
 # - cat /etc/*-release
 # - pwd
 # - ls
-  - docker run centos:centos6 /bin/bash -c "cat /etc/*-release; pwd; ls; cd /usr/local/bin; pwd; ls"
+  - docker run centos:centos6 /bin/bash -c "cat /etc/*-release; /usr/local/bin; pwd; wget -O esg-bootstrap http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/devel/esgf-installer/2.5/esg-bootstrap --no-check-certificate; ls -lah"
   - pwd

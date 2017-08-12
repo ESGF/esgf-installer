@@ -16,6 +16,8 @@ before_install:
 
 script:
  # Run tests in Container
-- cat /etc/redhat-release
+# - cat /etc/*-release
+# - pwd
+# - ls
+- docker run centos:6
 - pwd
-- ls

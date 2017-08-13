@@ -18,7 +18,7 @@ before_install:
 
 script:
  # Run tests in Container
-  - cat /etc/*-release
+  # - cat /etc/*-release
 # - pwd
 # - ls
   # - docker run centos:centos6 /bin/bash -c "cat /etc/*-release; cd /usr/local/bin; pwd; yum -y install wget; wget -O esg-bootstrap http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/devel/esgf-installer/2.5/esg-bootstrap --no-check-certificate; ls -lah; chmod 555 esg-bootstrap; bash esg-bootstrap --devel; ls -lah"
@@ -26,3 +26,4 @@ script:
   - pwd
   - ls
   - docker ps
+  - docker run -it -d esgf_install /bin/bash -c "echo inside container; ls"

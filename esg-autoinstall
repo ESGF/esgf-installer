@@ -33,7 +33,7 @@ expect {
     "Please select the IP address to use for this installation" {
         send 0\n ; exp_continue
     }
-    
+
     "What is the fully qualified domain name of this node?" {
         send ${FQDN}\n ; exp_continue
     }
@@ -301,3 +301,5 @@ expect {
         exit 0
     }
 }
+
+interact

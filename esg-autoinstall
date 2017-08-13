@@ -29,6 +29,7 @@ expect {
         send \n ; exp_continue
     }
     "Are you ready to begin the installation?" {
+        sleep 2
         send y\n ; exp_continue
     }
     "Please select the IP address to use for this installation" {
@@ -36,6 +37,7 @@ expect {
     }
 
     "What is the fully qualified domain name of this node?" {
+        sleep 2
         send ${FQDN}\n ; exp_continue
     }
     "What is the admin password to use for this installation?" {

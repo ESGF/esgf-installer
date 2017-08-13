@@ -122,7 +122,7 @@ init_structure() {
     if [ ! -e ${esg_etc_dir} ]; then mkdir -p ${esg_etc_dir} && ((config_check--)); else ((config_check--)); fi
     if [ ! -e ${tomcat_conf_dir} ]; then mkdir -p ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
     if [ ! -e ${config_file} ]; then touch ${config_file} && ((config_check--)); else ((config_check--)); fi
-    debug_print ${config_check}
+    debug_print "config_check: ${config_check}"
     ((config_check != 0 )) && echo "ERROR: checklist incomplete $([FAIL])" && checked_done 1 || verbose_print "checklist $([OK])"
     #--------------
 

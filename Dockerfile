@@ -22,4 +22,10 @@ RUN chmod 555 esg-bootstrap;
 
 RUN bash esg-bootstrap --devel;
 
+ADD esg-autoinstall.conf /usr/local/etc/esg-autoinstall.conf
+
 RUN ls -lah
+
+cat /usr/local/etc/esg-autoinstall.conf
+
+RUN bash esg-node --version

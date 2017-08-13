@@ -8,6 +8,7 @@
 # /usr/local/etc/esg-autoinstall.conf and edit it to reflect your site
 # settings, then run 'esg-autoinstall'
 #
+exp_internal 1
 
 source /usr/local/etc/esg-autoinstall.conf
 

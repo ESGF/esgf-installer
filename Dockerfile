@@ -6,6 +6,10 @@ MAINTAINER William Hill <hill119@llnl.gov>
 
 WORKDIR /usr/local/bin
 
+RUN echo "pwd in dockerfile: $pwd"
+
+RUN cat /etc/*-release
+
 RUN yum -y update
 
 RUN cd /usr/local/bin && pwd

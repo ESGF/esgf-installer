@@ -26,4 +26,5 @@ script:
   - pwd
   - ls
   - docker ps
-  - docker run -it -d esgf_install /bin/bash -c "echo inside container; ls"
+  - docker images
+  # - docker run -it -d esgf_install /bin/bash -c "echo inside container; ls"

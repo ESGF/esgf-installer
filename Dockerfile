@@ -26,6 +26,6 @@ ADD esg-autoinstall.conf /usr/local/etc/esg-autoinstall.conf
 
 RUN ls -lah
 
-cat /usr/local/etc/esg-autoinstall.conf
+RUN cat /usr/local/etc/esg-autoinstall.conf
 
 RUN bash esg-node --version

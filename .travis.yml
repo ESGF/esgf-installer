@@ -8,6 +8,7 @@ services:
 
 
 before_install:
+  - echo "pwd: $pwd"
   - sudo apt-get update
   - sudo service docker restart
   - sleep 5
@@ -16,7 +17,7 @@ before_install:
 
 script:
  # Run tests in Container
-# - cat /etc/*-release
+  - cat /etc/*-release
 # - pwd
 # - ls
   # - docker run centos:centos6 /bin/bash -c "cat /etc/*-release; cd /usr/local/bin; pwd; yum -y install wget; wget -O esg-bootstrap http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/devel/esgf-installer/2.5/esg-bootstrap --no-check-certificate; ls -lah; chmod 555 esg-bootstrap; bash esg-bootstrap --devel; ls -lah"

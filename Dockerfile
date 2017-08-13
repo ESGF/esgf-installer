@@ -14,7 +14,7 @@ RUN yum -y update
 
 RUN cd /usr/local/bin && pwd
 
-RUN yum -y install wget
+RUN yum -y install wget perl tr sed id file cat tail let dirname basename which rm touch
 
 RUN wget -O esg-bootstrap http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/devel/esgf-installer/2.5/esg-bootstrap --no-check-certificate
 
@@ -26,6 +26,6 @@ ADD esg-autoinstall.conf /usr/local/etc/esg-autoinstall.conf
 
 RUN ls -lah
 
-RUN cat /usr/local/etc/esg-autoinstall.conf
+RUN bash esg-autoinstall
 
 RUN bash esg-node --version

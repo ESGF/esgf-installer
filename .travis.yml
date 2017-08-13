@@ -8,7 +8,8 @@ services:
 
 
 before_install:
-  - echo "pwd: $pwd"
+  - echo "pwd:"
+  - pwd
   - sudo apt-get update
   - sudo service docker restart
   - sleep 5

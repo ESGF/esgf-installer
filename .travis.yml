@@ -27,7 +27,8 @@ script:
   - ls
   - docker ps
   - docker images
-  - docker run -i -t esgf_install /bin/bash
+  - docker run -it -d esgf_install /bin/bash
   - sleep 5
-  - ./esg-autoinstall
+  # - ./esg-autoinstall
+  - docker exec -it esgf_install echo "Hello from container!"
   # - docker run -it -d esgf_install /bin/bash -c "echo inside container; ls"

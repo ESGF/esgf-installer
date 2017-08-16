@@ -28,5 +28,12 @@ RUN ls -lah
 
 RUN ls -lah /usr/local/etc
 
-
 RUN bash esg-node --version
+
+RUN source esg-node
+
+RUN setup_java
+
+RUN setup_ant
+
+RUN setup_postgres

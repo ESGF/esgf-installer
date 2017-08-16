@@ -502,7 +502,7 @@ setup_postgress() {
 
 
     yum -y install postgresql postgresql-server postgresql-devel
-    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update postgresql\n\n" && return 1	
+    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update postgresql\n\n" && return 1
 
     local default="Y"
     ((force_install)) && default="N"
@@ -600,7 +600,7 @@ setup_postgress() {
     if [ ! -x ${postgress_bin_dir}/psql ] ; then
         echo " ERROR: psql not found after install!" && checked_done 1
     fi
-    
+
     if (( $(PGPASSWORD=${pg_sys_acct_passwd:=${security_admin_password}} psql -U postgres -c "select count(*) from pg_roles where rolname='${postgress_user}'" postgres | tail -n +3 | head -n 1) > 0 )); then
         echo "${postgress_user} exists!! :-)";
     else
@@ -875,8 +875,8 @@ setup_cdat() {
     #((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
 
-    # TODO check for conda 
- 
+    # TODO check for conda
+
 
     if [ ! -f Miniconda2-latest-Linux-x86_64.sh ] ; then
        wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
@@ -885,7 +885,7 @@ setup_cdat() {
 
      bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
       [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
-        
+
     export PATH=${cdat_home}/bin:$PATH
 
     if [ $ESGF_INSECURE > 0 ] ; then
@@ -896,10 +896,10 @@ setup_cdat() {
     # create a default environment for the publisher with cduitl (and cdms2)
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
     unset LD_LIBRARY_PATH
-    
+
 	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
-	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1	
-    fi   
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
+    fi
 
     source activate esgf-pub
     python -c "import cdms2" 2>/dev/null
@@ -955,7 +955,7 @@ test_cdat() {
 #Special function for the upgrade scenario (cdat -> uvcdat)
 #------------------------------------------------------------#
 _housekeeping_cdat_to_uvcdat() {
-    #Determine the install directory for cdat from the install_manifest 
+    #Determine the install directory for cdat from the install_manifest
     #(NOTE: Whatever the resulting path is, it must contain the string "cdat")
     local cdat_installed_dir=$(sed -nre 's/.*[^v]cdat=([^ ]*)([^ ]*.*cdat)/\2/p' ${install_manifest} | tr -d " ")
     [[ ${cdat_installed_dir} ]] && backup ${cdat_installed_dir} && rm -rf ${cdat_installed_dir}
@@ -1039,14 +1039,14 @@ setup_esgcet() {
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
     conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython
-    
+
     if [ $ESGF_INSECURE > 0 ] ; then
 
 	pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
     else
 	pipcmd="pip install"
     fi
-    
+
     $pipcmd esgprep==${esgprep_version}
     $pipcmd SQLAlchemy==0.7.10
     $pipcmd sqlalchemy_migrate
@@ -1147,8 +1147,8 @@ setup_esgcet() {
         mkdir -p ${publisher_home}
 
         ESGINI=${publisher_home}/${publisher_config} esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
-	sed -i s/"host\.sample\.gov"/${esgf_host}/g ${publisher_home}/${publisher_config} 
-	sed -i s/"LASatYourHost"/LASat${node_short_name}/g ${publisher_home}/${publisher_config} 
+	sed -i s/"host\.sample\.gov"/${esgf_host}/g ${publisher_home}/${publisher_config}
+	sed -i s/"LASatYourHost"/LASat${node_short_name}/g ${publisher_home}/${publisher_config}
         [ $? != 0 ] && popd && checked_done 1
     fi
     echo "chown -R ${installer_uid}:${installer_gid} ${publisher_home}"
@@ -1199,7 +1199,7 @@ setup_esgcet() {
       fi
       if [ $choice == "y" ] ; then
         conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
-        pip install esgfpid   
+        pip install esgfpid
         pushd /usr/local
         git clone https://github.com/PCMDI/cmip6-cmor-tables
         esgf_pub_group="esgfpub"
@@ -1209,8 +1209,8 @@ setup_esgcet() {
         fi
         chgrp -R ${esgf_pub_group} cmip6-cmor-tables
         chmod -R g+rwx cmip6-cmor-tables
-        popd 
-      fi 
+        popd
+      fi
     fi
 
     # this is a workaround that we could remove once esgprep is corrected
@@ -1570,7 +1570,7 @@ EOF
 
 update_apache_conf() {
 
-	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"} 
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"}
     conf_file=/etc/httpd/conf/esgf-httpd.conf
 	pushd $localworkdir;
 	if [ ! -d apache_frontend ]; then
@@ -1641,13 +1641,13 @@ update_apache_conf() {
 	else
 		debug_print "No changes detected in apache frontend conf.";
 	fi
-		
+
 	popd; popd;
 }
-	
+
 setup_sensible_confs() {
 	#place for post-install configuration overrides, binary replacements etc
-	
+
 	#quick-fix for removing insecure commons-fileupload jar file
 	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
 		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
@@ -1675,7 +1675,7 @@ setup_sensible_confs() {
 		fi
 		chown apache:apache $esg_config_dir/$fn;
 		chmod a+r $esg_config_dir/$fn;
-	
+
 	done
 	chmod a+r $esg_config_dir/esgf_idp_static.xml
 
@@ -1748,7 +1748,7 @@ setup_apache_frontend() {
         fi
 
 	fi
-}	
+}
 #helper function to poke at tomcat ports...
 tomcat_port_check() {
     #---
@@ -1904,17 +1904,17 @@ cat <<EOF
 #    ?    Matches any single character.
 #
 # CA names must be specified (no wildcards). Names containing whitespaces
-# must be included in single quotes, e.g. 'Certification Authority'. 
-# Names must not contain new line symbols. 
-# The value of condition attribute is represented as a set of regular 
-# expressions. Each regular expression must be included in double quotes.  
+# must be included in single quotes, e.g. 'Certification Authority'.
+# Names must not contain new line symbols.
+# The value of condition attribute is represented as a set of regular
+# expressions. Each regular expression must be included in double quotes.
 #
 # This policy file dictates the following policy:
 #   -The Globus CA can sign Globus certificates
 #
 # Format:
 #------------------------------------------------------------------------
-#  token type  | def.authority |                value              
+#  token type  | def.authority |                value
 #--------------|---------------|-----------------------------------------
 # EACL entry #1|
 
@@ -2206,7 +2206,7 @@ install_local_certs(){
 	fi
 	cd $certdir;
 	missingfiles=0;
-	for fl in ${flist[@]}; do 
+	for fl in ${flist[@]}; do
 		if [ ! -s $fl ]; then
 			missingfiles=1;
 			echo "File $fl is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
@@ -2502,7 +2502,7 @@ get_webxml_file() {
     #Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)
     fetch_file=web.xml
 
-    # 3rd and 4th args mean we force download and keep a backup of the file. 
+    # 3rd and 4th args mean we force download and keep a backup of the file.
     checked_get ${tomcat_install_dir}/webapps/thredds/WEB-INF/${fetch_file}.tmpl ${esg_dist_url}/thredds/thredds.${fetch_file} 1 1
     local ret=$?
     (( ret > 1 )) && popd && checked_done 1
@@ -2529,10 +2529,12 @@ setup_tds() {
 
     local upgrade=${1:-0}
 
+    local default="Y"
     local dosetup
     if [ -d ${tomcat_install_dir}/webapps/thredds ]; then
         echo "Detected an existing thredds installation..."
         read -e -p "Do you want to continue with thredds installation and setup? [Y/n] " dosetup
+        [ -z "${dosetup}" ] && dosetup=${default}
         if [ "${dosetup}" == "N" ] || [ "${dosetup}" == "n" ]; then
             echo "Skipping thredds installation and setup - will assume thredds is setup properly"
             return 0
@@ -3152,14 +3154,14 @@ setup_subsystem_new() {
 
     shift && debug_print "-->>> "
     [ -n "${server_dir}" ] && shift && debug_print "-->>> "
-    
+
     # Check version
     vercomp `${scripts_dir}/${fetch_file} --newversion` `${scripts_dir}/${fetch_file} --oldversion`
     [ $? == 0 ] || [ $? == 2 ] && (( ! force_install )) && [OK] && return 0
 
-    # Go! 
+    # Go!
     ${scripts_dir}/${fetch_file}
-	    
+
     checked_done $?
     echo "-------------------------------"
     echo
@@ -3753,16 +3755,16 @@ install_keypair() {
 
     local ks_secret=$(cat ${ks_secret_file} 2> /dev/null)
     local default_passwd=${ks_secret:=changeit}
-   
+
      if [ ! -f ${public_cert} ] ; then
 	echo ${public_cert} not found or not readable.
-	
+
 	exit -1
     fi
 
     if [ ! -f ${private_key} ] ; then
 	echo ${private_key} not found or not readable.
-	
+
 	exit -1
     fi
 
@@ -3808,10 +3810,10 @@ install_keypair() {
 	for cert in ${certfiles[@]}; do
 	    if [ ! -f $cert ] ; then
 		echo ${cert} not found or not readable.
-	
-		exit -1		
+
+		exit -1
 	    fi
-	    
+
 	    cat $cert >>/etc/certs/tmpchain
 	    echo >> /etc/certs/tmpchain
 	done
@@ -5868,7 +5870,7 @@ esgf_node_info() {
 
      (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
 
-                                                                                    
+
 \033[01;31m
   EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
   E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
@@ -6023,11 +6025,11 @@ usage() {
         --config-db    - provides database only configuration to support based on note type (see --get-type)
         --backup-db    - creates a backup of node database to file
                          the prefix for all schemas provided is \"esgf_\" Ex: -s foo will reference schema esgf_foo
-                         [-s|--schema] <schema suffix> 
+                         [-s|--schema] <schema suffix>
                          [-db|--database] <database name>
         --restore-db   - restores from (nth) backup of database
                          [-n] <the nth backup> (default is n=1 or the last / most recent backup, 1 <= n <= 7)
-                         [-s|--schema] <schema suffix> 
+                         [-s|--schema] <schema suffix>
                          [-db|--database] <database name>
 
         -------------------------------
@@ -6116,7 +6118,7 @@ usage() {
                     Here for historical reasons when this user's home was used to download and build artifacts.
                     It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
                     (default - /usr/local/src/esgf  - currently:$installer_home)
-       
+
         --------------
         Typical usage:
         --------------
@@ -6128,10 +6130,10 @@ usage() {
         Update Certs : esg-node [--force] --rebuild-truststore
         Life Cycle   : esg-node [start|stop|status|restart|update]
 
-         ___ ___  ___ ___ 
+         ___ ___  ___ ___
         | __/ __|/ __| __|
-        | _|\__ \ (_ | _| 
-        |___|___/\___|_|  
+        | _|\__ \ (_ | _|
+        |___|___/\___|_|
 
 "
     exit 0
@@ -6201,7 +6203,7 @@ declare -r ALL_BIT=$((DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT))
 declare -ar _at_code=("00" "01" "04" "06" "07")
 declare -ar _fg_code=("00" "30" "31" "32" "33" "34" "35" "36" "37")
 declare -ar _bg_code=("00" "40" "41" "42" "43" "44" "45" "46" "47")
-declare -r _esgf_none=0; 
+declare -r _esgf_none=0;
 declare -r _esgf_bold=1; declare -r _esgf_underscore=2; declare -r _esgf_blink=3; declare -r _esgf_reverse=4
 declare -r _esgf_black=1; declare -r _esgf_red=2; declare -r _esgf_green=3; declare -r _esgf_yellow=4; declare -r _esgf_blue=5; declare -r _esgf_magenta=6; declare -r _esgf_cyan=7; declare -r _esgf_white=8
 declare -r color_capable=$(sed -n -e '/[0-9]/p' <<< $(tput colors))
@@ -6223,11 +6225,11 @@ main() {
         # Initializing
         debug_print "esg-node initializing..."
         ! hostname --fqdn >& /dev/null && echo "Please be sure this host has a fully qualified hostname and reponds to \"hostname --fqdn\" command" && exit 1
-	
+
 	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-        res=`echo $CDAT_HOME | grep -c conda` 
+        res=`echo $CDAT_HOME | grep -c conda`
         if [ $res == 0 ]; then
             unset CDAT_HOME
         fi
@@ -6242,8 +6244,8 @@ main() {
         esg_dist_url_root="${esgf_dist_mirror}/dist"
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
-    # Sourcing esg-init file        
-        [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"	
+    # Sourcing esg-init file
+        [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
 
 	# Downloading esg-installarg file
 	if [ ! -e ${esg_installarg_file} ] || ((force_install)) || [ ${esg_installarg_file} -ot $0 ]; then
@@ -6992,7 +6994,7 @@ main() {
         esgf_node_info
 
         local doit="n"
-        echo 
+        echo
 	 (( devel == 1 )) && echo "(Installing DEVELOPMENT tree...)" && echo ""
 
         read -e -p "Are you ready to begin the installation? [Y/n] " doit
@@ -7039,16 +7041,16 @@ main() {
 	echo '[esgf]' > /etc/yum.repos.d/esgf.repo
 	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
 	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
-		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
-	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then 
-		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo 
+		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo
+	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
+		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo
 	fi
 	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
     	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
     	echo 'priority=90' >> /etc/yum.repos.d/esgf.repo
     	echo 'gpgcheck=0' >> /etc/yum.repos.d/esgf.repo
-    	echo 'proxy=_none_' >> /etc/yum.repos.d/esgf.repo 
-	
+    	echo 'proxy=_none_' >> /etc/yum.repos.d/esgf.repo
+
     #---------------------------------------
     #Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
@@ -7072,7 +7074,7 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
 
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
-        
+
         # Compute Languages and Tools Setup
         #[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_languages
         #[ $((sel & INSTALL_BIT)) != 0 ] && setup_compute_tools
@@ -7103,7 +7105,7 @@ main() {
     #---------------------------------------
         [ $((sel & IDP_BIT+DATA_BIT )) != 0 ] && setup_subsystem security esgf-security $@
         [ $((sel & IDP_BIT )) != 0 ] && setup_subsystem idp esgf-idp $@
- 
+
     #---------------------------------------
     # Globus Installation...
     #---------------------------------------
@@ -7193,7 +7195,7 @@ main() {
         debug_print "(esg_datanode: cleaning up etc...)"
         chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
 
-    if [ $((sel & IDP_BIT)) != 0 ]; then	
+    if [ $((sel & IDP_BIT)) != 0 ]; then
 	export PGPASSWORD=${pg_sys_acct_passwd}
 
 	echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.
@@ -7208,7 +7210,7 @@ main() {
     #wait $tpid
     #rm $OUTPUT_PIPE
 
-  
+
         exit 0
     }
 

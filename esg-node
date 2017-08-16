@@ -1213,6 +1213,12 @@ setup_esgcet() {
       fi 
     fi
 
+    # this is a workaround that we could remove once esgprep is corrected
+    pushd ${workdir}
+    git clone https://github.com/ESGF/config
+    cp config/publisher-configs/ini/esg.cmip6.ini /esg/config/esgcet/esg.cmip6.ini
+    chmod a+r /esg/config/esgcet/esg.cmip6.ini
+    popd
 
     echo "esginitialize -c"
     esginitialize -c

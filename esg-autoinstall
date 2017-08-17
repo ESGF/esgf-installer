@@ -108,6 +108,9 @@ expect {
     "Do you want to continue with Ant installation and setup?" {
       send \n ; exp_continue
     }
+    "Do you want to continue with CDAT installation and setup? [y/N] " {
+      send \n ; exp_continue
+    }
     "Do you want to continue with esgcet installation and setup?" {
         send \n ; exp_continue
     }

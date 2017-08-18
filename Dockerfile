@@ -1,6 +1,6 @@
 # Docker image based on Centos 6 for running the ESGF autoinstaller for continous integration
 
-FROM centos:6
+FROM esgfhub/esgf-node:1.2
 
 MAINTAINER William Hill <hill119@llnl.gov>
 
@@ -29,11 +29,3 @@ RUN ls -lah
 RUN ls -lah /usr/local/etc
 
 RUN bash esg-node --version
-
-RUN source esg-node
-
-RUN setup_java
-
-RUN setup_ant
-
-RUN setup_postgres

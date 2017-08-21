@@ -25,4 +25,4 @@ services:
       - esgf-postgres
 volumes:
   # postgres data and configuration
-  pg_data:
+  pg_data: {}

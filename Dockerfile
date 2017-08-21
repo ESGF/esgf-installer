@@ -31,5 +31,3 @@ RUN ls -lah
 RUN ls -lah /usr/local/etc
 
 RUN bash esg-node --version
-
-RUN ./esg-autoinstall

@@ -8,27 +8,19 @@ services:
 
 
 before_install:
-  - pwd
-  - ls
-  - sudo apt-get update
-  - sudo service docker restart
+  # - pwd
+  # - ls
+  # - sudo apt-get update
+  # - sudo service docker restart
   - sleep 5
   - docker build -t esgf_install .
 
 
 script:
- # Run tests in Container
-  # - cat /etc/*-release
-# - pwd
-# - ls
-  # - docker run centos:centos6 /bin/bash -c "cat /etc/*-release; cd /usr/local/bin; pwd; yum -y install wget; wget -O esg-bootstrap http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/devel/esgf-installer/2.5/esg-bootstrap --no-check-certificate; ls -lah; chmod 555 esg-bootstrap; bash esg-bootstrap --devel; ls -lah"
-  # - pwd
   - pwd
   - ls
   - docker ps
   - docker images
   - docker run --name esgf_install -it -d esgf_install /bin/bash
   - sleep 5
-  # - ./esg-autoinstall
   - docker exec -it esgf_install ./esg-autoinstall
-  # - docker run -it -d esgf_install /bin/bash -c "echo inside container; ls"

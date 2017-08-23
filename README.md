@@ -20,3 +20,8 @@ To setup a 'master' install
 
 Please [open an issue](https://github.com/ESGF/esgf-installer/issues/new) for support.
 Please follow the [Issue Tracking Guidelines](https://github.com/ESGF/esgf-installer/wiki/ESGF-Installer-Issue-Tracking-Guidelines) when opening a new issue.
+
+
+## Contributing
+
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/ESGF/esgf-installer/compare).

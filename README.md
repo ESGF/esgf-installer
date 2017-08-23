@@ -25,7 +25,9 @@ To setup a 'master' install
  
     wget -O esg-bootstrap http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/esgf-installer/2.5/esg-bootstrap --no-check-certificate  
     chmod 555 esg-bootstrap  
-    ./esg-bootstrap    
+    ./esg-bootstrap
+    
+More detailed installation instructions can be found on the [wiki](https://github.com/ESGF/esgf-installer/wiki)
 
 ## Support
 

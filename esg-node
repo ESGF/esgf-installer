@@ -1050,6 +1050,7 @@ setup_esgcet() {
     $pipcmd esgprep==${esgprep_version}
     $pipcmd SQLAlchemy==0.7.10
     $pipcmd sqlalchemy_migrate
+    $pipcmd cdf2cim
 
     #clone publisher
     local publisher_git_protocol="git://"
@@ -1190,8 +1191,15 @@ setup_esgcet() {
       if [ $choice == "y" ] ; then
         conda install -y -c conda-forge -c pcmdi -c uvcdat cmor
         pip install esgfpid   
-        pushd $install_dir
+        pushd /usr/local
         git clone https://github.com/PCMDI/cmip6-cmor-tables
+        esgf_pub_group="esgfpub"
+        if [ ! $(getent group ${esgf_pub_group}) ]; then
+            /usr/sbin/groupadd -r ${esgf_pub_group}
+            [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add esgf_pub system group: ${esgf_pub_roup}" && popd && checked_done 1
+        fi
+        chgrp -R ${esgf_pub_group} cmip6-cmor-tables
+        chmod -R g+rwx cmip6-cmor-tables
         popd 
       fi 
     fi

@@ -102,6 +102,15 @@ expect {
     "Do you want to continue with Tomcat installation and setup?" {
         send \n ; exp_continue
     }
+    "Do you want to continue with Java installation and setup?" {
+        send \n ; exp_continue
+    }
+    "Do you want to continue with Ant installation and setup?" {
+      send \n ; exp_continue
+    }
+    "Do you want to continue with CDAT installation and setup?" {
+      send \n ; exp_continue
+    }
     "Do you want to continue with esgcet installation and setup?" {
         send \n ; exp_continue
     }
@@ -109,6 +118,9 @@ expect {
         send \n ; exp_continue
     }
     "Do you want to continue with ESGF Dashboard IP installation and setup?" {
+        send \n ; exp_continue
+    }
+    "Do you want to continue with LAS installation and setup?"  {
         send \n ; exp_continue
     }
     "Would you like to use the DN: (OU=ESGF.ORG, O=ESGF)" {
@@ -159,6 +171,13 @@ expect {
     "Enter certificate to add to trusted keystore" {
         send \n ; exp_continue
     }
+    "Would you like to configure this node for CMIP6 publishing" {
+        send Y\n ; exp_continue
+    }
+    "Would you like to install the SLCS OAuth server on this node" {
+        send Y\n ; exp_continue
+    }
+
     # For --type all, Globus is set up twice, once as a gateway, and
     # once as a datanode.  Unfortunately, on the second pass of this
     # the prompt defaults to N because it detects the installation of
@@ -171,7 +190,7 @@ expect {
     # around that at this time without changing the detection in the
     # esg-node script.
     "Do you want to continue with the Globus installation and setup?" {
-        send Y\n ; exp_continue
+        send ${GLOBUS}\n ; exp_continue
     }
     "Do you want to make a back up of the existing Globus distribution (datanode)?" {
         send \n ; exp_continue
@@ -271,6 +290,12 @@ expect {
     }
     "Enter (simple) CA's certificate password" {
         send ${CACERTPASS}\n ; exp_continue
+    }
+    "Are you sure you wish to add a NEW replica index" {
+        send ${SOLRREINDEX}\n ; exp_continue
+    }
+    "Automatic peer with super-node" {
+        send ${AUTOMATICPEER}\n ; exp_continue
     }
 
     # Victory conditions

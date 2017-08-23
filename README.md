@@ -3,15 +3,15 @@ The ESGF Installer is a command line tool for installing the ESGF Software Stack
 The software stack is comprised of: Tomcat, Thredds, CDAT & CDMS, PostgreSQL, MyProxy, and several ESGF.org custom software applications running on a LINUX (RedHat/CentOS) operating system.
 
 The custom ESGF software includes:
-[ESGF-dashboard](https://github.com/ESGF/esgf-dashboard)
-[ESGF-publisher](https://github.com/ESGF/esg-publisher)
-[ESGF-node-manager](https://github.com/ESGF/esgf-node-manager)
-[ESGF-stats-api](https://github.com/ESGF/esgf-stats-api)
-[ESGF-search](https://github.com/ESGF/esg-search)
-[ESGF-idp](https://github.com/ESGF/esgf-idp)
-[ESGF-orp](https://github.com/ESGF/esg-orp)
-[ESGF-security](https://github.com/ESGF/esgf-security)
-[ESGF-SLCS-server](https://github.com/ESGF/esgf-slcs-server)
+- [ESGF-dashboard](https://github.com/ESGF/esgf-dashboard)
+- [ESGF-publisher](https://github.com/ESGF/esg-publisher)
+- [ESGF-node-manager](https://github.com/ESGF/esgf-node-manager)
+- [ESGF-stats-api](https://github.com/ESGF/esgf-stats-api)
+- [ESGF-search](https://github.com/ESGF/esg-search)
+- [ESGF-idp](https://github.com/ESGF/esgf-idp)
+- [ESGF-orp](https://github.com/ESGF/esg-orp)
+- [ESGF-security](https://github.com/ESGF/esgf-security)
+- [ESGF-SLCS-server](https://github.com/ESGF/esgf-slcs-server)
 
 ## Installation
 To setup a 'devel' install 

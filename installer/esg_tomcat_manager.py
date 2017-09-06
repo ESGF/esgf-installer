@@ -560,6 +560,11 @@ def _set_distinguished_name(esgf_host):
 
     return (distinguished_name, use_distinguished_name)
 
+def extract_common_name(distinguished_name):
+    common_name = re.search("(CN=)(\S+)(,)", distinguished_name).group(2)
+    logger.info("regex on distinguished_name: %s", common_name)
+    return common_name
+
 def create_keystore(keystore_password):
     ''' Use the Java Keytool to create a keystore '''
     print "Launching Java's keytool:"
@@ -582,8 +587,8 @@ def create_keystore(keystore_password):
         esg_functions.exit_with_error(1)
     else:
         # distringuished_name_sed_output = subprocess.check_output("echo {distinguished_name} | sed -n 's#.*CN=\([^,]*\),.*#\1#p'".format(distinguished_name = distinguished_name))
-        logger.info("regex on distinguished_name: %s", re.search("(CN=)(\S+)(,)", distinguished_name).group(2))
-        if re.search("(CN=)(\S+)(,)", distinguished_name).group(2):
+
+        if extract_common_name(distinguished_name):
 
             java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
             {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
@@ -1405,3 +1410,15 @@ def write_tomcat_env():
 
 def write_tomcat_install_log():
     pass
+
+test_tomcat() {
+
+    echo
+    echo "----------------------------"
+    echo "Tomcat Test...  "
+    echo "----------------------------"
+    echo
+    start_tomcat
+    tomcat_port_check && echo "Tomcat ports checkout $([OK])" || ([FAIL] && popd && checked_done 1)
+    checked_done 0
+}

@@ -72,8 +72,12 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
 
         # Create symlink
         create_symlink(TOMCAT_VERSION)
-        os.remove(
-            "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
+        try:
+            os.remove(
+                "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
+        except OSError, error:
+            print "error:", error
+            pass
 
 
 def create_symlink(TOMCAT_VERSION):

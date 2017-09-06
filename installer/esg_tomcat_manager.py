@@ -62,7 +62,7 @@ def download_tomcat():
         TOMCAT_VERSION=TOMCAT_VERSION)
     print "downloading Tomcat"
     urllib.urlretrieve(
-        tomcat_download_url, "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION), show_progress)
+        tomcat_download_url, "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
 
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):

@@ -14,9 +14,10 @@ class test_ESG_tomcat(unittest.TestCase):
     def tearDown(self):
         os.remove("/tmp/apache-tomcat-8.5.20.tar.gz")
         try:
-            shutil.rmtree("/usr/local/tomcat")
+            shutil.unlink("/usr/local/tomcat")
         except OSError, error:
             print "error:", error
+            # shutil.unlink()
             pass
 
     # def test_download_tomcat(self):

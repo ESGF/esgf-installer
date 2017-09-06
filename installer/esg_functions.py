@@ -589,7 +589,7 @@ def get_esgf_host():
 
 def get_security_admin_password():
     ''' Gets the security_admin_password from the esgf_secret_file '''
-    with open(config.esgf_secret_file, 'rb') as password_file:
+    with open(config["esgf_secret_file"], 'rb') as password_file:
         security_admin_password = password_file.read().strip()
         return security_admin_password
 

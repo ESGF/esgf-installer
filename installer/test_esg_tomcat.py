@@ -11,10 +11,15 @@ with open('esg_config.yaml', 'r') as config_file:
 
 class test_ESG_tomcat(unittest.TestCase):
 
-    def tearDown(self):
-        os.remove("/tmp/apache-tomcat-8.5.20.tar.gz")
+    @classmethod
+    def tearDownClass(cls):
         try:
-            shutil.unlink("/usr/local/tomcat")
+            os.remove("/tmp/apache-tomcat-8.5.20.tar.gz")
+        except OSError, error:
+            print "error:", error
+            pass
+        try:
+            os.unlink("/usr/local/tomcat")
         except OSError, error:
             print "error:", error
             # shutil.unlink()

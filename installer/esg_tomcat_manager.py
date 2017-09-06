@@ -55,9 +55,12 @@ def show_progress(count, block_size, total_size):
 #     ln -s /usr/local/apache-tomcat-${TOMCAT_VERSION} /usr/local/tomcat && \
 #     rm /tmp/apache-tomcat-${TOMCAT_VERSION}.tar.gz
 TOMCAT_VERSION = "8.5.20"
-
+CATALINA_HOME = "/usr/local/tomcat"
 
 def download_tomcat():
+    if os.path.isdir("/usr/local/tomcat"):
+        print "Tomcat directory found.  Skipping installation."
+        return
     tomcat_download_url = "http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v{TOMCAT_VERSION}/bin/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
         TOMCAT_VERSION=TOMCAT_VERSION)
     print "downloading Tomcat"
@@ -87,13 +90,22 @@ def create_symlink(TOMCAT_VERSION):
 
 # ENV CATALINA_HOME /usr/local/tomcat
 #
+def remove_example_webapps():
 # # remove Tomcat example applications
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
+        shutil.rmtree("docs")
+        shutil.rmtree("examples")
+        shutil.rmtree("host-manager")
+        shutil.rmtree("manager")
 # RUN cd /usr/local/tomcat/webapps && \
 #     rm -rf docs examples host-manager manager
 #
+def copy_config_files():
 # # copy custom configuration
 # # server.xml: includes references to keystore, truststore in /esg/config/tomcat
 # # context.xml: increases the Tomcat cache to avoid flood of warning messages
+    shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
+    shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
 # COPY conf/server.xml /usr/local/tomcat/conf/server.xml
 # COPY conf/context.xml /usr/local/tomcat/conf/context.xml
 # COPY certs/ /esg/config/tomcat/
@@ -116,6 +128,8 @@ def create_symlink(TOMCAT_VERSION):
 def main():
     download_tomcat()
     extract_tomcat_tarball()
+    remove_example_webapps()
+    copy_config_files()
     pass
 if __name__ == '__main__':
     main()

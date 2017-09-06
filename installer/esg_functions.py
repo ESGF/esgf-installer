@@ -692,3 +692,13 @@ def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version,
             sys.exit(1)
 
     return True
+
+def extract_tarball(tarball_name):
+    try:
+        tar = tarfile.open(tarball_name)
+        tar.extractall()
+        tar.close()
+    except Exception, error:
+        logger.error(error)
+        print "ERROR: Could not extract the tarfile: {tarball_name}".format(tarball_name=tarball_name)
+        exit_with_error(1)

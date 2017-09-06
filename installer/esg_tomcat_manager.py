@@ -1411,14 +1411,14 @@ def write_tomcat_env():
 def write_tomcat_install_log():
     pass
 
-test_tomcat() {
-
-    echo
-    echo "----------------------------"
-    echo "Tomcat Test...  "
-    echo "----------------------------"
-    echo
-    start_tomcat
-    tomcat_port_check && echo "Tomcat ports checkout $([OK])" || ([FAIL] && popd && checked_done 1)
-    checked_done 0
-}
+# test_tomcat() {
+#
+#     echo
+#     echo "----------------------------"
+#     echo "Tomcat Test...  "
+#     echo "----------------------------"
+#     echo
+#     start_tomcat
+#     tomcat_port_check && echo "Tomcat ports checkout $([OK])" || ([FAIL] && popd && checked_done 1)
+#     checked_done 0
+# }

@@ -148,7 +148,11 @@ def get_previous_node_type_config(config_file):
     except IOError, error:
         logger.error(error)
 
-    if not node_type_list:
+    try:
+        node_type_list
+    except NameError, error:
+        print "error:", error
+    # if not node_type_list:
         print '''ERROR: No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
         sys.exit(1)

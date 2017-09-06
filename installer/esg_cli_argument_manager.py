@@ -9,7 +9,6 @@ import esg_functions
 import esg_setup
 import esg_apache_manager
 import esg_logging_manager
-import esg_init
 import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)

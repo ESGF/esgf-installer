@@ -605,7 +605,7 @@ def _download_truststore_file():
     #(first try getting it from distribution server otherwise copy Java's)
     if not os.path.isfile(config["truststore_file"]):
         # i.e. esg-truststore.ts
-        truststore_file_name = esg_bash2py.trim_string_from_tail(config["truststore_file"])
+        truststore_file_name = esg_bash2py.trim_string_from_head(config["truststore_file"])
         if esg_functions.download_update(truststore_file_name, "http://{esg_dist_url_root}/certs/{truststore_file_name}".format(esg_dist_url_root = config["esg_dist_url_root"], truststore_file_name = truststore_file_name)) > 1:
             print " INFO: Could not download certificates {truststore_file_name} for tomcat - will copy local java certificate file".format(truststore_file_name = truststore_file_name)
             #NOTE: The truststore uses the java default password: "changeit"

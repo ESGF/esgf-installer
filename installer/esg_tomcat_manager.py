@@ -593,7 +593,7 @@ def create_keystore(keystore_password):
             java_keytool_command = '{java_install_dir}/bin/keytool -genkey -dname "{distinguished_name}" -alias \
             {keystore_alias} -keyalg RSA -keystore {keystore_file} -validity 365 \
             -storepass {store_password} -keypass {store_password}'.format(java_install_dir = config["java_install_dir"],
-            keystore_alias = config["keystore_alias"], keystore_file = config["keystore_file"], keystore_password = keystore_password)
+            keystore_alias = config["keystore_alias"], keystore_file = config["keystore_file"], keystore_password = keystore_password, distinguished_name=distinguished_name)
 
             java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
             if java_keytool_process["returncode"] != 0:

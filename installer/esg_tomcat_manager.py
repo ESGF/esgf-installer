@@ -581,7 +581,7 @@ def create_keystore(keystore_password):
         -validity 365 -storepass {keystore_password}".format(java_install_dir = config["java_install_dir"],
             keystore_alias = config["keystore_alias"], keystore_file =config["keystore_file"], keystore_password = config["keystore_password"])
 
-        java_keytool_process = esg_functions.call_subprocess(shlex.split(java_keytool_command))
+        java_keytool_process = esg_functions.call_subprocess(java_keytool_command)
         if java_keytool_process["returncode"] != 0:
             print " ERROR: keytool genkey command failed"
         esg_functions.exit_with_error(1)

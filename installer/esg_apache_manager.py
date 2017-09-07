@@ -56,11 +56,17 @@ def make_python_eggs_dir():
     esg_bash2py.mkdir_p("/var/www/.python-eggs")
     apache_user_id = esg_functions.get_user_id("apache")
     apache_group_id = esg_functions.get_group_id("apache")
-    esg_functions.change_permissions_recursive("/var/www/.python-eggs", apache_user_id, apache_group_id)
+    os.chown("/var/www/.python-eggs", apache_user_id, apache_group_id)
 # # by default PYTHON_EGG_CACHE=/var/www/.python-eggs
 # RUN mkdir -p /var/www/.python-eggs && \
 #     chown -R apache:apache /var/www/.python-eggs
 #
+def copy_apache_conf_files():
+    ''' Copy custom apache conf files '''
+    shutil.copytree("apache_certs/", "/etc/certs/")
+    shutil.copytree("apache_html/", "/var/www/html/")
+    shutil.copyfile("apache_conf/httpd.conf", "/etc/httpd/conf.d/httpd.conf")
+    shutil.copyfile("apache_conf/ssl.conf", "/etc/httpd/conf.d/ssl.conf")
 # # configuration for standalone service
 # # (overridden by ESGF settings when running with docker-compose from parent directory)
 # COPY certs/ /etc/certs/
@@ -80,6 +86,9 @@ def make_python_eggs_dir():
 def main():
     install_apache_httpd()
     install_mod_wsgi()
+    make_python_eggs_dir()
+    copy_apache_conf_files()
+
 
     # pass
 if __name__ == '__main__':

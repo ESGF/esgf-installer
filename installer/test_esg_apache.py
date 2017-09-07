@@ -17,6 +17,8 @@ class test_ESG_apache(unittest.TestCase):
     def tearDownClass(cls):
         esg_functions.stream_subprocess_output("yum remove -y httpd")
         pip.main(["uninstall", "mod_wsgi"])
+        shutil.rmtree("/var/www/.python-eggs")
+        os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
 
 
     def test_install_apache_httpd(self):

@@ -18,7 +18,7 @@ class test_ESG_apache(unittest.TestCase):
 
     def test_install_apache_httpd(self):
         esg_apache_manager.install_apache_httpd()
-        output = esg_functions.call_subprocess("httpd -version")
+        output = esg_functions.call_subprocess("httpd -version")["stdout"]
         print "output:", output
         self.assertIsNotNone(output)
 

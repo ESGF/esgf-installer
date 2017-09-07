@@ -22,6 +22,8 @@ class test_ESG_apache(unittest.TestCase):
         print "output:", output
         self.assertIsNotNone(output)
 
+        self.assertTrue(os.path.isfile("/etc/httpd/modules/mod_wsgi-py27.so"))
+
 
 
 

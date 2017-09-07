@@ -26,17 +26,23 @@ with open('esg_config.yaml', 'r') as config_file:
 #     && yum install -y httpd httpd-devel mod_ssl \
 #     && yum clean all
 #
+def install_python27():
+    '''Install python with shared library '''
+    with esg_bash2py.pushd("/tmp"):
+        python_download_url = "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz"
+
 def install_apache_httpd():
     esg_functions.stream_subprocess_output("yum -y update")
     esg_functions.stream_subprocess_output("yum install -y httpd httpd-devel mod_ssl")
     esg_functions.stream_subprocess_output("yum clean all")
 
 def install_mod_wsgi():
+    '''Have to ensure python is install properly with the shared library for mod_wsgi installation to work'''
 # # install mod_wsgi
 # RUN cd /tmp
     pip.main(['install', "mod_wsgi==4.5.3"])
     with esg_bash2py.pushd("/etc/httpd/modules"):
-        esg_bash2py.symlink_force("/usr/local/lib/python2.7/site-packages/mod_wsgi-4.5.3-py2.7-linux-x86_64.egg/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
+        esg_bash2py.symlink_force("/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
 
 # RUN wget 'https://pypi.python.org/packages/c3/4e/f9bd165369642344e8fdbe78c7e820143f73d3beabfba71365f27ee5e4d3/mod_wsgi-4.5.3.tar.gz' && \
 #     tar xvf mod_wsgi-4.5.3.tar.gz && \

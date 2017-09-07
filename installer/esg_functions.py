@@ -702,3 +702,15 @@ def extract_tarball(tarball_name):
         logger.error(error)
         print "ERROR: Could not extract the tarfile: {tarball_name}".format(tarball_name=tarball_name)
         exit_with_error(1)
+
+def change_permissions_recursive(directory_path, uid=None, gid=None):
+    '''Recursive changes permissions on a directory and its subdirectories'''
+    #recursively change permissions
+    for root, dirs, files in os.walk(readlinkf(directory_path)):
+        for directory in dirs:
+            os.chown(os.path.join(root, directory), uid, gid)
+        for name in files:
+            try:
+                os.chown(os.path.join(root, name), uid, gid)
+            except OSError, error:
+                logger.error(error)

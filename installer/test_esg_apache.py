@@ -18,7 +18,7 @@ class test_ESG_apache(unittest.TestCase):
         esg_functions.stream_subprocess_output("yum remove -y httpd")
         pip.main(["uninstall", "mod_wsgi"])
         shutil.rmtree("/var/www/.python-eggs")
-        os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
+        # os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
 
 
     def test_install_apache_httpd(self):
@@ -37,6 +37,12 @@ class test_ESG_apache(unittest.TestCase):
         owner, group = esg_functions.get_dir_owner_and_group("/var/www/.python-eggs")
         self.assertEqual(owner, "apache")
         self.assertEqual(group, "apache")
+
+        esg_apache_manager.copy_apache_conf_files()
+        self.assertTrue(os.path.isfile("/etc/httpd/conf.d/httpd.conf"))
+        self.assertTrue(os.path.isfile("/etc/httpd/conf.d/ssl.conf"))
+        self.assertTrue(os.listdir("/var/www/html/"))
+        self.assertTrue(os.listdir("/etc/certs"))
 
 
 

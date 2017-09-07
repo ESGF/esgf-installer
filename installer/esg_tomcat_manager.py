@@ -18,6 +18,7 @@ import filecmp
 import glob
 import yaml
 import progressbar
+import errno
 from time import sleep
 from OpenSSL import crypto
 from lxml import etree
@@ -93,10 +94,16 @@ def create_symlink(TOMCAT_VERSION):
 def remove_example_webapps():
 # # remove Tomcat example applications
     with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
-        shutil.rmtree("docs")
-        shutil.rmtree("examples")
-        shutil.rmtree("host-manager")
-        shutil.rmtree("manager")
+        try:
+            shutil.rmtree("docs")
+            shutil.rmtree("examples")
+            shutil.rmtree("host-manager")
+            shutil.rmtree("manager")
+        except OSError, error:
+            if error.errno == errno.ENOENT:
+                pass
+            else:
+                print "error:", error
 # RUN cd /usr/local/tomcat/webapps && \
 #     rm -rf docs examples host-manager manager
 #

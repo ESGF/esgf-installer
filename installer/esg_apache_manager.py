@@ -63,6 +63,7 @@ def make_python_eggs_dir():
 #
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
+    esg_bash2py.mkdir_p("/etc/certs")
     shutil.copyfile("apache_certs/hostcert.pem", "/etc/certs/hostcert.pem")
     shutil.copyfile("apache_certs/hostkey.pem", "/etc/certs/hostkey.pem")
     shutil.copyfile("apache_html/index.html", "/var/www/html/index.html")

@@ -64,7 +64,7 @@ def make_python_eggs_dir():
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     shutil.copytree("apache_certs/", "/etc/certs/")
-    shutil.copytree("apache_html/", "/var/www/html/")
+    shutil.copyfile("apache_html/index.html", "/var/www/html/index.html")
     shutil.copyfile("apache_conf/httpd.conf", "/etc/httpd/conf.d/httpd.conf")
     shutil.copyfile("apache_conf/ssl.conf", "/etc/httpd/conf.d/ssl.conf")
 # # configuration for standalone service

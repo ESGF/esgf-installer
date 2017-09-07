@@ -52,6 +52,11 @@ def install_mod_wsgi():
 # RUN cd /etc/httpd/modules && \
 #     ln -s /usr/local/lib/python2.7/site-packages/mod_wsgi-4.5.3-py2.7-linux-x86_64.egg/mod_wsgi/server/mod_wsgi-py27.so ./mod_wsgi-py27.so
 #
+def make_python_eggs_dir():
+    esg_bash2py.mkdir_p("/var/www/.python-eggs")
+    apache_user_id = esg_functions.get_user_id("apache")
+    apache_group_id = esg_functions.get_group_id("apache")
+    esg_functions.change_permissions_recursive("/var/www/.python-eggs", apache_user_id, apache_group_id)
 # # by default PYTHON_EGG_CACHE=/var/www/.python-eggs
 # RUN mkdir -p /var/www/.python-eggs && \
 #     chown -R apache:apache /var/www/.python-eggs

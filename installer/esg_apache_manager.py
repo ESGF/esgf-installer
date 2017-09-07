@@ -26,7 +26,9 @@ with open('esg_config.yaml', 'r') as config_file:
 #     && yum clean all
 #
 def install_apache_httpd():
-    esg_functions.stream_subprocess_output("yum -y update && yum install -y httpd httpd-devel mod_ssl")
+    esg_functions.stream_subprocess_output("yum -y update")
+    esg_functions.stream_subprocess_output("yum install -y httpd httpd-devel mod_ssl")
+    esg_functions.stream_subprocess_output("yum clean all")
 # # install mod_wsgi
 # RUN cd /tmp
 # RUN wget 'https://pypi.python.org/packages/c3/4e/f9bd165369642344e8fdbe78c7e820143f73d3beabfba71365f27ee5e4d3/mod_wsgi-4.5.3.tar.gz' && \

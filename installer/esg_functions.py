@@ -14,6 +14,8 @@ import hashlib
 import shlex
 import socket
 import yaml
+import pwd
+import grp
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 import esg_bash2py
@@ -692,6 +694,26 @@ def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version,
             sys.exit(1)
 
     return True
+
+def get_group_id(group_name):
+    ''' Returns the id of the Unix group '''
+    return grp.getgrnam(group_name).gr_gid
+
+def get_user_id(user_name):
+    ''' Returns the id of the Unix user '''
+    return pwd.getpwnam(user_name).pw_uid
+
+
+def get_dir_owner_and_group(path):
+    ''' Returns a tuple containing the owner and group of the given directory path '''
+    stat_info = os.stat(path)
+    uid = stat_info.st_uid
+    gid = stat_info.st_gid
+    # print uid, gid
+
+    user = pwd.getpwuid(uid)[0]
+    group = grp.getgrgid(gid)[0]
+    return user, group
 
 def extract_tarball(tarball_name):
     try:

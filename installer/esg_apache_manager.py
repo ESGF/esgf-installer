@@ -36,7 +36,7 @@ def install_mod_wsgi():
 # RUN cd /tmp
     pip.main(['install', "mod_wsgi==4.5.3"])
     with esg_bash2py.pushd("/etc/httpd/modules"):
-        esg_bash2py.symlink_force("/usr/local/lib/python2.7/site-packages/mod_wsgi-4.5.3-py2.7-linux-x86_64.egg/mod_wsgi/server/mod_wsgi-py27.so", "./mod_wsgi-py27.so")
+        esg_bash2py.symlink_force("/usr/local/lib/python2.7/site-packages/mod_wsgi-4.5.3-py2.7-linux-x86_64.egg/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
 
 # RUN wget 'https://pypi.python.org/packages/c3/4e/f9bd165369642344e8fdbe78c7e820143f73d3beabfba71365f27ee5e4d3/mod_wsgi-4.5.3.tar.gz' && \
 #     tar xvf mod_wsgi-4.5.3.tar.gz && \

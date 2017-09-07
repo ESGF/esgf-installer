@@ -106,6 +106,9 @@ def copy_config_files():
 # # context.xml: increases the Tomcat cache to avoid flood of warning messages
     shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
     shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
+    shutil.copytree("certs/", "/esg/config/tomcat")
+
+    shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
 # COPY conf/server.xml /usr/local/tomcat/conf/server.xml
 # COPY conf/context.xml /usr/local/tomcat/conf/context.xml
 # COPY certs/ /esg/config/tomcat/
@@ -113,6 +116,16 @@ def copy_config_files():
 # # custom env variables for starting Tomcat
 # COPY conf/setenv.sh $CATALINA_HOME/bin
 #
+def create_tomcat_user():
+    esg_functions.call_subprocess("groupadd tomcat")
+    esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
+    tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
+    tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
+    tomcat_group_id = grp.getgrnam("tomcat").gr_gid
+    esg_functions.change_permissions_recursive(tomcat_directory, tomcat_user_id, tomcat_group_id)
+
+    os.chmod("/usr/local/tomcat/webapps", 0775)
+
 # # create non-privilged user to run Tomcat
 # RUN groupadd tomcat
 # RUN useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat
@@ -130,6 +143,7 @@ def main():
     extract_tomcat_tarball()
     remove_example_webapps()
     copy_config_files()
-    pass
+    create_tomcat_user()
+    # pass
 if __name__ == '__main__':
     main()

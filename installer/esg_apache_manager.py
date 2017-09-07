@@ -12,6 +12,7 @@ import esg_functions
 import esg_logging_manager
 import esg_init
 import yaml
+import pip
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -29,8 +30,14 @@ def install_apache_httpd():
     esg_functions.stream_subprocess_output("yum -y update")
     esg_functions.stream_subprocess_output("yum install -y httpd httpd-devel mod_ssl")
     esg_functions.stream_subprocess_output("yum clean all")
+
+def install_mod_wsgi():
 # # install mod_wsgi
 # RUN cd /tmp
+    pip.main(['install', "mod_wsgi==4.5.3"])
+    with esg_bash2py.pushd("/etc/httpd/modules"):
+        esg_bash2py.symlink_force("/usr/local/lib/python2.7/site-packages/mod_wsgi-4.5.3-py2.7-linux-x86_64.egg/mod_wsgi/server/mod_wsgi-py27.so", "./mod_wsgi-py27.so")
+
 # RUN wget 'https://pypi.python.org/packages/c3/4e/f9bd165369642344e8fdbe78c7e820143f73d3beabfba71365f27ee5e4d3/mod_wsgi-4.5.3.tar.gz' && \
 #     tar xvf mod_wsgi-4.5.3.tar.gz && \
 #     cd mod_wsgi-4.5.3 && \
@@ -60,6 +67,9 @@ def install_apache_httpd():
 # ADD scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # ENTRYPOINT /usr/local/bin/docker-entrypoint.sh
 def main():
-    pass
+    install_apache_httpd()
+    install_mod_wsgi()
+
+    # pass
 if __name__ == '__main__':
     main()

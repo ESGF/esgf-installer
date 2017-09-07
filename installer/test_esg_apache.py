@@ -4,6 +4,7 @@ import unittest
 import esg_apache_manager
 import esg_functions
 import os
+import errno
 import shutil
 import yaml
 import pip
@@ -17,9 +18,15 @@ class test_ESG_apache(unittest.TestCase):
     def tearDownClass(cls):
         esg_functions.stream_subprocess_output("yum remove -y httpd")
         pip.main(["uninstall", "mod_wsgi"])
-        shutil.rmtree("/var/www/.python-eggs")
-        shutil.rmtree('/var/www/html/')
-        shutil.rmtree('/etc/certs/')
+        try:
+            shutil.rmtree("/var/www/.python-eggs")
+            shutil.rmtree('/var/www/html/')
+            shutil.rmtree('/etc/certs/')
+        except OSError, error:
+            if error.errno == errno.ENOENT:
+                pass
+            else:
+                print "error:", error
         # os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
 
 

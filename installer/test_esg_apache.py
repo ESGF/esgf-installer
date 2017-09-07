@@ -12,9 +12,9 @@ with open('esg_config.yaml', 'r') as config_file:
 
 class test_ESG_apache(unittest.TestCase):
 
-    @classmethod
-    def tearDownClass(cls):
-        esg_functions.stream_subprocess_output("yum remove -y httpd")
+    # @classmethod
+    # def tearDownClass(cls):
+    #     esg_functions.stream_subprocess_output("yum remove -y httpd")
 
     def test_install_apache_httpd(self):
         esg_apache_manager.install_apache_httpd()
@@ -22,6 +22,8 @@ class test_ESG_apache(unittest.TestCase):
         print "output:", output
         self.assertIsNotNone(output)
 
+
+        esg_apache_manager.install_mod_wsgi()
         self.assertTrue(os.path.isfile("/etc/httpd/modules/mod_wsgi-py27.so"))
 
 

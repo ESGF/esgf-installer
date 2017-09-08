@@ -38,7 +38,7 @@ class test_ESG_postgres(unittest.TestCase):
         conn2 = esg_postgres.connect_to_db("postgres","testuser")
         cur2 = conn2.cursor()
         cur2.execute("""SELECT datname from pg_database;""")
-        rows = cur.fetchall()
+        rows = cur2.fetchall()
         print "\nRows: \n"
         print rows
         self.assertIsNotNone(rows)

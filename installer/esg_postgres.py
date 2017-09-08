@@ -52,7 +52,7 @@ def set_pg_sys_account_password():
         with open(config["pg_secret_file"], "w") as secret_file:
             secret_file.write(config["pg_sys_acct_passwd"])
 
-        ''' Change pg_secret_file permissions'''
+        #Change pg_secret_file permissions
         if os.path.isfile(config["pg_secret_file"]):
             os.chmod(config["pg_secret_file"], 0640)
             tomcat_group_id = grp.getgrnam(config["tomcat_group"]).gr_gid
@@ -378,3 +378,9 @@ def postgres_clean_schema_migration(repository_id):
             cur.execute("delete from esgf_migrate_version where repository_id LIKE '%$%s%'", repository_id)
     except Exception, error:
         print "error: ", error
+
+def main():
+    setup_postgres()
+
+if __name__ == '__main__':
+    main()

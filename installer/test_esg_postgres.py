@@ -24,6 +24,18 @@ class test_ESG_postgres(unittest.TestCase):
         print rows
         self.assertIsNotNone(rows)
 
+    def test_add_user_to_db(self):
+        conn = esg_postgres.connect_to_db("postgres","postgres")
+        cur = conn.cursor()
+        cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
+
+        conn2 = esg_postgres.connect_to_db("postgres","dbsuper")
+        cur2 = conn2.cursor()
+        cur2.execute("""SELECT datname from pg_database;""")
+        rows = cur.fetchall()
+        print "\nRows: \n"
+        print rows
+        self.assertIsNotNone(rows)
 
 if __name__ == '__main__':
     unittest.main()

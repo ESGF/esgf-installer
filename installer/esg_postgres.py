@@ -314,9 +314,10 @@ def setup_db_schemas():
     cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
     # # create 'esgcet' user
     # su --login - postgres --command "psql -c \"CREATE USER esgcet PASSWORD 'changeit';\""
-    cur.execute("CREATE USER esgcet PASSWORD 'changeit';")
+    cur.execute("CREATE USER esgcet PASSWORD 'password';")
     # # create CoG database
     # su --login - postgres --command "psql -c \"CREATE DATABASE cogdb;\""
+    cur.execute("CREATE DATABASE cogdb;")
     # # create ESGF database
     # su --login - postgres --command "psql -c \"CREATE DATABASE esgcet;\""
     # # load ESGF schemas

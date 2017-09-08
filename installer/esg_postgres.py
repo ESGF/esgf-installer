@@ -132,10 +132,19 @@ def restart_postgres():
 
 def connect_to_db(db_name, user):
     ''' Connect to database '''
+    #Using password auth currently;
+    #TODO: attemtping to login postgres system account fails.  Might to use os.seteuid({postgres_user_id})
+    #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
+    #Essentially change user from root to postgres
+    if user == "postgres":
+        root_id = pwd.getpwnam("root").pw_uid
+        postgres_id = pwd.getpwnam("postgres").pw_uid
+
+        os.seteuid(postgres_id)
     try:
-        conn=psycopg2.connect("dbname={db_name} user={user} host='localhost' password='password'".format(db_name=db_name, user=user))
+        conn = psycopg2.connect("dbname={db_name} user={user} host='localhost'".format(db_name=db_name, user=user))
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
-    except Exception, error:
+    except psycopg2.OperationalError, error:
         logger.error(error)
         print "error: ", error
         print "I am unable to connect to the database."
@@ -291,6 +300,8 @@ def setup_postgres(force_install = False):
 def stop_postgress():
     esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
 
+def setup_db_schemas():
+    pass
 
 def backup_db():
     pass

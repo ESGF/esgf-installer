@@ -136,8 +136,8 @@ def connect_to_db(db_name, user):
     #TODO: attemtping to login postgres system account fails.  Might to use os.seteuid({postgres_user_id})
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
     #Essentially change user from root to postgres
+    root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
-        root_id = pwd.getpwnam("root").pw_uid
         postgres_id = pwd.getpwnam("postgres").pw_uid
 
         os.seteuid(postgres_id)

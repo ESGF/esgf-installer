@@ -28,7 +28,10 @@ class test_ESG_postgres(unittest.TestCase):
     def test_add_user_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
-        cur.execute("CREATE USER testuser with CREATEROLE superuser PASSWORD 'password';")
+        try:
+            cur.execute("CREATE USER testuser with CREATEROLE superuser PASSWORD 'password';")
+        except Exception, error:
+            print "error:", error
         cur.commit()
         conn.close()
 

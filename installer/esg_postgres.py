@@ -152,7 +152,7 @@ def connect_to_db(db_name, user):
 
     #Set effective user id (euid) back to root
     if os.geteuid() != root_id:
-        os.seteuid(postgres_id)
+        os.seteuid(root_id)
 
     return conn
 

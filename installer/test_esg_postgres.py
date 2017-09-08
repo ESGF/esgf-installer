@@ -57,5 +57,10 @@ class test_ESG_postgres(unittest.TestCase):
         print users
         self.assertIsNotNone(users)
 
+    def test_list_schemas(self):
+        output = esg_postgres.postgres_list_db_schemas("postgres")
+        self.assertIsNotNone(output)
+
+
 if __name__ == '__main__':
     unittest.main()

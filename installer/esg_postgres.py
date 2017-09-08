@@ -320,13 +320,19 @@ def setup_db_schemas():
     cur.execute("CREATE DATABASE cogdb;")
     # # create ESGF database
     # su --login - postgres --command "psql -c \"CREATE DATABASE esgcet;\""
+    cur.execute("CREATE DATABASE esgcet;")
     # # load ESGF schemas
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_esgcet.sql"
+    cur.execute("esgcet < sqldata/esgf_esgcet.sql")
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_node_manager.sql"
+    cur.execute("esgcet < sqldata/esgf_node_manager.sql")
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security.sql"
+    cur.execute("esgcet < sqldata/esgf_security.sql")
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_dashboard.sql"
+    cur.execute("esgcet < sqldata/esgf_dashboard.sql")
     # # load ESGF data
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
+    cur.execute("esgcet < sqldata/esgf_security_data.sql")
     # # list database users
     # su --login - postgres --command "psql -c \"\du;\""
     # # initialize migration table
@@ -363,9 +369,9 @@ def _choose_postgres_user_password():
 def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
-def postgres_list_db_schemas():
+def postgres_list_db_schemas(db_name):
     # This prints a list of all schemas known to postgres.
-    conn = connect_to_db("postgres", "dbsuper")
+    conn = connect_to_db("postgres", db_name)
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")

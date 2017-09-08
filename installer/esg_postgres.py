@@ -144,7 +144,7 @@ def connect_to_db(db_name, user):
     try:
         conn = psycopg2.connect("dbname={db_name} user={user} host='localhost'".format(db_name=db_name, user=user))
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
-    except psycopg2.OperationalError, error:
+    except Exception, error:
         logger.error(error)
         print "error: ", error
         print "I am unable to connect to the database."

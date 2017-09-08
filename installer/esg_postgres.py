@@ -144,17 +144,17 @@ def connect_to_db(db_name, user):
     try:
         conn = psycopg2.connect("dbname={db_name} user={user} host='localhost'".format(db_name=db_name, user=user))
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
+
+        #Set effective user id (euid) back to root
+        if os.geteuid() != root_id:
+            os.seteuid(root_id)
+
+        return conn
     except Exception, error:
         logger.error(error)
         print "error: ", error
         print "I am unable to connect to the database."
         esg_functions.exit_with_error(1)
-
-    #Set effective user id (euid) back to root
-    if os.geteuid() != root_id:
-        os.seteuid(root_id)
-
-    return conn
 
 def check_for_postgres_db_user():
     ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''

@@ -19,6 +19,7 @@ class test_ESG_postgres(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         conn = esg_postgres.connect_to_db("postgres","postgres")
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         cur.execute("DROP USER testuser;")
         cur.execute("DROP DATABASE IF EXISTS unittestdb;")

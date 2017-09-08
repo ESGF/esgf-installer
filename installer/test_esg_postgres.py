@@ -15,9 +15,20 @@ class test_ESG_postgres(unittest.TestCase):
     #     esg_postgres.stop_postgress()
     #     esg_postgres.check_for_postgres_db_user()
 
+    @classmethod
+    def tearDownClass(cls):
+        conn = esg_postgres.connect_to_db("postgres","postgres")
+        cur = conn.cursor()
+        cur.execute("DROP USER testuser;")
+        cur.execute("DROP DATABASE [IF EXISTS] unittestdb;")
+
     def test_connect_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
+        try:
+            cur.execute("CREATE DATABASE unittestdb;")
+        except Exception, error:
+            print "error:", error
         cur.execute("""SELECT datname from pg_database;""")
         rows = cur.fetchall()
         print "\nRows: \n"
@@ -38,10 +49,10 @@ class test_ESG_postgres(unittest.TestCase):
         conn2 = esg_postgres.connect_to_db("postgres","testuser")
         cur2 = conn2.cursor()
         cur2.execute("""SELECT usename FROM pg_user;""")
-        rows = cur2.fetchall()
+        users = cur2.fetchall()
         print "\nUsers: \n"
-        print rows
-        self.assertIsNotNone(rows)
+        print users
+        self.assertIsNotNone(users)
 
 if __name__ == '__main__':
     unittest.main()

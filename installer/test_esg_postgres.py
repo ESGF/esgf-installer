@@ -23,11 +23,14 @@ class test_ESG_postgres(unittest.TestCase):
         print "\nRows: \n"
         print rows
         self.assertIsNotNone(rows)
+        conn.close()
 
     def test_add_user_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
         cur.execute("CREATE USER testuser with CREATEROLE superuser PASSWORD 'password';")
+        cur.commit()
+        conn.close()
 
         conn2 = esg_postgres.connect_to_db("postgres","testuser")
         cur2 = conn2.cursor()

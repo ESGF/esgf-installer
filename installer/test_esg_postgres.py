@@ -4,6 +4,7 @@ import unittest
 import esg_postgres
 import os
 import yaml
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
@@ -20,10 +21,11 @@ class test_ESG_postgres(unittest.TestCase):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
         cur.execute("DROP USER testuser;")
-        cur.execute("DROP DATABASE [IF EXISTS] unittestdb;")
+        cur.execute("DROP DATABASE IF EXISTS unittestdb;")
 
     def test_connect_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         try:
             cur.execute("CREATE DATABASE unittestdb;")

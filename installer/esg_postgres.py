@@ -151,8 +151,9 @@ def connect_to_db(db_name, user):
         esg_functions.exit_with_error(1)
 
     #Set effective user id (euid) back to root
-    os.seteuid(postgres_id)
-    
+    if os.geteuid() != root_id:
+        os.seteuid(postgres_id)
+
     return conn
 
 def check_for_postgres_db_user():
@@ -304,6 +305,31 @@ def stop_postgress():
     esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
 
 def setup_db_schemas():
+    conn = connect_to_db("postgres", "postgres")
+    cur = conn.cursor()
+
+
+    # create super user
+    # su --login - postgres --command "psql -c \"CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'changeit';\""
+    cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
+    # # create 'esgcet' user
+    # su --login - postgres --command "psql -c \"CREATE USER esgcet PASSWORD 'changeit';\""
+    cur.execute("CREATE USER esgcet PASSWORD 'changeit';")
+    # # create CoG database
+    # su --login - postgres --command "psql -c \"CREATE DATABASE cogdb;\""
+    # # create ESGF database
+    # su --login - postgres --command "psql -c \"CREATE DATABASE esgcet;\""
+    # # load ESGF schemas
+    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_esgcet.sql"
+    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_node_manager.sql"
+    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security.sql"
+    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_dashboard.sql"
+    # # load ESGF data
+    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
+    # # list database users
+    # su --login - postgres --command "psql -c \"\du;\""
+    # # initialize migration table
+    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"
     pass
 
 def backup_db():

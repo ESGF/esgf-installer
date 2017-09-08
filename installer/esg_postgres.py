@@ -145,7 +145,7 @@ def connect_to_db(db_name, user):
 
 def check_for_postgres_db_user():
     ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''
-    check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='{postgress_user}'" postgres | tail -n +3 | head -n 1'''.format(postgress_user=config["postgress_user"])
+    check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='{postgress_user}'" postgres'''.format(postgress_user=config["postgress_user"])
     check_for_pg_user_output = esg_functions.call_subprocess(check_for_pg_user_command)
     print "check_for_postgres_db_user: ", check_for_pg_user_output
     count = int(check_for_pg_user_output["stdout"].strip().split("\n")[-2].strip())
@@ -252,7 +252,7 @@ def setup_postgres(force_install = False):
 
         #start the postgres server
         start_postgres()
-        check_for_postgres_db_user()
+        # check_for_postgres_db_user()
         # connect_to_db()
         with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "9.6", "data")):
             download_config_files(force_install)

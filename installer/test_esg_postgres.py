@@ -21,9 +21,8 @@ class test_ESG_postgres(unittest.TestCase):
         cur.execute("""SELECT datname from pg_database;""")
         rows = cur.fetchall()
         print "\nRows: \n"
-        for row in rows:
-            print "   ", row[1]
-        assertIsNotNone(rows)
+        print rows
+        self.assertIsNotNone(rows)
 
 
 if __name__ == '__main__':

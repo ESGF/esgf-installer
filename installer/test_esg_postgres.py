@@ -32,7 +32,7 @@ class test_ESG_postgres(unittest.TestCase):
             cur.execute("CREATE USER testuser with CREATEROLE superuser PASSWORD 'password';")
         except Exception, error:
             print "error:", error
-        cur.commit()
+        conn.commit()
         conn.close()
 
         conn2 = esg_postgres.connect_to_db("postgres","testuser")

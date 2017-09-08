@@ -150,6 +150,9 @@ def connect_to_db(db_name, user):
         print "I am unable to connect to the database."
         esg_functions.exit_with_error(1)
 
+    #Set effective user id (euid) back to root
+    os.seteuid(postgres_id)
+    
     return conn
 
 def check_for_postgres_db_user():

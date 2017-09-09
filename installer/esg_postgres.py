@@ -381,10 +381,10 @@ def postgres_list_db_schemas(user_name, db_name):
     except Exception, error:
         print "error:", error
 
-def postgres_list_schemas_tables():
+def postgres_list_schemas_tables(user_name, db_name):
     # List all Postgres tables in all schemas, in the schemaname.tablename
     # format, in the ESGF database
-    conn = connect_to_db("postgres", "dbsuper")
+    conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
@@ -404,6 +404,16 @@ def postgres_list_dbs():
         return databases
     except Exception, error:
         print "error: ", error
+
+def list_users(user_name, db_name):
+    conn = connect_to_db(user_name, db_name)
+    cur = conn.cursor()
+    cur2.execute("""SELECT usename FROM pg_user;""")
+    users = cur2.fetchall()
+    user_list = [user[0] for user in users ]
+    conn.close()
+    return user_list
+
 
 
 def postgres_clean_schema_migration(repository_id):

@@ -119,7 +119,7 @@ class test_ESG_postgres(unittest.TestCase):
             # print "schema_tables after: ", schema_tables
         except Exception, error:
             print 'error:', error
-        self.assertIsNone(after_tables_list)
+        self.assertIsNotNone(after_tables_list)
 
 
 

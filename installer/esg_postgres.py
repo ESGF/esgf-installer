@@ -399,7 +399,7 @@ def postgres_list_dbs():
     conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
-        cur.execute("SELECT datname FROM pg_database;")
+        cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
         databases = cur.fetchall()
         return databases
     except Exception, error:

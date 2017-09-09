@@ -19,7 +19,7 @@ class test_ESG_postgres(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         conn = esg_postgres.connect_to_db("postgres","postgres")
-        users_list = esg_postgres.list_users()
+        users_list = esg_postgres.list_users("postgres","postgres")
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         if "testuser" in users_list:

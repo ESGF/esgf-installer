@@ -408,8 +408,8 @@ def postgres_list_dbs():
 def list_users(user_name, db_name):
     conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
-    cur2.execute("""SELECT usename FROM pg_user;""")
-    users = cur2.fetchall()
+    cur.execute("""SELECT usename FROM pg_user;""")
+    users = cur.fetchall()
     user_list = [user[0] for user in users ]
     conn.close()
     return user_list

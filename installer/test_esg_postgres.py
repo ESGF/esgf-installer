@@ -66,7 +66,8 @@ class test_ESG_postgres(unittest.TestCase):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
         try:
-            cur.execute("postgres < sqldata/esgf_esgcet.sql")
+            # cur.execute("postgres < sqldata/esgf_esgcet.sql")
+            cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
             output = esg_postgres.postgres_list_db_schemas("postgres")
             print "output after add schema:", output
         except Exception, error:

@@ -23,6 +23,7 @@ class test_ESG_postgres(unittest.TestCase):
         cur = conn.cursor()
         cur.execute("DROP USER testuser;")
         cur.execute("DROP DATABASE IF EXISTS unittestdb;")
+        conn.close()
 
     def test_connect_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
@@ -60,6 +61,15 @@ class test_ESG_postgres(unittest.TestCase):
     def test_list_schemas(self):
         output = esg_postgres.postgres_list_db_schemas("postgres")
         self.assertIsNotNone(output)
+
+    def test_add_schema_from_file(self):
+        conn = esg_postgres.connect_to_db("postgres","postgres")
+        cur = conn.cursor()
+        try:
+            cur.execute("postgres < sqldata/esgf_esgcet.sql")
+        except Exception, error:
+            print 'error:', error
+
 
 
 if __name__ == '__main__':

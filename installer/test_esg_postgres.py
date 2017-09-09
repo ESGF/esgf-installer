@@ -102,19 +102,24 @@ class test_ESG_postgres(unittest.TestCase):
             # print "schema_tables: ", schema_tables
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
             tables = cur2.fetchall()
-            print "tables before:", tables
+            before_tables_list = [table[1]  for table in tables if table[0] == 'public']
+            print "tables before:", before_tables_list
+            print "tables before length:", len(before_tables_list)
             cur2.execute(open("sqldata/esgf_esgcet.sql", "r").read())
             # conn.commit()
 
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
             tables = cur2.fetchall()
-            print "tables after:", tables
+            after_tables_list = [table[1] for table in tables if table[0] == 'public']
+            print "tables after:", after_tables_list
+            print "tables after length:", len(after_tables_list)
             # output = esg_postgres.postgres_list_db_schemas("esgcet", "esgcet")
             # print "output after add schema:", output
             # schema_tables = esg_postgres.postgres_list_schemas_tables("esgcet", "esgcet")
             # print "schema_tables after: ", schema_tables
         except Exception, error:
             print 'error:', error
+        self.assertIsNone(after_tables_list)
 
 
 

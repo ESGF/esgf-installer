@@ -369,9 +369,9 @@ def _choose_postgres_user_password():
 def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
-def postgres_list_db_schemas(db_name):
+def postgres_list_db_schemas(user_name, db_name):
     # This prints a list of all schemas known to postgres.
-    conn = connect_to_db("postgres", db_name)
+    conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")

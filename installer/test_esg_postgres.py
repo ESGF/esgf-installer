@@ -98,13 +98,21 @@ class test_ESG_postgres(unittest.TestCase):
         cur2 = conn2.cursor()
         try:
             # cur.execute("postgres < sqldata/esgf_esgcet.sql")
-            schema_tables = esg_postgres.postgres_list_schemas_tables("esgcet", "esgcet")
-            print "schema_tables after: ", schema_tables
+            # schema_tables = esg_postgres.postgres_list_schemas_tables("esgcet", "esgcet")
+            # print "schema_tables: ", schema_tables
+            cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
+            tables = cur2.fetchall
+            print "tables before:", tables
             cur2.execute(open("sqldata/esgf_esgcet.sql", "r").read())
-            output = esg_postgres.postgres_list_db_schemas("esgcet", "esgcet")
-            print "output after add schema:", output
-            schema_tables = esg_postgres.postgres_list_schemas_tables("esgcet", "esgcet")
-            print "schema_tables after: ", schema_tables
+            conn.commit()
+
+            cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
+            tables = cur2.fetchall
+            print "tables after:", tables
+            # output = esg_postgres.postgres_list_db_schemas("esgcet", "esgcet")
+            # print "output after add schema:", output
+            # schema_tables = esg_postgres.postgres_list_schemas_tables("esgcet", "esgcet")
+            # print "schema_tables after: ", schema_tables
         except Exception, error:
             print 'error:', error
 

@@ -67,6 +67,8 @@ class test_ESG_postgres(unittest.TestCase):
         cur = conn.cursor()
         try:
             cur.execute("postgres < sqldata/esgf_esgcet.sql")
+            output = esg_postgres.postgres_list_db_schemas("postgres")
+            print "output after add schema:", output
         except Exception, error:
             print 'error:', error
 

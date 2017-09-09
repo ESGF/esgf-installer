@@ -66,6 +66,8 @@ class test_ESG_postgres(unittest.TestCase):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
         cur.execute("CREATE USER esgcet PASSWORD 'password';")
+        conn.commit()
+        conn.close()
 
         conn2 = esg_postgres.connect_to_db("postgres","esgcet")
         cur2 = conn2.cursor()

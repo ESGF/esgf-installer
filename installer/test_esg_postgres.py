@@ -59,16 +59,20 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(users)
 
     def test_list_schemas(self):
-        output = esg_postgres.postgres_list_db_schemas("postgres")
+        output = esg_postgres.postgres_list_db_schemas("postgres", "postgres")
         self.assertIsNotNone(output)
 
     def test_add_schema_from_file(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
+        cur.execute("CREATE USER esgcet PASSWORD 'password';")
+
+        conn2 = esg_postgres.connect_to_db("postgres","esgcet")
+        cur2 = conn2.cursor()
         try:
             # cur.execute("postgres < sqldata/esgf_esgcet.sql")
-            cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
-            output = esg_postgres.postgres_list_db_schemas("postgres")
+            cur2.execute(open("sqldata/esgf_esgcet.sql", "r").read())
+            output = esg_postgres.postgres_list_db_schemas("esgcet", "postgres")
             print "output after add schema:", output
         except Exception, error:
             print 'error:', error

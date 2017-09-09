@@ -65,16 +65,21 @@ class test_ESG_postgres(unittest.TestCase):
     def test_add_schema_from_file(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
-        cur.execute("CREATE USER esgcet PASSWORD 'password';")
+        try:
+            cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
+            cur.execute("CREATE USER esgcet PASSWORD 'password';")
+            cur.execute("CREATE DATABASE esgcet;")
+        except Exception, error:
+            print "error:", error
         conn.commit()
         conn.close()
 
-        conn2 = esg_postgres.connect_to_db("postgres","esgcet")
+        conn2 = esg_postgres.connect_to_db("esgcet","esgcet")
         cur2 = conn2.cursor()
         try:
             # cur.execute("postgres < sqldata/esgf_esgcet.sql")
             cur2.execute(open("sqldata/esgf_esgcet.sql", "r").read())
-            output = esg_postgres.postgres_list_db_schemas("esgcet", "postgres")
+            output = esg_postgres.postgres_list_db_schemas("esgcet", "esgcet")
             print "output after add schema:", output
         except Exception, error:
             print 'error:', error

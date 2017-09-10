@@ -370,23 +370,24 @@ def _choose_postgres_user_password():
 def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
-def postgres_list_db_schemas(conn=None, user_name="postgres", db_name="postgres"):
+def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres"):
     '''This prints a list of all schemas known to postgres.'''
     if not conn:
-        conn = connect_to_db(user_name, db_name)
+        conn = connect_to_db(db_name, user_name)
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")
         schemas = cur.fetchall()
-        print "schemas: ", schemas
-        return schemas
+        # print "schemas: ", schemas
+        schema_list = [schema[0] for schema in schemas ]
+        return schema_list
     except Exception, error:
         print "error:", error
 
-def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postgres"):
+def postgres_list_schemas_tables(conn=None, db_name="postgres", user_name="postgres"):
     '''List all Postgres tables in all schemas, in the schemaname.tablename format, in the ESGF database'''
     if not conn:
-        conn = connect_to_db(user_name, db_name)
+        conn = connect_to_db(db_name, user_name)
     cur = conn.cursor()
     try:
         cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
@@ -407,10 +408,10 @@ def postgres_list_dbs():
     except Exception, error:
         print "error: ", error
 
-def list_users(conn=None, user_name="postgres", db_name="postgres"):
+def list_users(conn=None, db_name="postgres", user_name="postgres"):
     '''List all users in database'''
     if not conn:
-        conn = connect_to_db(user_name, db_name)
+        conn = connect_to_db(db_name, user_name)
     cur = conn.cursor()
     cur.execute("""SELECT usename FROM pg_user;""")
     users = cur.fetchall()

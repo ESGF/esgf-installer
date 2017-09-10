@@ -120,6 +120,7 @@ def start_postgres():
         return True
 
 def postgres_status():
+    '''Checks the status of the postgres server'''
     status = esg_functions.call_subprocess("service postgresql-9.6 status")
     print "status:", status
     if "running" in status["stdout"]:
@@ -128,12 +129,12 @@ def postgres_status():
         return False
 
 def restart_postgres():
+    '''Restarts the postgres server'''
     esg_functions.call_subprocess("service postgresql-9.6 restart")
 
 def connect_to_db(db_name, user):
     ''' Connect to database '''
     #Using password auth currently;
-    #TODO: attemtping to login postgres system account fails.  Might to use os.seteuid({postgres_user_id})
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
     #Essentially change user from root to postgres
     root_id = pwd.getpwnam("root").pw_uid
@@ -300,45 +301,44 @@ def setup_postgres(force_install = False):
     # if not found_valid_version:
     #     upgrade
 
-
 def stop_postgress():
+    '''Stops the postgres server'''
     esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
 
 def setup_db_schemas():
+    '''Load ESGF schemas'''
     conn = connect_to_db("postgres", "postgres")
     cur = conn.cursor()
 
-
     # create super user
-    # su --login - postgres --command "psql -c \"CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'changeit';\""
     cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
-    # # create 'esgcet' user
-    # su --login - postgres --command "psql -c \"CREATE USER esgcet PASSWORD 'changeit';\""
+    # create 'esgcet' user
     cur.execute("CREATE USER esgcet PASSWORD 'password';")
-    # # create CoG database
-    # su --login - postgres --command "psql -c \"CREATE DATABASE cogdb;\""
+    # create CoG database
     cur.execute("CREATE DATABASE cogdb;")
-    # # create ESGF database
-    # su --login - postgres --command "psql -c \"CREATE DATABASE esgcet;\""
+    # create ESGF database
     cur.execute("CREATE DATABASE esgcet;")
-    # # load ESGF schemas
-    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_esgcet.sql"
+
+    # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
-    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_node_manager.sql"
     cur.execute(open("sqldata/esgf_node_manager.sql", "r").read())
-    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security.sql"
     cur.execute(open("sqldata/esgf_security.sql", "r").read())
-    # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_dashboard.sql"
     cur.execute(open("sqldata/esgf_dashboard.sql", "r").read())
+
+    # # list database users
+    list_users(conn=conn)
+
+    load_esgf_data(cur)
+
+
+def load_esgf_data(cur):
     # # load ESGF data
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
     cur.execute(open("sqldata/esgf_security_data.sql", "r").read())
-    # # list database users
 
     # # initialize migration table
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"
     cur.execute(open("sqldata/esgf_migrate_version.sql", "r").read())
-    pass
 
 def backup_db():
     pass
@@ -370,9 +370,10 @@ def _choose_postgres_user_password():
 def postgres_create_db(db_name):
     esg_functions.stream_subprocess_output("createdb -U {postgress_user} {db_name}".format(postgress_user=config["postgress_user"], db_name=db_name))
 
-def postgres_list_db_schemas(user_name, db_name):
-    # This prints a list of all schemas known to postgres.
-    conn = connect_to_db(user_name, db_name)
+def postgres_list_db_schemas(conn=None, user_name="postgres", db_name="postgres"):
+    '''This prints a list of all schemas known to postgres.'''
+    if not conn:
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")
@@ -382,10 +383,10 @@ def postgres_list_db_schemas(user_name, db_name):
     except Exception, error:
         print "error:", error
 
-def postgres_list_schemas_tables(user_name, db_name):
-    # List all Postgres tables in all schemas, in the schemaname.tablename
-    # format, in the ESGF database
-    conn = connect_to_db(user_name, db_name)
+def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postgres"):
+    '''List all Postgres tables in all schemas, in the schemaname.tablename format, in the ESGF database'''
+    if not conn:
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
@@ -396,7 +397,7 @@ def postgres_list_schemas_tables(user_name, db_name):
         print "error:", error
 
 def postgres_list_dbs():
-    # This prints a list of all databases known to postgres.
+    '''This prints a list of all databases known to postgres.'''
     conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
@@ -406,8 +407,8 @@ def postgres_list_dbs():
     except Exception, error:
         print "error: ", error
 
-#TODO: Make this accept a psycopg2 connection object
 def list_users(conn=None, user_name="postgres", db_name="postgres"):
+    '''List all users in database'''
     if not conn:
         conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()

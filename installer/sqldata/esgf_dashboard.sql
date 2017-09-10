@@ -462,7 +462,7 @@ CREATE TABLE esgf_dashboard.cmip5_fact_download (
 ALTER TABLE esgf_dashboard.cmip5_fact_download OWNER TO dbsuper;
 
 /* CMIP5 DATA MARTS */
-CREATE TABLE esgf_dashboard.cmip5_dmart_clients_host_time_geolocation (
+CREATE TABLE esgf_dashboard.cmip5_dmart_clients_time_geolocation (
    dmart_key bigserial PRIMARY KEY,
    total_size bigint,
    number_of_downloads bigint,

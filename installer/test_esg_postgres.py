@@ -75,7 +75,7 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(user_list)
 
     def test_list_schemas(self):
-        output = esg_postgres.postgres_list_db_schemas("postgres", "postgres")
+        output = esg_postgres.postgres_list_db_schemas(user_name="postgres", db_name="postgres")
         self.assertIsNotNone(output)
 
         conn = esg_postgres.connect_to_db("postgres","postgres")

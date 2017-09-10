@@ -127,6 +127,11 @@ class test_ESG_postgres(unittest.TestCase):
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
         print "schemas_list after:", schemas_list
         self.assertTrue("esgf_security" in schemas_list)
+
+        cur2.execute(open("sqldata/esgf_dashboard.sql", "r").read())
+        schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
+        print "schemas_list after:", schemas_list
+        self.assertTrue("esgf_dashboard" in schemas_list)
         conn.close()
         self.assertIsNotNone(after_tables_list)
 

@@ -323,20 +323,21 @@ def setup_db_schemas():
     cur.execute("CREATE DATABASE esgcet;")
     # # load ESGF schemas
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_esgcet.sql"
-    cur.execute("esgcet < sqldata/esgf_esgcet.sql")
+    cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_node_manager.sql"
-    cur.execute("esgcet < sqldata/esgf_node_manager.sql")
+    cur.execute(open("sqldata/esgf_node_manager.sql", "r").read())
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security.sql"
-    cur.execute("esgcet < sqldata/esgf_security.sql")
+    cur.execute(open("sqldata/esgf_security.sql", "r").read())
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_dashboard.sql"
-    cur.execute("esgcet < sqldata/esgf_dashboard.sql")
+    cur.execute(open("sqldata/esgf_dashboard.sql", "r").read())
     # # load ESGF data
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
-    cur.execute("esgcet < sqldata/esgf_security_data.sql")
+    cur.execute(open("sqldata/esgf_security_data.sql", "r").read())
     # # list database users
-    # su --login - postgres --command "psql -c \"\du;\""
+
     # # initialize migration table
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"
+    cur.execute(open("sqldata/esgf_migrate_version.sql", "r").read())
     pass
 
 def backup_db():
@@ -405,8 +406,10 @@ def postgres_list_dbs():
     except Exception, error:
         print "error: ", error
 
-def list_users(user_name, db_name):
-    conn = connect_to_db(user_name, db_name)
+#TODO: Make this accept a psycopg2 connection object
+def list_users(conn=None, user_name="postgres", db_name="postgres"):
+    if not conn:
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     cur.execute("""SELECT usename FROM pg_user;""")
     users = cur.fetchall()

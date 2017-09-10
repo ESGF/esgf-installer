@@ -105,6 +105,7 @@ class test_ESG_postgres(unittest.TestCase):
             before_tables_list = [table[1]  for table in tables if table[0] == 'public']
             print "tables before:", before_tables_list
             print "tables before length:", len(before_tables_list)
+
             cur2.execute(open("sqldata/esgf_esgcet.sql", "r").read())
 
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
@@ -114,6 +115,13 @@ class test_ESG_postgres(unittest.TestCase):
             print "tables after length:", len(after_tables_list)
         except Exception, error:
             print 'error:', error
+
+        schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
+        print "schemas_list before:", schemas_list
+        cur2.execute(open("sqldata/esgf_node_manager.sql", "r").read())
+        schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
+        print "schemas_list after:", schemas_list
+        self.assertTrue("esgf_node_manager" in schemas_list)
         conn.close()
         self.assertIsNotNone(after_tables_list)
 

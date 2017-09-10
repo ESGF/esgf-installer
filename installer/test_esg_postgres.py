@@ -19,7 +19,7 @@ class test_ESG_postgres(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         conn = esg_postgres.connect_to_db("postgres","postgres")
-        users_list = esg_postgres.list_users("postgres","postgres")
+        users_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         if "testuser" in users_list:
@@ -66,7 +66,7 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(users)
 
     def test_list_users(self):
-        user_list = esg_postgres.list_users("postgres", "postgres")
+        user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
         self.assertIsNotNone(user_list)
 
         conn = esg_postgres.connect_to_db("postgres","postgres")
@@ -79,7 +79,7 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(output)
 
     def test_add_schema_from_file(self):
-        user_list = esg_postgres.list_users("postgres", "postgres")
+        user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
         conn = esg_postgres.connect_to_db("postgres","postgres")
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()

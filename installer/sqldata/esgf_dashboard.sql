@@ -899,7 +899,7 @@ drop function if exists store_dashboard_queue() CASCADE;
 drop function if exists update_dashboard_queue() CASCADE;
 drop function if exists delete_dashboard_queue() CASCADE;
 drop function if exists update_url(integer);
-drop LANGUAGE if exists plpgsql;
+drop extension if exists plpgsql;
 
 --
 --Copy the rows of the access_logging table into the dashboard_queue table

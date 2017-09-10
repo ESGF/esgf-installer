@@ -131,7 +131,6 @@ class test_ESG_postgres(unittest.TestCase):
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
         print "schemas_list after:", schemas_list
         self.assertTrue("esgf_dashboard" in schemas_list)
-        conn.close()
         self.assertIsNotNone(after_tables_list)
 
         user_list = esg_postgres.list_users(conn=conn2)
@@ -140,6 +139,7 @@ class test_ESG_postgres(unittest.TestCase):
         user_list = esg_postgres.list_users(conn=conn2)
         print "user_list after load_esgf_data:", user_list
         self.assertTrue("admin" in user_list)
+        conn2.close()
 
 
 

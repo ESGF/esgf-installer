@@ -702,7 +702,7 @@ CREATE TABLE esgf_dashboard.obs4mips_fact_download (
 ALTER TABLE esgf_dashboard.obs4mips_fact_download OWNER TO dbsuper;
 
 /* OBS4MIPS DATA MARTS */
-CREATE TABLE esgf_dashboard.obs4mips_dmart_clients_host_time_geolocation (
+CREATE TABLE esgf_dashboard.obs4mips_dmart_clients_time_geolocation (
    dmart_key bigserial PRIMARY KEY,
    total_size bigint,
    number_of_downloads bigint,

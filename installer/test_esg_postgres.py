@@ -151,7 +151,7 @@ class test_ESG_postgres(unittest.TestCase):
 
     def test_create_pg_pass_file(self):
         esg_postgres.create_pg_pass_file()
-        self.assertTrue(os.path.isfile(os.join.path(os.environ["HOME"], ".pg_pass")))
+        self.assertTrue(os.path.isfile(os.path.join(os.environ["HOME"], ".pg_pass")))
 
 
 if __name__ == '__main__':

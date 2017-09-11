@@ -304,10 +304,12 @@ def setup_postgres(force_install = False):
     #     upgrade
 
 def create_pg_pass_file():
-    pg_pass_file_path = os.path.join(os.environ["HOME"],".pgpass")
+    '''Creates the file to store login passwords for psql'''
+    pg_pass_file_path = os.path.join(os.environ["HOME"], ".pgpass")
     with open(pg_pass_file_path, "w") as pg_pass_file:
         pg_pass_file.write('localhost:5432:cogdb:dbsuper:password')
-        pg_pass_file.write('localhost:5432:esgcet:dbsuper:password') 
+        pg_pass_file.write('localhost:5432:esgcet:dbsuper:password')
+    os.chmod(pg_pass_file_path, 0600)
 
 def stop_postgress():
     '''Stops the postgres server'''

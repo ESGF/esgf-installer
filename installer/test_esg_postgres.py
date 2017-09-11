@@ -18,6 +18,12 @@ class test_ESG_postgres(unittest.TestCase):
     #     esg_postgres.check_for_postgres_db_user()
 
     @classmethod
+    def setUpClass(cls):
+        esg_postgres.stop_postgress()
+        purge_postgres()
+        esg_postgres.download_postgres()
+
+    @classmethod
     def tearDownClass(cls):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         users_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")

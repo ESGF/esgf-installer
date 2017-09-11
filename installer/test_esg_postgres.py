@@ -5,6 +5,7 @@ import esg_postgres
 import os
 import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from esg_purge import purge_postgres
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
@@ -31,6 +32,8 @@ class test_ESG_postgres(unittest.TestCase):
         cur.execute("DROP DATABASE IF EXISTS unittestdb;")
         cur.execute("DROP DATABASE IF EXISTS esgcet;")
         conn.close()
+        purge_postgres()
+
 
     def test_connect_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")

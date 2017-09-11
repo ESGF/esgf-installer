@@ -237,13 +237,13 @@ def setup_postgres(force_install = False):
             default_continue_install = "N"
             continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
             if continue_install.lower() in ["no", 'n']:
+                print "Skipping installation."
                 return True
         elif not postgres_binary_path or not psql_path:
             print "Postgres not found on system"
     except OSError, error:
         logger.error(error)
 
-    
         backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
         if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
             backup_db()

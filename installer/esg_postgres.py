@@ -354,7 +354,7 @@ def setup_db_schemas(force_install):
     cur.execute(open("sqldata/esgf_dashboard.sql", "r").read())
 
     # # list database users
-    list_users(conn=conn)
+    print list_users(conn=conn)
 
     load_esgf_data(cur)
 

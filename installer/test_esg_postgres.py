@@ -133,13 +133,14 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertTrue("esgf_dashboard" in schemas_list)
         self.assertIsNotNone(after_tables_list)
 
-        user_list = esg_postgres.list_users(conn=conn2)
-        print "user_list before load_esgf_data:", user_list
-        esg_postgres.load_esgf_data(cur2)
-        user_list = esg_postgres.list_users(conn=conn2)
-        print "user_list after load_esgf_data:", user_list
-        self.assertTrue("admin" in user_list)
-        conn2.close()
+        # user_list = esg_postgres.list_users(conn=conn2)
+        # print "user_list before load_esgf_data:", user_list
+        # esg_postgres.load_esgf_data(cur2)
+        cur2.execute(open("sqldata/esgf_security_data.sql", "r").read())
+        roles_list = esg_postgres.list_roles(conn=conn2)
+        print "roles_list after load_esgf_data:", roles_list
+        self.assertTrue("admin" in roles_list)
+        # conn2.close()
 
 
 

@@ -379,7 +379,7 @@ def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres"
         cur.execute("select schema_name from information_schema.schemata;")
         schemas = cur.fetchall()
         # print "schemas: ", schemas
-        schema_list = [schema[0] for schema in schemas ]
+        schema_list = [schema[0] for schema in schemas]
         return schema_list
     except Exception, error:
         print "error:", error
@@ -415,9 +415,19 @@ def list_users(conn=None, db_name="postgres", user_name="postgres"):
     cur = conn.cursor()
     cur.execute("""SELECT usename FROM pg_user;""")
     users = cur.fetchall()
-    user_list = [user[0] for user in users ]
-    conn.close()
+    user_list = [user[0] for user in users]
+    # conn.close()
     return user_list
+
+def list_roles(conn=None, db_name="postgres", user_name="postgres"):
+    '''List all roles'''
+    if not conn:
+        conn = connect_to_db(db_name, user_name)
+    cur = conn.cursor()
+    cur.execute("""SELECT rolname FROM pg_roles;""")
+    roles = cur.fetchall()
+    roles_list = [role[0] for role in roles]
+    return roles_list
 
 
 

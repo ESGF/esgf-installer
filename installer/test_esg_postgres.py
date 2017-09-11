@@ -139,7 +139,11 @@ class test_ESG_postgres(unittest.TestCase):
         cur2.execute(open("sqldata/esgf_security_data.sql", "r").read())
         roles_list = esg_postgres.list_roles(conn=conn2)
         print "roles_list after load_esgf_data:", roles_list
-        self.assertTrue("admin" in roles_list)
+        cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
+        tables = cur2.fetchall()
+        after_tables_list = [table[1] for table in tables if table[0] == 'public']
+        print "tables after esgf_security_data:", after_tables_list
+        # self.assertTrue("admin" in roles_list)
         # conn2.close()
 
 

@@ -132,13 +132,14 @@ def restart_postgres():
     '''Restarts the postgres server'''
     esg_functions.call_subprocess("service postgresql-9.6 restart")
 
-def connect_to_db(db_name, user, host=None):
+def connect_to_db(user, db_name=None,  host=None):
     ''' Connect to database '''
     #Using password auth currently;
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
     #Essentially change user from root to postgres
     #TODO: This was only working for ident identification
     #TODO: to connect initially, will have to remove host from connection string.  Add params for host and password
+    #TODO: Create a helper function to build connection strings
     root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
         postgres_id = pwd.getpwnam("postgres").pw_uid
@@ -146,8 +147,10 @@ def connect_to_db(db_name, user, host=None):
         os.seteuid(postgres_id)
     if host is not None:
         db_connection_string = "dbname={db_name} user={user} host={host}".format(db_name=db_name, user=user, host=host)
-    else:
+    elif db_name is not None:
         db_connection_string = "dbname={db_name} user={user}".format(db_name=db_name, user=user)
+    else:
+        db_connection_string = "dbname={db_name}".format(db_name=db_name)
     try:
         conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
@@ -323,7 +326,7 @@ def stop_postgress():
 
 def setup_db_schemas():
     '''Load ESGF schemas'''
-    conn = connect_to_db("esgcet","postgres")
+    conn = connect_to_db("postgres")
     cur = conn.cursor()
 
     # create super user
@@ -334,6 +337,8 @@ def setup_db_schemas():
     cur.execute("CREATE DATABASE cogdb;")
     # create ESGF database
     cur.execute("CREATE DATABASE esgcet;")
+
+    #TODO: close connection here and connection to esgcet; or look up how to switch databases
 
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())

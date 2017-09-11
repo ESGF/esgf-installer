@@ -293,7 +293,7 @@ def setup_postgres(force_install = False):
         restart_postgres()
 
     #TODO: Set password for postgres user
-    setup_db_schemas()
+    setup_db_schemas(force_install)
     create_pg_pass_file()
 
     ''' function calls '''
@@ -325,7 +325,7 @@ def stop_postgress():
     '''Stops the postgres server'''
     esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
 
-def setup_db_schemas():
+def setup_db_schemas(force_install):
     '''Load ESGF schemas'''
     conn = connect_to_db("postgres")
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)

@@ -244,63 +244,63 @@ def setup_postgres(force_install = False):
     except OSError, error:
         logger.error(error)
 
-        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
-        if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
-            backup_db()
+    backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
+    if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
+        backup_db()
 
-        download_postgres()
+    download_postgres()
 
-        '''Create system account (postgres) if it doesn't exist '''
-        ########
-        #Create the system account for postgress to run as.
-        ########
-        pg_sys_acct_homedir = psql_path
-        pg_sys_acct_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-        if not pg_sys_acct_id:
-            print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct = config["pg_sys_acct"])
-            #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-            create_postgres_group()
-            set_pg_sys_account_password()
-            create_postgres_system_user(pg_sys_acct_homedir)
+    '''Create system account (postgres) if it doesn't exist '''
+    ########
+    #Create the system account for postgress to run as.
+    ########
+    pg_sys_acct_homedir = psql_path
+    pg_sys_acct_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+    if not pg_sys_acct_id:
+        print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct = config["pg_sys_acct"])
+        #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
+        create_postgres_group()
+        set_pg_sys_account_password()
+        create_postgres_system_user(pg_sys_acct_homedir)
 
-        else:
-            postgress_user_shell = get_postgres_user_shell()
-            if postgress_user_shell != "/bin/bash":
-                set_postgres_user_shell()
-        change_pg_install_dir_ownership()
-
-
-        initialize_postgres()
-
-        #start the postgres server
-        start_postgres()
-        # check_for_postgres_db_user()
-        # connect_to_db()
-        with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "9.6", "data")):
-            download_config_files(force_install)
-            update_port_in_config_file()
-            update_log_dir_in_config_file()
-            restart_postgres()
-
-        setup_db_schemas()
-        create_pg_pass_file()
-
-        ''' function calls '''
-        esg_functions.check_shmmax()
-        write_postgress_env()
-        write_postgress_install_log()
-        esg_functions.exit_with_error(0)
+    else:
+        postgress_user_shell = get_postgres_user_shell()
+        if postgress_user_shell != "/bin/bash":
+            set_postgres_user_shell()
+    change_pg_install_dir_ownership()
 
 
-    '''Check if managed_db'''
-    # db_properties = esg_setup.get_db_properties()
-    # if esg_setup._is_managed_db(db_properties):
-    #     return True
+    initialize_postgres()
 
-    '''Check if should perform upgrade'''
-    # upgrade  = None
-    # if not found_valid_version:
-    #     upgrade
+    #start the postgres server
+    start_postgres()
+    # check_for_postgres_db_user()
+    # connect_to_db()
+    with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "9.6", "data")):
+        download_config_files(force_install)
+        update_port_in_config_file()
+        update_log_dir_in_config_file()
+        restart_postgres()
+
+    setup_db_schemas()
+    create_pg_pass_file()
+
+    ''' function calls '''
+    esg_functions.check_shmmax()
+    write_postgress_env()
+    write_postgress_install_log()
+    esg_functions.exit_with_error(0)
+
+
+'''Check if managed_db'''
+# db_properties = esg_setup.get_db_properties()
+# if esg_setup._is_managed_db(db_properties):
+#     return True
+
+'''Check if should perform upgrade'''
+# upgrade  = None
+# if not found_valid_version:
+#     upgrade
 
 def create_pg_pass_file():
     '''Creates the file to store login passwords for psql'''

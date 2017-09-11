@@ -153,6 +153,9 @@ class test_ESG_postgres(unittest.TestCase):
         esg_postgres.create_pg_pass_file()
         self.assertTrue(os.path.isfile(os.path.join(os.environ["HOME"], ".pgpass")))
 
+    def test_setup_postgres(self):
+        esg_postgres.setup_postgres()
+
 
 if __name__ == '__main__':
     unittest.main()

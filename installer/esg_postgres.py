@@ -346,6 +346,7 @@ def setup_db_schemas():
     #TODO: move download_config_files() here
     download_config_files(force_install)
     conn = connect_to_db("postgres", db_name='esgcet')
+    cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
     cur.execute(open("sqldata/esgf_node_manager.sql", "r").read())

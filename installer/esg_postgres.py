@@ -132,18 +132,24 @@ def restart_postgres():
     '''Restarts the postgres server'''
     esg_functions.call_subprocess("service postgresql-9.6 restart")
 
-def connect_to_db(db_name, user):
+def connect_to_db(db_name, user, host=None):
     ''' Connect to database '''
     #Using password auth currently;
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
     #Essentially change user from root to postgres
+    #TODO: This was only working for ident identification
+    #TODO: to connect initially, will have to remove host from connection string.  Add params for host and password
     root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
         postgres_id = pwd.getpwnam("postgres").pw_uid
 
         os.seteuid(postgres_id)
+    if host is not None:
+        db_connection_string = "dbname={db_name} user={user} host={host}".format(db_name=db_name, user=user, host=host)
+    else:
+        db_connection_string = "dbname={db_name} user={user}".format(db_name=db_name, user=user)
     try:
-        conn = psycopg2.connect("dbname={db_name} user={user} host='localhost'".format(db_name=db_name, user=user))
+        conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
 
         #Set effective user id (euid) back to root
@@ -282,6 +288,7 @@ def setup_postgres(force_install = False):
         update_log_dir_in_config_file()
         restart_postgres()
 
+    #TODO: Set password for postgres user
     setup_db_schemas()
     create_pg_pass_file()
 

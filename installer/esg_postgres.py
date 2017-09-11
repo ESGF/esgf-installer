@@ -7,6 +7,7 @@ import esg_version_manager
 import esg_bash2py
 from time import sleep
 from distutils.spawn import find_executable
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import esg_logging_manager
 import yaml
 
@@ -150,7 +151,7 @@ def connect_to_db(user, db_name=None,  host=None):
     elif db_name is not None:
         db_connection_string = "dbname={db_name} user={user}".format(db_name=db_name, user=user)
     else:
-        db_connection_string = "dbname={db_name}".format(db_name=db_name)
+        db_connection_string = "user={user}".format(user=user)
     try:
         conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
@@ -286,7 +287,7 @@ def setup_postgres(force_install = False):
     # check_for_postgres_db_user()
     # connect_to_db()
     with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "9.6", "data")):
-        download_config_files(force_install)
+        # download_config_files(force_install)
         update_port_in_config_file()
         update_log_dir_in_config_file()
         restart_postgres()
@@ -327,6 +328,7 @@ def stop_postgress():
 def setup_db_schemas():
     '''Load ESGF schemas'''
     conn = connect_to_db("postgres")
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
     # create super user
@@ -339,7 +341,11 @@ def setup_db_schemas():
     cur.execute("CREATE DATABASE esgcet;")
 
     #TODO: close connection here and connection to esgcet; or look up how to switch databases
-
+    cur.close()
+    conn.close()
+    #TODO: move download_config_files() here
+    download_config_files(force_install)
+    conn = connect_to_db("postgres", db_name='esgcet')
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
     cur.execute(open("sqldata/esgf_node_manager.sql", "r").read())

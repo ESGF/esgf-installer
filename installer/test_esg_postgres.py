@@ -143,6 +143,9 @@ class test_ESG_postgres(unittest.TestCase):
         tables = cur2.fetchall()
         after_tables_list = [table[1] for table in tables if table[0] == 'public']
         print "tables after esgf_security_data:", after_tables_list
+
+        databases = esg_postgres.postgres_list_dbs(conn2)
+        print "databases after esgf_security_data:", databases
         # self.assertTrue("admin" in roles_list)
         # conn2.close()
 

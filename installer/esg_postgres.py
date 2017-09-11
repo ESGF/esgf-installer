@@ -397,14 +397,17 @@ def postgres_list_schemas_tables(conn=None, db_name="postgres", user_name="postg
     except Exception, error:
         print "error:", error
 
-def postgres_list_dbs():
+def postgres_list_dbs(conn=None, db_name="postgres", user_name="postgres"):
     '''This prints a list of all databases known to postgres.'''
-    conn = connect_to_db("postgres", "dbsuper")
+    if not conn:
+        conn = connect_to_db(db_name, user_name)
+    # conn = connect_to_db("postgres", "dbsuper")
     cur = conn.cursor()
     try:
         cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
         databases = cur.fetchall()
-        return databases
+        database_list = [database[0] for database in databases]
+        return database_list
     except Exception, error:
         print "error: ", error
 

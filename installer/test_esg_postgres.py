@@ -26,11 +26,12 @@ class test_ESG_postgres(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         conn = esg_postgres.connect_to_db("postgres","postgres")
-        users_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
+        users_list = esg_postgres.list_users(conn=conn)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
-        if "testuser" in users_list:
-            cur.execute("DROP USER testuser;")
+        cur.execute("DROP USER IF EXISTS testuser;")
+        # if "testuser" in users_list:
+        #     cur.execute("DROP USER testuser;")
         if "dbsuper" in users_list:
             cur.execute("DROP USER dbsuper;")
         if "esgcet" in users_list:

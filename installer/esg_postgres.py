@@ -275,6 +275,7 @@ def setup_postgres(force_install = False):
             restart_postgres()
 
         setup_db_schemas()
+        create_pg_pass_file()
 
         ''' function calls '''
         esg_functions.check_shmmax()

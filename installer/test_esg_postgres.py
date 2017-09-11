@@ -19,12 +19,18 @@ class test_ESG_postgres(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        print "\n*******************************"
+        print "Setting up ESGF Postgres Test Fixture"
+        print "******************************* \n"
         esg_postgres.stop_postgress()
         purge_postgres()
         esg_postgres.download_postgres()
 
     @classmethod
     def tearDownClass(cls):
+        print "\n*******************************"
+        print "Tearing down ESGF Postgres Test Fixture"
+        print "******************************* \n"
         conn = esg_postgres.connect_to_db("postgres","postgres")
         users_list = esg_postgres.list_users(conn=conn)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)

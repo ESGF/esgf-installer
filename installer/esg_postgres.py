@@ -220,7 +220,6 @@ def update_log_dir_in_config_file():
         grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 
-
 def setup_postgres(force_install = False):
     print "\n*******************************"
     print "Setting up Postgres"
@@ -228,9 +227,19 @@ def setup_postgres(force_install = False):
 
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
 
-
     postgres_binary_path = find_executable("postgres")
     psql_path = find_executable("psql")
+    try:
+        found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config["postgress_min_version"], version_command = "-V")
+        if found_valid_version and not force_install:
+            postgres_version_found = esg_functions.call_subprocess("postgres --version")
+            print postgres_version_found["stdout"]
+            default_continue_install = "N"
+            continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
+            if continue_install.lower() not in ["yes", 'y']:
+                return True
+    except OSError, error:
+        logger.error(error)
 
     if not postgres_binary_path or not psql_path:
         print "Postgres not found on system"
@@ -240,7 +249,6 @@ def setup_postgres(force_install = False):
             backup_db()
 
         download_postgres()
-
 
         '''Create system account (postgres) if it doesn't exist '''
         ########
@@ -282,16 +290,6 @@ def setup_postgres(force_install = False):
         write_postgress_env()
         write_postgress_install_log()
         esg_functions.exit_with_error(0)
-    else:
-        try:
-            found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config["postgress_min_version"], version_command = "-V")
-            if found_valid_version and not force_install:
-                print "Valid existing Postgres installation found. Skipping setup."
-                postgres_version_found = esg_functions.call_subprocess("postgres --version")
-                print postgres_version_found["stdout"]
-                return True
-        except OSError, error:
-            logger.error(error)
 
 
     '''Check if managed_db'''

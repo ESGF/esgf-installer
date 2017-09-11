@@ -149,7 +149,9 @@ class test_ESG_postgres(unittest.TestCase):
         # self.assertTrue("admin" in roles_list)
         # conn2.close()
 
-
+def test_create_pg_pass_file(self):
+    esg_postgres.create_pg_pass_file()
+    self.assertTrue(os.path.isfile(os.environ["HOME"], ".pg_pass"))
 
 
 if __name__ == '__main__':

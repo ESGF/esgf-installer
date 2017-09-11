@@ -274,6 +274,8 @@ def setup_postgres(force_install = False):
             update_log_dir_in_config_file()
             restart_postgres()
 
+        setup_db_schemas()
+
         ''' function calls '''
         esg_functions.check_shmmax()
         write_postgress_env()
@@ -301,13 +303,19 @@ def setup_postgres(force_install = False):
     # if not found_valid_version:
     #     upgrade
 
+def create_pg_pass_file():
+    pg_pass_file_path = os.path.join(os.environ["HOME"],".pgpass")
+    with open(pg_pass_file_path, "w") as pg_pass_file:
+        pg_pass_file.write('localhost:5432:cogdb:dbsuper:password')
+        pg_pass_file.write('localhost:5432:esgcet:dbsuper:password') 
+
 def stop_postgress():
     '''Stops the postgres server'''
     esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
 
 def setup_db_schemas():
     '''Load ESGF schemas'''
-    conn = connect_to_db("postgres", "postgres")
+    conn = connect_to_db("esgcet","postgres")
     cur = conn.cursor()
 
     # create super user

@@ -312,8 +312,12 @@ def setup_postgres(force_install = False):
     # connect_to_db()
     with esg_bash2py.pushd(os.path.join(config["postgress_install_dir"], "9.6", "data")):
         # download_config_files(force_install)
-        update_port_in_config_file()
-        update_log_dir_in_config_file()
+        # update_port_in_config_file()
+        # update_log_dir_in_config_file()
+        shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/9.6/data/postgresql.conf")
+        postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+        postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
+        os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
         with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
             hba_conf_file.write("local    all             postgres                         ident sameuser\n")
             hba_conf_file.write("local    all             all                         md5\n")
@@ -373,10 +377,6 @@ def setup_db_schemas(force_install):
     cur.close()
     conn.close()
     #TODO: move download_config_files() here
-    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/9.6/data/postgresql.conf")
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
-    os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
 
     # download_config_files(force_install)
     # esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")

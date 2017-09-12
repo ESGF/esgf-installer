@@ -22,6 +22,9 @@ def download_postgres():
     esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96")
 
 def initialize_postgres():
+    if os.path.isdir("/var/lib/pgsql/9.6/data"):
+        print "Data directory already exists. Skipping initialize_postgres()."
+        return
     esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")
     os.chmod(os.path.join(config["postgress_install_dir"], "9.6", "data"), 0700)
 
@@ -113,6 +116,8 @@ def create_postgres_log_dir():
 
 def start_postgres():
     ''' Start db '''
+    if not os.path.isdir("/var/lib/pgsql/9.6/data"):
+        initialize_postgres()
     esg_functions.stream_subprocess_output("service postgresql-9.6 start")
     esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")
 

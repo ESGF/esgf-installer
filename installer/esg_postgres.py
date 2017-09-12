@@ -1,6 +1,7 @@
 import os
 import grp
 import pwd
+import shutil
 import psycopg2
 import esg_functions
 import esg_version_manager
@@ -255,7 +256,7 @@ def setup_postgres(force_install = False):
     postgres_binary_path = find_executable("postgres")
     psql_path = find_executable("psql")
 
-    if not postgres_binary_path or not psql_path:
+    if not psql_path:
         print "Postgres not found on system"
     else:
         try:
@@ -363,8 +364,15 @@ def setup_db_schemas(force_install):
     cur.close()
     conn.close()
     #TODO: move download_config_files() here
-    download_config_files(force_install)
-    conn = connect_to_db("postgres", db_name='esgcet')
+    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/9.6/data/postgresql.conf")
+    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+    postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
+    os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
+
+    with open("/var/lib/pgsql/9.6/data/pg_hba.conf") as hba_conf_file:
+        hba_conf_file.write("host    all             all             0.0.0.0/0               md5")
+    # download_config_files(force_install)
+    conn = connect_to_db("esgfcet", db_name='esgcet', host="localhost", password="password")
     cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
@@ -377,6 +385,8 @@ def setup_db_schemas(force_install):
 
     load_esgf_data(cur)
 
+    # IMPORTANT: change connections to require encrypted password
+    esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
 
 def load_esgf_data(cur):
     # # load ESGF data

@@ -5,9 +5,6 @@
 # esg_publisher.py: 17
 GitPython == 2.1.1
 
-# esg_setup.py: 976
-cdat_info == 0.0.0
-
 # esg_logging_manager.py: 2
 coloredlogs == 7.1
 

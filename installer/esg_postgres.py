@@ -9,6 +9,7 @@ from time import sleep
 from distutils.spawn import find_executable
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import esg_logging_manager
+import semver
 import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -165,6 +166,7 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
 
         os.seteuid(postgres_id)
     db_connection_string = build_connection_string(user, db_name, host, password)
+    print "db_connection_string: ", db_connection_string
     try:
         conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
@@ -252,20 +254,24 @@ def setup_postgres(force_install = False):
 
     postgres_binary_path = find_executable("postgres")
     psql_path = find_executable("psql")
-    try:
-        found_valid_version = esg_version_manager.check_for_acceptible_version(postgres_binary_path, config["postgress_min_version"], version_command = "-V")
-        if found_valid_version and not force_install:
-            postgres_version_found = esg_functions.call_subprocess("postgres --version")
-            print postgres_version_found["stdout"]
-            default_continue_install = "N"
-            continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
-            if continue_install.lower() in ["no", 'n']:
-                print "Skipping installation."
-                return True
-        elif not postgres_binary_path or not psql_path:
-            print "Postgres not found on system"
-    except OSError, error:
-        logger.error(error)
+
+    if not postgres_binary_path or not psql_path:
+        print "Postgres not found on system"
+    else:
+        try:
+            postgres_version_found = esg_functions.call_subprocess("psql --version")
+            print "postgres version number: ", postgres_version_found["stdout"].split(" ")[0]
+            if semver.compare(postgres_version_found["stdout"].split(" ")[0], config["postgress_min_version"]) >= 1 and not force_install:
+                # postgres_version_found = esg_functions.call_subprocess("psql --version")
+                # print postgres_version_found["stdout"]
+                default_continue_install = "N"
+                continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
+                if continue_install.lower() in ["no", 'n']:
+                    print "Skipping installation."
+                    return True
+            # elif
+        except OSError, error:
+            logger.error(error)
 
     backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
     if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":

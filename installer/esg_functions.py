@@ -736,3 +736,13 @@ def change_permissions_recursive(directory_path, uid=None, gid=None):
                 os.chown(os.path.join(root, name), uid, gid)
             except OSError, error:
                 logger.error(error)
+
+def replace_string_in_file(file_name, original_string, new_string):
+    '''Goes into a file and replaces string'''
+    with open(file_name, 'r') as file_handle:
+        filedata = file_handle.read()
+    filedata = filedata.replace(original_string, new_string)
+
+    # Write the file out again
+    with open(file_name, 'w') as file_handle:
+        file_handle.write(filedata)

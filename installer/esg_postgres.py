@@ -22,7 +22,7 @@ def download_postgres():
     esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96")
 
 def initialize_postgres():
-    if os.path.isdir("/var/lib/pgsql/9.6/data"):
+    if os.listdir("/var/lib/pgsql/9.6/data"):
         print "Data directory already exists. Skipping initialize_postgres()."
         return
     esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")

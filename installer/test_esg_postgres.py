@@ -113,7 +113,7 @@ class test_ESG_postgres(unittest.TestCase):
         conn.commit()
         conn.close()
 
-        conn2 = esg_postgres.connect_to_db("esgcet","postgres")
+        conn2 = esg_postgres.connect_to_db("esgcet", db_name="esgcet")
         cur2 = conn2.cursor()
         try:
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
@@ -171,7 +171,15 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(os.environ["HOME"], ".pgpass")))
 
     def test_setup_postgres(self):
+        '''Tests the entire postgres setup; Essentially an integration test'''
         esg_postgres.setup_postgres()
+
+    def test_build_connection_string(self):
+        test_connection_string = esg_postgres.build_connection_string("postgres", db_name="postgres", host="localhost")
+        print "test_connection_string:", test_connection_string
+        self.assertIsNotNone(test_connection_string)
+
+
 
 
 if __name__ == '__main__':

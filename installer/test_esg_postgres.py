@@ -25,6 +25,7 @@ class test_ESG_postgres(unittest.TestCase):
         esg_postgres.stop_postgress()
         purge_postgres()
         esg_postgres.download_postgres()
+        esg_postgres.start_postgres()
 
     @classmethod
     def tearDownClass(cls):

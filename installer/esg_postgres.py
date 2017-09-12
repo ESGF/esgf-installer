@@ -164,12 +164,6 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
         postgres_id = pwd.getpwnam("postgres").pw_uid
 
         os.seteuid(postgres_id)
-    # if host is not None:
-    #     db_connection_string = "dbname={db_name} user={user} host={host}".format(db_name=db_name, user=user, host=host)
-    # elif db_name is not None:
-    #     db_connection_string = "dbname={db_name} user={user}".format(db_name=db_name, user=user)
-    # else:
-    #     db_connection_string = "user={user}".format(user=user)
     db_connection_string = build_connection_string(user, db_name, host, password)
     try:
         conn = psycopg2.connect(db_connection_string)

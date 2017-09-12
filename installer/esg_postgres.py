@@ -139,7 +139,19 @@ def restart_postgres():
     '''Restarts the postgres server'''
     esg_functions.call_subprocess("service postgresql-9.6 restart")
 
-def connect_to_db(user, db_name=None,  host=None):
+def build_connection_string(user,db_name=None, host=None, password=None):
+    '''Creates the db connection string using the params as options '''
+    db_connection_string = ["user={user}".format(user=user)]
+    if db_name:
+        db_connection_string.append("dbname={db_name}".format(db_name=db_name))
+    if host:
+        db_connection_string.append("host={host}".format(host=host))
+    if password:
+        db_connection_string.append("password={password}".format(password=password))
+
+    return " ".join(db_connection_string)
+
+def connect_to_db(user, db_name=None,  host=None, password=None):
     ''' Connect to database '''
     #Using password auth currently;
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
@@ -152,12 +164,13 @@ def connect_to_db(user, db_name=None,  host=None):
         postgres_id = pwd.getpwnam("postgres").pw_uid
 
         os.seteuid(postgres_id)
-    if host is not None:
-        db_connection_string = "dbname={db_name} user={user} host={host}".format(db_name=db_name, user=user, host=host)
-    elif db_name is not None:
-        db_connection_string = "dbname={db_name} user={user}".format(db_name=db_name, user=user)
-    else:
-        db_connection_string = "user={user}".format(user=user)
+    # if host is not None:
+    #     db_connection_string = "dbname={db_name} user={user} host={host}".format(db_name=db_name, user=user, host=host)
+    # elif db_name is not None:
+    #     db_connection_string = "dbname={db_name} user={user}".format(db_name=db_name, user=user)
+    # else:
+    #     db_connection_string = "user={user}".format(user=user)
+    db_connection_string = build_connection_string(user, db_name, host, password)
     try:
         conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)

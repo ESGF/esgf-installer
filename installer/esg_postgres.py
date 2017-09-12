@@ -116,7 +116,8 @@ def create_postgres_log_dir():
 
 def start_postgres():
     ''' Start db '''
-    if not os.path.isdir("/var/lib/pgsql/9.6/data"):
+    #if the data directory doesn't exist or is empty
+    if not os.path.isdir("/var/lib/pgsql/9.6/data/") or not os.listdir("/var/lib/pgsql/9.6/data/"):
         initialize_postgres()
     esg_functions.stream_subprocess_output("service postgresql-9.6 start")
     esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")

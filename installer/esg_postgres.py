@@ -372,6 +372,7 @@ def setup_db_schemas(force_install):
     with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "a") as hba_conf_file:
         hba_conf_file.write("host    all             all             0.0.0.0/0               md5")
     # download_config_files(force_install)
+    esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
     conn = connect_to_db("esgcet", db_name='esgcet', host="localhost", password="password")
     cur = conn.cursor()
     # load ESGF schemas

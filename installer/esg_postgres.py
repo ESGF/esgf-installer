@@ -140,6 +140,9 @@ def postgres_status():
 def restart_postgres():
     '''Restarts the postgres server'''
     esg_functions.call_subprocess("service postgresql-9.6 restart")
+    sleep(6)
+    postgres_status()
+
 
 def build_connection_string(user,db_name=None, host=None, password=None):
     '''Creates the db connection string using the params as options '''
@@ -373,7 +376,8 @@ def setup_db_schemas(force_install):
         hba_conf_file.write("local    all             postgres                         ident sameuser\n")
         hba_conf_file.write("local    all             all                         md5\n")
     # download_config_files(force_install)
-    esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
+    # esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
+    restart_postgres()
     conn = connect_to_db("esgcet", db_name='esgcet', password="password")
     cur = conn.cursor()
     # load ESGF schemas

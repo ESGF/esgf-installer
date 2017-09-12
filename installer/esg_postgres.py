@@ -370,8 +370,8 @@ def setup_db_schemas(force_install):
     os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
 
     with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                         ident sameuser")
-        hba_conf_file.write("local    all             all                         md5")
+        hba_conf_file.write("local    all             postgres                         ident sameuser\n")
+        hba_conf_file.write("local    all             all                         md5\n")
     # download_config_files(force_install)
     esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
     conn = connect_to_db("esgcet", db_name='esgcet', password="password")

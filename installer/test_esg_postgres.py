@@ -17,8 +17,38 @@ class test_ESG_postgres(unittest.TestCase):
     #     esg_postgres.stop_postgress()
     #     esg_postgres.check_for_postgres_db_user()
 
-    @classmethod
-    def setUpClass(cls):
+    # @classmethod
+    # def setUpClass(cls):
+    #     print "\n*******************************"
+    #     print "Setting up ESGF Postgres Test Fixture"
+    #     print "******************************* \n"
+    #     esg_postgres.stop_postgress()
+    #     purge_postgres()
+    #     esg_postgres.download_postgres()
+    #     esg_postgres.start_postgres()
+    #
+    # @classmethod
+    # def tearDownClass(cls):
+    #     print "\n*******************************"
+    #     print "Tearing down ESGF Postgres Test Fixture"
+    #     print "******************************* \n"
+    #     conn = esg_postgres.connect_to_db("postgres","postgres")
+    #     users_list = esg_postgres.list_users(conn=conn)
+    #     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    #     cur = conn.cursor()
+    #     cur.execute("DROP USER IF EXISTS testuser;")
+    #     # if "testuser" in users_list:
+    #     #     cur.execute("DROP USER testuser;")
+    #     if "dbsuper" in users_list:
+    #         cur.execute("DROP USER dbsuper;")
+    #     if "esgcet" in users_list:
+    #         cur.execute("DROP USER esgcet;")
+    #     cur.execute("DROP DATABASE IF EXISTS unittestdb;")
+    #     cur.execute("DROP DATABASE IF EXISTS esgcet;")
+    #     conn.close()
+    #     purge_postgres()
+
+    def test_setup(self):
         print "\n*******************************"
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
@@ -27,8 +57,7 @@ class test_ESG_postgres(unittest.TestCase):
         esg_postgres.download_postgres()
         esg_postgres.start_postgres()
 
-    @classmethod
-    def tearDownClass(cls):
+    def test_tear_down(self):
         print "\n*******************************"
         print "Tearing down ESGF Postgres Test Fixture"
         print "******************************* \n"
@@ -47,7 +76,6 @@ class test_ESG_postgres(unittest.TestCase):
         cur.execute("DROP DATABASE IF EXISTS esgcet;")
         conn.close()
         purge_postgres()
-
 
     def test_connect_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
@@ -173,6 +201,8 @@ class test_ESG_postgres(unittest.TestCase):
     def test_setup_postgres(self):
         '''Tests the entire postgres setup; Essentially an integration test'''
         esg_postgres.setup_postgres()
+
+        self.test_tear_down()
 
     def test_build_connection_string(self):
         test_connection_string = esg_postgres.build_connection_string("postgres", db_name="postgres", host="localhost")

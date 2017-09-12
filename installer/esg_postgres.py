@@ -131,7 +131,7 @@ def start_postgres():
 def postgres_status():
     '''Checks the status of the postgres server'''
     status = esg_functions.call_subprocess("service postgresql-9.6 status")
-    print "status:", status
+    print "Postgres server status:", status["stdout"]
     if "running" in status["stdout"]:
         return True
     else:
@@ -139,8 +139,9 @@ def postgres_status():
 
 def restart_postgres():
     '''Restarts the postgres server'''
+    print "Restarting postgres server"
     esg_functions.call_subprocess("service postgresql-9.6 restart")
-    sleep(6)
+    sleep(7)
     postgres_status()
 
 
@@ -313,6 +314,9 @@ def setup_postgres(force_install = False):
         # download_config_files(force_install)
         update_port_in_config_file()
         update_log_dir_in_config_file()
+        with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
+            hba_conf_file.write("local    all             postgres                         ident sameuser\n")
+            hba_conf_file.write("local    all             all                         md5\n")
         restart_postgres()
 
     #TODO: Set password for postgres user
@@ -363,6 +367,8 @@ def setup_db_schemas(force_install):
     # create ESGF database
     cur.execute("CREATE DATABASE esgcet;")
 
+    print list_users(conn=conn)
+
     #TODO: close connection here and connection to esgcet; or look up how to switch databases
     cur.close()
     conn.close()
@@ -372,12 +378,9 @@ def setup_db_schemas(force_install):
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
     os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
 
-    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                         ident sameuser\n")
-        hba_conf_file.write("local    all             all                         md5\n")
     # download_config_files(force_install)
     # esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
-    restart_postgres()
+    # restart_postgres()
     conn = connect_to_db("esgcet", db_name='esgcet', password="password")
     cur = conn.cursor()
     # load ESGF schemas

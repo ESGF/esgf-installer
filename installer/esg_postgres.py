@@ -260,9 +260,9 @@ def setup_postgres(force_install = False):
         print "Postgres not found on system"
     else:
         try:
-            postgres_version_found = esg_functions.call_subprocess("psql --version")
-            print "postgres version number: ", postgres_version_found["stdout"].split(" ")[-1]
-            if semver.compare(postgres_version_found["stdout"].split(" ")[0], config["postgress_min_version"]) >= 1 and not force_install:
+            postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"].split(" ")[-1]
+            print "postgres version number: ", postgres_version_found
+            if semver.compare(postgres_version_found, config["postgress_min_version"]) >= 1 and not force_install:
                 # postgres_version_found = esg_functions.call_subprocess("psql --version")
                 # print postgres_version_found["stdout"]
                 default_continue_install = "N"

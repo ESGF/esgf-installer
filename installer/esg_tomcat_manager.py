@@ -116,12 +116,6 @@ def copy_config_files():
     shutil.copytree("certs/", "/esg/config/tomcat")
 
     shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
-# COPY conf/server.xml /usr/local/tomcat/conf/server.xml
-# COPY conf/context.xml /usr/local/tomcat/conf/context.xml
-# COPY certs/ /esg/config/tomcat/
-#
-# # custom env variables for starting Tomcat
-# COPY conf/setenv.sh $CATALINA_HOME/bin
 #
 def create_tomcat_user():
     esg_functions.call_subprocess("groupadd tomcat")
@@ -133,15 +127,6 @@ def create_tomcat_user():
 
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
-# # create non-privilged user to run Tomcat
-# RUN groupadd tomcat
-# RUN useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat
-# RUN chown -R tomcat:tomcat /usr/local/apache-tomcat-${TOMCAT_VERSION}
-# RUN chmod 775 /usr/local/tomcat/webapps
-#
-# EXPOSE 8080
-# EXPOSE 8443
-#
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf
 # CMD ["supervisord", "--nodaemon", "-c", "/etc/supervisord.conf"]

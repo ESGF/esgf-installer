@@ -506,7 +506,8 @@ def list_tables(conn=None, db_name="postgres", user_name="postgres"):
     cur = conn.cursor()
     cur.execute("""SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';""")
     tables = cur.fetchall()
-    print "tables for {current_database}: {tables}".format(current_database=current_database, tables=tables)
+    tables_list = [{"schema_name":table[0], "table_name":table[1], "owner": table[2]} for table in tables]
+    print "tables for {current_database}: {tables_list}".format(current_database=current_database, tables_list=tables_list)
 
 
 

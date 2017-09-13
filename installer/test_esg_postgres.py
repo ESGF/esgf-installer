@@ -17,36 +17,36 @@ class test_ESG_postgres(unittest.TestCase):
     #     esg_postgres.stop_postgress()
     #     esg_postgres.check_for_postgres_db_user()
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     print "\n*******************************"
-    #     print "Setting up ESGF Postgres Test Fixture"
-    #     print "******************************* \n"
-    #     esg_postgres.stop_postgress()
-    #     purge_postgres()
-    #     esg_postgres.download_postgres()
-    #     esg_postgres.start_postgres()
-    #
-    # @classmethod
-    # def tearDownClass(cls):
-    #     print "\n*******************************"
-    #     print "Tearing down ESGF Postgres Test Fixture"
-    #     print "******************************* \n"
-    #     conn = esg_postgres.connect_to_db("postgres","postgres")
-    #     users_list = esg_postgres.list_users(conn=conn)
-    #     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    #     cur = conn.cursor()
-    #     cur.execute("DROP USER IF EXISTS testuser;")
-    #     # if "testuser" in users_list:
-    #     #     cur.execute("DROP USER testuser;")
-    #     if "dbsuper" in users_list:
-    #         cur.execute("DROP USER dbsuper;")
-    #     if "esgcet" in users_list:
-    #         cur.execute("DROP USER esgcet;")
-    #     cur.execute("DROP DATABASE IF EXISTS unittestdb;")
-    #     cur.execute("DROP DATABASE IF EXISTS esgcet;")
-    #     conn.close()
-    #     purge_postgres()
+    @classmethod
+    def setUpClass(cls):
+        print "\n*******************************"
+        print "Setting up ESGF Postgres Test Fixture"
+        print "******************************* \n"
+        esg_postgres.stop_postgress()
+        purge_postgres()
+        esg_postgres.download_postgres()
+        esg_postgres.start_postgres()
+
+    @classmethod
+    def tearDownClass(cls):
+        print "\n*******************************"
+        print "Tearing down ESGF Postgres Test Fixture"
+        print "******************************* \n"
+        conn = esg_postgres.connect_to_db("postgres","postgres")
+        users_list = esg_postgres.list_users(conn=conn)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+        cur.execute("DROP USER IF EXISTS testuser;")
+        # if "testuser" in users_list:
+        #     cur.execute("DROP USER testuser;")
+        if "dbsuper" in users_list:
+            cur.execute("DROP USER dbsuper;")
+        if "esgcet" in users_list:
+            cur.execute("DROP USER esgcet;")
+        cur.execute("DROP DATABASE IF EXISTS unittestdb;")
+        cur.execute("DROP DATABASE IF EXISTS esgcet;")
+        conn.close()
+        purge_postgres()
 
     def test_setup(self):
         print "\n*******************************"
@@ -109,6 +109,7 @@ class test_ESG_postgres(unittest.TestCase):
         print "\nUsers: \n"
         print users
         self.assertIsNotNone(users)
+        self.test_tear_down()
 
     def test_list_users(self):
         user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
@@ -193,6 +194,8 @@ class test_ESG_postgres(unittest.TestCase):
         print "databases after esgf_security_data:", databases
         # self.assertTrue("admin" in roles_list)
         # conn2.close()
+
+        self.test_tear_down()
 
     def test_create_pg_pass_file(self):
         esg_postgres.create_pg_pass_file()

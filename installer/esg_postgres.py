@@ -393,7 +393,7 @@ def setup_db_schemas(force_install):
     print list_users(conn=conn)
 
     load_esgf_data(cur)
-
+    list_tables(conn)
     # IMPORTANT: change connections to require encrypted password
     esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
 
@@ -497,6 +497,16 @@ def list_roles(conn=None, db_name="postgres", user_name="postgres"):
     roles = cur.fetchall()
     roles_list = [role[0] for role in roles]
     return roles_list
+
+def list_tables(conn=None, db_name="postgres", user_name="postgres"):
+    '''List all tables in current database'''
+    if not conn:
+        conn = connect_to_db(db_name, user_name)
+    current_database = conn.get_dsn_parameters()["dbname"]
+    cur = conn.cursor()
+    cur.execute("""SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';""")
+    tables = cur.fetchall()
+    print "tables for {current_database}: {tables}".format(current_database=current_database, tables=tables)
 
 
 

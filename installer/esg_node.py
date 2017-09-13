@@ -317,8 +317,10 @@ def system_component_installation():
         if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
             # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             esg_publisher.setup_esgcet()
-            esg_tomcat_manager.setup_tomcat(devel)
-            esg_apache_manager.setup_apache_frontend(devel)
+            # esg_tomcat_manager.setup_tomcat(devel)
+            # esg_apache_manager.setup_apache_frontend(devel)
+            esg_tomcat_manager.main()
+            esg_apache_manager.main()
     # setup_esgcet()
     # test_esgcet()
 
@@ -406,25 +408,6 @@ def main(node_type_list):
 
     # install dependencies
     system_component_installation()
-
-    #---------------------------------------
-    #Installation of basic system components.
-    # (Only when one setup in the sequence is okay can we move to the next)
-    #---------------------------------------
-    if "install" in node_type_list:
-        #Base install components: Java, Ant, Postgres, CDAT, Tomcat, Apache
-        esg_setup.setup_java()
-        esg_setup.setup_ant()
-        esg_postgres.setup_postgres()
-        esg_setup.setup_cdat()
-        if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
-            esg_publisher.setup_esgcet()
-        esg_tomcat_manager.setup_tomcat(devel)
-        esg_apache_manager.setup_apache_frontend(devel)
-        esg_subsystem.setup_subsystem("node-manager", "esgf-node-manager", esg_dist_url)
-
-
-    # yum_remove_rpm_forge_output = yum_remove_rpm_forge.communicate()
 
 
 if __name__ == '__main__':

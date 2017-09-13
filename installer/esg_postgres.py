@@ -319,7 +319,7 @@ def setup_postgres(force_install = False):
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
     os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
     with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                         ident sameuser\n")
+        hba_conf_file.write("local    all             postgres                         ident\n")
         hba_conf_file.write("local    all             all                         md5\n")
     restart_postgres()
 
@@ -381,7 +381,7 @@ def setup_db_schemas(force_install):
     # download_config_files(force_install)
     # esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
     # restart_postgres()
-    conn = connect_to_db("esgcet", db_name='esgcet', password="password")
+    conn = connect_to_db("dbsuper", db_name='esgcet', password="password")
     cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())

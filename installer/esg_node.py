@@ -324,8 +324,14 @@ def system_component_installation():
     # setup_esgcet()
     # test_esgcet()
 
+def check_for_conda():
+    python_version = esg_functions.call_subprocess("python --version")["stdout"]
+    if "conda" not in python_version:
+        print 'Please activate the esgf-pub conda environment before running the install script.'
+        sys.exit(1)
 
 def main(node_type_list):
+    check_for_conda()
     # default distribution_url
     esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
 
@@ -382,6 +388,8 @@ def main(node_type_list):
 
     if devel is True:
         print "(Installing DEVELOPMENT tree...)"
+
+    install_conda()
 
     # Process User Response
     get_user_response()

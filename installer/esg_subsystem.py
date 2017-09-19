@@ -16,6 +16,8 @@ import esg_bash2py
 import esg_node_manager
 import shlex
 import yaml
+import urllib
+import shutil
 from time import sleep
 import esg_logging_manager
 
@@ -35,11 +37,11 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
     subsystem_install_script_path = os.path.join(config["scripts_dir"],"esg-{subsystem}".format(subsystem=subsystem))
 
-#     #---
-#     #check that you have at one point in time fetched the subsystem's installation script
-#     #if indeed you have we will assume you would like to proceed with setting up the latest...
-#     #Otherwise we just ask you first before you pull down new code to your machine...
-#     #---
+    #---
+    #check that you have at one point in time fetched the subsystem's installation script
+    #if indeed you have we will assume you would like to proceed with setting up the latest...
+    #Otherwise we just ask you first before you pull down new code to your machine...
+    #---
 
     if force_install:
         default = "y"
@@ -83,3 +85,23 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     setup_subsystem_stdout, setup_subsystem_stderr = setup_subsystem_process.communicate()
     logger.debug("setup_subsystem_stdout: %s", setup_subsystem_stdout)
     logger.debug("setup_subsystem_stderr: %s", setup_subsystem_stderr)
+
+
+def setup_orp():
+    '''Setup the ORP subsystem'''
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
+
+    #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
+    orp_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "esg-orp", "esg-orp.war")
+    urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
+        esg_functions.extract_tarball("esg-orp.war")
+        os.remove("esg-orp.war")
+        tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
+        tomcat_group_id = grp.getgrnam("tomcat").gr_gid
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", tomcat_user_id, tomcat_group_id)
+
+
+    # properties to read the Tomcat keystore, used to sign the authentication cookie
+    # these values are the same for all ESGF nodes
+    shutil.copyfile("esgf_orp_conf/esg-orp.properties", "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")

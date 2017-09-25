@@ -27,6 +27,9 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
+TOMCAT_USER_ID = pwd.getpwnam("tomcat").pw_uid
+TOMCAT_GROUP_ID = grp.getgrnam("tomcat").gr_gid
+CATALINA_HOME = "/usr/local/tomcat"
 
 def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_install=False):
     '''
@@ -97,11 +100,78 @@ def setup_orp():
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
         esg_functions.extract_tarball("esg-orp.war")
         os.remove("esg-orp.war")
-        tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
-        tomcat_group_id = grp.getgrnam("tomcat").gr_gid
-        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", tomcat_user_id, tomcat_group_id)
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 
     # properties to read the Tomcat keystore, used to sign the authentication cookie
     # these values are the same for all ESGF nodes
     shutil.copyfile("esgf_orp_conf/esg-orp.properties", "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")
+
+
+def setup_thredds():
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
+    thredds_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
+    urllib.urlretrieve(thredds_url, "/usr/local/tomcat/webapps/thredds/")
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
+        esg_functions.extract_tarball("thredds.war")
+        os.remove("thredds.war")
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    # TDS configuration root
+    esg_bash2py.mkdir_p("/esg/content/thredds")
+
+    # TDS memory configuration
+    shutil.copyfile("thredds_conf/threddsConfig.xml", "/esg/content/thredds/threddsConfig.xml")
+
+    # ESGF root catalog
+    shutil.copyfile("thredds_conf/catalog.xml", "/esg/content/thredds/catalog.xml-esgcet")
+
+    esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
+
+    # TDS customized applicationContext.xml file with ESGF authorizer
+    shutil.copyfile("thredds_conf/applicationContext.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml")
+
+    # TDS jars necessary to support ESGF security filters
+    # some jars are retrieved from the ESGF repository
+    # other jars are copied from the unpacked ORP or NM distributions
+    esgf_devel_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel")
+    urllib.urlretrieve("{esgf_devel_url}/filters/XSGroupRole-1.0.0.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar")
+    urllib.urlretrieve("{esgf_devel_url}/filters/commons-httpclient-3.1.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar")
+    urllib.urlretrieve("{esgf_devel_url}/filters/commons-lang-2.6.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar")
+    urllib.urlretrieve("{esgf_devel_url}/esg-orp/esg-orp-2.9.3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esg-orp-2.9.3.jar")
+    urllib.urlretrieve("{esgf_devel_url}/esgf-node-manager/esgf-node-manager-common-1.0.0.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-common-1.0.0.jar")
+    urllib.urlretrieve("{esgf_devel_url}/esgf-node-manager/esgf-node-manager-filters-1.0.0.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-filters-1.0.0.jar")
+    urllib.urlretrieve("{esgf_devel_url}/esgf-security/esgf-security-2.7.10.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-security-2.7.10.jar")
+    urllib.urlretrieve("{esgf_devel_url}/filters/jdom-legacy-1.1.3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/filters/jdom-legacy-1.1.3.jar")
+    urllib.urlretrieve("{esgf_devel_url}/filters/opensaml-2.3.2.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/filters/opensaml-2.3.2.jar")
+    urllib.urlretrieve("{esgf_devel_url}/filters/openws-1.3.1.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/filters/openws-1.3.1.jar")
+    urllib.urlretrieve("{esgf_devel_url}/filters/xmltooling-1.2.2.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/filters/xmltooling-1.2.2.jar")
+
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar")
+
+    shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
+
+    # TDS customized logging (uses DEBUG)
+    shutil.copyfile("thredds_conf/log4j2.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
+
+    # data node scripts
+    #TODO: Convert data node scripts to Python
+
+    # change ownership of content directory
+    esg_functions.change_permissions_recursive("/esg/content/thredds/", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    # change ownership of source directory
+    esg_functions.change_permissions_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    # cleanup
+    shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")

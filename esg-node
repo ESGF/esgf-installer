@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC5.4.0-devel"
-script_maj_version="2.0"
-script_release="Centaur"
+script_version="v2.5.15-devel-release"
+script_maj_version="2.5"
+script_release="Samhaim"
 envfile="/etc/esg.env"
 
 #--------------
@@ -1674,6 +1674,15 @@ setup_sensible_confs() {
 
 }
 setup_apache_frontend() {
+
+
+      if [ -f /opt/esgf/python/bin/pip ] ; then
+        export LD_LIBRARY_PATH=/opt/esgf/python/lib:/opt/esgf/python/lib/python2.7:/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server
+        /opt/esgf/python/bin/pip install --upgrade pip
+        /opt/esgf/python/bin/pip install --upgrade virtualenv
+        unset LD_LIBRARY_PATH
+      fi
+
 	olddir=`pwd`;
 	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
 	cd $localworkdir;
@@ -1715,10 +1724,7 @@ setup_apache_frontend() {
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
     else
-        export LD_LIBRARY_PATH=/opt/esgf/python/lib:/opt/esgf/python/lib/python2.7:/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server
-        /opt/esgf/python/bin/pip install --upgrade pip
-        /opt/esgf/python/bin/pip install --upgrade virtualenv
-        unset LD_LIBRARY_PATH
+
 
         conf_file=/etc/httpd/conf/esgf-httpd.conf
         if [ -f $conf_file ] ; then

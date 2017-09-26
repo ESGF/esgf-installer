@@ -73,6 +73,13 @@ set IDPPEER "pcmdi9.llnl.gov"
 # E-mail address notifications will be sent as
 set ADMINEMAIL "root@localhost"
 
+# Default answer for installing Globus
+# Should be be N for upgrade and Y for fresh install
+set GLOBUS "y"
+
+# Default answer for automatic peering
+# Should be be N for upgrade and Y for fresh install
+set AUTOMATICPEER "y"
 
 ### Special-use variables (you probably don't want to change these) ###
 

@@ -81,6 +81,8 @@ set GLOBUS "y"
 # Should be be N for upgrade and Y for fresh install
 set AUTOMATICPEER "y"
 
+set THREDDS "N"
+
 ### Special-use variables (you probably don't want to change these) ###
 
 # Which install script to run

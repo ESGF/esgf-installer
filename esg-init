@@ -30,10 +30,10 @@ init() {
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
 
-    esgcet_version=${esgcet_version:-"3.2.6"}
-    publisher_tag=${publisher_tag:-"v3.2.6"}
-    esgprep_version="2.7.9"
-    cmor_version="3.2.5"  # concidence its same as esgcet
+    esgcet_version=${esgcet_version:-"3.2.7"}
+    publisher_tag=${publisher_tag:-"v3.2.7"}
+    esgprep_version="2.7.19"
+    cmor_version="3.2.7"  # concidence its same as esgcet
 
 
     #see esgf-node-manager project:

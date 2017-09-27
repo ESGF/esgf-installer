@@ -115,7 +115,7 @@ expect {
         send \n ; exp_continue
     }
     "Do you want to continue with thredds installation and setup?" {
-        send \n ; exp_continue
+        send ${THREDDS}\n ; exp_continue
     }
     "Do you want to continue with ESGF Dashboard IP installation and setup?" {
         send \n ; exp_continue

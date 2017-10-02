@@ -89,19 +89,30 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     logger.debug("setup_subsystem_stderr: %s", setup_subsystem_stderr)
 
 def download_orp_war(orp_url):
-    try:
-        r = requests.get(orp_url, stream=True)
 
-        # Total size in bytes.
-        total_size = int(r.headers.get('content-length', 0))
-        print "total_size of war file:", total_size
+    from clint.textui import progress
 
-        with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
-            for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
-                f.write(data)
-    except requests.exceptions.RequestException as e:  # This is the correct syntax
-        print e
-        sys.exit(1)
+    r = requests.get(orp_url, stream=True)
+    path = '/usr/local/tomcat/webapps/esg-orp/esg-orp.war'
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+    # try:
+    #     r = requests.get(orp_url, stream=True)
+    #
+    #     # Total size in bytes.
+    #     total_size = int(r.headers.get('content-length', 0))
+    #     print "total_size of war file:", total_size
+    #
+    #     with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
+    #         for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
+    #             f.write(data)
+    # except requests.exceptions.RequestException as e:  # This is the correct syntax
+    #     print e
+    #     sys.exit(1)
 
 
 def setup_orp():

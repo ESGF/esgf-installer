@@ -9,6 +9,8 @@ import shutil
 import urllib
 import pwd
 import grp
+import stat
+import requests
 import esg_functions
 import esg_bash2py
 import yaml
@@ -103,6 +105,24 @@ def setup_orp():
     shutil.copyfile("esgf_orp_conf/esg-orp.properties", "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")
 
 
+# ESGF OLD NODE MANAGER
+# uset to extract dependency jars
+# RUN mkdir -p /usr/local/tomcat/webapps/esgf-node-manager
+# ADD $ESGF_REPO/dist/devel/esgf-node-manager/esgf-node-manager.war /usr/local/tomcat/webapps/esgf-node-manager/
+# RUN cd /usr/local/tomcat/webapps/esgf-node-manager/ && \
+#     jar xvf esgf-node-manager.war
+
+def setup_node_manager_old():
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
+    node_manager_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
+    # urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
+    r = requests.get(node_manager_url)
+    with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", "wb") as code:
+        code.write(r.content)
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
+        esg_functions.extract_tarball("esgf-node-manager.war")
+        os.remove("esgf-node-manager.war")
+
 def setup_thredds():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
     thredds_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
@@ -171,13 +191,53 @@ def setup_thredds():
     # cleanup
     shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
 
+
+def setup_dashboard():
+    # install esgf-stats-api war file
+    #COPY dashboard/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
+    # ADD $ESGF_REPO/dist/devel/esgf-stats-api/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
+    # RUN cd /usr/local/tomcat/webapps/esgf-stats-api && \
+    #     jar xvf esgf-stats-api.war && \
+    #     rm esgf-stats-api.war && \
+    #     chown -R tomcat:tomcat /usr/local/tomcat/webapps/esgf-stats-api
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
+    stats_api_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
+    r = requests.get(stats_api_url)
+    with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-stats-api.war", "wb") as code:
+        code.write(r.content)
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):
+        esg_functions.extract_tarball("esgf-stats-api.war")
+        os.remove("esgf-stats-api.war")
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esgf-stats-api", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    # execute dashboard installation script (without the postgres schema)
+    run_dashboard_script()
+
+    # create non-privileged user to run the dashboard application
+    # RUN groupadd dashboard && \
+    #     useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard && \
+    #     chown -R dashboard:dashboard /usr/local/esgf-dashboard-ip
+    # RUN chmod a+w /var/run
+    esg_functions.call_subprocess("groupadd dashboard")
+    esg_functions.call_subprocess("useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard")
+    DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
+    DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
+    esg_functions.change_permissions_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
+    os.chmod("/var/run", stat.S_IWRITE)
+    os.chmod("/var/run", stat.S_IWGRP)
+    os.chmod("/var/run", stat.S_IWOTH)
+
+def start_dashboard_service():
+    esg_functions.call_subprocess("dashboard_conf/ip.service start")
+
+
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''
     Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard")
 
 
 
-def install_dashboard():
+def run_dashboard_script():
     #default values
     DashDir = "/usr/local/esgf-dashboard-ip"
     GeoipDir = "/usr/local/geoip"

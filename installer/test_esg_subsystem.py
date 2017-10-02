@@ -6,6 +6,7 @@ import esg_purge
 import shutil
 import os
 import esg_tomcat_manager
+import esg_bash2py
 
 class test_ESGF_subsystem(unittest.TestCase):
 
@@ -21,6 +22,9 @@ class test_ESGF_subsystem(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        print "\n*******************************"
+        print "Cleaning up ESGF Subsystem Test Fixture"
+        print "******************************* \n"
         try:
             shutil.rmtree("/usr/local/esgf-dashboard")
         except Exception, error:
@@ -42,6 +46,7 @@ class test_ESGF_subsystem(unittest.TestCase):
         os.listdir("/usr/local/esgf-dashboard")
 
     def test_download_orp_war(self):
+        esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
         esg_subsystem.download_orp_war("http://aims1.llnl.gov/esgf/dist/devel/esg-orp/esg-orp.war")
         self.assertTrue(os.path.isfile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war"))
 

@@ -37,6 +37,10 @@ class test_ESGF_subsystem(unittest.TestCase):
         self.assertTrue(os.path.isdir("/usr/local/esgf-dashboard"))
         os.listdir("/usr/local/esgf-dashboard")
 
+    def test_download_orp_war(self):
+        esg_subsystem.download_orp_war("http://aims1.llnl.gov/esgf/dist/devel/esg-orp/esg-orp.war")
+        self.assertTrue(os.path.isfile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war"))
+
     def test_setup_orp(self):
         esg_subsystem.setup_orp()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))

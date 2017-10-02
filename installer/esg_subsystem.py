@@ -88,6 +88,21 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
     logger.debug("setup_subsystem_stdout: %s", setup_subsystem_stdout)
     logger.debug("setup_subsystem_stderr: %s", setup_subsystem_stderr)
 
+def download_orp_war(orp_url):
+    try:
+        r = requests.get(orp_url, stream=True)
+
+        # Total size in bytes.
+        total_size = int(r.headers.get('content-length', 0))
+        print "total_size of war file:", total_size
+
+        with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
+            for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
+                f.write(data)
+    except requests.exceptions.RequestException as e:  # This is the correct syntax
+        print e
+        sys.exit(1)
+
 
 def setup_orp():
     '''Setup the ORP subsystem'''
@@ -99,24 +114,11 @@ def setup_orp():
     # r = requests.get(orp_url)
     # with open("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", "wb") as code:
     #     code.write(r.content)
-    try:
-        r = requests.get(orp_url, stream=True)
-
-        # Total size in bytes.
-        total_size = int(r.headers.get('content-length', 0))
-
-        with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
-            for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
-                f.write(data)
-    except requests.exceptions.RequestException as e:  # This is the correct syntax
-        print e
-        sys.exit(1)
-
+    download_orp_war(orp_url)
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
         esg_functions.extract_tarball("esg-orp.war")
         os.remove("esg-orp.war")
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
-
 
     # properties to read the Tomcat keystore, used to sign the authentication cookie
     # these values are the same for all ESGF nodes

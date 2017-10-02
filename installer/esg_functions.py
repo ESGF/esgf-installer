@@ -722,6 +722,7 @@ def extract_tarball(tarball_name):
         tar.close()
     except Exception, error:
         logger.error(error)
+        print "error:", error
         print "ERROR: Could not extract the tarfile: {tarball_name}".format(tarball_name=tarball_name)
         exit_with_error(1)
 

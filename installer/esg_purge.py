@@ -20,7 +20,7 @@ def purge_tomcat():
     try:
         shutil.rmtree("/etc/logrotate.d/esgf_tomcat")
     except OSError, error:
-        print "error deleting directory:", error
+        print "error deleting directory -> /etc/logrotate.d/esgf_tomcat:", error
 
     tomcat_directories = glob.glob("/usr/local/tomcat*")
     tomcat_directories.extend(glob.glob("/usr/local/apache-tomcat*"))
@@ -28,7 +28,7 @@ def purge_tomcat():
         try:
             shutil.rmtree(directory)
         except OSError, error:
-            print "error deleting directory:", error
+            print "error deleting directory -> {directory}:".format(directory=directory), error
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")

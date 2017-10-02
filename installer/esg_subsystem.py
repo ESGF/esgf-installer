@@ -92,7 +92,7 @@ def setup_orp():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
 
     #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
-    orp_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "esg-orp", "esg-orp.war")
+    orp_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
     urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
         esg_functions.extract_tarball("esg-orp.war")
@@ -114,7 +114,7 @@ def setup_orp():
 
 def setup_node_manager_old():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
-    node_manager_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
+    node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
     # urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
     r = requests.get(node_manager_url)
     with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", "wb") as code:
@@ -125,7 +125,7 @@ def setup_node_manager_old():
 
 def setup_thredds():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
-    thredds_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
+    thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
     urllib.urlretrieve(thredds_url, "/usr/local/tomcat/webapps/thredds/")
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
         esg_functions.extract_tarball("thredds.war")
@@ -149,7 +149,7 @@ def setup_thredds():
     # TDS jars necessary to support ESGF security filters
     # some jars are retrieved from the ESGF repository
     # other jars are copied from the unpacked ORP or NM distributions
-    esgf_devel_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel")
+    esgf_devel_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel")
     urllib.urlretrieve("{esgf_devel_url}/filters/XSGroupRole-1.0.0.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar")
     urllib.urlretrieve("{esgf_devel_url}/filters/commons-httpclient-3.1.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar")
     urllib.urlretrieve("{esgf_devel_url}/filters/commons-lang-2.6.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar")
@@ -201,7 +201,7 @@ def setup_dashboard():
     #     rm esgf-stats-api.war && \
     #     chown -R tomcat:tomcat /usr/local/tomcat/webapps/esgf-stats-api
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
-    stats_api_url = os.path.join("http://", config.esgf_dist_mirror, "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
+    stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
     r = requests.get(stats_api_url)
     with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-stats-api.war", "wb") as code:
         code.write(r.content)

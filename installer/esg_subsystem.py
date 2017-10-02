@@ -16,6 +16,7 @@ import esg_bash2py
 import yaml
 from git import Repo
 from time import sleep
+from tqdm import tqdm
 import esg_logging_manager
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -94,9 +95,19 @@ def setup_orp():
     #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
     orp_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
     print "orp_url:", orp_url
-    r = requests.get(orp_url)
-    with open("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", "wb") as code:
-        code.write(r.content)
+    # r = requests.get(orp_url)
+    # with open("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", "wb") as code:
+    #     code.write(r.content)
+
+    r = requests.get(orp_url, stream=True)
+
+    # Total size in bytes.
+    total_size = int(r.headers.get('content-length', 0));
+
+    with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
+        for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
+            f.write(data)
+
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
         esg_functions.extract_tarball("esg-orp.war")
         os.remove("esg-orp.war")

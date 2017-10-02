@@ -1327,10 +1327,12 @@ set_aside_web_app_cleanup() {
 #ESGF Distribution Mirrors Utilities
 #------------------------------------------
 
-esgf_dist_mirror=""
-
 get_esgf_dist_mirror() {
 
+    if [ -z "$esgf_dist_mirror" ]; then
+	return
+    fi
+    
     esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf" "dist.ceda.ac.uk/esgf" "aims1.llnl.gov/esgf" "esg-dn2.nsc.liu.se/esgf")
 
 	declare -A resarray

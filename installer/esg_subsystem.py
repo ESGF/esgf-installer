@@ -15,6 +15,7 @@ import esg_functions
 import esg_bash2py
 import yaml
 import sys
+import zipfile
 from git import Repo
 from time import sleep
 from tqdm import tqdm
@@ -127,7 +128,9 @@ def setup_orp():
     #     code.write(r.content)
     download_orp_war(orp_url)
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
-        esg_functions.extract_tarball("esg-orp.war")
+        # esg_functions.extract_tarball("esg-orp.war")
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as zf:
+            zf.extractall()
         os.remove("esg-orp.war")
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 

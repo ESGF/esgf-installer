@@ -1329,7 +1329,7 @@ set_aside_web_app_cleanup() {
 
 get_esgf_dist_mirror() {
 
-    if [ -z "$esgf_dist_mirror" ]; then
+    if [ ! -z "$esgf_dist_mirror" ]; then
 	return
     fi
     

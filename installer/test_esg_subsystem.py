@@ -55,6 +55,7 @@ class test_ESGF_subsystem(unittest.TestCase):
     def test_setup_orp(self):
         esg_subsystem.setup_orp()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-node-manager"))
 
 if __name__ == '__main__':
     unittest.main()

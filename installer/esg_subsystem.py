@@ -5,19 +5,14 @@
 #
 import os
 import subprocess
-import logging
-import grp
-import pwd
-import psycopg2
-import esg_functions
-import esg_setup
-import esg_version_manager
-import esg_bash2py
-import esg_node_manager
-import shlex
-import yaml
-import urllib
 import shutil
+import urllib
+import pwd
+import grp
+import esg_functions
+import esg_bash2py
+import yaml
+from git import Repo
 from time import sleep
 import esg_logging_manager
 
@@ -175,3 +170,43 @@ def setup_thredds():
 
     # cleanup
     shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
+
+def clone_dashboard_repo():
+    ''' Clone esgf-dashboard repo from Github'''
+    Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard")
+
+
+
+def install_dashboard():
+    #default values
+    DashDir = "/usr/local/esgf-dashboard-ip"
+    GeoipDir = "/usr/local/geoip"
+    Fed="no"
+
+    # cd /usr/local
+    #
+    # git clone https://github.com/ESGF/esgf-dashboard.git
+    #
+    # cd esgf-dashboard/
+    #
+    # git checkout -b work_plana origin/work_plana
+    #
+    # cd src/c/esgf-dashboard-ip
+    #
+    # ./configure --prefix=$DashDir --with-geoip-prefix-path=$GeoipDir --with-allow-federation=$Fed
+    #
+    # make
+    # make install
+    #
+    with esg_bash2py.pushd("/usr/local"):
+        clone_dashboard_repo()
+        os.chdir("esgf-dashboard")
+
+        dashboard_repo_local = Repo("esgf-dashboard")
+        dashboard_repo_local.git.checkout("work_plana")
+
+        os.chdir("src/c/esgf-dashboard-ip")
+
+        esg_functions.call_subprocess("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
+        esg_functions.call_subprocess("make")
+        esg_functions.call_subprocess("make install")

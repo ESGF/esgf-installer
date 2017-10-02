@@ -93,6 +93,10 @@ def download_orp_war(orp_url):
 
     from clint.textui import progress
 
+    print "\n*******************************"
+    print "Downloading ORP (Setting up The OpenID Relying Party) war file"
+    print "******************************* \n"
+
     r = requests.get(orp_url, stream=True)
     path = '/usr/local/tomcat/webapps/esg-orp/esg-orp.war'
     with open(path, 'wb') as f:
@@ -147,6 +151,10 @@ def setup_orp():
 #     jar xvf esgf-node-manager.war
 def download_node_manager_war(node_manager_url):
     from clint.textui import progress
+
+    print "\n*******************************"
+    print "Downloading Node Manager (old) war file"
+    print "******************************* \n"
 
     r = requests.get(node_manager_url, stream=True)
     path = '/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war'

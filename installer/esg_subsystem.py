@@ -14,6 +14,7 @@ import requests
 import esg_functions
 import esg_bash2py
 import yaml
+import sys
 from git import Repo
 from time import sleep
 from tqdm import tqdm
@@ -98,15 +99,18 @@ def setup_orp():
     # r = requests.get(orp_url)
     # with open("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", "wb") as code:
     #     code.write(r.content)
+    try:
+        r = requests.get(orp_url, stream=True)
 
-    r = requests.get(orp_url, stream=True)
+        # Total size in bytes.
+        total_size = int(r.headers.get('content-length', 0))
 
-    # Total size in bytes.
-    total_size = int(r.headers.get('content-length', 0));
-
-    with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
-        for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
-            f.write(data)
+        with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
+            for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
+                f.write(data)
+    except requests.exceptions.RequestException as e:  # This is the correct syntax
+        print e
+        sys.exit(1)
 
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
         esg_functions.extract_tarball("esg-orp.war")

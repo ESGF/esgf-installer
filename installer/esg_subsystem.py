@@ -93,7 +93,9 @@ def setup_orp():
 
     #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
     orp_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
-    urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
+    r = requests.get(orp_url)
+    with open("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", "wb") as code:
+        code.write(r.content)
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
         esg_functions.extract_tarball("esg-orp.war")
         os.remove("esg-orp.war")

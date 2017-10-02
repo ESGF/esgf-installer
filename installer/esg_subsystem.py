@@ -145,16 +145,31 @@ def setup_orp():
 # ADD $ESGF_REPO/dist/devel/esgf-node-manager/esgf-node-manager.war /usr/local/tomcat/webapps/esgf-node-manager/
 # RUN cd /usr/local/tomcat/webapps/esgf-node-manager/ && \
 #     jar xvf esgf-node-manager.war
+def download_node_manager_war(node_manager_url):
+    from clint.textui import progress
+
+    r = requests.get(node_manager_url, stream=True)
+    path = '/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war'
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
 
 def setup_node_manager_old():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
     node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
     # urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
-    r = requests.get(node_manager_url)
-    with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", "wb") as code:
-        code.write(r.content)
+    download_node_manager_war(node_manager_url)
+    # r = requests.get(node_manager_url)
+    # with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", "wb") as code:
+    #     code.write(r.content)
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
-        esg_functions.extract_tarball("esgf-node-manager.war")
+        # esg_functions.extract_tarball("esgf-node-manager.war")
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", 'r') as zf:
+            zf.extractall()
         os.remove("esgf-node-manager.war")
 
 def setup_thredds():

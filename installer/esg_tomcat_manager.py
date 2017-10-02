@@ -62,7 +62,7 @@ CATALINA_HOME = "/usr/local/tomcat"
 def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found.  Skipping installation."
-        return
+        return False
     # tomcat_download_url = "http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v{TOMCAT_VERSION}/bin/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
         # TOMCAT_VERSION=TOMCAT_VERSION)
@@ -70,6 +70,8 @@ def download_tomcat():
     r = requests.get(tomcat_download_url)
     with open("/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION), "wb") as code:
         code.write(r.content)
+
+    return True
     # urllib.urlretrieve(
     #     tomcat_download_url, "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
 
@@ -136,11 +138,11 @@ def create_tomcat_user():
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf
 # CMD ["supervisord", "--nodaemon", "-c", "/etc/supervisord.conf"]
 def main():
-    download_tomcat()
-    extract_tomcat_tarball()
-    remove_example_webapps()
-    copy_config_files()
-    create_tomcat_user()
+    if download_tomcat():
+        extract_tomcat_tarball()
+        remove_example_webapps()
+        copy_config_files()
+        create_tomcat_user()
     # pass
 if __name__ == '__main__':
     main()

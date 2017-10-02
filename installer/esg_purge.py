@@ -29,6 +29,7 @@ def purge_tomcat():
             shutil.rmtree(directory)
         except OSError, error:
             print "error deleting directory -> {directory}:".format(directory=directory), error
+    os.unlink("/usr/local/tomcat")
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")

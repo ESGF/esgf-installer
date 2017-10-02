@@ -52,3 +52,5 @@ semver == 2.7.8
 # esg_node_manager.py: 11
 # esg_setup.py: 11
 tld == 0.7.9
+
+tqdm

@@ -18,6 +18,7 @@ import filecmp
 import glob
 import yaml
 import progressbar
+import requests
 import errno
 from time import sleep
 from OpenSSL import crypto
@@ -65,8 +66,11 @@ def download_tomcat():
     tomcat_download_url = "http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v{TOMCAT_VERSION}/bin/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
         TOMCAT_VERSION=TOMCAT_VERSION)
     print "downloading Tomcat"
-    urllib.urlretrieve(
-        tomcat_download_url, "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
+    r = requests.get(tomcat_download_url)
+    with open("/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION), "wb") as code:
+        code.write(r.content)
+    # urllib.urlretrieve(
+    #     tomcat_download_url, "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
 
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):

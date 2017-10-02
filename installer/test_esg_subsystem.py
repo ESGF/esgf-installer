@@ -26,6 +26,10 @@ class test_ESGF_subsystem(unittest.TestCase):
         except Exception, error:
             print "error:", error
         esg_purge.purge_tomcat()
+        try:
+            shutil.rmtree("/esg")
+        except OSError, error:
+            print "error deleting /esg:", error
     # def cleanup(self):
     #     try:
     #         shutil.rmtree("/usr/local/esgf-dashboard")

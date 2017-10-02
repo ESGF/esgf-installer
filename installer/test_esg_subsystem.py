@@ -49,6 +49,8 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
         esg_subsystem.download_orp_war("http://aims1.llnl.gov/esgf/dist/devel/esg-orp/esg-orp.war")
         self.assertTrue(os.path.isfile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war"))
+        st = os.stat("/usr/local/tomcat/webapps/esg-orp/esg-orp.war")
+        print "war file size:", st.st_size
 
     def test_setup_orp(self):
         esg_subsystem.setup_orp()

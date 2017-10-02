@@ -14,9 +14,10 @@ class test_ESG_tomcat(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         try:
+            print "Removing tar file in tearDownClass"
             os.remove("/tmp/apache-tomcat-8.5.20.tar.gz")
         except OSError, error:
-            print "error:", error
+            # print "error:", error
             pass
         try:
             os.unlink("/usr/local/tomcat")

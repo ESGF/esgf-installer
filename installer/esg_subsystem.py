@@ -270,3 +270,16 @@ def run_dashboard_script():
         esg_functions.call_subprocess("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
         esg_functions.call_subprocess("make")
         esg_functions.call_subprocess("make install")
+
+def main():
+    setup_orp()
+    setup_node_manager_old()
+    setup_thredds()
+    setup_dashboard()
+
+
+
+
+
+if __name__ == '__main__':
+    main()

@@ -53,4 +53,4 @@ semver == 2.7.8
 # esg_setup.py: 11
 tld == 0.7.9
 
-tqdm
+clint

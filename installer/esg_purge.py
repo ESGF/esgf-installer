@@ -17,7 +17,10 @@ def purge_tomcat():
     # esg-node --stop may not actually cause Tomcat to exit properly,
     # so force-kill all remaining instances
     esg_functions.call_subprocess("pkill -9 -u tomcat")
-    shutil.rmtree("/etc/logrotate.d/esgf_tomcat")
+    try:
+        shutil.rmtree("/etc/logrotate.d/esgf_tomcat")
+    except OSError, error:
+        print "error deleting directory:", error
 
     tomcat_directories = glob.glob("/usr/local/tomcat*")
     tomcat_directories.extend(glob.glob("/usr/local/apache-tomcat*"))

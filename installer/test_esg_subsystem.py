@@ -2,21 +2,35 @@
 
 import unittest
 import esg_subsystem
+import esg_purge
 import shutil
 import os
 import esg_tomcat_manager
 
-class test_ESGF_BUILD(unittest.TestCase):
+class test_ESGF_subsystem(unittest.TestCase):
 
-    def setUp(self):
-        # purge_and_clone_fresh_repos.main(os.path.join(os.environ["HOME"], "Development", "ESGF"))
-        pass
+    @classmethod
+    def setUpClass(cls):
+        print "\n*******************************"
+        print "Setting up ESGF Subsystem Test Fixture"
+        print "******************************* \n"
+        esg_tomcat_manager.main()
+    # def setUp(self):
+    #     # purge_and_clone_fresh_repos.main(os.path.join(os.environ["HOME"], "Development", "ESGF"))
+    #     pass
 
-    def cleanup(self):
+    @classmethod
+    def tearDownClass(cls):
         try:
             shutil.rmtree("/usr/local/esgf-dashboard")
         except Exception, error:
             print "error:", error
+        esg_purge.purge_tomcat()
+    # def cleanup(self):
+    #     try:
+    #         shutil.rmtree("/usr/local/esgf-dashboard")
+    #     except Exception, error:
+    #         print "error:", error
 
     def test_clone_dashboard_repo(self):
         esg_subsystem.clone_dashboard_repo()

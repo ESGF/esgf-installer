@@ -58,6 +58,9 @@ class test_ESGF_subsystem(unittest.TestCase):
     def test_setup_node_manager_old(self):
         esg_subsystem.setup_node_manager_old()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-node-manager"))
+    def test_setup_thredds(self):
+        esg_subsystem.setup_thredds()
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/thredds"))
 
 if __name__ == '__main__':
     unittest.main()

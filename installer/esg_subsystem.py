@@ -180,12 +180,31 @@ def setup_node_manager_old():
             zf.extractall()
         os.remove("esgf-node-manager.war")
 
+def download_thredds_war(thredds_url):
+    from clint.textui import progress
+
+    print "\n*******************************"
+    print "Downloading Thredds war file"
+    print "******************************* \n"
+
+    r = requests.get(thredds_url, stream=True)
+    path = '/usr/local/tomcat/webapps/thredds/thredds.war'
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
 def setup_thredds():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
     thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
-    urllib.urlretrieve(thredds_url, "/usr/local/tomcat/webapps/thredds/")
+    download_thredds_war(thredds_url)
+    # urllib.urlretrieve(thredds_url, "/usr/local/tomcat/webapps/thredds/")
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
-        esg_functions.extract_tarball("thredds.war")
+        # esg_functions.extract_tarball("thredds.war")
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
+            zf.extractall()
         os.remove("thredds.war")
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 

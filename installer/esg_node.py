@@ -332,7 +332,7 @@ def check_for_conda():
         sys.exit(1)
 
 def main(node_type_list):
-    check_for_conda()
+    # check_for_conda()
     # default distribution_url
     esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
 

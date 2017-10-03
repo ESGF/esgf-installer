@@ -596,7 +596,7 @@ def get_security_admin_password():
             security_admin_password = password_file.read().strip()
             return security_admin_password
     except IOError, error:
-        print "error getting security_admin_password:", exit_with_error
+        print "error getting security_admin_password:", error
         return None
 
 def set_keyword_password():

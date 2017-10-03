@@ -16,7 +16,7 @@ import esg_version_manager
 import esg_mirror_manager
 import esg_apache_manager
 import esg_subsystem
-import esg_node_manager
+# import esg_node_manager
 import esg_logging_manager
 import esg_init
 import yaml
@@ -334,7 +334,7 @@ def check_for_conda():
 def main(node_type_list):
     check_for_conda()
     # default distribution_url
-    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+    esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
 
     # initialize connection
     init_connection()

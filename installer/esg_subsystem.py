@@ -19,6 +19,7 @@ import zipfile
 from git import Repo
 from time import sleep
 from tqdm import tqdm
+from clint.textui import progress
 import esg_logging_manager
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -91,8 +92,6 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
 
 def download_orp_war(orp_url):
 
-    from clint.textui import progress
-
     print "\n*******************************"
     print "Downloading ORP (Setting up The OpenID Relying Party) war file"
     print "******************************* \n"
@@ -150,7 +149,6 @@ def setup_orp():
 # RUN cd /usr/local/tomcat/webapps/esgf-node-manager/ && \
 #     jar xvf esgf-node-manager.war
 def download_node_manager_war(node_manager_url):
-    from clint.textui import progress
 
     print "\n*******************************"
     print "Downloading Node Manager (old) war file"
@@ -181,7 +179,6 @@ def setup_node_manager_old():
         os.remove("esgf-node-manager.war")
 
 def download_thredds_war(thredds_url):
-    from clint.textui import progress
 
     print "\n*******************************"
     print "Downloading Thredds war file"
@@ -268,6 +265,20 @@ def setup_thredds():
     shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
 
 
+def download_stats_api_war(stats_api_url):
+    print "\n*******************************"
+    print "Downloading ESGF Stats API war file"
+    print "******************************* \n"
+    r = requests.get(stats_api_url)
+
+    path = '/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war'
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
 def setup_dashboard():
     # install esgf-stats-api war file
     #COPY dashboard/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
@@ -278,11 +289,12 @@ def setup_dashboard():
     #     chown -R tomcat:tomcat /usr/local/tomcat/webapps/esgf-stats-api
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
     stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
-    r = requests.get(stats_api_url)
-    with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-stats-api.war", "wb") as code:
-        code.write(r.content)
+    download_stats_api_war(stats_api_url)
+
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):
-        esg_functions.extract_tarball("esgf-stats-api.war")
+        # esg_functions.extract_tarball("esgf-stats-api.war")
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war", 'r') as zf:
+            zf.extractall()
         os.remove("esgf-stats-api.war")
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esgf-stats-api", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
@@ -302,6 +314,8 @@ def setup_dashboard():
     os.chmod("/var/run", stat.S_IWRITE)
     os.chmod("/var/run", stat.S_IWGRP)
     os.chmod("/var/run", stat.S_IWOTH)
+
+    start_dashboard_service()
 
 def start_dashboard_service():
     esg_functions.call_subprocess("dashboard_conf/ip.service start")

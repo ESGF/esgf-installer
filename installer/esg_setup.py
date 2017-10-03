@@ -437,18 +437,17 @@ def _choose_admin_password():
 
 def _choose_organization_name():
     esg_root_id = esg_property_manager.get_property("esg_root_id")
-    if not esg_root_id or force_install:
-        while True:
-            default_org_name = tld.get_tld(
-                "http://" + socket.gethostname(), as_object=True).domain
-            org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ", format(
-                default_org_name=default_org_name)) or default_org_name
-            org_name_input.replace("", "_")
-            esg_property_manager.write_as_property("esg_root_id", esg_root_id)
-            break
-    else:
+    if esg_root_id:
         logger.info("esg_root_id = [%s]", esg_root_id)
-
+        return
+    if not esg_root_id or force_install:
+        default_org_name = tld.get_tld(
+            "http://" + socket.gethostname(), as_object=True).domain
+        while True:
+            org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ".format(default_org_name=default_org_name)) or default_org_name
+            org_name_input.replace("", "_")
+            esg_property_manager.write_as_property("esg_root_id", org_name_input)
+            break
 
 def _choose_node_short_name():
     node_short_name = esg_property_manager.get_property("node_short_name")

@@ -567,14 +567,17 @@ def _choose_mail_admin_address():
 def _choose_publisher_db_user():
     default_publisher_db_user = None
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+    if publisher_db_user:
+        print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
+        logger.info("publisher_db_user: %s", publisher_db_user)
+        return
     if not publisher_db_user or force_install:
         default_publisher_db_user = publisher_db_user or "esgcet"
         publisher_db_user_input = raw_input(
-            "What is the (low priv) db account for publisher? [${default}]: ") or default_publisher_db_user
+            "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ").format(default_publisher_db_user=default_publisher_db_user) or default_publisher_db_user
         esg_property_manager.write_as_property(
             "publisher_db_user", publisher_db_user_input)
-    else:
-        logger.info("publisher_db_user: %s", publisher_db_user)
+
 
 
 def _choose_publisher_db_user_passwd():

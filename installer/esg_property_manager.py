@@ -98,7 +98,7 @@ def write_as_property(property_name, property_value):
     datafile.seek(0)
     for line in searchlines:
         if property_name in line:
-            print "Property already exists"
+            print "Property {property_name} with value {property_value} already exists".format(property_name=property_name, property_value=property_value)
             return "Property already exists"
     else:
         datafile.write(property_name+"="+property_value+"\n")

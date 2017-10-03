@@ -335,6 +335,8 @@ def _is_valid_password(password_input):
     if not password_input or len(password_input) < 6:
         print "Sorry password must be at least six characters :-( "
         return False
+    else:
+        return True
 
 
 def _confirm_password(password_input, password_confirmation):
@@ -384,7 +386,7 @@ def _update_password_files_permissions():
     except KeyError:
         _add_user_group(config["tomcat_group"])
 
-    tomcat_group_id = tomcat_group_info.gr_id
+    tomcat_group_id = tomcat_group_info.gr_gid
 
     try:
         os.chown(config["esgf_secret_file"], config[

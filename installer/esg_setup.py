@@ -579,19 +579,22 @@ def _choose_publisher_db_user():
             "publisher_db_user", publisher_db_user_input)
 
 def _choose_publisher_db_user_passwd():
+    if config["publisher_db_user_passwd"]:
+        print "Using previously configured publisher DB password"
+        return
     if not config["publisher_db_user_passwd"] or force_install:
-        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
         publisher_db_user_passwd_input = raw_input(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
         if publisher_db_user_passwd_input:
             with open(config['pub_secret_file'], "w") as secret_file:
                 secret_file.write(publisher_db_user_passwd_input)
 
-    if not os.path.isfile(config['pub_secret_file']):
-        esg_bash2py.touch(config['pub_secret_file'])
-        with open(config['pub_secret_file'], "w") as secret_file:
-            secret_file.write(config[
-                              "publisher_db_user_passwd"])
+    # if not os.path.isfile(config['pub_secret_file']):
+    #     esg_bash2py.touch(config['pub_secret_file'])
+    #     with open(config['pub_secret_file'], "w") as secret_file:
+    #         secret_file.write(config[
+    #                           "publisher_db_user_passwd"])
 
 def get_db_properties():
     db_properties_dict = {"db_user": None, "db_host": None,

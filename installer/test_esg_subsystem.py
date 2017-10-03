@@ -68,7 +68,7 @@ class test_ESGF_subsystem(unittest.TestCase):
     def test_main(self):
         esg_subsystem.main()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))
-        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-node-manager"))
+        self.assertTrue(os.path.isfile("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar"))
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/thredds"))
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
 

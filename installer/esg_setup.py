@@ -38,17 +38,6 @@ use_local_files = 0
 force_install = False
 
 
-esg_functions_file = "/Users/hill119/Development/esgf-installer/esg-functions"
-esg_init_file = "/Users/hill119/Development/esgf-installer/esg-init"
-
-
-if os.path.isfile(esg_functions_file):
-    esg_bash2py.source(esg_init_file)
-    esg_bash2py.source(esg_functions_file)
-else:
-    print "file not found"
-
-
 def check_prerequisites():
     '''
         Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for

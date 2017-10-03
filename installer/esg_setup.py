@@ -500,6 +500,9 @@ def _choose_node_namespace():
 
 def _choose_node_peer_group():
     node_peer_group = esg_property_manager.get_property("node_peer_group")
+    if node_peer_group:
+        logger.info("node_peer_group = [%s]", node_peer_group)
+        return
     if not node_peer_group or force_install:
         try:
             node_peer_group
@@ -508,7 +511,7 @@ def _choose_node_peer_group():
         while True:
             node_peer_group_input = raw_input(
                 "What peer group(s) will this node participate in? (esgf-test|esgf-prod) [{node_peer_group}]: ".format(node_peer_group=node_peer_group)) or node_peer_group
-            if node_peer_group_input != "esgf-test" or node_peer_group_input != "esgf-prod":
+            if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod"] :
                 print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input=node_peer_group_input)
                 print "Please choose either esgf-test or esgf-prod"
                 continue
@@ -516,9 +519,6 @@ def _choose_node_peer_group():
                 esg_property_manager.write_as_property(
                     "node_peer_group", node_peer_group_input)
                 break
-    else:
-        logger.info("node_peer_group = [%s]", node_peer_group)
-
 
 def _choose_esgf_default_peer():
     esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")

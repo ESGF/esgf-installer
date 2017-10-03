@@ -454,8 +454,7 @@ def _choose_node_short_name():
     node_short_name = esg_property_manager.get_property("node_short_name")
     if not node_short_name or force_install:
         while True:
-            node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(
-                node_short_name=node_short_name)) or node_short_name
+            node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=node_short_name)) or node_short_name
             node_short_name_input.replace("", "_")
             esg_property_manager.write_as_property(
                 "node_short_name", node_short_name_input)

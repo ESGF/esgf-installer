@@ -61,6 +61,9 @@ class test_ESGF_subsystem(unittest.TestCase):
     def test_setup_thredds(self):
         esg_subsystem.setup_thredds()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/thredds"))
+    def test_setup_dashboard(self):
+        esg_subsystem.setup_dashboard()
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
 
 if __name__ == '__main__':
     unittest.main()

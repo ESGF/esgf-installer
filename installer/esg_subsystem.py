@@ -104,19 +104,6 @@ def download_orp_war(orp_url):
             if chunk:
                 f.write(chunk)
                 f.flush()
-    # try:
-    #     r = requests.get(orp_url, stream=True)
-    #
-    #     # Total size in bytes.
-    #     total_size = int(r.headers.get('content-length', 0))
-    #     print "total_size of war file:", total_size
-    #
-    #     with open('/usr/local/tomcat/webapps/esg-orp/esg-orp.war', 'wb') as f:
-    #         for data in tqdm(r.iter_content(32*1024), total=total_size, unit='B', unit_scale=True):
-    #             f.write(data)
-    # except requests.exceptions.RequestException as e:  # This is the correct syntax
-    #     print e
-    #     sys.exit(1)
 
 
 def setup_orp():
@@ -126,12 +113,9 @@ def setup_orp():
     #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
     orp_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
     print "orp_url:", orp_url
-    # r = requests.get(orp_url)
-    # with open("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", "wb") as code:
-    #     code.write(r.content)
+
     download_orp_war(orp_url)
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
-        # esg_functions.extract_tarball("esg-orp.war")
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as zf:
             zf.extractall()
         os.remove("esg-orp.war")
@@ -144,10 +128,6 @@ def setup_orp():
 
 # ESGF OLD NODE MANAGER
 # uset to extract dependency jars
-# RUN mkdir -p /usr/local/tomcat/webapps/esgf-node-manager
-# ADD $ESGF_REPO/dist/devel/esgf-node-manager/esgf-node-manager.war /usr/local/tomcat/webapps/esgf-node-manager/
-# RUN cd /usr/local/tomcat/webapps/esgf-node-manager/ && \
-#     jar xvf esgf-node-manager.war
 def download_node_manager_war(node_manager_url):
 
     print "\n*******************************"
@@ -167,13 +147,9 @@ def download_node_manager_war(node_manager_url):
 def setup_node_manager_old():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
     node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
-    # urllib.urlretrieve(orp_url, "/usr/local/tomcat/webapps/esg-orp/")
     download_node_manager_war(node_manager_url)
-    # r = requests.get(node_manager_url)
-    # with open("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", "wb") as code:
-    #     code.write(r.content)
+
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
-        # esg_functions.extract_tarball("esgf-node-manager.war")
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-node-manager.war")
@@ -197,9 +173,8 @@ def setup_thredds():
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
     thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
     download_thredds_war(thredds_url)
-    # urllib.urlretrieve(thredds_url, "/usr/local/tomcat/webapps/thredds/")
+
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
-        # esg_functions.extract_tarball("thredds.war")
         with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
             zf.extractall()
         os.remove("thredds.war")
@@ -282,17 +257,11 @@ def download_stats_api_war(stats_api_url):
 def setup_dashboard():
     # install esgf-stats-api war file
     #COPY dashboard/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
-    # ADD $ESGF_REPO/dist/devel/esgf-stats-api/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
-    # RUN cd /usr/local/tomcat/webapps/esgf-stats-api && \
-    #     jar xvf esgf-stats-api.war && \
-    #     rm esgf-stats-api.war && \
-    #     chown -R tomcat:tomcat /usr/local/tomcat/webapps/esgf-stats-api
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
     stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
     download_stats_api_war(stats_api_url)
 
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):
-        # esg_functions.extract_tarball("esgf-stats-api.war")
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-stats-api.war")
@@ -344,21 +313,6 @@ def run_dashboard_script():
     GeoipDir = "/usr/local/geoip"
     Fed="no"
 
-    # cd /usr/local
-    #
-    # git clone https://github.com/ESGF/esgf-dashboard.git
-    #
-    # cd esgf-dashboard/
-    #
-    # git checkout -b work_plana origin/work_plana
-    #
-    # cd src/c/esgf-dashboard-ip
-    #
-    # ./configure --prefix=$DashDir --with-geoip-prefix-path=$GeoipDir --with-allow-federation=$Fed
-    #
-    # make
-    # make install
-    #
     with esg_bash2py.pushd("/usr/local"):
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")
@@ -377,9 +331,6 @@ def main():
     setup_node_manager_old()
     setup_thredds()
     setup_dashboard()
-
-
-
 
 
 if __name__ == '__main__':

@@ -323,10 +323,16 @@ def start_dashboard_service():
 
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''
+    print "\n*******************************"
+    print "Cloning esgf-dashboard repo from Github"
+    print "******************************* \n"
+
     from git import RemoteProgress
     class Progress(RemoteProgress):
         def update(self, op_code, cur_count, max_count=None, message=''):
-            print('Downloading: (==== {} ====)\r'.format(message))
+            if message:
+                print('Downloading: (==== {} ====)\r'.format(message))
+                print "current line:", self._cur_line
 
     Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard", progress=Progress())
 
@@ -357,13 +363,13 @@ def run_dashboard_script():
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")
 
-        dashboard_repo_local = Repo("esgf-dashboard")
+        dashboard_repo_local = Repo(".")
         dashboard_repo_local.git.checkout("work_plana")
 
         os.chdir("src/c/esgf-dashboard-ip")
 
         esg_functions.call_subprocess("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
-        esg_functions.call_subprocess("make")
+        esg_functions.stream_subprocess_output("make")
         esg_functions.call_subprocess("make install")
 
 def main():

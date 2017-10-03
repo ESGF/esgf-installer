@@ -420,10 +420,11 @@ def _update_password_files_permissions():
 def _choose_admin_password():
     while True:
         password_input = raw_input(
-            "What is the admin password to use for this installation? (alpha-numeric only)")
+            "What is the admin password to use for this installation? (alpha-numeric only): ")
 
         security_admin_password = esg_functions.get_security_admin_password()
-        if force_install and len(password_input) == 0 and len(security_admin_password) > 0:
+        # if force_install and len(password_input) == 0 and len(security_admin_password) > 0:
+        if password_input == security_admin_password:
             changed = False
             break
         if not _is_valid_password(password_input):

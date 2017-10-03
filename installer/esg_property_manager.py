@@ -102,4 +102,5 @@ def write_as_property(property_name, property_value):
             return "Property already exists"
     else:
         datafile.write(property_name+"="+property_value+"\n")
+        print "Added Property {property_name} with value {property_value} to {config_file}".format(property_name=property_name, property_value=property_value, config_file=config["config_file"])
         return 0

@@ -1,0 +1,105 @@
+#! /bin/sh
+
+# Copyright (c) 2011 
+# All rights reserved.
+#
+# Author: Sandro Fiore, 2011
+
+
+### BEGIN INIT INFO
+# Short-Description: esgf-dashboard-ip: esgf information provider 
+# Description:      
+#	The esgf-information provider bla bla bla 
+#	
+#	
+#	
+### END INIT INFO
+
+[ -e /etc/esg.env ] && $(grep LD_LIBRARY_PATH /etc/esg.env)
+
+# Check for missing binaries
+
+# prefix folder for the esgf-dashboard-ip package, dynamically updated by the autotools with the ip prefix folder
+ESGF_DASHBOARD_IP_HOME=/usr/local/esgf-dashboard-ip
+
+# esgf-dashboard-ip executable
+SERVICE="esgf-dashboard-ip" 
+
+# sourcing environmental variables (in particular LD_LIBRARY_PATH)
+#. /export/fiore2/etc/esg.env
+
+test -x $ESGF_DASHBOARD_IP_HOME/bin/esgf-dashboard-ip || { echo "$ESGF_DASHBOARD_IP_HOME/bin/esgf-dashboard-ip not installed";
+        if [ "$1" = "stop" ]; then exit 0;
+        else exit 5; fi; }
+
+  case "$1" in
+    start)
+        echo -n "Starting the ESGF Information Provider... "
+        
+        ps ax | grep -v grep | pgrep $SERVICE
+        if [ $? == 0 ]; then
+            echo "[ALREADY RUNNING] "
+	else
+        	## Start the esgf information provider 
+		cd $ESGF_DASHBOARD_IP_HOME/bin
+        	#$ESGF_DASHBOARD_IP_HOME/bin/esgf-dashboard-ip & 
+        	$ESGF_DASHBOARD_IP_HOME/bin/esgf-dashboard-ip
+                pid=$!
+                echo $pid > /var/run/esgf-dashboard-ip.pid
+		echo "[OK]"
+	fi
+        ;;
+    stop)
+        echo -n "Shutting down ESGF Information Provider... "
+
+        #-------
+        #First try shutting down specific instance we started...
+        #-------
+        if [ -e "/var/run/esgf-dashboard-ip.pid" ]; then 
+            kill -9 $(cat /var/run/esgf-dashboard-ip.pid)
+            [ $? == 0 ] && echo "[OK]" && rm /var/run/esgf-dashboard-ip.pid && exit 0
+        else
+            echo "cannot find PID file [/var/run/esgf-dashboard-ip.pid]"
+        fi
+
+        #-------
+        #Otherwise do brute force
+        #-------
+	if ps ax | grep -v grep | pgrep $SERVICE >& /dev/null
+	then
+            ## Stop the esgf information provider 
+            killall esgf-dashboard-ip 
+	    echo "[OK]*"
+	else
+	    echo "[ALREADY STOPPED]"
+	fi
+        ;;
+    status)
+        echo -n "Checking the ESGF Information Provider status..."
+
+	if ps ax | grep -v grep | pgrep $SERVICE > /dev/null
+	then
+	    echo "[RUNNING] "
+	else
+		echo "[STOPPED]"
+	fi
+        ;;
+    version | --version)
+       	./esgf-dashboard-ip --version 
+        ;;
+    restart)
+        ## Stop the esgf information provider and regardless of whether it was
+        ## running or not, start it again.
+
+        $0 stop
+        $0 start
+        ;;
+    *)
+        ## If no or wrong parameters are given, print which are avaiable.
+        echo "Usage: $0 {start|stop|status|restart|version}"
+	echo
+        exit 1
+        ;;
+esac
+
+exit 0

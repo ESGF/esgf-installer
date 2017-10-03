@@ -574,11 +574,9 @@ def _choose_publisher_db_user():
     if not publisher_db_user or force_install:
         default_publisher_db_user = publisher_db_user or "esgcet"
         publisher_db_user_input = raw_input(
-            "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ").format(default_publisher_db_user=default_publisher_db_user) or default_publisher_db_user
+            "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ".format(default_publisher_db_user=default_publisher_db_user)) or default_publisher_db_user
         esg_property_manager.write_as_property(
             "publisher_db_user", publisher_db_user_input)
-
-
 
 def _choose_publisher_db_user_passwd():
     if not config["publisher_db_user_passwd"] or force_install:

@@ -306,8 +306,8 @@ def setup_dashboard():
     #     useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard && \
     #     chown -R dashboard:dashboard /usr/local/esgf-dashboard-ip
     # RUN chmod a+w /var/run
-    esg_functions.call_subprocess("groupadd dashboard")
-    esg_functions.call_subprocess("useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard")
+    esg_functions.stream_subprocess_output("groupadd dashboard")
+    esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard")
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
     DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
     esg_functions.change_permissions_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
@@ -318,7 +318,7 @@ def setup_dashboard():
     start_dashboard_service()
 
 def start_dashboard_service():
-    esg_functions.call_subprocess("dashboard_conf/ip.service start")
+    esg_functions.stream_subprocess_output("dashboard_conf/ip.service start")
 
 
 def clone_dashboard_repo():
@@ -368,9 +368,9 @@ def run_dashboard_script():
 
         os.chdir("src/c/esgf-dashboard-ip")
 
-        esg_functions.call_subprocess("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
+        esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
         esg_functions.stream_subprocess_output("make")
-        esg_functions.call_subprocess("make install")
+        esg_functions.stream_subprocess_output("make install")
 
 def main():
     setup_orp()

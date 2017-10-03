@@ -65,5 +65,12 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.setup_dashboard()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
 
+    def test_main(self):
+        esg_subsystem.main()
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-node-manager"))
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/thredds"))
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
+
 if __name__ == '__main__':
     unittest.main()

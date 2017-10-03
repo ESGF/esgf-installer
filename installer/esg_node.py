@@ -321,6 +321,7 @@ def system_component_installation():
             # esg_apache_manager.setup_apache_frontend(devel)
             esg_tomcat_manager.main()
             esg_apache_manager.main()
+            esg_subsystem.main()
     # setup_esgcet()
     # test_esgcet()
 
@@ -389,7 +390,7 @@ def main(node_type_list):
     if devel is True:
         print "(Installing DEVELOPMENT tree...)"
 
-    install_conda()
+    # install_conda()
 
     # Process User Response
     get_user_response()

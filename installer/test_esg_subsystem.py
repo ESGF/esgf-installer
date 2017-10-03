@@ -43,7 +43,7 @@ class test_ESGF_subsystem(unittest.TestCase):
     def test_clone_dashboard_repo(self):
         esg_subsystem.clone_dashboard_repo()
         self.assertTrue(os.path.isdir("/usr/local/esgf-dashboard"))
-        os.listdir("/usr/local/esgf-dashboard")
+        print "esgf-dashboard repo contents:", os.listdir("/usr/local/esgf-dashboard")
 
     def test_download_orp_war(self):
         esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")

@@ -738,8 +738,8 @@ sub find_misc_jars {
     my $jarver;
 
     my %jardirs = (
-        '/usr/local/las-esgf/8.6.1/las-esgf-v8.6.1/lib'                    => 'las',
-        '/usr/local/las-esgf/8.6.1/las-esgf-v8.6.1/WebContent/WEB-INF/lib' => 'las-webcontent',
+        '/usr/local/las-esgf/8.6.3/las-esgf-v8.6.3/lib'                    => 'las',
+        '/usr/local/las-esgf/8.6.3/las-esgf-v8.6.3/WebContent/WEB-INF/lib' => 'las-webcontent',
         '/usr/local/solr/server/lib/'                                      => 'solr-server',
         '/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib'            => 'solr-webapp',
        );

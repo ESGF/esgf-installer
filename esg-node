@@ -883,10 +883,10 @@ setup_cdat() {
        [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
     fi
 
-     bash Miniconda2-latest-Linux-x86_64.sh -b -p $conda_home
+     bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
       [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
 
-    export PATH=${cdat_home}/bin:${conda_home}/bin:$PATH
+    export PATH=${cdat_home}/bin:$PATH
 
     if [ $ESGF_INSECURE > 0 ] ; then
         conda config --set ssl_verify False
@@ -894,7 +894,7 @@ setup_cdat() {
     fi
 
     # create a default environment for the publisher with cduitl (and cdms2)
-    if [ ! -d $cdat_home ] ; then
+    if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
     unset LD_LIBRARY_PATH
 
 	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil

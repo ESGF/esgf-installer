@@ -93,6 +93,10 @@ def copy_apache_conf_files():
 # ADD scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # ENTRYPOINT /usr/local/bin/docker-entrypoint.sh
 def main():
+    print "\n*******************************"
+    print "Setting up Apache (httpd) Web Server"
+    print "******************************* \n"
+
     if check_for_apache_installation():
         print "Found existing Apache installation."
         esg_functions.call_subprocess("httpd -version")

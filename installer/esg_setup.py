@@ -482,8 +482,11 @@ def _choose_node_long_name():
 def _choose_node_namespace():
     node_namespace = esg_property_manager.get_property("node_namespace")
     if not node_namespace or force_install:
-        top_level_domain = tld.get_tld(
-            "http://" + socket.gethostname(), as_object=True)
+        try:
+            top_level_domain = tld.get_tld(
+                "http://" + socket.gethostname(), as_object=True)
+        except tld.exceptions.TldDomainNotFound, error:
+            top_level_domain = None
         domain = top_level_domain.domain
         suffix = top_level_domain.suffix
         default_node_namespace = suffix + "." + domain

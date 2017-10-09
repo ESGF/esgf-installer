@@ -485,11 +485,12 @@ def _choose_node_namespace():
         try:
             top_level_domain = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True)
+            domain = top_level_domain.domain
+            suffix = top_level_domain.suffix
+            default_node_namespace = suffix + "." + domain
         except tld.exceptions.TldDomainNotFound, error:
             top_level_domain = None
-        domain = top_level_domain.domain
-        suffix = top_level_domain.suffix
-        default_node_namespace = suffix + "." + domain
+            
         while True:
             node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(
                 default_node_namespace=default_node_namespace)) or default_node_namespace

@@ -13,13 +13,20 @@ import esg_logging_manager
 import esg_init
 import yaml
 import pip
-
+from distutils.spawn import find_executable
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
+
+
+def check_for_apache_installation():
+    if find_executable("httpd"):
+        return True
+    else:
+        return False
 
 # # install latest apache httpd
 # RUN yum -y update \
@@ -86,6 +93,12 @@ def copy_apache_conf_files():
 # ADD scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # ENTRYPOINT /usr/local/bin/docker-entrypoint.sh
 def main():
+    if check_for_apache_installation():
+        print "Found existing Apache installation."
+        esg_functions.call_subprocess("httpd -version")
+        continue_install = raw_input("Would you like to continue the Apache installation anyway? [y/N]") or "N"
+        if continue_install.lower in ["no", "n"]:
+            return
     install_apache_httpd()
     install_mod_wsgi()
     make_python_eggs_dir()

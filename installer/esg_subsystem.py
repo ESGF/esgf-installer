@@ -18,7 +18,6 @@ import sys
 import zipfile
 from git import Repo
 from time import sleep
-from tqdm import tqdm
 from clint.textui import progress
 import esg_logging_manager
 
@@ -287,6 +286,7 @@ def setup_dashboard():
     start_dashboard_service()
 
 def start_dashboard_service():
+    os.chmod("dashboard_conf/ip.service", 0555)
     esg_functions.stream_subprocess_output("dashboard_conf/ip.service start")
 
 

@@ -111,7 +111,5 @@ def main():
     make_python_eggs_dir()
     copy_apache_conf_files()
 
-
-    # pass
 if __name__ == '__main__':
     main()

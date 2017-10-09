@@ -45,6 +45,9 @@ def install_apache_httpd():
 
 def install_mod_wsgi():
     '''Have to ensure python is install properly with the shared library for mod_wsgi installation to work'''
+    print "\n*******************************"
+    print "Setting mod_wsgi"
+    print "******************************* \n"
 # # install mod_wsgi
 # RUN cd /tmp
     pip.main(['install', "mod_wsgi==4.5.3"])

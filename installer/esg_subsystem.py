@@ -304,6 +304,9 @@ def start_dashboard_service():
 
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''
+    if os.path.isdir("/usr/local/esgf-dashboard"):
+        print "esgf-dashboard repo already exists."
+        return
     print "\n*******************************"
     print "Cloning esgf-dashboard repo from Github"
     print "******************************* \n"
@@ -321,9 +324,6 @@ def clone_dashboard_repo():
 
 def run_dashboard_script():
     #default values
-    print "\n*******************************"
-    print "Running ESGF Dashboard Script"
-    print "******************************* \n"
     DashDir = "/usr/local/esgf-dashboard-ip"
     GeoipDir = "/usr/local/geoip"
     Fed="no"
@@ -336,6 +336,10 @@ def run_dashboard_script():
         dashboard_repo_local.git.checkout("work_plana")
 
         os.chdir("src/c/esgf-dashboard-ip")
+
+        print "\n*******************************"
+        print "Running ESGF Dashboard Script"
+        print "******************************* \n"
 
         esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
         esg_functions.stream_subprocess_output("make")

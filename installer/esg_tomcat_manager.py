@@ -59,9 +59,13 @@ def show_progress(count, block_size, total_size):
 TOMCAT_VERSION = "8.5.20"
 CATALINA_HOME = "/usr/local/tomcat"
 
+def check_tomcat_version():
+    esg_functions.call_subprocess("/usr/local/tomcat/bin/version.sh")
+
 def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found.  Skipping installation."
+        check_tomcat_version()
         return False
     # tomcat_download_url = "http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v{TOMCAT_VERSION}/bin/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
@@ -134,10 +138,16 @@ def create_tomcat_user():
 
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
+
+#TODO:create start_tomcat() and stop_tomcat(); config_test()
+
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf
 # CMD ["supervisord", "--nodaemon", "-c", "/etc/supervisord.conf"]
 def main():
+    print "*******************************"
+    print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
+    print "******************************* \n"
     if download_tomcat():
         extract_tomcat_tarball()
         remove_example_webapps()

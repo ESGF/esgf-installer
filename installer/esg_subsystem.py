@@ -107,6 +107,9 @@ def download_orp_war(orp_url):
 
 def setup_orp():
     '''Setup the ORP subsystem'''
+    print "\n*******************************"
+    print "Setting up ORP"
+    print "******************************* \n"
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
 
     #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
@@ -144,6 +147,9 @@ def download_node_manager_war(node_manager_url):
 
 
 def setup_node_manager_old():
+    print "\n*******************************"
+    print "Setting up ESGF Node Manager (old)"
+    print "******************************* \n"
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
     node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
     download_node_manager_war(node_manager_url)
@@ -169,6 +175,9 @@ def download_thredds_war(thredds_url):
                 f.flush()
 
 def setup_thredds():
+    print "\n*******************************"
+    print "Setting up Thredds"
+    print "******************************* \n"
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
     thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
     download_thredds_war(thredds_url)
@@ -254,6 +263,9 @@ def download_stats_api_war(stats_api_url):
                 f.flush()
 
 def setup_dashboard():
+    print "\n*******************************"
+    print "Setting up ESGF Stats API (dashboard)"
+    print "******************************* \n"
     # install esgf-stats-api war file
     #COPY dashboard/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
@@ -309,6 +321,9 @@ def clone_dashboard_repo():
 
 def run_dashboard_script():
     #default values
+    print "\n*******************************"
+    print "Running ESGF Dashboard Script"
+    print "******************************* \n"
     DashDir = "/usr/local/esgf-dashboard-ip"
     GeoipDir = "/usr/local/geoip"
     Fed="no"

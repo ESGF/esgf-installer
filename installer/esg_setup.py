@@ -490,7 +490,7 @@ def _choose_node_namespace():
             default_node_namespace = suffix + "." + domain
         except tld.exceptions.TldDomainNotFound, error:
             top_level_domain = None
-            
+            default_node_namespace = None
         while True:
             node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(
                 default_node_namespace=default_node_namespace)) or default_node_namespace

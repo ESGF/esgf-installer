@@ -2797,7 +2797,7 @@ test_tds() {
     start_postgress
 
     echo "$cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds"
-    $cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
+    esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
     [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
     echo "curl http://${esgf_host_ip}/thredds"

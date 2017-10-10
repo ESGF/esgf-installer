@@ -30,10 +30,10 @@ init() {
 #    cdat_tag="1.5.1.esgf-v1.7.0"
 
 
-    esgcet_version=${esgcet_version:-"3.2.6"}
-    publisher_tag=${publisher_tag:-"v3.2.6"}
-    esgprep_version="2.7.10"
-    cmor_version="3.2.5"  # concidence its same as esgcet
+    esgcet_version=${esgcet_version:-"3.2.7"}
+    publisher_tag=${publisher_tag:-"v3.2.7"}
+    esgprep_version="2.7.19"
+    cmor_version="3.2.7"  # concidence its same as esgcet
 
 
     #see esgf-node-manager project:
@@ -45,7 +45,7 @@ init() {
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.9.6"}
+    esg_orp_version=${esg_orp_version:-"2.9.7"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"2.7.11"}

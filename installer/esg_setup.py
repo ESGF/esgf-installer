@@ -636,6 +636,7 @@ def initial_setup_questionnaire():
     _choose_esgf_index_peer()
     _choose_mail_admin_address()
 
+    #TODO:Extract constructring DB string into separate function
     db_properties = get_db_properties()
 
     if not all(db_properties) or force_install:
@@ -647,7 +648,7 @@ def initial_setup_questionnaire():
         else:
             connstring_ = "{db_user}@{db_host}:{db_port}/{db_database} [external = ${db_managed}]".format(db_user=db_properties["db_user"],
                                                                                                           db_host=db_properties[
-                                                                                                              "db_host"],
+                                    ©                                                                          "db_host"],
                                                                                                           db_port=db_properties[
                                                                                                               "db_port"],
                                                                                                           db_database=db_properties[
@@ -835,7 +836,7 @@ def setup_java():
         setup_java_answer = "y"
 
     if find_executable("java", os.path.join(config["java_install_dir"],"bin")):
-        print "Detected an existing java installation..."
+        print "Detected an existing java installation at {java_path}...".format(java_path=find_executable("java", os.path.join(config["java_install_dir"],"bin")))
         java_version_stdout = esg_functions.call_subprocess("{java_executable} -version".format(java_executable=find_executable("java")))
         print java_version_stdout
         if force_install:

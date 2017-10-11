@@ -14,7 +14,7 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-
+# TODO: Can't find usage anywhere; maybe deprecate
 def load_properties(property_file = config["config_file"]):
     '''
         Load properties from a java-style property file
@@ -45,23 +45,12 @@ def get_property(property_name, config_file=config["config_file"]):
     '''
     parser = ConfigParser.SafeConfigParser()
     parser.read(config_file)
-    return parser.get("installer_properties", property_name)
-    # if not os.access(config["config_file"], os.R_OK):
-    #     print "Unable to read file"
-    #     return False
-    # property_name = re.sub(r'\_', r'.', property_name)
-    # datafile = open(config["config_file"], "r+")
-    # searchlines = datafile.readlines()
-    # datafile.seek(0)
-    # for line in searchlines:
-    #     if property_name in line:
-    #         _, value = line.split("=")
-    #         if not value and default_value:
-    #             return default_value.strip()
-    #         else:
-    #             return value.strip()
+    try:
+        return parser.get("installer_properties", property_name)
+    except ConfigParser.NoSectionError, error:
+        print "could not find property: {property_name}".format(property_name)
 
-# TODO: Not used anywhere; maybe deprecate
+# TODO: Can't find usage anywhere; maybe deprecate
 def get_property_as():
     '''
         Gets a single property from the arg string and turns the alias into a
@@ -72,6 +61,7 @@ def get_property_as():
     '''
     pass
 
+# TODO: Can't find usage anywhere; maybe deprecate
 def remove_property(key):
     '''
         Removes a given variable's property representation from the property file

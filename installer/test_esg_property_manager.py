@@ -47,11 +47,14 @@ class test_ESG_property_manager(unittest.TestCase):
         with open("/usr/local/test_properties.ini", "w") as test_properties_file:
             esg_property_manager.write_as_property("Batman", "Bruce Wayne", test_properties_file)
         parser = ConfigParser.SafeConfigParser()
+
+        test_properties_file = open("/usr/local/test_properties.ini", "r+")
         parser.read("/usr/local/test_properties.ini")
         self.assertEqual(parser.get('installer_properties', 'Batman'), "Bruce Wayne")
 
         parser.set("installer_properties", "Batman", "Damian Wayne")
         self.assertEqual(parser.get('installer_properties', 'Batman'), "Bruce Wayne")
+        test_properties_file.close()
 
 
 

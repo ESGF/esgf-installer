@@ -8,5 +8,5 @@ script:
   - whoami
   - cd installer
   - pip install -r requirements.txt
-  - python test_esg_property_manager.py
+  - sudo python test_esg_property_manager.py
   - python esg_pylint_script.py -a

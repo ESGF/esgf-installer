@@ -44,8 +44,8 @@ class test_ESG_property_manager(unittest.TestCase):
     #     self.assertEqual(output, False)
 
     def test_write_as_property(self):
-        with open("/usr/local/test_properties.ini", "w") as test_properties_file:
-            esg_property_manager.write_as_property("Batman", "Bruce Wayne", test_properties_file)
+        test_properties_file = "/usr/local/test_properties.ini"
+        esg_property_manager.write_as_property("Batman", "Bruce Wayne", test_properties_file)
         parser = ConfigParser.SafeConfigParser()
 
         test_properties_file = open("/usr/local/test_properties.ini", "r+")

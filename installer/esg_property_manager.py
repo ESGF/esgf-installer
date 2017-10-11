@@ -103,7 +103,8 @@ def write_as_property(property_name, property_value, config_file=config["config_
         print "section already exists"
 
     parser.set('installer_properties', property_name, property_value)
-    parser.write(config_file)
+    with open(config_file, "w") as config_file_object:
+        parser.write(config_file_object)
     # datafile = open(config["config_file"], "a+")
     # searchlines = datafile.readlines()
     # datafile.seek(0)

@@ -100,6 +100,8 @@ def write_as_property(property_name, property_value, config_file=config["config_
         parser.add_section("installer_properties")
     except ConfigParser.DuplicateSectionError:
         print "section already exists"
+
+    parser.read(config_file)
     parser.set('installer_properties', property_name, property_value)
     parser.write(config_file)
     # datafile = open(config["config_file"], "a+")

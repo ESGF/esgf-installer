@@ -6,5 +6,6 @@ install: "pip install -r installer/requirements.txt"
 script:
   - pwd
   - cd installer
+  - pip install -r requirements.txt
   - python test_esg_tomcat.py
   - python esg_pylint_script.py -a

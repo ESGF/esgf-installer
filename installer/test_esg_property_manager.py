@@ -25,12 +25,14 @@ class test_ESG_property_manager(unittest.TestCase):
     #     output = esg_property_manager.load_properties()
     #     self.assertEqual(output, 0)
     #
-    # def test_get_property(self):
-    #     output = esg_property_manager.get_property("publisher.config")
-    #     self.assertEqual(output, "esg.ini")
-    #
-    #     output = esg_property_manager.get_property("esgf.http.port")
-    #     self.assertEqual(output, "80")
+    def test_get_property(self):
+        test_properties_file = "/usr/local/test_properties.ini"
+        esg_property_manager.write_as_property("Black Panther", "T'Challa", test_properties_file)
+        output = esg_property_manager.get_property("Black Panther", test_properties_file)
+        self.assertEqual(output, "T'Challa")
+
+        # output = esg_property_manager.get_property("esgf.http.port")
+        # self.assertEqual(output, "80")
     #
     # def test_remove_property(self):
     #     target = open(config["config_file"], 'a')

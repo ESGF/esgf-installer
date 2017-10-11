@@ -48,7 +48,7 @@ def get_property(property_name, config_file=config["config_file"]):
     try:
         return parser.get("installer_properties", property_name)
     except ConfigParser.NoSectionError, error:
-        print "could not find property: {property_name}".format(property_name)
+        print "could not find property: {property_name}".format(property_name=property_name)
 
 # TODO: Can't find usage anywhere; maybe deprecate
 def get_property_as():

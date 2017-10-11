@@ -6,6 +6,8 @@ import re
 import yaml
 import esg_logging_manager
 import esg_env_manager
+import ConfigParser
+
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
@@ -86,21 +88,28 @@ def remove_property(key):
     return property_found
 
 
-def write_as_property(property_name, property_value):
+def write_as_property(property_name, property_value, config_file=config["config_file"]):
     '''
         Writes variable out to property file as java-stye property
         I am replacing all bash-style "_"s with java-style "."s
         arg 1 - The string of the variable you wish to write as property to property file
         arg 2 - The value to set the variable to (default: the value of arg1)
     '''
-    datafile = open(config["config_file"], "a+")
-    searchlines = datafile.readlines()
-    datafile.seek(0)
-    for line in searchlines:
-        if property_name in line:
-            print "Property {property_name} with value {property_value} already exists".format(property_name=property_name, property_value=property_value)
-            return "Property already exists"
-    else:
-        datafile.write(property_name+"="+property_value+"\n")
-        print "Added Property {property_name} with value {property_value} to {config_file}".format(property_name=property_name, property_value=property_value, config_file=config["config_file"])
-        return 0
+    parser = ConfigParser.SafeConfigParser()
+    try:
+        parser.add_section("installer_properties")
+    except ConfigParser.DuplicateSectionError:
+        print "section already exists"
+    parser.set('installer_properties', property_name, property_value)
+    parser.write(config_file)
+    # datafile = open(config["config_file"], "a+")
+    # searchlines = datafile.readlines()
+    # datafile.seek(0)
+    # for line in searchlines:
+    #     if property_name in line:
+    #         print "Property {property_name} with value {property_value} already exists".format(property_name=property_name, property_value=property_value)
+    #         return "Property already exists"
+    # else:
+    #     datafile.write(property_name+"="+property_value+"\n")
+    #     print "Added Property {property_name} with value {property_value} to {config_file}".format(property_name=property_name, property_value=property_value, config_file=config["config_file"])
+    #     return 0

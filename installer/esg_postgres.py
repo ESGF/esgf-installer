@@ -24,9 +24,12 @@ def download_postgres():
     esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96")
 
 def initialize_postgres():
-    if os.listdir("/var/lib/pgsql/9.6/data"):
-        print "Data directory already exists. Skipping initialize_postgres()."
-        return
+    try:
+        if os.listdir("/var/lib/pgsql/9.6/data"):
+            print "Data directory already exists. Skipping initialize_postgres()."
+            return
+    except OSError, error:
+        print "error:", error
     esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")
     os.chmod(os.path.join(config["postgress_install_dir"], "9.6", "data"), 0700)
 
@@ -163,8 +166,6 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
     #Essentially change user from root to postgres
     #TODO: This was only working for ident identification
-    #TODO: to connect initially, will have to remove host from connection string.  Add params for host and password
-    #TODO: Create a helper function to build connection strings
     root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
         postgres_id = pwd.getpwnam("postgres").pw_uid
@@ -250,15 +251,8 @@ def update_log_dir_in_config_file():
         grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 
-def setup_postgres(force_install = False):
-    print "\n*******************************"
-    print "Setting up Postgres"
-    print "******************************* \n"
-
+def check_existing_pg_version(psql_path, force_install=False):
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
-
-    postgres_binary_path = find_executable("postgres")
-    psql_path = find_executable("psql")
 
     if not psql_path:
         print "Postgres not found on system"
@@ -267,16 +261,33 @@ def setup_postgres(force_install = False):
             postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"].split(" ")[-1]
             print "postgres version number: ", postgres_version_found
             if semver.compare(postgres_version_found, config["postgress_min_version"]) >= 1 and not force_install:
-                # postgres_version_found = esg_functions.call_subprocess("psql --version")
-                # print postgres_version_found["stdout"]
-                default_continue_install = "N"
-                continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
-                if continue_install.lower() in ["no", 'n']:
-                    print "Skipping installation."
-                    return True
-            # elif
+                return True
+                # default_continue_install = "N"
+                # continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
+                # if continue_install.lower() in ["no", 'n']:
+                #     print "Skipping installation."
+                #     return True
         except OSError, error:
             logger.error(error)
+
+
+def setup_postgres(force_install = False):
+    print "\n*******************************"
+    print "Setting up Postgres"
+    print "******************************* \n"
+
+    print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
+
+    psql_path = find_executable("psql")
+
+    if check_existing_pg_version(psql_path):
+        default_continue_install = "N"
+        continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
+        if continue_install.lower() in ["no", 'n']:
+            print "Skipping installation."
+            return True
+        else:
+            force_install = True
 
     backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
     if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
@@ -407,6 +418,9 @@ def load_esgf_data(cur):
     cur.execute(open("sqldata/esgf_migrate_version.sql", "r").read())
 
 def backup_db():
+#     echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz "
+# debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz"
+# PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} | gzip > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz
     pass
 
 def write_postgress_env():

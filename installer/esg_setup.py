@@ -441,8 +441,12 @@ def _choose_organization_name():
         logger.info("esg_root_id = [%s]", esg_root_id)
         return
     if not esg_root_id or force_install:
-        default_org_name = tld.get_tld(
-            "http://" + socket.gethostname(), as_object=True).domain
+        try:
+            default_org_name = tld.get_tld(
+                "http://" + socket.gethostname(), as_object=True).domain
+        except tld.exceptions.TldDomainNotFound, error:
+            print error
+            default_org_name = "llnl"
         while True:
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ".format(default_org_name=default_org_name)) or default_org_name
             org_name_input.replace("", "_")
@@ -478,11 +482,15 @@ def _choose_node_long_name():
 def _choose_node_namespace():
     node_namespace = esg_property_manager.get_property("node_namespace")
     if not node_namespace or force_install:
-        top_level_domain = tld.get_tld(
-            "http://" + socket.gethostname(), as_object=True)
-        domain = top_level_domain.domain
-        suffix = top_level_domain.suffix
-        default_node_namespace = suffix + "." + domain
+        try:
+            top_level_domain = tld.get_tld(
+                "http://" + socket.gethostname(), as_object=True)
+            domain = top_level_domain.domain
+            suffix = top_level_domain.suffix
+            default_node_namespace = suffix + "." + domain
+        except tld.exceptions.TldDomainNotFound, error:
+            top_level_domain = None
+            default_node_namespace = None
         while True:
             node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(
                 default_node_namespace=default_node_namespace)) or default_node_namespace
@@ -672,8 +680,8 @@ def initial_setup_questionnaire():
         logger.info("db publisher connection string %s@%s:%s/%s",
                     db_properties["db_user"], db_properties["db_host"], db_properties["db_port"], db_properties["db_database"])
 
-    esg_env_manager.deduplicate_properties(
-        config["config_file"])
+    # esg_env_manager.deduplicate_properties(
+    #     config["config_file"])
 
     os.chdir(starting_directory)
 

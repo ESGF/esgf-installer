@@ -18,7 +18,6 @@ import sys
 import zipfile
 from git import Repo
 from time import sleep
-from tqdm import tqdm
 from clint.textui import progress
 import esg_logging_manager
 
@@ -108,6 +107,9 @@ def download_orp_war(orp_url):
 
 def setup_orp():
     '''Setup the ORP subsystem'''
+    print "\n*******************************"
+    print "Setting up ORP"
+    print "******************************* \n"
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
 
     #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
@@ -145,6 +147,9 @@ def download_node_manager_war(node_manager_url):
 
 
 def setup_node_manager_old():
+    print "\n*******************************"
+    print "Setting up ESGF Node Manager (old)"
+    print "******************************* \n"
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
     node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
     download_node_manager_war(node_manager_url)
@@ -170,6 +175,9 @@ def download_thredds_war(thredds_url):
                 f.flush()
 
 def setup_thredds():
+    print "\n*******************************"
+    print "Setting up Thredds"
+    print "******************************* \n"
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
     thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
     download_thredds_war(thredds_url)
@@ -255,6 +263,9 @@ def download_stats_api_war(stats_api_url):
                 f.flush()
 
 def setup_dashboard():
+    print "\n*******************************"
+    print "Setting up ESGF Stats API (dashboard)"
+    print "******************************* \n"
     # install esgf-stats-api war file
     #COPY dashboard/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
@@ -287,11 +298,15 @@ def setup_dashboard():
     start_dashboard_service()
 
 def start_dashboard_service():
+    os.chmod("dashboard_conf/ip.service", 0555)
     esg_functions.stream_subprocess_output("dashboard_conf/ip.service start")
 
 
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''
+    if os.path.isdir("/usr/local/esgf-dashboard"):
+        print "esgf-dashboard repo already exists."
+        return
     print "\n*******************************"
     print "Cloning esgf-dashboard repo from Github"
     print "******************************* \n"
@@ -321,6 +336,10 @@ def run_dashboard_script():
         dashboard_repo_local.git.checkout("work_plana")
 
         os.chdir("src/c/esgf-dashboard-ip")
+
+        print "\n*******************************"
+        print "Running ESGF Dashboard Script"
+        print "******************************* \n"
 
         esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
         esg_functions.stream_subprocess_output("make")

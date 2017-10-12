@@ -9,6 +9,7 @@ import esg_functions
 import esg_setup
 import esg_apache_manager
 import esg_logging_manager
+import esg_bash2py
 import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -252,11 +253,7 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
             # if node_type_bit & get_bit_value(arg) == 0:
             #     node_type_bit += get_bit_value(arg)
             #     selection_string += " "+arg
-        if not os.path.isdir(config["esg_config_dir"]):
-            try:
-                os.mkdir(config["esg_config_dir"])
-            except IOError, error:
-                logger.error(error)
+        esg_bash2py.mkdir_p(config["esg_config_dir"])
         # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         set_node_type_config(node_type_list, config["esg_config_type_file"])
         sys.exit(0)

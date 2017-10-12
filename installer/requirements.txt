@@ -3,14 +3,15 @@
 
 # esg_apache_manager.py: 8
 # esg_publisher.py: 17
-GitPython == 2.1.1
+# esg_subsystem.py: 19,299
+GitPython == 2.1.5
 
 # esg_logging_manager.py: 2
 coloredlogs == 7.1
 
 # esg_node.py: 7
-# esg_tomcat_manager.py: 24
-lxml == 3.6.4
+# esg_tomcat_manager.py: 25
+lxml == 3.7.3
 
 # esg_env_manager.py: 6
 # esg_node_manager.py: 10
@@ -25,32 +26,31 @@ pip == 9.0.1
 # esg_env_manager.py: 5
 plumbum == 1.6.3
 
-# esg_postgres.py: 4,10
-# esg_subsystem.py: 11
+# esg_tomcat_manager.py: 20
+progressbar2 == 3.34.2
+
+# esg_postgres.py: 5,11
 # test_esg_postgres.py: 7
 psycopg2 == 2.7.1
 
 # esg_cert_manager.py: 6
 # esg_node_manager.py: 6
 # esg_setup.py: 6
-# esg_tomcat_manager.py: 23
-pyOpenSSL == 16.2.0
+# esg_tomcat_manager.py: 24
+pyOpenSSL == 17.0.0
 
 # esg_pylint_script.py: 8
-pylint == 1.5.4
+pylint == 1.6.4
 
 # esg_bootstrap.py: 7
 # esg_functions.py: 12
 # esg_mirror_manager.py: 6
 # esg_node_manager.py: 7
 # esg_setup.py: 7
-requests == 2.12.4
+# esg_subsystem.py: 13
+# esg_tomcat_manager.py: 21
+requests == 2.11.1
 
-# esg_postgres.py: 12
-semver == 2.7.8
-
-# esg_node_manager.py: 11
-# esg_setup.py: 11
-tld == 0.7.9
-
-clint
+# setup.py: 3
+setuptools == 36.0.1
+Pyyaml

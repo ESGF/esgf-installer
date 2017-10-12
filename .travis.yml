@@ -5,7 +5,8 @@ python:
 install: "pip install -r installer/requirements.txt"
 script:
   - pwd
-  - cd installer 
-  - python test_esg_functions.py
-  - python test_esg_setup.py
+  - whoami
+  - cd installer
+  - pip install -r requirements.txt
+  - sudo python test_esg_property_manager.py
   - python esg_pylint_script.py -a

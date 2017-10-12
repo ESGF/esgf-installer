@@ -6,13 +6,15 @@ import re
 import yaml
 import esg_logging_manager
 import esg_env_manager
+import ConfigParser
+
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-
+# TODO: Can't find usage anywhere; maybe deprecate
 def load_properties(property_file = config["config_file"]):
     '''
         Load properties from a java-style property file
@@ -35,28 +37,22 @@ def load_properties(property_file = config["config_file"]):
     return 0
 
 
-def get_property(property_name, default_value = None):
+def get_property(property_name, config_file=config["config_file"]):
     '''
-        Gets a single property from a string arg and turns it into a shell var
+        Gets a single property from the config_file using ConfigParser
         arg 1 - the string that you wish to get the property of (and make a variable)
-        arg 2 - optional default value to set
+        arg 2 - the path to the config file
     '''
-    if not os.access(config["config_file"], os.R_OK):
-        print "Unable to read file"
-        return False
-    property_name = re.sub(r'\_', r'.', property_name)
-    datafile = open(config["config_file"], "r+")
-    searchlines = datafile.readlines()
-    datafile.seek(0)
-    for line in searchlines:
-        if property_name in line:
-            _, value = line.split("=")
-            if not value and default_value:
-                return default_value.strip()
-            else:
-                return value.strip()
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(config_file)
+    try:
+        return parser.get("installer_properties", property_name)
+    except ConfigParser.NoSectionError, error:
+        print "could not find property: {property_name}".format(property_name=property_name)
+    except ConfigParser.NoOptionError, error:
+        print "error:", error
 
-# TODO: Not used anywhere; maybe deprecate
+# TODO: Can't find usage anywhere; maybe deprecate
 def get_property_as():
     '''
         Gets a single property from the arg string and turns the alias into a
@@ -67,6 +63,7 @@ def get_property_as():
     '''
     pass
 
+# TODO: Can't find usage anywhere; maybe deprecate
 def remove_property(key):
     '''
         Removes a given variable's property representation from the property file
@@ -86,21 +83,19 @@ def remove_property(key):
     return property_found
 
 
-def write_as_property(property_name, property_value):
+def write_as_property(property_name, property_value=None, config_file=config["config_file"]):
     '''
-        Writes variable out to property file as java-stye property
-        I am replacing all bash-style "_"s with java-style "."s
+        Writes variable out to property file using ConfigParser
         arg 1 - The string of the variable you wish to write as property to property file
-        arg 2 - The value to set the variable to (default: the value of arg1)
+        arg 2 - The value to set the variable to (default: None)
     '''
-    datafile = open(config["config_file"], "a+")
-    searchlines = datafile.readlines()
-    datafile.seek(0)
-    for line in searchlines:
-        if property_name in line:
-            print "Property {property_name} with value {property_value} already exists".format(property_name=property_name, property_value=property_value)
-            return "Property already exists"
-    else:
-        datafile.write(property_name+"="+property_value+"\n")
-        print "Added Property {property_name} with value {property_value} to {config_file}".format(property_name=property_name, property_value=property_value, config_file=config["config_file"])
-        return 0
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(config_file)
+    try:
+        parser.add_section("installer_properties")
+    except ConfigParser.DuplicateSectionError:
+        print "section already exists"
+
+    parser.set('installer_properties', property_name, property_value)
+    with open(config_file, "w") as config_file_object:
+        parser.write(config_file_object)

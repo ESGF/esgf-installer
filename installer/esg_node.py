@@ -313,6 +313,9 @@ def system_component_installation():
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()
         esg_setup.setup_cdat()
+        esg_tomcat_manager.main()
+        esg_apache_manager.main()
+        esg_subsystem.main()
         # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
             # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:

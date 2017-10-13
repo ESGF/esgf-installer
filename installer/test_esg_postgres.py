@@ -26,6 +26,8 @@ class test_ESG_postgres(unittest.TestCase):
         purge_postgres()
         esg_postgres.download_postgres()
         esg_postgres.start_postgres()
+        esg_postgres.setup_hba_conf_file()
+        esg_postgres.restart_postgres()
 
     @classmethod
     def tearDownClass(cls):
@@ -33,6 +35,9 @@ class test_ESG_postgres(unittest.TestCase):
         print "Tearing down ESGF Postgres Test Fixture"
         print "******************************* \n"
         conn = esg_postgres.connect_to_db("postgres","postgres")
+        #Tests have already been cleaned up with self.test_setup()
+        if not conn:
+            return
         users_list = esg_postgres.list_users(conn=conn)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
@@ -102,7 +107,7 @@ class test_ESG_postgres(unittest.TestCase):
         conn.commit()
         conn.close()
 
-        conn2 = esg_postgres.connect_to_db("testuser","postgres")
+        conn2 = esg_postgres.connect_to_db("testuser",db_name="postgres", host='localhost', password='password')
         cur2 = conn2.cursor()
         cur2.execute("""SELECT usename FROM pg_user;""")
         users = cur2.fetchall()

@@ -329,9 +329,7 @@ def setup_postgres(force_install = False):
     postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
     os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
-    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                         ident\n")
-        hba_conf_file.write("local    all             all                         md5\n")
+    setup_hba_conf_file()
     restart_postgres()
 
     #TODO: Set password for postgres user
@@ -354,6 +352,12 @@ def setup_postgres(force_install = False):
 # upgrade  = None
 # if not found_valid_version:
 #     upgrade
+
+def setup_hba_conf_file():
+    '''Modify the pg_hba.conf file for md5 authencation'''
+    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
+        hba_conf_file.write("local    all             postgres                         ident\n")
+        hba_conf_file.write("local    all             all                         md5\n")
 
 def create_pg_pass_file():
     '''Creates the file to store login passwords for psql'''

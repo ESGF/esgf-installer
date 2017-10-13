@@ -144,12 +144,10 @@ def init_structure():
     except KeyError:
         esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
 
-    # logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer))
     if not esgf_idp_peer:
         myproxy_endpoint = None
     else:
         myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
-    # re.search("/\w+", source)
 
     try:
         config["myproxy_port"]
@@ -347,9 +345,6 @@ def _update_admin_password_file(updated_password):
 
     # Use the same password when creating the postgress account
     config["pg_sys_acct_passwd"] = updated_password
-
-# TODO: move this function to esg_functions
-
 
 def _add_user_group(group_name):
     # TODO: Refactor by modifying the /etc/group and /etc/gshadow files; use

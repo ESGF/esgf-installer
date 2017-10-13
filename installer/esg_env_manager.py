@@ -73,32 +73,6 @@ def deduplicate_settings_in_file(envfile = None):
         sys.exit(0)
 
 
-def deduplicate_properties(properties_file = None):
-    infile = esg_bash2py.Expand.colonMinus(properties_file, config["config_file"])
-    try:
-        my_set = set()
-        deduplicated_list = []
-        with open(infile, 'r+') as prop_file:
-            property_settings = prop_file.readlines()
-            for prop in reversed(property_settings):
-                if not prop.isspace():
-                    key, value = prop.split("=")
-                    # logger.debug("key: %s", key)
-                    # logger.debug("value: %s", value)
-                if key not in my_set:
-                    deduplicated_list.append(key+ "=" + value)
-                    my_set.add(key)
-            deduplicated_list.reverse()
-            # logger.debug("deduplicated_list: %s", str(deduplicated_list))
-            prop_file.seek(0)
-            for setting in deduplicated_list:
-                prop_file.write(setting)
-            prop_file.truncate()
-        return True
-    except IOError, error:
-        logger.error(error)
-        sys.exit(0)
-
 def get_config_ip(interface_value):
     # chain = ifconfig["eth3"] | grep["inet[^6]"] | awk['{ gsub (" *inet [^:]*:",""); print eth3}']
     #     '''

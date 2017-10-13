@@ -107,7 +107,7 @@ class test_ESG_postgres(unittest.TestCase):
         conn.commit()
         conn.close()
 
-        conn2 = esg_postgres.connect_to_db("testuser",db_name="postgres", host='localhost', password='password')
+        conn2 = esg_postgres.connect_to_db("testuser",db_name="postgres", password='password')
         cur2 = conn2.cursor()
         cur2.execute("""SELECT usename FROM pg_user;""")
         users = cur2.fetchall()

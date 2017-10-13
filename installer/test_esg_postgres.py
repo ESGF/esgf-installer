@@ -201,11 +201,6 @@ class test_ESG_postgres(unittest.TestCase):
         esg_postgres.create_pg_pass_file()
         self.assertTrue(os.path.isfile(os.path.join(os.environ["HOME"], ".pgpass")))
 
-    def test_setup_postgres(self):
-        '''Tests the entire postgres setup; Essentially an integration test'''
-        esg_postgres.setup_postgres()
-
-        self.test_tear_down()
 
     def test_build_connection_string(self):
         test_connection_string = esg_postgres.build_connection_string("postgres", db_name="postgres", host="localhost")

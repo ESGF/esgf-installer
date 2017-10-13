@@ -14,5 +14,5 @@ script:
   - cd installer
   - pip install -r requirements.txt
   - python test_esg_property_manager.py
-  - python test_esg_postgres.py
+  - python test_esg_tomcat.py
   - python esg_pylint_script.py -a

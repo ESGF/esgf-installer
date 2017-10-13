@@ -55,3 +55,4 @@ requests == 2.11.1
 setuptools == 36.0.1
 Pyyaml
 semver
+tld

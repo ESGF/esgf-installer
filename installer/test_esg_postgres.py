@@ -106,6 +106,7 @@ class test_ESG_postgres(unittest.TestCase):
             print "error:", error
         conn.commit()
         conn.close()
+        cur.close()
 
         conn2 = esg_postgres.connect_to_db("testuser",db_name="postgres", password='password')
         cur2 = conn2.cursor()
@@ -114,7 +115,9 @@ class test_ESG_postgres(unittest.TestCase):
         print "\nUsers: \n"
         print users
         self.assertIsNotNone(users)
-        self.test_tear_down()
+        conn2.close()
+        cur2.close()
+        # self.test_tear_down()
 
     def test_list_users(self):
         user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")

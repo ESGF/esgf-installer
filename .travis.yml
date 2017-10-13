@@ -1,10 +1,13 @@
 language: python
 python:
   - "2.7"
+
+dist: trusty
+sudo: required
 # command to install dependencies
 install: "pip install -r installer/requirements.txt"
 before_script:
-  - chmod 0777 /usr/local
+  - sudo chmod 0777 /usr/local
 script:
   - ls -la /usr/local
   - pwd

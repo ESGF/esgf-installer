@@ -56,3 +56,4 @@ setuptools == 36.0.1
 Pyyaml
 semver
 tld
+clint

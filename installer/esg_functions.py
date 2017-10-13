@@ -707,6 +707,14 @@ def get_user_id(user_name):
     ''' Returns the id of the Unix user '''
     return pwd.getpwnam(user_name).pw_uid
 
+def get_tomcat_user_id():
+    ''' Returns the id of the Tomcat user '''
+    return pwd.getpwnam("tomcat").pw_uid
+
+def get_tomcat_group_id():
+    ''' Returns the id of the Tomcat group '''
+    return grp.getgrnam("tomcat").gr_gid
+
 
 def get_dir_owner_and_group(path):
     ''' Returns a tuple containing the owner and group of the given directory path '''

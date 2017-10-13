@@ -27,8 +27,6 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-TOMCAT_USER_ID = pwd.getpwnam("tomcat").pw_uid
-TOMCAT_GROUP_ID = grp.getgrnam("tomcat").gr_gid
 CATALINA_HOME = "/usr/local/tomcat"
 
 def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_install=False):
@@ -121,6 +119,8 @@ def setup_orp():
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as zf:
             zf.extractall()
         os.remove("esg-orp.war")
+        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # properties to read the Tomcat keystore, used to sign the authentication cookie
@@ -186,6 +186,8 @@ def setup_thredds():
         with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
             zf.extractall()
         os.remove("thredds.war")
+        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # TDS configuration root
@@ -239,6 +241,8 @@ def setup_thredds():
     #TODO: Convert data node scripts to Python
 
     # change ownership of content directory
+    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
     esg_functions.change_permissions_recursive("/esg/content/thredds/", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # change ownership of source directory
@@ -276,6 +280,8 @@ def setup_dashboard():
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-stats-api.war")
+        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esgf-stats-api", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # execute dashboard installation script (without the postgres schema)

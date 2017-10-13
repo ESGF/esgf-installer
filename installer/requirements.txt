@@ -54,5 +54,4 @@ requests == 2.11.1
 # setup.py: 3
 setuptools == 36.0.1
 Pyyaml
-coloredlogs
 semver

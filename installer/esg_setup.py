@@ -124,92 +124,91 @@ def init_structure():
 
     check_for_my_ip()
 
-    try:
-        esgf_host = config["esgf_host"]
-    except KeyError:
-        esgf_host = esg_property_manager.get_property("esgf_host")
+    # try:
+    #     esgf_host = config["esgf_host"]
+    # except KeyError:
+    #     esgf_host = esg_property_manager.get_property("esgf_host")
+    #
+    # try:
+    #     esgf_default_peer = config["esgf_default_peer"]
+    # except KeyError:
+    #     esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
+    #
+    # try:
+    #     esgf_idp_peer_name = config["esgf_idp_peer_name"]
+    # except KeyError:
+    #     esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
+    #
+    # try:
+    #     esgf_idp_peer = config["esgf_idp_peer"]
+    # except KeyError:
+    #     esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
+    #
+    # if not esgf_idp_peer:
+    #     myproxy_endpoint = None
+    # else:
+    #     myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
+    #
+    # try:
+    #     config["myproxy_port"]
+    # except KeyError:
+    #     myproxy_port = esg_bash2py.Expand.colonMinus(
+    #         esg_property_manager.get_property("myproxy_port"), "7512")
+    #
+    # try:
+    #     esg_root_id = config["esg_root_id"]
+    # except KeyError:
+    #     esg_root_id = esg_property_manager.get_property("esg_root_id")
+    #
+    # try:
+    #     node_peer_group = config["node_peer_group"]
+    # except KeyError:
+    #     node_peer_group = esg_property_manager.get_property("node_peer_group")
+    #
+    # try:
+    #     config["node_short_name"]
+    # except KeyError:
+    #     node_short_name = esg_property_manager.get_property("node_short_name")
+    #
+    # # NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
+    # # this is actually an issue with dedup_properties that gets called in the
+    # # get_property function
+    #
+    # # Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
+    # # Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
+    # # We transform it to dname which is written in the java style AAA=bb,
+    # # XX=yy (micro->macro) scheme using "standard2java_dn" function
+    #
+    # try:
+    #     dname = config["dname"]
+    # except KeyError:
+    #     dname = esg_property_manager.get_property("dname")
+    #
+    # try:
+    #     gridftp_config = config["gridftp_config"]
+    # except KeyError:
+    #     gridftp_config = esg_property_manager.get_property(
+    #         "gridftp_config", "bdm end-user")
+    #
+    # try:
+    #     publisher_config = config["publisher_config"]
+    # except KeyError:
+    #     publisher_config = esg_property_manager.get_property(
+    #         "publisher_config", "esg.ini")
+    #
+    # try:
+    #     publisher_home = config["publisher_home"]
+    # except KeyError:
+    #     publisher_home = esg_property_manager.get_property(
+    #         "publisher_home", config["esg_config_dir"] + "/esgcet")
+    #
+    # # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
+    # # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
+    # # logger.debug("keystore_alias in esg_setup: %s", config["keystore_alias"])
+    #
+    # config["ESGINI"] = os.path.join(
+    #     publisher_home, publisher_config)
 
-    try:
-        esgf_default_peer = config["esgf_default_peer"]
-    except KeyError:
-        esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
-
-    try:
-        esgf_idp_peer_name = config["esgf_idp_peer_name"]
-    except KeyError:
-        esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
-
-    try:
-        esgf_idp_peer = config["esgf_idp_peer"]
-    except KeyError:
-        esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
-
-    if not esgf_idp_peer:
-        myproxy_endpoint = None
-    else:
-        myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
-
-    try:
-        config["myproxy_port"]
-    except KeyError:
-        myproxy_port = esg_bash2py.Expand.colonMinus(
-            esg_property_manager.get_property("myproxy_port"), "7512")
-
-    try:
-        esg_root_id = config["esg_root_id"]
-    except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg_root_id")
-
-    try:
-        node_peer_group = config["node_peer_group"]
-    except KeyError:
-        node_peer_group = esg_property_manager.get_property("node_peer_group")
-
-    try:
-        config["node_short_name"]
-    except KeyError:
-        node_short_name = esg_property_manager.get_property("node_short_name")
-
-    # NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
-    # this is actually an issue with dedup_properties that gets called in the
-    # get_property function
-
-    # Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
-    # Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
-    # We transform it to dname which is written in the java style AAA=bb,
-    # XX=yy (micro->macro) scheme using "standard2java_dn" function
-
-    try:
-        dname = config["dname"]
-    except KeyError:
-        dname = esg_property_manager.get_property("dname")
-
-    try:
-        gridftp_config = config["gridftp_config"]
-    except KeyError:
-        gridftp_config = esg_property_manager.get_property(
-            "gridftp_config", "bdm end-user")
-
-    try:
-        publisher_config = config["publisher_config"]
-    except KeyError:
-        publisher_config = esg_property_manager.get_property(
-            "publisher_config", "esg.ini")
-
-    try:
-        publisher_home = config["publisher_home"]
-    except KeyError:
-        publisher_home = esg_property_manager.get_property(
-            "publisher_home", config["esg_config_dir"] + "/esgcet")
-
-    # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
-    # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
-    # logger.debug("keystore_alias in esg_setup: %s", config["keystore_alias"])
-
-    config["ESGINI"] = os.path.join(
-        publisher_home, publisher_config)
-
-    return 0
 
 
 def write_paths():
@@ -346,31 +345,13 @@ def _update_admin_password_file(updated_password):
     # Use the same password when creating the postgress account
     config["pg_sys_acct_passwd"] = updated_password
 
-def _add_user_group(group_name):
-    # TODO: Refactor by modifying the /etc/group and /etc/gshadow files; use
-    # [max_list.gr_gid for max_list in group_list] to find max group id and
-    # increment
-    groupadd_command = ["/usr/sbin/groupadd", "-r", group_name]
-    # groupadd_command = "/usr/sbin/groupadd -r {group_name}".format(group_name = group_name)
-    try:
-        groupadd_output = subprocess.check_output(groupadd_command, shell=True)
-    except subprocess.CalledProcessError as error:
-        logger.error(error)
-        print "ERROR: *Could not add tomcat system group: %s" % (config["tomcat_group"])
-        # os.chdir(starting_directory)
-        esg_functions.exit_with_error(1)
-
 
 def _update_password_files_permissions():
     os.chmod(config["esgf_secret_file"], 0640)
 
-    try:
-        tomcat_group_info = grp.getgrnam(
-            config["tomcat_group"])
-    except KeyError:
-        _add_user_group(config["tomcat_group"])
-
-    tomcat_group_id = tomcat_group_info.gr_gid
+    if not esg_functions.get_tomcat_group_id():
+        esg_functions.add_user_group(config["tomcat_group"])
+    tomcat_group_id = esg_functions.get_tomcat_group_id()
 
     try:
         os.chown(config["esgf_secret_file"], config[

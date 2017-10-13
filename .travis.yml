@@ -8,6 +8,8 @@ sudo: required
 install: "pip install -r installer/requirements.txt"
 before_script:
   - sudo chmod 0777 /usr/local
+  - mkdir -p /esg
+  - sudo chmod 0777 /esg
 script:
   - pwd
   - whoami

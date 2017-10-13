@@ -9,13 +9,10 @@ install: "pip install -r installer/requirements.txt"
 before_script:
   - sudo chmod 0777 /usr/local
 script:
-  - ls -la /usr/local
   - pwd
   - whoami
   - cd installer
-  # - pip install virtualenv
-  # - virtualenv esgf_3_0
-  # - source esgf_3_0/bin/activate
   - pip install -r requirements.txt
   - python test_esg_property_manager.py
+  - python test_esg_postgres.py
   - python esg_pylint_script.py -a

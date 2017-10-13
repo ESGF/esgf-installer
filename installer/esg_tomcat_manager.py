@@ -69,7 +69,6 @@ def download_tomcat():
         return False
     # tomcat_download_url = "http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v{TOMCAT_VERSION}/bin/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
-        # TOMCAT_VERSION=TOMCAT_VERSION)
     print "downloading Tomcat"
     r = requests.get(tomcat_download_url)
     with open("/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION), "wb") as code:

@@ -2,6 +2,7 @@ import os
 import grp
 import pwd
 import shutil
+import sys
 import psycopg2
 import esg_functions
 import esg_version_manager
@@ -291,7 +292,7 @@ def setup_postgres(force_install = False):
 
     backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
     if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
-        backup_db()
+        backup_db("postgres", "postgres")
 
     download_postgres()
 
@@ -421,11 +422,27 @@ def load_esgf_data(cur):
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"
     cur.execute(open("sqldata/esgf_migrate_version.sql", "r").read())
 
-def backup_db():
-#     echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz "
-# debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz"
-# PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} | gzip > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz
-    pass
+def backup_db(db_name, user_name):
+    #     echo "Backing up esgf schema esgf${my_schema_name} of ${my_node_db_name} -to-> ${backup_file_root}_$(date ${date_format}).sql.gz "
+    # debug_print "pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz"
+    # PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} pg_dump -U ${postgress_user} --schema=esgf${my_schema_name} ${my_node_db_name} | gzip > ${my_node_db_name}_esgf${my_schema_name}_backup_$(date ${date_format}).sql.gz
+    try:
+        conn = connect_to_db(db_name, user_name)
+        cur = conn.cursor()
+        tables = list_tables(conn)
+        for table in tables:
+            # cur.execute('SELECT x FROM t')
+            cur.execute("SELECT * FROM %s" % (table))
+            f = open('{table}_backup.sql'.format(table=table), 'w')
+            for row in cur:
+                f.write("insert into t values (" + str(row) + ");")
+    except psycopg2.DatabaseError, e:
+        print 'Error %s' % e
+        sys.exit(1)
+    finally:
+        if conn:
+            conn.close()
+        f.close()
 
 def write_postgress_env():
     pass
@@ -525,6 +542,7 @@ def list_tables(conn=None, db_name="postgres", user_name="postgres"):
     cur.execute("""SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';""")
     tables = cur.fetchall()
     tables_list = [{"schema_name":table[0], "table_name":table[1], "owner": table[2]} for table in tables]
+    return tables_list
     print "tables for {current_database}: {tables_list}".format(current_database=current_database, tables_list=tables_list)
 
 

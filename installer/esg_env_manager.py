@@ -2,7 +2,7 @@ import sys
 import subprocess
 import logging
 import yaml
-from plumbum.cmd import grep, wc, cat, head, ifconfig, awk
+# from plumbum.cmd import grep, wc, cat, head, ifconfig, awk
 import netifaces
 import esg_bash2py
 import esg_logging_manager
@@ -100,7 +100,7 @@ def deduplicate_properties(properties_file = None):
         sys.exit(0)
 
 def get_config_ip(interface_value):
-    chain = ifconfig["eth3"] | grep["inet[^6]"] | awk['{ gsub (" *inet [^:]*:",""); print eth3}']
+    # chain = ifconfig["eth3"] | grep["inet[^6]"] | awk['{ gsub (" *inet [^:]*:",""); print eth3}']
     #     '''
     #     #####
     #     # Get Current IP Address - Needed (at least temporarily) for Mesos Master

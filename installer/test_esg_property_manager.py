@@ -1,4 +1,3 @@
-#!/usr/bin/local/env python
 
 import unittest
 import esg_property_manager

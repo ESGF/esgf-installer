@@ -713,7 +713,18 @@ def get_tomcat_user_id():
 
 def get_tomcat_group_id():
     ''' Returns the id of the Tomcat group '''
-    return grp.getgrnam("tomcat").gr_gid
+    try:
+        return grp.getgrnam("tomcat").gr_gid
+    except KeyError, error:
+        print "error:", error
+
+def add_user_group(group_name):
+    try:
+        stream_subprocess_output("groupdadd {group_name}".format(group_name=group_name))
+    except Exception, error:
+        print "error:", error
+        print "Could not add group {group_name}".format(group_name=group_name)
+        exit_with_error(1)
 
 
 def get_dir_owner_and_group(path):

@@ -5,12 +5,11 @@ python:
 install: "pip install -r installer/requirements.txt"
 script:
   - pwd
-  - sudo su root
   - whoami
   - cd installer
-  - pip install virtualenv
-  - virtualenv esgf_3_0
-  - source esgf_3_0/bin/activate
+  # - pip install virtualenv
+  # - virtualenv esgf_3_0
+  # - source esgf_3_0/bin/activate
   - pip install -r requirements.txt
   - python test_esg_property_manager.py
   - python esg_pylint_script.py -a

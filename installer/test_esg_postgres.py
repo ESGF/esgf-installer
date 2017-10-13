@@ -147,7 +147,7 @@ class test_ESG_postgres(unittest.TestCase):
         conn.commit()
         conn.close()
 
-        conn2 = esg_postgres.connect_to_db("esgcet", db_name="esgcet", host='localhost', password='password')
+        conn2 = esg_postgres.connect_to_db("esgcet", db_name="esgcet",password='password')
         cur2 = conn2.cursor()
         try:
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")

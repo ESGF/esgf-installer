@@ -945,7 +945,7 @@ def setup_ant():
     esg_functions.stream_subprocess_output("yum -y install ant")
 
 
-def download_conda():
+def download_conda(CDAT_HOME="/usr/local/conda"):
     print "\n*******************************"
     print "Downloading Miniconda"
     print "******************************* \n"
@@ -959,16 +959,13 @@ def download_conda():
                 if chunk:
                     f.write(chunk)
                     f.flush()
-                    
-        CDAT_HOME = "/usr/local/conda"
-        esg_bash2py.mkdir_p(CDAT_HOME)
-        esg_functions.stream_subprocess_output("bash Miniconda2-latest-Linux-x86_64.sh -b -p /usr/local/conda")
+        install_conda(CDAT_HOME)
 
 
-    # with esg_bash2py.pushd(CDAT_HOME):
-    #     shutil.move("/tmp/Miniconda2-latest-Linux-x86_64.sh", os.getcwd())
-    #     sys.path.append('/home/JoeBlow/python_scripts')
 
+def install_conda(CDAT_HOME="/usr/local/conda"):
+    esg_functions.stream_subprocess_output("bash Miniconda2-latest-Linux-x86_64.sh -b -p {CDAT_HOME}".format(CDAT_HOME=CDAT_HOME))
+    sys.path.append(CDAT_HOME)
 
 
 

@@ -970,11 +970,7 @@ def install_conda(CDAT_HOME="/usr/local/conda"):
 
 
 def create_conda_env(CDAT_HOME="/usr/local/conda"):
-    # esg_functions.stream_subprocess_output("conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil")
-    esg_functions.stream_subprocess_output("{CDAT_HOME}/bin/conda")
-
-
-
+    esg_functions.stream_subprocess_output("{CDAT_HOME}/bin/conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil".format(CDAT_HOME=CDAT_HOME))
 
 def setup_cdat():
     print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])
@@ -1003,21 +999,10 @@ def setup_cdat():
 
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
-        # yum_install_uvcdat = subprocess.Popen(
-        #     ["yum", "-y", "install", "uvcdat"], stdout=subprocess.PIPE)
-        # print "yum_install_uvcdat_output: ", yum_install_uvcdat.communicate()[0]
-        # print "yum_install_return_code: ", yum_install_uvcdat.returncode
         yum_install_uvcdat = esg_functions.call_subprocess("yum -y install uvcdat")
         if yum_install_uvcdat["returncode"] != 0:
             print "[FAIL] \n\tCould not install or update uvcdat\n\n"
             return False
 
-    #TODO: Fix these to not use shell=True
-    # curl_output = subprocess.call(
-    #     "curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
-    # setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(
-    #     cdat_home=config["cdat_home"]), shell=True)
-    # pip_setup_output = subprocess.call("{cdat_home}/bin/easy_install pip".format(
-    #     cdat_home=config["cdat_home"]), shell=True)
 
     return True

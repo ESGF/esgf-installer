@@ -960,12 +960,18 @@ def download_conda(CDAT_HOME="/usr/local/conda"):
                     f.write(chunk)
                     f.flush()
         install_conda(CDAT_HOME)
+        create_conda_env()
 
 
 
 def install_conda(CDAT_HOME="/usr/local/conda"):
     esg_functions.stream_subprocess_output("bash Miniconda2-latest-Linux-x86_64.sh -b -p {CDAT_HOME}".format(CDAT_HOME=CDAT_HOME))
     sys.path.append(os.path.join(CDAT_HOME, "bin"))
+
+
+def create_conda_env(CDAT_HOME="/usr/local/conda"):
+    esg_functions.stream_subprocess_output("{CDAT_HOME}/bin/conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil".format(CDAT_HOME=CDAT_HOME))
+
 
 
 

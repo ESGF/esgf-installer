@@ -10,6 +10,13 @@ with open('esg_config.yaml', 'r') as config_file:
 
 
 class test_ESG_Functions(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        esg_functions.call_subprocess("groupdel test_esgf_group")
 
     def test_check_esgf_httpd_process(self):
         output = esg_functions.check_esgf_httpd_process()
@@ -34,9 +41,13 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.backup(os.getcwd())
         self.assertEqual(output, 0)
 
-    def test_subprocess_pipe_commands(self):
-        output = esg_functions.subprocess_pipe_commands("/bin/ps -elf | grep grep")
-        self.assertIsNotNone(output)
+    # def test_subprocess_pipe_commands(self):
+    #     output = esg_functions.subprocess_pipe_commands("/bin/ps -elf | grep grep")
+    #     self.assertIsNotNone(output)
 
+    def test_add_unix_group(self):
+        esg_functions.add_unix_group("test_esgf_group")
+        print "group_list:", esg_functions.get_group_list()
+        self.assertTrue("test_esgf_group" in esg_functions.get_group_list())
 if __name__ == '__main__':
     unittest.main()

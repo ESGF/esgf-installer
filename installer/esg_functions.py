@@ -727,10 +727,8 @@ def get_tomcat_group_id():
         print "error:", error
 
 def add_unix_group(group_name):
-    groupadd_command = "groupdadd {group_name}".format(group_name=group_name)
-    print "groupadd_command:", groupadd_command
     try:
-        call_subprocess(groupadd_command)
+        call_subprocess("groupadd {group_name}".format(group_name=group_name))
     except Exception, error:
         print "error:", error
         print "Could not add group {group_name}".format(group_name=group_name)
@@ -738,7 +736,7 @@ def add_unix_group(group_name):
 
 def add_unix_user(user_name):
     try:
-        stream_subprocess_output("groupdadd {user_name}".format(user_name=user_name))
+        stream_subprocess_output("useradd {user_name}".format(user_name=user_name))
     except Exception, error:
         print "error:", error
         print "Could not add user {user_name}".format(user_name=user_name)

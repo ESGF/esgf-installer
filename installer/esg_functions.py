@@ -727,8 +727,10 @@ def get_tomcat_group_id():
         print "error:", error
 
 def add_unix_group(group_name):
+    groupadd_command = "groupdadd {group_name}".format(group_name=group_name)
+    print "groupadd_command:", groupadd_command
     try:
-        call_subprocess("groupdadd {group_name}".format(group_name=group_name))
+        call_subprocess(groupadd_command)
     except Exception, error:
         print "error:", error
         print "Could not add group {group_name}".format(group_name=group_name)

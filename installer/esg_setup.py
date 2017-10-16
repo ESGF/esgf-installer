@@ -965,7 +965,7 @@ def download_conda(CDAT_HOME="/usr/local/conda"):
 
 def install_conda(CDAT_HOME="/usr/local/conda"):
     esg_functions.stream_subprocess_output("bash Miniconda2-latest-Linux-x86_64.sh -b -p {CDAT_HOME}".format(CDAT_HOME=CDAT_HOME))
-    sys.path.append(CDAT_HOME)
+    sys.path.append(os.path.join(CDAT_HOME, "bin"))
 
 
 

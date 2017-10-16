@@ -858,7 +858,7 @@ def setup_java():
             if not os.path.isfile(java_dist_file):
                 print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_dist_file))
                 print "Downloading Java from ", config["java_dist_url"]
-                if esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install) > 0:
+                if not esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install):
                     logger.error("ERROR: Could not download Java")
                 print "unpacking", java_dist_file
                 try:
@@ -927,7 +927,7 @@ def write_java_env():
 
 def setup_ant():
     '''
-        Install ant via yum. Does nothing if a version of Ant is already installed.
+        Install ant via yum.
     '''
 
     print "\n*******************************"
@@ -936,11 +936,25 @@ def setup_ant():
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         logger.info("Found existing Ant installation.  Skipping set up.")
-        return
+        esg_functions.stream_subprocess_output("ant -version")
+        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]") or "no"
+        if force_ant_install.lower() in ["n", "no"]:
+            return
 
-    command_list = ["yum", "-y", "install", "ant"]
-    yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
-    esg_functions.stream_subprocess_output(yum_install_ant)
+    esg_functions.stream_subprocess_output("yum -y install ant")
+
+
+def download_conda():
+    with esg_bash2py.pushd("/tmp"):
+        conda_url = "https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
+        r = requests.get(orp_url, stream=True)
+        path = '/tmp/Miniconda2-latest-Linux-x86_64.sh'
+        with open(path, 'wb') as f:
+            total_length = int(r.headers.get('content-length'))
+            for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
 
 
 def setup_cdat():

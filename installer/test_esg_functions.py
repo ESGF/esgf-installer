@@ -50,10 +50,14 @@ class test_ESG_Functions(unittest.TestCase):
     #     output = esg_functions.subprocess_pipe_commands("/bin/ps -elf | grep grep")
     #     self.assertIsNotNone(output)
 
+    def test_is_in_git_repo(self):
+		output = esg_functions.is_in_git_repo(os.getcwd())
+		self.assertTrue(output)
+
     def test_add_unix_group(self):
         esg_functions.add_unix_group("test_esgf_group")
         print "group_list:", esg_functions.get_group_list()
         self.assertTrue("test_esgf_group" in esg_functions.get_group_list())
-        
+
 if __name__ == '__main__':
     unittest.main()

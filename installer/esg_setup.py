@@ -947,7 +947,7 @@ def setup_ant():
 def download_conda():
     with esg_bash2py.pushd("/tmp"):
         conda_url = "https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
-        r = requests.get(orp_url, stream=True)
+        r = requests.get(conda_url, stream=True)
         path = '/tmp/Miniconda2-latest-Linux-x86_64.sh'
         with open(path, 'wb') as f:
             total_length = int(r.headers.get('content-length'))

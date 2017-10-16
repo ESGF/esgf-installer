@@ -18,6 +18,7 @@ import tarfile
 from time import sleep
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
+from clint.textui import progress
 import esg_bash2py
 import esg_functions
 import esg_bootstrap

@@ -699,6 +699,14 @@ def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version,
 
     return True
 
+def get_group_list():
+    '''Returns a list of the Unix groups on the system'''
+    return [group.gr_name for group in grp.getgrall()]
+
+def get_user_list():
+    '''Returns a list of the Unix users on the system'''
+    return [user.pw_name for user in pwd.getpwall()]
+
 def get_group_id(group_name):
     ''' Returns the id of the Unix group '''
     return grp.getgrnam(group_name).gr_gid
@@ -718,12 +726,20 @@ def get_tomcat_group_id():
     except KeyError, error:
         print "error:", error
 
-def add_user_group(group_name):
+def add_unix_group(group_name):
     try:
         stream_subprocess_output("groupdadd {group_name}".format(group_name=group_name))
     except Exception, error:
         print "error:", error
         print "Could not add group {group_name}".format(group_name=group_name)
+        exit_with_error(1)
+
+def add_unix_user(user_name):
+    try:
+        stream_subprocess_output("groupdadd {user_name}".format(user_name=user_name))
+    except Exception, error:
+        print "error:", error
+        print "Could not add user {user_name}".format(user_name=user_name)
         exit_with_error(1)
 
 

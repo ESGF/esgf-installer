@@ -18,6 +18,8 @@ class test_ESG_Setup(unittest.TestCase):
 		esg_functions.stream_subprocess_output("/usr/local/testConda/bin/anaconda-clean --yes")
 		shutil.rmtree("/usr/local/testConda")
 
+		esg_functions.stream_subprocess_output("yum -y remove uvcdat")
+
 	def test_download_conda(self):
 		print "path:", sys.path
 		esg_setup.download_conda("/usr/local/testConda")
@@ -25,6 +27,9 @@ class test_ESG_Setup(unittest.TestCase):
 		print "path after:", sys.path
 		self.assertTrue("/usr/local/testConda/bin" in sys.path)
 		# self.assertTrue(find_executable("conda"))
+
+	def test_setup_cdat(self):
+		self.assertTrue(esg_setup.setup_cdat())
 
 
 

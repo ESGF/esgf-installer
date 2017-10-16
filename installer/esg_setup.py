@@ -642,10 +642,10 @@ def initial_setup_questionnaire():
     _choose_publisher_db_user_passwd()
 
     os.chmod(config['pub_secret_file'], 0640)
-    if not esg_functions.get_tomcat_group_id():
-        esg_functions.add_user_group(config["tomcat_group"])
+    if "tomcat" not in esg_functions.get_group_list():
+        esg_functions.add_unix_group(config["tomcat_group"])
     os.chown(config['esgf_secret_file'], config[
-             "installer_uid"], tomcat_group_id)
+             "installer_uid"], esg_functions.get_tomcat_group_id())
 
     if db_properties["db_host"] == esgf_host or db_properties["db_host"] == "localhost":
         logger.info("db publisher connection string %s@localhost",

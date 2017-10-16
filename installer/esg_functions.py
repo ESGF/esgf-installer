@@ -18,6 +18,8 @@ import pwd
 import grp
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
+from distutils.spawn import find_executable
+from clint.textui import progress
 import esg_bash2py
 import esg_property_manager
 import esg_logging_manager
@@ -310,7 +312,7 @@ def git_tagrelease():
 
 
 
-def is_in_git(file_name):
+def is_in_git_repo(file_name):
     '''
      This determines if a specified file is in a git repository.
      This function will resolve symlinks and check for a .git
@@ -321,18 +323,13 @@ def is_in_git(file_name):
 
      Accepts as an argument the file to be checked
 
-     Returns 0 if the specified file is in a git repository
+     Returns True if the specified file is in a git repository
 
-     Returns 2 if it could not detect a git repository purely by file
-     position and git was not available to complete a rev-parse test
-
-     Returns 1 otherwise
+     Returns False otherwise
     '''
-    try:
-        is_git_installed = subprocess.check_output(["which", "git"])
-    except subprocess.CalledProcessError, e:
-        print "Ping stdout output:\n", e.output
-        print "git is not available to finish checking for a repository -- assuming there isn't one!"
+    if not find_executable("git"):
+        print "Git is not installed"
+        return False
 
     print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
     absolute_path = readlinkf(file_name)
@@ -341,15 +338,15 @@ def is_in_git(file_name):
 
     if not os.path.isfile(file_name):
         print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
-        return 1
+        return False
 
     if os.path.isdir(one_directory_up+"/.git"):
         print "%s is in a git repository" % file_name
-        return 0
+        return True
 
     if os.path.isdir(two_directories_up+"/.git"):
         print "%s is in a git repository" % file_name
-        return 0
+        return True
 
 def check_for_update(filename_1, filename_2=None):
     '''
@@ -423,7 +420,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     logger.debug("local file : %s", local_file)
     logger.debug("remote file: %s", remote_file)
 
-    if is_in_git(local_file) == 0:
+    if is_in_git_repo(local_file) == 0:
         print "%s is controlled by Git, not updating" % (local_file)
         return True
 
@@ -454,16 +451,15 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
 
 def fetch_remote_file(local_file, remote_file):
     ''' Download a remote file from a distribution mirror and write its contents to the local_file '''
+
     try:
-        remote_file_request = requests.get(remote_file)
-        if not remote_file_request.status_code == requests.codes.ok:
-            print " ERROR: Problem pulling down [%s] from esg distribution site" % (remote_file)
-            remote_file_request.raise_for_status()
-            return 2
-        else:
-            file_name = open(local_file, "w")
-            file_name.write(remote_file_request.content)
-            file_name.close()
+        remote_file_request = requests.get(remote_file, stream=True)
+        with open(local_file, "wb") as downloaded_file:
+            total_length = int(remote_file_request.headers.get('content-length'))
+            for chunk in progress.bar(remote_file_request.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+                if chunk:
+                    downloaded_file.write(chunk)
+                    downloaded_file.flush()
     except requests.exceptions.RequestException, error:
         print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
         print error
@@ -655,7 +651,7 @@ def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version,
     ''' Verify the esg_node script is the most current version '''
     # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
     logger.info("esg_node_filename: %s", esg_node_filename)
-    if is_in_git(esg_node_filename) == 0:
+    if is_in_git_repo(esg_node_filename) == 0:
         logger.info("Git repository detected; not checking checksum of esg-node")
         return
 

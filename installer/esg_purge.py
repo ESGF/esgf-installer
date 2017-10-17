@@ -3,6 +3,7 @@ import shutil
 import glob
 import subprocess
 import datetime
+import errno
 import esg_logging_manager
 import esg_functions
 
@@ -41,7 +42,13 @@ def purge_tomcat():
             shutil.rmtree(directory)
         except OSError, error:
             print "error deleting directory -> {directory}:".format(directory=directory), error
-    os.unlink("/usr/local/tomcat")
+    try:
+        os.unlink("/usr/local/tomcat")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+        else:
+            logger.exception()
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")

@@ -20,7 +20,7 @@ def purge_postgres():
         shutil.rmtree("/var/lib/pgsql")
         os.remove(os.path.join(os.environ["HOME"], ".pgpass"))
     except OSError, error:
-        logger.exception()
+        logger.exception("Could not delete /var/lib/pgsql")
 
 def purge_tomcat():
     print "\n*******************************"
@@ -48,7 +48,7 @@ def purge_tomcat():
         if error.errno == errno.ENOENT:
             pass
         else:
-            logger.exception()
+            logger.exception("Could not delete symlink /usr/local/tomcat")
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")

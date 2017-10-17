@@ -20,7 +20,7 @@ def purge_postgres():
         shutil.rmtree("/var/lib/pgsql")
         os.remove(os.path.join(os.environ["HOME"], ".pgpass"))
     except OSError, error:
-        print "error:", error
+        logger.exception()
 
 def purge_tomcat():
     print "\n*******************************"

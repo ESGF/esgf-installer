@@ -505,29 +505,37 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
         return True
 
 
-
 def stream_subprocess_output(command_string):
     ''' Print out the stdout of the subprocess in real time '''
-    process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
-    with process.stdout:
-        for line in iter(process.stdout.readline, b''):
-            print line,
-    # wait for the subprocess to exit
-    process.wait()
+    try:
+        process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
+        with process.stdout:
+            for line in iter(process.stdout.readline, b''):
+                print line,
+        # wait for the subprocess to exit
+        process.wait()
+    except (OSError, ValueError), error:
+        logger.exception()
+        exit_with_error(1)
 
 
 def call_subprocess(command_string, command_stdin = None):
     ''' Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn't have subprocess.call() '''
     logger.debug("command_string: %s", command_string)
-    command_process = subprocess.Popen(shlex.split(command_string), stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    if command_stdin:
-        command_process_stdout, command_process_stderr =  command_process.communicate(input = command_stdin)
+    try:
+        command_process = subprocess.Popen(shlex.split(command_string), stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        if command_stdin:
+            command_process_stdout, command_process_stderr =  command_process.communicate(input = command_stdin)
+        else:
+            command_process_stdout, command_process_stderr =  command_process.communicate()
+    except (OSError, ValueError), error:
+        logger.exception()
+        exit_with_error(1)
     else:
-        command_process_stdout, command_process_stderr =  command_process.communicate()
-    logger.debug("command_process_stdout: %s", command_process_stdout)
-    logger.debug("command_process_stderr: %s", command_process_stderr)
-    logger.debug("command_process.returncode: %s", command_process.returncode)
-    return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
+        logger.debug("command_process_stdout: %s", command_process_stdout)
+        logger.debug("command_process_stderr: %s", command_process_stderr)
+        logger.debug("command_process.returncode: %s", command_process.returncode)
+        return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
 
 
 def subprocess_pipe_commands(command_list):

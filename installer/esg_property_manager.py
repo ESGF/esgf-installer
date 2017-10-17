@@ -14,29 +14,6 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-# TODO: Can't find usage anywhere; maybe deprecate
-def load_properties(property_file = config["config_file"]):
-    '''
-        Load properties from a java-style property file
-        providing them as script variables in this context
-        arg 1 - optional property file (default is ${config_file})
-    '''
-    if not os.access(property_file, os.R_OK):
-        return False
-    esg_env_manager.deduplicate_properties(property_file)
-    separator = "="
-    count = 0
-    with open(property_file) as f:
-        for line in f:
-            key,value = line.split(separator)
-            print  "loading... "
-            print  "[%s] -> " % (key)
-            print "[%s]" % (value)
-            count+=1
-    print "Loaded (imported) %i properties from %s" % (count, property_file)
-    return 0
-
-
 def get_property(property_name, config_file=config["config_file"]):
     '''
         Gets a single property from the config_file using ConfigParser

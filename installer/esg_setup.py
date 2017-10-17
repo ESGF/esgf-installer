@@ -18,6 +18,7 @@ import tarfile
 from time import sleep
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
+from clint.textui import progress
 import esg_bash2py
 import esg_functions
 import esg_bootstrap
@@ -124,94 +125,91 @@ def init_structure():
 
     check_for_my_ip()
 
-    try:
-        esgf_host = config["esgf_host"]
-    except KeyError:
-        esgf_host = esg_property_manager.get_property("esgf_host")
+    # try:
+    #     esgf_host = config["esgf_host"]
+    # except KeyError:
+    #     esgf_host = esg_property_manager.get_property("esgf_host")
+    #
+    # try:
+    #     esgf_default_peer = config["esgf_default_peer"]
+    # except KeyError:
+    #     esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
+    #
+    # try:
+    #     esgf_idp_peer_name = config["esgf_idp_peer_name"]
+    # except KeyError:
+    #     esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
+    #
+    # try:
+    #     esgf_idp_peer = config["esgf_idp_peer"]
+    # except KeyError:
+    #     esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
+    #
+    # if not esgf_idp_peer:
+    #     myproxy_endpoint = None
+    # else:
+    #     myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
+    #
+    # try:
+    #     config["myproxy_port"]
+    # except KeyError:
+    #     myproxy_port = esg_bash2py.Expand.colonMinus(
+    #         esg_property_manager.get_property("myproxy_port"), "7512")
+    #
+    # try:
+    #     esg_root_id = config["esg_root_id"]
+    # except KeyError:
+    #     esg_root_id = esg_property_manager.get_property("esg_root_id")
+    #
+    # try:
+    #     node_peer_group = config["node_peer_group"]
+    # except KeyError:
+    #     node_peer_group = esg_property_manager.get_property("node_peer_group")
+    #
+    # try:
+    #     config["node_short_name"]
+    # except KeyError:
+    #     node_short_name = esg_property_manager.get_property("node_short_name")
+    #
+    # # NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
+    # # this is actually an issue with dedup_properties that gets called in the
+    # # get_property function
+    #
+    # # Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
+    # # Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
+    # # We transform it to dname which is written in the java style AAA=bb,
+    # # XX=yy (micro->macro) scheme using "standard2java_dn" function
+    #
+    # try:
+    #     dname = config["dname"]
+    # except KeyError:
+    #     dname = esg_property_manager.get_property("dname")
+    #
+    # try:
+    #     gridftp_config = config["gridftp_config"]
+    # except KeyError:
+    #     gridftp_config = esg_property_manager.get_property(
+    #         "gridftp_config", "bdm end-user")
+    #
+    # try:
+    #     publisher_config = config["publisher_config"]
+    # except KeyError:
+    #     publisher_config = esg_property_manager.get_property(
+    #         "publisher_config", "esg.ini")
+    #
+    # try:
+    #     publisher_home = config["publisher_home"]
+    # except KeyError:
+    #     publisher_home = esg_property_manager.get_property(
+    #         "publisher_home", config["esg_config_dir"] + "/esgcet")
+    #
+    # # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
+    # # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
+    # # logger.debug("keystore_alias in esg_setup: %s", config["keystore_alias"])
+    #
+    # config["ESGINI"] = os.path.join(
+    #     publisher_home, publisher_config)
 
-    try:
-        esgf_default_peer = config["esgf_default_peer"]
-    except KeyError:
-        esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
-
-    try:
-        esgf_idp_peer_name = config["esgf_idp_peer_name"]
-    except KeyError:
-        esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
-
-    try:
-        esgf_idp_peer = config["esgf_idp_peer"]
-    except KeyError:
-        esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
-
-    # logger.debug("trim_string_from_tail(esgf_idp_peer_name): %s",  esg_functions.trim_string_from_tail(esgf_idp_peer))
-    if not esgf_idp_peer:
-        myproxy_endpoint = None
-    else:
-        myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
-    # re.search("/\w+", source)
-
-    try:
-        config["myproxy_port"]
-    except KeyError:
-        myproxy_port = esg_bash2py.Expand.colonMinus(
-            esg_property_manager.get_property("myproxy_port"), "7512")
-
-    try:
-        esg_root_id = config["esg_root_id"]
-    except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg_root_id")
-
-    try:
-        node_peer_group = config["node_peer_group"]
-    except KeyError:
-        node_peer_group = esg_property_manager.get_property("node_peer_group")
-
-    try:
-        config["node_short_name"]
-    except KeyError:
-        node_short_name = esg_property_manager.get_property("node_short_name")
-
-    # NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
-    # this is actually an issue with dedup_properties that gets called in the
-    # get_property function
-
-    # Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
-    # Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
-    # We transform it to dname which is written in the java style AAA=bb,
-    # XX=yy (micro->macro) scheme using "standard2java_dn" function
-
-    try:
-        dname = config["dname"]
-    except KeyError:
-        dname = esg_property_manager.get_property("dname")
-
-    try:
-        gridftp_config = config["gridftp_config"]
-    except KeyError:
-        gridftp_config = esg_property_manager.get_property(
-            "gridftp_config", "bdm end-user")
-
-    try:
-        publisher_config = config["publisher_config"]
-    except KeyError:
-        publisher_config = esg_property_manager.get_property(
-            "publisher_config", "esg.ini")
-
-    try:
-        publisher_home = config["publisher_home"]
-    except KeyError:
-        publisher_home = esg_property_manager.get_property(
-            "publisher_home", config["esg_config_dir"] + "/esgcet")
-
-    # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
-    # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
-    # logger.debug("keystore_alias in esg_setup: %s", config["keystore_alias"])
-
-    config["ESGINI"] = os.path.join(
-        publisher_home, publisher_config)
-
-    return 0
 
 
 def write_paths():
@@ -348,34 +346,13 @@ def _update_admin_password_file(updated_password):
     # Use the same password when creating the postgress account
     config["pg_sys_acct_passwd"] = updated_password
 
-# TODO: move this function to esg_functions
-
-
-def _add_user_group(group_name):
-    # TODO: Refactor by modifying the /etc/group and /etc/gshadow files; use
-    # [max_list.gr_gid for max_list in group_list] to find max group id and
-    # increment
-    groupadd_command = ["/usr/sbin/groupadd", "-r", group_name]
-    # groupadd_command = "/usr/sbin/groupadd -r {group_name}".format(group_name = group_name)
-    try:
-        groupadd_output = subprocess.check_output(groupadd_command, shell=True)
-    except subprocess.CalledProcessError as error:
-        logger.error(error)
-        print "ERROR: *Could not add tomcat system group: %s" % (config["tomcat_group"])
-        # os.chdir(starting_directory)
-        esg_functions.exit_with_error(1)
-
 
 def _update_password_files_permissions():
     os.chmod(config["esgf_secret_file"], 0640)
 
-    try:
-        tomcat_group_info = grp.getgrnam(
-            config["tomcat_group"])
-    except KeyError:
-        _add_user_group(config["tomcat_group"])
-
-    tomcat_group_id = tomcat_group_info.gr_gid
+    if not esg_functions.get_tomcat_group_id():
+        esg_functions.add_user_group(config["tomcat_group"])
+    tomcat_group_id = esg_functions.get_tomcat_group_id()
 
     try:
         os.chown(config["esgf_secret_file"], config[
@@ -658,7 +635,7 @@ def initial_setup_questionnaire():
         else:
             connstring_ = "{db_user}@{db_host}:{db_port}/{db_database} [external = ${db_managed}]".format(db_user=db_properties["db_user"],
                                                                                                           db_host=db_properties[
-                                    ©                                                                          "db_host"],
+                                                                                                              "db_host"],
                                                                                                           db_port=db_properties[
                                                                                                               "db_port"],
                                                                                                           db_database=db_properties[
@@ -669,11 +646,10 @@ def initial_setup_questionnaire():
     _choose_publisher_db_user_passwd()
 
     os.chmod(config['pub_secret_file'], 0640)
-    tomcat_group_info = grp.getgrnam(
-        config["tomcat_group"])
-    tomcat_group_id = tomcat_group_info[2]
+    if "tomcat" not in esg_functions.get_group_list():
+        esg_functions.add_unix_group(config["tomcat_group"])
     os.chown(config['esgf_secret_file'], config[
-             "installer_uid"], tomcat_group_id)
+             "installer_uid"], esg_functions.get_tomcat_group_id())
 
     if db_properties["db_host"] == esgf_host or db_properties["db_host"] == "localhost":
         logger.info("db publisher connection string %s@localhost",
@@ -886,7 +862,7 @@ def setup_java():
             if not os.path.isfile(java_dist_file):
                 print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_dist_file))
                 print "Downloading Java from ", config["java_dist_url"]
-                if esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install) > 0:
+                if not esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install):
                     logger.error("ERROR: Could not download Java")
                 print "unpacking", java_dist_file
                 try:
@@ -955,7 +931,7 @@ def write_java_env():
 
 def setup_ant():
     '''
-        Install ant via yum. Does nothing if a version of Ant is already installed.
+        Install ant via yum.
     '''
 
     print "\n*******************************"
@@ -964,12 +940,40 @@ def setup_ant():
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         logger.info("Found existing Ant installation.  Skipping set up.")
-        return
+        esg_functions.stream_subprocess_output("ant -version")
+        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]") or "no"
+        if force_ant_install.lower() in ["n", "no"]:
+            return
 
-    command_list = ["yum", "-y", "install", "ant"]
-    # yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
     esg_functions.stream_subprocess_output("yum -y install ant")
 
+
+def download_conda(CDAT_HOME="/usr/local/conda"):
+    print "\n*******************************"
+    print "Downloading Miniconda"
+    print "******************************* \n"
+    with esg_bash2py.pushd("/tmp"):
+        conda_url = "https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
+        r = requests.get(conda_url, stream=True)
+        path = '/tmp/Miniconda2-latest-Linux-x86_64.sh'
+        with open(path, 'wb') as f:
+            total_length = int(r.headers.get('content-length'))
+            for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+        install_conda(CDAT_HOME)
+        create_conda_env(CDAT_HOME=CDAT_HOME)
+
+
+
+def install_conda(CDAT_HOME="/usr/local/conda"):
+    esg_functions.stream_subprocess_output("bash Miniconda2-latest-Linux-x86_64.sh -b -p {CDAT_HOME}".format(CDAT_HOME=CDAT_HOME))
+    sys.path.append(os.path.join(CDAT_HOME, "bin"))
+
+
+def create_conda_env(CDAT_HOME="/usr/local/conda"):
+    esg_functions.stream_subprocess_output("{CDAT_HOME}/bin/conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil".format(CDAT_HOME=CDAT_HOME))
 
 def setup_cdat():
     print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])
@@ -997,26 +1001,11 @@ def setup_cdat():
             return True
 
     esg_bash2py.mkdir_p(config["workdir"])
+    with esg_bash2py.pushd(config["workdir"]):
+        yum_install_uvcdat = esg_functions.call_subprocess("yum -y install uvcdat")
+        if yum_install_uvcdat["returncode"] != 0:
+            print "[FAIL] \n\tCould not install or update uvcdat\n\n"
+            return False
 
-    starting_directory = os.getcwd()
-    os.chdir(config["workdir"])
-
-    yum_install_uvcdat = subprocess.Popen(
-        ["yum", "-y", "install", "uvcdat"], stdout=subprocess.PIPE)
-    print "yum_install_uvcdat_output: ", yum_install_uvcdat.communicate()[0]
-    print "yum_install_return_code: ", yum_install_uvcdat.returncode
-    if yum_install_uvcdat.returncode != 0:
-        print "[FAIL] \n\tCould not install or update uvcdat\n\n"
-        return False
-
-    #TODO: Fix these to not use shell=True
-    curl_output = subprocess.call(
-        "curl -k -O https://bootstrap.pypa.io/ez_setup.py", shell=True)
-    setup_tools_output = subprocess.call("{cdat_home}/bin/python ez_setup.py".format(
-        cdat_home=config["cdat_home"]), shell=True)
-    pip_setup_output = subprocess.call("{cdat_home}/bin/easy_install pip".format(
-        cdat_home=config["cdat_home"]), shell=True)
-
-    os.chdir(starting_directory)
 
     return True

@@ -26,6 +26,8 @@ class test_ESG_postgres(unittest.TestCase):
         purge_postgres()
         esg_postgres.download_postgres()
         esg_postgres.start_postgres()
+        esg_postgres.setup_hba_conf_file()
+        esg_postgres.restart_postgres()
 
     @classmethod
     def tearDownClass(cls):
@@ -33,6 +35,9 @@ class test_ESG_postgres(unittest.TestCase):
         print "Tearing down ESGF Postgres Test Fixture"
         print "******************************* \n"
         conn = esg_postgres.connect_to_db("postgres","postgres")
+        #Tests have already been cleaned up with self.test_setup()
+        if not conn:
+            return
         users_list = esg_postgres.list_users(conn=conn)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
@@ -101,15 +106,18 @@ class test_ESG_postgres(unittest.TestCase):
             print "error:", error
         conn.commit()
         conn.close()
+        cur.close()
 
-        conn2 = esg_postgres.connect_to_db("postgres","testuser")
+        conn2 = esg_postgres.connect_to_db("testuser",db_name="postgres", password='password')
         cur2 = conn2.cursor()
         cur2.execute("""SELECT usename FROM pg_user;""")
         users = cur2.fetchall()
         print "\nUsers: \n"
         print users
         self.assertIsNotNone(users)
-        self.test_tear_down()
+        conn2.close()
+        cur2.close()
+        # self.test_tear_down()
 
     def test_list_users(self):
         user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
@@ -142,7 +150,7 @@ class test_ESG_postgres(unittest.TestCase):
         conn.commit()
         conn.close()
 
-        conn2 = esg_postgres.connect_to_db("esgcet", db_name="esgcet", host='localhost', password='password')
+        conn2 = esg_postgres.connect_to_db("esgcet", db_name="esgcet",password='password')
         cur2 = conn2.cursor()
         try:
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
@@ -201,11 +209,6 @@ class test_ESG_postgres(unittest.TestCase):
         esg_postgres.create_pg_pass_file()
         self.assertTrue(os.path.isfile(os.path.join(os.environ["HOME"], ".pgpass")))
 
-    def test_setup_postgres(self):
-        '''Tests the entire postgres setup; Essentially an integration test'''
-        esg_postgres.setup_postgres()
-
-        self.test_tear_down()
 
     def test_build_connection_string(self):
         test_connection_string = esg_postgres.build_connection_string("postgres", db_name="postgres", host="localhost")

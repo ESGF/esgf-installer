@@ -70,6 +70,7 @@ custom_setup = 0
 use_local_files = 0
 
 progname = "esg-node"
+#TODO: Look at parent repo and set version from tag using semver
 script_version = "v2.0-RC5.4.0-devel"
 script_maj_version = "2.0"
 script_release = "Centaur"
@@ -274,12 +275,11 @@ def get_user_response():
         begin_installation = raw_input(
             "Are you ready to begin the installation? [Y/n] ") or default_install_answer
 
-        if begin_installation.lower() == "n" or begin_installation.lower() == "no":
+        if begin_installation.lower() in ["n", "no"]:
             print "Canceling installation"
             sys.exit(0)
-        elif begin_installation.lower() == "y" or begin_installation.lower() == "yes":
+        elif begin_installation.lower() in ["y", "yes"]:
             break
-            # return "y"
         else:
             print "Invalid option.  Please select a valid option [Y/n]"
 
@@ -312,14 +312,17 @@ def system_component_installation():
         esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()
-        esg_setup.setup_cdat()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
+    if "data" in node_type_list:
         esg_subsystem.main()
         # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
         if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
             # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
             esg_publisher.setup_esgcet()
+            #CDAT only used on with Publisher; move
+            esg_setup.setup_cdat()
+            #TODO: setup_cdat() should go here
             # esg_tomcat_manager.setup_tomcat(devel)
             # esg_apache_manager.setup_apache_frontend(devel)
             esg_tomcat_manager.main()

@@ -34,10 +34,16 @@ def purge_tomcat():
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
 
+def purge_java():
+    try:
+        shutil.rmtree("/usr/local/java")
+    except OSError, error:
+        print "error: No Java installation found to delete"
+
 def main():
     purge_postgres()
     purge_tomcat()
-    pass
+    purge_java()
 
 if __name__ == '__main__':
     main()

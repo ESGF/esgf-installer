@@ -138,7 +138,20 @@ def create_tomcat_user():
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
 
-#TODO:create start_tomcat() and stop_tomcat(); config_test()
+def start_tomcat():
+    return esg_functions.call_subprocess("service httpd start")
+
+def stop_tomcat():
+    esg_functions.stream_subprocess_output("service httpd stop")
+
+def restart_tomcat():
+    esg_functions.stream_subprocess_output("service httpd restart")
+
+def check_tomcat_status():
+    return esg_functions.call_subprocess("service httpd status")
+
+def run_tomcat_config_test():
+    esg_functions.stream_subprocess_output("service httpd configtest")
 
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf

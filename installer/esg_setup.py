@@ -515,11 +515,12 @@ def _choose_node_peer_group():
         try:
             node_peer_group
         except NameError:
-            node_peer_group = "esgf-test"
+            node_peer_group = "esgf-dev"
         while True:
+            print "Only choose esgf-test for test federation install or esgf-prod for production installation.  Otherwise choose esgf-dev."
             node_peer_group_input = raw_input(
-                "What peer group(s) will this node participate in? (esgf-test|esgf-prod) [{node_peer_group}]: ".format(node_peer_group=node_peer_group)) or node_peer_group
-            if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod"] :
+                "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev) [{node_peer_group}]: ".format(node_peer_group=node_peer_group)) or node_peer_group
+            if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
                 print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input=node_peer_group_input)
                 print "Please choose either esgf-test or esgf-prod"
                 continue
@@ -528,6 +529,7 @@ def _choose_node_peer_group():
                     "node_peer_group", node_peer_group_input)
                 break
 
+#TODO: this can be removed as it's no longer used by the node manager
 def _choose_esgf_default_peer():
     esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
     if not esgf_default_peer or force_install:
@@ -965,8 +967,8 @@ def setup_ant():
         return
 
     command_list = ["yum", "-y", "install", "ant"]
-    yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
-    esg_functions.stream_subprocess_output(yum_install_ant)
+    # yum_install_ant = subprocess.Popen(command_list, stdout=subprocess.PIPE)
+    esg_functions.stream_subprocess_output("yum -y install ant")
 
 
 def setup_cdat():

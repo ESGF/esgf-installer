@@ -31,6 +31,10 @@ class test_ESG_Setup(unittest.TestCase):
 	def test_setup_cdat(self):
 		self.assertTrue(esg_setup.setup_cdat())
 
+	def test_check_for_existing_java(self):
+		output = esg_setup.check_for_existing_java()
+		self.assertIsNotNone(output)
+
 
 
 

@@ -774,6 +774,15 @@ def install_prerequisites():
         yum_install_list, stdout=subprocess.PIPE)
     esg_functions.stream_subprocess_output(yum_install_prerequisites)
 
+def check_for_existing_java():
+    '''Check if a valid java installation is currently on the system'''
+    java_path = find_executable("java", os.path.join(config["java_install_dir"],"bin"))
+    if java_path:
+        print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
+        java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
+        print java_version_stdout
+        return java_version_stdout
+
 
 def setup_java():
     '''

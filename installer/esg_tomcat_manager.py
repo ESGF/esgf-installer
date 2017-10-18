@@ -17,6 +17,7 @@ import shlex
 import filecmp
 import glob
 import yaml
+import errno
 import progressbar
 import requests
 import errno
@@ -49,13 +50,6 @@ def show_progress(count, block_size, total_size):
         pbar = None
         downloaded = 0
 
-# # Tomcat 8
-# ENV TOMCAT_VERSION 8.5.20
-#
-# RUN wget -O /tmp/apache-tomcat-${TOMCAT_VERSION}.tar.gz http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
-#     cd /usr/local && tar xzf /tmp/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
-#     ln -s /usr/local/apache-tomcat-${TOMCAT_VERSION} /usr/local/tomcat && \
-#     rm /tmp/apache-tomcat-${TOMCAT_VERSION}.tar.gz
 TOMCAT_VERSION = "8.5.20"
 CATALINA_HOME = "/usr/local/tomcat"
 
@@ -67,7 +61,7 @@ def download_tomcat():
         print "Tomcat directory found.  Skipping installation."
         check_tomcat_version()
         return False
-    # tomcat_download_url = "http://mirror.reverse.net/pub/apache/tomcat/tomcat-8/v{TOMCAT_VERSION}/bin/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
+
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
     print "downloading Tomcat"
     r = requests.get(tomcat_download_url)
@@ -75,9 +69,6 @@ def download_tomcat():
         code.write(r.content)
 
     return True
-    # urllib.urlretrieve(
-    #     tomcat_download_url, "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
-
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):
     with esg_bash2py.pushd(dest_dir):
@@ -102,7 +93,7 @@ def create_symlink(TOMCAT_VERSION):
 # ENV CATALINA_HOME /usr/local/tomcat
 #
 def remove_example_webapps():
-# # remove Tomcat example applications
+    '''remove Tomcat example applications'''
     with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
         try:
             shutil.rmtree("docs")
@@ -113,20 +104,24 @@ def remove_example_webapps():
             if error.errno == errno.ENOENT:
                 pass
             else:
-                print "error:", error
-# RUN cd /usr/local/tomcat/webapps && \
-#     rm -rf docs examples host-manager manager
-#
-def copy_config_files():
-# # copy custom configuration
-# # server.xml: includes references to keystore, truststore in /esg/config/tomcat
-# # context.xml: increases the Tomcat cache to avoid flood of warning messages
-    shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
-    shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
-    shutil.copytree("certs/", "/esg/config/tomcat")
+                logger.exception()
 
-    shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
-#
+def copy_config_files():
+    '''copy custom configuration'''
+    '''server.xml: includes references to keystore, truststore in /esg/config/tomcat'''
+    '''context.xml: increases the Tomcat cache to avoid flood of warning messages'''
+    try:
+        shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
+        shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
+        shutil.copytree("certs/", "/esg/config/tomcat")
+
+        shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
+    except OSError, error:
+        if error.errno == errno.EEXIST:
+            pass
+        else:
+            logger.exception()
+
 def create_tomcat_user():
     esg_functions.call_subprocess("groupadd tomcat")
     esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
@@ -138,7 +133,20 @@ def create_tomcat_user():
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
 
-#TODO:create start_tomcat() and stop_tomcat(); config_test()
+def start_tomcat():
+    return esg_functions.call_subprocess("service httpd start")
+
+def stop_tomcat():
+    esg_functions.stream_subprocess_output("service httpd stop")
+
+def restart_tomcat():
+    esg_functions.stream_subprocess_output("service httpd restart")
+
+def check_tomcat_status():
+    return esg_functions.call_subprocess("service httpd status")
+
+def run_tomcat_config_test():
+    esg_functions.stream_subprocess_output("service httpd configtest")
 
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf

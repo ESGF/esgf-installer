@@ -13,7 +13,6 @@ coloredlogs == 7.1
 # esg_tomcat_manager.py: 25
 lxml == 3.7.3
 
-# esg_env_manager.py: 6
 # esg_node_manager.py: 10
 # esg_setup.py: 10
 netifaces == 0.10.6
@@ -22,9 +21,6 @@ netifaces == 0.10.6
 # esg_publisher.py: 7
 # test_esg_apache.py: 10
 pip == 9.0.1
-
-# esg_env_manager.py: 5
-plumbum == 1.6.3
 
 # esg_tomcat_manager.py: 20
 progressbar2 == 3.34.2

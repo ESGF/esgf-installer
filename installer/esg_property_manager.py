@@ -5,7 +5,6 @@ import os
 import re
 import yaml
 import esg_logging_manager
-import esg_env_manager
 import ConfigParser
 
 

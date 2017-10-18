@@ -12,7 +12,6 @@ import esg_postgres
 import esg_functions
 import esg_property_manager
 import esg_version_manager
-import esg_env_manager
 from time import sleep
 from git import Repo
 import esg_logging_manager
@@ -348,7 +347,6 @@ def write_esgcet_install_log():
     with open(config.install_manifest, "a+") as datafile:
         datafile.write(str(datetime.date.today()) + "python:esgcet=" +
                        config["esgcet_version"] + "\n")
-        esg_env_manager.deduplicate_settings_in_file(config.install_manifest)
 
     esg_property_manager.write_as_property(
         "publisher_config", config["publisher_config"])

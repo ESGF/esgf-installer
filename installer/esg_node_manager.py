@@ -21,7 +21,6 @@ from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScript
 import esg_bash2py
 import esg_functions
 import esg_bootstrap
-import esg_env_manager
 import esg_property_manager
 import esg_version_manager
 import esg_postgres
@@ -33,7 +32,7 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-envfile = "/etc/esg.env"
+
 
 #--------------
 # User Defined / Settable (public)
@@ -55,7 +54,6 @@ logger.debug("node_dist_url: %s", node_dist_url)
 
 
 def init():
-    #[ -n "${envfile}" ] && [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "node manager: sourcing environment from: ${envfile} \n"
 
     esgf_node_manager_egg_file = "esgf_node_manager-{esgf_node_manager_db_version}-py{python_version}.egg".format(
         esgf_node_manager_db_version=config["esgf_node_manager_db_version"], python_version=config["python_version"])

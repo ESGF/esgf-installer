@@ -22,7 +22,6 @@ from clint.textui import progress
 import esg_bash2py
 import esg_functions
 import esg_bootstrap
-import esg_env_manager
 import esg_property_manager
 import esg_version_manager
 import esg_logging_manager
@@ -630,9 +629,6 @@ def initial_setup_questionnaire():
         logger.info("db publisher connection string %s@%s:%s/%s",
                     db_properties["db_user"], db_properties["db_host"], db_properties["db_port"], db_properties["db_database"])
 
-    # esg_env_manager.deduplicate_properties(
-    #     config["config_file"])
-
     os.chdir(starting_directory)
 
     return True
@@ -907,6 +903,7 @@ def setup_cdat():
             config["cdat_home"], "bin", "python"))
         import cdat_info
         import cdms2
+        #if semver.match(cdat_info.Version, ">="+config["cdat_version"])
         if esg_version_manager.check_version_atleast(cdat_info.Version, config["cdat_version"]) == 0 and not force_install:
             print "CDAT already installed [OK]"
             return True

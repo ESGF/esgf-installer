@@ -780,8 +780,8 @@ def check_for_existing_java():
     if java_path:
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
-        print java_version_stdout
-        return java_version_stdout
+        print java_version_stdout["stderr"]
+        return java_version_stdout["stderr"]
 
 
 def setup_java():

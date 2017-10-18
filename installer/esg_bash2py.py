@@ -46,7 +46,7 @@ def mkdir_p(path, mode = 0777):
         os.makedirs(path, mode)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
-            print "{path} already exists".format(path=path)
+            logger.exception("%s already exists.", path)
             pass
         else:
             raise

@@ -23,10 +23,10 @@ def get_property(property_name, config_file=config["config_file"]):
     parser.read(config_file)
     try:
         return parser.get("installer_properties", property_name)
-    except ConfigParser.NoSectionError, error:
-        print "could not find property: {property_name}".format(property_name=property_name)
-    except ConfigParser.NoOptionError, error:
-        print "error:", error
+    except ConfigParser.NoSectionError:
+        logger.exception("could not find property %s", property_name)
+    except ConfigParser.NoOptionError:
+        logger.exception("could not find property %s", property_name)
 
 # TODO: Can't find usage anywhere; maybe deprecate
 def get_property_as():
@@ -70,7 +70,7 @@ def write_as_property(property_name, property_value=None, config_file=config["co
     try:
         parser.add_section("installer_properties")
     except ConfigParser.DuplicateSectionError:
-        print "section already exists"
+        logger.exception("section already exists")
 
     parser.set('installer_properties', property_name, property_value)
     with open(config_file, "w") as config_file_object:

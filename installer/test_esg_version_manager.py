@@ -3,6 +3,7 @@
 import unittest
 import esg_version_manager
 import os
+import semver
 import yaml
 
 
@@ -14,6 +15,9 @@ class test_ESG_version_manager(unittest.TestCase):
     def test_version_comp(self):
         output = esg_version_manager.version_comp("2:2.3.4-5", "3:2.5.3-1")
         self.assertEqual(output, -1)
+        test = semver.compare("2.2.3-5", "3.2.5-1")
+        print "test:", test
+        self.assertEqual(test, -1)
 
         output = esg_version_manager.version_comp("3:2.5.3-1", "2:2.3.4-5")
         self.assertEqual(output, 1)

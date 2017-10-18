@@ -88,20 +88,13 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         if not continue_installation_answer.strip():
             continue_installation_answer = default_upgrade_answer
 
-        if continue_installation_answer.lower() != "y":
+        if continue_installation_answer.lower() in ["y", "yes"]:
             print "Skipping esgcet installation and setup - will assume esgcet is setup properly"
             return 0
 
-    print "current directory: ", os.getcwd()
     starting_directory = os.getcwd()
 
-    try:
-        os.makedirs(config["workdir"])
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
+    esg_bash2py.mkdir_p(config["workdir"])
 
     os.chdir(config["workdir"])
 
@@ -156,6 +149,8 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         print " WARNING: Problem with checking out publisher (esgcet) revision [%s] from repository :-(" % (config["esgcet_version"])
 
     # install publisher
+    from setuptools import sandbox
+    sandbox.run_setup('setup.py', ['install'])
     installation_command = "cd src/python/esgcet; %s/bin/python setup.py install" % (
         config["cdat_home"])
     try:

@@ -306,11 +306,6 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
     #     logger.debug("checking for updated apache frontend configuration")
     #     esg_apache_manager.update_apache_conf()
     #     sys.exit(0)
-    elif args.writeenv:
-        if node_type_dictionary["WRITE_ENV_BIT"]:
-            print 'node_type_dictionary["WRITE_ENV_BIT"]', node_type_dictionary["WRITE_ENV_BIT"]
-        # if node_type_bit & bit_dictionary["WRITE_ENV_BIT"] == 0:
-        #     node_type_bit += bit_dictionary["WRITE_ENV_BIT"]
     elif args.version:
         logger.info("Version: %s", script_version)
         logger.info("Release: %s", script_release)

@@ -781,8 +781,23 @@ def check_for_existing_java():
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
         print java_version_stdout["stderr"]
+        installed_java_version = re.search("1.8.0_\w+", java_version_stdout["stderr"])
+        if semver.match(installed_java_version, config["java_version"]) > 0:
+            print "Installed java version meets the minimum requirement "
         return java_version_stdout["stderr"]
 
+def check_java_version(java_path):
+    try:
+        return esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))["stderr"]
+    except KeyError:
+        logger.exception("Could not check the Java version")
+        esg_functions.exit_with_error(1)
+
+def download_java(java_tarfile):
+    print "Downloading Java from ", config["java_dist_url"]
+    if not esg_functions.download_update(java_tarfile, config["java_dist_url"], force_install):
+        logger.error("ERROR: Could not download Java")
+        esg_functions.exit_with_error(1)
 
 def setup_java():
     '''
@@ -794,66 +809,37 @@ def setup_java():
     print "******************************* \n"
 
     if force_install:
-        setup_java_answer = "n"
-    else:
-        setup_java_answer = "y"
-
-    if find_executable("java", os.path.join(config["java_install_dir"],"bin")):
-        print "Detected an existing java installation at {java_path}...".format(java_path=find_executable("java", os.path.join(config["java_install_dir"],"bin")))
-        java_version_stdout = esg_functions.call_subprocess("{java_executable} -version".format(java_executable=find_executable("java")))
-        print java_version_stdout
-        if force_install:
-            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or setup_java_answer
-        else:
-            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [Y/n]: ") or setup_java_answer
-        print "chosen setup_java_answer:", setup_java_answer
-        if setup_java_answer.lower().strip() not in ["y", "yes"]:
-            print "Skipping Java installation and setup - will assume Java is setup properly"
-            return
-        last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
+        pass
+    if check_for_existing_java():
+            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
+            if setup_java_answer.lower().strip() not in ["n", "no"]:
+                print "Skipping Java installation"
+                return
+            last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
 
-        if os.path.exists(os.path.join("/usr", "java", "jdk{java_version}".format(java_version=config["java_version"]))):
-            logger.info("Found existing Java installation.  Skipping set up.")
-            return
-        java_major_version = config["java_version"].split(".")[1]
-        java_minor_version = config["java_version"].split("_")[1]
-
-        java_dist_file = esg_bash2py.trim_string_from_head(config["java_dist_url"])
-        java_dist_dir = java_dist_file.split("-")[0]
+        java_tarfile = esg_bash2py.trim_string_from_head(config["java_dist_url"])
+        jdk_directory = java_tarfile.split("-")[0]
         java_install_dir_parent = config["java_install_dir"].rsplit("/",1)[0]
 
-        #Check to see if we have an Java distribution directory
-        if not os.path.exists(os.path.join(java_install_dir_parent, java_dist_dir)):
-            print "Don't see java distribution dir: ", os.path.join(java_install_dir_parent, java_dist_dir)
+        #Check for Java tar file
+        if not os.path.isfile(java_tarfile):
+            print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_tarfile))
+            download_java(java_tarfile)
 
-            if not os.path.isfile(java_dist_file):
-                print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_dist_file))
-                print "Downloading Java from ", config["java_dist_url"]
-                if not esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install):
-                    logger.error("ERROR: Could not download Java")
-                print "unpacking", java_dist_file
-                esg_functions.extract_tarball(java_dist_file, java_install_dir_parent)
+        print "Extracting Java tarfile", java_tarfile
+        esg_functions.extract_tarball(java_tarfile, java_install_dir_parent)
 
-        #If you don't see the directory but see the tar.gz distribution
-        #then expand it
-        if os.path.isfile(java_dist_file) and not os.path.exists(os.path.join(java_install_dir_parent, java_dist_dir)):
-            print "unpacking", java_dist_file
-            esg_functions.extract_tarball(java_dist_file, java_install_dir_parent)
-
-        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
+        #Create symlink to Java install directory (/usr/local/java)
+        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, jdk_directory), config["java_install_dir"])
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
         #recursively change permissions
         esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
-    java_version_stdout = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config["java_install_dir"]))
-    print java_version_stdout["stderr"]
-    if not java_version_stdout:
-        print "cannot run {java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"])
-        esg_functions.exit_with_error(1)
+    check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
 
 def setup_ant():
     '''

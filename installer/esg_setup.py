@@ -941,7 +941,7 @@ def setup_ant():
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         logger.info("Found existing Ant installation.  Skipping set up.")
         esg_functions.stream_subprocess_output("ant -version")
-        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]") or "no"
+        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]: ") or "no"
         if force_ant_install.lower() in ["n", "no"]:
             return
 
@@ -974,6 +974,10 @@ def install_conda(CDAT_HOME="/usr/local/conda"):
 
 def create_conda_env(CDAT_HOME="/usr/local/conda"):
     esg_functions.stream_subprocess_output("{CDAT_HOME}/bin/conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil".format(CDAT_HOME=CDAT_HOME))
+    #Test by trying to import cdms2
+    #Absolutely needs to be in a conda env
+    #Have bash script to activate conda then kick off installation
+    #Ask Sasha what all he needs from uvcdat for Publisher
 
 def setup_cdat():
     print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])
@@ -999,13 +1003,5 @@ def setup_cdat():
         if cdat_setup_choice.lower().strip() not in ["y", "yes"]:
             print "Skipping CDAT installation and setup - will assume CDAT is setup properly"
             return True
-
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
-        yum_install_uvcdat = esg_functions.call_subprocess("yum -y install uvcdat")
-        if yum_install_uvcdat["returncode"] != 0:
-            print "[FAIL] \n\tCould not install or update uvcdat\n\n"
-            return False
-
 
     return True

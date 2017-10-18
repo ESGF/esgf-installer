@@ -120,14 +120,12 @@ def _define_acceptable_arguments():
     parser.add_argument("--status", help="Status on node's services", action="store_true")
     parser.add_argument("--update-sub-installer", dest="updatesubinstaller", help="Update a specified installation script", nargs=2, metavar=('script_name', 'script_directory'))
     parser.add_argument("--update-apache-conf", dest="updateapacheconf", help="Update Apache configuration", action="store_true")
-    parser.add_argument("--write-env", dest="writeenv", help="Writes the necessary environment variables to file {envfile}".format(envfile = config["envfile"]), action="store_true")
     parser.add_argument("-v","--version", dest="version", help="Displays the version of this script", action="store_true")
     parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
     parser.add_argument("--custom_setup", dest="customsetup", help="Sets esgsetup to use a custom, user-defined setup", action="store_true")
     parser.add_argument("--use-local-files", dest="uselocalfiles", help="Sets a flag for using local files instead of attempting to fetch a remote file", action="store_true")
     parser.add_argument("--devel", help="Sets the installation type to the devel build", action="store_true")
     parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
-    parser.add_argument("--clear-env-state", dest="clearenvstate", help="Removes the file holding the environment state of last install", action="store_true")
 
     args = parser.parse_args()
     return (args, parser)
@@ -303,10 +301,10 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         esg_setup.init_structure()
         update_script(args[1], args[2])
         sys.exit(0)
-    elif args.updateapacheconf:
-        logger.debug("checking for updated apache frontend configuration")
-        esg_apache_manager.update_apache_conf()
-        sys.exit(0)
+    # elif args.updateapacheconf:
+    #     logger.debug("checking for updated apache frontend configuration")
+    #     esg_apache_manager.update_apache_conf()
+    #     sys.exit(0)
     elif args.writeenv:
         if node_type_dictionary["WRITE_ENV_BIT"]:
             print 'node_type_dictionary["WRITE_ENV_BIT"]', node_type_dictionary["WRITE_ENV_BIT"]
@@ -330,12 +328,3 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         devel = True
     elif args.prod:
         devel = False
-    elif args.clearenvstate:
-        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"clear")
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
-        if os.path.isfile(config["envfile"]):
-            shutil.move(config["envfile"], config["envfile"]+".bak")
-            #empty out contents of the file
-            open(config["envfile"], 'w').close()

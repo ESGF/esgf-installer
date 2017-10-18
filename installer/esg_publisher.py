@@ -306,7 +306,6 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
         print "exception occurred with esginitialize_output: ", str(exception)
 
     os.chdir(starting_directory)
-    write_esgcet_env()
     write_esgcet_install_log()
 
     esg_functions.exit_with_error(0)
@@ -347,11 +346,6 @@ def generate_esg_config_file(recommended_setup = 1):
     logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
     return generate_esg_ini_command
 
-def write_esgcet_env():
-    """ Write """
-    with open(config.envfile, "a+") as datafile:
-        datafile.write("export ESG_ROOT_ID=" + esg_root_id + "\n")
-        esg_env_manager.deduplicate_settings_in_file(config.envfile)
 
 
 def write_esgcet_install_log():

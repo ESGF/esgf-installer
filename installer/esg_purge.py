@@ -87,7 +87,7 @@ def purge_base():
     directories_to_delete = ["/esg", "/etc/certs", "/etc/esgfcerts",
     "/etc/tempcerts", "/opt/esgf", "/tmp/inputpipe", "/tmp/outputpipe", "/usr/local/cog", "/var/www/.python-eggs"]
 
-    files_to_delete = ["/etc/esg.env", "/etc/httpd/conf/esgf-httpd.conf", "/usr/local/bin/add_checksums_to_map.sh"]
+    files_to_delete = ["/etc/httpd/conf/esgf-httpd.conf", "/usr/local/bin/add_checksums_to_map.sh"]
     for directory in directories_to_delete:
         try:
             print "Deleting {directory}: ".format(directory=directory)

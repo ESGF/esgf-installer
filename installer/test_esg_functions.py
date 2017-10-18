@@ -31,8 +31,8 @@ class test_ESG_Functions(unittest.TestCase):
         self.assertEqual(output, "usr/local/bin:/usr/test/bin")
 
     def test_readlinkf(self):
-        output = esg_functions.readlinkf(config["envfile"])
-        self.assertEqual(output, "/etc/esg.env")
+        output = esg_functions.readlinkf(config["install_prefix"])
+        self.assertEqual(output, "/usr/local")
 
 
     def test_prefix_to_path(self):

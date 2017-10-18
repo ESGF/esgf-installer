@@ -14,8 +14,6 @@ config_file: /esg/config/esgf.properties
 date_format: +%Y_%m_%d_%H%M%S
 db_database: esgcet
 default_distinguished_name: OU=ESGF.ORG, O=ESGF
-envfile: /etc/esg.env
-error: !!python/object/apply:exceptions.IOError [2, No such file or directory, /esg/config/.esg_pg_publisher_pass]
 esg_backup_dir: /esg/backups
 esg_coffee_dist_url_root: distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist
 esg_config: !!python/object:__builtin__.file {}

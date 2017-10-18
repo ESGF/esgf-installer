@@ -283,15 +283,15 @@ def setup_postgres(force_install = False):
 
     if check_existing_pg_version(psql_path):
         default_continue_install = "N"
-        continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
+        continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
         if continue_install.lower() in ["no", 'n']:
             print "Skipping installation."
             return True
         else:
             force_install = True
 
-    backup_db_input = raw_input("Do you want to backup the current database? [Y/n]")
-    if backup_db_input.lower() == "y" or backup_db_input.lower() == "yes":
+    backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
+    if backup_db_input.lower() in ["y", "yes"]:
         backup_db("postgres", "postgres")
 
     download_postgres()

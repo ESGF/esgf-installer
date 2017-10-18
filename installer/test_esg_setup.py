@@ -3,6 +3,7 @@
 import unittest
 import os
 import shutil
+import errno
 import esg_functions
 from distutils.spawn import find_executable
 import sys
@@ -13,12 +14,18 @@ class test_ESG_Setup(unittest.TestCase):
 
 	@classmethod
 	def tearDownClass(cls):
-		os.remove("/tmp/Miniconda2-latest-Linux-x86_64.sh")
+		try:
+			os.remove("/tmp/Miniconda2-latest-Linux-x86_64.sh")
+		except OSError, error:
+			if error.errno == errno.EEXIST:
+				pass
 		esg_functions.stream_subprocess_output("/usr/local/testConda/bin/conda install -y anaconda-clean")
 		esg_functions.stream_subprocess_output("/usr/local/testConda/bin/anaconda-clean --yes")
-		shutil.rmtree("/usr/local/testConda")
-
-		esg_functions.stream_subprocess_output("yum -y remove uvcdat")
+		try:
+			shutil.rmtree("/usr/local/testConda")
+		except OSError, error:
+			if error.errno == errno.EEXIST:
+				pass
 
 	def test_download_conda(self):
 		print "path:", sys.path

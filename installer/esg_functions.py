@@ -421,7 +421,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     logger.debug("local file : %s", local_file)
     logger.debug("remote file: %s", remote_file)
 
-    if is_in_git_repo(local_file) == 0:
+    if is_in_git_repo(local_file):
         print "%s is controlled by Git, not updating" % (local_file)
         return True
 
@@ -462,8 +462,7 @@ def fetch_remote_file(local_file, remote_file):
                     downloaded_file.write(chunk)
                     downloaded_file.flush()
     except requests.exceptions.RequestException, error:
-        print "Exception occurred when fetching {remote_file}".format(remote_file=remote_file)
-        print error
+        logger.exception("Could not download %s", remote_file)
         sys.exit()
 
 def create_backup_file(file_name, backup_extension=".bak"):

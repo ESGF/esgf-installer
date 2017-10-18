@@ -204,8 +204,8 @@ def download_esg_installarg(esg_dist_url):
             if not os.path.getsize(config.esg_installarg_file) > 0:
                 os.remove(config.esg_installarg_file)
             esg_bash2py.touch(config.esg_installarg_file)
-        except IOError, error:
-            logger.error(error)
+        except IOError:
+            logger.exception("Unable to access esg-installarg file")
 
 
 def create_new_list_from_keys(dictionary):

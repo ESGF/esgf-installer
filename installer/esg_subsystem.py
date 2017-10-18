@@ -75,8 +75,8 @@ def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_insta
                 return False
             try:
                 os.chmod(subsystem_full_name, 0755)
-            except OSError, error:
-                logger.error(error)
+            except OSError:
+                logger.exception("Unable to change permissions on %s", subsystem_full_name)
 
 
     logger.info("script_dir contents: %s", os.listdir(config["scripts_dir"]))

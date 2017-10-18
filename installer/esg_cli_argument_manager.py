@@ -10,6 +10,7 @@ import esg_setup
 import esg_apache_manager
 import esg_logging_manager
 import esg_bash2py
+from esg_exceptions import NoNodeTypeError
 import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -139,21 +140,21 @@ def get_previous_node_type_config(config_file):
     '''
     try:
         last_config_type = open(config_file, "r")
-        # logger.debug("readlines from file: %s", last_config_type.readlines())
         node_type_list = last_config_type.read().split()
         logger.debug("node_type_list is now: %s", " ".join(node_type_list))
-        return node_type_list
+        if node_type_list:
+            return node_type_list
+        else:
+            raise NoNodeTypeError
     except IOError, error:
-        logger.error(error)
-
-    try:
-        node_type_list
-    except NameError, error:
-        print "error:", error
-    # if not node_type_list:
-        print '''ERROR: No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
-        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n'''
+        logger.exception("Unable to get the previous node type")
         sys.exit(1)
+    except NoNodeTypeError:
+        logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
+        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
+        sys.exit(1)
+
+
 
 def set_node_type_config(node_type_list, config_file):
     '''Write the node type list as a string to file '''
@@ -164,7 +165,7 @@ def set_node_type_config(node_type_list, config_file):
             logger.debug("Writing %s to file as new node_type_string", " ".join(node_type_list))
             config_type_file.write(" ".join(node_type_list))
         except IOError, error:
-            logger.error(error)
+            logger.exception("Unable to save node type \n")
 
 def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url):
     selection_string = ""

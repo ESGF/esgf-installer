@@ -116,9 +116,6 @@ def init_structure():
 
     os.chmod(config["esg_etc_dir"], 0777)
 
-    if os.access(config["envfile"], os.W_OK):
-        write_paths()
-
     #--------------
     # Setup variables....
     #--------------
@@ -209,31 +206,6 @@ def init_structure():
     #
     # config["ESGINI"] = os.path.join(
     #     publisher_home, publisher_config)
-
-
-
-def write_paths():
-    config["show_summary_latch"] += 1
-
-    datafile = open(config["envfile"], "a+")
-    datafile.write("export ESGF_HOME=" + config["esg_root_dir"] + "\n")
-    datafile.write("export ESG_USER_HOME=" +
-                   config["installer_home"] + "\n")
-    datafile.write("export ESGF_INSTALL_WORKDIR=" +
-                   config["workdir"] + "\n")
-    datafile.write("export ESGF_INSTALL_PREFIX=" +
-                   config["install_prefix"] + "\n")
-    datafile.write("export PATH=" + config["myPATH"] +
-                   ":" + os.environ["PATH"] + "\n")
-    try:
-        datafile.write("export LD_LIBRARY_PATH=" + config["myLD_LIBRARY_PATH"] +
-            ":" + os.environ["LD_LIBRARY_PATH"] + "\n")
-    except KeyError, error:
-        logger.error(error)
-    datafile.truncate()
-    datafile.close()
-
-    esg_env_manager.deduplicate_settings_in_file(config["envfile"])
 
 
 def _select_ip_address():
@@ -338,8 +310,8 @@ def _update_admin_password_file(updated_password):
     try:
         security_admin_password_file = open(config["esgf_secret_file"], 'w+')
         security_admin_password_file.write(updated_password)
-    except IOError, error:
-        logger.error(error)
+    except IOError:
+        logger.exception("Unable to update security_admin_password file: %s", config["esgf_secret_file"])
     finally:
         security_admin_password_file.close()
 
@@ -351,22 +323,22 @@ def _update_password_files_permissions():
     os.chmod(config["esgf_secret_file"], 0640)
 
     if not esg_functions.get_tomcat_group_id():
-        esg_functions.add_user_group(config["tomcat_group"])
+        esg_functions.add_unix_group(config["tomcat_group"])
     tomcat_group_id = esg_functions.get_tomcat_group_id()
 
     try:
         os.chown(config["esgf_secret_file"], config[
                  "installer_uid"], tomcat_group_id)
-    except OSError, error:
-        logger.error(error)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
 
     if os.path.isfile(config['esgf_secret_file']):
         os.chmod(config['esgf_secret_file'], 0640)
         try:
             os.chown(config['esgf_secret_file'], config[
                      "installer_uid"], tomcat_group_id)
-        except OSError, error:
-            logger.error(error)
+        except OSError:
+            logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
 
     if not os.path.isfile(config['pg_secret_file']):
         esg_bash2py.touch(config['pg_secret_file'])
@@ -374,15 +346,15 @@ def _update_password_files_permissions():
             with open(config['pg_secret_file'], "w") as secret_file:
                 secret_file.write(config[
                                   "pg_sys_acct_passwd"])
-        except IOError, error:
-            logger.error(error)
+        except IOError:
+            logger.exception("Could not open %s", config['pg_secret_file'])
     else:
         os.chmod(config['pg_secret_file'], 0640)
         try:
             os.chown(config['pg_secret_file'], config[
                      "installer_uid"], tomcat_group_id)
-        except OSError, error:
-            logger.error(error)
+        except OSError:
+            logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
 
 
 def _choose_admin_password():
@@ -608,8 +580,8 @@ def initial_setup_questionnaire():
     try:
         with open(config['esgf_secret_file'], 'r') as esgf_secret_file:
             security_admin_password = esgf_secret_file.read()
-    except IOError, error:
-        logger.error(error)
+    except IOError:
+        logger.exception("Unable to open %s", config['esgf_secret_file'])
 
     if not security_admin_password or force_install:
         _choose_admin_password()
@@ -858,56 +830,25 @@ def setup_java():
                 if not esg_functions.download_update(java_dist_file, config["java_dist_url"], force_install):
                     logger.error("ERROR: Could not download Java")
                 print "unpacking", java_dist_file
-                try:
-                    tar = tarfile.open(java_dist_file)
-                    #extract to java_install_dir
-                    tar.extractall(java_install_dir_parent)
-                    tar.close()
-                except tarfile.TarError, error:
-                    logger.error(error)
-                    print "ERROR: Could not extract Java:", java_dist_file
-                    esg_functions.exit_with_error(0)
+                esg_functions.extract_tarball(java_dist_file, java_install_dir_parent)
 
         #If you don't see the directory but see the tar.gz distribution
         #then expand it
         if os.path.isfile(java_dist_file) and not os.path.exists(os.path.join(java_install_dir_parent, java_dist_dir)):
             print "unpacking", java_dist_file
-            try:
-                tar = tarfile.open(java_dist_file)
-                #extract to java_install_dir
-                tar.extractall(java_install_dir_parent)
-                tar.close()
-            except tarfile.TarError, error:
-                logger.error(error)
-                print "ERROR: Could not extract Java:", java_dist_file
-                esg_functions.exit_with_error(1)
+            esg_functions.extract_tarball(java_dist_file, java_install_dir_parent)
 
         esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, java_dist_dir), config["java_install_dir"])
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
         #recursively change permissions
-        for root, dirs, files in os.walk(esg_functions.readlinkf(config["java_install_dir"])):
-            for directory in dirs:
-                os.chown(os.path.join(root, directory), config["installer_uid"], config["installer_gid"])
-            for name in files:
-                try:
-                    os.chown(os.path.join(root, name), config["installer_uid"], config["installer_gid"])
-                except OSError, error:
-                    logger.error(error)
+        esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
     java_version_stdout = esg_functions.call_subprocess("{java_install_dir}/bin/java -version".format(java_install_dir=config["java_install_dir"]))
     print java_version_stdout["stderr"]
     if not java_version_stdout:
         print "cannot run {java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"])
         esg_functions.exit_with_error(1)
-
-
-def write_java_env():
-    config["show_summary_latch"] += 1
-    target = open(config['envfile'], 'w')
-    target.write("export JAVA_HOME=" +
-                 config["java_install_dir"])
-
 
 def setup_ant():
     '''
@@ -965,11 +906,12 @@ def setup_cdat():
         sys.path.insert(0, os.path.join(
             config["cdat_home"], "bin", "python"))
         import cdat_info
+        import cdms2
         if esg_version_manager.check_version_atleast(cdat_info.Version, config["cdat_version"]) == 0 and not force_install:
             print "CDAT already installed [OK]"
             return True
-    except ImportError, error:
-        logger.error(error)
+    except ImportError:
+        logger.exception("Unable to import cdms2")
 
     print "\n*******************************"
     print "Setting up CDAT - (Python + CDMS)... {cdat_version}".format(cdat_version=config["cdat_version"])

@@ -149,8 +149,8 @@ def init():
     try:
         os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
             ':' + os.environ["LD_LIBRARY_PATH"]
-    except KeyError, error:
-        LOGGER.error(error)
+    except KeyError:
+        LOGGER.exception("LD_LIBRARY_PATH not found initially")
         os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
 
     #--------------

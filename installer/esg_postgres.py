@@ -166,7 +166,6 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
     #Using password auth currently;
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
     #Essentially change user from root to postgres
-    #TODO: This was only working for ident identification
     root_id = pwd.getpwnam("root").pw_uid
     if user == "postgres":
         postgres_id = pwd.getpwnam("postgres").pw_uid
@@ -183,10 +182,8 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
             os.seteuid(root_id)
 
         return conn
-    except Exception, error:
-        logger.error(error)
-        print "error: ", error
-        print "I am unable to connect to the database."
+    except Exception:
+        logger.exception("Unable to connect to the database.")
         esg_functions.exit_with_error(1)
 
 def check_for_postgres_db_user():
@@ -263,13 +260,8 @@ def check_existing_pg_version(psql_path, force_install=False):
             print "postgres version number: ", postgres_version_found
             if semver.compare(postgres_version_found, config["postgress_min_version"]) >= 1 and not force_install:
                 return True
-                # default_continue_install = "N"
-                # continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]? ") or default_continue_install
-                # if continue_install.lower() in ["no", 'n']:
-                #     print "Skipping installation."
-                #     return True
-        except OSError, error:
-            logger.error(error)
+        except OSError:
+            logger.exception("Unable to check existing Postgres version \n")
 
 
 def setup_postgres(force_install = False):

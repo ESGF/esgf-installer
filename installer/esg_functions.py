@@ -16,6 +16,7 @@ import socket
 import yaml
 import pwd
 import grp
+import netifaces
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 from distutils.spawn import find_executable
@@ -466,11 +467,13 @@ def fetch_remote_file(local_file, remote_file):
         sys.exit()
 
 def create_backup_file(file_name, backup_extension=".bak"):
+    '''Create a backup of a file using the given backup extension'''
+    backup_file_name = os.path.join(file_name, backup_extension)
     try:
-        shutil.copyfile(file_name, file_name + backup_extension)
-        os.chmod(file_name + backup_extension, 600)
-    except OSError, error:
-        logger.error(error)
+        shutil.copyfile(file_name, backup_file_name)
+        os.chmod(backup_file_name, 600)
+    except OSError:
+        logger.exception("Could not create backup file: %s\n", backup_file_name)
 
 def verify_checksum(local_file, remote_file):
     remote_file_md5 = requests.get(remote_file+ '.md5').content
@@ -634,15 +637,15 @@ def get_keystore_password():
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
-    except IOError, error:
-        logger.error(error)
+    except IOError:
+        logger.exception("Failed to get keystore password")
         set_keyword_password()
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
 
 def _check_keystore_password(keystore_password):
-    '''Utility function to check that a given password is valid for the global scoped ${keystore_file} '''
+    '''Utility function to check that a given password is valid for the global scoped {keystore_file} '''
     if not os.path.isfile(config['ks_secret_file']):
         logger.error("$([FAIL]) No keystore file present [%s]", config['ks_secret_file'])
         return False
@@ -758,15 +761,13 @@ def get_dir_owner_and_group(path):
     group = grp.getgrgid(gid)[0]
     return user, group
 
-def extract_tarball(tarball_name):
+def extract_tarball(tarball_name, dest_dir="."):
     try:
         tar = tarfile.open(tarball_name)
-        tar.extractall()
+        tar.extractall(dest_dir)
         tar.close()
-    except Exception, error:
-        logger.error(error)
-        print "error:", error
-        print "ERROR: Could not extract the tarfile: {tarball_name}".format(tarball_name=tarball_name)
+    except tarfile.TarError:
+        logger.exception("Could not extract the tarfile: %s", tarball_name)
         exit_with_error(1)
 
 def change_permissions_recursive(directory_path, uid=None, gid=None):
@@ -776,10 +777,11 @@ def change_permissions_recursive(directory_path, uid=None, gid=None):
         for directory in dirs:
             os.chown(os.path.join(root, directory), uid, gid)
         for name in files:
+            file_path = os.path.join(root, name)
             try:
-                os.chown(os.path.join(root, name), uid, gid)
-            except OSError, error:
-                logger.error(error)
+                os.chown(file_path, uid, gid)
+            except OSError:
+                logger.exception("Could not change permissions on : %s", file_path)
 
 def replace_string_in_file(file_name, original_string, new_string):
     '''Goes into a file and replaces string'''
@@ -790,3 +792,17 @@ def replace_string_in_file(file_name, original_string, new_string):
     # Write the file out again
     with open(file_name, 'w') as file_handle:
         file_handle.write(filedata)
+
+
+def get_config_ip(interface_value):
+    # chain = ifconfig["eth3"] | grep["inet[^6]"] | awk['{ gsub (" *inet [^:]*:",""); print eth3}']
+    #     '''
+    #     #####
+    #     # Get Current IP Address - Needed (at least temporarily) for Mesos Master
+    #     ####
+    #     Takes a single interface value
+    #     "eth0" or "lo", etc...
+    #     '''
+    netifaces.ifaddresses(interface_value)
+    ip = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
+    return ip

@@ -783,7 +783,7 @@ def check_for_existing_java():
         java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
         print java_version_stdout["stderr"]
         installed_java_version = re.search("1.8.0_\w+", java_version_stdout["stderr"])
-        if semver.match(installed_java_version, config["java_version"]) > 0:
+        if semver.compare(installed_java_version, config["java_version"]) > -1:
             print "Installed java version meets the minimum requirement "
         return java_version_stdout["stderr"]
 

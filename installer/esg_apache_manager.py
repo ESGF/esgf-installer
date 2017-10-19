@@ -28,11 +28,22 @@ def check_for_apache_installation():
     else:
         return False
 
-# # install latest apache httpd
-# RUN yum -y update \
-#     && yum install -y httpd httpd-devel mod_ssl \
-#     && yum clean all
-#
+def start_apache():
+    return esg_functions.call_subprocess("service httpd start")
+
+def stop_apache():
+    esg_functions.stream_subprocess_output("service httpd stop")
+
+def restart_apache():
+    esg_functions.stream_subprocess_output("service httpd restart")
+
+def check_apache_status():
+    return esg_functions.call_subprocess("service httpd status")
+
+def run_apache_config_test():
+    esg_functions.stream_subprocess_output("service httpd configtest")
+
+
 def install_python27():
     '''Install python with shared library '''
     with esg_bash2py.pushd("/tmp"):
@@ -48,29 +59,17 @@ def install_mod_wsgi():
     print "\n*******************************"
     print "Setting mod_wsgi"
     print "******************************* \n"
-# # install mod_wsgi
-# RUN cd /tmp
+
     pip.main(['install', "mod_wsgi==4.5.3"])
     with esg_bash2py.pushd("/etc/httpd/modules"):
         esg_bash2py.symlink_force("/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
 
-# RUN wget 'https://pypi.python.org/packages/c3/4e/f9bd165369642344e8fdbe78c7e820143f73d3beabfba71365f27ee5e4d3/mod_wsgi-4.5.3.tar.gz' && \
-#     tar xvf mod_wsgi-4.5.3.tar.gz && \
-#     cd mod_wsgi-4.5.3 && \
-#     python setup.py install && \
-#     rm -rf /tmp/mod_wsgi*
-# RUN cd /etc/httpd/modules && \
-#     ln -s /usr/local/lib/python2.7/site-packages/mod_wsgi-4.5.3-py2.7-linux-x86_64.egg/mod_wsgi/server/mod_wsgi-py27.so ./mod_wsgi-py27.so
-#
 def make_python_eggs_dir():
     esg_bash2py.mkdir_p("/var/www/.python-eggs")
     apache_user_id = esg_functions.get_user_id("apache")
     apache_group_id = esg_functions.get_group_id("apache")
     os.chown("/var/www/.python-eggs", apache_user_id, apache_group_id)
-# # by default PYTHON_EGG_CACHE=/var/www/.python-eggs
-# RUN mkdir -p /var/www/.python-eggs && \
-#     chown -R apache:apache /var/www/.python-eggs
-#
+
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     esg_bash2py.mkdir_p("/etc/certs")
@@ -79,13 +78,7 @@ def copy_apache_conf_files():
     shutil.copyfile("apache_html/index.html", "/var/www/html/index.html")
     shutil.copyfile("apache_conf/httpd.conf", "/etc/httpd/conf.d/httpd.conf")
     shutil.copyfile("apache_conf/ssl.conf", "/etc/httpd/conf.d/ssl.conf")
-# # configuration for standalone service
-# # (overridden by ESGF settings when running with docker-compose from parent directory)
-# COPY certs/ /etc/certs/
-# COPY html/ /var/www/html/
-# COPY conf/httpd.conf /etc/httpd/conf.d/httpd.conf
-# COPY conf/ssl.conf /etc/httpd/conf.d/ssl.conf
-#
+
 # EXPOSE 80 443
 #
 # # start httpd server
@@ -104,7 +97,7 @@ def main():
         print "Found existing Apache installation."
         esg_functions.call_subprocess("httpd -version")
         continue_install = raw_input("Would you like to continue the Apache installation anyway? [y/N]") or "N"
-        if continue_install.lower in ["no", "n"]:
+        if continue_install.lower() in ["no", "n"]:
             return
     install_apache_httpd()
     install_mod_wsgi()

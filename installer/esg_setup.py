@@ -813,7 +813,7 @@ def setup_java():
         pass
     if check_for_existing_java():
             setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
-            if setup_java_answer.lower().strip() not in ["n", "no"]:
+            if setup_java_answer.lower().strip() not in ["y", "yes"]:
                 print "Skipping Java installation"
                 return
             last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])

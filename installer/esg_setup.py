@@ -576,14 +576,7 @@ def initial_setup_questionnaire():
     esgf_host = esg_property_manager.get_property("esgf_host")
     _choose_fqdn(esgf_host)
 
-    security_admin_password = None
-    try:
-        with open(config['esgf_secret_file'], 'r') as esgf_secret_file:
-            security_admin_password = esgf_secret_file.read()
-    except IOError:
-        logger.exception("Unable to open %s", config['esgf_secret_file'])
-
-    if not security_admin_password or force_install:
+    if not esg_functions.get_security_admin_password() or force_install:
         _choose_admin_password()
 
     _choose_organization_name()

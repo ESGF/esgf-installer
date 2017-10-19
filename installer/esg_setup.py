@@ -27,6 +27,7 @@ import esg_version_manager
 import esg_logging_manager
 import esg_init
 import yaml
+import semver
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 

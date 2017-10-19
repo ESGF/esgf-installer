@@ -4,6 +4,7 @@ import pwd
 import shutil
 import sys
 import psycopg2
+import configobj
 import esg_functions
 import esg_version_manager
 import esg_bash2py
@@ -21,6 +22,16 @@ with open('esg_config.yaml', 'r') as config_file:
 
 
 def download_postgres():
+    #Edit distributions .repo file per https://wiki.postgresql.org/wiki/YUM_Installation
+    config = configobj.ConfigObj('/etc/yum.repos.d/CentOS-Base.repo')
+    try:
+        config["updates"]["exclude"]
+        config["base"]["exclude"]
+    except KeyError:
+        config["updates"]["exclude"] ="postgresql*"
+        config["base"]["exclude"] ="postgresql*"
+        config.write()
+
     esg_functions.stream_subprocess_output("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
     esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96")
 
@@ -35,9 +46,12 @@ def initialize_postgres():
     os.chmod(os.path.join(config["postgress_install_dir"], "9.6", "data"), 0700)
 
 def check_for_postgres_sys_acct():
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    if not postgres_user_id:
+    try:
+        postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+    except KeyError:
         print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct = config["pg_sys_acct"])
+    else:
+        return True
 
 def create_postgres_group():
     groupadd_command = "/usr/sbin/groupadd -r %s" % (
@@ -264,6 +278,7 @@ def check_existing_pg_version(psql_path, force_install=False):
             logger.exception("Unable to check existing Postgres version \n")
 
 
+
 def setup_postgres(force_install = False):
     print "\n*******************************"
     print "Setting up Postgres"
@@ -293,9 +308,7 @@ def setup_postgres(force_install = False):
     #Create the system account for postgress to run as.
     ########
     pg_sys_acct_homedir = psql_path
-    pg_sys_acct_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    if not pg_sys_acct_id:
-        print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct = config["pg_sys_acct"])
+    if not check_for_postgres_sys_acct():
         #NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
         create_postgres_group()
         set_pg_sys_account_password()

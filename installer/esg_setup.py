@@ -839,7 +839,7 @@ def setup_java():
         #recursively change permissions
         esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
-    check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
+    print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
 
 def setup_ant():
     '''

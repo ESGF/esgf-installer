@@ -17,6 +17,16 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
+
+def compare_versions(version_1, version_2):
+    '''Check to see if version_1 is greater than or equal to version_2'''
+    version_1 = version_1.replace("_", "-")
+    version_2 = version_2.replace("_", "-")
+    if semver.compare(version_1, version_2) > -1:
+        return True
+    else:
+        return False
+        
 def check_module_version(module_name, min_version):
     '''
         Checks the version of a given python module.

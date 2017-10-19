@@ -40,8 +40,8 @@ def purge_tomcat():
     for directory in tomcat_directories:
         try:
             shutil.rmtree(directory)
-        except OSError, error:
-            print "error deleting directory -> {directory}:".format(directory=directory), error
+        except OSError:
+            logger.exception("Couldn't delete %s", directory)
     try:
         os.unlink("/usr/local/tomcat")
     except OSError, error:

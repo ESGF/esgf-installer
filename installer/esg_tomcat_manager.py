@@ -113,7 +113,7 @@ def copy_config_files():
     try:
         shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
-        shutil.copytree("certs/", "/esg/config/tomcat")
+        shutil.copytree("certs", "/esg/config/tomcat")
 
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:
@@ -132,21 +132,23 @@ def create_tomcat_user():
 
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
-
 def start_tomcat():
-    return esg_functions.call_subprocess("service httpd start")
+    return esg_functions.call_subprocess("/usr/local/tomcat/bin/catalina.sh run")
 
 def stop_tomcat():
-    esg_functions.stream_subprocess_output("service httpd stop")
+    esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
 
 def restart_tomcat():
-    esg_functions.stream_subprocess_output("service httpd restart")
+    stop_tomcat()
+    print "Sleeping for 7 seconds to allow shutdown"
+    sleep(7)
+    start_tomcat()
 
 def check_tomcat_status():
     return esg_functions.call_subprocess("service httpd status")
 
 def run_tomcat_config_test():
-    esg_functions.stream_subprocess_output("service httpd configtest")
+    esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf

@@ -70,7 +70,7 @@ def write_as_property(property_name, property_value=None, config_file=config["co
     try:
         parser.add_section("installer_properties")
     except ConfigParser.DuplicateSectionError:
-        logger.exception("section already exists")
+        logger.debug("section already exists")
 
     parser.set('installer_properties', property_name, property_value)
     with open(config_file, "w") as config_file_object:

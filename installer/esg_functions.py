@@ -13,6 +13,7 @@ import requests
 import hashlib
 import shlex
 import socket
+import errno
 import yaml
 import pwd
 import grp

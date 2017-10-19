@@ -600,10 +600,13 @@ def get_security_admin_password():
     try:
         with open(config["esgf_secret_file"], 'rb') as password_file:
             security_admin_password = password_file.read().strip()
-            return security_admin_password
     except IOError, error:
-        print "error getting security_admin_password:", error
-        return None
+        if error.errno == errno.ENOENT:
+            logger.error("File doesn't exist %s", config["esgf_secret_file"])
+        logger.exception("Could not get password from file")
+    else:
+        return security_admin_password
+
 
 def set_keyword_password():
     while True:

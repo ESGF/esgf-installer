@@ -14,6 +14,7 @@ def purge_postgres():
     print "Purging Postgres"
     print "******************************* \n"
 
+    esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
     esg_functions.stream_subprocess_output("yum remove -y postgresql postgresql-libs postgresql-server")
     try:
         # shutil.rmtree("/usr/local/pgsql")
@@ -60,7 +61,7 @@ def purge_java():
 
     try:
         shutil.rmtree("/usr/local/java")
-    except OSError, error:
+    except OSError:
         logger.exception("No Java installation found to delete")
 
 def purge_ant():
@@ -76,7 +77,7 @@ def purge_thredds():
 
     try:
         shutil.rmtree("/usr/local/tomcat/webapps/thredds")
-    except OSError, error:
+    except OSError:
         logger.exception("Couldn't delete thredds")
 
 def purge_base():
@@ -160,6 +161,7 @@ def main():
     purge_postgres()
     purge_tomcat()
     purge_thredds()
+    purge_ant()
     purge_java()
     purge_base()
     purge_cdat()

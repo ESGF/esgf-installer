@@ -53,3 +53,4 @@ Pyyaml
 semver
 tld
 clint
+configobj

@@ -37,83 +37,67 @@ with open('esg_config.yaml', 'r') as config_file:
 use_local_files = 0
 force_install = False
 
+def check_if_root():
+    '''Check to see if the user is root'''
+    print "Checking that you have root privileges on %s... " % (socket.gethostname())
+    root_check = os.geteuid()
+    try:
+        if root_check != 0:
+            raise UnprivilegedUserError
+        logger.debug("Root user found.")
+    except UnprivilegedUserError:
+        logger.exception("You must be root to run the ESGF Installer.")
+        esg_functions.exit_with_error(1)
+
+def check_os():
+    '''Check if the operating system on server is Redhat or CentOS;
+    returns False Otherwise'''
+    print "Checking operating system....."
+    release_version = re.search(
+        "(centos|redhat)-(\S*)-", platform.platform()).groups()
+    logger.debug("Release Version: %s", release_version)
+    try:
+        if "6" not in release_version[1]:
+            raise WrongOSError
+    except WrongOSError:
+        logger.exception("ESGF can only be installed on CentOS 6 or Redhat 6")
+        esg_functions.exit_with_error(1)
+    else:
+        print "Operating System = {OS} {version}".format(OS=release_version[0], version=release_version[1])
+
 
 def check_prerequisites():
     '''
         Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for
     '''
-    print '''
-        \033[01;31m
-      EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
-      E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
-      E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
-      EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
-        E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
-    \033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
-        E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
-        E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
-        E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
-        E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
-    \033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
-        E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
-      EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
-      E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
-      E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
-      EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
-    \033[0m
-    '''
 
-    print "Checking that you have root privileges on %s... " % (socket.gethostname())
-    root_check = os.geteuid()
-    if root_check != 0:
-        raise UnprivilegedUserError
-    print "[OK]"
+    check_if_root()
 
     #----------------------------------------
     print "Checking requisites... "
 
     # checking for OS, architecture, distribution and version
+    check_os()
 
-    print "Checking operating system....."
-    release_version = re.search(
-        "(centos|redhat)-(\S*)-", platform.platform()).groups()
-    logger.debug("Release Version: %s", release_version)
-    if "6" not in release_version[1]:
-        raise WrongOSError
-    else:
-        print "Operating System = {OS} {version}".format(OS=release_version[0], version=release_version[1])
-        print "[OK]"
-
-
-def init_structure():
-
-    if not os.path.isfile(config["config_file"]):
-        esg_bash2py.touch(config["config_file"])
-
-    config_check = 7
+def create_esg_directories():
+    '''Create directories to hold ESGF scripts, config files, and logs'''
     directories_to_check = [config["scripts_dir"], config["esg_backup_dir"], config["esg_tools_dir"],
                             config[
                                 "esg_log_dir"], config["esg_config_dir"], config["esg_etc_dir"],
                             config["tomcat_conf_dir"]]
     for directory in directories_to_check:
         if not os.path.isdir(directory):
-            try:
-                os.makedirs(directory)
-                config_check -= 1
-            except OSError, e:
-                if e.errno != 17:
-                    raise
-                sleep(1)
-                pass
-        else:
-            config_check -= 1
-    if config_check != 0:
-        print "ERROR: checklist incomplete $([FAIL])"
-        esg_functions.exit_with_error(1)
-    else:
-        print "checklist $([OK])"
-
+            esg_bash2py.mkdir_p(directory)
     os.chmod(config["esg_etc_dir"], 0777)
+
+def init_structure():
+
+    if not os.path.isfile(config["config_file"]):
+        esg_bash2py.touch(config["config_file"])
+
+    create_esg_directories()
+
+
 
     #--------------
     # Setup variables....

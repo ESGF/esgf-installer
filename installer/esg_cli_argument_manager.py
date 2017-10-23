@@ -146,9 +146,8 @@ def get_previous_node_type_config(config_file):
             return node_type_list
         else:
             raise NoNodeTypeError
-    except IOError, error:
-        logger.exception("Unable to get the previous node type")
-        sys.exit(1)
+    except IOError:
+        raise NoNodeTypeError
     except NoNodeTypeError:
         logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')

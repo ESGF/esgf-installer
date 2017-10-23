@@ -259,17 +259,13 @@ def begin_installation():
 def install_log_info():
     if force_install:
         logger.info("(force install is ON)")
-    # if node_type_bit & DATA != 0:
     if node_types["DATA"]:
         logger.info("(data node type selected)")
     if node_types["INDEX"]:
-        # if node_type_bit & INDEX != 0:
         logger.info("(index node type selected)")
     if node_types["IDP"]:
-        # if node_type_bit & IDP != 0:
         logger.info("(idp node type selected)")
     if node_types["COMPUTE"]:
-        # if node_type_bit & COMPUTE != 0:
         logger.info("(compute node type selected)")
 
 
@@ -278,31 +274,20 @@ def system_component_installation():
     # Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
-    # logger.debug(node_type_bit & INSTALL)
-    # if node_type_bit & INSTALL !=0:
-    if "install" in node_type_list:
+
+    if "INSTALL" in node_type_list:
         esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
+        # esg_subsystem.main()
+    if "DATA" in node_type_list:
         esg_subsystem.main()
-    if "data" in node_type_list:
-        esg_subsystem.main()
-        # logger.debug("node_type_bit & (DATA+COMPUTE) %s", node_type_bit & (DATA+COMPUTE))
         if node_types["DATA"] and node_types["COMPUTE"]:
-            # if node_type_bit & (DATA+COMPUTE) != 0:
             esg_publisher.setup_esgcet()
             #CDAT only used on with Publisher; move
             esg_setup.setup_cdat()
-            #TODO: setup_cdat() should go here
-            # esg_tomcat_manager.setup_tomcat(devel)
-            # esg_apache_manager.setup_apache_frontend(devel)
-            esg_tomcat_manager.main()
-            esg_apache_manager.main()
-            esg_subsystem.main()
-    # setup_esgcet()
-    # test_esgcet()
 
 def check_for_conda():
     python_version = esg_functions.call_subprocess("python --version")["stdout"]
@@ -331,6 +316,9 @@ def main(node_type_list):
     # logger.debug("node_type_list: %s", node_type_list)
     cli_info = esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
     print "cli_info:", cli_info
+    if cli_info:
+        node_type_list = cli_info
+
 
     esg_setup.check_prerequisites()
 
@@ -339,6 +327,7 @@ def main(node_type_list):
 
     logger.debug("node_type_list: %s", node_type_list)
     logger.info("node_type_list: %s", node_type_list)
+    print "node_type_list after process_arguments:", node_type_list
 
     print '''
     -----------------------------------

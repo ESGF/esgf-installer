@@ -30,11 +30,9 @@ import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-use_local_files = 0
 force_install = False
 
 def check_if_root():
@@ -97,99 +95,11 @@ def init_structure():
 
     create_esg_directories()
 
-
-
     #--------------
     # Setup variables....
     #--------------
 
     check_for_my_ip()
-
-    # try:
-    #     esgf_host = config["esgf_host"]
-    # except KeyError:
-    #     esgf_host = esg_property_manager.get_property("esgf_host")
-    #
-    # try:
-    #     esgf_default_peer = config["esgf_default_peer"]
-    # except KeyError:
-    #     esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
-    #
-    # try:
-    #     esgf_idp_peer_name = config["esgf_idp_peer_name"]
-    # except KeyError:
-    #     esgf_idp_peer_name = esg_property_manager.get_property("esgf_idp_peer_name")
-    #
-    # try:
-    #     esgf_idp_peer = config["esgf_idp_peer"]
-    # except KeyError:
-    #     esgf_idp_peer = esg_property_manager.get_property("esgf_idp_peer")
-    #
-    # if not esgf_idp_peer:
-    #     myproxy_endpoint = None
-    # else:
-    #     myproxy_endpoint = esg_bash2py.trim_string_from_tail(esgf_idp_peer)
-    #
-    # try:
-    #     config["myproxy_port"]
-    # except KeyError:
-    #     myproxy_port = esg_bash2py.Expand.colonMinus(
-    #         esg_property_manager.get_property("myproxy_port"), "7512")
-    #
-    # try:
-    #     esg_root_id = config["esg_root_id"]
-    # except KeyError:
-    #     esg_root_id = esg_property_manager.get_property("esg_root_id")
-    #
-    # try:
-    #     node_peer_group = config["node_peer_group"]
-    # except KeyError:
-    #     node_peer_group = esg_property_manager.get_property("node_peer_group")
-    #
-    # try:
-    #     config["node_short_name"]
-    # except KeyError:
-    #     node_short_name = esg_property_manager.get_property("node_short_name")
-    #
-    # # NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
-    # # this is actually an issue with dedup_properties that gets called in the
-    # # get_property function
-    #
-    # # Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
-    # # Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
-    # # We transform it to dname which is written in the java style AAA=bb,
-    # # XX=yy (micro->macro) scheme using "standard2java_dn" function
-    #
-    # try:
-    #     dname = config["dname"]
-    # except KeyError:
-    #     dname = esg_property_manager.get_property("dname")
-    #
-    # try:
-    #     gridftp_config = config["gridftp_config"]
-    # except KeyError:
-    #     gridftp_config = esg_property_manager.get_property(
-    #         "gridftp_config", "bdm end-user")
-    #
-    # try:
-    #     publisher_config = config["publisher_config"]
-    # except KeyError:
-    #     publisher_config = esg_property_manager.get_property(
-    #         "publisher_config", "esg.ini")
-    #
-    # try:
-    #     publisher_home = config["publisher_home"]
-    # except KeyError:
-    #     publisher_home = esg_property_manager.get_property(
-    #         "publisher_home", config["esg_config_dir"] + "/esgcet")
-    #
-    # # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
-    # # config["keystore_alias"] = esg_functions.get_property("keystore_alias")
-    # # logger.debug("keystore_alias in esg_setup: %s", config["keystore_alias"])
-    #
-    # config["ESGINI"] = os.path.join(
-    #     publisher_home, publisher_config)
-
 
 def _select_ip_address():
     choice = int(raw_input(""))
@@ -290,6 +200,8 @@ def _confirm_password(password_input, password_confirmation):
 
 
 def _update_admin_password_file(updated_password):
+    #TODO: Rename esgf_secret_file to esgf_admin_password_file
+    '''Updates the esgf_secret_file'''
     try:
         security_admin_password_file = open(config["esgf_secret_file"], 'w+')
         security_admin_password_file.write(updated_password)
@@ -297,23 +209,6 @@ def _update_admin_password_file(updated_password):
         logger.exception("Unable to update security_admin_password file: %s", config["esgf_secret_file"])
     finally:
         security_admin_password_file.close()
-
-    # Use the same password when creating the postgress account
-    config["pg_sys_acct_passwd"] = updated_password
-
-
-def _update_password_files_permissions():
-    os.chmod(config["esgf_secret_file"], 0640)
-
-    if not esg_functions.get_tomcat_group_id():
-        esg_functions.add_unix_group(config["tomcat_group"])
-    tomcat_group_id = esg_functions.get_tomcat_group_id()
-
-    try:
-        os.chown(config["esgf_secret_file"], config[
-                 "installer_uid"], tomcat_group_id)
-    except OSError:
-        logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
 
     if os.path.isfile(config['esgf_secret_file']):
         os.chmod(config['esgf_secret_file'], 0640)
@@ -323,12 +218,20 @@ def _update_password_files_permissions():
         except OSError:
             logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
 
+    # Use the same password when creating the postgress account
+    config["pg_sys_acct_passwd"] = updated_password
+
+
+def _update_password_files_permissions():
+    #TODO: Rename and refactor this function
+    if not esg_functions.get_tomcat_group_id():
+        esg_functions.add_unix_group(config["tomcat_group"])
+    tomcat_group_id = esg_functions.get_tomcat_group_id()
+
     if not os.path.isfile(config['pg_secret_file']):
-        esg_bash2py.touch(config['pg_secret_file'])
         try:
             with open(config['pg_secret_file'], "w") as secret_file:
-                secret_file.write(config[
-                                  "pg_sys_acct_passwd"])
+                secret_file.write(config["pg_sys_acct_passwd"])
         except IOError:
             logger.exception("Could not open %s", config['pg_secret_file'])
     else:
@@ -346,7 +249,6 @@ def _choose_admin_password():
             "What is the admin password to use for this installation? (alpha-numeric only): ")
 
         security_admin_password = esg_functions.get_security_admin_password()
-        # if force_install and len(password_input) == 0 and len(security_admin_password) > 0:
         if password_input == security_admin_password:
             changed = False
             break
@@ -372,12 +274,12 @@ def _choose_organization_name():
     if esg_root_id:
         logger.info("esg_root_id = [%s]", esg_root_id)
         return
-    if not esg_root_id or force_install:
+    elif force_install:
         try:
             default_org_name = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True).domain
         except tld.exceptions.TldDomainNotFound, error:
-            print error
+            logger.exception("Could not find top level domain for %s.", socket.gethostname())
             default_org_name = "llnl"
         while True:
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ".format(default_org_name=default_org_name)) or default_org_name
@@ -454,29 +356,12 @@ def _choose_node_peer_group():
                 "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev) [{node_peer_group}]: ".format(node_peer_group=node_peer_group)) or node_peer_group
             if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
                 print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input=node_peer_group_input)
-                print "Please choose either esgf-test or esgf-prod"
+                print "Please choose either esgf-test, esgf-dev, or esgf-prod"
                 continue
             else:
                 esg_property_manager.write_as_property(
                     "node_peer_group", node_peer_group_input)
                 break
-
-#TODO: this can be removed as it's no longer used by the node manager
-def _choose_esgf_default_peer():
-    esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
-    if not esgf_default_peer or force_install:
-        try:
-            default_esgf_default_peer = esgf_host
-        except NameError:
-            default_esgf_default_peer = socket.getfqdn()
-
-        esgf_default_peer_input = raw_input("What is the default peer to this node? [{default_esgf_default_peer}]: ".format(
-            default_esgf_default_peer=default_esgf_default_peer)) or default_esgf_default_peer
-        esg_property_manager.write_as_property(
-            "esgf_default_peer", esgf_default_peer_input)
-    else:
-        logger.info("esgf_default_peer = [%s]", esgf_default_peer)
-
 
 def _choose_esgf_index_peer():
     esgf_index_peer = esg_property_manager.get_property("esgf_index_peer")
@@ -549,6 +434,7 @@ def get_db_properties():
 def initial_setup_questionnaire():
     print "-------------------------------------------------------"
     print 'Welcome to the ESGF Node installation program! :-)'
+    print "-------------------------------------------------------"
 
     esg_bash2py.mkdir_p(config['esg_config_dir'])
 
@@ -574,7 +460,6 @@ def initial_setup_questionnaire():
     _choose_node_long_name()
     _choose_node_namespace()
     _choose_node_peer_group()
-    _choose_esgf_default_peer()
     _choose_esgf_index_peer()
     _choose_mail_admin_address()
 
@@ -733,7 +618,7 @@ def install_prerequisites():
     '''
     print '''
     *******************************
-    Installing prerequisites
+    Installing prerequisites from yum
     *******************************
     '''
     yum_remove_rpm_forge = subprocess.Popen(
@@ -754,9 +639,7 @@ def install_prerequisites():
                         "libicu-devel", "libgtextutils-devel", "httpd,"" httpd-devel",
                         "mod_ssl", "libjpeg-turbo-devel", "myproxy", '*ExtUtils*']
 
-    yum_install_prerequisites = subprocess.Popen(
-        yum_install_list, stdout=subprocess.PIPE)
-    esg_functions.stream_subprocess_output(yum_install_prerequisites)
+    esg_functions.stream_subprocess_output(" ".join(yum_install_list))
 
 def check_for_existing_java():
     '''Check if a valid java installation is currently on the system'''

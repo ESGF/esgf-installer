@@ -215,7 +215,7 @@ def _update_admin_password_file(updated_password):
         os.chmod(config['esgf_secret_file'], 0640)
         try:
             os.chown(config['esgf_secret_file'], config[
-                     "installer_uid"], tomcat_group_id)
+                     "installer_uid"], esg_functions.get_tomcat_group_id())
         except OSError:
             logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
 

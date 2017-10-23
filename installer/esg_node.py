@@ -34,8 +34,6 @@ node_types = {"INSTALL": False, "DATA": False, "INDEX": False,
                           "IDP": False, "COMPUTE": False, "MIN": 4, "MAX": 64}
 node_types["ALL"] = node_types["DATA"] and node_types[
     "INDEX"] and node_types["IDP"] and node_types["COMPUTE"]
-install_mode = 0
-upgrade_mode = 0
 
 node_type_list = []
 
@@ -53,8 +51,8 @@ use_local_files = 0
 
 progname = "esg-node"
 #TODO: Look at parent repo and set version from tag using semver
-script_version = "v2.0-RC5.4.0-devel"
-script_maj_version = "2.0"
+script_version = "v3.0"
+script_maj_version = "3.0"
 script_release = "Centaur"
 force_install = False
 
@@ -199,24 +197,24 @@ def check_selected_node_type(node_types, node_type_list):
             continue
         else:
             print '''
-                    Sorry no suitable node type has been selected
-                    Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
-                    (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
+                Sorry no suitable node type has been selected
+                Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
+                (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
 
-                    Ex:  esg-node --set-type data
-                    esg-node install
+                Ex:  esg-node --set-type data
+                esg-node install
 
-                    or do so as a single command line:
+                or do so as a single command line:
 
-                    Ex:  esg-node --type data install
+                Ex:  esg-node --type data install
 
-                    Use the --help | -h option for more information
+                Use the --help | -h option for more information
 
-                    Note: The type value is recorded upon successfully starting the node.
-                    the value is used for subsequent launches so the type value does not have to be
-                    always specified.  A simple \"esg-node start\" will launch with the last type used
-                    that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-                    (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
+                Note: The type value is recorded upon successfully starting the node.
+                the value is used for subsequent launches so the type value does not have to be
+                always specified.  A simple \"esg-node start\" will launch with the last type used
+                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
+                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
                   '''
             sys.exit(1)
     return True
@@ -331,8 +329,7 @@ def main(node_type_list):
     # node_type_list = esg_cli_argument_manager.get_previous_node_type_config(
     #     config["esg_config_type_file"])
     # logger.debug("node_type_list: %s", node_type_list)
-    esg_cli_argument_manager.process_arguments(
-        install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)
+    esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
 
     esg_setup.check_prerequisites()
 
@@ -340,14 +337,16 @@ def main(node_type_list):
         __file__), esg_dist_url, script_version, script_maj_version, devel)
 
     logger.debug("node_type_list: %s", node_type_list)
+    logger.info("node_type_list: %s", node_type_list)
 
     print '''
     -----------------------------------
     ESGF Node Installation Program
     -----------------------------------'''
 
-    esg_cli_argument_manager.get_previous_node_type_config(
+    previous_node_type = esg_cli_argument_manager.get_previous_node_type_config(
         config["esg_config_type_file"])
+    print "previous_node_type:", previous_node_type
     check_selected_node_type(node_types, node_type_list)
 
     # Display node information to user

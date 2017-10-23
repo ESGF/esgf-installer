@@ -61,6 +61,7 @@ def update_script(script_name, script_directory):
 
 #Formerly get_bit_value
 def set_node_type_value(node_type, node_type_list, boolean_value):
+    print "initial node_type_list in set_node_type_value", node_type_list
     if node_type == "install":
         node_type_dictionary["INSTALL"] = True
     elif node_type == "data":
@@ -171,9 +172,13 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         sys.exit(0)
 
     if args.install:
+        if args.type:
+            for arg in args.type:
+                node_type_list = set_node_type_value(arg, node_type_list, True)
         installer_mode_dictionary["upgrade_mode"] = False
         installer_mode_dictionary["install_mode"] = True
         set_node_type_value("install", node_type_list, True)
+        print "node_type_list before returning from args.install:", node_type_list
         logger.debug("Install Services")
     if args.update or args.upgrade:
         installer_mode_dictionary["upgrade_mode"] = True

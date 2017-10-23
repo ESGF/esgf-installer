@@ -27,6 +27,7 @@ import esg_version_manager
 import esg_logging_manager
 import esg_init
 import yaml
+import semver
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
@@ -445,14 +446,7 @@ def initial_setup_questionnaire():
     esgf_host = esg_property_manager.get_property("esgf_host")
     _choose_fqdn(esgf_host)
 
-    security_admin_password = None
-    try:
-        with open(config['esgf_secret_file'], 'r') as esgf_secret_file:
-            security_admin_password = esgf_secret_file.read()
-    except IOError:
-        logger.exception("Unable to open %s", config['esgf_secret_file'])
-
-    if not security_admin_password or force_install:
+    if not esg_functions.get_security_admin_password() or force_install:
         _choose_admin_password()
 
     _choose_organization_name()
@@ -648,8 +642,8 @@ def check_for_existing_java():
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
         print java_version_stdout["stderr"]
-        installed_java_version = re.search("1.8.0_\w+", java_version_stdout["stderr"])
-        if semver.match(installed_java_version, config["java_version"]) > 0:
+        installed_java_version = re.search("1.8.0_\w+", java_version_stdout["stderr"]).group()
+        if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
             print "Installed java version meets the minimum requirement "
         return java_version_stdout["stderr"]
 
@@ -679,7 +673,7 @@ def setup_java():
         pass
     if check_for_existing_java():
             setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
-            if setup_java_answer.lower().strip() not in ["n", "no"]:
+            if setup_java_answer.lower().strip() not in ["y", "yes"]:
                 print "Skipping Java installation"
                 return
             last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
@@ -706,7 +700,7 @@ def setup_java():
         #recursively change permissions
         esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
-    check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
+    print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
 
 def setup_ant():
     '''

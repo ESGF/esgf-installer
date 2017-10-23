@@ -35,6 +35,9 @@ class test_ESG_version_manager(unittest.TestCase):
         output = esg_version_manager.check_webapp_version("esg-orp", "4.0")
         self.assertEqual(output, 1)
 
+    def test_compare_versions(self):
+        self.assertTrue(esg_version_manager.compare_versions("1.8.0_131", "1.8.0_111"))
+
 
 if __name__ == '__main__':
     unittest.main()

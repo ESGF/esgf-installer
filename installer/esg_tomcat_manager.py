@@ -28,6 +28,7 @@ import esg_functions
 import esg_bash2py
 import esg_property_manager
 import esg_logging_manager
+from clint.textui import progress
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -65,8 +66,13 @@ def download_tomcat():
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
     print "downloading Tomcat"
     r = requests.get(tomcat_download_url)
-    with open("/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION), "wb") as code:
-        code.write(r.content)
+    tomcat_download_path =  "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION)
+    with open(tomcat_download_path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
 
     return True
 
@@ -110,10 +116,14 @@ def copy_config_files():
     '''copy custom configuration'''
     '''server.xml: includes references to keystore, truststore in /esg/config/tomcat'''
     '''context.xml: increases the Tomcat cache to avoid flood of warning messages'''
+
+    print "*******************************"
+    print "Copying custom Tomcat config files"
+    print "******************************* \n"
     try:
         shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
-        shutil.copytree("certs/", "/esg/config/tomcat")
+        shutil.copytree("certs", "/esg/config/tomcat")
 
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:
@@ -132,21 +142,23 @@ def create_tomcat_user():
 
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
-
 def start_tomcat():
-    return esg_functions.call_subprocess("service httpd start")
+    return esg_functions.call_subprocess("/usr/local/tomcat/bin/catalina.sh run")
 
 def stop_tomcat():
-    esg_functions.stream_subprocess_output("service httpd stop")
+    esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
 
 def restart_tomcat():
-    esg_functions.stream_subprocess_output("service httpd restart")
+    stop_tomcat()
+    print "Sleeping for 7 seconds to allow shutdown"
+    sleep(7)
+    start_tomcat()
 
 def check_tomcat_status():
     return esg_functions.call_subprocess("service httpd status")
 
 def run_tomcat_config_test():
-    esg_functions.stream_subprocess_output("service httpd configtest")
+    esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf

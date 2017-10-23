@@ -281,13 +281,12 @@ def system_component_installation():
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
-        # esg_subsystem.main()
     if "DATA" in node_type_list:
         esg_subsystem.main()
-        if node_types["DATA"] and node_types["COMPUTE"]:
-            esg_publisher.setup_esgcet()
-            #CDAT only used on with Publisher; move
-            esg_setup.setup_cdat()
+    if "DATA" in node_type_list and "COMPUTE" in node_type_list:
+        esg_publisher.setup_esgcet()
+        #CDAT only used on with Publisher; move
+        esg_setup.setup_cdat()
 
 def check_for_conda():
     python_version = esg_functions.call_subprocess("python --version")["stdout"]

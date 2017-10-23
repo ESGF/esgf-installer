@@ -159,6 +159,7 @@ def set_node_type_config(node_type_list, config_file):
 def process_arguments(node_type_list, devel, esg_dist_url):
     logger.debug("node_type_list at start of process_arguments: %s", node_type_list)
     logger.info("node_type_list at start of process_arguments: %s", node_type_list)
+    print "node_type_list at start of process_arguments: %s", node_type_list
 
     args, parser = _define_acceptable_arguments()
 
@@ -206,7 +207,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
     elif args.type:
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
-        print "args.type: %s", args.type
+        print "args.type:", args.type
         for arg in args.type:
             set_node_type_value(arg, node_type_list, True)
         sys.exit(0)

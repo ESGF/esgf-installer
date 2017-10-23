@@ -166,6 +166,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
 
     logging.debug(pprint.pformat(args))
     logger.info("args: %s", args)
+    print "args:", args
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -179,6 +180,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         installer_mode_dictionary["install_mode"] = True
         set_node_type_value("install", node_type_list, True)
         print "node_type_list before returning from args.install:", node_type_list
+        return node_type_list
         logger.debug("Install Services")
     if args.update or args.upgrade:
         installer_mode_dictionary["upgrade_mode"] = True

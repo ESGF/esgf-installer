@@ -329,7 +329,8 @@ def main(node_type_list):
     # node_type_list = esg_cli_argument_manager.get_previous_node_type_config(
     #     config["esg_config_type_file"])
     # logger.debug("node_type_list: %s", node_type_list)
-    esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
+    cli_info = esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
+    print "cli_info:", cli_info
 
     esg_setup.check_prerequisites()
 

@@ -27,11 +27,8 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
-
-logger.info("keystore_alias: %s", config["keystore_alias"])
 os.environ['LANG'] = "POSIX"
 os.umask(022)
-
 
 node_types = {"INSTALL": False, "DATA": False, "INDEX": False,
                           "IDP": False, "COMPUTE": False, "MIN": 4, "MAX": 64}
@@ -66,10 +63,8 @@ force_install = False
 #--------------
 #--------------
 
-# os.environ['UVCDAT_ANONYMOUS_LOG'] = False
 
 esg_root_id = esg_functions.get_esg_root_id()
-
 
 def esgf_node_info():
 
@@ -193,19 +188,14 @@ def download_esg_installarg(esg_dist_url):
             logger.exception("Unable to access esg-installarg file")
 
 
-def create_new_list_from_keys(dictionary):
-    """ Return clean option list."""
-    return [node_option.split("")[0].lower() for node_option in dictionary.keys()]
-
-
 def check_selected_node_type(node_types, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
 
-    node_options_modified = create_new_list_from_keys(node_types)
-    logger.debug("node_options_modified: %s", node_options_modified)
+    # node_options_modified = create_new_list_from_keys(node_types)
+    # logger.debug("node_options_modified: %s", node_options_modified)
     for option in node_type_list:
         logger.debug("option: %s", option)
-        if option in node_options_modified:
+        if option in node_type_list.keys():
             continue
         else:
             print '''
@@ -253,16 +243,16 @@ def get_installation_type(script_version):
         return "master"
 
 
-def get_user_response():
+def begin_installation():
     """ Capture user response. """
     while True:
-        begin_installation = raw_input(
+        start_installation = raw_input(
             "Are you ready to begin the installation? [Y/n] ") or "Y"
 
-        if begin_installation.lower() in ["n", "no"]:
+        if start_installation.lower() in ["n", "no"]:
             print "Canceling installation"
             sys.exit(0)
-        elif begin_installation.lower() in ["y", "yes"]:
+        elif start_installation.lower() in ["y", "yes"]:
             break
         else:
             print "Invalid option.  Please select a valid option [Y/n]"
@@ -298,6 +288,7 @@ def system_component_installation():
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
+        esg_subsystem.main()
     if "data" in node_type_list:
         esg_subsystem.main()
         # logger.debug("node_type_bit & (DATA+COMPUTE) %s", node_type_bit & (DATA+COMPUTE))
@@ -342,16 +333,8 @@ def main(node_type_list):
     # logger.debug("node_type_list: %s", node_type_list)
     esg_cli_argument_manager.process_arguments(
         install_mode, upgrade_mode, node_type_list, devel, esg_dist_url)
-    try:
-        esg_setup.check_prerequisites()
-    except UnprivilegedUserError:
-        logger.info(
-            "$([FAIL]) \n\tMust run this program with root's effective UID\n\n")
-        sys.exit(1)
-    except WrongOSError:
-        logger.info(
-            "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems")
-        sys.exit(1)
+
+    esg_setup.check_prerequisites()
 
     esg_functions.verify_esg_node_script(os.path.basename(
         __file__), esg_dist_url, script_version, script_maj_version, devel)
@@ -362,13 +345,6 @@ def main(node_type_list):
     -----------------------------------
     ESGF Node Installation Program
     -----------------------------------'''
-
-    # logger.debug("node_type_bit & INSTALL != 0: %s", node_type_bit & INSTALL != 0)
-    # logger.debug("node_type_bit: %i, %s", node_type_bit, type(node_type_bit))
-    # logger.debug("MIN: %i, %s", MIN, type(MIN))
-    # logger.debug("MAX: %i", MAX)
-    # logger.debug("node_type_bit >= MIN: %s",  node_type_bit >= MIN)
-    # logger.debug("node_type_bit >= MIN and node_type_bit <= MAX: %s", node_type_bit >= MIN and node_type_bit <= MAX)
 
     esg_cli_argument_manager.get_previous_node_type_config(
         config["esg_config_type_file"])
@@ -383,7 +359,7 @@ def main(node_type_list):
     # install_conda()
 
     # Process User Response
-    get_user_response()
+    begin_installation()
 
     #
     esg_setup.init_structure()

@@ -32,26 +32,11 @@ logger.info("keystore_alias: %s", config["keystore_alias"])
 os.environ['LANG'] = "POSIX"
 os.umask(022)
 
-DEBUG = esg_bash2py.Expand.colonMinus("DEBUG", False)
-VERBOSE = esg_bash2py.Expand.colonMinus("VERBOSE", "0")
-# INSTALL_BIT=1
-# TEST_BIT=2
-# DATA_BIT=4
-# INDEX_BIT=8
-# IDP_BIT=16
-# COMPUTE_BIT=32
-# WRITE_ENV_BIT=64
-# PRIVATE_BIT=128
-# NOTE: remember to adjust (below) when adding new bits!!
-# MIN_BIT=4
-# MAX_BIT=64
-# ALL_BIT=DATA_BIT+INDEX_BIT+IDP_BIT+COMPUTE_BIT
 
-
-bit_boolean_dictionary = {"INSTALL_BIT": False, "TEST_BIT": False, "DATA_BIT": False, "INDEX_BIT": False,
-                          "IDP_BIT": False, "COMPUTE_BIT": False, "WRITE_ENV_BIT": False, "MIN_BIT": 4, "MAX_BIT": 64}
-ALL_BIT = bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary[
-    "INDEX_BIT"] and bit_boolean_dictionary["IDP_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]
+node_types = {"INSTALL": False, "DATA": False, "INDEX": False,
+                          "IDP": False, "COMPUTE": False, "MIN": 4, "MAX": 64}
+node_types["ALL"] = node_types["DATA"] and node_types[
+    "INDEX"] and node_types["IDP"] and node_types["COMPUTE"]
 install_mode = 0
 upgrade_mode = 0
 
@@ -59,11 +44,11 @@ node_type_list = []
 
 
 def get_node_type():
-    for key, value in bit_boolean_dictionary.items():
+    for key, value in node_types.items():
         if value:
             node_type_list.append(key)
 
-devel = esg_bash2py.Expand.colonMinus("devel", True)
+devel = True
 recommended_setup = 1
 
 custom_setup = 0
@@ -210,13 +195,13 @@ def download_esg_installarg(esg_dist_url):
 
 def create_new_list_from_keys(dictionary):
     """ Return clean option list."""
-    return [node_option.split("_BIT")[0].lower() for node_option in dictionary.keys()]
+    return [node_option.split("")[0].lower() for node_option in dictionary.keys()]
 
 
-def check_selected_node_type(bit_boolean_dictionary, node_type_list):
+def check_selected_node_type(node_types, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
 
-    node_options_modified = create_new_list_from_keys(bit_boolean_dictionary)
+    node_options_modified = create_new_list_from_keys(node_types)
     logger.debug("node_options_modified: %s", node_options_modified)
     for option in node_type_list:
         logger.debug("option: %s", option)
@@ -271,9 +256,8 @@ def get_installation_type(script_version):
 def get_user_response():
     """ Capture user response. """
     while True:
-        default_install_answer = "Y"
         begin_installation = raw_input(
-            "Are you ready to begin the installation? [Y/n] ") or default_install_answer
+            "Are you ready to begin the installation? [Y/n] ") or "Y"
 
         if begin_installation.lower() in ["n", "no"]:
             print "Canceling installation"
@@ -287,17 +271,17 @@ def get_user_response():
 def install_log_info():
     if force_install:
         logger.info("(force install is ON)")
-    # if node_type_bit & DATA_BIT != 0:
-    if bit_boolean_dictionary["DATA_BIT"]:
+    # if node_type_bit & DATA != 0:
+    if node_types["DATA"]:
         logger.info("(data node type selected)")
-    if bit_boolean_dictionary["INDEX_BIT"]:
-        # if node_type_bit & INDEX_BIT != 0:
+    if node_types["INDEX"]:
+        # if node_type_bit & INDEX != 0:
         logger.info("(index node type selected)")
-    if bit_boolean_dictionary["IDP_BIT"]:
-        # if node_type_bit & IDP_BIT != 0:
+    if node_types["IDP"]:
+        # if node_type_bit & IDP != 0:
         logger.info("(idp node type selected)")
-    if bit_boolean_dictionary["COMPUTE_BIT"]:
-        # if node_type_bit & COMPUTE_BIT != 0:
+    if node_types["COMPUTE"]:
+        # if node_type_bit & COMPUTE != 0:
         logger.info("(compute node type selected)")
 
 
@@ -306,8 +290,8 @@ def system_component_installation():
     # Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
     #---------------------------------------
-    # logger.debug(node_type_bit & INSTALL_BIT)
-    # if node_type_bit & INSTALL_BIT !=0:
+    # logger.debug(node_type_bit & INSTALL)
+    # if node_type_bit & INSTALL !=0:
     if "install" in node_type_list:
         esg_setup.setup_java()
         esg_setup.setup_ant()
@@ -316,9 +300,9 @@ def system_component_installation():
         esg_apache_manager.main()
     if "data" in node_type_list:
         esg_subsystem.main()
-        # logger.debug("node_type_bit & (DATA_BIT+COMPUTE_BIT) %s", node_type_bit & (DATA_BIT+COMPUTE_BIT))
-        if bit_boolean_dictionary["DATA_BIT"] and bit_boolean_dictionary["COMPUTE_BIT"]:
-            # if node_type_bit & (DATA_BIT+COMPUTE_BIT) != 0:
+        # logger.debug("node_type_bit & (DATA+COMPUTE) %s", node_type_bit & (DATA+COMPUTE))
+        if node_types["DATA"] and node_types["COMPUTE"]:
+            # if node_type_bit & (DATA+COMPUTE) != 0:
             esg_publisher.setup_esgcet()
             #CDAT only used on with Publisher; move
             esg_setup.setup_cdat()
@@ -379,16 +363,16 @@ def main(node_type_list):
     ESGF Node Installation Program
     -----------------------------------'''
 
-    # logger.debug("node_type_bit & INSTALL_BIT != 0: %s", node_type_bit & INSTALL_BIT != 0)
+    # logger.debug("node_type_bit & INSTALL != 0: %s", node_type_bit & INSTALL != 0)
     # logger.debug("node_type_bit: %i, %s", node_type_bit, type(node_type_bit))
-    # logger.debug("MIN_BIT: %i, %s", MIN_BIT, type(MIN_BIT))
-    # logger.debug("MAX_BIT: %i", MAX_BIT)
-    # logger.debug("node_type_bit >= MIN_BIT: %s",  node_type_bit >= MIN_BIT)
-    # logger.debug("node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT: %s", node_type_bit >= MIN_BIT and node_type_bit <= MAX_BIT)
+    # logger.debug("MIN: %i, %s", MIN, type(MIN))
+    # logger.debug("MAX: %i", MAX)
+    # logger.debug("node_type_bit >= MIN: %s",  node_type_bit >= MIN)
+    # logger.debug("node_type_bit >= MIN and node_type_bit <= MAX: %s", node_type_bit >= MIN and node_type_bit <= MAX)
 
     esg_cli_argument_manager.get_previous_node_type_config(
         config["esg_config_type_file"])
-    check_selected_node_type(bit_boolean_dictionary, node_type_list)
+    check_selected_node_type(node_types, node_type_list)
 
     # Display node information to user
     esgf_node_info()

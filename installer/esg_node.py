@@ -195,7 +195,7 @@ def check_selected_node_type(node_types, node_type_list):
     # logger.debug("node_options_modified: %s", node_options_modified)
     for option in node_type_list:
         logger.debug("option: %s", option)
-        if option in node_type_list.keys():
+        if option in node_types.keys():
             continue
         else:
             print '''

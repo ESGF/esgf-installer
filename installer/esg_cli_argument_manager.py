@@ -19,12 +19,12 @@ with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
 progname = "esg-node"
-script_version = "v2.0-RC5.4.0-devel"
-script_maj_version = "2.0"
+script_version = "v3.0"
+script_maj_version = "3.0"
 script_release = "Centaur"
 
-node_type_dictionary = {"INSTALL_BIT": False , "TEST_BIT": False, "DATA_BIT":False, "INDEX_BIT":False, "IDP_BIT":False, "COMPUTE_BIT":False, "WRITE_ENV_BIT":False, "MIN_BIT": False, "MAX_BIT": False}
-installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
+node_type_dictionary = {"INSTALL": False , "TEST": False, "DATA":False, "INDEX":False, "IDP":False, "COMPUTE":False, "MIN": False, "MAX": False}
+installer_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
 
 def setup_sensible_confs():
     pass
@@ -40,14 +40,6 @@ def generate_esgf_csrs_ext():
 def cert_howto():
     pass
 
-def test_postgress():
-    pass
-def test_cdat():
-    pass
-def test_tomcat():
-    pass
-def test_tds():
-    pass
 def show_type():
     pass
 def start(node_bit):
@@ -70,23 +62,21 @@ def update_script(script_name, script_directory):
 #Formerly get_bit_value
 def set_node_type_value(node_type, node_type_list, boolean_value):
     if node_type == "install":
-        node_type_dictionary["INSTALL_BIT"] = True
+        node_type_dictionary["INSTALL"] = True
     elif node_type == "data":
-        node_type_dictionary["DATA_BIT"] = True
+        node_type_dictionary["DATA"] = True
     elif node_type == "index":
-        node_type_dictionary["INDEX_BIT"] = True
+        node_type_dictionary["INDEX"] = True
     elif node_type == "idp":
-        node_type_dictionary["IDP_BIT"] = True
+        node_type_dictionary["IDP"] = True
     elif node_type == "compute":
-        node_type_dictionary["COMPUTE_BIT"] = True
-    elif node_type == "write_env":
-        node_type_dictionary["WRITE_ENV_BIT"] = True
+        node_type_dictionary["COMPUTE"] = True
     elif node_type == "min":
-        node_type_dictionary["MIN_BIT"] = True
+        node_type_dictionary["MIN"] = True
     elif node_type == "max":
-        node_type_dictionary["MAX_BIT"] = True
-    # elif node_type == "all":
-    #     node_type_dictionary["ALL_BIT"] = True
+        node_type_dictionary["MAX"] = True
+    elif node_type == "all":
+        node_type_dictionary["ALL"] = True
     else:
         raise ValueError("Invalid node type reference")
 
@@ -95,9 +85,7 @@ def set_node_type_value(node_type, node_type_list, boolean_value):
 def get_node_type(node_type_list):
     for key, value in node_type_dictionary.items():
         if value:
-            node_type = key.split("_BIT")[0].lower()
-            logger.debug("node_type: %s", node_type)
-            node_type_list.append(node_type)
+            node_type_list.append(key)
     return node_type_list
 
 def _define_acceptable_arguments():
@@ -110,7 +98,6 @@ def _define_acceptable_arguments():
     parser.add_argument("--generate-esgf-csrs", dest="generateesgfcsrs", help="Generate CSRs for a simpleCA CA certificate and/or web container certificate", action="store_true")
     parser.add_argument("--generate-esgf-csrs-ext", dest="generateesgfcsrsext", help="Generate CSRs for a node other than the one you are running", action="store_true")
     parser.add_argument("--cert-howto", dest="certhowto", help="Provides information about certificate management", action="store_true")
-    parser.add_argument("--verify", "--test", dest="verify", help="Runs the test code to verify installation", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
     parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="+", choices=["data", "index", "idp", "compute", "all"])
     parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+", choices=["data", "index", "idp", "compute", "all"])
@@ -162,19 +149,18 @@ def set_node_type_config(node_type_list, config_file):
         try:
             config_type_file = open(config_file, "w")
             config_type_file.write(" ".join(node_type_list))
-        except IOError, error:
+        except IOError:
             logger.exception("Unable to save node type \n")
         else:
             logger.debug("Wrote %s to file as new node_type_string", " ".join(node_type_list))
             config_type_file.close()
 
 
-def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dist_url):
-    selection_string = ""
+def process_arguments(node_type_list, devel, esg_dist_url):
     logger.debug("node_type_list at start of process_arguments: %s", node_type_list)
+    logger.info("node_type_list at start of process_arguments: %s", node_type_list)
 
     args, parser = _define_acceptable_arguments()
-    print "type of args:", type(args)
 
     logging.debug(pprint.pformat(args))
     logger.info("args: %s", args)
@@ -184,23 +170,19 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         sys.exit(0)
 
     if args.install:
-            installater_mode_dictionary["upgrade_mode"] = False
-            installater_mode_dictionary["install_mode"] = True
-            set_node_type_value("install", node_type_list, True)
-            # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
-            #     node_type_bit += get_bit_value("install")
-            logger.debug("Install Services")
+        installer_mode_dictionary["upgrade_mode"] = False
+        installer_mode_dictionary["install_mode"] = True
+        set_node_type_value("install", node_type_list, True)
+        logger.debug("Install Services")
     if args.update or args.upgrade:
-            installater_mode_dictionary["upgrade_mode"]= True
-            installater_mode_dictionary["install_mode"] = False
-            set_node_type_value("install", node_type_list, True)
-            # if node_type_bit & bit_dictionary["INSTALL_BIT"] == 0:
-            #     node_type_bit += get_bit_value("install")
-            logger.debug("Update Services")
-            esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
+        installer_mode_dictionary["upgrade_mode"] = True
+        installer_mode_dictionary["install_mode"] = False
+        set_node_type_value("install", node_type_list, True)
+        logger.debug("Update Services")
+        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
     if args.fixperms:
         logger.debug("fixing permissions")
-        setup_sensible_confs
+        setup_sensible_confs()
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
@@ -221,28 +203,12 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
         logger.debug("cert howto")
         cert_howto()
         sys.exit(0)
-    elif args.verify:
-        logger.debug("Verify Services")
-        set_node_type_value("test", node_type_list, True)
-        # if node_type_bit & get_bit_value("test") == 0:
-        #     node_type_bit += get_bit_value("test")
-        # logger.debug("node_type_bit = %s", node_type_bit)
-        test_postgress()
-        test_cdat()
-        # test_esgcet()
-        test_tomcat()
-        test_tds()
-        sys.exit(0)
     elif args.type:
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
+        print "args.type: %s", args.type
         for arg in args.type:
-            #TODO: refactor conditional to function with descriptive name
             set_node_type_value(arg, node_type_list, True)
-            # if node_type_bit & get_bit_value(arg) == 0:
-            #     node_type_bit += get_bit_value(arg)
-                # selection_string += " "+arg
-        # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
@@ -250,10 +216,6 @@ def process_arguments(install_mode, upgrade_mode, node_type_list, devel, esg_dis
             logger.debug("arg: %s", arg)
             node_type_list = []
             node_type_list = set_node_type_value(arg, node_type_list, True)
-            #TODO: refactor conditional to function with descriptive name
-            # if node_type_bit & get_bit_value(arg) == 0:
-            #     node_type_bit += get_bit_value(arg)
-            #     selection_string += " "+arg
         esg_bash2py.mkdir_p(config["esg_config_dir"])
         # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         set_node_type_config(node_type_list, config["esg_config_type_file"])

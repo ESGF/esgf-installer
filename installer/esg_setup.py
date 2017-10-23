@@ -45,7 +45,7 @@ def check_if_root():
             raise UnprivilegedUserError
         logger.debug("Root user found.")
     except UnprivilegedUserError:
-        logger.exception("You must be root to run the ESGF Installer.")
+        logger.exception("\nMust run this program with root's effective UID\n\n")
         esg_functions.exit_with_error(1)
 
 def check_os():
@@ -59,7 +59,7 @@ def check_os():
         if "6" not in release_version[1]:
             raise WrongOSError
     except WrongOSError:
-        logger.exception("ESGF can only be installed on CentOS 6 or Redhat 6")
+        logger.exception("ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems")
         esg_functions.exit_with_error(1)
     else:
         print "Operating System = {OS} {version}".format(OS=release_version[0], version=release_version[1])

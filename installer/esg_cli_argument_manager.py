@@ -225,7 +225,6 @@ def process_arguments(node_type_list, devel, esg_dist_url):
             node_type_list = []
             node_type_list = set_node_type_value(arg, node_type_list, True)
         esg_bash2py.mkdir_p(config["esg_config_dir"])
-        # logger.info("node type set to: [%s] (%s) ", selection_string, node_type_bit)
         set_node_type_config(node_type_list, config["esg_config_type_file"])
         sys.exit(0)
     elif args.gettype:

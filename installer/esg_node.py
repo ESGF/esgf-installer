@@ -290,8 +290,11 @@ def system_component_installation():
         esg_setup.setup_cdat()
 
 def check_for_conda():
+    if not os.path.isdir("/usr/local/conda"):
+        print "Please run the install_conda.sh script before attempting to install ESGF."
     if "conda" not in find_executable("python"):
-        print 'Please activate the esgf-pub conda environment before running the install script.'
+        print 'Please activate the esgf-pub conda environment before running the install script by using the following command:'
+        print "source /usr/local/conda/bin/activate esgf-pub"
         sys.exit(1)
 
 def main(node_type_list):

@@ -4,7 +4,6 @@ import sys
 import logging
 import socket
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
-from lxml import etree
 from distutils.spawn import find_executable
 import esg_functions
 import esg_bash2py
@@ -336,9 +335,11 @@ def main(node_type_list):
     ESGF Node Installation Program
     -----------------------------------'''
 
-    previous_node_type = esg_cli_argument_manager.get_previous_node_type_config(
-        config["esg_config_type_file"])
-    print "previous_node_type:", previous_node_type
+    #If not type not set from CLI argument, look at previous node type setting
+    if not [node_type for node_type in node_type_list if node_type in node_types.keys()]:
+        previous_node_type = esg_cli_argument_manager.get_previous_node_type_config(
+            config["esg_config_type_file"])
+        print "previous_node_type:", previous_node_type
     check_selected_node_type(node_types, node_type_list)
 
     # Display node information to user

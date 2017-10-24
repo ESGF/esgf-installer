@@ -5,6 +5,7 @@ import logging
 import socket
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from lxml import etree
+from distutils.spawn import find_executable
 import esg_functions
 import esg_bash2py
 import esg_setup
@@ -289,13 +290,12 @@ def system_component_installation():
         esg_setup.setup_cdat()
 
 def check_for_conda():
-    python_version = esg_functions.call_subprocess("python --version")["stdout"]
-    if "conda" not in python_version:
+    if "conda" not in find_executable("python"):
         print 'Please activate the esgf-pub conda environment before running the install script.'
         sys.exit(1)
 
 def main(node_type_list):
-    # check_for_conda()
+    check_for_conda()
     # default distribution_url
     esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
 

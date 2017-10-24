@@ -91,10 +91,11 @@ def create_esg_directories():
 
 def init_structure():
 
+    create_esg_directories()
+
+    #Create esgf.properties file
     if not os.path.isfile(config["config_file"]):
         esg_bash2py.touch(config["config_file"])
-
-    create_esg_directories()
 
     #--------------
     # Setup variables....

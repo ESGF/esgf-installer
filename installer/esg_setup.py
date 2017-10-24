@@ -212,63 +212,60 @@ def _update_admin_password_file(updated_password):
     finally:
         security_admin_password_file.close()
 
-    if os.path.isfile(config['esgf_secret_file']):
-        os.chmod(config['esgf_secret_file'], 0640)
-        try:
-            os.chown(config['esgf_secret_file'], config[
-                     "installer_uid"], esg_functions.get_tomcat_group_id())
-        except OSError:
-            logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
-
-    # Use the same password when creating the postgress account
-    config["pg_sys_acct_passwd"] = updated_password
-
-
-def _update_password_files_permissions():
-    #TODO: Rename and refactor this function
     if not esg_functions.get_tomcat_group_id():
         esg_functions.add_unix_group(config["tomcat_group"])
     tomcat_group_id = esg_functions.get_tomcat_group_id()
 
-    if not os.path.isfile(config['pg_secret_file']):
-        try:
-            with open(config['pg_secret_file'], "w") as secret_file:
-                secret_file.write(config["pg_sys_acct_passwd"])
-        except IOError:
-            logger.exception("Could not open %s", config['pg_secret_file'])
-    else:
-        os.chmod(config['pg_secret_file'], 0640)
-        try:
-            os.chown(config['pg_secret_file'], config[
-                     "installer_uid"], tomcat_group_id)
-        except OSError:
-            logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
+    os.chmod(config['esgf_secret_file'], 0640)
+    try:
+        os.chown(config['esgf_secret_file'], config[
+                 "installer_uid"], tomcat_group_id)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", config["esgf_secret_file"])
+
+    # Use the same password when creating the postgress account
+    config["pg_sys_acct_passwd"] = updated_password
+    _update_postgres_password()
+
+
+def _update_postgres_password():
+    '''Updates the Postgres system account password; gets saved to /esg/config/.esg_pg_pass'''
+    if not esg_functions.get_tomcat_group_id():
+        esg_functions.add_unix_group(config["tomcat_group"])
+    tomcat_group_id = esg_functions.get_tomcat_group_id()
+
+    try:
+        with open(config['pg_secret_file'], "w") as secret_file:
+            secret_file.write(config["pg_sys_acct_passwd"])
+    except IOError:
+        logger.exception("Could not open %s", config['pg_secret_file'])
+
+    os.chmod(config['pg_secret_file'], 0640)
+    try:
+        os.chown(config['pg_secret_file'], config[
+                 "installer_uid"], tomcat_group_id)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
 
 
 def _choose_admin_password():
+    '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
+    if esg_functions.get_security_admin_password():
+        logger.info("Previously set password found.")
+        return
+
     while True:
         password_input = raw_input(
             "What is the admin password to use for this installation? (alpha-numeric only): ")
-
-        security_admin_password = esg_functions.get_security_admin_password()
-        if password_input == security_admin_password:
-            changed = False
-            break
         if not _is_valid_password(password_input):
             continue
-        if password_input:
-            security_admin_password = password_input
 
-        security_admin_password_confirmation = raw_input(
+        password_input_confirmation = raw_input(
             "Please re-enter password to confirm: ")
-        if _confirm_password(security_admin_password, security_admin_password_confirmation):
-            changed = True
+
+        if _confirm_password(password_input, password_input_confirmation):
+            _update_admin_password_file(password_input)
             break
-
-    if changed is True:
-        _update_admin_password_file(password_input)
-
-    _update_password_files_permissions()
 
 
 def _choose_organization_name():

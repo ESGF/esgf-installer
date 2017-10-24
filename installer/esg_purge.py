@@ -157,6 +157,11 @@ def purge_cdat():
     pass
 
 
+def purge_apache():
+    esg_functions.stream_subprocess_output("yum remove -y httpd httpd-devel mod_ssl")
+    shutil.rmtree("/etc/httpd")
+
+
 def main():
     purge_postgres()
     purge_tomcat()
@@ -165,6 +170,7 @@ def main():
     purge_java()
     purge_base()
     purge_cdat()
+    purge_apache()
 
 if __name__ == '__main__':
     main()

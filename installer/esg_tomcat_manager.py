@@ -123,7 +123,11 @@ def copy_config_files():
     try:
         shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
-        shutil.copytree("certs", "/esg/config/tomcat")
+        shutil.copyfile("certs/esg-truststore.ts", "/esg/config/tomcat/esg-truststore.ts")
+        shutil.copyfile("certs/esg-truststore.ts-orig", "/esg/config/tomcat/esg-truststore.ts-orig")
+        shutil.copyfile("certs/keystore-tomcat", "/esg/config/tomcat/keystore-tomcat")
+        shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
+        # shutil.copytree("certs", "/esg/config/tomcat")
 
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:

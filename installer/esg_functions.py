@@ -604,7 +604,8 @@ def get_security_admin_password():
     except IOError, error:
         if error.errno == errno.ENOENT:
             logger.error("File doesn't exist %s", config["esgf_secret_file"])
-        logger.exception("Could not get password from file")
+        else:
+            logger.exception("Could not get password from file")
     else:
         return security_admin_password
 
@@ -733,8 +734,8 @@ def get_tomcat_group_id():
     ''' Returns the id of the Tomcat group '''
     try:
         return grp.getgrnam("tomcat").gr_gid
-    except KeyError, error:
-        print "error:", error
+    except KeyError:
+        logger.exception("Could not get Tomcat group id")
 
 def add_unix_group(group_name):
     try:

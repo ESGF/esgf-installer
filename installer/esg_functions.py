@@ -17,6 +17,7 @@ import errno
 import yaml
 import pwd
 import grp
+import getpass
 import netifaces
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
@@ -610,16 +611,15 @@ def get_security_admin_password():
         return security_admin_password
 
 
-def set_keyword_password():
+def set_java_keystore_password():
+    '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''
     while True:
-        keystore_password_input = raw_input("Please enter the password for this keystore   : ")
-        if keystore_password_input == "changeit":
-                break
+        keystore_password_input = getpass.getpass("Please enter the password for this keystore: ")
         if not keystore_password_input:
-            print "Invalid password"
+            print "Invalid password. The password can not be blank."
             continue
 
-        keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
+        keystore_password_input_confirmation = getpass.getpass("Please re-enter the password for this keystore: ")
         if keystore_password_input == keystore_password_input_confirmation:
             config["keystore_password"] = keystore_password_input
             break
@@ -630,20 +630,20 @@ def set_keyword_password():
         keystore_file.write(config["keystore_password"])
     return True
 
-def get_keystore_password():
-    ''' Gets the keystore_password from the saved ks_secret_file '''
+def get_java_keystore_password():
+    ''' Gets the keystore_password from the saved ks_secret_file at /esg/config/.esg_keystore_pass '''
     try:
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         if not keystore_password:
-            set_keyword_password()
+            set_java_keystore_password()
 
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
     except IOError:
         logger.exception("Failed to get keystore password")
-        set_keyword_password()
+        set_java_keystore_password()
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
@@ -653,7 +653,7 @@ def _check_keystore_password(keystore_password):
     if not os.path.isfile(config['ks_secret_file']):
         logger.error("$([FAIL]) No keystore file present [%s]", config['ks_secret_file'])
         return False
-    keystore_password = get_keystore_password()
+    keystore_password = get_java_keystore_password()
     keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_file=config['ks_secret_file'], keystore_password=keystore_password)
     keytool_list_process = call_subprocess(keytool_list_command)
     if keytool_list_process["returncode"] != 0:

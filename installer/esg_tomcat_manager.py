@@ -23,7 +23,7 @@ import requests
 import errno
 import getpass
 from time import sleep
-from OpenSSL import crypto
+import OpenSSL
 from lxml import etree
 import esg_functions
 import esg_bash2py
@@ -166,15 +166,46 @@ def run_tomcat_config_test():
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
 
+
+def create_certificate_chain_list():
+    cert_files = []
+    #Enter ca_chain file into list
+    print "Please enter your Certificate Authority's certificate chain file(s)"
+    print "[enter each cert file/url press return, press return with blank entry when done]"
+    while True:
+        certfile_entry = raw_input("Enter certificate chain file name: ")
+        if not certfile_entry:
+            break
+        else:
+            cert_files.append(certfile_entry)
+
+    return cert_files
+
+
+def create_certificate_chain(cert_files):
+    #Copy the tmpchain and rename to cachain
+    with open("/etc/certs/tmpchain", "w") as tmpchain_file:
+        for cert in cert_files:
+            if not os.path.isfile(cert):
+                print "{cert} not found. Exiting.".format(cert=cert)
+                esg_functions.exit_with_error(1)
+            with open(cert, "r") as cert_file_handle:
+                cert_file_contents = cert_file_handle.read()
+            tmpchain_file.write(cert_file_contents+"\n")
+    shutil.copyfile("/etc/certs/tmpchain", "/etc/certs/cachain.pem")
+
+
 #arg 1 -> private key
 #arg 2 -> public cert (the returned signed CSR)
 #arg 3 -> keystore name
 #arg 4 -> alias
 #arg 5 -> password (The value you want *set* for the keystore and internal private key)
 def install_tomcat_keypair(password, private_key=config["tomcat_conf_dir"]+"/hostkey.pem", public_cert=None, keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
-    '''If you want to install a commercial CA issuezd certificate:
+    '''If you want to install a commercial CA issued certificate:
     esg-node --install-keypair <certificate file> <key file>
     When prompted for the cachain file, specify the chain file provided by your CA'''
+
+    #Exit if public_cert(signed CSR isn't found)
     if not public_cert:
         public_cert = os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem")
 
@@ -191,62 +222,33 @@ def install_tomcat_keypair(password, private_key=config["tomcat_conf_dir"]+"/hos
     print "keystore name  = ", keystore_name
     print "keystore alias = ", keystore_alias
 
-    try:
-        with open(config["keystore_secret_file"], "r") as ks_secret_file:
-            default_keystore_password = ks_secret_file.read()
-    except IOError:
-        default_keystore_password = None
+    #TODO: Maybe move this to generate_tomcat_keystore() function for better cohesion; #Setting the password to be used in keystore creation; Can be moved to more relevant function
+    keystore_password = esg_functions.get_java_keystore_password()
 
-    if not default_keystore_password:
-        esg_functions.set_keyword_password()
+    cert_files = create_certificate_chain_list()
 
-    cert_files = []
-    certfile_entry = None
-
-    print "Please enter your Certificate Authority's certificate chain file(s)"
-    print "[enter each cert file/url press return, press return with blank entry when done]"
-    while True:
-        certfile_entry = raw_input("Enter certificate chain file name: ")
-        if not certfile_entry:
-            break
-        else:
-            cert_files.append(certfile_entry)
-
+    #Copy and rename private_key and cert
     shutil.copyfile(private_key, "/etc/certs/hostkey.pem")
     shutil.copyfile(public_cert, "/etc/certs/hostcert.pem")
 
-    with open("/etc/certs/tmpchain", "w") as tmpchain_file:
-        for cert in cert_files:
-            if not os.path.isfile(cert):
-                print "{cert} not found. Exiting.".format(cert=cert)
-                esg_functions.exit_with_error(1)
-            tmpchain_file.write(cert+"\n")
-    shutil.copyfile("/etc/certs/tmpchain", "/etc/certs/cachain.pem")
+    create_certificate_chain(cert_files)
+
 
     os.chmod("/etc/certs/hostkey.pem", 0400)
     os.chmod("/etc/certs/hostcert.pem", 0644)
     os.chmod("/etc/certs/cachain.pem", 0644)
 
 
-#
-#     echo "truststore_name = ${truststore_name}"
-#
-#
-#     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
-#     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
-#     if [ $? != 0 ]; then
-#         echo "ERROR: Problem with key generation and/or keystore construction"
-#         mv ${keystore_name}{.bak,}
-#         exit 5
-#     fi
-#
-#     [ "$(readlink -f ${public_cert})" -nt "$(readlink -f ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem)" ] && mv -v ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem{,.old}
-#     [ "$(readlink -f ${public_cert})" != "$(readlink -f ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem)" ] && cp -v ${public_cert} ${tomcat_conf_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node.pem
-#
-#
-#     echo "${store_password}" > ${ks_secret_file}
-#     chmod 640 ${ks_secret_file}
-#     chown ${installer_uid}:${tomcat_group} ${ks_secret_file}
+    generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, private_key, public_cert, cert_files)
+
+    #Check for newer version of public_cert; if found backup old cert
+    try:
+        if os.path.getctime(public_cert) > os.path.getctime(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem")):
+            shutil.move(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem.old"))
+            shutil.copyfile(public_cert, os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"))
+    except IOError:
+        logger.exception("Error while copying public cert")
+
 #
 #     #(In order for ORP or any other local service to trust eachother put your own cert into the truststore)
 #     [ -e "${truststore_name}" ] && mv -v ${truststore_name}{,.bak}
@@ -257,6 +259,10 @@ def install_tomcat_keypair(password, private_key=config["tomcat_conf_dir"]+"/hos
 #     echo "Please restart this node for keys to take effect: \"$0 restart\""
 #     echo
 # }
+
+
+def rebuild_truststore():
+    pass
 
 
 def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, private_key, public_cert, intermediate_certs):
@@ -303,21 +309,25 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, p
     cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
     ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
 
+    #TODO:Probably need to clear out cert_bundle_file on each run
+
+    #TODO:Break into separate function
+    #Write public_cert to bundle first
+    print "Signed Cert -----> ", public_cert
+    if "http" not in public_cert:
+        #Write contents of cert to cert_bundle_file
+        with open(public_cert, "r") as cert_data:
+            cert_contents = cert_data.read()
+        with open(cert_bundle, "a") as cert_bundle_file:
+            cert_bundle_file.write(cert_contents)
+    else:
+        #Make request for public_cert, then write public_cert contents to cert_bundle_file
+        cert_contents = requests.get(public_cert).content
+        with open(cert_bundle, "a") as cert_bundle_file:
+            cert_bundle_file.write(cert_contents)
+
     num_of_certs = len(intermediate_certs)
     for index, cert in enumerate(intermediate_certs):
-        if index == 0:
-            print "Signed Cert -----> ", cert
-            if "http" not in cert:
-                #Write contents of cert to cert_bundle_file
-                with open(cert, "r") as cert_data:
-                    cert_contents = cert_data.read()
-                with open(cert_bundle, "a") as cert_bundle_file:
-                    cert_bundle_file.write(cert_contents)
-            else:
-                #Make request for cert, then write cert contents to cert_bundle_file
-                cert_contents = requests.get(cert).content
-                with open(cert_bundle, "a") as cert_bundle_file:
-                    cert_bundle_file.write(cert_contents)
         if index == num_of_certs-1:
             print "Root Cert -------> ", cert
             if "http" not in cert:
@@ -351,9 +361,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, p
                     ca_chain_bundle_file.write(cert_contents)
 
         print "checking that key pair is congruent... "
-        private_key_md5 = esg_functions.get_md5sum(private_key)
-        cert_file_md5 = esg_functions.get_md5sum(intermediate_certs[0])
-        if private_key_md5 == cert_file_md5:
+        if check_associate_cert_with_private_key(public_cert, private_key):
             print "The keypair was congruent"
         else:
             print "The keypair was not congruent"
@@ -403,55 +411,56 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, p
 
         print "Constructing new keystore content... "
         command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {certbundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
-        construct_keystore_output = subprocess.call(command)
+        construct_keystore_output = esg_functions.call_subprocess(command)
         #FYI: Code 127 is "command not found"
         if construct_keystore_output["returncode"] == 127:
             print "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)  [one moment please...]"
+            install_extkeytool()
+            print "Retrying to build keystore with extkeytool"
+            esg_functions.stream_subprocess_output(command)
 
-    #
-    #     #-------------
-    #     #Generating new keystore
-    #     #-------------
-    #     echo -n "Constructing new keystore content... "
-    #     local command="extkeytool -importkey -keystore ${keystore_name} -alias ${keystore_alias} -storepass ${store_password} -keypass ${store_password} -keyfile ${derkey} -certfile ${certbundle} -provider ${provider}"
-    #     debug_print ${command}
-    #
-    #     ${command} > /dev/null
-    #     local ret=$?
-    #
-    #     #FYI: Code 127 is "command not found"
-    #     if [ ${ret} == 127 ]; then
-    #         echo "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)  [one moment please...]"
-    #         curl -s -L --insecure ${extkeytool_download_url} |  (cd ${install_dir}; tar xvzf -)
-    #         echo "NOW... let's retry building your new keystore...."
-    #         ${command}
-    #         local ret=$?
-    #     fi
-    #
-    #     [ ${ret} != 0 ] && echo "$([FAIL]) Problem with running extkeytool :-(" && return 1
-    #     [ ${ret} == 0 ] && [OK]
-    #
-    #     echo
-    #     echo "How do things look?"
-    #     $java_install_dir/bin/keytool -v -list -keystore "${keystore_name}" -storepass ${store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'
-    #     if [ $? == 0 ]; then
-    #         echo
-    #         echo "Mmmm, freshly baked keystore!"
-    #         echo "If Everything looks good... then replace your current tomcat keystore with ${keystore_name}, if necessary."
-    #         echo "Don't forget to change your tomcat's server.xml entry accordingly :-)"
-    #         echo "Remember: Keep your private key ${private_key} and signed cert ${certfiles[0]} in a safe place!!!"
-    #         echo
-    #         answer="Y"
-    #         read -e -p "Is the above information correct? [Y/n] " answer
-    #         [ -n "${answer}" ] && [ "${answer}" != "Y" ]  && [ "${answer}" != "y" ]  && echo "Eh... try again... ;-)" && return 1
-    #     else
-    #         echo
-    #         echo "Hmmm... something didn't quite go so right... double check things..."
-    #         return 1
-    #     fi
-    #     return 0
-    # }
-    '''Generate a keystore for
+        #Check keystore output
+        check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
+        keystore_output = esg_functions.call_subprocess(check_keystore_command)
+        if keystore_output["returncode"] == 0:
+            print "Mmmm, freshly baked keystore!"
+            print "If Everything looks good... then replace your current tomcat keystore with {keystore_name}, if necessary.".format(keystore_name=keystore_name)
+            print "Don't forget to change your tomcat's server.xml entry accordingly :-)"
+            print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
+        else:
+            print "Failed to check keystore"
+            esg_functions.exit_with_error(1)
+
+    '''Generate a keystore for'''
+
+    def install_extkeytool():
+        extkeytool_tarfile = esg_bash2py.trim_string_from_head(config["extkeytool_download_url"])
+        esg_functions.download_update(extkeytool_tarfile, config["extkeytool_download_url"])
+        esg_functions.extract_tarball(extkeytool_tarfile, "/esg/tools")
+    def check_associate_cert_with_private_key(cert, private_key):
+        """
+        :type cert: str
+        :type private_key: str
+        :rtype: bool
+        """
+        try:
+            private_key_obj = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_key)
+        except OpenSSL.crypto.Error:
+            raise Exception('private key is not correct: %s' % private_key)
+
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+        except OpenSSL.crypto.Error:
+            raise Exception('certificate is not correct: %s' % cert)
+
+        context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_METHOD)
+        context.use_privatekey(private_key_obj)
+        context.use_certificate(cert_obj)
+        try:
+            context.check_privatekey()
+            return True
+        except OpenSSL.SSL.Error:
+            return False
 # # startup
 # COPY conf/supervisord.tomcat.conf /etc/supervisor/conf.d/supervisord.tomcat.conf
 # CMD ["supervisord", "--nodaemon", "-c", "/etc/supervisord.conf"]

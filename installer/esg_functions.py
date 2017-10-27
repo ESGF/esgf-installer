@@ -628,6 +628,8 @@ def set_java_keystore_password():
             continue
     with open(config['ks_secret_file'], 'w') as keystore_file:
         keystore_file.write(config["keystore_password"])
+    os.chmod(config['ks_secret_file'], 0640)
+    os.chown(config['ks_secret_file'], get_user_id("root"), get_group_id("tomcat"))
     return True
 
 def get_java_keystore_password():

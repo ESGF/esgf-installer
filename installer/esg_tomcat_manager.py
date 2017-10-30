@@ -273,37 +273,38 @@ def fetch_esgf_certificates():
     esg_bash2py.mkdir_p(config["globus_global_certs_dir"])
 
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
-#     debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-#     curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
-#     local ret=$?
-#     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
-#     if [ $ret == 0 ]; then
-#         [ -e ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz ] && rm ${globus_global_certs_dir%/*}/${globus_global_certs_dir##*/}.bak.tgz
-#     fi
-#
-#     local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert "${esg_root_dir}/config/myproxy/myproxy-server.config" 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
-#     if [ -n "${simpleCA_cert}" ]; then
-#         local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
-#         echo "checking for MY cert: ${globus_global_certs_dir}/${simpleCA_cert_hash}.0"
-#         [ -e "${globus_global_certs_dir}/${simpleCA_cert_hash}.0" ] && ((!force_install)) && echo "Local CA cert file detected.... $([OK])" && return 0
-#         echo "Integrating in local simpleCA_cert... "
-#
-#         debug_print "Local SimpleCA Root Cert: ${simpleCA_cert}"
-#         debug_print "Extracting Signing policy command: tar xvzfO ${simpleCA_cert%/*}/globus_simple_ca_${simpleCA_cert_hash}_setup*.tar.gz globus_simple_ca_${simpleCA_cert_hash}_setup-*/${simpleCA_cert_hash}.signing_policy > ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy"
-#
-#         (cp -v ${simpleCA_cert} ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 && \
-#             tar xvzfO ${simpleCA_cert%/*}/globus_simple_ca_${simpleCA_cert_hash}_setup*.tar.gz globus_simple_ca_${simpleCA_cert_hash}_setup-*/${simpleCA_cert_hash}.signing_policy > ${globus_global_certs_dir}/${simpleCA_cert_hash}.signing_policy && \
-#             [ -d ${tomcat_install_dir}/webapps/ROOT ] && openssl x509 -text -hash -in ${simpleCA_cert} > ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
-#             echo " My CA Cert now posted @ http://$(hostname --fqdn)/cacert.pem "
-#             chmod 644 ${tomcat_install_dir}/webapps/ROOT/cacert.pem && \
-#                 [OK]) || [FAIL]
-#         #zoiks
-#         #write_as_property node_dn $(extract_openssl_dn ${simpleCA_cert}) && echo "property updated $([OK])"
-#     fi
-#
-#     chmod 755 ${globus_global_certs_dir}
-#     chmod 644 ${globus_global_certs_dir}/*
-# }
+    esg_trusted_certs_file_url = "https://aims1.llnl.gov/esgf/dist/certs/{esg_trusted_certs_file}".format(esg_trusted_certs_file=esg_trusted_certs_file)
+    esg_functions.download_update(esg_trusted_certs_file, esg_trusted_certs_file_url)
+    #untar the esg_trusted_certs_file
+    esg_functions.extract_tarball(esg_trusted_certs_file)
+    #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
+    simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
+    if os.path.isfile(simpleCA_cert):
+        simpleCA_cert_hash = esg_functions.get_md5sum(simpleCA_cert)
+        print "checking for MY cert: {globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=globus_global_certs_dir, simpleCA_cert_hash=simpleCA_cert_hash)
+        if os.path.isfile("{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=globus_global_certs_dir, simpleCA_cert_hash=simpleCA_cert_hash)):
+            print "Local CA cert file detected...."
+            print "Integrating in local simpleCA_cert... "
+            print "Local SimpleCA Root Cert: {simpleCA_cert}".format(simpleCA_cert=simpleCA_cert)
+            print "Extracting Signing policy"
+
+            #Copy simple CA cert to globus cert directory
+            shutil.copyfile(simpleCA_cert, "{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=globus_global_certs_dir, simpleCA_cert_hash=simpleCA_cert_hash))
+
+            #extract simple CA cert tarball and copy to globus cert directory
+            simpleCA_cert_parent_dir = esg_functions.get_parent_directory(simpleCA_cert)
+            simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{simpleCA_cert_hash}_setup-0.tar.gz".format(simpleCA_cert_hash=simpleCA_cert_hash))
+            esg_functions.extract_tarball(simpleCA_setup_tar_file)
+            with esg_bash2py.pushd("globus_simple_ca_{simpleCA_cert_hash}_setup-0".format(simpleCA_cert_hash=simpleCA_cert_hash)):
+                shutil.copyfile("{simpleCA_cert_hash}.signing_policy".format(simpleCA_cert_hash=simpleCA_cert_hash), "{globus_global_certs_dir}/{simpleCA_cert_hash}.signing_policy".format(globus_global_certs_dir=globus_global_certs_dir, simpleCA_cert_hash=simpleCA_cert_hash))
+            if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
+                esg_functions.stream_subprocess_output("openssl x509 -text -hash -in {simpleCA_cert} > {tomcat_install_dir}/webapps/ROOT/cacert.pem".format(simpleCA_cert=simpleCA_cert, tomcat_install_dir="/usr/loca/tomcat"))
+                print " My CA Cert now posted @ http://{fqdn}/cacert.pem ".format(fqdn=socket.getfqdn())
+                os.chmod("/usr/local/tomcat/webapps/ROOT/cacert.pem", 0644)
+
+        os.chmod(globus_global_certs_dir, 0755)
+        esg_functions.change_permissions_recursive(globus_global_certs_dir, 0644)
+
 
 
 def rebuild_truststore(truststore_file):
@@ -312,7 +313,7 @@ def rebuild_truststore(truststore_file):
 
     print "(Re)building truststore from esg certificates... [{truststore_file}]".format(truststore_file=truststore_file)
 
-    is not os.path.isdir(config["globus_global_certs_dir"]):
+    if not os.path.isdir(config["globus_global_certs_dir"]):
         print "Sorry, No esg certificates found... in {globus_global_certs_dir}".format(globus_global_certs_dir=globus_global_certs_dir)
         print "Fetching fresh esg certificates"
         fetch_esgf_certificates()

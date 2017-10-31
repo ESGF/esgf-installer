@@ -313,7 +313,8 @@ def git_tagrelease():
     '''
     pass
 
-
+def get_parent_directory(directory_path):
+    return os.path.join(directory_path, os.pardir)
 
 def is_in_git_repo(file_name):
     '''

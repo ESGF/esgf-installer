@@ -318,13 +318,18 @@ def rebuild_truststore(truststore_file):
         print "Fetching fresh esg certificates"
         fetch_esgf_certificates()
 
-    #
-    #     #If you don't already have a truststore to build on....
-    #     #Start building from a solid foundation i.e. Java's set of ca certs...
-    #     [ ! -e ${truststore_file_} ] && cp -v ${java_install_dir}/jre/lib/security/cacerts ${truststore_file_}
-    #
-    #     local tmp_dir=/tmp/esg_scratch
-    #     mkdir -p ${tmp_dir}
+        #If you don't already have a truststore to build on....
+        #Start building from a solid foundation i.e. Java's set of ca certs...
+        if not os.path.isfile(truststore_file):
+            shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
+
+        tmp_dir = "/tmp/esg_scratch"
+        esg_bash2py.mkdir_p(tmp_dir)
+        
+        cert_files = glob.glob('{globus_global_certs_dir}/*.0'.format(globus_global_certs_dir=config["globus_global_certs_dir"]))
+        for cert in cert_files:
+            _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
+        shutil.rmtree(tmp_dir)
     #
     #     local cert_files=$(find ${globus_global_certs_dir} | egrep '^.*\.0$')
     #     for cert_file in $cert_files; do
@@ -343,6 +348,29 @@ def rebuild_truststore(truststore_file):
     #     return 0
     # }
 
+
+def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
+    #Takes full path to a pem certificate file and incorporates it into the given truststore
+
+    print "{cert_file} ->".format(cert_file=cert_file)
+    cert_hash = cert_file.split(".")[0]
+    der_file = os.path.join(tmp_dir, cert_hash+".der")
+    #--------------
+    # Convert from PEM format to DER format - for ingest into keystore
+    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_file)
+    with open(der_file, "w") as der_file_handle:
+        der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1,cert_pem))
+
+    #--------------
+    if os.path.isfile(truststore_file):
+        output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
+        if output["returncode"] == 0:
+            print "Deleted cert hash"
+
+        output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -import -alias {cert_hash} -file {der_file} -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(cert_hash=cert_hash, der_file=der_file, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
+        if output["returncode"] == 0:
+            print "added {der_file} to {truststore_file}".format(der_file=der_file, truststore_file=truststore_file)
+        os.remove(der_file)
 
 def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, private_key, public_cert, intermediate_certs):
     '''The following helper function creates a new keystore for your tomcat installation'''

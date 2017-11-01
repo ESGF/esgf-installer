@@ -28,6 +28,13 @@ class test_ESG_cert_manager(unittest.TestCase):
         self.assertTrue(os.path.isfile("/esg/tools/idptools/bin/extkeytool"))
 
 
+    def test_create_empty_java_keystore(self):
+        esg_cert_manager.create_empty_java_keystore("/tmp/test-keystore", "testing", "password", "CN=ESGF")
+        test_keystore_output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -keystore /tmp/test-keystore")
+        print "test_keystore_output:", test_keystore_output
+        self.assertTrue(test_keystore_output["returncode"] == 0)
+
+
 
 
 

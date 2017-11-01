@@ -3,6 +3,7 @@
 import unittest
 import esg_cert_manager
 import esg_bash2py
+import esg_functions
 import esg_logging_manager
 from distutils.spawn import find_executable
 import os

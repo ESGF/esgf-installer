@@ -122,7 +122,7 @@ def fetch_esgf_certificates():
 def install_extkeytool():
     extkeytool_tarfile = esg_bash2py.trim_string_from_head(config["extkeytool_download_url"])
     esg_functions.download_update(extkeytool_tarfile, config["extkeytool_download_url"])
-    esg_functions.extract_tarball(extkeytool_tarfile, "/esg/tools")
+    esg_functions.extract_tarball(extkeytool_tarfile, "/esg/tools/idptools")
 
 def backup_previous_keystore(keystore_name):
     '''If a previous keystore exists, back it up'''

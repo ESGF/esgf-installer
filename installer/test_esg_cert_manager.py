@@ -54,6 +54,10 @@ class test_ESG_cert_manager(unittest.TestCase):
 
         self.assertTrue(esg_cert_manager.check_associate_cert_with_private_key("/tmp/mycert.pem", "/tmp/mykey.pem"))
 
+        esg_cert_manager.convert_per_to_dem("/tmp/mykey.pem", "/tmp")
+        self.assertTrue(os.path.exists("/tmp/key.der"))
+
+
 
 
 

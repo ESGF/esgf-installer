@@ -309,30 +309,30 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, p
     '''Generate a keystore for'''
 
 
-    def check_associate_cert_with_private_key(cert, private_key):
-        """
-        :type cert: str
-        :type private_key: str
-        :rtype: bool
-        """
-        try:
-            private_key_obj = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_key)
-        except OpenSSL.crypto.Error:
-            raise Exception('private key is not correct: %s' % private_key)
+def check_associate_cert_with_private_key(cert, private_key):
+    """
+    :type cert: str
+    :type private_key: str
+    :rtype: bool
+    """
+    try:
+        private_key_obj = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_key)
+    except OpenSSL.crypto.Error:
+        raise Exception('private key is not correct: %s' % private_key)
 
-        try:
-            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
-        except OpenSSL.crypto.Error:
-            raise Exception('certificate is not correct: %s' % cert)
+    try:
+        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+    except OpenSSL.crypto.Error:
+        raise Exception('certificate is not correct: %s' % cert)
 
-        context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_METHOD)
-        context.use_privatekey(private_key_obj)
-        context.use_certificate(cert_obj)
-        try:
-            context.check_privatekey()
-            return True
-        except OpenSSL.SSL.Error:
-            return False
+    context = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_METHOD)
+    context.use_privatekey(private_key_obj)
+    context.use_certificate(cert_obj)
+    try:
+        context.check_privatekey()
+        return True
+    except OpenSSL.SSL.Error:
+        return False
 
 
 #------------------------------------

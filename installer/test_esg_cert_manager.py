@@ -41,6 +41,11 @@ class test_ESG_cert_manager(unittest.TestCase):
         self.assertTrue(test_keystore_output["returncode"] == 0)
 
 
+    def test_create_self_signed_cert(self):
+        esg_cert_manager.create_self_signed_cert("/tmp")
+        self.assertTrue(os.path.exists(os.path.join("/tmp", "myapp.crt")))
+
+
 
 
 

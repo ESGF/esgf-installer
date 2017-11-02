@@ -78,10 +78,9 @@ def create_certificate_chain(cert_files):
     shutil.copyfile("/etc/certs/tmpchain", "/etc/certs/cachain.pem")
 
 
-def fetch_esgf_certificates():
+def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     '''Goes to ESG distribution server and pulls down all certificates for the federation.
     (suitable for crontabbing)'''
-    pass
     print "Fetching Freshest ESG Federation Certificates..."
     #if globus_global_certs_dir already exists, backup and delete, then recreate empty directory
     if os.path.isdir(config["globus_global_certs_dir"]):
@@ -93,7 +92,7 @@ def fetch_esgf_certificates():
     esg_trusted_certs_file_url = "https://aims1.llnl.gov/esgf/dist/certs/{esg_trusted_certs_file}".format(esg_trusted_certs_file=esg_trusted_certs_file)
     esg_functions.download_update(esg_trusted_certs_file, esg_trusted_certs_file_url)
     #untar the esg_trusted_certs_file
-    esg_functions.extract_tarball(esg_trusted_certs_file)
+    esg_functions.extract_tarball(esg_trusted_certs_file, globus_certs_dir)
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):

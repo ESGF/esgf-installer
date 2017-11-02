@@ -318,7 +318,7 @@ def check_associate_cert_with_private_key(cert, private_key):
     try:
         private_key_obj = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_key)
     except OpenSSL.crypto.Error:
-        raise Exception('private key is not correct: %s' % private_key)
+        logger.exception("Private key is not correct.")
 
     try:
         cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)

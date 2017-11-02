@@ -90,7 +90,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
 
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
     esg_trusted_certs_file_url = "https://aims1.llnl.gov/esgf/dist/certs/{esg_trusted_certs_file}".format(esg_trusted_certs_file=esg_trusted_certs_file)
-    esg_functions.download_update(esg_trusted_certs_file, esg_trusted_certs_file_url)
+    esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
     #untar the esg_trusted_certs_file
     esg_functions.extract_tarball(esg_trusted_certs_file, globus_certs_dir)
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"

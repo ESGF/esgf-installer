@@ -29,6 +29,12 @@ class test_ESG_cert_manager(unittest.TestCase):
         except OSError, error:
             print "error:", error
 
+        try:
+            os.remove("/tmp/mykey.pem")
+            os.remove("/tmp/mycert.pem")
+        except OSError, error:
+            print "error:", error
+
     def test_install_extkeytool(self):
         esg_cert_manager.install_extkeytool()
         self.assertTrue(os.path.isfile("/esg/tools/idptools/bin/extkeytool"))
@@ -43,7 +49,10 @@ class test_ESG_cert_manager(unittest.TestCase):
 
     def test_create_self_signed_cert(self):
         esg_cert_manager.create_self_signed_cert("/tmp")
-        self.assertTrue(os.path.exists(os.path.join("/tmp", "myapp.crt")))
+        self.assertTrue(os.path.exists(os.path.join("/tmp", "mykey.pem")))
+        self.assertTrue(os.path.exists(os.path.join("/tmp", "mycert.pem")))
+
+        self.assertTrue(esg_cert_manager.check_associate_cert_with_private_key("/tmp/mycert.pem", "/tmp/mykey.pem"))
 
 
 

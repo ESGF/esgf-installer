@@ -19,6 +19,9 @@ import esg_functions
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
+consoleHandler = logging.StreamHandler()
+logger.addHandler(consoleHandler)
+
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 
@@ -315,13 +318,17 @@ def check_associate_cert_with_private_key(cert, private_key):
     :type private_key: str
     :rtype: bool
     """
+    with open(private_key, "r") as private_key_file:
+        private_key_contents = private_key_file.read()
     try:
-        private_key_obj = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_key)
+        private_key_obj = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_key_contents)
     except OpenSSL.crypto.Error:
         logger.exception("Private key is not correct.")
 
+    with open(cert, "r") as cert_file:
+        cert_contents = cert_file.read()
     try:
-        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_contents)
     except OpenSSL.crypto.Error:
         logger.exception("Certificate is not correct.")
         # raise Exception('certificate is not correct: %s' % cert)

@@ -138,10 +138,10 @@ def create_empty_java_keystore(keystore_name, keystore_alias, keystore_password,
         print "Problem with generating initial keystore...Exiting."
         esg_functions.exit_with_error(1)
 
-def convert_per_to_dem(private_key, idptools_install_dir):
+def convert_per_to_dem(private_key, key_output_dir):
     '''Convert your private key into from PEM to DER format that java likes'''
     print "converting private key from PEM to DER... "
-    derkey = os.path.join(idptools_install_dir,"key.der")
+    derkey = os.path.join(key_output_dir,"key.der")
     convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
     if convert_to_der["returncode"] !=0:
         print "Problem with preparing initial keystore...Exiting."
@@ -590,8 +590,8 @@ def create_self_signed_cert(cert_dir):
 
     Source: https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/
     """
-    CERT_FILE = "myapp.crt"
-    KEY_FILE = "myapp.key"
+    CERT_FILE = "mycert.pem"
+    KEY_FILE = "mykey.pem"
 
     if not os.path.exists(os.path.join(cert_dir, CERT_FILE)) \
             or not os.path.exists(os.path.join(cert_dir, KEY_FILE)):

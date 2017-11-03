@@ -333,10 +333,8 @@ def check_associate_cert_with_private_key(cert, private_key):
     except OpenSSL.crypto.Error:
         logger.exception("Private key is not correct.")
 
-    with open(cert, "r") as cert_file:
-        cert_contents = cert_file.read()
     try:
-        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_contents)
+        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert).read())
     except OpenSSL.crypto.Error:
         logger.exception("Certificate is not correct.")
 
@@ -449,7 +447,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     der_file = os.path.join(tmp_dir, cert_hash+".der")
     #--------------
     # Convert from PEM format to DER format - for ingest into keystore
-    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_file)
+    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_file).read())
     with open(der_file, "w") as der_file_handle:
         der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1,cert_pem))
 

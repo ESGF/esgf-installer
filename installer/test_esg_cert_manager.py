@@ -33,6 +33,8 @@ class test_ESG_cert_manager(unittest.TestCase):
             os.remove("/tmp/mykey.pem")
             os.remove("/tmp/mycert.pem")
             os.remove("/tmp/test-truststore.ts")
+            os.remove("/tmp/new-truststore.ts")
+            os.remove("/tmp/key.der")
         except OSError, error:
             print "error:", error
 
@@ -47,6 +49,8 @@ class test_ESG_cert_manager(unittest.TestCase):
         print "test_keystore_output:", test_keystore_output["stdout"]
         self.assertTrue(test_keystore_output["returncode"] == 0)
 
+        keystore_output = esg_cert_manager.check_keystore("/tmp/test-keystore", "password")
+        self.assertTrue(keystore_output)
 
     def test_create_self_signed_cert(self):
         esg_cert_manager.create_self_signed_cert("/tmp")
@@ -57,6 +61,10 @@ class test_ESG_cert_manager(unittest.TestCase):
 
         esg_cert_manager.convert_per_to_dem("/tmp/mykey.pem", "/tmp")
         self.assertTrue(os.path.exists("/tmp/key.der"))
+
+        esg_cert_manager.create_new_truststore("/tmp/temp-truststore.ts")
+        esg_cert_manager._insert_cert_into_truststore("/tmp/mycert.pem", "/tmp/temp-truststore.ts", "/tmp")
+
 
     def test_fetch_esgf_certificates(self):
         esg_cert_manager.fetch_esgf_certificates("/tmp")
@@ -71,6 +79,8 @@ class test_ESG_cert_manager(unittest.TestCase):
     def test_create_new_truststore(self):
         esg_cert_manager.create_new_truststore("/tmp/new-truststore.ts")
         self.assertTrue(os.path.isfile("/tmp/new-truststore.ts"))
+
+
 
 
 

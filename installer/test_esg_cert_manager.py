@@ -50,9 +50,6 @@ class test_ESG_cert_manager(unittest.TestCase):
         self.assertTrue(test_keystore_output["returncode"] == 0)
 
         keystore_output = esg_cert_manager.check_keystore("/tmp/test-keystore", "password")
-        print "certs in keystore_output:", keystore_output.certs
-        print "private keys in keystore_output:", keystore_output.private_keys
-        print "secret keys in keystore_output:", keystore_output.secret_keys
         self.assertTrue("testing" in keystore_output.private_keys.keys())
 
     def test_create_self_signed_cert(self):
@@ -67,7 +64,24 @@ class test_ESG_cert_manager(unittest.TestCase):
 
         esg_cert_manager.create_new_truststore("/tmp/temp-truststore.ts")
         esg_cert_manager._insert_cert_into_truststore("/tmp/mycert.pem", "/tmp/temp-truststore.ts", "/tmp")
+        truststore_output = esg_cert_manager.check_keystore("/tmp/temp-truststore.ts", "changeit")
 
+        truststore_keys = [str(key) for key in truststore_output.certs.keys()]
+        print "truststore_keys:", truststore_keys
+        self.assertTrue("/tmp/mycert" in truststore_keys)
+
+        # esg_cert_manager.create_new_truststore("/tmp/temp-truststore.ts")
+        # truststore_output = esg_cert_manager.check_keystore("/tmp/temp-truststore.ts", "changeit")
+        # print "num of truststore keys before insert:", len(truststore_output.certs.keys())
+        # set_1 = set(truststore_output.certs.keys())
+        # esg_cert_manager._insert_cert_into_truststore("/tmp/mycert.pem", "/tmp/temp-truststore.ts", "/tmp")
+        # truststore_output = esg_cert_manager.check_keystore("/tmp/temp-truststore.ts", "changeit")
+        # print "truststore_output:", truststore_output.certs.keys()
+        # set_2 = set(truststore_output.certs.keys())
+        # print "set diff:", set_2 - set_1
+        # print "num of truststore keys:", len(truststore_output.certs.keys())
+        # print "truststore_output attributes:", dir(truststore_output)
+        # print "truststore_output type:", truststore_output.store_type
 
     def test_fetch_esgf_certificates(self):
         esg_cert_manager.fetch_esgf_certificates("/tmp")

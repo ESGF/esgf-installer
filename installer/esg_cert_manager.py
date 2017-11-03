@@ -227,6 +227,14 @@ def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
 
         return cert_bundle, ca_chain_bundle
 
+def check_keystore(keystore_name, keystore_password):
+    '''Check the contents of a given keystore or truststore'''
+    import jks
+
+    keystore = jks.KeyStore.load(keystore_name, keystore_password)
+    print "keystore:", keystore
+    return keystore
+
 def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, private_key, public_cert, intermediate_certs):
     '''The following helper function creates a new keystore for your tomcat installation'''
     # arg 1 -> keystore name

@@ -93,6 +93,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
     #untar the esg_trusted_certs_file
     esg_functions.extract_tarball(os.path.join(globus_certs_dir,esg_trusted_certs_file), globus_certs_dir)
+    os.remove(os.path.join(globus_certs_dir,esg_trusted_certs_file))
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
@@ -344,31 +345,31 @@ def check_associate_cert_with_private_key(cert, private_key):
 #------------------------------------
 #   Truststore functions
 #------------------------------------
-def rebuild_truststore(truststore_file):
+def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_dir"]):
     '''Converts ESG certificates (that can be fetch by above function) into a truststore'''
 
     print "(Re)building truststore from esg certificates... [{truststore_file}]".format(truststore_file=truststore_file)
 
-    if not os.path.isdir(config["globus_global_certs_dir"]):
-        print "Sorry, No esg certificates found... in {globus_global_certs_dir}".format(globus_global_certs_dir=config["globus_global_certs_dir"])
+    if not os.path.isdir(certs_dir):
+        print "Sorry, No esg certificates found... in {certs_dir}".format(certs_dir=certs_dir)
         print "Fetching fresh esg certificates"
-        fetch_esgf_certificates()
+        fetch_esgf_certificates(certs_dir)
 
-        #If you don't already have a truststore to build on....
-        #Start building from a solid foundation i.e. Java's set of ca certs...
-        if not os.path.isfile(truststore_file):
-            shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
+    #If you don't already have a truststore to build on....
+    #Start building from a solid foundation i.e. Java's set of ca certs...
+    if not os.path.isfile(truststore_file):
+        shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
 
-        tmp_dir = "/tmp/esg_scratch"
-        esg_bash2py.mkdir_p(tmp_dir)
+    tmp_dir = "/tmp/esg_scratch"
+    esg_bash2py.mkdir_p(tmp_dir)
 
-        cert_files = glob.glob('{globus_global_certs_dir}/*.0'.format(globus_global_certs_dir=config["globus_global_certs_dir"]))
-        for cert in cert_files:
-            _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
-        shutil.rmtree(tmp_dir)
+    cert_files = glob.glob('{certs_dir}/*.0'.format(certs_dir=certs_dir))
+    for cert in cert_files:
+        _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
+    shutil.rmtree(tmp_dir)
 
-        sync_with_java_truststore(truststore_file)
-        os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
+    sync_with_java_truststore(truststore_file)
+    os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
 
 
 def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):

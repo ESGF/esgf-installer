@@ -342,6 +342,9 @@ def check_associate_cert_with_private_key(cert, private_key):
         return False
 
 
+def create_new_truststore(truststore_file):
+    shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
+
 #------------------------------------
 #   Truststore functions
 #------------------------------------
@@ -358,7 +361,7 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
     #If you don't already have a truststore to build on....
     #Start building from a solid foundation i.e. Java's set of ca certs...
     if not os.path.isfile(truststore_file):
-        shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
+        create_new_truststore(truststore_file)
 
     tmp_dir = "/tmp/esg_scratch"
     esg_bash2py.mkdir_p(tmp_dir)

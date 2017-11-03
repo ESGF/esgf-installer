@@ -440,7 +440,7 @@ def sync_with_java_truststore(truststore_file):
 
 
 def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
-    #Takes full path to a pem certificate file and incorporates it into the given truststore
+    '''Takes full path to a pem certificate file and incorporates it into the given truststore'''
 
     print "{cert_file} ->".format(cert_file=cert_file)
     cert_hash = cert_file.split(".")[0]

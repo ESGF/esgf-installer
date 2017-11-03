@@ -32,6 +32,7 @@ class test_ESG_cert_manager(unittest.TestCase):
         try:
             os.remove("/tmp/mykey.pem")
             os.remove("/tmp/mycert.pem")
+            os.remove("/tmp/test-truststore.ts")
         except OSError, error:
             print "error:", error
 
@@ -66,6 +67,10 @@ class test_ESG_cert_manager(unittest.TestCase):
     def test_rebuild_truststore(self):
         esg_cert_manager.rebuild_truststore("/tmp/test-truststore.ts")
         self.assertTrue(os.path.isfile("/tmp/test-truststore.ts"))
+
+    def test_create_new_truststore(self):
+        esg_cert_manager.create_new_truststore("/tmp/new-truststore.ts")
+        self.assertTrue(os.path.isfile("/tmp/new-truststore.ts"))
 
 
 

@@ -59,7 +59,7 @@ class test_ESG_cert_manager(unittest.TestCase):
 
     def test_fetch_esgf_certificates(self):
         esg_cert_manager.fetch_esgf_certificates("/tmp")
-        self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates.tar"))
+        self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates"))
 
         shutil.rmtree("/tmp/esg_trusted_certificates")
 

@@ -402,8 +402,8 @@ def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
 
 
 def sync_with_java_truststore(truststore_file):
-    jssecacerts_path = "{java_install_dir}/jre/lib/security/jssecacerts"
-    cacerts_path = "{java_install_dir}/jre/lib/security/cacerts"
+    jssecacerts_path = "{java_install_dir}/jre/lib/security/jssecacerts".format(java_install_dir=config["java_install_dir"])
+    cacerts_path = "{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"])
     if not os.path.isfile(jssecacerts_path) and os.path.isfile(cacerts_path):
         shutil.copyfile(cacerts_path, jssecacerts_path)
 

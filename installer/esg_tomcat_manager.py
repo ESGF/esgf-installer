@@ -165,6 +165,27 @@ def check_tomcat_status():
 def run_tomcat_config_test():
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
+def copy_credential_files(tomcat_install_config_dir):
+    '''Copy Tomcat config files'''
+    logger.debug("Moving credential files into node's tomcat configuration dir: %s", config["tomcat_conf_dir"])
+    tomcat_credential_files = [config["truststore_file"], config["keystore_file"], config["tomcat_users_file"],
+        os.path.join(tomcat_install_config_dir, "hostkey.pem")]
+
+    for file_path in tomcat_credential_files:
+        credential_file_name = esg_bash2py.trim_string_from_head(file_path)
+        if os.path.exists(os.path.join(tomcat_install_config_dir,credential_file_name)) and not os.path.exists(file_path):
+            try:
+                shutil.move(os.path.join(tomcat_install_config_dir,credential_file_name), file_path)
+            except OSError:
+                logger.exception("Could not move file %s", credential_file_name)
+
+    esgf_host = esg_functions.get_esgf_host()
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.csr")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.csr")):
+        shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.csr"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.csr"))
+
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem")):
+        shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem"))
+
 def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
@@ -185,24 +206,7 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
 
         esg_functions.backup(tomcat_install_config_dir)
 
-        logger.debug("Moving credential files into node's tomcat configuration dir: %s", config["tomcat_conf_dir"])
-        tomcat_credential_files = [config["truststore_file"], config["keystore_file"], config["tomcat_users_file"],
-            os.path.join(tomcat_install_config_dir, "hostkey.pem")]
-
-        for file_path in tomcat_credential_files:
-            credential_file_name = esg_bash2py.trim_string_from_head(file_path)
-            if os.path.exists(os.path.join(tomcat_install_config_dir,credential_file_name)) and not os.path.exists(file_path):
-                try:
-                    shutil.move(os.path.join(tomcat_install_config_dir,credential_file_name), file_path)
-                except OSError:
-                    logger.exception("Could not move file %s", credential_file_name)
-
-        esgf_host = esg_functions.get_esgf_host()
-        if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.csr")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.csr")):
-            shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.csr"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.csr"))
-
-        if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem")):
-            shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem"))
+        copy_credential_files(tomcat_install_config_dir)
 
         os.chown(config["tomcat_conf_dir"], pwd.getpwnam(config["tomcat_user"]).pw_uid, grp.getgrnam(config["tomcat_group"]).gr_gid)
 

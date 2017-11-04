@@ -186,6 +186,18 @@ def copy_credential_files(tomcat_install_config_dir):
     if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem")):
         shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem"))
 
+
+def check_server_xml():
+    '''Check the Tomcat server.xml file for the explicit Realm specification needed.'''
+    #Be sure that the server.xml file contains the explicit Realm specification needed.
+    server_xml_path = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")
+    tree = etree.parse(server_xml_path)
+    root = tree.getroot()
+    realm_element = root.find(".//Realm")
+    if realm_element:
+        return True
+
+
 def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
@@ -210,12 +222,8 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
 
         os.chown(config["tomcat_conf_dir"], pwd.getpwnam(config["tomcat_user"]).pw_uid, grp.getgrnam(config["tomcat_group"]).gr_gid)
 
-        #Be sure that the server.xml file contains the explicit Realm specification needed.
-        server_xml_path = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")
-        tree = etree.parse(server_xml_path)
-        root = tree.getroot()
-        realm_element = root.find(".//Realm")
-        if realm_element is None:
+
+        if not check_server_xml():
             download_server_config_file(esg_dist_url)
 
         #SET the server.xml variables to contain proper values

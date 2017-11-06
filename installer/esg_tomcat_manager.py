@@ -2,23 +2,10 @@
 Tomcat Management Functions
 '''
 import os
-import subprocess
-import sys
-import hashlib
 import shutil
 import grp
-import datetime
-import socket
-import re
 import pwd
-import tarfile
-import urllib
-import shlex
-import filecmp
-import glob
 import yaml
-import errno
-import progressbar
 import requests
 import errno
 import getpass
@@ -27,7 +14,6 @@ import OpenSSL
 from lxml import etree
 import esg_functions
 import esg_bash2py
-import esg_property_manager
 import esg_logging_manager
 from clint.textui import progress
 
@@ -36,21 +22,6 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
-
-pbar = None
-downloaded = 0
-def show_progress(count, block_size, total_size):
-    global pbar
-    global downloaded
-    if pbar is None:
-        pbar = progressbar.ProgressBar(maxval=total_size)
-
-    downloaded += block_size
-    pbar.update(block_size)
-    if downloaded == total_size:
-        pbar.finish()
-        pbar = None
-        downloaded = 0
 
 TOMCAT_VERSION = "8.5.20"
 CATALINA_HOME = "/usr/local/tomcat"
@@ -97,8 +68,6 @@ def create_symlink(TOMCAT_VERSION):
         "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION), "/usr/local/tomcat")
 
 
-# ENV CATALINA_HOME /usr/local/tomcat
-#
 def remove_example_webapps():
     '''remove Tomcat example applications'''
     with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
@@ -128,7 +97,6 @@ def copy_config_files():
         shutil.copyfile("certs/esg-truststore.ts-orig", "/esg/config/tomcat/esg-truststore.ts-orig")
         shutil.copyfile("certs/keystore-tomcat", "/esg/config/tomcat/keystore-tomcat")
         shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
-        # shutil.copytree("certs", "/esg/config/tomcat")
 
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:
@@ -197,7 +165,6 @@ def check_server_xml():
     if realm_element:
         return True
 
-
 def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
@@ -220,8 +187,7 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
 
         copy_credential_files(tomcat_install_config_dir)
 
-        os.chown(config["tomcat_conf_dir"], pwd.getpwnam(config["tomcat_user"]).pw_uid, grp.getgrnam(config["tomcat_group"]).gr_gid)
-
+        os.chown(config["tomcat_conf_dir"], esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
 
         if not check_server_xml():
             download_server_config_file(esg_dist_url)
@@ -257,5 +223,6 @@ def main():
         remove_example_webapps()
         copy_config_files()
         create_tomcat_user()
+
 if __name__ == '__main__':
     main()

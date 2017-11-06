@@ -33,7 +33,7 @@ class test_ESG_tomcat(unittest.TestCase):
         try:
             shutil.rmtree("/usr/local/tomcat_test/")
         except OSError, error:
-            logger.exception()
+            logger.exception("Could not delete tomcat_test directory")
             pass
         esg_tomcat_manager.stop_tomcat()
 

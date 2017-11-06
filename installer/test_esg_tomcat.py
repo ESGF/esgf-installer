@@ -75,6 +75,10 @@ class test_ESG_tomcat(unittest.TestCase):
         print "output:", output
         self.assertTrue("running" in output["stdout"])
 
+    def test_setup_temp_certs(self):
+        esg_tomcat_manager.setup_temp_certs()
+        self.assertTrue(os.path.isdir("CA"))
+
 
 
 

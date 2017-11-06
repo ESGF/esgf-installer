@@ -213,6 +213,11 @@ def edit_tomcat_server_xml(keystore_password):
     tree.write(os.path.join(config["tomcat_install_dir"],"conf", "test_output.xml"), pretty_print = True)
 
 
+def setup_temp_certs():
+    '''Setup temporary certs for testing a standalone node installation'''
+    temp_ca_name = "{hostname}-CA".format(hostname=esg_functions.get_esgf_host())
+    new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca")
+
 
 def main():
     print "*******************************"

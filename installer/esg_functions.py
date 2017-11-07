@@ -18,6 +18,7 @@ import yaml
 import pwd
 import grp
 import netifaces
+import getpass
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from time import sleep
 from distutils.spawn import find_executable
@@ -612,14 +613,14 @@ def get_security_admin_password():
 
 def set_keyword_password():
     while True:
-        keystore_password_input = raw_input("Please enter the password for this keystore   : ")
+        keystore_password_input = getpass.getpass("Please enter the password for this keystore   : ")
         if keystore_password_input == "changeit":
                 break
         if not keystore_password_input:
             print "Invalid password"
             continue
 
-        keystore_password_input_confirmation = raw_input("Please re-enter the password for this keystore: ")
+        keystore_password_input_confirmation = getpass.getpass("Please re-enter the password for this keystore: ")
         if keystore_password_input == keystore_password_input_confirmation:
             config["keystore_password"] = keystore_password_input
             break

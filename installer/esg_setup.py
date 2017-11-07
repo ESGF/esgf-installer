@@ -14,6 +14,7 @@ import shlex
 import hashlib
 import urlparse
 import datetime
+import getpass
 import tarfile
 from time import sleep
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
@@ -410,7 +411,7 @@ def _choose_publisher_db_user_passwd():
         return
     if not config["publisher_db_user_passwd"] or force_install:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
-        publisher_db_user_passwd_input = raw_input(
+        publisher_db_user_passwd_input = getpass.getpass(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
         if publisher_db_user_passwd_input:
             with open(config['pub_secret_file'], "w") as secret_file:

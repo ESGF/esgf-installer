@@ -4,6 +4,7 @@ import pwd
 import shutil
 import sys
 import psycopg2
+import getpass
 import configobj
 import esg_functions
 import esg_version_manager
@@ -66,7 +67,7 @@ def create_postgres_group():
 def set_pg_sys_account_password():
     if not config["pg_sys_acct_passwd"]:
         while True:
-            pg_sys_acct_passwd_input = raw_input("Create password for postgress system account: ")
+            pg_sys_acct_passwd_input = getpass.getpass("Create password for postgress system account: ")
             if not pg_sys_acct_passwd_input:
                 print "Please enter a password: "
                 continue
@@ -455,8 +456,8 @@ def write_postgress_install_log():
     pass
 def _choose_postgres_user_password():
     while True:
-        postgres_user_password = raw_input("Enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
-        postgres_user_password_confirmation = raw_input("Re-enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
+        postgres_user_password = getpass.getpass("Enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
+        postgres_user_password_confirmation = getpass.getpass("Re-enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
         if postgres_user_password != postgres_user_password_confirmation:
             print "The passwords did not match. Enter same password twice."
             continue

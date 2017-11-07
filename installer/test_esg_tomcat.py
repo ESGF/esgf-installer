@@ -55,6 +55,9 @@ class test_ESG_tomcat(unittest.TestCase):
         esg_tomcat_manager.copy_config_files()
         self.assertTrue(os.path.isfile("/usr/local/tomcat/conf/server.xml"))
 
+    def test_copy_config_files(self):
+        pass
+
     def test_start_tomcat(self):
         pass
 

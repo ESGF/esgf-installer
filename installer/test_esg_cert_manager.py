@@ -32,6 +32,10 @@ class test_ESG_cert_manager(unittest.TestCase):
         try:
             os.remove("/tmp/mykey.pem")
             os.remove("/tmp/mycert.pem")
+            os.remove("/tmp/test-truststore.ts")
+            os.remove("/tmp/new-truststore.ts")
+            os.remove("/tmp/key.der")
+            os.remove("/tmp/temp-truststore.ts")
         except OSError, error:
             print "error:", error
 
@@ -46,6 +50,9 @@ class test_ESG_cert_manager(unittest.TestCase):
         print "test_keystore_output:", test_keystore_output["stdout"]
         self.assertTrue(test_keystore_output["returncode"] == 0)
 
+        keystore_output = esg_cert_manager.check_keystore("/tmp/test-keystore", "password")
+        print "key in keystore:", keystore_output["testing"]
+        self.assertTrue("testing" in keystore_output.private_keys.keys())
 
     def test_create_self_signed_cert(self):
         esg_cert_manager.create_self_signed_cert("/tmp")
@@ -57,9 +64,29 @@ class test_ESG_cert_manager(unittest.TestCase):
         esg_cert_manager.convert_per_to_dem("/tmp/mykey.pem", "/tmp")
         self.assertTrue(os.path.exists("/tmp/key.der"))
 
+        esg_cert_manager.create_new_truststore("/tmp/temp-truststore.ts")
+        esg_cert_manager._insert_cert_into_truststore("/tmp/mycert.pem", "/tmp/temp-truststore.ts", "/tmp")
+        truststore_output = esg_cert_manager.check_keystore("/tmp/temp-truststore.ts", "changeit")
+
+        truststore_keys = [str(key) for key in truststore_output.certs.keys()]
+        print "truststore_keys:", truststore_keys
+        self.assertTrue("/tmp/mycert" in truststore_keys)
+
     def test_fetch_esgf_certificates(self):
         esg_cert_manager.fetch_esgf_certificates("/tmp")
-        self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates.tar"))
+        self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates"))
+
+        shutil.rmtree("/tmp/esg_trusted_certificates")
+
+    def test_rebuild_truststore(self):
+        esg_cert_manager.rebuild_truststore("/tmp/test-truststore.ts")
+        self.assertTrue(os.path.isfile("/tmp/test-truststore.ts"))
+
+    def test_create_new_truststore(self):
+        esg_cert_manager.create_new_truststore("/tmp/new-truststore.ts")
+        self.assertTrue(os.path.isfile("/tmp/new-truststore.ts"))
+
+
 
 
 

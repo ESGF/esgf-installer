@@ -2,23 +2,10 @@
 Tomcat Management Functions
 '''
 import os
-import subprocess
-import sys
-import hashlib
 import shutil
 import grp
-import datetime
-import socket
-import re
 import pwd
-import tarfile
-import urllib
-import shlex
-import filecmp
-import glob
 import yaml
-import errno
-import progressbar
 import requests
 import errno
 import getpass
@@ -27,7 +14,6 @@ import OpenSSL
 from lxml import etree
 import esg_functions
 import esg_bash2py
-import esg_property_manager
 import esg_logging_manager
 from clint.textui import progress
 
@@ -36,21 +22,6 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
-
-pbar = None
-downloaded = 0
-def show_progress(count, block_size, total_size):
-    global pbar
-    global downloaded
-    if pbar is None:
-        pbar = progressbar.ProgressBar(maxval=total_size)
-
-    downloaded += block_size
-    pbar.update(block_size)
-    if downloaded == total_size:
-        pbar.finish()
-        pbar = None
-        downloaded = 0
 
 TOMCAT_VERSION = "8.5.20"
 CATALINA_HOME = "/usr/local/tomcat"
@@ -97,8 +68,6 @@ def create_symlink(TOMCAT_VERSION):
         "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION), "/usr/local/tomcat")
 
 
-# ENV CATALINA_HOME /usr/local/tomcat
-#
 def remove_example_webapps():
     '''remove Tomcat example applications'''
     with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
@@ -128,7 +97,6 @@ def copy_config_files():
         shutil.copyfile("certs/esg-truststore.ts-orig", "/esg/config/tomcat/esg-truststore.ts-orig")
         shutil.copyfile("certs/keystore-tomcat", "/esg/config/tomcat/keystore-tomcat")
         shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
-        # shutil.copytree("certs", "/esg/config/tomcat")
 
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:
@@ -165,6 +133,92 @@ def check_tomcat_status():
 def run_tomcat_config_test():
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
+def copy_credential_files(tomcat_install_config_dir):
+    '''Copy Tomcat config files'''
+    logger.debug("Moving credential files into node's tomcat configuration dir: %s", config["tomcat_conf_dir"])
+    tomcat_credential_files = [config["truststore_file"], config["keystore_file"], config["tomcat_users_file"],
+        os.path.join(tomcat_install_config_dir, "hostkey.pem")]
+
+    for file_path in tomcat_credential_files:
+        credential_file_name = esg_bash2py.trim_string_from_head(file_path)
+        if os.path.exists(os.path.join(tomcat_install_config_dir,credential_file_name)) and not os.path.exists(file_path):
+            try:
+                shutil.move(os.path.join(tomcat_install_config_dir,credential_file_name), file_path)
+            except OSError:
+                logger.exception("Could not move file %s", credential_file_name)
+
+    esgf_host = esg_functions.get_esgf_host()
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.csr")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.csr")):
+        shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.csr"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.csr"))
+
+    if os.path.exists(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem")) and not os.path.exists(os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem")):
+        shutil.move(os.path.join(tomcat_install_config_dir, esgf_host +"-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esgf_host +"-esg-node.pem"))
+
+
+def check_server_xml():
+    '''Check the Tomcat server.xml file for the explicit Realm specification needed.'''
+    #Be sure that the server.xml file contains the explicit Realm specification needed.
+    server_xml_path = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")
+    tree = etree.parse(server_xml_path)
+    root = tree.getroot()
+    realm_element = root.find(".//Realm")
+    if realm_element:
+        return True
+
+def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
+    '''
+    Move selected config files into esgf tomcat's config dir (certificate et al)
+    Ex: /esg/config/tomcat
+    -rw-r--r-- 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
+    -r-------- 1 tomcat tomcat    887 Apr 22 19:32 hostkey.pem
+    -rw-r--r-- 1 tomcat tomcat   1276 Apr 22 19:32 keystore-tomcat
+    -rw-r--r-- 1 tomcat tomcat    590 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.csr
+    -rw-r--r-- 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
+    -rw-r--r-- 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
+    Only called when migration conditions are present.
+    '''
+    tomcat_install_config_dir = os.path.join(config["tomcat_install_dir"], "conf")
+
+    if tomcat_install_config_dir != config["tomcat_conf_dir"]:
+        if not os.path.exists(config["tomcat_conf_dir"]):
+            esg_bash2py.mkdir_p(config["tomcat_conf_dir"])
+
+        esg_functions.backup(tomcat_install_config_dir)
+
+        copy_credential_files(tomcat_install_config_dir)
+
+        os.chown(config["tomcat_conf_dir"], esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
+
+        if not check_server_xml():
+            download_server_config_file(esg_dist_url)
+
+        #SET the server.xml variables to contain proper values
+        logger.debug("Editing %s/conf/server.xml accordingly...", config["tomcat_install_dir"])
+        edit_tomcat_server_xml(config["keystore_password"])
+
+def edit_tomcat_server_xml(keystore_password):
+    server_xml_path = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")
+    tree = etree.parse(server_xml_path)
+    root = tree.getroot()
+
+    pathname = root.find(".//Resource[@pathname]")
+    pathname.set('pathname', config["tomcat_users_file"])
+    connector_element = root.find(".//Connector[@truststoreFile]")
+    connector_element.set('truststoreFile', config["truststore_file"])
+    connector_element.set('truststorePass', config["truststore_password"])
+    connector_element.set('keystoreFile', config["keystore_file"])
+    connector_element.set('keystorePass', keystore_password)
+    connector_element.set('keyAlias', config["keystore_alias"])
+    tree.write(open(server_xml_path, "wb"), pretty_print = True)
+    tree.write(os.path.join(config["tomcat_install_dir"],"conf", "test_output.xml"), pretty_print = True)
+
+
+def setup_temp_certs():
+    '''Setup temporary certs for testing a standalone node installation'''
+    temp_ca_name = "{hostname}-CA".format(hostname=esg_functions.get_esgf_host())
+    new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca")
+
+
 def main():
     print "*******************************"
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
@@ -174,6 +228,6 @@ def main():
         remove_example_webapps()
         copy_config_files()
         create_tomcat_user()
-    # pass
+
 if __name__ == '__main__':
     main()

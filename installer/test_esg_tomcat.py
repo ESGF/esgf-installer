@@ -33,7 +33,7 @@ class test_ESG_tomcat(unittest.TestCase):
         try:
             shutil.rmtree("/usr/local/tomcat_test/")
         except OSError, error:
-            logger.exception()
+            logger.exception("Could not delete tomcat_test directory")
             pass
         esg_tomcat_manager.stop_tomcat()
 
@@ -77,6 +77,10 @@ class test_ESG_tomcat(unittest.TestCase):
         output = esg_tomcat_manager.check_tomcat_status()
         print "output:", output
         self.assertTrue("running" in output["stdout"])
+
+    def test_setup_temp_certs(self):
+        esg_tomcat_manager.setup_temp_certs()
+        self.assertTrue(os.path.isdir("CA"))
 
 
 

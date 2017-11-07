@@ -4,7 +4,6 @@ Certificate Management Functions
 import os
 import shutil
 from OpenSSL import crypto
-import datetime
 import glob
 import filecmp
 import logging
@@ -93,6 +92,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
     #untar the esg_trusted_certs_file
     esg_functions.extract_tarball(os.path.join(globus_certs_dir,esg_trusted_certs_file), globus_certs_dir)
+    os.remove(os.path.join(globus_certs_dir,esg_trusted_certs_file))
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
@@ -162,7 +162,7 @@ def check_cachain_validity(ca_chain_bundle):
 
 def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider, extkeytool_executable):
     '''Imports a signed Certificate into the keystore'''
-    command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {certbundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
+    command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {cert_bundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
     construct_keystore_output = esg_functions.call_subprocess(command)
     #FYI: Code 127 is "command not found"
     if construct_keystore_output["returncode"] == 127:
@@ -172,10 +172,10 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
         esg_functions.stream_subprocess_output(command)
 
 def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
+    '''Create certificate bundle from public cert and cachain'''
     cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
     ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
 
-    '''Create certificate bundle from public cert and cachain'''
     #Write public_cert to bundle first
     print "Signed Cert -----> ", public_cert
     if "http" not in public_cert:
@@ -226,7 +226,15 @@ def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
 
         return cert_bundle, ca_chain_bundle
 
-def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, private_key, public_cert, intermediate_certs):
+def check_keystore(keystore_name, keystore_password):
+    '''Check the contents of a given keystore or truststore'''
+    import jks
+
+    keystore = jks.KeyStore.load(keystore_name, keystore_password)
+    print "keystore:", keystore
+    return keystore
+
+def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, intermediate_certs):
     '''The following helper function creates a new keystore for your tomcat installation'''
     # arg 1 -> keystore name
     # arg 2 -> keystore alias
@@ -243,7 +251,8 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, p
 
     if not os.path.isfile(private_key):
         print "Private key file {private_key} does not exist".format(private_key=private_key)
-    #
+
+    keystore_password = esg_functions.get_java_keystore_password()
 
     #-------------
     #Display values
@@ -308,8 +317,6 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, p
             print "Failed to check keystore"
             esg_functions.exit_with_error(1)
 
-    '''Generate a keystore for'''
-
 
 def check_associate_cert_with_private_key(cert, private_key):
     """
@@ -324,10 +331,8 @@ def check_associate_cert_with_private_key(cert, private_key):
     except OpenSSL.crypto.Error:
         logger.exception("Private key is not correct.")
 
-    with open(cert, "r") as cert_file:
-        cert_contents = cert_file.read()
     try:
-        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_contents)
+        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert).read())
     except OpenSSL.crypto.Error:
         logger.exception("Certificate is not correct.")
 
@@ -341,34 +346,37 @@ def check_associate_cert_with_private_key(cert, private_key):
         return False
 
 
+def create_new_truststore(truststore_file):
+    shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
+
 #------------------------------------
 #   Truststore functions
 #------------------------------------
-def rebuild_truststore(truststore_file):
+def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_dir"]):
     '''Converts ESG certificates (that can be fetch by above function) into a truststore'''
 
     print "(Re)building truststore from esg certificates... [{truststore_file}]".format(truststore_file=truststore_file)
 
-    if not os.path.isdir(config["globus_global_certs_dir"]):
-        print "Sorry, No esg certificates found... in {globus_global_certs_dir}".format(globus_global_certs_dir=config["globus_global_certs_dir"])
+    if not os.path.isdir(certs_dir):
+        print "Sorry, No esg certificates found... in {certs_dir}".format(certs_dir=certs_dir)
         print "Fetching fresh esg certificates"
-        fetch_esgf_certificates()
+        fetch_esgf_certificates(certs_dir)
 
-        #If you don't already have a truststore to build on....
-        #Start building from a solid foundation i.e. Java's set of ca certs...
-        if not os.path.isfile(truststore_file):
-            shutil.copyfile("{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"]), truststore_file)
+    #If you don't already have a truststore to build on....
+    #Start building from a solid foundation i.e. Java's set of ca certs...
+    if not os.path.isfile(truststore_file):
+        create_new_truststore(truststore_file)
 
-        tmp_dir = "/tmp/esg_scratch"
-        esg_bash2py.mkdir_p(tmp_dir)
+    tmp_dir = "/tmp/esg_scratch"
+    esg_bash2py.mkdir_p(tmp_dir)
 
-        cert_files = glob.glob('{globus_global_certs_dir}/*.0'.format(globus_global_certs_dir=config["globus_global_certs_dir"]))
-        for cert in cert_files:
-            _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
-        shutil.rmtree(tmp_dir)
+    cert_files = glob.glob('{certs_dir}/*.0'.format(certs_dir=certs_dir))
+    for cert in cert_files:
+        _insert_cert_into_truststore(cert, truststore_file, tmp_dir)
+    shutil.rmtree(tmp_dir)
 
-        sync_with_java_truststore(truststore_file)
-        os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
+    sync_with_java_truststore(truststore_file)
+    os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
 
 
 def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
@@ -385,7 +393,7 @@ def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
             esg_functions.exit_with_error(1)
 
         print "Importing keystore's certificate into truststore... "
-        import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password_} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+        import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
         if import_to_truststore_output["returncode"] !=0:
             print "Could not import the certificate into the truststore"
             esg_functions.exit_with_error(1)
@@ -401,8 +409,8 @@ def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
 
 
 def sync_with_java_truststore(truststore_file):
-    jssecacerts_path = "{java_install_dir}/jre/lib/security/jssecacerts"
-    cacerts_path = "{java_install_dir}/jre/lib/security/cacerts"
+    jssecacerts_path = "{java_install_dir}/jre/lib/security/jssecacerts".format(java_install_dir=config["java_install_dir"])
+    cacerts_path = "{java_install_dir}/jre/lib/security/cacerts".format(java_install_dir=config["java_install_dir"])
     if not os.path.isfile(jssecacerts_path) and os.path.isfile(cacerts_path):
         shutil.copyfile(cacerts_path, jssecacerts_path)
 
@@ -430,14 +438,14 @@ def sync_with_java_truststore(truststore_file):
 
 
 def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
-    #Takes full path to a pem certificate file and incorporates it into the given truststore
+    '''Takes full path to a pem certificate file and incorporates it into the given truststore'''
 
     print "{cert_file} ->".format(cert_file=cert_file)
     cert_hash = cert_file.split(".")[0]
     der_file = os.path.join(tmp_dir, cert_hash+".der")
     #--------------
     # Convert from PEM format to DER format - for ingest into keystore
-    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_file)
+    cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_file).read())
     with open(der_file, "w") as der_file_handle:
         der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1,cert_pem))
 
@@ -451,6 +459,16 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         if output["returncode"] == 0:
             print "added {der_file} to {truststore_file}".format(der_file=der_file, truststore_file=truststore_file)
         os.remove(der_file)
+
+def copy_cert_to_tomcat_conf(public_cert):
+    '''Copy the signed cert to the ESGF Tomcat config directory (i.e. /esg/config/tomcat)'''
+    #Check for newer version of public_cert; if found backup old cert
+    try:
+        if os.path.getctime(public_cert) > os.path.getctime(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem")):
+            shutil.move(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem.old"))
+            shutil.copyfile(public_cert, os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"))
+    except IOError:
+        logger.exception("Error while copying public cert")
 
 def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''If you want to install a commercial CA issued certificate:
@@ -471,8 +489,6 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
     print "keystore name  = ", keystore_name
     print "keystore alias = ", keystore_alias
 
-    #TODO: Maybe move this to generate_tomcat_keystore() function for better cohesion; #Setting the password to be used in keystore creation; Can be moved to more relevant function
-    keystore_password = esg_functions.get_java_keystore_password()
 
     #Copy and rename private_key and cert
     shutil.copyfile(private_key, "/etc/certs/hostkey.pem")
@@ -486,15 +502,9 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
     os.chmod("/etc/certs/cachain.pem", 0644)
 
 
-    generate_tomcat_keystore(keystore_name, keystore_alias, keystore_password, private_key, public_cert, cert_files)
+    generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cert_files)
 
-    #Check for newer version of public_cert; if found backup old cert
-    try:
-        if os.path.getctime(public_cert) > os.path.getctime(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem")):
-            shutil.move(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem.old"))
-            shutil.copyfile(public_cert, os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"))
-    except IOError:
-        logger.exception("Error while copying public cert")
+    copy_cert_to_tomcat_conf(public_cert)
 
     if os.path.isfile(config["truststore_file"]):
         shutil.move(config["truststore_file"], config["truststore_file"]+".bak")

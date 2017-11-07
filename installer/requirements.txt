@@ -54,3 +54,4 @@ semver
 tld
 clint
 configobj
+pyjks

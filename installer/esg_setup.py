@@ -634,7 +634,7 @@ def install_prerequisites():
     esg_functions.stream_subprocess_output(" ".join(yum_install_list))
 
 def set_default_java():
-    default_java_version_info = esg_functions.call_subprocess("{java -version")["stderr"]
+    default_java_version_info = esg_functions.call_subprocess("java -version")["stderr"]
     default_java_version_number = re.search("1.8.0_\w+", default_java_version_info).group()
     if semver.compare(default_java_version_number, config["java_version"]) != 0:
         esg_functions.stream_subprocess_output("alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")

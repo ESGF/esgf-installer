@@ -534,7 +534,7 @@ def call_subprocess(command_string, command_stdin = None):
         else:
             command_process_stdout, command_process_stderr =  command_process.communicate()
     except (OSError, ValueError), error:
-        logger.exception()
+        logger.exception("Error with subprocess")
         exit_with_error(1)
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)

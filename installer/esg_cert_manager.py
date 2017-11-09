@@ -475,6 +475,7 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
     esg-node --install-keypair <certificate file> <key file>
     When prompted for the cachain file, specify the chain file provided by your CA'''
 
+
     #Exit if public_cert(signed CSR isn't found)
     if not os.path.isfile(public_cert):
         print "{public_cert} not found. Exiting.".format(public_cert=public_cert)
@@ -518,87 +519,6 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
     #     echo
     # }
 
-
-def print_cert(certificate_path):
-    print "CERTIFICATE = %s" % (certificate_path)
-    # cert_file = '/path/to/your/certificate'
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, open(certificate_path).read())
-    print cert
-    # subject = cert.get_subject()
-    # issued_to = subject.CN    # the Common Name field
-    # issuer = cert.get_issuer()
-    # issued_by = issuer.CN
-
-def check_cert_expiry(certificate_path):
-    pass
-
-    # print "inspecting %s" % (certificate_path)
-    # try:
-    #     cert = crypto.load_certificate(crypto.FILETYPE_PEM, open(certificate_path).read())
-    #     if cert.has_expired():
-    #         certs_expired.append(cert)
-    #         return
-    #     expire_date = datetime.strptime(cert.notAfter(), "%Y%m%d%H%M%SZ")
-    #     expire_in = expire_date - datetime.now()
-    #     if expire_in.days < 0:
-    #         certs_immediate_expire.append(cert)
-    #     elif expire_in.days <= 7:
-    #         certs_week_expire.append(cert)
-    #     elif expire_in.days <= 30:
-    #         certs_month_expire.append(cert)
-    #
-    # except:
-    #     # exit_error(1, 'Certificate date format unknow.')
-    #     print "Certificate date formate unknown."
-
-def check_cert_expiry_for_files(file_path):
-    print "Checking for expired certs [file(s): %s]..." % (file_path)
-
-    # for file in $@
-    # do
-    #     [ ! -e "${file}" ] && echo "no such file: ${file}, skipping... " && continue
-    #     check_cert_expiry ${file}
-    # done
-    for file in file_path:
-        if not os.path.isfile(file):
-            print "no such file: %s, skipping... " % (file)
-            continue
-        check_cert_expiry(file)
-
-    # ocal message=
-    # [ "$var_expire" ] && message=$message"Certificates will expire in:\n$var_expire\n"
-    # [ "$certs_expire" ] && message=$message"Certificates already expired :\n$certs_expire\n"
-    # [ "$certs_day" ] && message=$message"Certificates will expire within a day:\n$certs_day\n"
-    # [ "$certs_warn" ] && message=$message"Certificates expiring this week:\n$certs_warn\n"
-    # [ "$certs_info" ] && message=$message"Certificates expiring this month:\n$certs_info\n"
-
-    # #mail -s "Certificates Expiration closes" gavin@llnl.gov < <(printf "$message")
-    # printf "$message"
-    print  "Certificates already expired :\n%s\n" % (certs_expired)
-    print "Certificates will expire within a day:\n%s\n" % (certs_immediate_expire)
-    print "Certificates expiring this week:\n%s\n" % (certs_week_expire)
-    print "Certificates expiring this month:\n%s\n" % (certs_month_expire)
-
-# TODO: No uses found
-def check_certs_in_dir():
-    pass
-
-def trash_expired_cert(certificate_path):
-    trash_directory = esg_bash2py.Expand.colonMinus("ESGF_PROJECT_ROOT", "/tmp")+"/trash"
-    os.mkdir(trash_directory)
-    shutil.move(certificate_path, trash_directory)
-    print "Trashed expired certificate %s" % (certificate_path)
-
-
-# TODO: No uses found
-def set_aside_web_app():
-    pass
-
-# TODO: No uses found
-def set_aside_web_app_cleanup():
-    pass
-
-
 def create_self_signed_cert(cert_dir):
     """
     If datacard.crt and datacard.key don't exist in cert_dir, create a new
@@ -606,8 +526,8 @@ def create_self_signed_cert(cert_dir):
 
     Source: https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/
     """
-    CERT_FILE = "mycert.pem"
-    KEY_FILE = "mykey.pem"
+    CERT_FILE = "hostcert.pem"
+    KEY_FILE = "hostkey.pem"
 
     if not os.path.exists(os.path.join(cert_dir, CERT_FILE)) \
             or not os.path.exists(os.path.join(cert_dir, KEY_FILE)):
@@ -635,3 +555,11 @@ def create_self_signed_cert(cert_dir):
             OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
         open(os.path.join(cert_dir, KEY_FILE), "wt").write(
             OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k))
+
+def main():
+    esg_cert_manager.create_self_signed_cert("/etc/certs")
+    install_tomcat_keypair("/etc/certs/hostkey.pem", "/etc/certs/hostcert.pem")
+
+
+if __name__ == '__main__':
+    main()

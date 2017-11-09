@@ -10,6 +10,7 @@ import esg_bash2py
 import esg_version_manager
 import esg_functions
 import esg_logging_manager
+import esg_cert_manager
 import esg_init
 import yaml
 import pip
@@ -84,10 +85,12 @@ def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     esg_bash2py.mkdir_p("/etc/certs")
     #TODO: Generate certs from esg_cert_manager and copy here
-    shutil.copyfile("apache_certs/hostcert.pem", "/etc/certs/hostcert.pem")
-    shutil.copyfile("apache_certs/hostkey.pem", "/etc/certs/hostkey.pem")
+    # esg_cert_manager.create_self_signed_cert("/etc/certs")
+    # esg_cert_manager.create_certificate_chain("/etc/certs/hostcert.pem")
+    # shutil.copyfile("apache_certs/hostcert.pem", "/etc/certs/hostcert.pem")
+    # shutil.copyfile("apache_certs/hostkey.pem", "/etc/certs/hostkey.pem")
     shutil.copyfile("apache_certs/esgf-ca-bundle.crt", "/etc/certs/esgf-ca-bundle.crt")
-    shutil.copyfile("apache_certs/temp_cachain.pem", "/etc/certs/cachain.pem")
+    # shutil.copyfile("apache_certs/temp_cachain.pem", "/etc/certs/cachain.pem")
     shutil.copyfile("apache_html/index.html", "/var/www/html/index.html")
     # shutil.copyfile("apache_conf/httpd.conf", "/etc/httpd/conf.d/httpd.conf")
     shutil.copyfile("apache_conf/ssl.conf", "/etc/httpd/conf.d/ssl.conf")

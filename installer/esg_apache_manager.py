@@ -54,6 +54,7 @@ def install_apache_httpd():
 
     #Custom ESGF Apache files that setup proxying
     shutil.copyfile("apache_conf/esgf-httpd", "/etc/init.d/esgf-httpd")
+    os.chmod("/etc/init.d/esgf-httpd", 0755)
     shutil.copyfile("apache_conf/esgf-httpd.conf", "/etc/httpd/conf/esgf-httpd.conf")
     shutil.copyfile("apache_conf/esgf-httpd-local.conf", "/etc/httpd/conf/esgf-httpd-local.conf")
     shutil.copyfile("apache_conf/esgf-httpd-locals.conf", "/etc/httpd/conf/esgf-httpd-locals.conf")
@@ -85,6 +86,8 @@ def copy_apache_conf_files():
     #TODO: Generate certs from esg_cert_manager and copy here
     shutil.copyfile("apache_certs/hostcert.pem", "/etc/certs/hostcert.pem")
     shutil.copyfile("apache_certs/hostkey.pem", "/etc/certs/hostkey.pem")
+    shutil.copyfile("apache_certs/esgf-ca-bundle.crt", "/etc/certs/esgf-ca-bundle.crt")
+    shutil.copyfile("apache_certs/temp_cachain.pem", "/etc/certs/cachain.pem")
     shutil.copyfile("apache_html/index.html", "/var/www/html/index.html")
     # shutil.copyfile("apache_conf/httpd.conf", "/etc/httpd/conf.d/httpd.conf")
     shutil.copyfile("apache_conf/ssl.conf", "/etc/httpd/conf.d/ssl.conf")

@@ -638,6 +638,7 @@ def set_default_java():
     default_java_version_number = re.search("1.8.0_\w+", default_java_version_info).group()
     if semver.compare(default_java_version_number, config["java_version"]) != 0:
         esg_functions.stream_subprocess_output("alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
+        esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
 
 def check_for_existing_java():
     '''Check if a valid java installation is currently on the system'''
@@ -704,7 +705,9 @@ def setup_java():
         #recursively change permissions
         esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
-    print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
+    set_default_java()
+    print check_java_version("java")
+    # print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
 
 def setup_ant():
     '''

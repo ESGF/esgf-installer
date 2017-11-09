@@ -116,7 +116,7 @@ def create_tomcat_user():
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
 def start_tomcat():
-    return esg_functions.call_subprocess("/usr/local/tomcat/bin/catalina.sh run")
+    return esg_functions.call_subprocess("/usr/local/tomcat/bin/catalina.sh start")
 
 def stop_tomcat():
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
@@ -128,7 +128,7 @@ def restart_tomcat():
     start_tomcat()
 
 def check_tomcat_status():
-    return esg_functions.call_subprocess("service httpd status")
+    return esg_functions.call_subprocess("ps -aux | grep tomcat | grep -v grep")
 
 def run_tomcat_config_test():
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
@@ -228,6 +228,7 @@ def main():
         remove_example_webapps()
         copy_config_files()
         create_tomcat_user()
+        start_tomcat()
 
 if __name__ == '__main__':
     main()

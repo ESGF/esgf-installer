@@ -633,6 +633,9 @@ def install_prerequisites():
 
     esg_functions.stream_subprocess_output(" ".join(yum_install_list))
 
+def set_default_java():
+    esg_functions.stream_subprocess_output("alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
+
 def check_for_existing_java():
     '''Check if a valid java installation is currently on the system'''
     java_path = find_executable("java", os.path.join(config["java_install_dir"],"bin"))

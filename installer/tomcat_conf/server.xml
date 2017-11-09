@@ -85,6 +85,7 @@
          connector should be using the OpenSSL style configuration
          described in the APR documentation -->
 
+<!--TODO: Update keyAlias; truststorePass and keystorePass  -->
     <Connector port="8443" SSLEnabled="true" maxHttpHeaderSize="8192"
                maxThreads="150" minSpareThreads="25" maxSpareThreads="75"
                enableLookups="false" disableUploadTimeout="true"
@@ -98,7 +99,8 @@
                keyAlias="my_esgf_node"
                keystoreFile="/esg/config/tomcat/keystore-tomcat" keystorePass="changeit"/>
 
-    <Connector port="8009" protocol="AJP/1.3" redirectPort="8443"
+    <!-- The tomcat webapps are proxied from port 8223 -->
+    <Connector port="8223" protocol="AJP/1.3" redirectPort="8443"
                maxConnections="256" keepAliveTimeout="30000"  />
 
     <!-- An Engine represents the entry point (within Catalina) that processes

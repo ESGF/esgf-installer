@@ -42,6 +42,12 @@ class test_ESG_Setup(unittest.TestCase):
 		output = esg_setup.check_for_existing_java()
 		self.assertIsNotNone(output)
 
+	def test_setup_java(self):
+		esg_setup.setup_java()
+		self.assertTrue(os.path.exists("/usr/local/java"))
+		self.assertTrue(find_executable("java"))
+
+
 
 
 

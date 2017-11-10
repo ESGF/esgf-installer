@@ -5,6 +5,7 @@ import os
 import shutil
 import errno
 import esg_functions
+import esg_logging_manager
 from distutils.spawn import find_executable
 import sys
 import esg_setup

@@ -9,6 +9,7 @@ from distutils.spawn import find_executable
 import sys
 import esg_setup
 
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 class test_ESG_Setup(unittest.TestCase):
 
@@ -28,13 +29,13 @@ class test_ESG_Setup(unittest.TestCase):
 				pass
 
 		print "\n*******************************"
-	    print "Purging Java"
-	    print "******************************* \n"
+		print "Purging Java"
+		print "******************************* \n"
 
-	    try:
-	        shutil.rmtree("/usr/local/java")
-	    except OSError:
-	        logger.exception("No Java installation found to delete")
+		try:
+		    shutil.rmtree("/usr/local/java")
+		except OSError:
+		    logger.exception("No Java installation found to delete")
 
 	def test_download_conda(self):
 		print "path:", sys.path

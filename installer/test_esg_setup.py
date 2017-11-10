@@ -27,6 +27,15 @@ class test_ESG_Setup(unittest.TestCase):
 			if error.errno == errno.EEXIST:
 				pass
 
+		print "\n*******************************"
+	    print "Purging Java"
+	    print "******************************* \n"
+
+	    try:
+	        shutil.rmtree("/usr/local/java")
+	    except OSError:
+	        logger.exception("No Java installation found to delete")
+
 	def test_download_conda(self):
 		print "path:", sys.path
 		esg_setup.download_conda("/usr/local/testConda")

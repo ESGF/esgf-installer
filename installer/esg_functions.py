@@ -777,7 +777,7 @@ def track_extraction_progress(members):
 def extract_tarball(tarball_name, dest_dir="."):
     try:
         tar = tarfile.open(tarball_name)
-        tar.extractall(dest_dir, members = track_extraction_progress(tarball_name))
+        tar.extractall(dest_dir, members = track_extraction_progress(tar))
         tar.close()
     except tarfile.TarError:
         logger.exception("Could not extract the tarfile: %s", tarball_name)

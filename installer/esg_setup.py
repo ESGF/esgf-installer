@@ -658,7 +658,7 @@ def check_java_version(java_path):
     installed_java_version = re.search("1.8.0_\w+", java_version_output).group()
     if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
         print "Installed java version meets the minimum requirement "
-    return java_version_output["stderr"]
+    return java_version_output
 
 def download_java(java_tarfile):
     print "Downloading Java from ", config["java_dist_url"]

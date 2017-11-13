@@ -51,7 +51,6 @@ class test_ESG_cert_manager(unittest.TestCase):
         self.assertTrue(test_keystore_output["returncode"] == 0)
 
         keystore_output = esg_cert_manager.check_keystore("/tmp/test-keystore", "password")
-        print "key in keystore:", keystore_output["testing"]
         self.assertTrue("testing" in keystore_output.private_keys.keys())
 
     def test_create_self_signed_cert(self):

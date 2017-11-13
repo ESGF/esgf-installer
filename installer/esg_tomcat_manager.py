@@ -28,13 +28,17 @@ TOMCAT_VERSION = "8.5.20"
 CATALINA_HOME = "/usr/local/tomcat"
 
 def check_tomcat_version():
-    esg_functions.call_subprocess("/usr/local/tomcat/bin/version.sh")
+    esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/version.sh")
 
 def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
-        print "Tomcat directory found.  Skipping installation."
+        print "Tomcat directory found."
         check_tomcat_version()
-        return False
+        continue_tomcat = raw_input("Do you want to contine the Tomcat installation [y/N]") or "no"
+        if continue_tomcat.lower() in ["yes", "y"]:
+            return True
+        else:
+            return False
 
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
     print "downloading Tomcat"

@@ -644,8 +644,9 @@ def get_java_keystore_password():
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
-    except IOError:
-        logger.exception("Failed to get keystore password")
+    except IOError, error:
+        if error.errno == errno.ENOENT:
+            logger.info("The keystore password has not been set yet so the password file %s does not exist yet.", config['ks_secret_file'])
         set_java_keystore_password()
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()

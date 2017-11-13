@@ -58,18 +58,18 @@ class test_ESG_cert_manager(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join("/tmp", "hostkey.pem")))
         self.assertTrue(os.path.exists(os.path.join("/tmp", "hostcert.pem")))
 
-        self.assertTrue(esg_cert_manager.check_associate_cert_with_private_key("/tmp/mycert.pem", "/tmp/mykey.pem"))
+        self.assertTrue(esg_cert_manager.check_associate_cert_with_private_key("/tmp/hostcert.pem", "/tmp/hostkey.pem"))
 
-        esg_cert_manager.convert_per_to_dem("/tmp/mykey.pem", "/tmp")
+        esg_cert_manager.convert_per_to_dem("/tmp/hostkey.pem", "/tmp")
         self.assertTrue(os.path.exists("/tmp/key.der"))
 
         esg_cert_manager.create_new_truststore("/tmp/temp-truststore.ts")
-        esg_cert_manager._insert_cert_into_truststore("/tmp/mycert.pem", "/tmp/temp-truststore.ts", "/tmp")
+        esg_cert_manager._insert_cert_into_truststore("/tmp/hostcert.pem", "/tmp/temp-truststore.ts", "/tmp")
         truststore_output = esg_cert_manager.check_keystore("/tmp/temp-truststore.ts", "changeit")
 
         truststore_keys = [str(key) for key in truststore_output.certs.keys()]
         print "truststore_keys:", truststore_keys
-        self.assertTrue("/tmp/mycert" in truststore_keys)
+        self.assertTrue("/tmp/hostcert" in truststore_keys)
 
     def test_fetch_esgf_certificates(self):
         esg_cert_manager.fetch_esgf_certificates("/tmp")

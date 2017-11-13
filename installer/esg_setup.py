@@ -645,19 +645,20 @@ def check_for_existing_java():
     java_path = find_executable("java", os.path.join(config["java_install_dir"],"bin"))
     if java_path:
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
-        java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
-        print java_version_stdout["stderr"]
-        installed_java_version = re.search("1.8.0_\w+", java_version_stdout["stderr"]).group()
-        if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
-            print "Installed java version meets the minimum requirement "
-        return java_version_stdout["stderr"]
+        return check_java_version(java_path)
 
 def check_java_version(java_path):
+    print "Checking Java version"
     try:
-        return esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))["stderr"]
+        java_version_output = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))["stderr"]
     except KeyError:
         logger.exception("Could not check the Java version")
         esg_functions.exit_with_error(1)
+
+    installed_java_version = re.search("1.8.0_\w+", java_version_output).group()
+    if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
+        print "Installed java version meets the minimum requirement "
+    return java_version_output["stderr"]
 
 def download_java(java_tarfile):
     print "Downloading Java from ", config["java_dist_url"]

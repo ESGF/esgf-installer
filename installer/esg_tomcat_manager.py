@@ -35,9 +35,7 @@ def download_tomcat():
         print "Tomcat directory found."
         check_tomcat_version()
         continue_tomcat = raw_input("Do you want to contine the Tomcat installation [y/N]") or "no"
-        if continue_tomcat.lower() in ["yes", "y"]:
-            return True
-        else:
+        if continue_tomcat.lower() in ["no", "n"]:
             return False
 
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"

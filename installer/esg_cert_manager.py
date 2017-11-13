@@ -551,6 +551,8 @@ def create_self_signed_cert(cert_dir):
         cert.set_pubkey(k)
         cert.sign(k, 'sha1')
 
+        esg_bash2py.mkdir_p(cert_dir)
+
         with open(os.path.join(cert_dir, CERT_FILE), "wt") as cert_file_handle:
             cert_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
         with open(os.path.join(cert_dir, KEY_FILE), "wt") as key_file_handle:

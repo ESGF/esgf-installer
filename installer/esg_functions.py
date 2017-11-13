@@ -768,10 +768,16 @@ def get_dir_owner_and_group(path):
     group = grp.getgrgid(gid)[0]
     return user, group
 
+def track_extraction_progress(members):
+    '''Output of the files being extracted from a tarball'''
+    for member in members:
+       # this will be the current file being extracted
+       yield member
+
 def extract_tarball(tarball_name, dest_dir="."):
     try:
         tar = tarfile.open(tarball_name)
-        tar.extractall(dest_dir)
+        tar.extractall(dest_dir, members = track_extraction_progress(tarball_name))
         tar.close()
     except tarfile.TarError:
         logger.exception("Could not extract the tarfile: %s", tarball_name)

@@ -55,8 +55,8 @@ class test_ESG_cert_manager(unittest.TestCase):
 
     def test_create_self_signed_cert(self):
         esg_cert_manager.create_self_signed_cert("/tmp")
-        self.assertTrue(os.path.exists(os.path.join("/tmp", "mykey.pem")))
-        self.assertTrue(os.path.exists(os.path.join("/tmp", "mycert.pem")))
+        self.assertTrue(os.path.exists(os.path.join("/tmp", "hostkey.pem")))
+        self.assertTrue(os.path.exists(os.path.join("/tmp", "hostcert.pem")))
 
         self.assertTrue(esg_cert_manager.check_associate_cert_with_private_key("/tmp/mycert.pem", "/tmp/mykey.pem"))
 

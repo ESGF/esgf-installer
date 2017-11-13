@@ -15,6 +15,7 @@ from lxml import etree
 import esg_functions
 import esg_bash2py
 import esg_logging_manager
+import esg_cert_manager
 from clint.textui import progress
 
 
@@ -75,7 +76,7 @@ def remove_example_webapps():
             shutil.rmtree("docs")
             shutil.rmtree("examples")
             shutil.rmtree("host-manager")
-            shutil.rmtree("manager")
+            # shutil.rmtree("manager")
         except OSError, error:
             if error.errno == errno.ENOENT:
                 pass
@@ -87,23 +88,24 @@ def copy_config_files():
     '''server.xml: includes references to keystore, truststore in /esg/config/tomcat'''
     '''context.xml: increases the Tomcat cache to avoid flood of warning messages'''
 
-    # print "*******************************"
-    # print "Copying custom Tomcat config files"
-    # print "******************************* \n"
-    # try:
-    #     shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
-    #     shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
+    print "*******************************"
+    print "Copying custom Tomcat config files"
+    print "******************************* \n"
+    try:
+        shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
+        shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
     #     shutil.copyfile("certs/esg-truststore.ts", "/esg/config/tomcat/esg-truststore.ts")
     #     shutil.copyfile("certs/esg-truststore.ts-orig", "/esg/config/tomcat/esg-truststore.ts-orig")
     #     shutil.copyfile("certs/keystore-tomcat", "/esg/config/tomcat/keystore-tomcat")
     #     shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
     #
-    #     shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
-    # except OSError, error:
-    #     if error.errno == errno.EEXIST:
-    #         pass
-    #     else:
-    #         logger.exception()
+        shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
+    except OSError, error:
+        # if error.errno == errno.EEXIST:
+        #     pass
+        # else:
+        logger.exception()
+
     esg_cert_manager.main()
 
 def create_tomcat_user():

@@ -551,10 +551,10 @@ def create_self_signed_cert(cert_dir):
         cert.set_pubkey(k)
         cert.sign(k, 'sha1')
 
-        open(os.path.join(cert_dir, CERT_FILE), "wt").write(
-            OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
-        open(os.path.join(cert_dir, KEY_FILE), "wt").write(
-            OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k))
+        with open(os.path.join(cert_dir, CERT_FILE), "wt") as cert_file_handle:
+            cert_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
+        with open(os.path.join(cert_dir, KEY_FILE), "wt") as key_file_handle:
+            key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k))
 
 def main():
     print "*******************************"

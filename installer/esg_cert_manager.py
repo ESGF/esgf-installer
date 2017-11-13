@@ -492,8 +492,11 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
 
 
     #Copy and rename private_key and cert
-    shutil.copyfile(private_key, "/etc/certs/hostkey.pem")
-    shutil.copyfile(public_cert, "/etc/certs/hostcert.pem")
+    try:
+        shutil.copyfile(private_key, "/etc/certs/hostkey.pem")
+        shutil.copyfile(public_cert, "/etc/certs/hostcert.pem")
+    except shutil.Error:
+        logger.exception("Error copying cert files.")
 
     cert_files = create_certificate_chain_list()
     create_certificate_chain(cert_files)

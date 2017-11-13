@@ -557,6 +557,10 @@ def create_self_signed_cert(cert_dir):
             OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k))
 
 def main():
+    print "*******************************"
+    print "Setting up SSL Certificates"
+    print "******************************* \n"
+
     create_self_signed_cert("/etc/certs")
     install_tomcat_keypair("/etc/certs/hostkey.pem", "/etc/certs/hostcert.pem")
 

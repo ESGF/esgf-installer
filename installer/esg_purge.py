@@ -62,7 +62,12 @@ def purge_java():
     try:
         shutil.rmtree("/usr/local/java")
     except OSError:
-        logger.exception("No Java installation found to delete")
+        logger.exception("No Java installation found to delete at /usr/local/java")
+
+    try:
+        shutil.rmtree("/usr/bin/java")
+    except OSError:
+        logger.exception("No Java installation found to delete at /usr/bin/java")
 
 def purge_ant():
     print "\n*******************************"

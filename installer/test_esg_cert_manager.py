@@ -30,8 +30,8 @@ class test_ESG_cert_manager(unittest.TestCase):
             print "error:", error
 
         try:
-            os.remove("/tmp/mykey.pem")
-            os.remove("/tmp/mycert.pem")
+            os.remove("/tmp/hostkey.pem")
+            os.remove("/tmp/hostcert.pem")
             os.remove("/tmp/test-truststore.ts")
             os.remove("/tmp/new-truststore.ts")
             os.remove("/tmp/key.der")

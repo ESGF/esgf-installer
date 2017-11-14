@@ -173,8 +173,15 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
 
 def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
     '''Create certificate bundle from public cert and cachain'''
+    print "\n*******************************"
+    print "Bundling Certificates"
+    print "******************************* \n"
+
     cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
     ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
+
+    print "public_cert:", public_cert
+    print "ca_chain:", ca_chain
 
     #Write public_cert to bundle first
     print "Signed Cert -----> ", public_cert

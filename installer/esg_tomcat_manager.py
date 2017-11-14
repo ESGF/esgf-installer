@@ -126,6 +126,9 @@ def create_tomcat_user():
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
 def start_tomcat():
+    print "\n*******************************"
+    print "Attempting to start Tomcat"
+    print "******************************* \n"
     return esg_functions.call_subprocess("/usr/local/tomcat/bin/catalina.sh start")
 
 def stop_tomcat():

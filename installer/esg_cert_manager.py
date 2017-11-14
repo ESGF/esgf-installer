@@ -133,6 +133,9 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
         esg_functions.change_permissions_recursive(config["globus_global_certs_dir"], 0644)
 
 def install_extkeytool():
+    print "\n*******************************"
+    print "Installing Extkeytool"
+    print "******************************* \n"
     extkeytool_tarfile = esg_bash2py.trim_string_from_head(config["extkeytool_download_url"])
     esg_functions.download_update(extkeytool_tarfile, config["extkeytool_download_url"])
     esg_functions.extract_tarball(extkeytool_tarfile, "/esg/tools/idptools")
@@ -171,16 +174,22 @@ def check_cachain_validity(ca_chain_bundle):
     else:
         print "Hmmm... no chain provided [{ca_chain_bundle}], skipping this check..."
 
-def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider, extkeytool_executable):
+def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider):
     '''Imports a signed Certificate into the keystore'''
+
+    idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
+    extkeytool_executable = os.path.join(idptools_install_dir, "bin", "extkeytool")
+    if not os.path.isfile(extkeytool_executable):
+        install_extkeytool()
+
     command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {cert_bundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
     construct_keystore_output = esg_functions.call_subprocess(command)
     #FYI: Code 127 is "command not found"
-    if construct_keystore_output["returncode"] == 127:
-        print "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)  [one moment please...]"
-        install_extkeytool()
-        print "Retrying to build keystore with extkeytool"
-        esg_functions.stream_subprocess_output(command)
+    # if construct_keystore_output["returncode"] == 127:
+    #     print "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)  [one moment please...]"
+    #     install_extkeytool()
+    #     print "Retrying to build keystore with extkeytool"
+    #     esg_functions.stream_subprocess_output(command)
 
 def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
     '''Create certificate bundle from public cert and cachain'''
@@ -283,7 +292,6 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     print "Certificates..."
 
     esg_bash2py.mkdir_p(idptools_install_dir)
-    extkeytool_executable = os.path.join(idptools_install_dir, "bin", "extkeytool")
 
     cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
     ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
@@ -321,7 +329,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     check_cachain_validity(ca_chain_bundle)
 
     print "Constructing new keystore content... "
-    import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider, extkeytool_executable)
+    import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider)
 
     #Check keystore output
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])

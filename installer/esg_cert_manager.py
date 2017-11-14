@@ -46,14 +46,14 @@ def create_certificate_chain_list():
             if not cert_files:
                 print "Adding default certificate chain file {default_cachain}".format(default_cachain=default_cachain)
                 if os.path.isfile(default_cachain):
-                    cert_files.append(certfile_entry)
+                    cert_files.append(default_cachain)
                     break
                 else:
                     print "{default_cachain} does not exist".format(default_cachain=default_cachain)
                     print "Creating {default_cachain}".format(default_cachain=default_cachain)
                     esg_bash2py.mkdir_p("/etc/esgfcerts")
                     esg_bash2py.touch(default_cachain)
-                    cert_files.append(certfile_entry)
+                    cert_files.append(default_cachain)
                     break
                     # esg_functions.exit_with_error(1)
             else:

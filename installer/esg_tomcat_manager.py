@@ -225,7 +225,7 @@ def setup_temp_certs():
 
 
 def main():
-    print "*******************************"
+    print "\n*******************************"
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
     print "******************************* \n"
     if download_tomcat():

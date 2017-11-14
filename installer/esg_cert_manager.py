@@ -10,6 +10,7 @@ import logging
 import socket
 import requests
 import yaml
+import errno
 import OpenSSL
 import esg_bash2py
 import esg_logging_manager
@@ -481,12 +482,19 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
 def copy_cert_to_tomcat_conf(public_cert):
     '''Copy the signed cert to the ESGF Tomcat config directory (i.e. /esg/config/tomcat)'''
     #Check for newer version of public_cert; if found backup old cert
+    esgf_cert_name = os.path.join(config["tomcat_conf_dir"], "{esgf_host}-esg-node.pem".format(esgf_host=esg_functions.get_esgf_host()))
+
     try:
-        if os.path.getctime(public_cert) > os.path.getctime(os.path.join(config["tomcat_conf_dir"], "{esgf_host}-esg-node.pem".format(esgf_host=esg_functions.get_esgf_host()))):
-            shutil.move(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem.old"))
-            shutil.copyfile(public_cert, os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"))
+        if os.path.getctime(public_cert) > os.path.getctime(esgf_cert_name):
+            #TODO: Maybe put a timestamp on backed up cert
+            shutil.move(esgf_cert_name, esgf_cert_name+".old")
+            shutil.copyfile(public_cert, esgf_cert_name)
     except IOError:
         logger.exception("Error while copying public cert")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            logger.info("Existing cert %s not found.  Copying public cert to Tomcat config directory: %s", esgf_cert_name, config["tomcat_conf_dir"])
+            shutil.copyfile(public_cert, esgf_cert_name)
 
 def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''If you want to install a commercial CA issued certificate:

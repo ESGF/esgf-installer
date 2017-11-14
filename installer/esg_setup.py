@@ -15,6 +15,7 @@ import hashlib
 import urlparse
 import datetime
 import tarfile
+import getpass
 from time import sleep
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
@@ -203,6 +204,7 @@ def _confirm_password(password_input, password_confirmation):
 
 def _update_admin_password_file(updated_password):
     #TODO: Rename esgf_secret_file to esgf_admin_password_file
+    #TODO: Move this to esg_functions as set_security_admin_password()
     '''Updates the esgf_secret_file'''
     try:
         security_admin_password_file = open(config["esgf_secret_file"], 'w+')
@@ -255,12 +257,12 @@ def _choose_admin_password():
         return
 
     while True:
-        password_input = raw_input(
+        password_input = getpass.getpass(
             "What is the admin password to use for this installation? (alpha-numeric only): ")
         if not _is_valid_password(password_input):
             continue
 
-        password_input_confirmation = raw_input(
+        password_input_confirmation = getpass.getpass(
             "Please re-enter password to confirm: ")
 
         if _confirm_password(password_input, password_input_confirmation):
@@ -410,7 +412,7 @@ def _choose_publisher_db_user_passwd():
         return
     if not config["publisher_db_user_passwd"] or force_install:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
-        publisher_db_user_passwd_input = raw_input(
+        publisher_db_user_passwd_input = getpass.getpass(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
         if publisher_db_user_passwd_input:
             with open(config['pub_secret_file'], "w") as secret_file:

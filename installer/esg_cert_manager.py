@@ -140,7 +140,7 @@ def install_extkeytool():
 def backup_previous_keystore(keystore_name):
     '''If a previous keystore exists, back it up'''
     if os.path.isfile(keystore_name):
-        shutil.move(keystore_name, os.path.join(keystore_name,".bak"))
+        shutil.move(keystore_name, os.path.join(keystore_name+".bak"))
 
 def create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name):
     '''Create a new empty Java Keystore using the JDK's keytool'''

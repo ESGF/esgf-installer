@@ -298,43 +298,43 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
         esg_functions.exit_with_error(1)
 
 
-        print "creating keystore... "
-        #create a keystore with a self-signed cert
-        distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
+    print "creating keystore... "
+    #create a keystore with a self-signed cert
+    distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
 
-        #if previous keystore is found; backup
-        backup_previous_keystore(keystore_name)
+    #if previous keystore is found; backup
+    backup_previous_keystore(keystore_name)
 
-        #-------------
-        #Make empty keystore...
-        #-------------
-        create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name)
+    #-------------
+    #Make empty keystore...
+    #-------------
+    create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name)
 
-        #-------------
-        #Convert your private key into from PEM to DER format that java likes
-        #-------------
-        derkey = convert_per_to_dem(private_key, idptools_install_dir)
+    #-------------
+    #Convert your private key into from PEM to DER format that java likes
+    #-------------
+    derkey = convert_per_to_dem(private_key, idptools_install_dir)
 
-        #-------------
-        #Now we gather up all the other keys in the key chain...
-        #-------------
-        check_cachain_validity(ca_chain_bundle)
+    #-------------
+    #Now we gather up all the other keys in the key chain...
+    #-------------
+    check_cachain_validity(ca_chain_bundle)
 
-        print "Constructing new keystore content... "
-        import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider, extkeytool_executable)
+    print "Constructing new keystore content... "
+    import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider, extkeytool_executable)
 
-        #Check keystore output
-        java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
-        check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
-        keystore_output = esg_functions.call_subprocess(check_keystore_command)
-        if keystore_output["returncode"] == 0:
-            print "Mmmm, freshly baked keystore!"
-            print "If Everything looks good... then replace your current tomcat keystore with {keystore_name}, if necessary.".format(keystore_name=keystore_name)
-            print "Don't forget to change your tomcat's server.xml entry accordingly :-)"
-            print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
-        else:
-            print "Failed to check keystore"
-            esg_functions.exit_with_error(1)
+    #Check keystore output
+    java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
+    check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
+    keystore_output = esg_functions.call_subprocess(check_keystore_command)
+    if keystore_output["returncode"] == 0:
+        print "Mmmm, freshly baked keystore!"
+        print "If Everything looks good... then replace your current tomcat keystore with {keystore_name}, if necessary.".format(keystore_name=keystore_name)
+        print "Don't forget to change your tomcat's server.xml entry accordingly :-)"
+        print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
+    else:
+        print "Failed to check keystore"
+        esg_functions.exit_with_error(1)
 
 
 def check_associate_cert_with_private_key(cert, private_key):

@@ -34,7 +34,7 @@ def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
-        continue_tomcat = raw_input("Do you want to contine the Tomcat installation [y/N]") or "no"
+        continue_tomcat = raw_input("Do you want to contine the Tomcat installation [y/N]: ") or "no"
         if continue_tomcat.lower() in ["no", "n"]:
             return False
 

@@ -45,11 +45,12 @@ def create_certificate_chain_list():
         if not certfile_entry:
             if not cert_files:
                 print "Adding default certificate chain file {default_cachain}".format(default_cachain=default_cachain)
-                if os.path.isfile(certfile_entry):
+                if os.path.isfile(default_cachain):
                     cert_files.append(certfile_entry)
                 else:
-                    print "{certfile_entry} does not exist".format(certfile_entry=certfile_entry)
-                    break
+                    print "{default_cachain} does not exist".format(default_cachain=default_cachain)
+                    # break
+                    esg_functions.exit_with_error(1)
             else:
                 break
         else:
@@ -63,6 +64,10 @@ def create_certificate_chain_list():
 
 def create_certificate_chain(cert_files):
     '''Concatenate the certificates in the chain and copy them to /etc/certs'''
+    print "\n*******************************"
+    print "Creating Certificate Chain"
+    print "******************************* \n"
+
     #Copy the tmpchain and rename to cachain
     with open("/etc/certs/tmpchain", "w") as tmpchain_file:
         for cert in cert_files:
@@ -198,40 +203,41 @@ def bundle_certificates(public_cert, ca_chain, idptools_install_dir):
             cert_bundle_file.write(cert_contents)
 
     num_of_certs = len(ca_chain)
-    for index, cert in enumerate(ca_chain):
-        if index == num_of_certs-1:
-            print "Root Cert -------> ", cert
-            if "http" not in cert:
-                #Write contents of cert to cert_bundle_file and ca_chain_bundle
-                with open(cert, "r") as cert_data:
-                    cert_contents = cert_data.read()
-                with open(cert_bundle, "a") as cert_bundle_file:
-                    cert_bundle_file.write(cert_contents)
-                with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                    ca_chain_bundle_file.write(cert_contents)
+    if num_of_certs > 0:
+        for index, cert in enumerate(ca_chain):
+            if index == num_of_certs-1:
+                print "Root Cert -------> ", cert
+                if "http" not in cert:
+                    #Write contents of cert to cert_bundle_file and ca_chain_bundle
+                    with open(cert, "r") as cert_data:
+                        cert_contents = cert_data.read()
+                    with open(cert_bundle, "a") as cert_bundle_file:
+                        cert_bundle_file.write(cert_contents)
+                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
+                        ca_chain_bundle_file.write(cert_contents)
+                else:
+                    cert_contents = requests.get(cert).content
+                    with open(cert_bundle, "a") as cert_bundle_file:
+                        cert_bundle_file.write(cert_contents)
+                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
+                        ca_chain_bundle_file.write(cert_contents)
             else:
-                cert_contents = requests.get(cert).content
-                with open(cert_bundle, "a") as cert_bundle_file:
-                    cert_bundle_file.write(cert_contents)
-                with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                    ca_chain_bundle_file.write(cert_contents)
-        else:
-            print "Intermediate cert #{index} ----> {cert}".format(index=index, cert=cert)
-            if "http" not in cert:
-                with open(cert, "r") as cert_data:
-                    cert_contents = cert_data.read()
-                with open(cert_bundle, "a") as cert_bundle_file:
-                    cert_bundle_file.write(cert_contents)
-                with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                    ca_chain_bundle_file.write(cert_contents)
-            else:
-                cert_contents = requests.get(cert).content
-                with open(cert_bundle, "a") as cert_bundle_file:
-                    cert_bundle_file.write(cert_contents)
-                with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
-                    ca_chain_bundle_file.write(cert_contents)
+                print "Intermediate cert #{index} ----> {cert}".format(index=index, cert=cert)
+                if "http" not in cert:
+                    with open(cert, "r") as cert_data:
+                        cert_contents = cert_data.read()
+                    with open(cert_bundle, "a") as cert_bundle_file:
+                        cert_bundle_file.write(cert_contents)
+                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
+                        ca_chain_bundle_file.write(cert_contents)
+                else:
+                    cert_contents = requests.get(cert).content
+                    with open(cert_bundle, "a") as cert_bundle_file:
+                        cert_bundle_file.write(cert_contents)
+                    with open(ca_chain_bundle, "a") as ca_chain_bundle_file:
+                        ca_chain_bundle_file.write(cert_contents)
 
-        return cert_bundle, ca_chain_bundle
+    return cert_bundle, ca_chain_bundle
 
 def check_keystore(keystore_name, keystore_password):
     '''Check the contents of a given keystore or truststore'''

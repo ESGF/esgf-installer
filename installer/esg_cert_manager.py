@@ -184,6 +184,8 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
 
     command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {cert_bundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
     construct_keystore_output = esg_functions.call_subprocess(command)
+    if construct_keystore_output["returncode"] !=0:
+        print "Could not import cert %s into keystore %s" % (cert_bundle, keystore_name)
     #FYI: Code 127 is "command not found"
     # if construct_keystore_output["returncode"] == 127:
     #     print "Hmmm... Cannot find extkeytool... :-( Let me get it for you! :-)  [one moment please...]"

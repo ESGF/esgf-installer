@@ -90,7 +90,7 @@ def copy_config_files():
     '''server.xml: includes references to keystore, truststore in /esg/config/tomcat'''
     '''context.xml: increases the Tomcat cache to avoid flood of warning messages'''
 
-    print "*******************************"
+    print "\n*******************************"
     print "Copying custom Tomcat config files"
     print "******************************* \n"
     try:
@@ -111,6 +111,11 @@ def copy_config_files():
     esg_cert_manager.main()
 
 def create_tomcat_user():
+    '''Create the Tomcat system user and user group'''
+    print "\n*******************************"
+    print "Creating Tomcat User"
+    print "******************************* \n"
+
     esg_functions.call_subprocess("groupadd tomcat")
     esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
     tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
@@ -231,8 +236,8 @@ def main():
     if download_tomcat():
         extract_tomcat_tarball()
         remove_example_webapps()
-        copy_config_files()
         create_tomcat_user()
+        copy_config_files()
         start_tomcat()
 
 if __name__ == '__main__':

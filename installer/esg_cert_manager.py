@@ -480,7 +480,7 @@ def copy_cert_to_tomcat_conf(public_cert):
     '''Copy the signed cert to the ESGF Tomcat config directory (i.e. /esg/config/tomcat)'''
     #Check for newer version of public_cert; if found backup old cert
     try:
-        if os.path.getctime(public_cert) > os.path.getctime(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem")):
+        if os.path.getctime(public_cert) > os.path.getctime(os.path.join(config["tomcat_conf_dir"], "{esgf_host}-esg-node.pem".format(esgf_host=esg_functions.get_esgf_host()))):
             shutil.move(os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"), os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem.old"))
             shutil.copyfile(public_cert, os.path.join(config["tomcat_conf_dir"], esg_functions.get_esgf_host(), "-esg-node.pem"))
     except IOError:

@@ -105,6 +105,10 @@ def download_orp_war(orp_url):
 
 def setup_orp():
     '''Setup the ORP subsystem'''
+    if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
+        orp_install = raw_input("Existing ORP installation found.  Do you want to continue with the ORP installation [y/N]: " or "no")
+        if orp_install.lower() in ["no", "n"]:
+            return
     print "\n*******************************"
     print "Setting up ORP"
     print "******************************* \n"
@@ -147,6 +151,12 @@ def download_node_manager_war(node_manager_url):
 
 
 def setup_node_manager_old():
+
+    if os.path.isdir("/usr/local/tomcat/webapps/esgf-node-manager"):
+        node_manager_install = raw_input("Existing Node Manager installation found.  Do you want to continue with the Node Manager installation [y/N]: " or "no")
+        if node_manager_install.lower() in ["no", "n"]:
+            return
+
     print "\n*******************************"
     print "Setting up ESGF Node Manager (old)"
     print "******************************* \n"
@@ -175,6 +185,12 @@ def download_thredds_war(thredds_url):
                 f.flush()
 
 def setup_thredds():
+
+    if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
+        thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " or "no")
+        if thredds_install.lower() in ["no", "n"]:
+            return
+
     print "\n*******************************"
     print "Setting up Thredds"
     print "******************************* \n"
@@ -267,11 +283,15 @@ def download_stats_api_war(stats_api_url):
                 f.flush()
 
 def setup_dashboard():
+
+    if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
+        stats_api_install = raw_input("Existing Stats API installation found.  Do you want to continue with the Stats API installation [y/N]: " or "no")
+        if stats_api_install.lower() in ["no", "n"]:
+            return
     print "\n*******************************"
     print "Setting up ESGF Stats API (dashboard)"
     print "******************************* \n"
-    # install esgf-stats-api war file
-    #COPY dashboard/esgf-stats-api.war /usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war
+    
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
     stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
     download_stats_api_war(stats_api_url)

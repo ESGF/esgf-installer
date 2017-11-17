@@ -128,7 +128,9 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     '''Goes to ESG distribution server and pulls down all certificates for the federation.
     (suitable for crontabbing)'''
 
-    print "Fetching Freshest ESG Federation Certificates..."
+    print "\n*******************************"
+    print "Fetching freshest ESG Federation Certificates..."
+    print "******************************* \n"
     #if globus_global_certs_dir already exists, backup and delete, then recreate empty directory
     if os.path.isdir(config["globus_global_certs_dir"]):
         esg_functions.backup(config["globus_global_certs_dir"], os.path.join(config["globus_global_certs_dir"], ".bak.tz"))
@@ -493,7 +495,6 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
 
     if not os.path.isdir(certs_dir):
         print "Sorry, No esg certificates found... in {certs_dir}".format(certs_dir=certs_dir)
-        print "Fetching fresh esg certificates"
         fetch_esgf_certificates(certs_dir)
 
     #If you don't already have a truststore to build on....
@@ -517,6 +518,10 @@ def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
     #----------------------------------------------------------------
     #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
     #----------------------------------------------------------------
+
+    print "\n*******************************"
+    print "Adding public key to truststore file {truststore_file}".format(truststore_file=truststore_file)
+    print "******************************* \n"
     if os.path.isfile(truststore_file):
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "

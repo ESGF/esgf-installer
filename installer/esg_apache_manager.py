@@ -103,7 +103,7 @@ def main():
     if check_for_apache_installation():
         print "Found existing Apache installation."
         esg_functions.call_subprocess("httpd -version")
-        continue_install = raw_input("Would you like to continue the Apache installation anyway? [y/N]") or "N"
+        continue_install = raw_input("Would you like to continue the Apache installation anyway? [y/N]: ") or "N"
         if continue_install.lower() in ["no", "n"]:
             return
     install_apache_httpd()

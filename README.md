@@ -14,11 +14,11 @@ The custom ESGF software includes:
 - [ESGF-SLCS-server](https://github.com/ESGF/esgf-slcs-server)
 
 ## Installation
-Clone this repo using ```git clone https://github.com/ESGF/esgf-installer.git```
-Install Miniconda by running the ```install_conda.sh``` script
-Activate the ```esgf-pub``` conda environment using ```source /usr/loca/conda/bin/activate esgf-pub```
-Run an installation by invoking the ```esg_node.py``` script.
-- Example: ```python esg_node.py --install --type data```
+- Clone this repo using ```git clone https://github.com/ESGF/esgf-installer.git```
+- Install Miniconda by running the ```install_conda.sh``` script
+- Activate the ```esgf-pub``` conda environment using ```source /usr/loca/conda/bin/activate esgf-pub```
+- Run an installation by invoking the ```esg_node.py``` script.  
+    Example: ```python esg_node.py --install --type data```
 
 
 

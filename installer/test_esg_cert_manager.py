@@ -39,6 +39,11 @@ class test_ESG_cert_manager(unittest.TestCase):
         except OSError, error:
             print "error:", error
 
+        try:
+            shutil.rmtree("/etc/tempcerts")
+        except OSError, error:
+            print "error:", error
+
     def test_install_extkeytool(self):
         esg_cert_manager.install_extkeytool()
         self.assertTrue(os.path.isfile("/esg/tools/idptools/bin/extkeytool"))
@@ -84,6 +89,10 @@ class test_ESG_cert_manager(unittest.TestCase):
     def test_create_new_truststore(self):
         esg_cert_manager.create_new_truststore("/tmp/new-truststore.ts")
         self.assertTrue(os.path.isfile("/tmp/new-truststore.ts"))
+
+    def test_setup_temp_ca(self):
+        esg_cert_manager.setup_temp_ca()
+        self.assertTrue(os.listdir("/etc/tempcerts/CA"))
 
 
 

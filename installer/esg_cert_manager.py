@@ -608,10 +608,16 @@ def setup_temp_ca():
     shutil.copyfile("apache_certs/CA.pl", "/etc/tempcerts/CA.pl")
     shutil.copyfile("apache_certs/openssl.cnf", "/etc/tempcerts/openssl.cnf")
     shutil.copyfile("apache_certs/myproxy-server.config", "/etc/tempcerts/myproxy-server.config")
+    os.chmod("/etc/tempcerts/CA.pl", 0755)
+    os.chmod("/etc/tempcerts/openssl.cnf", 0755)
 
     with esg_bash2py.pushd("/etc/tempcerts"):
         esg_bash2py.mkdir_p("CA")
-        esg_functions.stream_subprocess_output("perl CA.pl -newca")
+        ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
+        print "ca_answer:", ca_answer
+        new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca", command_stdin=ca_answer)
+        print "new_ca_output:", new_ca_output
+
 
 
 

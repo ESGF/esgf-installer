@@ -603,13 +603,13 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
 def setup_temp_ca():
     esg_bash2py.mkdir_p("/etc/tempcerts")
 
-    with esg_bash2py.pushd("/etc/tempcerts"):
-        #Copy CA perl script and openssl conf file that it uses.  The CA perl script
-        #is used to create a temporary root CA
-        shutil.copyfile("apache_certs/CA.pl", "/etc/tempcerts/CA.pl")
-        shutil.copyfile("apache_certs/openssl.cnf", "/etc/tempcerts/openssl.cnf")
-        shutil.copyfile("apache_certs/myproxy-server.config", "/etc/tempcerts/myproxy-server.config")
+    #Copy CA perl script and openssl conf file that it uses.  The CA perl script
+    #is used to create a temporary root CA
+    shutil.copyfile("apache_certs/CA.pl", "/etc/tempcerts/CA.pl")
+    shutil.copyfile("apache_certs/openssl.cnf", "/etc/tempcerts/openssl.cnf")
+    shutil.copyfile("apache_certs/myproxy-server.config", "/etc/tempcerts/myproxy-server.config")
 
+    with esg_bash2py.pushd("/etc/tempcerts"):
         esg_bash2py.mkdir_p("CA")
         esg_functions.stream_subprocess_output("perl CA.pl -newca")
 

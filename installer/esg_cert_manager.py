@@ -632,6 +632,10 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     '''Checks if Commerical CA directory has been created; asks user if they would like proceed with
     Commercial CA installation if directory is found'''
 
+    print "*******************************"
+    print "Checking for Commerical CA"
+    print "******************************* \n"
+
     if os.listdir(commercial_ca_directory):
         print "Found commercial CA directory."
         commercial_ca_setup = raw_input("Do you want to install the commerical CA [Y/n]: ") or "yes"

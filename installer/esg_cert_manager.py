@@ -137,12 +137,15 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
         shutil.rmtree(config["globus_global_certs_dir"])
     esg_bash2py.mkdir_p(config["globus_global_certs_dir"])
 
+    #Download trusted certs tarball
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
     esg_trusted_certs_file_url = "https://aims1.llnl.gov/esgf/dist/certs/{esg_trusted_certs_file}".format(esg_trusted_certs_file=esg_trusted_certs_file)
     esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
+
     #untar the esg_trusted_certs_file
     esg_functions.extract_tarball(os.path.join(globus_certs_dir,esg_trusted_certs_file), globus_certs_dir)
     os.remove(os.path.join(globus_certs_dir,esg_trusted_certs_file))
+
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
@@ -161,6 +164,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
             simpleCA_cert_parent_dir = esg_functions.get_parent_directory(simpleCA_cert)
             simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{simpleCA_cert_hash}_setup-0.tar.gz".format(simpleCA_cert_hash=simpleCA_cert_hash))
             esg_functions.extract_tarball(simpleCA_setup_tar_file)
+
             with esg_bash2py.pushd("globus_simple_ca_{simpleCA_cert_hash}_setup-0".format(simpleCA_cert_hash=simpleCA_cert_hash)):
                 shutil.copyfile("{simpleCA_cert_hash}.signing_policy".format(simpleCA_cert_hash=simpleCA_cert_hash), "{globus_global_certs_dir}/{simpleCA_cert_hash}.signing_policy".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash))
             if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
@@ -183,7 +187,9 @@ def install_extkeytool():
 
 def convert_per_to_dem(private_key, key_output_dir):
     '''Convert your private key into from PEM to DER format that java likes'''
+    print "\n*******************************"
     print "converting private key from PEM to DER... "
+    print "******************************* \n"
     derkey = os.path.join(key_output_dir,"key.der")
     convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
     if convert_to_der["returncode"] !=0:
@@ -198,6 +204,8 @@ def check_cachain_validity(ca_chain_bundle):
         valid_chain = esg_functions.call_subprocess("openssl verify -CAfile {ca_chain_bundle} {ca_chain_bundle}".format(ca_chain_bundle=ca_chain_bundle))
         if "error" in valid_chain['stdout'] or "error" in valid_chain['stderr']:
             print "The chain is not valid.  (hint: did you include the root cert for the chain?)"
+        else:
+            print "{ca_chain_bundle} is valid.".format(ca_chain_bundle=ca_chain_bundle)
     else:
         print "Hmmm... no chain provided [{ca_chain_bundle}], skipping this check..."
 
@@ -310,6 +318,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     print "Keystore alias: {keystore_alias}".format(keystore_alias=keystore_alias)
     print "Keystore password: {keystore_password}".format(keystore_password=keystore_password)
     print "Private key   : {private_key}".format(private_key=private_key)
+    print "Public cert  : {public_cert}".format(public_cert=public_cert)
     print "Certificates..."
 
     esg_bash2py.mkdir_p(idptools_install_dir)
@@ -619,14 +628,27 @@ def setup_temp_ca():
         print "new_ca_output:", new_ca_output
 
 
-def check_for_commercial_ca():
-    if os.listdir("/etc/esgfcerts"):
+def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
+    '''Checks if Commerical CA directory has been created; asks user if they would like proceed with
+    Commercial CA installation if directory is found'''
+
+    if os.listdir(commercial_ca_directory):
         print "Found commercial CA directory."
         commercial_ca_setup = raw_input("Do you want to install the commerical CA [Y/n]: ") or "yes"
         if commercial_ca_setup.lower() in ["yes", "y"]:
-            pass
+            file_list = ["hostcert.pem", "hostkey.pem"]
+            with esg_bash2py.pushd(commercial_ca_directory):
+                for file_name in file_list:
+                    if not os.path.isfile(file_name):
+                        print "{file_name} not found in /etc/esgfcerts. Exiting."
+                        esg_functions.exit_with_error(1)
+                    else:
+                        try:
+                            shutil.copyfile(file_name, "/etc/grid-security/{file_name}".format(file_name=file_name))
+                        except OSError:
+                            logger.exception("Could not copy %s", file_name)
 
-
+                print "Local installation of certs complete."
 
 def main():
     print "*******************************"
@@ -635,6 +657,7 @@ def main():
 
     create_self_signed_cert("/etc/certs")
     install_tomcat_keypair("/etc/certs/hostkey.pem", "/etc/certs/hostcert.pem")
+    check_for_commercial_ca()
 
 
 if __name__ == '__main__':

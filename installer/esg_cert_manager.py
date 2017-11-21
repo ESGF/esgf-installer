@@ -60,6 +60,17 @@ def create_self_signed_cert(cert_dir):
         cert.gmtime_adj_notAfter(10*365*24*60*60)
         cert.set_issuer(cert.get_subject())
         cert.set_pubkey(k)
+        cert.add_extensions([
+          OpenSSL.crypto.X509Extension("basicConstraints", True,
+                                       "CA:TRUE, pathlen:0"),
+          OpenSSL.crypto.X509Extension("keyUsage", True,
+                                       "keyCertSign, cRLSign"),
+          OpenSSL.crypto.X509Extension("subjectKeyIdentifier", False, "hash",
+                                       subject=cert),
+          ])
+        cert.add_extensions([
+          OpenSSL.crypto.X509Extension("authorityKeyIdentifier", False, "keyid:always",issuer=cert)
+          ])
         cert.sign(k, 'sha1')
 
         esg_bash2py.mkdir_p(cert_dir)

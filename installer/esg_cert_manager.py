@@ -619,6 +619,13 @@ def setup_temp_ca():
         print "new_ca_output:", new_ca_output
 
 
+def check_for_commercial_ca():
+    if os.listdir("/etc/esgfcerts"):
+        print "Found commercial CA directory."
+        commercial_ca_setup = raw_input("Do you want to install the commerical CA [Y/n]: ") or "yes"
+        if commercial_ca_setup.lower() in ["yes", "y"]:
+            pass
+
 
 
 def main():

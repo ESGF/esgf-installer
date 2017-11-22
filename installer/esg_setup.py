@@ -16,6 +16,7 @@ import urlparse
 import datetime
 import getpass
 import tarfile
+import getpass
 from time import sleep
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
@@ -204,6 +205,7 @@ def _confirm_password(password_input, password_confirmation):
 
 def _update_admin_password_file(updated_password):
     #TODO: Rename esgf_secret_file to esgf_admin_password_file
+    #TODO: Move this to esg_functions as set_security_admin_password()
     '''Updates the esgf_secret_file'''
     try:
         security_admin_password_file = open(config["esgf_secret_file"], 'w+')
@@ -256,12 +258,12 @@ def _choose_admin_password():
         return
 
     while True:
-        password_input = raw_input(
+        password_input = getpass.getpass(
             "What is the admin password to use for this installation? (alpha-numeric only): ")
         if not _is_valid_password(password_input):
             continue
 
-        password_input_confirmation = raw_input(
+        password_input_confirmation = getpass.getpass(
             "Please re-enter password to confirm: ")
 
         if _confirm_password(password_input, password_input_confirmation):
@@ -409,6 +411,12 @@ def _choose_publisher_db_user_passwd():
     if config["publisher_db_user_passwd"]:
         print "Using previously configured publisher DB password"
         return
+    if os.path.isfile(config['pub_secret_file']):
+        with open(config['pub_secret_file'], "r") as secret_file:
+            publisher_db_user_passwd = secret_file.read()
+        print "Found existing value for property publisher_db_user_passwd"
+        return
+    
     if not config["publisher_db_user_passwd"] or force_install:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
         publisher_db_user_passwd_input = getpass.getpass(
@@ -416,12 +424,6 @@ def _choose_publisher_db_user_passwd():
         if publisher_db_user_passwd_input:
             with open(config['pub_secret_file'], "w") as secret_file:
                 secret_file.write(publisher_db_user_passwd_input)
-
-    # if not os.path.isfile(config['pub_secret_file']):
-    #     esg_bash2py.touch(config['pub_secret_file'])
-    #     with open(config['pub_secret_file'], "w") as secret_file:
-    #         secret_file.write(config[
-    #                           "publisher_db_user_passwd"])
 
 def get_db_properties():
     db_properties_dict = {"db_user": None, "db_host": None,
@@ -634,24 +636,32 @@ def install_prerequisites():
 
     esg_functions.stream_subprocess_output(" ".join(yum_install_list))
 
+def set_default_java():
+    # default_java_version_info = esg_functions.call_subprocess("java -version")["stderr"]
+    # default_java_version_number = re.search("1.8.0_\w+", default_java_version_info).group()
+    # if semver.compare(default_java_version_number, config["java_version"]) != 0:
+    esg_functions.stream_subprocess_output("alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
+    esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
+
 def check_for_existing_java():
     '''Check if a valid java installation is currently on the system'''
     java_path = find_executable("java", os.path.join(config["java_install_dir"],"bin"))
     if java_path:
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
-        java_version_stdout = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))
-        print java_version_stdout["stderr"]
-        installed_java_version = re.search("1.8.0_\w+", java_version_stdout["stderr"]).group()
-        if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
-            print "Installed java version meets the minimum requirement "
-        return java_version_stdout["stderr"]
+        return check_java_version(java_path)
 
 def check_java_version(java_path):
+    print "Checking Java version"
     try:
-        return esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))["stderr"]
+        java_version_output = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))["stderr"]
     except KeyError:
         logger.exception("Could not check the Java version")
         esg_functions.exit_with_error(1)
+
+    installed_java_version = re.search("1.8.0_\w+", java_version_output).group()
+    if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
+        print "Installed java version meets the minimum requirement "
+    return java_version_output
 
 def download_java(java_tarfile):
     print "Downloading Java from ", config["java_dist_url"]
@@ -699,7 +709,9 @@ def setup_java():
         #recursively change permissions
         esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
-    print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
+    set_default_java()
+    print check_java_version("java")
+    # print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
 
 def setup_ant():
     '''

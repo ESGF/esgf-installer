@@ -17,6 +17,7 @@ import errno
 import yaml
 import pwd
 import grp
+import getpass
 import netifaces
 import getpass
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
@@ -313,7 +314,8 @@ def git_tagrelease():
     '''
     pass
 
-
+def get_parent_directory(directory_path):
+    return os.path.join(directory_path, os.pardir)
 
 def is_in_git_repo(file_name):
     '''
@@ -533,7 +535,7 @@ def call_subprocess(command_string, command_stdin = None):
         else:
             command_process_stdout, command_process_stderr =  command_process.communicate()
     except (OSError, ValueError), error:
-        logger.exception()
+        logger.exception("Error with subprocess")
         exit_with_error(1)
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)
@@ -611,13 +613,18 @@ def get_security_admin_password():
         return security_admin_password
 
 
-def set_keyword_password():
+def set_java_keystore_password():
+    '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''
     while True:
+<<<<<<< HEAD
         keystore_password_input = getpass.getpass("Please enter the password for this keystore   : ")
         if keystore_password_input == "changeit":
                 break
+=======
+        keystore_password_input = getpass.getpass("Please enter the password for this keystore: ")
+>>>>>>> setup_ca_script
         if not keystore_password_input:
-            print "Invalid password"
+            print "Invalid password. The password can not be blank."
             continue
 
         keystore_password_input_confirmation = getpass.getpass("Please re-enter the password for this keystore: ")
@@ -629,22 +636,25 @@ def set_keyword_password():
             continue
     with open(config['ks_secret_file'], 'w') as keystore_file:
         keystore_file.write(config["keystore_password"])
+    os.chmod(config['ks_secret_file'], 0640)
+    os.chown(config['ks_secret_file'], get_user_id("root"), get_group_id("tomcat"))
     return True
 
-def get_keystore_password():
-    ''' Gets the keystore_password from the saved ks_secret_file '''
+def get_java_keystore_password():
+    ''' Gets the keystore_password from the saved ks_secret_file at /esg/config/.esg_keystore_pass '''
     try:
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         if not keystore_password:
-            set_keyword_password()
+            set_java_keystore_password()
 
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
-    except IOError:
-        logger.exception("Failed to get keystore password")
-        set_keyword_password()
+    except IOError, error:
+        if error.errno == errno.ENOENT:
+            logger.info("The keystore password has not been set yet so the password file %s does not exist yet.", config['ks_secret_file'])
+        set_java_keystore_password()
         with open(config['ks_secret_file'], 'rb') as keystore_file:
             keystore_password = keystore_file.read().strip()
         return keystore_password
@@ -654,7 +664,7 @@ def _check_keystore_password(keystore_password):
     if not os.path.isfile(config['ks_secret_file']):
         logger.error("$([FAIL]) No keystore file present [%s]", config['ks_secret_file'])
         return False
-    keystore_password = get_keystore_password()
+    keystore_password = get_java_keystore_password()
     keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_file=config['ks_secret_file'], keystore_password=keystore_password)
     keytool_list_process = call_subprocess(keytool_list_command)
     if keytool_list_process["returncode"] != 0:
@@ -766,10 +776,16 @@ def get_dir_owner_and_group(path):
     group = grp.getgrgid(gid)[0]
     return user, group
 
+def track_extraction_progress(members):
+    '''Output of the files being extracted from a tarball'''
+    for member in members:
+       # this will be the current file being extracted
+       yield member
+
 def extract_tarball(tarball_name, dest_dir="."):
     try:
         tar = tarfile.open(tarball_name)
-        tar.extractall(dest_dir)
+        tar.extractall(dest_dir, members = track_extraction_progress(tar))
         tar.close()
     except tarfile.TarError:
         logger.exception("Could not extract the tarfile: %s", tarball_name)

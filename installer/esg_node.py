@@ -16,6 +16,7 @@ import esg_version_manager
 import esg_mirror_manager
 import esg_apache_manager
 import esg_subsystem
+import esg_property_manager
 import esg_logging_manager
 import esg_init
 import yaml
@@ -295,6 +296,40 @@ def check_for_conda():
         print "source /usr/local/conda/bin/activate esgf-pub"
         sys.exit(1)
 
+
+def done_remark():
+    print "Finished!..."
+    print "In order to see if this node has been installed properly you may direct your browser to:"
+    if "DATA" in node_type_list or "INSTALL" in node_type_list:
+        esgf_host = esg_functions.get_esgf_host()
+        print "http://{esgf_host}/thredds".format(esgf_host=esgf_host)
+        print "http://{esgf_host}/esg-orp".format(esgf_host=esgf_host)
+    if "INDEX" in node_type_list:
+        print "http://${esgf_host}/"
+    if "COMPUTE" in node_type_list:
+        print "http://${esgf_host}/las"
+
+    print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node_peer_group"))
+    print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf_index_peer"))
+
+#     if [ -d "${thredds_content_dir}/thredds" ]; then
+#         echo
+#         echo "[Note: Use UNIX group permissions on ${thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]"
+#         echo " %> chgrp -R <appropriate unix group for publishing users> ${thredds_content_dir}/thredds"
+#     fi
+#
+    print '''
+        -------------------------------------------------------
+        Administrators of this node should subscribe to the
+        esgf-node-admins@lists.llnl.gov by sending email to: "majordomo@lists.llnl.gov"
+        with the body: "subscribe esgf-node-admins"
+        -------------------------------------------------------
+'''
+#
+#     #echo "(\"Test Project\" -> pcmdi.${esg_root_id}.${node_short_name}.test.mytest)"
+#     echo ""
+
+
 def main(node_type_list):
     check_for_conda()
     # default distribution_url
@@ -374,6 +409,7 @@ def main(node_type_list):
 
     # install dependencies
     system_component_installation()
+    done_remark()
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ import logging
 import socket
 import requests
 import yaml
+import datetime
 import errno
 import jks
 import OpenSSL
@@ -638,21 +639,37 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
 
     if os.listdir(commercial_ca_directory):
         print "Found commercial CA directory."
-        commercial_ca_setup = raw_input("Do you want to install the commerical CA [Y/n]: ") or "yes"
+        commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
         if commercial_ca_setup.lower() in ["yes", "y"]:
-            file_list = ["hostcert.pem", "hostkey.pem"]
-            with esg_bash2py.pushd(commercial_ca_directory):
-                for file_name in file_list:
-                    if not os.path.isfile(file_name):
-                        print "{file_name} not found in /etc/esgfcerts. Exiting."
-                        esg_functions.exit_with_error(1)
-                    else:
-                        try:
-                            shutil.copyfile(file_name, "/etc/grid-security/{file_name}".format(file_name=file_name))
-                        except OSError:
-                            logger.exception("Could not copy %s", file_name)
+            commercial_key_path = raw_input("Enter the file path of the commercial key: ")
+            commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
+            ca_chain_path = raw_input("Enter the file path of the ca chain: ")
+            #Backup existing certs
+            if os.path.isfile("/etc/certs/hostcert.pem"):
+                shutil.copyfile("/etc/certs/hostcert.pem", "/etc/certs/hostcert.pem.{date}.bak".format(date=str(datetime.date.today())))
+            if os.path.isfile("/etc/certs/hostkey.pem"):
+                shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
 
-                print "Local installation of certs complete."
+            shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
+            shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
+            shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
+            
+            print "Local installation of certs complete."
+
+        else:
+            return
+            # file_list = ["hostcert.pem", "hostkey.pem"]
+            # with esg_bash2py.pushd(commercial_ca_directory):
+            #     for file_name in file_list:
+            #         if not os.path.isfile(file_name):
+            #             print "{file_name} not found in /etc/esgfcerts. Exiting."
+            #             esg_functions.exit_with_error(1)
+            #         else:
+            #             try:
+            #                 shutil.copyfile(file_name, "/etc/grid-security/{file_name}".format(file_name=file_name))
+            #             except OSError:
+            #                 logger.exception("Could not copy %s", file_name)
+
 
 def main():
     print "*******************************"

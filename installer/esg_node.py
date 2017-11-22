@@ -298,7 +298,8 @@ def check_for_conda():
 
 
 def done_remark():
-    print "Finished!..."
+    '''Prints info to denote that the installation has completed'''
+    print "\nFinished!..."
     print "In order to see if this node has been installed properly you may direct your browser to:"
     if "DATA" in node_type_list or "INSTALL" in node_type_list:
         esgf_host = esg_functions.get_esgf_host()

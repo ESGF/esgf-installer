@@ -24,6 +24,53 @@ with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 esg_root_id = esg_functions.get_esg_root_id()
 
+def clone_publisher_repo(publisher_path):
+    print "Fetching the cdat project from GIT Repo... %s" % (config["publisher_repo"])
+    Repo.clone_from(config[
+                    "publisher_repo"], publisher_path)
+
+    if not os.path.isdir(os.path.join(publisher_path, ".git")):
+
+        publisher_git_protocol = "https://"
+        print "Apparently was not able to fetch from GIT repo using git protocol... trying https protocol... %s" % (publisher_git_protocol)
+
+        Repo.clone_from(config["publisher_repo_https"], publisher_path)
+
+        if not os.path.isdir(os.path.join(config["workdir"], "esg-publisher", ".git")):
+            print "Could not fetch from cdat's repo (with git nor https protocol)"
+            esg_functions.exit_with_error(1)
+    else:
+        print "Publisher repo already exists {publisher_path}".format(publisher_path=publisher_path)
+
+def checkout_publisher_branch(publisher_path, branch_name):
+    publisher_repo_local = Repo(publisher_path)
+    publisher_repo_local.git.checkout(branch_name)
+
+def install_publisher():
+    # install publisher
+    from setuptools import sandbox
+    sandbox.run_setup('setup.py', ['install'])
+
+def setup_publisher():
+    # install ESGF publisher
+    # location: /usr/local/conda/envs/esgf-pub/
+    ESG_PUBLISHER_VERSION= "v3.2.7"
+    with esg_bash2py.pushd("/tmp"):
+        clone_publisher_repo()
+        # git clone https://github.com/ESGF/esg-publisher.git && \
+        # cd esg-publisher && \
+        with esg_bash2py.pushd("esg-publisher"):
+            checkout_publisher_branch("/tmp/esg-publisher", ESG_PUBLISHER_VERSION)
+            with esg_bash2py.pushd("src/python/esgcet"):
+                install_publisher()
+
+# env needed by Python client to trust the data node server certicate
+# ENV SSL_CERT_DIR /etc/grid-security/certificates
+# ENV ESGINI /esg/config/esgcet/esg.ini
+#
+# # startup scripts
+# COPY scripts/ /usr/local/bin/
+
 try:
     node_short_name = config["node_short_name"]
 except:

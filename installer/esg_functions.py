@@ -616,13 +616,7 @@ def get_security_admin_password():
 def set_java_keystore_password():
     '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''
     while True:
-<<<<<<< HEAD
-        keystore_password_input = getpass.getpass("Please enter the password for this keystore   : ")
-        if keystore_password_input == "changeit":
-                break
-=======
         keystore_password_input = getpass.getpass("Please enter the password for this keystore: ")
->>>>>>> setup_ca_script
         if not keystore_password_input:
             print "Invalid password. The password can not be blank."
             continue

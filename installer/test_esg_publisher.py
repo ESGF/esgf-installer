@@ -3,7 +3,6 @@ import esg_publisher
 import os
 import shutil
 import yaml
-from git import Git
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
@@ -32,9 +31,7 @@ class test_ESG_publisher(unittest.TestCase):
         esg_publisher.clone_publisher_repo("/tmp/esg-publisher")
         self.assertTrue(os.path.isdir("/tmp/esg-publisher/.git"))
 
-        repo = Git('/tmp/esg-publisher')
-        repo.checkout("v3.2.7")
-        # repo = esg_publisher.checkout_publisher_branch("/tmp/esg-publisher", "v3.2.7")
+        repo = esg_publisher.checkout_publisher_branch("/tmp/esg-publisher", "v3.2.7")
         branch = repo.active_branch
         print "active branch:", branch.name
         self.assertEquals(branch.name, "v3.2.7")

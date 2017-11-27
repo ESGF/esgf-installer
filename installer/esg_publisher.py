@@ -48,8 +48,9 @@ def install_publisher():
     # install publisher
     # from setuptools import sandbox
     symlink_pg_binary()
-    from distutils.core import run_setup
-    run_setup('setup.py', ['install'])
+    esg_functions.stream_subprocess_output("python setup.py install")
+    # from distutils.core import run_setup
+    # run_setup('setup.py', ['install'])
     # sandbox.run_setup('setup.py', ['install'])
 
 def setup_publisher():

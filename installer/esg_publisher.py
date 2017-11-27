@@ -53,7 +53,7 @@ def setup_publisher():
         # git clone https://github.com/ESGF/esg-publisher.git && \
         # cd esg-publisher && \
         with esg_bash2py.pushd("esg-publisher"):
-            checkout_publisher_branch("/tmp/esg-publisher", ESG_PUBLISHER_VERSION)
+            checkout_publisher_branch("/tmp/esg-publisher", "devel")
             with esg_bash2py.pushd("src/python/esgcet"):
                 install_publisher()
 

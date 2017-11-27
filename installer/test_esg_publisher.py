@@ -31,6 +31,17 @@ class test_ESG_publisher(unittest.TestCase):
         esg_publisher.clone_publisher_repo("/tmp/esg-publisher")
         self.assertTrue(os.path.isdir("/tmp/esg-publisher/.git"))
 
+        repo = esg_publisher.checkout_publisher_branch("/tmp/esg-publisher", "v3.2.7")
+        branch = repo.active_branch
+        print "active branch:", branch.name
+        self.assertEquals(branch.name, "v3.2.7")
+
+    # def test_checkout_publisher_branch(self):
+    #     repo = checkout_publisher_branch("/tmp/esg-publisher", "v3.2.7")
+    #     branch = repo.active_branch
+    #     print "active branch:", branch.name
+    #     self.assertEquals(branch.name, "v3.2.7")
+
 
     # def test_esgcet():
     #     print '''

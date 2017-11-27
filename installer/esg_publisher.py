@@ -39,10 +39,18 @@ def checkout_publisher_branch(publisher_path, branch_name):
     publisher_repo_local.git.checkout(branch_name)
     return publisher_repo_local
 
+#TODO: Might belong in esg_postgres.py
+def symlink_pg_binary():
+    '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
+    esg_bash2py.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
+
 def install_publisher():
     # install publisher
-    from setuptools import sandbox
-    sandbox.run_setup('setup.py', ['install'])
+    # from setuptools import sandbox
+    symlink_pg_binary()
+    from distutils.core import run_setup
+    run_setup('setup.py', ['install'])
+    # sandbox.run_setup('setup.py', ['install'])
 
 def setup_publisher():
     # install ESGF publisher

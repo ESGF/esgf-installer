@@ -12,6 +12,7 @@ import esg_postgres
 import esg_functions
 import esg_property_manager
 import esg_version_manager
+import esg_bash2py
 from time import sleep
 from git import Repo
 import esg_logging_manager
@@ -36,6 +37,7 @@ def clone_publisher_repo(publisher_path):
 def checkout_publisher_branch(publisher_path, branch_name):
     publisher_repo_local = Repo(publisher_path)
     publisher_repo_local.git.checkout(branch_name)
+    return publisher_repo_local
 
 def install_publisher():
     # install publisher
@@ -47,7 +49,7 @@ def setup_publisher():
     # location: /usr/local/conda/envs/esgf-pub/
     ESG_PUBLISHER_VERSION= "v3.2.7"
     with esg_bash2py.pushd("/tmp"):
-        clone_publisher_repo()
+        clone_publisher_repo("/tmp/esg-publisher")
         # git clone https://github.com/ESGF/esg-publisher.git && \
         # cd esg-publisher && \
         with esg_bash2py.pushd("esg-publisher"):

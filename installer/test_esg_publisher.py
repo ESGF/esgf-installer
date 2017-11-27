@@ -28,7 +28,7 @@ class test_ESG_publisher(unittest.TestCase):
         pass
 
     def test_clone_publisher_repo(self):
-        esg_publisher.clone_publisher_repo("/tmp")
+        esg_publisher.clone_publisher_repo("/tmp/esg-publisher")
         self.assertTrue(os.path.isdir("/tmp/esg-publisher/.git"))
 
 

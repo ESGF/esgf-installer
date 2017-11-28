@@ -45,7 +45,7 @@ pylint == 1.6.4
 # esg_setup.py: 7
 # esg_subsystem.py: 13
 # esg_tomcat_manager.py: 21
-requests == 2.11.1
+requests >=2.17.3
 
 # setup.py: 3
 setuptools == 36.0.1

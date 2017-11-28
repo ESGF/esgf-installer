@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<idp_whitelist xmlns="http://www.esgf.org/whitelist">
+    <value>https://esgf-node.jpl.nasa.gov/esgf-idp/idp/openidServer.htm</value>
+</idp_whitelist>
+

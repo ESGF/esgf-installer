@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	ESGF OpenID Providers List for User Interface Combobox
+
+	This list sets the entries in a combobox in the OpenID Relying
+	Party user interface.  It allows users to pick an IdP from a list
+	rather than having to type in their OpenID.
+
+	*** IMPORTANT: Providers included MUST be running release 1.8
+	or greater of ESGF in order to use the special generic
+	identifier select OpenID URIs ***
+
+	What is an OpenID Provider Identifier Select URI? - For ESGF Providers
+	this consists of the usual OpenID URI minus the last element
+	denoting the user identifier. e.g. for DKRZ's OpenID Provider,
+	An example OpenID might be,
+
+		https://esgf-data.dkrz.de/esgf-idp/openid/alice
+
+	The equivalent identifier select URI is:
+
+		https://esgf-data.dkrz.de/esgf-idp/openid/
+
+	This represents a generic URI for the OpenID Provider.  This allows
+	the ORP user interface to be simplified so that the user can select
+	from one of a fixed set of options, one for each ESGF IdP.  Once
+	selected, the user is redirected to their selected IdP and then asked
+	to confirm their username along with their password.
+-->
+<OPS>
+ <OP>
+  <!--
+	Identity Provider Organisation name to be displayed in ORP user interface combobox
+	The first entry is blank to indicate to the user that they can type in their
+	own if needed
+  -->
+  <NAME></NAME>
+  <URL>https://</URL>
+ </OP>
+ <OP>
+  <NAME>DOE Lawrence Livermore National Laboratory (LLNL)</NAME>
+  <URL>https://pcmdi.llnl.gov/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>Centre for Environmental Data Analysis (CEDA)</NAME>
+  <URL>https://ceda.ac.uk/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>NASA Jet Propulsion Laboratory (JPL)</NAME>
+  <URL>https://esgf-node.jpl.nasa.gov/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>Institut Pierre Simon Laplace (IPSL)</NAME>
+  <URL>https://esgf-node.ipsl.upmc.fr/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>National Supercomputer Center at Linkoping University (NSC-LIU)</NAME>
+  <URL>https://esg-dn1.nsc.liu.se/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>German Climate Computing Centre (DKRZ)</NAME>
+  <URL>https://esgf-data.dkrz.de/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>NASA Center for Climate Simulation (NCCS)</NAME>
+  <URL>https://esgf.nccs.nasa.gov/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>National Computational Infrastructure (NCI)</NAME>
+  <URL>https://esgf.nci.org.au/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>NOAA Geophysical Fluid Dynamics Laboratory (GFDL)</NAME>
+  <URL>https://esgdata.gfdl.noaa.gov/esgf-idp/openid/</URL>
+ </OP>
+ <OP>
+  <NAME>NOAA Enviromental System Research Laboratory (ESRL)</NAME>
+  <URL>https://esgf.esrl.noaa.gov/esgf-idp/openid/</URL>
+ </OP>
+
+</OPS>

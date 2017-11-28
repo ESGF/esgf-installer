@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sites>
+
+  <!-- Central CoG site -->
+  <site name="CoG-CU" domain="www.earthsystemcog.org" />
+
+  <!-- Africa -->
+
+  <!-- America -->
+
+    <!-- DOE/LLNL production server -->
+    <site name="ESGF@DOE/LLNL" domain="pcmdi.llnl.gov" /> 
+
+    <!-- NASA/JPL production server -->
+    <site name="ESGF@NASA/JPL" domain="esgf-node.jpl.nasa.gov" />
+
+    <!-- NASA/NCCS production server -->
+    <site name="ESGF@NASA/NCCS" domain="esgf.nccs.nasa.gov" />
+
+    <!-- NOAA/ESRL production server -->
+    <site name="ESGF@NOAA/ESRL" domain="cog-esgf.esrl.noaa.gov" />		
+
+    <!-- NOAA/GFDL production server -->
+    <site name="ESGF@NOAA/GFDL" domain="esgdata.gfdl.noaa.gov" />		
+
+  <!-- Asia -->
+
+  <!-- Australia -->
+
+    <!-- NCI production server -->
+    <site name="ESGF@NCI" domain="esgf.nci.org.au" /> 
+    
+  <!-- Europe -->
+
+    <!-- DKRZ production server -->
+    <site name="ESGF@DKRZ" domain="esgf-data.dkrz.de" /> 
+    
+    <!-- IPSL production server -->
+    <site name="ESGF@IPSL" domain="esgf-node.ipsl.upmc.fr" />
+
+    <!-- NSC/LIU production server -->
+    <site name="ESGF@NSC/LIU" domain="esg-dn1.nsc.liu.se" />
+        
+    <!-- CEDA production server -->
+    <site name="ESGF@CEDA" domain="esgf-index1.ceda.ac.uk" /> 
+
+</sites>

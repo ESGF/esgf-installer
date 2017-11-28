@@ -26,11 +26,11 @@ with open('esg_config.yaml', 'r') as config_file:
 esg_root_id = esg_functions.get_esg_root_id()
 
 def clone_publisher_repo(publisher_path):
-    print "Fetching the cdat project from GIT Repo... %s" % (config["publisher_repo"])
+    print "Fetching the cdat project from GIT Repo... %s" % (config["publisher_repo_https"])
 
     if not os.path.isdir(os.path.join(publisher_path, ".git")):
         Repo.clone_from(config[
-                        "publisher_repo"], publisher_path)
+                        "publisher_repo_https"], publisher_path)
     else:
         print "Publisher repo already exists {publisher_path}".format(publisher_path=publisher_path)
 

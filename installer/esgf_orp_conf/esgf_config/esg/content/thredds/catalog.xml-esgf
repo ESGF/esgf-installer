@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<catalog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xmlns:xlink="http://www.w3.org/1999/xlink" 
+         xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" 
+         name="Earth System Grid catalog">
+
+  <catalogRef name="Earth System Root catalog" xlink:title="Earth System Root catalog" xlink:href="esgcet/catalog.xml"/>
+
+</catalog>
+

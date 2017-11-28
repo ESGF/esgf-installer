@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<azs_whitelist xmlns="http://www.esgf.org/whitelist">
+    <value>https://esgf-node.jpl.nasa.gov/esg-orp/saml/soap/secure/authorizationService.htm</value>
+</azs_whitelist>
+

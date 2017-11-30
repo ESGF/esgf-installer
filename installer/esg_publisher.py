@@ -18,12 +18,27 @@ from git import Repo
 import esg_logging_manager
 import esg_init
 import yaml
+import re
+from pip.operations import freeze
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open('esg_config.yaml', 'r') as config_file:
     config = yaml.load(config_file)
 esg_root_id = esg_functions.get_esg_root_id()
+
+def check_publisher_version():
+    '''Check if an existing version of the Publisher is found on the system'''
+    module_list = list(freeze.freeze())
+    matcher = re.compile("esgcet==.*")
+    results_list = filter(matcher.match, module_list)
+    if results_list:
+        version = results_list[0].split("==")[1]
+        print "Found existing esg-publisher installation (esg-publisher version {version})".format(version=version)
+        return version
+    else:
+        print "esg-publisher not found on system."
+
 
 def clone_publisher_repo(publisher_path):
     print "Fetching the cdat project from GIT Repo... %s" % (config["publisher_repo_https"])

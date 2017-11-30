@@ -60,6 +60,11 @@ class test_ESG_publisher(unittest.TestCase):
         esg_publisher.run_esginitialize()
         self.assertTrue(os.path.isdir("/esg/data"))
 
+    def test_generate_esgsetup_options(self):
+        output = esg_publisher.generate_esgsetup_options()
+        print "output:", output
+        self.assertTrue(output)
+
     # def test_checkout_publisher_branch(self):
     #     repo = checkout_publisher_branch("/tmp/esg-publisher", "v3.2.7")
     #     branch = repo.active_branch

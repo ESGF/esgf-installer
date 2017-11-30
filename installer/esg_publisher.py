@@ -350,7 +350,7 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
             logger.info("generate_esg_ini_command: %s", generate_esg_ini_command)
 
         else:
-            esg_ini_command = generate_esg_config_file()
+            esg_ini_command = generate_esgsetup_options()
             print "esg_ini_command: ", esg_ini_command
 
     try:
@@ -383,17 +383,17 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
     esg_functions.exit_with_error(0)
 
 
-def generate_esg_config_file(recommended_setup = 1):
+def generate_esgsetup_options(recommended_setup = 1):
     # get_property publisher_db_user ${publisher_db_user}
     publisher_db_user = None
     try:
         publisher_db_user = config["publisher_db_user"]
     except KeyError:
-        publisher_db_user = esg_functions.get_property("publisher_db_user")
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
 
     security_admin_password = esg_functions.get_security_admin_password()
 
-    generate_esg_ini_command = "{cdat_home}/bin/esgsetup --db".format(cdat_home=config["cdat_home"])
+    generate_esg_ini_command = "esgsetup --db".format(cdat_home=config["cdat_home"])
     if recommended_setup == 1:
         generate_esg_ini_command += " --minimal-setup"
     if config["db_database"]:

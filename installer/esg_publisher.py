@@ -53,6 +53,21 @@ def install_publisher():
     # run_setup('setup.py', ['install'])
     # sandbox.run_setup('setup.py', ['install'])
 
+def run_esgsetup():
+    '''generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration'''
+    print "\n*******************************"
+    print "Running esgsetup"
+    print "******************************* \n"
+    
+    generate_esg_ini_command = '''esgsetup --config --minimal-setup" --rootid {esg_root_id}'''.format(esg_root_id=esg_functions.get_esg_root_id())
+    #"sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}"
+    #"sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}"
+    esgsetup_process = esg_functions.call_subprocess(generate_esg_ini_command)
+    if esgsetup_process['returncode'] != 0:
+        raise RuntimeError("%s failed, status code %s stderr %r" % (
+                   generate_esg_ini_command, esgsetup_process['returncode'], esgsetup_process['stderr']))
+        esg_functions.exit_with_error(1)
+
 def setup_publisher():
     # install ESGF publisher
     # location: /usr/local/conda/envs/esgf-pub/

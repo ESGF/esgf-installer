@@ -62,10 +62,17 @@ def run_esgsetup():
     generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_root_id}'''.format(esg_root_id=esg_functions.get_esg_root_id())
     #"sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}"
     #"sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}"
-    esgsetup_process = esg_functions.call_subprocess(generate_esg_ini_command)
-    if esgsetup_process['returncode'] != 0:
-        raise RuntimeError("%s failed, status code %s stderr %r" % (
-                   generate_esg_ini_command, esgsetup_process['returncode'], esgsetup_process['stderr']))
+    try:
+        esg_functions.stream_subprocess_output(generate_esg_ini_command)
+    except Exception:
+        logger.exception("Could not finish esgsetup")
+        esg_functions.exit_with_error(1)
+
+def run_esginitialize():
+    '''Run the esginitialize script to initialize the ESG node database.'''
+    esginitialize_process = esg_functions.call_subprocess("esginitialize -c")
+    if esginitialize_process["returncode"] != 0:
+        logger.exception("esginitialize failed")
         esg_functions.exit_with_error(1)
 
 def setup_publisher():

@@ -20,6 +20,7 @@ from git import Repo
 from time import sleep
 from clint.textui import progress
 import esg_logging_manager
+import re
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
@@ -168,6 +169,19 @@ def setup_node_manager_old():
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-node-manager.war")
+
+def check_thredds_version():
+    '''Check the MANIFEST.MF file for the Thredds version'''
+    with open("/usr/local/tomcat/webapps/thredds/META-INF/MANIFEST.MF", "r") as manifest_file:
+        contents = manifest_file.readlines()
+        matcher = re.compile("Implementation-Version.*")
+        results_list = filter(matcher.match, contents)
+        if results_list:
+            version_number = results_list[0].split(":")[1].strip().split("-")[1]
+            print "Found existing Thredds installation (Thredds version {version})".format(version=version_number)
+            return version_number
+        else:
+            print "Thredds not found on system."
 
 def download_thredds_war(thredds_url):
 

@@ -53,6 +53,42 @@ def install_publisher():
     # run_setup('setup.py', ['install'])
     # sandbox.run_setup('setup.py', ['install'])
 
+
+def generate_esgsetup_options(recommended_setup = 1):
+    '''Generate the string that will pass arguments to esgsetup'''
+    publisher_db_user = None
+    try:
+        publisher_db_user = config["publisher_db_user"]
+    except KeyError:
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+
+    security_admin_password = esg_functions.get_security_admin_password()
+
+    generate_esg_ini_command = "esgsetup --db".format(cdat_home=config["cdat_home"])
+    if recommended_setup == 1:
+        generate_esg_ini_command += " --minimal-setup"
+    if config["db_database"]:
+        generate_esg_ini_command += " --db-name %s" % (config["db_database"])
+    if config["postgress_user"]:
+        generate_esg_ini_command += " --db-admin %s" % (config["postgress_user"])
+
+    if security_admin_password:
+        generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
+    elif config["pg_sys_acct_passwd"]:
+        generate_esg_ini_command += " --db-admin-password %s" % (config["pg_sys_acct_passwd"])
+
+    if publisher_db_user:
+        generate_esg_ini_command += " --db-user %s" % (publisher_db_user)
+    if config["publisher_db_user_passwd"]:
+        generate_esg_ini_command += " --db-user-password %s" % (config["publisher_db_user_passwd"])
+    if config["postgress_host"]:
+        generate_esg_ini_command += " --db-host %s" % (config["postgress_host"])
+    if config["postgress_port"]:
+        generate_esg_ini_command += " --db-port %s" % (config["postgress_port"])
+
+    logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
+    return generate_esg_ini_command
+
 def run_esgsetup():
     '''generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration'''
     print "\n*******************************"
@@ -83,13 +119,14 @@ def run_esginitialize():
         print esginitialize_process["stderr"]
 
 def setup_publisher():
-    # install ESGF publisher
-    # location: /usr/local/conda/envs/esgf-pub/
+    '''Install ESGF publisher'''
+
+    print "\n*******************************"
+    print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
+    print "******************************* \n"
     ESG_PUBLISHER_VERSION= "v3.2.7"
     with esg_bash2py.pushd("/tmp"):
         clone_publisher_repo("/tmp/esg-publisher")
-        # git clone https://github.com/ESGF/esg-publisher.git && \
-        # cd esg-publisher && \
         with esg_bash2py.pushd("esg-publisher"):
             checkout_publisher_branch("/tmp/esg-publisher", "devel")
             with esg_bash2py.pushd("src/python/esgcet"):
@@ -383,43 +420,6 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
     esg_functions.exit_with_error(0)
 
 
-def generate_esgsetup_options(recommended_setup = 1):
-    # get_property publisher_db_user ${publisher_db_user}
-    publisher_db_user = None
-    try:
-        publisher_db_user = config["publisher_db_user"]
-    except KeyError:
-        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
-
-    security_admin_password = esg_functions.get_security_admin_password()
-
-    generate_esg_ini_command = "esgsetup --db".format(cdat_home=config["cdat_home"])
-    if recommended_setup == 1:
-        generate_esg_ini_command += " --minimal-setup"
-    if config["db_database"]:
-        generate_esg_ini_command += " --db-name %s" % (config["db_database"])
-    if config["postgress_user"]:
-        generate_esg_ini_command += " --db-admin %s" % (config["postgress_user"])
-
-    if security_admin_password:
-        generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
-    elif config["pg_sys_acct_passwd"]:
-        generate_esg_ini_command += " --db-admin-password %s" % (config["pg_sys_acct_passwd"])
-
-    if publisher_db_user:
-        generate_esg_ini_command += " --db-user %s" % (publisher_db_user)
-    if config["publisher_db_user_passwd"]:
-        generate_esg_ini_command += " --db-user-password %s" % (config["publisher_db_user_passwd"])
-    if config["postgress_host"]:
-        generate_esg_ini_command += " --db-host %s" % (config["postgress_host"])
-    if config["postgress_port"]:
-        generate_esg_ini_command += " --db-port %s" % (config["postgress_port"])
-
-    logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
-    return generate_esg_ini_command
-
-
-
 def write_esgcet_install_log():
     """ Write"""
     with open(config.install_manifest, "a+") as datafile:
@@ -433,80 +433,3 @@ def write_esgcet_install_log():
     esg_property_manager.write_as_property("monitor.esg.ini", os.path.join(config[
                                     "publisher_home"], config["publisher_config"]))
     return 0
-
-
-def test_esgcet():
-    print '''
-    ----------------------------
-    ESGCET Test...
-    ----------------------------
-    '''
-    starting_directory = os.getcwd()
-    os.chdir(config["workdir"])
-
-    esg_postgres.start_postgress()
-
-    esgcet_testdir = os.path.join(config[
-                                  "thredds_root_dir"], "test")
-
-    try:
-        os.makedirs(esgcet_testdir)
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
-    except Exception, exception:
-        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
-        esg_functions.exit_with_error(1)
-
-    os.chown(esgcet_testdir, config[
-             "installer_uid"], config["installer_gid"])
-
-    try:
-        os.mkdir(config["thredds_replica_dir"])
-    except OSError, exception:
-        if exception.errno != 17:
-            raise
-        sleep(1)
-        pass
-    except Exception, exception:
-        print "Exception occurred when attempting to create the {esgcet_testdir} directory: {exception}".format(esgcet_testdir=esgcet_testdir, exception=exception)
-        esg_functions.exit_with_error(1)
-
-    os.chown(config["thredds_replica_dir"], config[
-             "installer_uid"], config["installer_gid"])
-    print "esgcet test directory: [%s]" % esgcet_testdir
-
-    fetch_file = "sftlf.nc"
-    if esg_functions.checked_get(os.path.join(esgcet_testdir, fetch_file), "http://" + config["esg_dist_url_root"] + "/externals/" + fetch_file) > 0:
-        print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
-        os.chdir(starting_directory)
-        esg_functions.exit_with_error(1)
-
-    # Run test...
-    print "%s/bin/esginitialize -c " % (config["cdat_home"])
-    esginitialize_output = subprocess.call(
-        "%s/bin/esginitialize -c" % (config["cdat_home"]), shell=True)
-
-    print '''
-        {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
-        '''.format(cdat_home=config["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir)
-    esgprep_output = subprocess.call('''
-        {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
-        '''.format(cdat_home=config["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir), shell=True)
-    if esgprep_output != 0:
-        print " ERROR: ESG Mapfile generation failed"
-        os.chdir(starting_directory)
-        esg_functions.exit_with_error(1)
-
-    print "{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(cdat_home=config["cdat_home"])
-    esgpublish_output = subprocess.call("{cdat_home}/bin/esgpublish --service fileservice --map test_mapfile.txt --project test --thredds".format(
-        cdat_home=config["cdat_home"]), shell=True)
-    if esgpublish_output != 0:
-        print " ERROR: ESG publish failed"
-        os.chdir(starting_directory)
-        esg_functions.exit_with_error(1)
-
-    os.chdir(starting_directory)
-    esg_functions.exit_with_error(0)

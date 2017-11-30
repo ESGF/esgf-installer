@@ -70,10 +70,17 @@ def run_esgsetup():
 
 def run_esginitialize():
     '''Run the esginitialize script to initialize the ESG node database.'''
+    print "\n*******************************"
+    print "Running esginitialize"
+    print "******************************* \n"
+
     esginitialize_process = esg_functions.call_subprocess("esginitialize -c")
     if esginitialize_process["returncode"] != 0:
         logger.exception("esginitialize failed")
         esg_functions.exit_with_error(1)
+    else:
+        print esginitialize_process["stdout"]
+        print esginitialize_process["stderr"]
 
 def setup_publisher():
     # install ESGF publisher

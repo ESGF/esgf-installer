@@ -154,6 +154,26 @@ def setup_publisher():
 # # startup scripts
 # COPY scripts/ /usr/local/bin/
 
+def write_esgcet_install_log():
+    """ Write the Publisher install properties to the install manifest"""
+    with open(config["install_manifest"], "a+") as datafile:
+        datafile.write(str(datetime.date.today()) + "python:esgcet=" +
+                       config["esgcet_version"] + "\n")
+
+    esg_property_manager.write_as_property(
+        "publisher_config", config["publisher_config"])
+    esg_property_manager.write_as_property(
+        "publisher_home", config["publisher_home"])
+    esg_property_manager.write_as_property("monitor.esg.ini", os.path.join(config[
+                                    "publisher_home"], config["publisher_config"]))
+    return 0
+
+def main():
+    setup_publisher()
+    run_esgsetup()
+    run_esginitialize()
+    write_esgcet_install_log()
+
 try:
     node_short_name = config["node_short_name"]
 except:
@@ -434,17 +454,5 @@ def setup_esgcet(upgrade_mode=None, force_install = False, recommended_setup = 1
 
     esg_functions.exit_with_error(0)
 
-
-def write_esgcet_install_log():
-    """ Write"""
-    with open(config.install_manifest, "a+") as datafile:
-        datafile.write(str(datetime.date.today()) + "python:esgcet=" +
-                       config["esgcet_version"] + "\n")
-
-    esg_property_manager.write_as_property(
-        "publisher_config", config["publisher_config"])
-    esg_property_manager.write_as_property(
-        "publisher_home", config["publisher_home"])
-    esg_property_manager.write_as_property("monitor.esg.ini", os.path.join(config[
-                                    "publisher_home"], config["publisher_config"]))
-    return 0
+if __name__ == '__main__':
+    main()

@@ -58,8 +58,8 @@ def run_esgsetup():
     print "\n*******************************"
     print "Running esgsetup"
     print "******************************* \n"
-    
-    generate_esg_ini_command = '''esgsetup --config --minimal-setup" --rootid {esg_root_id}'''.format(esg_root_id=esg_functions.get_esg_root_id())
+
+    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_root_id}'''.format(esg_root_id=esg_functions.get_esg_root_id())
     #"sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}"
     #"sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}"
     esgsetup_process = esg_functions.call_subprocess(generate_esg_ini_command)

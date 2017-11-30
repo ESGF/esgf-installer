@@ -48,11 +48,19 @@ class test_ESG_publisher(unittest.TestCase):
     def test_setup_publisher(self):
         esg_publisher.setup_publisher()
         self.assertTrue(os.path.isdir('/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esgcet-3.2.8-py2.7.egg'))
+
+        esg_publisher.run_esgsetup()
+        self.assertTrue(os.path.isfile("/esg/config/esgcet/esg.ini"))
     # def test_checkout_publisher_branch(self):
     #     repo = checkout_publisher_branch("/tmp/esg-publisher", "v3.2.7")
     #     branch = repo.active_branch
     #     print "active branch:", branch.name
     #     self.assertEquals(branch.name, "v3.2.7")
+
+    # def test_run_esgsetup(self):
+    #     esg_publisher.run_esgsetup()
+    #     self.assertTrue(os.path.isfile("/esg/config/esgcet/esg.ini"))
+
 
 
     # def test_esgcet(self):

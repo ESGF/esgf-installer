@@ -68,6 +68,11 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.setup_dashboard()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
 
+    def test_setup_solr(self):
+        esg_subsystem.setup_solr()
+        self.assertTrue(os.path.isdir("/usr/local/solr"))
+
+
     def test_main(self):
         esg_subsystem.main()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))

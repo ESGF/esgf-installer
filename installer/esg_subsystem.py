@@ -14,10 +14,8 @@ import requests
 import esg_functions
 import esg_bash2py
 import yaml
-import sys
 import zipfile
 from git import Repo
-from time import sleep
 from clint.textui import progress
 import esg_logging_manager
 import re
@@ -384,6 +382,97 @@ def run_dashboard_script():
         esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
         esg_functions.stream_subprocess_output("make")
         esg_functions.stream_subprocess_output("make install")
+
+def download_solr_tarball(solr_tarball_url, SOLR_VERSION):
+    print "\n*******************************"
+    print "Download Solr version {SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION)
+    print "******************************* \n"
+    r = requests.get(solr_tarball_url)
+
+    path = '/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION)
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
+def extract_solr_tarball(solr_tarball_path, SOLR_VERSION):
+    '''Extract the solr tarball to /usr/local and symlink it to /usr/local/solr'''
+    print "\n*******************************"
+    print "Extracting Solr"
+    print "******************************* \n"
+
+    with esg_bash2py.pushd("/usr/local"):
+        esg_functions.extract_tarball(solr_tarball_path)
+        os.remove(solr_tarball_path)
+        esg_bash2py.symlink_force("solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), "solr")
+
+def download_template_directory():
+    '''download template directory structure for shards home'''
+    ESGF_REPO = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
+    with esg_bash2py.pushd("/usr/local/src"):
+        r = requests.get("{ESGF_REPO}/dist/esg-search/solr-home.tar".format(ESGF_REPO=ESGF_REPO))
+
+        path = 'solr-home.tar'
+        with open(path, 'wb') as f:
+            total_length = int(r.headers.get('content-length'))
+            for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+
+        esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
+
+def setup_solr():
+    '''Setup Apache Solr for faceted search'''
+
+    print "\n*******************************"
+    print "Setting up Solr"
+    print "******************************* \n"
+    
+    # # Solr/Jetty web application
+    SOLR_VERSION = "5.5.4"
+    SOLR_INSTALL_DIR = "/usr/local/solr"
+    SOLR_HOME = "/usr/local/solr-home"
+    SOLR_DATA_DIR = "/esg/solr-index"
+    SOLR_INCLUDE= "{SOLR_HOME}/solr.in.sh".format(SOLR_HOME=SOLR_HOME)
+
+    #Download solr tarball
+    solr_tarball_url = "http://archive.apache.org/dist/lucene/solr/{SOLR_VERSION}/solr-{SOLR_VERSION}.tgz".format(SOLR_VERSION=SOLR_VERSION)
+    download_solr_tarball(solr_tarball_url, SOLR_VERSION)
+    #Extract solr tarball
+    extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION)
+
+    esg_bash2py.mkdir_p(SOLR_DATA_DIR)
+
+    # download template directory structure for shards home
+    download_template_directory()
+
+    esg_bash2py.mkdir_p(SOLR_HOME)
+
+    # create non-privilged user to run Solr server
+    esg_functions.stream_subprocess_output("groupadd solr")
+    esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
+
+    SOLR_USER_ID = pwd.getpwnam("solr").pw_uid
+    SOLR_GROUP_ID = grp.getgrnam("solr").gr_gid
+    esg_functions.change_permissions_recursive("/usr/local/solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_permissions_recursive(SOLR_HOME, SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_permissions_recursive(SOLR_DATA_DIR, SOLR_USER_ID, SOLR_GROUP_ID)
+
+    #
+    #Copy shard files
+    shutil.copyfile("solr_scripts/add_shard.sh", "/usr/local/bin/add_shard.sh")
+    shutil.copyfile("solr_scripts/remove_shard.sh", "/usr/local/bin/remove_shard.sh")
+
+    # add shards
+    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8984")
+    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8983")
+
+    # custom logging properties
+    shutil.copyfile("solr_scripts/log4j.properties", "/{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+
 
 def main():
     setup_orp()

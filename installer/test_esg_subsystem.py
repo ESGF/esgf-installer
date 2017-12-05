@@ -72,6 +72,10 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.setup_solr()
         self.assertTrue(os.path.isdir("/usr/local/solr"))
 
+    def test_setup_esg_search(self):
+        esg_subsystem.setup_esg_search()
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-search"))
+
 
     def test_main(self):
         esg_subsystem.main()

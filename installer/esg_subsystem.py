@@ -430,7 +430,7 @@ def setup_solr():
     print "\n*******************************"
     print "Setting up Solr"
     print "******************************* \n"
-    
+
     # # Solr/Jetty web application
     SOLR_VERSION = "5.5.4"
     SOLR_INSTALL_DIR = "/usr/local/solr"
@@ -472,6 +472,41 @@ def setup_solr():
 
     # custom logging properties
     shutil.copyfile("solr_scripts/log4j.properties", "/{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+
+def download_esg_search_war(esg_search_war_url):
+    print "\n*******************************"
+    print "Downloading ESG Search war file"
+    print "******************************* \n"
+
+    r = requests.get(esg_search_war_url, stream=True)
+    path = '/usr/local/tomcat/webapps/esg-search/esg-search.war'
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
+def setup_esg_search():
+    '''Setting up the ESG Search application'''
+
+    print "\n*******************************"
+    print "Setting up ESG Search"
+    print "******************************* \n"
+
+    ESGF_REPO = "http://aims1.llnl.gov/esgf"
+    esg_search_war_url = "{ESGF_REPO}/esg-search/esg-search.war".format(ESGF_REPO=ESGF_REPO)
+    download_esg_search_war(esg_search_war_url)
+    #Extract esg-search war
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-search"):
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
+            zf.extractall()
+        os.remove("esg-search.war")
+
+    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
+    esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-search", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
 
 
 def main():

@@ -516,7 +516,10 @@ def checkout_cog_branch(cog_path, branch_name):
 
 def clone_cog_repo(COG_DIR, COG_INSTALL_DIR):
     '''Clone the COG repo from Github'''
-    Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
+    print "\n*******************************"
+    print "Cloning COG repo"
+    print "******************************* \n"
+    Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR)
     with esg_bash2py.pushd(COG_DIR):
         checkout_cog_branch(".", "devel")
         # cog_repo_local = Repo(".")

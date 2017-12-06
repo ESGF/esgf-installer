@@ -76,6 +76,15 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.setup_esg_search()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-search"))
 
+    def test_clone_cog_repo(self):
+        esg_subsystem.clone_cog_repo("/tmp/cog", "/tmp/cog/cog_install")
+        self.assertTrue(os.path.isdir("/tmp/cog/.git"))
+
+        repo = esg_publisher.checkout_publisher_branch("/tmp/cog", "devel")
+        branch = repo.active_branch
+        print "active branch:", branch.name
+        self.assertEquals(branch.name, "devel")
+
 
     def test_main(self):
         esg_subsystem.main()

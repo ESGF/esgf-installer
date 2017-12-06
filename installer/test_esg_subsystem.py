@@ -80,7 +80,7 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.clone_cog_repo("/tmp/cog", "/tmp/cog/cog_install")
         self.assertTrue(os.path.isdir("/tmp/cog/.git"))
 
-        repo = esg_publisher.checkout_publisher_branch("/tmp/cog", "devel")
+        repo = esg_subsystem.checkout_cog_branch("/tmp/cog", "devel")
         branch = repo.active_branch
         print "active branch:", branch.name
         self.assertEquals(branch.name, "devel")

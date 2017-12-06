@@ -28,13 +28,6 @@ with open('esg_config.yaml', 'r') as config_file:
 
 CATALINA_HOME = "/usr/local/tomcat"
 
-from git import RemoteProgress
-class Progress(RemoteProgress):
-    def update(self, op_code, cur_count, max_count=None, message=''):
-        if message:
-            print('Downloading: (==== {} ====)\r'.format(message))
-            print "current line:", self._cur_line
-
 def setup_subsystem(subsystem, distribution_directory, esg_dist_url, force_install=False):
     '''
     arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
@@ -519,7 +512,15 @@ def clone_cog_repo(COG_DIR, COG_INSTALL_DIR):
     print "\n*******************************"
     print "Cloning COG repo"
     print "******************************* \n"
-    Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR)
+
+    from git import RemoteProgress
+    class Progress(RemoteProgress):
+        def update(self, op_code, cur_count, max_count=None, message=''):
+            if message:
+                print('Downloading: (==== {} ====)\r'.format(message))
+                print "current line:", self._cur_line
+
+    Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
     with esg_bash2py.pushd(COG_DIR):
         checkout_cog_branch(".", "devel")
         # cog_repo_local = Repo(".")

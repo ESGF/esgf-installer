@@ -507,13 +507,20 @@ def setup_esg_search():
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
     esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-search", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
+#TODO: This is duplicating checkout_publisher_branch in esg_publisher; Should be generalized
+def checkout_cog_branch(cog_path, branch_name):
+    '''Checkout a given branch of the COG repo'''
+    publisher_repo_local = Repo(cog_path)
+    publisher_repo_local.git.checkout(branch_name)
+    return publisher_repo_local
 
 def clone_cog_repo(COG_DIR, COG_INSTALL_DIR):
     '''Clone the COG repo from Github'''
     Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
     with esg_bash2py.pushd(COG_DIR):
-        cog_repo_local = Repo(".")
-        cog_repo_local.git.checkout("devel")
+        checkout_cog_branch(".", "devel")
+        # cog_repo_local = Repo(".")
+        # cog_repo_local.git.checkout("devel")
 
 def setup_cog():
     # choose CoG version

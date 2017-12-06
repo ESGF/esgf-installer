@@ -34,6 +34,12 @@ class test_ESGF_subsystem(unittest.TestCase):
             shutil.rmtree("/esg")
         except OSError, error:
             print "error deleting /esg:", error
+
+        try:
+            shutil.rmtree("/tmp/cog")
+        except OSError, error:
+            print "error deleting /tmp/cog:", error
+
     # def cleanup(self):
     #     try:
     #         shutil.rmtree("/usr/local/esgf-dashboard")

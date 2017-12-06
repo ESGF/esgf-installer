@@ -348,6 +348,12 @@ def clone_dashboard_repo():
     print "\n*******************************"
     print "Cloning esgf-dashboard repo from Github"
     print "******************************* \n"
+    from git import RemoteProgress
+    class Progress(RemoteProgress):
+        def update(self, op_code, cur_count, max_count=None, message=''):
+            if message:
+                print('Downloading: (==== {} ====)\r'.format(message))
+                print "current line:", self._cur_line
 
     Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard", progress=Progress())
 

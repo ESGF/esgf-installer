@@ -341,6 +341,7 @@ def main(node_type_list):
 
     # determine installation type
     install_type = get_installation_type(script_version)
+    print "install_type:", install_type
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()

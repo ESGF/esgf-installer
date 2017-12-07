@@ -1,14 +1,14 @@
-Build Utilities
+ESG Setup Module
 ------------------
 .. automodule:: esg_setup
    :members:
 
-ESGF Build
+ESG Apache Manager Module
 ------------------
 .. automodule:: esg_apache_manager
    :members:
 
-Purge and Clone
+ESG Cert Manager
 ------------------
 .. automodule:: esg_cert_manager
   :members:

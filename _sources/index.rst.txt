@@ -7,9 +7,12 @@ Welcome to esgf-installer's documentation!
 ==========================================
 
 .. toctree::
-   :maxdepth: 2
+   :caption: API
 
    api
+
+   :caption: Issues
+
    issues
 
 
@@ -23,4 +26,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-* :ref:`issues`

@@ -9,7 +9,7 @@ import shutil
 import yaml
 import pip
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 class test_ESG_apache(unittest.TestCase):

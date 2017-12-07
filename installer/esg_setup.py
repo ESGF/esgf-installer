@@ -33,7 +33,7 @@ import semver
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 force_install = False
@@ -416,7 +416,7 @@ def _choose_publisher_db_user_passwd():
             publisher_db_user_passwd = secret_file.read()
         print "Found existing value for property publisher_db_user_passwd"
         return
-    
+
     if not config["publisher_db_user_passwd"] or force_install:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
         publisher_db_user_passwd_input = getpass.getpass(

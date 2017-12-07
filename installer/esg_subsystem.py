@@ -555,7 +555,7 @@ def setup_cog():
     #     virtualenv venv
     #
     # # download CoG specific tag or branch
-    clone_cog_repo(COG_DIR, COG_INSTALL_DIR)
+    clone_cog_repo(COG_INSTALL_DIR)
 
     #
     # # install CoG dependencies

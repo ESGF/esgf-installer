@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to esgf-installer’s documentation! &mdash; esgf-installer 2.5.13 documentation</title>
+  <title>ESGF Installer Issue Tracking Guidelines &mdash; esgf-installer 2.5.13 documentation</title>
   
 
   
@@ -35,8 +35,8 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="esgf-installer 2.5.13 documentation" href="#"/>
-        <link rel="next" title="ESG Setup Module" href="api.html"/> 
+    <link rel="top" title="esgf-installer 2.5.13 documentation" href="index.html"/>
+        <link rel="prev" title="ESG Setup Module" href="api.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -55,7 +55,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> esgf-installer
+            <a href="index.html" class="icon icon-home"> esgf-installer
           
 
           
@@ -89,11 +89,15 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="api.html">ESG Setup Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#esg-apache-manager-module">ESG Apache Manager Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ESGF Installer Issue Tracking Guidelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#labeling">Labeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#closing-issues">Closing Issues</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -108,7 +112,7 @@
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">esgf-installer</a>
+          <a href="index.html">esgf-installer</a>
         
       </nav>
 
@@ -136,15 +140,15 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#">Docs</a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Welcome to esgf-installer&#8217;s documentation!</li>
+      <li>ESGF Installer Issue Tracking Guidelines</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/issues.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -157,29 +161,25 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="welcome-to-esgf-installer-s-documentation">
-<h1>Welcome to esgf-installer&#8217;s documentation!<a class="headerlink" href="#welcome-to-esgf-installer-s-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">ESG Setup Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#esg-apache-manager-module">ESG Apache Manager Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="issues.html">ESGF Installer Issue Tracking Guidelines</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="issues.html#labeling">Labeling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="issues.html#closing-issues">Closing Issues</a></li>
-</ul>
-</li>
-</ul>
+  <div class="section" id="esgf-installer-issue-tracking-guidelines">
+<h1>ESGF Installer Issue Tracking Guidelines<a class="headerlink" href="#esgf-installer-issue-tracking-guidelines" title="Permalink to this headline">¶</a></h1>
+<p>We are going to begin to use Github Issues as a well to provide easier and better tracking of issues that occur during development of ESGF.
+Here are some general guidelines for reporting issues.</p>
+<div class="section" id="labeling">
+<h2>Labeling<a class="headerlink" href="#labeling" title="Permalink to this headline">¶</a></h2>
+<p>Github Issues has a label feature that can be used to categorize issues.
+The general guidelines for labeling an issue is to add a label that lists the version in which the issue was first discovered and a label listing the component in which the issue occurs/affects.
+It is possible than an issue affects more than one component, so please add labels for all associated components.</p>
 </div>
+<div class="section" id="closing-issues">
+<h2>Closing Issues<a class="headerlink" href="#closing-issues" title="Permalink to this headline">¶</a></h2>
+<p>Once an issue has been resolved in the codebase, the issue should be closed to avoid duplicated work.
+It is a best practice to add the issue number to the commit message when committing the solution code to the repository.
+For example, when committing code to solve issue #3 the commit message can look similar to this:</p>
+<p><code class="docutils literal"><span class="pre">Added</span> <span class="pre">new</span> <span class="pre">awesome</span> <span class="pre">feature;</span> <span class="pre">fixes</span> <span class="pre">#3</span></code></p>
+<p>That will cause the commit to be linked to the issue.</p>
+<p>Alternatively, the short hash of the commit that fixed the issue can be added as a comment in order to link the solution with the problem statement.</p>
 </div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
-<li><span class="xref std std-ref">issues</span></li>
-</ul>
 </div>
 
 
@@ -192,8 +192,8 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="ESG Setup Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+        <a href="api.html" class="btn btn-neutral" title="ESG Setup Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

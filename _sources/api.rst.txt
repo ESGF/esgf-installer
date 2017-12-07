@@ -5,7 +5,7 @@ Build Utilities
 
 ESGF Build
 ------------------
-.. automodule:: esgf_apache_manager
+.. automodule:: esg_apache_manager
    :members:
 
 Purge and Clone

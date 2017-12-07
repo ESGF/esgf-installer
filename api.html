@@ -91,8 +91,8 @@
               <!-- Local TOC -->
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">Build Utilities</a></li>
-<li><a class="reference internal" href="#esgf-build">ESGF Build</a></li>
-<li><a class="reference internal" href="#purge-and-clone">Purge and Clone</a></li>
+<li><a class="reference internal" href="#module-esg_apache_manager">ESGF Build</a></li>
+<li><a class="reference internal" href="#module-esg_cert_manager">Purge and Clone</a></li>
 </ul>
 </div>
             
@@ -156,14 +156,210 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="build-utilities">
-<h1>Build Utilities<a class="headerlink" href="#build-utilities" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-esg_setup">
+<span id="build-utilities"></span><h1>Build Utilities<a class="headerlink" href="#module-esg_setup" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="esg_setup.check_for_existing_java">
+<code class="descclassname">esg_setup.</code><code class="descname">check_for_existing_java</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_for_existing_java"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_for_existing_java" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a valid java installation is currently on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.check_if_root">
+<code class="descclassname">esg_setup.</code><code class="descname">check_if_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_if_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_if_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check to see if the user is root</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.check_os">
+<code class="descclassname">esg_setup.</code><code class="descname">check_os</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_os"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_os" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the operating system on server is Redhat or CentOS;
+returns False Otherwise</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.check_prerequisites">
+<code class="descclassname">esg_setup.</code><code class="descname">check_prerequisites</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_prerequisites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_prerequisites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.create_esg_directories">
+<code class="descclassname">esg_setup.</code><code class="descname">create_esg_directories</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#create_esg_directories"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.create_esg_directories" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create directories to hold ESGF scripts, config files, and logs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.install_prerequisites">
+<code class="descclassname">esg_setup.</code><code class="descname">install_prerequisites</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#install_prerequisites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.install_prerequisites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install prerequisite modules via yum</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.setup_ant">
+<code class="descclassname">esg_setup.</code><code class="descname">setup_ant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#setup_ant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.setup_ant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install ant via yum.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.setup_java">
+<code class="descclassname">esg_setup.</code><code class="descname">setup_java</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#setup_java"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.setup_java" title="Permalink to this definition">¶</a></dt>
+<dd><p>Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esgf-build">
-<h1>ESGF Build<a class="headerlink" href="#esgf-build" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-esg_apache_manager">
+<span id="esgf-build"></span><h1>ESGF Build<a class="headerlink" href="#module-esg_apache_manager" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="esg_apache_manager.copy_apache_conf_files">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">copy_apache_conf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#copy_apache_conf_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.copy_apache_conf_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy custom apache conf files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_apache_manager.install_mod_wsgi">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">install_mod_wsgi</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#install_mod_wsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.install_mod_wsgi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Have to ensure python is install properly with the shared library for mod_wsgi installation to work</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_apache_manager.install_python27">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">install_python27</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#install_python27"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.install_python27" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install python with shared library</p>
+</dd></dl>
+
 </div>
-<div class="section" id="purge-and-clone">
-<h1>Purge and Clone<a class="headerlink" href="#purge-and-clone" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-esg_cert_manager">
+<span id="purge-and-clone"></span><h1>Purge and Clone<a class="headerlink" href="#module-esg_cert_manager" title="Permalink to this headline">¶</a></h1>
+<p>Certificate Management Functions</p>
+<dl class="function">
+<dt id="esg_cert_manager.backup_previous_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">backup_previous_keystore</code><span class="sig-paren">(</span><em>keystore_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#backup_previous_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.backup_previous_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a previous keystore exists, back it up</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.bundle_certificates">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">bundle_certificates</code><span class="sig-paren">(</span><em>public_cert</em>, <em>ca_chain</em>, <em>idptools_install_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#bundle_certificates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.bundle_certificates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create certificate bundle from public cert and cachain</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_associate_cert_with_private_key">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_associate_cert_with_private_key</code><span class="sig-paren">(</span><em>cert</em>, <em>private_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_associate_cert_with_private_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_associate_cert_with_private_key" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_cachain_validity">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_cachain_validity</code><span class="sig-paren">(</span><em>ca_chain_bundle</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_cachain_validity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_cachain_validity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that the CA chain is valid</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_for_commercial_ca">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_for_commercial_ca</code><span class="sig-paren">(</span><em>commercial_ca_directory='/etc/esgfcerts'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_for_commercial_ca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_for_commercial_ca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if Commerical CA directory has been created; asks user if they would like proceed with
+Commercial CA installation if directory is found</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the contents of a given keystore or truststore</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.convert_per_to_dem">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">convert_per_to_dem</code><span class="sig-paren">(</span><em>private_key</em>, <em>key_output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#convert_per_to_dem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.convert_per_to_dem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert your private key into from PEM to DER format that java likes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.copy_cert_to_tomcat_conf">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">copy_cert_to_tomcat_conf</code><span class="sig-paren">(</span><em>public_cert</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#copy_cert_to_tomcat_conf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.copy_cert_to_tomcat_conf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy the signed cert to the ESGF Tomcat config directory (i.e. /esg/config/tomcat)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_certificate_chain">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_certificate_chain</code><span class="sig-paren">(</span><em>cert_files</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_certificate_chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_certificate_chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate the certificates in the chain and copy them to /etc/certs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_certificate_chain_list">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_certificate_chain_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_certificate_chain_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_certificate_chain_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a list of the certificates that will be a part of the certificate
+chain file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_empty_java_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_empty_java_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_alias</em>, <em>keystore_password</em>, <em>distinguished_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_empty_java_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_empty_java_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new empty Java Keystore using the JDK&#8217;s keytool</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_new_truststore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_new_truststore</code><span class="sig-paren">(</span><em>truststore_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_new_truststore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_new_truststore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Java Truststore file by copying the JRE&#8217;s cacerts file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_self_signed_cert">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_self_signed_cert</code><span class="sig-paren">(</span><em>cert_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_self_signed_cert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_self_signed_cert" title="Permalink to this definition">¶</a></dt>
+<dd><p>If datacard.crt and datacard.key don&#8217;t exist in cert_dir, create a new
+self-signed cert and keypair and write them into that directory.</p>
+<p>Source: <a class="reference external" href="https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/">https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.fetch_esgf_certificates">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">fetch_esgf_certificates</code><span class="sig-paren">(</span><em>globus_certs_dir='/etc/grid-security/certificates'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#fetch_esgf_certificates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.fetch_esgf_certificates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Goes to ESG distribution server and pulls down all certificates for the federation.
+(suitable for crontabbing)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.generate_tomcat_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">generate_tomcat_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_alias</em>, <em>private_key</em>, <em>public_cert</em>, <em>intermediate_certs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#generate_tomcat_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.generate_tomcat_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>The following helper function creates a new keystore for your tomcat installation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.import_cert_into_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">import_cert_into_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_alias</em>, <em>keystore_password</em>, <em>derkey</em>, <em>cert_bundle</em>, <em>provider</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#import_cert_into_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.import_cert_into_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Imports a signed Certificate into the keystore</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.install_extkeytool">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">install_extkeytool</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#install_extkeytool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.install_extkeytool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install the Extkeytool from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.install_tomcat_keypair">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">install_tomcat_keypair</code><span class="sig-paren">(</span><em>private_key='/etc/esgfcerts/hostkey.pem'</em>, <em>public_cert='/etc/esgfcerts/hostcert.pem'</em>, <em>keystore_name='/esg/config/tomcat/keystore-tomcat'</em>, <em>keystore_alias='my_esgf_node'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#install_tomcat_keypair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.install_tomcat_keypair" title="Permalink to this definition">¶</a></dt>
+<dd><p>If you want to install a commercial CA issued certificate:
+esg-node &#8211;install-keypair &lt;certificate file&gt; &lt;key file&gt;
+When prompted for the cachain file, specify the chain file provided by your CA</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.rebuild_truststore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">rebuild_truststore</code><span class="sig-paren">(</span><em>truststore_file</em>, <em>certs_dir='/etc/grid-security/certificates'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#rebuild_truststore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.rebuild_truststore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts ESG certificates (that can be fetch by above function) into a truststore</p>
+</dd></dl>
+
 </div>
 
 

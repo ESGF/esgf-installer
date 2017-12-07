@@ -35,7 +35,9 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="esgf-installer 2.5.13 documentation" href="index.html"/> 
+    <link rel="top" title="esgf-installer 2.5.13 documentation" href="index.html"/>
+        <link rel="next" title="ESGF Installer Issue Tracking Guidelines" href="issues.html"/>
+        <link rel="prev" title="Welcome to esgf-installer’s documentation!" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -88,13 +90,16 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">ESG Setup Module</a></li>
-<li><a class="reference internal" href="#esg-apache-manager-module">ESG Apache Manager Module</a></li>
-<li><a class="reference internal" href="#module-esg_cert_manager">ESG Cert Manager</a></li>
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ESG Setup Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_apache_manager">ESG Apache Manager Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_cert_manager">ESG Cert Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_bootstrap">ESG Bootstrap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 </ul>
-</div>
+
             
           
         </div>
@@ -208,9 +213,9 @@ returns False Otherwise</p>
 </dd></dl>
 
 </div>
-<div class="section" id="esg-apache-manager-module">
-<h1>ESG Apache Manager Module<a class="headerlink" href="#esg-apache-manager-module" title="Permalink to this headline">¶</a></h1>
-<span class="target" id="module-esg_apache_manager"></span><dl class="function">
+<div class="section" id="module-esg_apache_manager">
+<span id="esg-apache-manager-module"></span><h1>ESG Apache Manager Module<a class="headerlink" href="#module-esg_apache_manager" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
 <dt id="esg_apache_manager.copy_apache_conf_files">
 <code class="descclassname">esg_apache_manager.</code><code class="descname">copy_apache_conf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#copy_apache_conf_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.copy_apache_conf_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy custom apache conf files</p>
@@ -361,6 +366,362 @@ When prompted for the cachain file, specify the chain file provided by your CA</
 </dd></dl>
 
 </div>
+<div class="section" id="module-esg_bootstrap">
+<span id="esg-bootstrap"></span><h1>ESG Bootstrap<a class="headerlink" href="#module-esg_bootstrap" title="Permalink to this headline">¶</a></h1>
+<p>Place Holder...</p>
+<dl class="function">
+<dt id="esg_bootstrap.check_for_root_id">
+<code class="descclassname">esg_bootstrap.</code><code class="descname">check_for_root_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#check_for_root_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.check_for_root_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks to see if the user is currently root</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_bootstrap.confirm_file_status">
+<code class="descclassname">esg_bootstrap.</code><code class="descname">confirm_file_status</code><span class="sig-paren">(</span><em>return_value</em>, <em>fetch_file</em>, <em>starting_directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#confirm_file_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.confirm_file_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check to see if the file is Updated or needs to be installed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_bootstrap.get_latest_esgf_install_scripts">
+<code class="descclassname">esg_bootstrap.</code><code class="descname">get_latest_esgf_install_scripts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#get_latest_esgf_install_scripts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.get_latest_esgf_install_scripts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks for updates to the ESGF Install Scripts; if updates
+are found download and update to latest script version</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_bootstrap.setup_dir">
+<code class="descclassname">esg_bootstrap.</code><code class="descname">setup_dir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#setup_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.setup_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup main directory.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-esg_functions">
+<span id="esg-functions"></span><h1>ESG Functions<a class="headerlink" href="#module-esg_functions" title="Permalink to this headline">¶</a></h1>
+<p>esg-functions: ESGF Node Application Stack Functions
+description: Installer Functions for the ESGF Node application stack</p>
+<dl class="function">
+<dt id="esg_functions.append_to_path">
+<code class="descclassname">esg_functions.</code><code class="descname">append_to_path</code><span class="sig-paren">(</span><em>path_variable</em>, <em>path_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#append_to_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.append_to_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends path components to a variable, deduplicates the list,
+then prints to stdout the export command required to append that
+list to that variable</p>
+<p>Takes as arguments first a variable containing a colon-separated
+path to append to, then a space-separated collection of paths to
+append &#8211; these path components MUST NOT contain spaces.</p>
+<p>If insufficient arguments are present, a warning message is
+printed to stderr and nothing is printed to stdout.</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd><p class="first">append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib</p>
+<dl class="last docutils">
+<dt>Would result in the entry:</dt>
+<dd>export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/foo/lib:/bar/lib</dd>
+</dl>
+</dd>
+<dt>NOTE: In the context of system setup this is usually</dt>
+<dd>NOT WHAT YOU WANT - use prefix_to_path (below)</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.backup">
+<code class="descclassname">esg_functions.</code><code class="descname">backup</code><span class="sig-paren">(</span><em>path</em>, <em>backup_dir='/esg/backups'</em>, <em>num_of_backups='7'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#backup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.backup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a directory the contents of the directory is backed up as a tar.gz file in
+path - a filesystem path
+backup_dir - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
+num_of_backups - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.call_subprocess">
+<code class="descclassname">esg_functions.</code><code class="descname">call_subprocess</code><span class="sig-paren">(</span><em>command_string</em>, <em>command_stdin=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#call_subprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.call_subprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn&#8217;t have subprocess.call()</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.change_permissions_recursive">
+<code class="descclassname">esg_functions.</code><code class="descname">change_permissions_recursive</code><span class="sig-paren">(</span><em>directory_path</em>, <em>uid=None</em>, <em>gid=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#change_permissions_recursive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.change_permissions_recursive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursive changes permissions on a directory and its subdirectories</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.check_for_update">
+<code class="descclassname">esg_functions.</code><code class="descname">check_for_update</code><span class="sig-paren">(</span><em>filename_1</em>, <em>filename_2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#check_for_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.check_for_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does an md5 check between local and remote resource
+returns 0 (success) iff there is no match and thus indicating that
+an update is available.
+USAGE: checked_for_update [file] <a class="reference external" href="http://www.foo.com/file">http://www.foo.com/file</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.check_shmmax">
+<code class="descclassname">esg_functions.</code><code class="descname">check_shmmax</code><span class="sig-paren">(</span><em>min_shmmax=48</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#check_shmmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.check_shmmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>NOTE: This is another <strong>RedHat/CentOS</strong> specialty thing (sort of)
+arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.create_backup_file">
+<code class="descclassname">esg_functions.</code><code class="descname">create_backup_file</code><span class="sig-paren">(</span><em>file_name</em>, <em>backup_extension='.bak'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#create_backup_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.create_backup_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a backup of a file using the given backup extension</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.download_update">
+<code class="descclassname">esg_functions.</code><code class="descname">download_update</code><span class="sig-paren">(</span><em>local_file</em>, <em>remote_file=None</em>, <em>force_download=False</em>, <em>make_backup_file=False</em>, <em>use_local_files=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#download_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.download_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an update is available then pull it down... then check the md5 sums again!</p>
+<p>Yes, this results in 3 network calls to pull down a file, but it
+saves total bandwidth and it also allows the updating from the
+network process to be cronttab-able while parsimonious with
+resources.  It is also very good practice to make sure that code
+being executed is the RIGHT code!</p>
+<p>The 3rd token is the &#8220;force&#8221; flag value 1|0.
+1 = do not check for update, directly go and fetch the file regardless
+0 = first check for update availability. (default)</p>
+<p>The 4th token is for indicated whether a backup file should be made flag value 1|0.
+1 = yes, create a .bak file if the file is already there before fetching new
+0 = no, do NOT make a .bak file even if the file is already there, overwrite it</p>
+<p>(When using the force flag you MUST specify the first two args!!)</p>
+<dl class="docutils">
+<dt>NOTE: Has multiple return values test for (( $? &gt; 1 )) when looking or errors</dt>
+<dd>A return value of 1 only means that the file is up-to-date and there
+Is no reason to fetch it.</dd>
+</dl>
+<p>USAGE: checked_get [file] <a class="reference external" href="http://www.foo.com/file">http://www.foo.com/file</a> [&lt;1|0&gt;] [&lt;1|0&gt;]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.exit_with_error">
+<code class="descclassname">esg_functions.</code><code class="descname">exit_with_error</code><span class="sig-paren">(</span><em>status</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#exit_with_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.exit_with_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>if positional parameter at position 1 is non-zero, then print error message.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.fetch_remote_file">
+<code class="descclassname">esg_functions.</code><code class="descname">fetch_remote_file</code><span class="sig-paren">(</span><em>local_file</em>, <em>remote_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#fetch_remote_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.fetch_remote_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download a remote file from a distribution mirror and write its contents to the local_file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_dir_owner_and_group">
+<code class="descclassname">esg_functions.</code><code class="descname">get_dir_owner_and_group</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_dir_owner_and_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_dir_owner_and_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple containing the owner and group of the given directory path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_esgf_host">
+<code class="descclassname">esg_functions.</code><code class="descname">get_esgf_host</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_esgf_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_esgf_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_group_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_group_id</code><span class="sig-paren">(</span><em>group_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_group_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_group_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Unix group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_group_list">
+<code class="descclassname">esg_functions.</code><code class="descname">get_group_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_group_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_group_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of the Unix groups on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_java_keystore_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_java_keystore_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_java_keystore_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_java_keystore_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the keystore_password from the saved ks_secret_file at /esg/config/.esg_keystore_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_md5sum">
+<code class="descclassname">esg_functions.</code><code class="descname">get_md5sum</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_md5sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_md5sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>#Utility function, wraps md5sum so it may be used on either mac or
+#linux machines</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_md5sum_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_md5sum_password</code><span class="sig-paren">(</span><em>password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_md5sum_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_md5sum_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hash a password to get it&#8217;s md5 value</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_node_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_node_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_node_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_node_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get (or generate) the id suitable for use in the context of zookeeper
+and thus the sharded solr install.  If this variable is not set then
+an ID is generated, unique to this host.
+NOTE: A lot of things rely on this ID so at the moment it is okay to
+provide a simple way to be able to determine an id externally... but
+this is only something for the testing phase for the most part.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_security_admin_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_security_admin_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_security_admin_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_security_admin_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the security_admin_password from the esgf_secret_file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_tomcat_group_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_tomcat_group_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_tomcat_group_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_tomcat_group_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Tomcat group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_tomcat_user_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_tomcat_user_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_tomcat_user_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_tomcat_user_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Tomcat user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_user_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_user_id</code><span class="sig-paren">(</span><em>user_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_user_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_user_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Unix user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_user_list">
+<code class="descclassname">esg_functions.</code><code class="descname">get_user_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_user_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_user_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of the Unix users on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.git_tagrelease">
+<code class="descclassname">esg_functions.</code><code class="descname">git_tagrelease</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#git_tagrelease"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.git_tagrelease" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes a commit to the current git repository updating the
+release version string and codename, tags that commit with the
+version string, and then immediately makes another commit
+appending &#8220;-devel&#8221; to the version string.</p>
+<p>This is to prepare for a release merge.  Note that the tag will
+not be against the correct revision after a merge to the release
+branch if it was not a fast-forward merge, so ensure that there
+are no unmerged changes from the release branch before using.</p>
+<p>If that happens, delete the tag, issue a git reset &#8211;hard
+against the last commit before the tag, merge the release
+branch, and try again.</p>
+<p>Arguments:
+$1: the release version string (mandatory)
+$2: the release codename (optional)</p>
+<dl class="docutils">
+<dt>Examples:</dt>
+<dd>git-tagrelease v4.5.6 AuthenticGreekPizzaEdition</dd>
+<dt>or just</dt>
+<dd>git-tagrelease v4.5.6</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.is_in_git_repo">
+<code class="descclassname">esg_functions.</code><code class="descname">is_in_git_repo</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#is_in_git_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.is_in_git_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>This determines if a specified file is in a git repository.
+This function will resolve symlinks and check for a .git
+directory in the directory of the actual file as well as its
+parent to avoid attempting to call git unless absolutely needed,
+so as to be able to detect some common cases on a system without
+git actually installed and in the path.</p>
+<p>Accepts as an argument the file to be checked</p>
+<p>Returns True if the specified file is in a git repository</p>
+<p>Returns False otherwise</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.path_unique">
+<code class="descclassname">esg_functions.</code><code class="descname">path_unique</code><span class="sig-paren">(</span><em>path_string='/Users/williamhill/anaconda/bin:/Applications/Postgres.app/Contents/Versions/latest/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Postgres.app/Contents/Versions/latest/bin'</em>, <em>path_separator=':'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#path_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.path_unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints a unique path string</p>
+<p>The first (leftmost) instance of a path entry will be the one that
+is preserved.</p>
+<p>If $1 is specified, it will be taken as the string to deduplicate,
+otherwise $PATH is used.</p>
+<p>If $2 is specified, it will be taken as the path separator, which
+otherwise defaults to &#8216;:&#8217;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.pcheck">
+<code class="descclassname">esg_functions.</code><code class="descname">pcheck</code><span class="sig-paren">(</span><em>function_name</em>, <em>num_of_iterations=5</em>, <em>wait_time_in_seconds=1</em>, <em>return_on_true=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#pcheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.pcheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is for repeatedly running a function until it returns
+true and/or the number of iterations have been reached.  The format of
+the args for this call are as follows:</p>
+<p>pcheck &lt;num_of_iterations&gt; &lt;wait_time_in_seconds&gt; &lt;return_on_true&gt; &#8211; [function name] &lt;args...&gt;
+The default operation is the run the function once a scecond for 5 seconds or until it returns true
+The default value of iterations is 5
+The default value of wait time is  1 (second)
+The default value of return on true is 1 (no more iterations after function/command succeeds)
+the &#8220;&#8211;&#8221; is a literal argument that MUST precede the function or command you wish to call</p>
+<p>Ex:
+Run a function or command foo 3x waiting 2 seconds between and returning after function/command success
+pcheck 3 2 1 &#8211; foo arg1 arg2
+Run a function or command foo using defaults
+pcheck &#8211; foo arg1 arg2</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.prefix_to_path">
+<code class="descclassname">esg_functions.</code><code class="descname">prefix_to_path</code><span class="sig-paren">(</span><em>path</em>, <em>prepend_value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#prefix_to_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.prefix_to_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepends path components to a variable, deduplicates the list,
+then prints to stdout the export command required to prepend
+that list to that variable.</p>
+<p>Takes as arguments first a variable containing a colon-separated
+path to prepend to, then a space-separated collection of paths to
+prepend &#8211; these path components MUST NOT contain spaces.</p>
+<p>If insufficient arguments are present, a warning message is
+printed to stderr and nothing is printed to stdout.</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd><p class="first">prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib</p>
+<dl class="last docutils">
+<dt>Would result in the entry:</dt>
+<dd>export LD_LIBRARY_PATH=/foo/lib:/bar/lib:$LD_LIBRARY_PATH</dd>
+</dl>
+</dd>
+<dt>NOTE: In the context of system setup this is usually</dt>
+<dd>WHAT YOU WANT; that your libs are found before any user libs are</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.readlinkf">
+<code class="descclassname">esg_functions.</code><code class="descname">readlinkf</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#readlinkf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.readlinkf" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a portable implementation of GNU&#8217;s &#8220;readlink -f&#8221; in
+bash/zsh, following symlinks recursively until they end in a
+file, and will print the full dereferenced path of the specified
+file even if the file isn&#8217;t a symlink.</p>
+<p>Loop detection exists, but only as an abort after passing a
+maximum length.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.replace_string_in_file">
+<code class="descclassname">esg_functions.</code><code class="descname">replace_string_in_file</code><span class="sig-paren">(</span><em>file_name</em>, <em>original_string</em>, <em>new_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#replace_string_in_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.replace_string_in_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Goes into a file and replaces string</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_java_keystore_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_java_keystore_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_java_keystore_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_java_keystore_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the password for a Java keystore to /esg/config/.esg_keystore_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.stream_subprocess_output">
+<code class="descclassname">esg_functions.</code><code class="descname">stream_subprocess_output</code><span class="sig-paren">(</span><em>command_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#stream_subprocess_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.stream_subprocess_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print out the stdout of the subprocess in real time</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.track_extraction_progress">
+<code class="descclassname">esg_functions.</code><code class="descname">track_extraction_progress</code><span class="sig-paren">(</span><em>members</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#track_extraction_progress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.track_extraction_progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output of the files being extracted from a tarball</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.verify_esg_node_script">
+<code class="descclassname">esg_functions.</code><code class="descname">verify_esg_node_script</code><span class="sig-paren">(</span><em>esg_node_filename</em>, <em>esg_dist_url_root</em>, <em>script_version</em>, <em>script_maj_version</em>, <em>devel</em>, <em>update_action=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#verify_esg_node_script"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.verify_esg_node_script" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify the esg_node script is the most current version</p>
+</dd></dl>
+
+</div>
 
 
            </div>
@@ -369,6 +730,15 @@ When prompted for the cachain file, specify the chain file provided by your CA</
            </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="issues.html" class="btn btn-neutral float-right" title="ESGF Installer Issue Tracking Guidelines" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to esgf-installer’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

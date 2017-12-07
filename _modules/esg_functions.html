@@ -1,0 +1,1051 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>esg_functions &mdash; esgf-installer 2.5.13 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="esgf-installer 2.5.13 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.5.13
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">ESG Setup Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_apache_manager">ESG Apache Manager Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_bootstrap">ESG Bootstrap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_functions">ESG Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>esg_functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for esg_functions</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/local/env python</span>
+<span class="sd">&#39;&#39;&#39; esg-functions: ESGF Node Application Stack Functions</span>
+<span class="sd">    description: Installer Functions for the ESGF Node application stack</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">pwd</span>
+<span class="kn">import</span> <span class="nn">grp</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">import</span> <span class="nn">netifaces</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">from</span> <span class="nn">esg_exceptions</span> <span class="k">import</span> <span class="n">UnprivilegedUserError</span><span class="p">,</span> <span class="n">WrongOSError</span><span class="p">,</span> <span class="n">UnverifiedScriptError</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
+<span class="kn">from</span> <span class="nn">clint.textui</span> <span class="k">import</span> <span class="n">progress</span>
+<span class="kn">import</span> <span class="nn">esg_bash2py</span>
+<span class="kn">import</span> <span class="nn">esg_property_manager</span>
+<span class="kn">import</span> <span class="nn">esg_logging_manager</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+<div class="viewcode-block" id="exit_with_error"><a class="viewcode-back" href="../api.html#esg_functions.exit_with_error">[docs]</a><span class="k">def</span> <span class="nf">exit_with_error</span><span class="p">(</span><span class="n">status</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        if positional parameter at position 1 is non-zero, then print error message.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">status</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">status</span> <span class="o">!=</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;&quot;</span>
+            <span class="s2">&quot;Sorry... </span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;This action did not complete successfully</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;Please re-run this task until successful before continuing further</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;&quot;</span>
+            <span class="s2">&quot;Also please review the installation FAQ it may assist you</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="s2">&quot;https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ&quot;</span>
+            <span class="s2">&quot;&quot;</span>
+        <span class="p">)</span>
+        <span class="c1">#Move back to starting directory</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;install_prefix&quot;</span><span class="p">])</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span></div>
+
+<span class="c1">#-------------------------------</span>
+<span class="c1"># Process checking utility functions</span>
+<span class="c1">#-------------------------------</span>
+
+<span class="k">def</span> <span class="nf">check_esgf_httpd_process</span><span class="p">():</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="s2">&quot;esgf-httpd&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">])</span>
+    <span class="nb">print</span> <span class="s2">&quot;httpd status:&quot;</span><span class="p">,</span> <span class="n">status</span>
+    <span class="k">if</span> <span class="n">status</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+<span class="c1">#----------------------------------------------------------</span>
+<span class="c1"># Process Launching and Checking...</span>
+<span class="c1">#----------------------------------------------------------</span>
+<div class="viewcode-block" id="pcheck"><a class="viewcode-back" href="../api.html#esg_functions.pcheck">[docs]</a><span class="k">def</span> <span class="nf">pcheck</span><span class="p">(</span><span class="n">function_name</span><span class="p">,</span> <span class="n">num_of_iterations</span> <span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">wait_time_in_seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">return_on_true</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This function is for repeatedly running a function until it returns</span>
+<span class="sd">    true and/or the number of iterations have been reached.  The format of</span>
+<span class="sd">    the args for this call are as follows:</span>
+
+<span class="sd">    pcheck &lt;num_of_iterations&gt; &lt;wait_time_in_seconds&gt; &lt;return_on_true&gt; -- [function name] &lt;args...&gt;</span>
+<span class="sd">    The default operation is the run the function once a scecond for 5 seconds or until it returns true</span>
+<span class="sd">    The default value of iterations is 5</span>
+<span class="sd">    The default value of wait time is  1 (second)</span>
+<span class="sd">    The default value of return on true is 1 (no more iterations after function/command succeeds)</span>
+<span class="sd">    the &quot;--&quot; is a literal argument that MUST precede the function or command you wish to call</span>
+
+<span class="sd">    Ex:</span>
+<span class="sd">    Run a function or command foo 3x waiting 2 seconds between and returning after function/command success</span>
+<span class="sd">    pcheck 3 2 1 -- foo arg1 arg2</span>
+<span class="sd">    Run a function or command foo using defaults</span>
+<span class="sd">    pcheck -- foo arg1 arg2</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">return_code</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_of_iterations</span><span class="p">):</span>
+        <span class="n">return_code</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">function_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_on_true</span> <span class="o">==</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">return_code</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s2"> [OK]</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">function_name</span><span class="p">)</span>
+            <span class="k">break</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="n">wait_time_in_seconds</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">$</span><span class="si">%s</span><span class="s2"> [FAIL]</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">function_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">return_code</span></div>
+
+<div class="viewcode-block" id="get_md5sum"><a class="viewcode-back" href="../api.html#esg_functions.get_md5sum">[docs]</a><span class="k">def</span> <span class="nf">get_md5sum</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        #Utility function, wraps md5sum so it may be used on either mac or</span>
+<span class="sd">        #linux machines</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">file_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+        <span class="n">file_name_md5</span> <span class="o">=</span> <span class="n">hasher</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;local_file_md5 : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file_name_md5</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">file_name_md5</span></div>
+
+<div class="viewcode-block" id="get_md5sum_password"><a class="viewcode-back" href="../api.html#esg_functions.get_md5sum_password">[docs]</a><span class="k">def</span> <span class="nf">get_md5sum_password</span><span class="p">(</span><span class="n">password</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Hash a password to get it&#39;s md5 value &#39;&#39;&#39;</span>
+    <span class="n">password_hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
+    <span class="n">password_hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">password</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">password_hasher</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+<span class="c1">#----------------------------------------------------------</span>
+<span class="c1"># Path munging...</span>
+<span class="c1">#----------------------------------------------------------</span>
+
+<div class="viewcode-block" id="path_unique"><a class="viewcode-back" href="../api.html#esg_functions.path_unique">[docs]</a><span class="k">def</span> <span class="nf">path_unique</span><span class="p">(</span><span class="n">path_string</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">],</span> <span class="n">path_separator</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prints a unique path string</span>
+
+<span class="sd">        The first (leftmost) instance of a path entry will be the one that</span>
+<span class="sd">        is preserved.</span>
+
+<span class="sd">        If $1 is specified, it will be taken as the string to deduplicate,</span>
+<span class="sd">        otherwise $PATH is used.</span>
+
+<span class="sd">        If $2 is specified, it will be taken as the path separator, which</span>
+<span class="sd">        otherwise defaults to &#39;:&#39;</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">split_path</span> <span class="o">=</span> <span class="n">path_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path_separator</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">split_path</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">split_path</span><span class="o">.</span><span class="n">index</span><span class="p">))</span></div>
+
+<span class="c1">#TODO: Maybe move this to esg_bash2py</span>
+<div class="viewcode-block" id="readlinkf"><a class="viewcode-back" href="../api.html#esg_functions.readlinkf">[docs]</a><span class="k">def</span> <span class="nf">readlinkf</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    This is a portable implementation of GNU&#39;s &quot;readlink -f&quot; in</span>
+<span class="sd">    bash/zsh, following symlinks recursively until they end in a</span>
+<span class="sd">    file, and will print the full dereferenced path of the specified</span>
+<span class="sd">    file even if the file isn&#39;t a symlink.</span>
+
+<span class="sd">    Loop detection exists, but only as an abort after passing a</span>
+<span class="sd">    maximum length.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
+
+
+<span class="c1">#----------------------------------------------------------</span>
+<span class="c1"># File reading and writing...</span>
+<span class="c1">#----------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">insert_file_at_pattern</span><span class="p">(</span><span class="n">target_file</span><span class="p">,</span> <span class="n">input_file</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Inserting into </span><span class="si">%s</span><span class="s2"> &lt;- </span><span class="si">%s</span><span class="s2"> at pattern </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">target_file</span><span class="p">,</span> <span class="n">input_file</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
+    <span class="n">infile</span> <span class="o">=</span> <span class="n">target_file</span>
+    <span class="n">filterfile</span> <span class="o">=</span> <span class="n">input_file</span>
+    <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="n">filterfile</span><span class="p">)</span>
+        <span class="nb">filter</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span><span class="nb">filter</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="nb">print</span> <span class="s2">&quot;&lt;p&gt;Error: </span><span class="si">%s</span><span class="s2">&lt;/p&gt;&quot;</span> <span class="o">%</span> <span class="n">e</span>
+
+
+
+<span class="c1"># TODO: Not used anywhere; maybe deprecate</span>
+<div class="viewcode-block" id="append_to_path"><a class="viewcode-back" href="../api.html#esg_functions.append_to_path">[docs]</a><span class="k">def</span> <span class="nf">append_to_path</span><span class="p">(</span><span class="n">path_variable</span><span class="p">,</span> <span class="n">path_list</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Appends path components to a variable, deduplicates the list,</span>
+<span class="sd">        then prints to stdout the export command required to append that</span>
+<span class="sd">        list to that variable</span>
+
+<span class="sd">        Takes as arguments first a variable containing a colon-separated</span>
+<span class="sd">        path to append to, then a space-separated collection of paths to</span>
+<span class="sd">        append -- these path components MUST NOT contain spaces.</span>
+
+<span class="sd">        If insufficient arguments are present, a warning message is</span>
+<span class="sd">        printed to stderr and nothing is printed to stdout.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">          append_to_path LD_LIBRARY_PATH /foo/lib /bar/lib</span>
+
+<span class="sd">          Would result in the entry:</span>
+<span class="sd">            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/foo/lib:/bar/lib</span>
+
+<span class="sd">        NOTE: In the context of system setup this is usually</span>
+<span class="sd">              NOT WHAT YOU WANT - use prefix_to_path (below)</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">path_list</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">path_variable</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="o">+</span> <span class="n">path</span></div>
+
+<div class="viewcode-block" id="prefix_to_path"><a class="viewcode-back" href="../api.html#esg_functions.prefix_to_path">[docs]</a><span class="k">def</span> <span class="nf">prefix_to_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">prepend_value</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prepends path components to a variable, deduplicates the list,</span>
+<span class="sd">        then prints to stdout the export command required to prepend</span>
+<span class="sd">        that list to that variable.</span>
+
+<span class="sd">        Takes as arguments first a variable containing a colon-separated</span>
+<span class="sd">        path to prepend to, then a space-separated collection of paths to</span>
+<span class="sd">        prepend -- these path components MUST NOT contain spaces.</span>
+
+<span class="sd">        If insufficient arguments are present, a warning message is</span>
+<span class="sd">        printed to stderr and nothing is printed to stdout.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">          prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib</span>
+
+<span class="sd">          Would result in the entry:</span>
+<span class="sd">            export LD_LIBRARY_PATH=/foo/lib:/bar/lib:$LD_LIBRARY_PATH</span>
+
+<span class="sd">        NOTE: In the context of system setup this is usually</span>
+<span class="sd">              WHAT YOU WANT; that your libs are found before any user libs are</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_unique</span><span class="p">(</span><span class="n">prepend_value</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;:&quot;</span><span class="o">+</span><span class="n">path</span>
+    <span class="k">return</span> <span class="n">path_unique</span><span class="p">(</span><span class="n">prepend_value</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;:&quot;</span><span class="o">+</span><span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="backup"><a class="viewcode-back" href="../api.html#esg_functions.backup">[docs]</a><span class="k">def</span> <span class="nf">backup</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">backup_dir</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_backup_dir&quot;</span><span class="p">],</span> <span class="n">num_of_backups</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_backups_to_keep&quot;</span><span class="p">]):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Given a directory the contents of the directory is backed up as a tar.gz file in</span>
+<span class="sd">        path - a filesystem path</span>
+<span class="sd">        backup_dir - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)</span>
+<span class="sd">        num_of_backups - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">source_directory</span> <span class="o">=</span> <span class="n">readlinkf</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;Backup - Creating a backup archive of </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">source_directory</span><span class="p">)</span>
+    <span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">source_directory</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">source_directory</span><span class="p">)</span>
+
+    <span class="n">source_backup_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;\w+$&quot;</span><span class="p">,</span> <span class="n">source_directory</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+    <span class="n">backup_filename</span><span class="o">=</span><span class="n">readlinkf</span><span class="p">(</span><span class="n">backup_dir</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">source_backup_name</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())</span><span class="o">+</span><span class="s2">&quot;.tgz&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">backup_filename</span><span class="p">,</span> <span class="s2">&quot;w:gz&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+            <span class="n">tar</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source_directory</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;ERROR: Problem with creating backup archive: </span><span class="si">{backup_filename}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">backup_filename</span> <span class="o">=</span> <span class="n">backup_filename</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">current_directory</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">backup_filename</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Created backup: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">backup_filename</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="s2">&quot;Could not locate backup file </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">backup_filename</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">current_directory</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+
+    <span class="c1"># Cleanup</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">!=</span> <span class="n">backup_dir</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">backup_dir</span><span class="p">)</span>
+    <span class="n">files</span><span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s1">&#39;ls -t | grep </span><span class="si">%s</span><span class="s1">.\*.tgz | tail -n +$((</span><span class="si">%i</span><span class="s1">+1)) | xargs&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">source_backup_name</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">num_of_backups</span><span class="p">)),</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readlines</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;Tidying up a bit...&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;old backup files to remove: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">files</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readlines</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">current_directory</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+<span class="c1"># TODO: No uses found</span>
+<div class="viewcode-block" id="get_node_id"><a class="viewcode-back" href="../api.html#esg_functions.get_node_id">[docs]</a><span class="k">def</span> <span class="nf">get_node_id</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get (or generate) the id suitable for use in the context of zookeeper</span>
+<span class="sd">        and thus the sharded solr install.  If this variable is not set then</span>
+<span class="sd">        an ID is generated, unique to this host.</span>
+<span class="sd">        NOTE: A lot of things rely on this ID so at the moment it is okay to</span>
+<span class="sd">        provide a simple way to be able to determine an id externally... but</span>
+<span class="sd">        this is only something for the testing phase for the most part.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+<span class="c1"># TODO: No uses found</span>
+<div class="viewcode-block" id="git_tagrelease"><a class="viewcode-back" href="../api.html#esg_functions.git_tagrelease">[docs]</a><span class="k">def</span> <span class="nf">git_tagrelease</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Makes a commit to the current git repository updating the</span>
+<span class="sd">        release version string and codename, tags that commit with the</span>
+<span class="sd">        version string, and then immediately makes another commit</span>
+<span class="sd">        appending &quot;-devel&quot; to the version string.</span>
+
+<span class="sd">        This is to prepare for a release merge.  Note that the tag will</span>
+<span class="sd">        not be against the correct revision after a merge to the release</span>
+<span class="sd">        branch if it was not a fast-forward merge, so ensure that there</span>
+<span class="sd">        are no unmerged changes from the release branch before using.</span>
+
+<span class="sd">        If that happens, delete the tag, issue a git reset --hard</span>
+<span class="sd">        against the last commit before the tag, merge the release</span>
+<span class="sd">        branch, and try again.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">        $1: the release version string (mandatory)</span>
+<span class="sd">        $2: the release codename (optional)</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">          git-tagrelease v4.5.6 AuthenticGreekPizzaEdition</span>
+<span class="sd">        or just</span>
+<span class="sd">          git-tagrelease v4.5.6</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">pass</span></div>
+
+<span class="k">def</span> <span class="nf">get_parent_directory</span><span class="p">(</span><span class="n">directory_path</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">)</span>
+
+<div class="viewcode-block" id="is_in_git_repo"><a class="viewcode-back" href="../api.html#esg_functions.is_in_git_repo">[docs]</a><span class="k">def</span> <span class="nf">is_in_git_repo</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">     This determines if a specified file is in a git repository.</span>
+<span class="sd">     This function will resolve symlinks and check for a .git</span>
+<span class="sd">     directory in the directory of the actual file as well as its</span>
+<span class="sd">     parent to avoid attempting to call git unless absolutely needed,</span>
+<span class="sd">     so as to be able to detect some common cases on a system without</span>
+<span class="sd">     git actually installed and in the path.</span>
+
+<span class="sd">     Accepts as an argument the file to be checked</span>
+
+<span class="sd">     Returns True if the specified file is in a git repository</span>
+
+<span class="sd">     Returns False otherwise</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">find_executable</span><span class="p">(</span><span class="s2">&quot;git&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Git is not installed&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;DEBUG: Checking to see if </span><span class="si">%s</span><span class="s2"> is in a git repository...&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+    <span class="n">absolute_path</span> <span class="o">=</span> <span class="n">readlinkf</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+    <span class="n">one_directory_up</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">absolute_path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">))</span>
+    <span class="n">two_directories_up</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">one_directory_up</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;DEBUG: </span><span class="si">%s</span><span class="s2"> does not exist yet, allowing creation&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">one_directory_up</span><span class="o">+</span><span class="s2">&quot;/.git&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is in a git repository&quot;</span> <span class="o">%</span> <span class="n">file_name</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">two_directories_up</span><span class="o">+</span><span class="s2">&quot;/.git&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is in a git repository&quot;</span> <span class="o">%</span> <span class="n">file_name</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="check_for_update"><a class="viewcode-back" href="../api.html#esg_functions.check_for_update">[docs]</a><span class="k">def</span> <span class="nf">check_for_update</span><span class="p">(</span><span class="n">filename_1</span><span class="p">,</span> <span class="n">filename_2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">         Does an md5 check between local and remote resource</span>
+<span class="sd">         returns 0 (success) iff there is no match and thus indicating that</span>
+<span class="sd">         an update is available.</span>
+<span class="sd">         USAGE: checked_for_update [file] http://www.foo.com/file</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">filename_2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">remote_file</span> <span class="o">=</span> <span class="n">filename_1</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\w+-\w+$&quot;</span><span class="p">,</span> <span class="n">filename_1</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">local_file</span> <span class="o">+</span> <span class="s2">&quot;.py&quot;</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\-(?=[^-]*$)&#39;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="n">local_file</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">filename_1</span>
+        <span class="n">remote_file</span> <span class="o">=</span> <span class="n">filename_2</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">local_file</span><span class="p">):</span>
+        <span class="nb">print</span>  <span class="s2">&quot; WARNING: Could not find local file </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot; WARNING: local file </span><span class="si">%s</span><span class="s2"> not executible&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
+
+    <span class="n">remote_file_md5</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">remote_file</span><span class="o">+</span> <span class="s1">&#39;.md5&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+    <span class="n">remote_file_md5</span> <span class="o">=</span> <span class="n">remote_file_md5</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">local_file_md5</span> <span class="o">=</span> <span class="n">get_md5sum</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">local_file_md5</span> <span class="o">!=</span> <span class="n">remote_file_md5</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot; Update Available @ </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">remote_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="download_update"><a class="viewcode-back" href="../api.html#esg_functions.download_update">[docs]</a><span class="k">def</span> <span class="nf">download_update</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">remote_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">make_backup_file</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_local_files</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">    If an update is available then pull it down... then check the md5 sums again!</span>
+
+<span class="sd">    Yes, this results in 3 network calls to pull down a file, but it</span>
+<span class="sd">    saves total bandwidth and it also allows the updating from the</span>
+<span class="sd">    network process to be cronttab-able while parsimonious with</span>
+<span class="sd">    resources.  It is also very good practice to make sure that code</span>
+<span class="sd">    being executed is the RIGHT code!</span>
+
+<span class="sd">    The 3rd token is the &quot;force&quot; flag value 1|0.</span>
+<span class="sd">    1 = do not check for update, directly go and fetch the file regardless</span>
+<span class="sd">    0 = first check for update availability. (default)</span>
+
+<span class="sd">    The 4th token is for indicated whether a backup file should be made flag value 1|0.</span>
+<span class="sd">    1 = yes, create a .bak file if the file is already there before fetching new</span>
+<span class="sd">    0 = no, do NOT make a .bak file even if the file is already there, overwrite it</span>
+
+<span class="sd">    (When using the force flag you MUST specify the first two args!!)</span>
+
+<span class="sd">    NOTE: Has multiple return values test for (( $? &gt; 1 )) when looking or errors</span>
+<span class="sd">       A return value of 1 only means that the file is up-to-date and there</span>
+<span class="sd">       Is no reason to fetch it.</span>
+
+<span class="sd">    USAGE: checked_get [file] http://www.foo.com/file [&lt;1|0&gt;] [&lt;1|0&gt;]</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">remote_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">remote_file</span> <span class="o">=</span> <span class="n">local_file</span>
+        <span class="c1">#Get the last subpath from the absolute path</span>
+        <span class="c1">#TODO: use esg_bash2py.trim_from_head() here</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">local_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;local file : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">local_file</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;remote file: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_in_git_repo</span><span class="p">(</span><span class="n">local_file</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is controlled by Git, not updating&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span> <span class="ow">and</span> <span class="n">use_local_files</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">            ***************************************************************************</span>
+<span class="s1">            ALERT....</span>
+<span class="s1">            NOT FETCHING ANY ESGF UPDATES FROM DISTRIBUTION SERVER!!!! USING LOCAL FILE</span>
+<span class="s1">            file: </span><span class="si">%s</span><span class="s1"></span>
+<span class="s1">            ***************************************************************************</span><span class="se">\n\n</span><span class="s1"></span>
+<span class="s1">        &#39;&#39;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">readlinkf</span><span class="p">(</span><span class="n">local_file</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">force_download</span><span class="p">:</span>
+        <span class="n">updates_available</span> <span class="o">=</span> <span class="n">check_for_update</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">updates_available</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No updates available.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span> <span class="ow">and</span> <span class="n">make_backup_file</span><span class="p">:</span>
+        <span class="n">create_backup_file</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Fetching file from </span><span class="si">%s</span><span class="s2"> -to-&gt; </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">remote_file</span><span class="p">,</span> <span class="n">local_file</span><span class="p">)</span>
+    <span class="n">fetch_remote_file</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">verify_checksum</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fetch_remote_file"><a class="viewcode-back" href="../api.html#esg_functions.fetch_remote_file">[docs]</a><span class="k">def</span> <span class="nf">fetch_remote_file</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Download a remote file from a distribution mirror and write its contents to the local_file &#39;&#39;&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">remote_file_request</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">remote_file</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">downloaded_file</span><span class="p">:</span>
+            <span class="n">total_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">remote_file_request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content-length&#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">progress</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">remote_file_request</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">),</span> <span class="n">expected_size</span><span class="o">=</span><span class="p">(</span><span class="n">total_length</span><span class="o">/</span><span class="mi">1024</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+                    <span class="n">downloaded_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                    <span class="n">downloaded_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not download </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="create_backup_file"><a class="viewcode-back" href="../api.html#esg_functions.create_backup_file">[docs]</a><span class="k">def</span> <span class="nf">create_backup_file</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">backup_extension</span><span class="o">=</span><span class="s2">&quot;.bak&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create a backup of a file using the given backup extension&#39;&#39;&#39;</span>
+    <span class="n">backup_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">backup_extension</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">backup_file_name</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">backup_file_name</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not create backup file: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">backup_file_name</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">verify_checksum</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">remote_file</span><span class="p">):</span>
+    <span class="n">remote_file_md5</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">remote_file</span><span class="o">+</span> <span class="s1">&#39;.md5&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+    <span class="n">remote_file_md5</span> <span class="o">=</span> <span class="n">remote_file_md5</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="n">local_file_md5</span> <span class="o">=</span> <span class="n">get_md5sum</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">local_file_md5</span> <span class="o">!=</span> <span class="n">remote_file_md5</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot; WARNING: Could not verify this file! </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{local_file}</span><span class="s2"> checksum [VERIFIED]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">local_file</span><span class="o">=</span><span class="n">local_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span> <span class="nf">_verify_against_mirror</span><span class="p">(</span><span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">script_maj_version</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Verify that the local script matches the remote script on the distribution mirror &#39;&#39;&#39;</span>
+    <span class="n">python_script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+    <span class="n">python_script_md5_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">python_script_name</span><span class="p">)</span>
+    <span class="n">python_script_md5_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;\w*-\w*&quot;</span><span class="p">,</span> <span class="n">python_script_md5_name</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;python_script_name: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">python_script_md5_name</span><span class="p">)</span>
+
+    <span class="n">remote_file_md5</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esg_dist_url_root}</span><span class="s2">/esgf-installer/</span><span class="si">{script_maj_version}</span><span class="s2">/</span><span class="si">{python_script_md5_name}</span><span class="s2">.md5&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url_root</span><span class="o">=</span> <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">script_maj_version</span><span class="o">=</span> <span class="n">script_maj_version</span><span class="p">,</span> <span class="n">python_script_md5_name</span><span class="o">=</span> <span class="n">python_script_md5_name</span> <span class="p">)</span> <span class="p">)</span><span class="o">.</span><span class="n">content</span>
+    <span class="n">remote_file_md5</span> <span class="o">=</span> <span class="n">remote_file_md5</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="n">local_file_md5</span> <span class="o">=</span> <span class="n">get_md5sum</span><span class="p">(</span><span class="n">python_script_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">local_file_md5</span> <span class="o">!=</span> <span class="n">remote_file_md5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnverifiedScriptError</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;[VERIFIED]&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="stream_subprocess_output"><a class="viewcode-back" href="../api.html#esg_functions.stream_subprocess_output">[docs]</a><span class="k">def</span> <span class="nf">stream_subprocess_output</span><span class="p">(</span><span class="n">command_string</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Print out the stdout of the subprocess in real time &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command_string</span><span class="p">),</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+                <span class="nb">print</span> <span class="n">line</span><span class="p">,</span>
+        <span class="c1"># wait for the subprocess to exit</span>
+        <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">),</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not stream subprocess output&quot;</span><span class="p">)</span>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="call_subprocess"><a class="viewcode-back" href="../api.html#esg_functions.call_subprocess">[docs]</a><span class="k">def</span> <span class="nf">call_subprocess</span><span class="p">(</span><span class="n">command_string</span><span class="p">,</span> <span class="n">command_stdin</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn&#39;t have subprocess.call() &#39;&#39;&#39;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;command_string: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">command_string</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">command_process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command_string</span><span class="p">),</span> <span class="n">stdin</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">command_stdin</span><span class="p">:</span>
+            <span class="n">command_process_stdout</span><span class="p">,</span> <span class="n">command_process_stderr</span> <span class="o">=</span>  <span class="n">command_process</span><span class="o">.</span><span class="n">communicate</span><span class="p">(</span><span class="nb">input</span> <span class="o">=</span> <span class="n">command_stdin</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">command_process_stdout</span><span class="p">,</span> <span class="n">command_process_stderr</span> <span class="o">=</span>  <span class="n">command_process</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">),</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error with subprocess&quot;</span><span class="p">)</span>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;command_process_stdout: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">command_process_stdout</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;command_process_stderr: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">command_process_stderr</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;command_process.returncode: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">command_process</span><span class="o">.</span><span class="n">returncode</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;stdout&quot;</span> <span class="p">:</span> <span class="n">command_process_stdout</span><span class="p">,</span> <span class="s2">&quot;stderr&quot;</span> <span class="p">:</span> <span class="n">command_process_stderr</span><span class="p">,</span> <span class="s2">&quot;returncode&quot;</span><span class="p">:</span> <span class="n">command_process</span><span class="o">.</span><span class="n">returncode</span><span class="p">}</span></div>
+
+
+<span class="k">def</span> <span class="nf">subprocess_pipe_commands</span><span class="p">(</span><span class="n">command_list</span><span class="p">):</span>
+    <span class="n">subprocess_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">command</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">command_list</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;index:&quot;</span><span class="p">,</span> <span class="n">index</span>
+        <span class="nb">print</span> <span class="s2">&quot;command:&quot;</span><span class="p">,</span> <span class="n">command</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">subprocess_command</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">stdin</span> <span class="o">=</span> <span class="n">subprocess_list</span><span class="p">[</span><span class="n">index</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+            <span class="n">subprocess_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subprocess_command</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subprocess_command</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+            <span class="n">subprocess_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subprocess_command</span><span class="p">)</span>
+    <span class="n">subprocess_list_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">subprocess_list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="p">,</span><span class="n">process</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">subprocess_list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">!=</span> <span class="n">subprocess_list_length</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subprocess_stdout</span><span class="p">,</span> <span class="n">subprocess_stderr</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">subprocess_stdout</span>
+
+
+<div class="viewcode-block" id="check_shmmax"><a class="viewcode-back" href="../api.html#esg_functions.check_shmmax">[docs]</a><span class="k">def</span> <span class="nf">check_shmmax</span><span class="p">(</span><span class="n">min_shmmax</span> <span class="o">=</span> <span class="mi">48</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">       NOTE: This is another **RedHat/CentOS** specialty thing (sort of)</span>
+<span class="sd">       arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">kernel_shmmax</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;kernel_shmmax&quot;</span><span class="p">)</span>
+    <span class="n">set_value_mb</span> <span class="o">=</span> <span class="n">min_shmmax</span>
+    <span class="n">set_value_bytes</span> <span class="o">=</span> <span class="n">set_value_mb</span> <span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span>
+    <span class="n">cur_value_bytes</span> <span class="o">=</span> <span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;sysctl -q kernel.shmmax&quot;</span><span class="p">)[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nb">print</span> <span class="s2">&quot;cur_value_bytes:&quot;</span><span class="p">,</span> <span class="n">cur_value_bytes</span>
+    <span class="n">cur_value_bytes</span> <span class="o">=</span> <span class="n">cur_value_bytes</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">cur_value_bytes</span> <span class="o">&lt;</span> <span class="n">set_value_bytes</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;Current system shared mem value too low [</span><span class="si">{cur_value_bytes}</span><span class="s2"> bytes] changing to [</span><span class="si">{set_value_bytes}</span><span class="s2"> bytes]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cur_value_bytes</span> <span class="o">=</span> <span class="n">cur_value_bytes</span><span class="p">,</span> <span class="n">set_value_bytes</span> <span class="o">=</span> <span class="n">set_value_bytes</span><span class="p">)</span>
+        <span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;sysctl -w kernel.shmmax=</span><span class="si">{set_value_bytes}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">set_value_bytes</span> <span class="o">=</span> <span class="n">set_value_bytes</span><span class="p">))</span>
+        <span class="c1">#TODO: replace with Python to update file</span>
+        <span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;sed -i.bak &#39;s/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/</span><span class="se">\1</span><span class="s2">&#39;$</span><span class="si">{set_value_bytes}</span><span class="s2">&#39;/g&#39; /etc/sysctl.conf&quot;</span><span class="p">)</span>
+        <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">write_as_property</span><span class="p">(</span><span class="s2">&quot;kernal_shmmax&quot;</span><span class="p">,</span> <span class="n">set_value_mb</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">get_esg_root_id</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_root_id</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_id&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">esg_root_id</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg_root_id&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">esg_root_id</span>
+
+<div class="viewcode-block" id="get_esgf_host"><a class="viewcode-back" href="../api.html#esg_functions.get_esgf_host">[docs]</a><span class="k">def</span> <span class="nf">get_esgf_host</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_host&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">esgf_host</span></div>
+
+<div class="viewcode-block" id="get_security_admin_password"><a class="viewcode-back" href="../api.html#esg_functions.get_security_admin_password">[docs]</a><span class="k">def</span> <span class="nf">get_security_admin_password</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Gets the security_admin_password from the esgf_secret_file &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_secret_file&quot;</span><span class="p">],</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">password_file</span><span class="p">:</span>
+            <span class="n">security_admin_password</span> <span class="o">=</span> <span class="n">password_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;File doesn&#39;t exist </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_secret_file&quot;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not get password from file&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">security_admin_password</span></div>
+
+
+<div class="viewcode-block" id="set_java_keystore_password"><a class="viewcode-back" href="../api.html#esg_functions.set_java_keystore_password">[docs]</a><span class="k">def</span> <span class="nf">set_java_keystore_password</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Saves the password for a Java keystore to /esg/config/.esg_keystore_pass&#39;&#39;&#39;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">keystore_password_input</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span><span class="s2">&quot;Please enter the password for this keystore: &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">keystore_password_input</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Invalid password. The password can not be blank.&quot;</span>
+            <span class="k">continue</span>
+
+        <span class="n">keystore_password_input_confirmation</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span><span class="s2">&quot;Please re-enter the password for this keystore: &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">keystore_password_input</span> <span class="o">==</span> <span class="n">keystore_password_input_confirmation</span><span class="p">:</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;keystore_password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">keystore_password_input</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Sorry, values did not match. Please try again.&quot;</span>
+            <span class="k">continue</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">keystore_file</span><span class="p">:</span>
+        <span class="n">keystore_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;keystore_password&quot;</span><span class="p">])</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="mi">0640</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">),</span> <span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="get_java_keystore_password"><a class="viewcode-back" href="../api.html#esg_functions.get_java_keystore_password">[docs]</a><span class="k">def</span> <span class="nf">get_java_keystore_password</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Gets the keystore_password from the saved ks_secret_file at /esg/config/.esg_keystore_pass &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">keystore_file</span><span class="p">:</span>
+            <span class="n">keystore_password</span> <span class="o">=</span> <span class="n">keystore_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">keystore_password</span><span class="p">:</span>
+            <span class="n">set_java_keystore_password</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">keystore_file</span><span class="p">:</span>
+            <span class="n">keystore_password</span> <span class="o">=</span> <span class="n">keystore_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">keystore_password</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;The keystore password has not been set yet so the password file </span><span class="si">%s</span><span class="s2"> does not exist yet.&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">])</span>
+        <span class="n">set_java_keystore_password</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">keystore_file</span><span class="p">:</span>
+            <span class="n">keystore_password</span> <span class="o">=</span> <span class="n">keystore_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">keystore_password</span></div>
+
+<span class="k">def</span> <span class="nf">_check_keystore_password</span><span class="p">(</span><span class="n">keystore_password</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Utility function to check that a given password is valid for the global scoped {keystore_file} &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">]):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;$([FAIL]) No keystore file present [</span><span class="si">%s</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">keystore_password</span> <span class="o">=</span> <span class="n">get_java_keystore_password</span><span class="p">()</span>
+    <span class="n">keytool_list_command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{java_install_dir}</span><span class="s2">/bin/keytool -list -keystore </span><span class="si">{keystore_file}</span><span class="s2"> -storepass </span><span class="si">{keystore_password}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">keystore_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">],</span> <span class="n">keystore_password</span><span class="o">=</span><span class="n">keystore_password</span><span class="p">)</span>
+    <span class="n">keytool_list_process</span> <span class="o">=</span> <span class="n">call_subprocess</span><span class="p">(</span><span class="n">keytool_list_command</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">keytool_list_process</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;$([FAIL]) Could not access private keystore </span><span class="si">%s</span><span class="s2"> with provided password. Try again...&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ks_secret_file&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="verify_esg_node_script"><a class="viewcode-back" href="../api.html#esg_functions.verify_esg_node_script">[docs]</a><span class="k">def</span> <span class="nf">verify_esg_node_script</span><span class="p">(</span><span class="n">esg_node_filename</span><span class="p">,</span> <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">script_version</span><span class="p">,</span> <span class="n">script_maj_version</span><span class="p">,</span> <span class="n">devel</span><span class="p">,</span> <span class="n">update_action</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Verify the esg_node script is the most current version &#39;&#39;&#39;</span>
+    <span class="c1"># Test to see if the esg-node script is currently being pulled from git, and if so skip verification</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;esg_node_filename: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">esg_node_filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_in_git_repo</span><span class="p">(</span><span class="n">esg_node_filename</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Git repository detected; not checking checksum of esg-node&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="s2">&quot;devel&quot;</span> <span class="ow">in</span> <span class="n">script_version</span><span class="p">:</span>
+        <span class="n">devel</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">remote_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_dist_url_root}</span><span class="s2">/esgf-installer/</span><span class="si">{script_maj_version}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url_root</span> <span class="o">=</span> <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">script_maj_version</span> <span class="o">=</span> <span class="n">script_maj_version</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">devel</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">remote_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_dist_url_root}</span><span class="s2">/devel/esgf-installer/</span><span class="si">{script_maj_version}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url_root</span> <span class="o">=</span> <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">script_maj_version</span> <span class="o">=</span> <span class="n">script_maj_version</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_verify_against_mirror</span><span class="p">(</span><span class="n">remote_url</span><span class="p">,</span> <span class="n">script_maj_version</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">UnverifiedScriptError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;WARNING: </span><span class="si">%s</span><span class="s1"> could not be verified!! </span><span class="se">\n</span><span class="s1">(This file, </span><span class="si">%s</span><span class="s1">, may have been tampered</span>
+<span class="s1">            with or there is a newer version posted at the distribution server.</span>
+<span class="s1">            </span><span class="se">\n</span><span class="s1">Please update this script.)</span><span class="se">\n\n</span><span class="s1">&#39;&#39;&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">update_action</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">update_action</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: &quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">update_action</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s2">&quot;Y&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">()]:</span>
+            <span class="nb">print</span>  <span class="s2">&quot;Continuing...&quot;</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">update_action</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s2">&quot;update&quot;</span><span class="p">,</span> <span class="s2">&quot;--update&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Updating local script with script from distribution server...&quot;</span>
+
+            <span class="k">if</span> <span class="n">devel</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">bootstrap_path</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/bin/esg-bootstrap --devel&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bootstrap_path</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/bin/esg-bootstrap&quot;</span>
+            <span class="n">invoke_bootstrap</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">bootstrap_path</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
+            <span class="n">invoke_bootstrap</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+
+            <span class="nb">print</span> <span class="s2">&quot;Please re-run this updated script: </span><span class="si">{current_script_name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">current_script_name</span> <span class="o">=</span> <span class="n">esg_node_filename</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">invoke_bootstrap</span><span class="o">.</span><span class="n">returncode</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">update_action</span> <span class="ow">is</span> <span class="s2">&quot;X&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="nb">print</span> <span class="s2">&quot;Exiting...&quot;</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Unknown option: </span><span class="si">{update_action}</span><span class="s2"> - Exiting&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">update_action</span> <span class="o">=</span> <span class="n">update_action</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="get_group_list"><a class="viewcode-back" href="../api.html#esg_functions.get_group_list">[docs]</a><span class="k">def</span> <span class="nf">get_group_list</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Returns a list of the Unix groups on the system&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">gr_name</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrall</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="get_user_list"><a class="viewcode-back" href="../api.html#esg_functions.get_user_list">[docs]</a><span class="k">def</span> <span class="nf">get_user_list</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Returns a list of the Unix users on the system&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">user</span><span class="o">.</span><span class="n">pw_name</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwall</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="get_group_id"><a class="viewcode-back" href="../api.html#esg_functions.get_group_id">[docs]</a><span class="k">def</span> <span class="nf">get_group_id</span><span class="p">(</span><span class="n">group_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Returns the id of the Unix group &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">group_name</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span></div>
+
+<div class="viewcode-block" id="get_user_id"><a class="viewcode-back" href="../api.html#esg_functions.get_user_id">[docs]</a><span class="k">def</span> <span class="nf">get_user_id</span><span class="p">(</span><span class="n">user_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Returns the id of the Unix user &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">user_name</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span></div>
+
+<div class="viewcode-block" id="get_tomcat_user_id"><a class="viewcode-back" href="../api.html#esg_functions.get_tomcat_user_id">[docs]</a><span class="k">def</span> <span class="nf">get_tomcat_user_id</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Returns the id of the Tomcat user &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span></div>
+
+<div class="viewcode-block" id="get_tomcat_group_id"><a class="viewcode-back" href="../api.html#esg_functions.get_tomcat_group_id">[docs]</a><span class="k">def</span> <span class="nf">get_tomcat_group_id</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Returns the id of the Tomcat group &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not get Tomcat group id&quot;</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">add_unix_group</span><span class="p">(</span><span class="n">group_name</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;groupadd </span><span class="si">{group_name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;error:&quot;</span><span class="p">,</span> <span class="n">error</span>
+        <span class="nb">print</span> <span class="s2">&quot;Could not add group </span><span class="si">{group_name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">)</span>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">add_unix_user</span><span class="p">(</span><span class="n">user_name</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;useradd </span><span class="si">{user_name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_name</span><span class="o">=</span><span class="n">user_name</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;error:&quot;</span><span class="p">,</span> <span class="n">error</span>
+        <span class="nb">print</span> <span class="s2">&quot;Could not add user </span><span class="si">{user_name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_name</span><span class="o">=</span><span class="n">user_name</span><span class="p">)</span>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_dir_owner_and_group"><a class="viewcode-back" href="../api.html#esg_functions.get_dir_owner_and_group">[docs]</a><span class="k">def</span> <span class="nf">get_dir_owner_and_group</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Returns a tuple containing the owner and group of the given directory path &#39;&#39;&#39;</span>
+    <span class="n">stat_info</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">uid</span> <span class="o">=</span> <span class="n">stat_info</span><span class="o">.</span><span class="n">st_uid</span>
+    <span class="n">gid</span> <span class="o">=</span> <span class="n">stat_info</span><span class="o">.</span><span class="n">st_gid</span>
+    <span class="c1"># print uid, gid</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">uid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrgid</span><span class="p">(</span><span class="n">gid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">user</span><span class="p">,</span> <span class="n">group</span></div>
+
+<div class="viewcode-block" id="track_extraction_progress"><a class="viewcode-back" href="../api.html#esg_functions.track_extraction_progress">[docs]</a><span class="k">def</span> <span class="nf">track_extraction_progress</span><span class="p">(</span><span class="n">members</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Output of the files being extracted from a tarball&#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">members</span><span class="p">:</span>
+       <span class="c1"># this will be the current file being extracted</span>
+       <span class="k">yield</span> <span class="n">member</span></div>
+
+<span class="k">def</span> <span class="nf">extract_tarball</span><span class="p">(</span><span class="n">tarball_name</span><span class="p">,</span> <span class="n">dest_dir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">tarball_name</span><span class="p">)</span>
+        <span class="n">tar</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">members</span> <span class="o">=</span> <span class="n">track_extraction_progress</span><span class="p">(</span><span class="n">tar</span><span class="p">))</span>
+        <span class="n">tar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not extract the tarfile: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tarball_name</span><span class="p">)</span>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="change_permissions_recursive"><a class="viewcode-back" href="../api.html#esg_functions.change_permissions_recursive">[docs]</a><span class="k">def</span> <span class="nf">change_permissions_recursive</span><span class="p">(</span><span class="n">directory_path</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Recursive changes permissions on a directory and its subdirectories&#39;&#39;&#39;</span>
+    <span class="c1">#recursively change permissions</span>
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">readlinkf</span><span class="p">(</span><span class="n">directory_path</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">directory</span><span class="p">),</span> <span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not change permissions on : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="replace_string_in_file"><a class="viewcode-back" href="../api.html#esg_functions.replace_string_in_file">[docs]</a><span class="k">def</span> <span class="nf">replace_string_in_file</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">original_string</span><span class="p">,</span> <span class="n">new_string</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Goes into a file and replaces string&#39;&#39;&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">file_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">original_string</span><span class="p">,</span> <span class="n">new_string</span><span class="p">)</span>
+
+    <span class="c1"># Write the file out again</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+        <span class="n">file_handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filedata</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_config_ip</span><span class="p">(</span><span class="n">interface_value</span><span class="p">):</span>
+    <span class="c1"># chain = ifconfig[&quot;eth3&quot;] | grep[&quot;inet[^6]&quot;] | awk[&#39;{ gsub (&quot; *inet [^:]*:&quot;,&quot;&quot;); print eth3}&#39;]</span>
+    <span class="c1">#     &#39;&#39;&#39;</span>
+    <span class="c1">#     #####</span>
+    <span class="c1">#     # Get Current IP Address - Needed (at least temporarily) for Mesos Master</span>
+    <span class="c1">#     ####</span>
+    <span class="c1">#     Takes a single interface value</span>
+    <span class="c1">#     &quot;eth0&quot; or &quot;lo&quot;, etc...</span>
+    <span class="c1">#     &#39;&#39;&#39;</span>
+    <span class="n">netifaces</span><span class="o">.</span><span class="n">ifaddresses</span><span class="p">(</span><span class="n">interface_value</span><span class="p">)</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">netifaces</span><span class="o">.</span><span class="n">ifaddresses</span><span class="p">(</span><span class="n">interface_value</span><span class="p">)[</span><span class="n">netifaces</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;addr&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ip</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'2.5.13',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Generate the new html pages for the documentation
+make html
 
 # while getopts ":m" opt; do
 #   case ${opt} in
@@ -20,6 +22,8 @@ git add _modules/*
 git add _sources/*
 git add *.inv
 
+#Commit message
 git commit -m 'updated autodocumentation'
 
+#Push to Github Pages
 git push

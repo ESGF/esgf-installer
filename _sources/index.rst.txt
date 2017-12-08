@@ -6,10 +6,30 @@
 Welcome to esgf-installer's documentation!
 ==========================================
 
+
+API:
+------
+
 .. toctree::
+   :maxdepth: 2
 
    api
+
+Issues:
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+
    issues
+
+Installation:
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
    installation
 
 

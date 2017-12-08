@@ -1,0 +1,35 @@
+{
+    "create_timestamp": 1489487392.117243,
+    "links": [
+        {
+            "from": "1",
+            "speed": 0,
+            "status": "unverified",
+            "to": "2"
+        }
+    ],
+    "membernodes": [
+        {
+            "members": [],
+            "supernode": "1"
+        },
+        {
+            "members": [],
+            "supernode": "2"
+        }
+    ],
+    "supernodes": [
+        {
+            "health": "new",
+            "hostname": "pcmdi11.llnl.gov",
+            "id": "1"
+        },
+        {
+            "health": "new",
+            "hostname": "my-node.esgf.org",
+            "id": "2"
+        }
+    ],
+    "total_membernodes": 0,
+    "total_supernodes": 2
+}

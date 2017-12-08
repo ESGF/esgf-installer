@@ -21,7 +21,7 @@ from clint.textui import progress
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 TOMCAT_VERSION = "8.5.20"
@@ -99,6 +99,7 @@ def copy_config_files():
     #     shutil.copyfile("certs/esg-truststore.ts", "/esg/config/tomcat/esg-truststore.ts")
     #     shutil.copyfile("certs/esg-truststore.ts-orig", "/esg/config/tomcat/esg-truststore.ts-orig")
     #     shutil.copyfile("certs/keystore-tomcat", "/esg/config/tomcat/keystore-tomcat")
+        esg_bash2py.mkdir_p("/esg/config/tomcat")
         shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
     #
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))

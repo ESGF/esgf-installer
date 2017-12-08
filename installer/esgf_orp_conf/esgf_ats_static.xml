@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<!--
+  File that may contain custom attribute service and registration 
+  endpoints in addition to those contained in the file esgf_ats.xml. 
+  This file is supposed to be maintained by the local system 
+  administrators, while the file esgf_ats.xml is dynamically generated
+  by the node manager.
+-->
+
+<ats_whitelist xmlns="http://www.esgf.org/whitelist">
+
+  <!-- 
+    pcmdi Attribute and Registration services: it is included here to 
+    allow registration for "esgf-test" nodes, otherwise it should be 
+    contained in file esgf_ats.xml for nodes in the "esgf-prod" group
+  -->
+
+  <attribute
+    type="CMIP5 Research"
+    attributeService="https://pcmdi.llnl.gov/esgf-idp/saml/soap/secure/attributeService.htm"
+    description="Users of CMIP5 data for non-commercial research purposes only"
+    registrationService="https://pcmdi.llnl.gov/esgf-idp/secure/registrationService.htm"
+    />
+  
+  <attribute
+    type="CMIP5 Commercial"
+    attributeService="https://pcmdi.llnl.gov/esgf-idp/saml/soap/secure/attributeService.htm"
+    description="Users of CMIP5 data for commercial purposes"
+    registrationService="https://pcmdi.llnl.gov/esgf-idp/secure/registrationService.htm"
+    />
+               
+  <!-- NASA Obs4MIPs -->
+  <attribute 
+    type="NASA OBS"
+    attributeService="https://esgf-node.jpl.nasa.gov/esgf-idp/saml/soap/secure/attributeService.htm"
+    description="NASA Observational Data"
+    registrationService="https://esgf-node.jpl.nasa.gov/esgf-idp/secure/registrationService.htm"
+      />
+
+  <attribute
+    type="ACME" 
+    attributeService="https://esg.ccs.ornl.gov/esgf-idp/saml/soap/secure/attributeService.htm"
+    description="ACME user group"
+    registrationService="https://esg.ccs.ornl.gov/esgf-idp/secure/registrationService.htm"
+    />
+  
+</ats_whitelist>

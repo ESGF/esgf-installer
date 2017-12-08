@@ -14,17 +14,16 @@ import requests
 import esg_functions
 import esg_bash2py
 import yaml
-import sys
 import zipfile
 from git import Repo
-from time import sleep
 from clint.textui import progress
 import esg_logging_manager
+import re
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 CATALINA_HOME = "/usr/local/tomcat"
@@ -168,6 +167,19 @@ def setup_node_manager_old():
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-node-manager.war")
+
+def check_thredds_version():
+    '''Check the MANIFEST.MF file for the Thredds version'''
+    with open("/usr/local/tomcat/webapps/thredds/META-INF/MANIFEST.MF", "r") as manifest_file:
+        contents = manifest_file.readlines()
+        matcher = re.compile("Implementation-Version.*")
+        results_list = filter(matcher.match, contents)
+        if results_list:
+            version_number = results_list[0].split(":")[1].strip().split("-")[1]
+            print "Found existing Thredds installation (Thredds version {version})".format(version=version_number)
+            return version_number
+        else:
+            print "Thredds not found on system."
 
 def download_thredds_war(thredds_url):
 
@@ -336,7 +348,6 @@ def clone_dashboard_repo():
     print "\n*******************************"
     print "Cloning esgf-dashboard repo from Github"
     print "******************************* \n"
-
     from git import RemoteProgress
     class Progress(RemoteProgress):
         def update(self, op_code, cur_count, max_count=None, message=''):
@@ -370,6 +381,255 @@ def run_dashboard_script():
         esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
         esg_functions.stream_subprocess_output("make")
         esg_functions.stream_subprocess_output("make install")
+
+def download_solr_tarball(solr_tarball_url, SOLR_VERSION):
+    print "\n*******************************"
+    print "Download Solr version {SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION)
+    print "******************************* \n"
+    r = requests.get(solr_tarball_url)
+
+    path = '/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION)
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
+def extract_solr_tarball(solr_tarball_path, SOLR_VERSION):
+    '''Extract the solr tarball to /usr/local and symlink it to /usr/local/solr'''
+    print "\n*******************************"
+    print "Extracting Solr"
+    print "******************************* \n"
+
+    with esg_bash2py.pushd("/usr/local"):
+        esg_functions.extract_tarball(solr_tarball_path)
+        os.remove(solr_tarball_path)
+        esg_bash2py.symlink_force("solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), "solr")
+
+def download_template_directory():
+    '''download template directory structure for shards home'''
+    ESGF_REPO = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
+    with esg_bash2py.pushd("/usr/local/src"):
+        r = requests.get("{ESGF_REPO}/dist/esg-search/solr-home.tar".format(ESGF_REPO=ESGF_REPO))
+
+        path = 'solr-home.tar'
+        with open(path, 'wb') as f:
+            total_length = int(r.headers.get('content-length'))
+            for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+
+        esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
+
+def setup_solr():
+    '''Setup Apache Solr for faceted search'''
+
+    print "\n*******************************"
+    print "Setting up Solr"
+    print "******************************* \n"
+
+    # # Solr/Jetty web application
+    SOLR_VERSION = "5.5.4"
+    SOLR_INSTALL_DIR = "/usr/local/solr"
+    SOLR_HOME = "/usr/local/solr-home"
+    SOLR_DATA_DIR = "/esg/solr-index"
+    SOLR_INCLUDE= "{SOLR_HOME}/solr.in.sh".format(SOLR_HOME=SOLR_HOME)
+
+    #Download solr tarball
+    solr_tarball_url = "http://archive.apache.org/dist/lucene/solr/{SOLR_VERSION}/solr-{SOLR_VERSION}.tgz".format(SOLR_VERSION=SOLR_VERSION)
+    download_solr_tarball(solr_tarball_url, SOLR_VERSION)
+    #Extract solr tarball
+    extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION)
+
+    esg_bash2py.mkdir_p(SOLR_DATA_DIR)
+
+    # download template directory structure for shards home
+    download_template_directory()
+
+    esg_bash2py.mkdir_p(SOLR_HOME)
+
+    # create non-privilged user to run Solr server
+    esg_functions.stream_subprocess_output("groupadd solr")
+    esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
+
+    SOLR_USER_ID = pwd.getpwnam("solr").pw_uid
+    SOLR_GROUP_ID = grp.getgrnam("solr").gr_gid
+    esg_functions.change_permissions_recursive("/usr/local/solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_permissions_recursive(SOLR_HOME, SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_permissions_recursive(SOLR_DATA_DIR, SOLR_USER_ID, SOLR_GROUP_ID)
+
+    #
+    #Copy shard files
+    shutil.copyfile("solr_scripts/add_shard.sh", "/usr/local/bin/add_shard.sh")
+    shutil.copyfile("solr_scripts/remove_shard.sh", "/usr/local/bin/remove_shard.sh")
+
+    # add shards
+    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8984")
+    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8983")
+
+    # custom logging properties
+    shutil.copyfile("solr_scripts/log4j.properties", "/{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+
+def download_esg_search_war(esg_search_war_url):
+    print "\n*******************************"
+    print "Downloading ESG Search war file"
+    print "******************************* \n"
+
+    r = requests.get(esg_search_war_url, stream=True)
+    path = '/usr/local/tomcat/webapps/esg-search/esg-search.war'
+    with open(path, 'wb') as f:
+        total_length = int(r.headers.get('content-length'))
+        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+            if chunk:
+                f.write(chunk)
+                f.flush()
+
+def setup_esg_search():
+    '''Setting up the ESG Search application'''
+
+    print "\n*******************************"
+    print "Setting up ESG Search"
+    print "******************************* \n"
+
+    ESGF_REPO = "http://aims1.llnl.gov/esgf"
+    esg_search_war_url = "{ESGF_REPO}/esg-search/esg-search.war".format(ESGF_REPO=ESGF_REPO)
+    download_esg_search_war(esg_search_war_url)
+    #Extract esg-search war
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-search"):
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
+            zf.extractall()
+        os.remove("esg-search.war")
+
+    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
+    esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-search", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+#TODO: This is duplicating checkout_publisher_branch in esg_publisher; Should be generalized
+def checkout_cog_branch(cog_path, branch_name):
+    '''Checkout a given branch of the COG repo'''
+    publisher_repo_local = Repo(cog_path)
+    publisher_repo_local.git.checkout(branch_name)
+    return publisher_repo_local
+
+def clone_cog_repo(COG_INSTALL_DIR):
+    '''Clone the COG repo from Github'''
+    print "\n*******************************"
+    print "Cloning COG repo"
+    print "******************************* \n"
+
+    from git import RemoteProgress
+    class Progress(RemoteProgress):
+        def update(self, op_code, cur_count, max_count=None, message=''):
+            if message:
+                print('Downloading: (==== {} ====)\r'.format(message))
+                print "current line:", self._cur_line
+
+    Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
+    # with esg_bash2py.pushd(COG_INSTALL_DIR):
+    checkout_cog_branch(COG_INSTALL_DIR, "devel")
+        # cog_repo_local = Repo(".")
+        # cog_repo_local.git.checkout("devel")
+
+def setup_cog():
+    # choose CoG version
+    COG_TAG = "v3.9.7"
+    # # env variable to execute CoG initialization
+    # # may be overridden from command line after first container startup
+    INIT = True
+    # setup CoG environment
+    COG_DIR = "/usr/local/cog"
+    esg_bash2py.mkdir_p(COG_DIR)
+
+    COG_CONFIG_DIR = "{COG_DIR}/cog_config".format(COG_DIR=COG_DIR)
+    esg_bash2py.mkdir_p(COG_CONFIG_DIR)
+
+    COG_INSTALL_DIR= "{COG_DIR}/cog_install".format(COG_DIR=COG_DIR)
+    esg_bash2py.mkdir_p(COG_INSTALL_DIR)
+
+    # ENV LD_LIBRARY_PATH=/usr/local/lib
+    #
+    # # install Python virtual environment
+    # RUN cd $COG_DIR && \
+    #     virtualenv venv
+    #
+    # # download CoG specific tag or branch
+    clone_cog_repo(COG_INSTALL_DIR)
+
+    #
+    # # install CoG dependencies
+    # RUN cd $COG_INSTALL_DIR && \
+    #     source $COG_DIR/venv/bin/activate && \
+    #     pip install -r requirements.txt
+    #
+    # # setup CoG database and configuration
+    # RUN cd $COG_INSTALL_DIR && \
+    #     source $COG_DIR/venv/bin/activate && \
+    #     python setup.py install
+    #
+    # # manually install additional dependencies
+    # RUN cd $COG_DIR && \
+    #     source $COG_DIR/venv/bin/activate && \
+    #     git clone https://github.com/EarthSystemCoG/django-openid-auth.git && \
+    #     cd django-openid-auth && \
+    #     python setup.py install
+    #
+    # RUN cd $COG_DIR && \
+    #     git clone https://github.com/globusonline/transfer-api-client-python.git && \
+    #     cd transfer-api-client-python && \
+    #     source $COG_DIR/venv/bin/activate && \
+    #     python setup.py install && \
+    #     git pull && \
+    #     cd mkproxy && \
+    #     make  && \
+    #     cp mkproxy $COG_DIR/venv/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/.
+    #
+    # # collect static files to ./static directory
+    # # must use a minimal settings file (configured with sqllite3 database)
+    # COPY conf/cog_settings.cfg /usr/local/cog/cog_config/cog_settings.cfg
+    # RUN cd $COG_INSTALL_DIR && \
+    #     source $COG_DIR/venv/bin/activate && \
+    #     python manage.py collectstatic --no-input && \
+    #     rm /usr/local/cog/cog_config/cog_settings.cfg
+    #     #python setup.py -q setup_cog --esgf=false
+    #
+    # # for some unknown reason, must reinstall captcha
+    # #RUN source $COG_DIR/venv/bin/activate && \
+    # #    pip uninstall -y django-simple-captcha && \
+    # #    pip install django-simple-captcha==0.5.1
+    #
+    # # expose default django port
+    # EXPOSE 8000
+    #
+    # # create non-privileged user to run django
+    # RUN groupadd -r cogadmin && \
+    #     useradd -r -g cogadmin cogadmin && \
+    #     mkdir -p ~cogadmin && \
+    #     chown cogadmin:cogadmin ~cogadmin
+    #
+    # # change user prompt
+    # RUN echo 'export PS1="[\u@\h]\$ "' >> ~cogadmin/.bashrc
+    #
+    # # change ownership of application directories
+    # #RUN chown -R cogadmin:cogadmin $COG_DIR
+    #
+    # # expose software installation directories
+    # # needed by apache httpd running cog through mod_wsgi
+    # VOLUME $COG_DIR/venv
+    # VOLUME $COG_INSTALL_DIR
+    #
+    # # startup
+    # COPY  scripts/ /usr/local/bin/
+    # COPY  conf/supervisord.cog.conf /etc/supervisor/conf.d/supervisord.cog.conf
+    # #COPY  scripts/wait_for_postgres.sh /usr/local/bin/wait_for_postgres.sh
+    # #COPY  scripts/process_esgf_config_archive.sh /usr/local/bin/process_esgf_config_archive.sh
+    #
+    # # wait for Postgred connection to be ready
+    # ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+    # # will override these CMD options at run time
+    # CMD ["localhost", "false", "true"]
+
 
 def main():
     setup_orp()

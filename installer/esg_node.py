@@ -24,7 +24,7 @@ import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 os.environ['LANG'] = "POSIX"
@@ -341,6 +341,7 @@ def main(node_type_list):
 
     # determine installation type
     install_type = get_installation_type(script_version)
+    print "install_type:", install_type
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()

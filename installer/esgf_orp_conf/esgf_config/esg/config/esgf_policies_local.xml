@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<!-- This file is intended to be edited and maintained by the local Node admnistrators.
+     It should contain only policies specific to data served by the local Node.
+     It will not be overridden by a software update. -->
+<policies xmlns="http://www.esgf.org/security">
+
+    <!-- The following statements allow all members of group "CMIP5 Research" or "CMIP5 Commercial" to read any local URL that contains "cmip5".
+         Note that the groups "CMIP5 Research" and "CMIP5 Commercial" are administered by PCMDI -->
+    <!-- <policy resource=".*cmip5.*" attribute_type="CMIP5 Research" attribute_value="user" action="Read"/> -->
+    <!-- <policy resource=".*cmip5.*" attribute_type="CMIP5 Commercial" attribute_value="user" action="Read"/> -->
+    <!-- These statements provide CMIP5 Read access for members of the old gateways -->
+    <!-- <policy resource=".*cmip5.*" attribute_type="CMIP5 Research" attribute_value="default" action="Read"/> -->
+    <!-- <policy resource=".*cmip5.*" attribute_type="CMIP5 Commercial" attribute_value="default" action="Read"/> -->
+    
+
+    <!-- The following statement allows all members of group "MY GROUP" to read any local URL that contains "my_data"
+    <policy resource=".*my_data.*" attribute_type="MY GROUP" attribute_value="user" action="Read"/> -->
+    
+    <!-- The following statement allows members of group "MY GROUP" with role="publisher" to publish local datasets with id containing "my_data" 
+    <policy resource=".*my_data.*" attribute_type="MY GROUP" attribute_value="publisher" action="Write"/> -->
+    
+    <!-- The following statements makes resources that contain '.*test.*' freely available for download -->
+    <!-- <policy resource=".*test.*" attribute_type="ANY" attribute_value="" action="Read"/> -->
+    
+    <!-- The following statements makes all resources freely available for download -->
+    <!-- <policy resource=".*" attribute_type="ANY" attribute_value="" action="Read"/> -->
+
+   <!-- NASA-JPL access control -->
+   <policy resource=".*NASA-JPL.*" attribute_type="NASA OBS" attribute_value="user" action="Read"/>
+   <policy resource=".*NASA-JPL.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+   <policy resource=".*NASA-GSFC.*" attribute_type="NASA OBS" attribute_value="user" action="Read"/>
+   <policy resource=".*NASA-GSFC.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+   <policy resource=".*AVISO.*" attribute_type="NASA OBS" attribute_value="user" action="Read"/>
+   <policy resource=".*AVISO.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+   <policy resource=".*REMSS.*" attribute_type="NASA OBS" attribute_value="user" action="Read"/>
+   <policy resource=".*REMSS.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+   <policy resource=".*MERRA.*" attribute_type="NASA OBS" attribute_value="user" action="Read"/>
+   <policy resource=".*MERRA.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+
+   <!-- NASA-JPL access control -->
+   <policy resource=".*obs4MIPs.*" attribute_type="AUTH_ONLY" attribute_value="" action="Read"/>
+   <policy resource=".*obs4MIPs.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+
+   <policy resource=".*COUND.*" attribute_type="NASA OBS" attribute_value="publisher" action="Write"/>
+   <policy resource=".*COUND.*" attribute_type="ANY" attribute_value="" action="Read"/>
+
+   <!-- YTOC datasets -->
+   <policy resource=".*gass-ytoc-mip.*" attribute_type="NASA OBS" attribute_value="user" action="Read"/>
+
+   <!-- Test resources require authentication -->
+   <policy resource=".*test.*" attribute_type="AUTH_ONLY" attribute_value="" action="Read"/>
+
+</policies>

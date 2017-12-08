@@ -7,7 +7,7 @@ import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esg_purge import purge_postgres
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 

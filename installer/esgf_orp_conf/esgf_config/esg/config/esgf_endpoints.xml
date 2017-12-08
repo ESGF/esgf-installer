@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<endpoints xmlns="http://www.esgf.org/whitelist">
+  <endpoint name="jplnasagov#public" gridftp="esgf-node.jpl.nasa.gov:2811" path_out='esg_dataroot' />
+  <endpoint name="jplnasagov#shared" gridftp="esgf-data.jpl.nasa.gov:2811" path_out='esg_dataroot' />
+</endpoints>

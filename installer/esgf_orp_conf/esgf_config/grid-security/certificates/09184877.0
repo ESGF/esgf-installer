@@ -1,0 +1,107 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 18 (0x12)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=UK, O=eScienceSLCSHierarchy, OU=Authority, CN=SLCS Top Level CA
+        Validity
+            Not Before: Jul 18 08:00:00 2016 GMT
+            Not After : Jul 14 13:00:00 2021 GMT
+        Subject: DC=uk, DC=ac, DC=ceda, O=STFC RAL, CN=Centre for Environmental Data Analysis
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:a2:6e:41:3e:91:ae:68:1e:89:6b:90:3c:bc:54:
+                    77:eb:b7:48:50:29:f3:2a:31:59:59:bc:8f:8e:d9:
+                    00:6e:25:c4:1f:31:5a:18:e5:03:98:e1:65:6e:50:
+                    22:ac:e8:20:d5:c5:18:ef:35:62:ee:0d:61:c4:9a:
+                    23:31:cd:6c:ec:df:11:2e:52:6e:13:a1:a4:89:c0:
+                    e4:65:05:2c:fe:c5:e4:29:2c:99:c0:3b:f5:18:b5:
+                    41:c7:50:8b:6c:89:82:ed:e2:99:0b:b3:9d:23:e2:
+                    8d:10:a6:57:8b:4d:32:a4:84:05:a6:9f:68:c5:b2:
+                    07:ff:10:d9:46:e6:6d:e9:4f:45:58:b6:3a:b4:0a:
+                    af:6b:82:6f:6e:66:63:1a:6e:fb:27:48:93:85:86:
+                    8b:1b:76:4e:c5:16:38:77:c5:c4:48:0a:fd:46:16:
+                    d6:4f:78:0d:34:82:3b:a2:8c:5d:83:d1:53:59:35:
+                    9f:89:01:06:47:a2:ac:b4:df:49:52:d0:58:a5:ad:
+                    4a:1f:5e:be:0c:5b:cd:14:6f:5c:dd:f6:33:f0:1e:
+                    ce:b6:1d:ce:fe:cd:af:71:91:b8:cd:de:7d:50:38:
+                    db:5c:df:87:08:be:27:52:f8:e8:24:cc:23:08:20:
+                    a7:5c:77:9e:36:7a:cd:be:34:b2:5e:ca:49:39:45:
+                    09:4d
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://crl.ca.ngs.ac.uk/crl/toplevel.der
+
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+            X509v3 Key Usage: critical
+                Certificate Sign, CRL Sign
+            X509v3 Subject Key Identifier: 
+                A0:90:49:62:23:18:15:1B:F7:8A:34:2F:10:EC:D4:C3:C0:FD:71:0C
+            X509v3 Authority Key Identifier: 
+                keyid:6C:EF:AE:59:9A:9E:50:63:13:56:47:C6:C4:3A:6F:7D:87:FD:0B:0D
+
+    Signature Algorithm: sha256WithRSAEncryption
+         7f:ca:2e:a8:42:b0:80:bc:91:88:7c:78:bb:68:5f:e3:c4:00:
+         7f:d0:36:5b:a3:73:a7:ad:7d:1e:ac:d4:10:6a:02:88:0d:99:
+         3a:e4:11:88:6f:04:11:f4:2e:8a:fc:f7:f9:75:50:8f:ce:e0:
+         00:08:25:a0:1a:f6:90:ff:cf:ab:d4:e6:fa:51:30:fd:06:fc:
+         1e:c7:6f:49:2a:52:8e:f6:f6:45:b5:ce:58:ac:99:f3:8d:bb:
+         e5:30:54:7d:95:a5:07:fd:17:3b:54:09:ce:df:fc:c4:aa:8d:
+         ed:65:d7:02:0b:d2:91:eb:2c:10:0d:63:54:b3:e5:3f:3f:3d:
+         dc:ce:46:a1:4d:35:b7:da:ba:79:0d:32:fb:2f:19:c5:4b:9d:
+         f1:d0:87:16:16:bb:37:51:a1:48:df:73:59:8c:2f:44:c3:27:
+         23:39:b4:96:15:67:73:62:78:8d:a3:a9:0a:bc:24:f5:52:1a:
+         ae:e1:88:db:1f:b5:45:86:8b:2a:51:a1:f4:1d:3f:94:80:10:
+         ca:57:ab:79:18:36:e9:63:6e:d9:64:94:8b:ac:fc:6e:19:94:
+         3d:96:0d:31:e8:c2:79:66:a1:3d:21:86:ec:f9:69:3c:9a:5f:
+         53:8a:ac:11:c3:bb:31:0f:b9:61:d2:d3:3f:77:86:77:3f:0a:
+         db:d1:ba:d1:28:a1:89:eb:3e:77:dd:1e:cf:16:4d:7c:df:26:
+         c7:11:51:ae:3b:8b:8c:75:ce:1a:93:90:c5:0c:26:3b:10:76:
+         fb:98:d5:87:24:43:8c:a1:73:dc:37:d2:d8:a5:1a:b6:be:9f:
+         01:06:1c:66:87:9c:4b:f3:78:c4:fa:a7:5d:b6:ae:85:d7:d7:
+         49:ee:26:17:74:43:a3:67:ea:79:69:de:3e:eb:40:a1:40:58:
+         0b:41:76:b2:a9:a0:00:0a:3f:9f:a9:60:8a:93:2f:c5:04:70:
+         72:d8:aa:fe:5b:67:07:13:4a:aa:b2:55:1d:a6:45:bd:bc:51:
+         87:fa:c9:53:77:55:ff:d9:ae:ac:d8:52:bd:35:87:1b:02:74:
+         02:4c:9c:29:a7:6d:3c:99:06:00:47:f3:9d:ca:d4:20:eb:40:
+         44:30:e8:cb:f3:27:7a:5a:a5:19:b5:3e:3b:4e:33:2e:c6:c4:
+         ab:f0:90:11:93:e8:2b:a4:e7:19:26:11:f9:9f:02:71:e8:30:
+         1b:7c:28:dc:b0:7b:93:a7:f7:c4:a4:96:d9:71:90:a8:c1:65:
+         92:9b:1e:9b:54:56:91:b7:07:d3:1d:85:15:7c:83:dc:29:c4:
+         2b:14:cc:44:42:58:2d:85:dc:9c:95:a1:93:90:b0:00:09:51:
+         29:d0:c9:df:fa:98:c5:31
+-----BEGIN CERTIFICATE-----
+MIIE+zCCAuOgAwIBAgIBEjANBgkqhkiG9w0BAQsFADBdMQswCQYDVQQGEwJVSzEe
+MBwGA1UECgwVZVNjaWVuY2VTTENTSGllcmFyY2h5MRIwEAYDVQQLDAlBdXRob3Jp
+dHkxGjAYBgNVBAMMEVNMQ1MgVG9wIExldmVsIENBMB4XDTE2MDcxODA4MDAwMFoX
+DTIxMDcxNDEzMDAwMFowgYIxEjAQBgoJkiaJk/IsZAEZFgJ1azESMBAGCgmSJomT
+8ixkARkWAmFjMRQwEgYKCZImiZPyLGQBGRYEY2VkYTERMA8GA1UECgwIU1RGQyBS
+QUwxLzAtBgNVBAMMJkNlbnRyZSBmb3IgRW52aXJvbm1lbnRhbCBEYXRhIEFuYWx5
+c2lzMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAom5BPpGuaB6Ja5A8
+vFR367dIUCnzKjFZWbyPjtkAbiXEHzFaGOUDmOFlblAirOgg1cUY7zVi7g1hxJoj
+Mc1s7N8RLlJuE6GkicDkZQUs/sXkKSyZwDv1GLVBx1CLbImC7eKZC7OdI+KNEKZX
+i00ypIQFpp9oxbIH/xDZRuZt6U9FWLY6tAqva4JvbmZjGm77J0iThYaLG3ZOxRY4
+d8XESAr9RhbWT3gNNII7ooxdg9FTWTWfiQEGR6KstN9JUtBYpa1KH16+DFvNFG9c
+3fYz8B7Oth3O/s2vcZG4zd59UDjbXN+HCL4nUvjoJMwjCCCnXHeeNnrNvjSyXspJ
+OUUJTQIDAQABo4GfMIGcMDkGA1UdHwQyMDAwLqAsoCqGKGh0dHA6Ly9jcmwuY2Eu
+bmdzLmFjLnVrL2NybC90b3BsZXZlbC5kZXIwDwYDVR0TAQH/BAUwAwEB/zAOBgNV
+HQ8BAf8EBAMCAQYwHQYDVR0OBBYEFKCQSWIjGBUb94o0LxDs1MPA/XEMMB8GA1Ud
+IwQYMBaAFGzvrlmanlBjE1ZHxsQ6b32H/QsNMA0GCSqGSIb3DQEBCwUAA4ICAQB/
+yi6oQrCAvJGIfHi7aF/jxAB/0DZbo3OnrX0erNQQagKIDZk65BGIbwQR9C6K/Pf5
+dVCPzuAACCWgGvaQ/8+r1Ob6UTD9Bvwex29JKlKO9vZFtc5YrJnzjbvlMFR9laUH
+/Rc7VAnO3/zEqo3tZdcCC9KR6ywQDWNUs+U/Pz3czkahTTW32rp5DTL7LxnFS53x
+0IcWFrs3UaFI33NZjC9EwycjObSWFWdzYniNo6kKvCT1Uhqu4YjbH7VFhosqUaH0
+HT+UgBDKV6t5GDbpY27ZZJSLrPxuGZQ9lg0x6MJ5ZqE9IYbs+Wk8ml9TiqwRw7sx
+D7lh0tM/d4Z3Pwrb0brRKKGJ6z533R7PFk183ybHEVGuO4uMdc4ak5DFDCY7EHb7
+mNWHJEOMoXPcN9LYpRq2vp8BBhxmh5xL83jE+qddtq6F19dJ7iYXdEOjZ+p5ad4+
+60ChQFgLQXayqaAACj+fqWCKky/FBHBy2Kr+W2cHE0qqslUdpkW9vFGH+slTd1X/
+2a6s2FK9NYcbAnQCTJwpp208mQYAR/OdytQg60BEMOjL8yd6WqUZtT47TjMuxsSr
+8JARk+grpOcZJhH5nwJx6DAbfCjcsHuTp/fEpJbZcZCowWWSmx6bVFaRtwfTHYUV
+fIPcKcQrFMxEQlgthdyclaGTkLAACVEp0Mnf+pjFMQ==
+-----END CERTIFICATE-----

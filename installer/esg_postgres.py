@@ -18,7 +18,7 @@ import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 
@@ -34,7 +34,7 @@ def download_postgres():
         config.write()
 
     esg_functions.stream_subprocess_output("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
-    esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96")
+    esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96 postgresql96-devel")
 
 def initialize_postgres():
     try:

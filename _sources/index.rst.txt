@@ -11,6 +11,7 @@ API:
 ------
 
 .. toctree::
+   :caption: API
    :maxdepth: 2
 
    api
@@ -19,6 +20,7 @@ Issues:
 --------
 
 .. toctree::
+   :caption: Issues
    :maxdepth: 2
 
 
@@ -28,6 +30,7 @@ Installation:
 ----------------
 
 .. toctree::
+   :caption: Installation
    :maxdepth: 2
 
    installation

@@ -1,5 +1,5 @@
 ESGF Installer Issue Tracking Guidelines
-------------------
+******************************************
 We are going to begin to use Github Issues as a well to provide easier and better tracking of issues that occur during development of ESGF.
 Here are some general guidelines for reporting issues.
 

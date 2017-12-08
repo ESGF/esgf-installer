@@ -30,6 +30,7 @@ import esg_logging_manager
 import esg_init
 import yaml
 import semver
+import readline
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 

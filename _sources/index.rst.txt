@@ -7,8 +7,6 @@ Welcome to esgf-installer's documentation!
 ==========================================
 
 
-API:
-------
 
 .. toctree::
    :caption: API
@@ -16,8 +14,6 @@ API:
 
    api
 
-Issues:
---------
 
 .. toctree::
    :caption: Issues
@@ -26,8 +22,6 @@ Issues:
 
    issues
 
-Installation:
-----------------
 
 .. toctree::
    :caption: Installation

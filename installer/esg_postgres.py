@@ -26,16 +26,16 @@ def download_postgres():
     print "\n*******************************"
     print "Downloading Postgres"
     print "******************************* \n"
-    
+
     #Edit distributions .repo file per https://wiki.postgresql.org/wiki/YUM_Installation
-    config = configobj.ConfigObj('/etc/yum.repos.d/CentOS-Base.repo')
-    try:
-        config["updates"]["exclude"]
-        config["base"]["exclude"]
-    except KeyError:
-        config["updates"]["exclude"] ="postgresql*"
-        config["base"]["exclude"] ="postgresql*"
-        config.write()
+    # config = configobj.ConfigObj('/etc/yum.repos.d/CentOS-Base.repo')
+    # try:
+    #     config["updates"]["exclude"]
+    #     config["base"]["exclude"]
+    # except KeyError:
+    #     config["updates"]["exclude"] ="postgresql*"
+    #     config["base"]["exclude"] ="postgresql*"
+    #     config.write()
 
     esg_functions.stream_subprocess_output("yum -y install postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
 

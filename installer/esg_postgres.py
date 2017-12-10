@@ -33,18 +33,17 @@ def download_postgres():
         config["base"]["exclude"] ="postgresql*"
         config.write()
 
-    esg_functions.stream_subprocess_output("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
-    esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96 postgresql96-devel")
+    esg_functions.stream_subprocess_output("yum -y install postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
 
 def initialize_postgres():
     try:
-        if os.listdir("/var/lib/pgsql/9.6/data"):
+        if os.listdir("/var/lib/pgsql/data"):
             print "Data directory already exists. Skipping initialize_postgres()."
             return
     except OSError, error:
         print "error:", error
-    esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")
-    os.chmod(os.path.join(config["postgress_install_dir"], "9.6", "data"), 0700)
+    esg_functions.stream_subprocess_output("service postgresql initdb")
+    os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 def check_for_postgres_sys_acct():
     try:
@@ -138,10 +137,10 @@ def create_postgres_log_dir():
 def start_postgres():
     ''' Start db '''
     #if the data directory doesn't exist or is empty
-    if not os.path.isdir("/var/lib/pgsql/9.6/data/") or not os.listdir("/var/lib/pgsql/9.6/data/"):
+    if not os.path.isdir("/var/lib/pgsql/data/") or not os.listdir("/var/lib/pgsql/data/"):
         initialize_postgres()
-    esg_functions.stream_subprocess_output("service postgresql-9.6 start")
-    esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")
+    esg_functions.stream_subprocess_output("service postgresql start")
+    esg_functions.stream_subprocess_output("chkconfig postgresql on")
 
     sleep(3)
     if postgres_status():
@@ -149,7 +148,7 @@ def start_postgres():
 
 def postgres_status():
     '''Checks the status of the postgres server'''
-    status = esg_functions.call_subprocess("service postgresql-9.6 status")
+    status = esg_functions.call_subprocess("service postgresql status")
     print "Postgres server status:", status["stdout"]
     if "running" in status["stdout"]:
         return True
@@ -159,7 +158,7 @@ def postgres_status():
 def restart_postgres():
     '''Restarts the postgres server'''
     print "Restarting postgres server"
-    esg_functions.call_subprocess("service postgresql-9.6 restart")
+    esg_functions.call_subprocess("service postgresql restart")
     sleep(7)
     postgres_status()
 
@@ -376,7 +375,7 @@ def create_pg_pass_file():
 
 def stop_postgress():
     '''Stops the postgres server'''
-    esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
+    esg_functions.stream_subprocess_output("service postgresql stop")
 
 def setup_db_schemas(force_install):
     '''Load ESGF schemas'''

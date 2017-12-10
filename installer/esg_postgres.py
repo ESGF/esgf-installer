@@ -23,6 +23,10 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
 
 
 def download_postgres():
+    print "\n*******************************"
+    print "Downloading Postgres"
+    print "******************************* \n"
+    
     #Edit distributions .repo file per https://wiki.postgresql.org/wiki/YUM_Installation
     config = configobj.ConfigObj('/etc/yum.repos.d/CentOS-Base.repo')
     try:

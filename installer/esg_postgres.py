@@ -335,10 +335,10 @@ def setup_postgres(force_install = False):
         # download_config_files(force_install)
         # update_port_in_config_file()
         # update_log_dir_in_config_file()
-    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/9.6/data/postgresql.conf")
+    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/data/postgresql.conf")
     postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
-    os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
+    os.chown("/var/lib/pgsql/data/postgresql.conf", postgres_user_id, postgres_group_id)
     setup_hba_conf_file()
     restart_postgres()
 
@@ -365,7 +365,7 @@ def setup_postgres(force_install = False):
 
 def setup_hba_conf_file():
     '''Modify the pg_hba.conf file for md5 authencation'''
-    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
+    with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
         hba_conf_file.write("local    all             postgres                         ident\n")
         hba_conf_file.write("local    all             all                         md5\n")
 
@@ -420,7 +420,7 @@ def setup_db_schemas(force_install):
     load_esgf_data(cur)
     list_tables(conn)
     # IMPORTANT: change connections to require encrypted password
-    esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
+    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
 
 def load_esgf_data(cur):
     # # load ESGF data

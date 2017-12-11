@@ -18,8 +18,6 @@ class test_ESG_postgres_integration(unittest.TestCase):
         print "******************************* \n"
         esg_postgres.stop_postgress()
         purge_postgres()
-        esg_postgres.download_postgres()
-        esg_postgres.start_postgres()
 
     @classmethod
     def tearDownClass(cls):
@@ -67,9 +65,6 @@ class test_ESG_postgres_integration(unittest.TestCase):
     def test_setup_postgres(self):
         '''Tests the entire postgres setup; Essentially an integration test'''
         esg_postgres.setup_postgres()
-
-        self.test_tear_down()
-
 
 
 if __name__ == '__main__':

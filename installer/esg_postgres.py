@@ -195,13 +195,13 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
     try:
         conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
+        if not conn:
+            print "Failed to connect to {db_name}".format(db_name=db_name)
+            raise Exception
 
         #Set effective user id (euid) back to root
         if os.geteuid() != root_id:
             os.seteuid(root_id)
-
-        if not conn:
-            raise Exception
 
         return conn
     except Exception:

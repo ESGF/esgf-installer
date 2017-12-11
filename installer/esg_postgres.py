@@ -276,9 +276,8 @@ def check_existing_pg_version(psql_path, force_install=False):
         print "Postgres not found on system"
     else:
         try:
-            matcher = re.compile("\d.")
             postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
-            postgres_version_number = filter(matcher.match, postgres_version_found)
+            postgres_version_number = result = re.search("\d.*", postgres_version_found).group()
             print "postgres version number: ", postgres_version_number
             if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 1 and not force_install:
                 return True

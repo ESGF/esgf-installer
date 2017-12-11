@@ -15,6 +15,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import esg_logging_manager
 import semver
 import yaml
+import re
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
@@ -268,15 +269,18 @@ def update_log_dir_in_config_file():
 
 
 def check_existing_pg_version(psql_path, force_install=False):
+    '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
 
     if not psql_path:
         print "Postgres not found on system"
     else:
         try:
-            postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"].split(" ")[-1]
-            print "postgres version number: ", postgres_version_found
-            if semver.compare(postgres_version_found, config["postgress_min_version"]) >= 1 and not force_install:
+            matcher = re.compile("\d.")
+            postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
+            postgres_version_number = filter(matcher.match, postgres_version_found)
+            print "postgres version number: ", postgres_version_number
+            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 1 and not force_install:
                 return True
         except OSError:
             logger.exception("Unable to check existing Postgres version \n")

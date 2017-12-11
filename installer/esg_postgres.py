@@ -200,6 +200,9 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
         if os.geteuid() != root_id:
             os.seteuid(root_id)
 
+        if not conn:
+            raise Exception
+
         return conn
     except Exception:
         logger.exception("Unable to connect to the database.")

@@ -18,8 +18,6 @@ class test_ESG_postgres_integration(unittest.TestCase):
         print "******************************* \n"
         esg_postgres.stop_postgress()
         purge_postgres()
-        esg_postgres.download_postgres()
-        esg_postgres.start_postgres()
 
     @classmethod
     def tearDownClass(cls):

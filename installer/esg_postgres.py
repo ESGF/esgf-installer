@@ -204,8 +204,9 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
             os.seteuid(root_id)
 
         return conn
-    except Exception:
+    except Exception, error:
         logger.exception("Unable to connect to the database.")
+        print "Error connecting to database:", error
         esg_functions.exit_with_error(1)
 
 def check_for_postgres_db_user():

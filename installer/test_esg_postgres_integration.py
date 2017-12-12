@@ -43,7 +43,7 @@ class test_ESG_postgres_integration(unittest.TestCase):
 
     def test_setup_postgres(self):
         '''Tests the entire postgres setup; Essentially an integration test'''
-        esg_postgres.setup_postgres()
+        esg_postgres.setup_postgres(backup_existing_db="N", default_continue_install = "Y")
 
 
 

@@ -285,8 +285,6 @@ def setup_postgres(force_install = False):
     print "Setting up Postgres"
     print "******************************* \n"
 
-    print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
-
     psql_path = find_executable("psql")
 
     if check_existing_pg_version(psql_path):

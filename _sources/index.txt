@@ -13,7 +13,6 @@ Welcome to esgf-installer's documentation!
    :maxdepth: 2
 
    installation
-   api
 
 
 .. toctree::

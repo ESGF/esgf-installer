@@ -1,8 +1,20 @@
 #!/bin/bash
 
-#Bash strict mode
-set -euo pipefail
-IFS=$'\n\t'
+# References
+# http://kvz.io/blog/2013/11/21/bash-best-practices/
+# http://jvns.ca/blog/2017/03/26/bash-quirks/
+
+# exit when a command fails
+set -o errexit
+
+# exit if any pipe commands fail
+set -o pipefail
+
+# exit when your script tries to use undeclared variables
+set -o nounset
+
+# trace what gets executed
+set -o xtrace
 
 # install Anaconda
 echo
@@ -11,18 +23,22 @@ echo "Installing Miniconda"
 echo "-----------------------------------"
 echo
 CDAT_HOME=/usr/local/conda
-cd /tmp && rm -rf $CDAT_HOME && \
-    wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh && \
-    sudo bash Miniconda2-latest-Linux-x86_64.sh -b -p $CDAT_HOME
 
-# create CDAT virtual environment with Anaconda
-echo
-echo "-----------------------------------"
-echo "Creating conda environment: esgf-pub"
-echo "-----------------------------------"
-echo
-PATH=${CDAT_HOME}/bin:$PATH
-conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
+pushd /tmp &&
+  rm -rf $CDAT_HOME && \
+      wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh && \
+      sudo bash Miniconda2-latest-Linux-x86_64.sh -b -p $CDAT_HOME
+
+  # create CDAT virtual environment with Anaconda
+  echo
+  echo "-----------------------------------"
+  echo "Creating conda environment: esgf-pub"
+  echo "-----------------------------------"
+  echo
+  PATH=${CDAT_HOME}/bin:$PATH
+  conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
+
+popd
 
 # activate virtual env and fetch some pre-requisites
 source ${CDAT_HOME}/bin/activate esgf-pub && \

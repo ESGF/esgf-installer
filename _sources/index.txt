@@ -28,6 +28,7 @@ Welcome to esgf-installer's documentation!
    :maxdepth: 2
 
    installation
+   contribute_docs
 
 
 

@@ -23,7 +23,6 @@ from distutils.spawn import find_executable
 from clint.textui import progress
 import esg_bash2py
 import esg_functions
-import esg_bootstrap
 import esg_property_manager
 import esg_version_manager
 import esg_logging_manager

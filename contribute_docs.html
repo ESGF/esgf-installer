@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to esgf-installer’s documentation! &mdash; esgf-installer 2.5.13 documentation</title>
+  <title>Contributing to Documentation &mdash; esgf-installer 2.5.13 documentation</title>
   
 
   
@@ -32,8 +32,7 @@
   
 
   
-    <link rel="top" title="esgf-installer 2.5.13 documentation" href="#"/>
-        <link rel="next" title="ESG Setup Module" href="api.html"/> 
+    <link rel="top" title="esgf-installer 2.5.13 documentation" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -52,7 +51,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> esgf-installer
+            <a href="index.html" class="icon icon-home"> esgf-installer
           
 
           
@@ -114,7 +113,7 @@
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">esgf-installer</a>
+          <a href="index.html">esgf-installer</a>
         
       </nav>
 
@@ -142,15 +141,15 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#">Docs</a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Welcome to esgf-installer&#8217;s documentation!</li>
+      <li>Contributing to Documentation</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/contribute_docs.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -163,41 +162,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="welcome-to-esgf-installer-s-documentation">
-<h1>Welcome to esgf-installer&#8217;s documentation!<a class="headerlink" href="#welcome-to-esgf-installer-s-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound" id="api">
-<p class="caption"><span class="caption-text">API</span><a class="headerlink" href="#api" title="Permalink to this toctree">¶</a></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">ESG Setup Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_apache_manager">ESG Apache Manager Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_functions">ESG Functions</a></li>
-</ul>
-</div>
-<div class="toctree-wrapper compound" id="issues">
-<p class="caption"><span class="caption-text">Issues</span><a class="headerlink" href="#issues" title="Permalink to this toctree">¶</a></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="issues.html">ESGF Installer Issue Tracking Guidelines</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="issues.html#labeling">Labeling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="issues.html#closing-issues">Closing Issues</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="toctree-wrapper compound" id="installation">
-<p class="caption"><span class="caption-text">Installation</span><a class="headerlink" href="#installation" title="Permalink to this toctree">¶</a></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
-</ul>
+  <div class="section" id="contributing-to-documentation">
+<h1>Contributing to Documentation<a class="headerlink" href="#contributing-to-documentation" title="Permalink to this headline">¶</a></h1>
+<p>The steps for adding new documentation to the ESGF Installer documentation page are as follows</p>
+<ol class="arabic simple">
+<li>Create a new ReStructured Text (rst) file named as {doc_name.rst}.  Example: the API page is named api.rst</li>
+<li>Populate the file with the relevant documentation information</li>
+<li>Edit the index.rst file to reference the newly created rst file.  Example:  Look for the relevant table of contents section (toctree) or create a new one.  The add the file name (with no extension) underneath the toctree section</li>
+<li>Run the <code class="docutils literal"><span class="pre">`push_to_github.sh`</span></code> script to build the new html pages and upload them to Github Pages.</li>
+</ol>
 </div>
 
 
@@ -207,13 +180,6 @@
            </div>
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="api.html" class="btn btn-neutral float-right" title="ESG Setup Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-    </div>
   
 
   <hr/>

@@ -32,9 +32,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="esgf-installer 2.5.13 documentation" href="../index.html"/>
         <link rel="up" title="Module code" href="index.html"/> 
 
@@ -94,7 +91,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../api.html">ESG Setup Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_apache_manager">ESG Apache Manager Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_bootstrap">ESG Bootstrap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_functions">ESG Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Issues</span></p>
@@ -199,9 +195,9 @@
 <span class="kn">import</span> <span class="nn">esg_logging_manager</span>
 
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
 <div class="viewcode-block" id="exit_with_error"><a class="viewcode-back" href="../api.html#esg_functions.exit_with_error">[docs]</a><span class="k">def</span> <span class="nf">exit_with_error</span><span class="p">(</span><span class="n">status</span><span class="p">):</span>
@@ -534,9 +530,9 @@
 
     <span class="k">if</span> <span class="n">filename_2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">remote_file</span> <span class="o">=</span> <span class="n">filename_1</span>
-        <span class="n">local_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\w+-\w+$&quot;</span><span class="p">,</span> <span class="n">filename_1</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\w+-\w+$&quot;</span><span class="p">,</span> <span class="n">filename_1</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
         <span class="n">local_file</span> <span class="o">=</span> <span class="n">local_file</span> <span class="o">+</span> <span class="s2">&quot;.py&quot;</span>
-        <span class="n">local_file</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\-(?=[^-]*$)&#39;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="n">local_file</span><span class="p">)</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;\-(?=[^-]*$)&#39;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="n">local_file</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">local_file</span> <span class="o">=</span> <span class="n">filename_1</span>
         <span class="n">remote_file</span> <span class="o">=</span> <span class="n">filename_2</span>
@@ -664,8 +660,8 @@
 
 <span class="k">def</span> <span class="nf">_verify_against_mirror</span><span class="p">(</span><span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">script_maj_version</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39; Verify that the local script matches the remote script on the distribution mirror &#39;&#39;&#39;</span>
-    <span class="n">python_script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
-    <span class="n">python_script_md5_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">python_script_name</span><span class="p">)</span>
+    <span class="n">python_script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">__file__</span><span class="p">)</span>
+    <span class="n">python_script_md5_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">r&#39;_&#39;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">python_script_name</span><span class="p">)</span>
     <span class="n">python_script_md5_name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;\w*-\w*&quot;</span><span class="p">,</span> <span class="n">python_script_md5_name</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;python_script_name: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">python_script_md5_name</span><span class="p">)</span>
 
@@ -686,7 +682,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command_string</span><span class="p">),</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">,</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
                 <span class="nb">print</span> <span class="n">line</span><span class="p">,</span>
         <span class="c1"># wait for the subprocess to exit</span>
         <span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
@@ -856,7 +852,7 @@
     <span class="k">except</span> <span class="n">UnverifiedScriptError</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;WARNING: </span><span class="si">%s</span><span class="s1"> could not be verified!! </span><span class="se">\n</span><span class="s1">(This file, </span><span class="si">%s</span><span class="s1">, may have been tampered</span>
 <span class="s1">            with or there is a newer version posted at the distribution server.</span>
-<span class="s1">            </span><span class="se">\n</span><span class="s1">Please update this script.)</span><span class="se">\n\n</span><span class="s1">&#39;&#39;&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="s1">            </span><span class="se">\n</span><span class="s1">Please update this script.)</span><span class="se">\n\n</span><span class="s1">&#39;&#39;&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">update_action</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">update_action</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: &quot;</span><span class="p">)</span>
@@ -1031,7 +1027,7 @@
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="../_static/jquery.js"></script>

@@ -32,9 +32,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="esgf-installer 2.5.13 documentation" href="index.html"/>
         <link rel="next" title="ESGF Installer Issue Tracking Guidelines" href="issues.html"/>
         <link rel="prev" title="Welcome to esgf-installer’s documentation!" href="index.html"/> 
@@ -95,7 +92,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">ESG Setup Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-esg_apache_manager">ESG Apache Manager Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_bootstrap">ESG Bootstrap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Issues</span></p>
@@ -155,7 +151,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/api.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -202,15 +198,9 @@ returns False Otherwise</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="esg_setup.install_prerequisites">
-<code class="descclassname">esg_setup.</code><code class="descname">install_prerequisites</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#install_prerequisites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.install_prerequisites" title="Permalink to this definition">¶</a></dt>
-<dd><p>Install prerequisite modules via yum</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="esg_setup.setup_ant">
 <code class="descclassname">esg_setup.</code><code class="descname">setup_ant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#setup_ant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.setup_ant" title="Permalink to this definition">¶</a></dt>
-<dd><p>Install ant via yum.</p>
+<dd><p>Install ant via yum</p>
 </dd></dl>
 
 <dl class="function">
@@ -263,7 +253,7 @@ returns False Otherwise</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
 </tr>
 </tbody>
 </table>
@@ -370,35 +360,6 @@ When prompted for the cachain file, specify the chain file provided by your CA</
 <dt id="esg_cert_manager.rebuild_truststore">
 <code class="descclassname">esg_cert_manager.</code><code class="descname">rebuild_truststore</code><span class="sig-paren">(</span><em>truststore_file</em>, <em>certs_dir='/etc/grid-security/certificates'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#rebuild_truststore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.rebuild_truststore" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts ESG certificates (that can be fetch by above function) into a truststore</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-esg_bootstrap">
-<span id="esg-bootstrap"></span><h1>ESG Bootstrap<a class="headerlink" href="#module-esg_bootstrap" title="Permalink to this headline">¶</a></h1>
-<p>Place Holder...</p>
-<dl class="function">
-<dt id="esg_bootstrap.check_for_root_id">
-<code class="descclassname">esg_bootstrap.</code><code class="descname">check_for_root_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#check_for_root_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.check_for_root_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks to see if the user is currently root</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="esg_bootstrap.confirm_file_status">
-<code class="descclassname">esg_bootstrap.</code><code class="descname">confirm_file_status</code><span class="sig-paren">(</span><em>return_value</em>, <em>fetch_file</em>, <em>starting_directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#confirm_file_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.confirm_file_status" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check to see if the file is Updated or needs to be installed.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="esg_bootstrap.get_latest_esgf_install_scripts">
-<code class="descclassname">esg_bootstrap.</code><code class="descname">get_latest_esgf_install_scripts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#get_latest_esgf_install_scripts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.get_latest_esgf_install_scripts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks for updates to the ESGF Install Scripts; if updates
-are found download and update to latest script version</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="esg_bootstrap.setup_dir">
-<code class="descclassname">esg_bootstrap.</code><code class="descname">setup_dir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_bootstrap.html#setup_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_bootstrap.setup_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setup main directory.</p>
 </dd></dl>
 
 </div>
@@ -634,7 +595,7 @@ git actually installed and in the path.</p>
 
 <dl class="function">
 <dt id="esg_functions.path_unique">
-<code class="descclassname">esg_functions.</code><code class="descname">path_unique</code><span class="sig-paren">(</span><em>path_string='/Users/williamhill/anaconda/bin:/Applications/Postgres.app/Contents/Versions/latest/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Postgres.app/Contents/Versions/latest/bin'</em>, <em>path_separator=':'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#path_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.path_unique" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">esg_functions.</code><code class="descname">path_unique</code><span class="sig-paren">(</span><em>path_string='//anaconda/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/ant/bin'</em>, <em>path_separator=':'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#path_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.path_unique" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prints a unique path string</p>
 <p>The first (leftmost) instance of a path entry will be the one that
 is preserved.</p>
@@ -778,7 +739,7 @@ maximum length.</p>
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

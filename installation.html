@@ -32,9 +32,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="esgf-installer 2.5.13 documentation" href="index.html"/>
         <link rel="prev" title="ESGF Installer Issue Tracking Guidelines" href="issues.html"/> 
 
@@ -94,7 +91,6 @@
 <li class="toctree-l1"><a class="reference internal" href="api.html">ESG Setup Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_apache_manager">ESG Apache Manager Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_bootstrap">ESG Bootstrap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html#module-esg_functions">ESG Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Issues</span></p>
@@ -154,7 +150,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/installation.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -172,9 +168,8 @@
 <ol class="arabic simple">
 <li>Clone this repo using <code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/ESGF/esgf-installer.git</span></code></li>
 <li>Change directory to the <code class="docutils literal"><span class="pre">installer/</span></code> directory</li>
-<li>If Miniconda has not been installed, install Miniconda by running the <code class="docutils literal"><span class="pre">install_conda.sh</span></code> script</li>
+<li>If Miniconda has not been installed, install Miniconda and other ESGF dependencies from yum and pip by running the <code class="docutils literal"><span class="pre">esg_bootstrap.sh</span></code> script</li>
 <li>Activate the esgf-pub conda environment using <code class="docutils literal"><span class="pre">source</span> <span class="pre">/usr/local/conda/bin/activate</span> <span class="pre">esgf-pub</span></code></li>
-<li>Install dependencies from pip using the requirements.txt with the command <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code></li>
 <li>Run an installation by invoking the <code class="docutils literal"><span class="pre">esg_node.py</span></code> script.
 Example: <code class="docutils literal"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
 </ol>
@@ -226,7 +221,7 @@ Example: <code class="docutils literal"><span class="pre">python</span> <span cl
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

@@ -10,12 +10,6 @@ set -o errexit
 # exit if any pipe commands fail
 set -o pipefail
 
-# exit when your script tries to use undeclared variables
-set -o nounset
-
-# trace what gets executed
-set -o xtrace
-
 # install Anaconda
 echo
 echo "-----------------------------------"

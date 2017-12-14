@@ -57,6 +57,8 @@ class test_ESG_publisher(unittest.TestCase):
         output = esg_publisher.check_publisher_version()
         self.assertEqual(output, "3.2.8")
 
+        esg_bash2py.mkdir_p("/esg/config/esgcet")
+        os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
         esg_publisher.run_esgsetup()
         self.assertTrue(os.path.isfile("/esg/config/esgcet/esg.ini"))
 

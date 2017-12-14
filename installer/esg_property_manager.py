@@ -9,8 +9,9 @@ import ConfigParser
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
+print "esg_property_manager: ", os.path.join(os.path.dirname(__file__))
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 def get_property(property_name, config_file=config["config_file"]):

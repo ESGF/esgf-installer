@@ -19,12 +19,13 @@ import esg_subsystem
 import esg_property_manager
 import esg_logging_manager
 import esg_init
+import esg_questionnaire
 import yaml
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 os.environ['LANG'] = "POSIX"
@@ -342,6 +343,7 @@ def main(node_type_list):
 
     # determine installation type
     install_type = get_installation_type(script_version)
+    print "install_type:", install_type
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()
@@ -395,12 +397,7 @@ def main(node_type_list):
     # log info
     install_log_info()
 
-    esg_setup.initial_setup_questionnaire()
-    #---------------------------------------
-    # Installation of prerequisites.
-    #---------------------------------------
-    # TODO: Uncomment this; only removed for testing speedup
-    # esg_setup.install_prerequisites()
+    esg_questionnaire.initial_setup_questionnaire()
 
     #---------------------------------------
     # Setup ESGF RPM repository

@@ -23,7 +23,7 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 consoleHandler = logging.StreamHandler()
 logger.addHandler(consoleHandler)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 
@@ -653,7 +653,7 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
             shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
             shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
             shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
-            
+
             print "Local installation of certs complete."
 
         else:

@@ -29,11 +29,16 @@ class test_ESGF_subsystem(unittest.TestCase):
             shutil.rmtree("/usr/local/esgf-dashboard")
         except Exception, error:
             print "error:", error
-        esg_purge.purge_tomcat()
         try:
             shutil.rmtree("/esg")
         except OSError, error:
             print "error deleting /esg:", error
+
+        try:
+            shutil.rmtree("/tmp/cog")
+        except OSError, error:
+            print "error deleting /tmp/cog:", error
+
     # def cleanup(self):
     #     try:
     #         shutil.rmtree("/usr/local/esgf-dashboard")
@@ -67,6 +72,24 @@ class test_ESGF_subsystem(unittest.TestCase):
     def test_setup_dashboard(self):
         esg_subsystem.setup_dashboard()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
+
+    def test_setup_solr(self):
+        esg_subsystem.setup_solr()
+        self.assertTrue(os.path.isdir("/usr/local/solr"))
+
+    def test_setup_esg_search(self):
+        esg_subsystem.setup_esg_search()
+        self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-search"))
+
+    def test_clone_cog_repo(self):
+        esg_subsystem.clone_cog_repo("/tmp/cog/cog_install")
+        self.assertTrue(os.path.isdir("/tmp/cog/cog_install/.git"))
+
+        repo = esg_subsystem.checkout_cog_branch("/tmp/cog/cog_install", "devel")
+        branch = repo.active_branch
+        print "active branch:", branch.name
+        self.assertEquals(branch.name, "devel")
+
 
     def test_main(self):
         esg_subsystem.main()

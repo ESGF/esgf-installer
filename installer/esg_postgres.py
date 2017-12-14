@@ -14,11 +14,12 @@ from distutils.spawn import find_executable
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import esg_logging_manager
 import semver
+import re
 import yaml
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 
@@ -271,36 +272,36 @@ def check_existing_pg_version(psql_path, force_install=False):
         print "Postgres not found on system"
     else:
         try:
-            postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"].split(" ")[-1]
-            print "postgres version number: ", postgres_version_found
-            if semver.compare(postgres_version_found, config["postgress_min_version"]) >= 1 and not force_install:
+            postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
+            postgres_version_number = re.search("\d.*", postgres_version_found).group()
+            print "postgres version number: ", postgres_version_number
+            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 1 and not force_install:
                 return True
         except OSError:
             logger.exception("Unable to check existing Postgres version \n")
 
 
 
-def setup_postgres(force_install = False):
+def setup_postgres(force_install=False, backup_existing_db=None, default_continue_install = "N"):
     print "\n*******************************"
     print "Setting up Postgres"
     print "******************************* \n"
 
-    print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
-
     psql_path = find_executable("psql")
 
     if check_existing_pg_version(psql_path):
-        default_continue_install = "N"
-        continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
-        if continue_install.lower() in ["no", 'n']:
-            print "Skipping installation."
-            return True
-        else:
-            force_install = True
+        if default_continue_install == "N":
+            continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
+            if continue_install.lower() in ["no", 'n']:
+                print "Skipping installation."
+                return True
+            else:
+                force_install = True
 
-    backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
-    if backup_db_input.lower() in ["y", "yes"]:
-        backup_db("postgres", "postgres")
+    if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:
+        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
+        if backup_db_input.lower() in ["y", "yes"]:
+            backup_db("postgres", "postgres")
 
     download_postgres()
 

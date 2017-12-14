@@ -5,7 +5,7 @@ import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esg_purge import purge_postgres
 
-with open('esg_config.yaml', 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 
@@ -18,8 +18,6 @@ class test_ESG_postgres_integration(unittest.TestCase):
         print "******************************* \n"
         esg_postgres.stop_postgress()
         purge_postgres()
-        esg_postgres.download_postgres()
-        esg_postgres.start_postgres()
 
     @classmethod
     def tearDownClass(cls):
@@ -43,32 +41,9 @@ class test_ESG_postgres_integration(unittest.TestCase):
         purge_postgres()
 
 
-    def test_tear_down(self):
-        print "\n*******************************"
-        print "Tearing down ESGF Postgres Test Fixture"
-        print "******************************* \n"
-        conn = esg_postgres.connect_to_db("postgres","postgres")
-        users_list = esg_postgres.list_users(conn=conn)
-        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = conn.cursor()
-        cur.execute("DROP USER IF EXISTS testuser;")
-        # if "testuser" in users_list:
-        #     cur.execute("DROP USER testuser;")
-        if "dbsuper" in users_list:
-            cur.execute("DROP USER dbsuper;")
-        if "esgcet" in users_list:
-            cur.execute("DROP USER esgcet;")
-        cur.execute("DROP DATABASE IF EXISTS unittestdb;")
-        cur.execute("DROP DATABASE IF EXISTS esgcet;")
-        conn.close()
-        purge_postgres()
-
-
     def test_setup_postgres(self):
         '''Tests the entire postgres setup; Essentially an integration test'''
-        esg_postgres.setup_postgres()
-
-        self.test_tear_down()
+        esg_postgres.setup_postgres(backup_existing_db="N", default_continue_install = "Y")
 
 
 

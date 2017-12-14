@@ -24,6 +24,9 @@ The custom ESGF software includes:
 
 More detailed installation instructions can be found on the [wiki](https://github.com/ESGF/esgf-installer/wiki)
 
+## API Documentation
+- [ESGF 3.0 API Documentation](https://esgf.github.io/esgf-installer/)
+
 ## Support
 
 Please [open an issue](https://github.com/ESGF/esgf-installer/issues/new) for support.

@@ -23,6 +23,7 @@ class test_ESG_publisher(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Publisher Test Fixture"
         print "******************************* \n"
+        esg_postgres.setup_postgres()
 
     @classmethod
     def tearDownClass(cls):

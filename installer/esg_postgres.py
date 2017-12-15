@@ -364,8 +364,9 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
 def setup_hba_conf_file():
     '''Modify the pg_hba.conf file for md5 authencation'''
     with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                         ident\n")
+        hba_conf_file.write("local    all             postgres                    ident\n")
         hba_conf_file.write("local    all             all                         md5\n")
+        hba_conf_file.write("host     all             all         ::1/128         md5\n")
 
 def create_pg_pass_file():
     '''Creates the file to store login passwords for psql'''

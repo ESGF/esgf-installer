@@ -4,6 +4,8 @@ import esg_postgres
 import esg_bash2py
 import os
 import shutil
+import fnmatch
+import re
 import yaml
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
@@ -53,10 +55,14 @@ class test_ESG_publisher(unittest.TestCase):
 
     def test_setup_publisher(self):
         esg_publisher.setup_publisher()
-        self.assertTrue(os.path.isdir('/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esgcet-3.3.0a2-py2.7.egg'))
+        python_module_files = os.listdir("/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages")
+        matches = fnmatch.filter(python_module_files, "esgcet-*-py2.7.egg")
+        print "esgcet egg files:", matches
+        self.assertTrue(matches)
 
         output = esg_publisher.check_publisher_version()
-        self.assertEqual(output, "3.3.0a2")
+        pattern = re.compile("3.*")
+        self.assertTrue(pattern.match(output))
 
         esg_bash2py.mkdir_p("/esg/config/esgcet")
         os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"

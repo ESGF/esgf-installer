@@ -25,7 +25,7 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
-    
+
 esg_root_id = esg_functions.get_esg_root_id()
 
 def check_publisher_version():
@@ -129,6 +129,8 @@ def run_esginitialize():
     esginitialize_process = esg_functions.call_subprocess("esginitialize -c")
     if esginitialize_process["returncode"] != 0:
         logger.exception("esginitialize failed")
+        logger.error(esginitialize_process["stderr"])
+        print esginitialize_process["stderr"]
         esg_functions.exit_with_error(1)
     else:
         print esginitialize_process["stdout"]

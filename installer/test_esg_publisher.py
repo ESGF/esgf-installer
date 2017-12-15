@@ -56,7 +56,7 @@ class test_ESG_publisher(unittest.TestCase):
         self.assertTrue(os.path.isdir('/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esgcet-3.2.8-py2.7.egg'))
 
         output = esg_publisher.check_publisher_version()
-        self.assertEqual(output, "3.2.8")
+        self.assertEqual(output, "3.3.0a2")
 
         esg_bash2py.mkdir_p("/esg/config/esgcet")
         os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"

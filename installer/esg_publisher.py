@@ -105,11 +105,11 @@ def generate_esgsetup_options(recommended_setup = 1):
     logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
     return generate_esg_ini_command
 
-def edit_esg_ini():
+def edit_esg_ini(node_short_name="test_node"):
     '''Edit placeholder values in the generated esg.ini file'''
     esg_functions.call_subprocess('sed -i s/esgcetpass/password/g {publisher_home}/{publisher_config}'.format(publisher_home=config["publisher_home"], publisher_config=config["publisher_config"]))
-    esg_functions.call_subprocess('sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}'.format(publisher_home=config["publisher_home"], publisher_config=config["publisher_config"]))
-    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}'.format(publisher_home=config["publisher_home"], publisher_config=config["publisher_config"]))
+    esg_functions.call_subprocess('sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}'.format(publisher_home=config["publisher_home"], publisher_config=config["publisher_config"], esgf_host=esg_functions.get_esgf_host()))
+    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}'.format(publisher_home=config["publisher_home"], publisher_config=config["publisher_config"], node_short_name=node_short_name))
 
 def run_esgsetup():
     '''generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration'''
@@ -121,7 +121,7 @@ def run_esgsetup():
     #"sed -i s/"host\.sample\.gov"/{esgf_host}/g {publisher_home}/{publisher_config}"
     #"sed -i s/"LASatYourHost"/LASat{node_short_name}/g {publisher_home}/{publisher_config}"
 
-    # edit_esg_ini()
+    edit_esg_ini()
     try:
         esg_functions.stream_subprocess_output(generate_esg_ini_command)
     except Exception:

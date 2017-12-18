@@ -69,6 +69,7 @@ class test_ESG_publisher(unittest.TestCase):
         esg_publisher.run_esgsetup()
         self.assertTrue(os.path.isfile("/esg/config/esgcet/esg.ini"))
 
+        os.environ["ESGINI"] = "/esg/config/esgcet/esg.ini"
         esg_publisher.run_esginitialize()
         self.assertTrue(os.path.isdir("/esg/data"))
 

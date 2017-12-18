@@ -61,8 +61,8 @@ class test_ESG_publisher(unittest.TestCase):
         self.assertTrue(matches)
 
         output = esg_publisher.check_publisher_version()
-        pattern = re.compile("3.*")
-        self.assertTrue(pattern.match(output))
+        match = re.search(r'\d.*', output).group()
+        self.assertTrue(match)
 
         esg_bash2py.mkdir_p("/esg/config/esgcet")
         os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"

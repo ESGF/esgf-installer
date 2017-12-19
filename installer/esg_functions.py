@@ -612,6 +612,65 @@ def get_security_admin_password():
     else:
         return security_admin_password
 
+def set_security_admin_password(updated_password, password_file=config['esgf_secret_file']):
+    #TODO: Rename esgf_secret_file to esgf_admin_password_file
+    '''Updates the esgf_secret_file'''
+    try:
+        security_admin_password_file = open(password_file, 'w+')
+        security_admin_password_file.write(updated_password)
+    except IOError:
+        logger.exception("Unable to update security_admin_password file: %s", password_file)
+    finally:
+        security_admin_password_file.close()
+
+    if not get_tomcat_group_id():
+        add_unix_group(config["tomcat_group"])
+    tomcat_group_id = get_tomcat_group_id()
+
+    os.chmod(config['esgf_secret_file'], 0640)
+    try:
+        os.chown(config['esgf_secret_file'], config[
+                 "installer_uid"], tomcat_group_id)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", password_file)
+
+    # Use the same password when creating the postgress account
+    set_postgres_password(updated_password)
+
+
+def get_publisher_password():
+    '''Gets the publisher database user's password'''
+    try:
+        with open(config['pub_secret_file'], "r") as secret_file:
+            publisher_db_user_passwd = secret_file.read()
+        return publisher_db_user_passwd
+    except OSError:
+        logger.exception("%s not found", config['pub_secret_file'])
+
+
+def set_postgres_password(password):
+    '''Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass'''
+
+    config["pg_sys_acct_passwd"] = password
+
+    try:
+        with open(config['pg_secret_file'], "w") as secret_file:
+            secret_file.write(config["pg_sys_acct_passwd"])
+    except IOError:
+        logger.exception("Could not open %s", config['pg_secret_file'])
+
+    os.chmod(config['pg_secret_file'], 0640)
+
+    if not get_tomcat_group_id():
+        add_unix_group(config["tomcat_group"])
+    tomcat_group_id = get_tomcat_group_id()
+
+    try:
+        os.chown(config['pg_secret_file'], config[
+                 "installer_uid"], tomcat_group_id)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
+
 
 def set_java_keystore_password():
     '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''

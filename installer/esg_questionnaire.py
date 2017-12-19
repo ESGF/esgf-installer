@@ -7,10 +7,10 @@ import getpass
 from esg_exceptions import UnverifiedScriptError
 from distutils.spawn import find_executable
 import esg_functions
-import esg_bootstrap
 import esg_property_manager
 import esg_version_manager
 import esg_logging_manager
+import esg_bash2py
 import esg_init
 import yaml
 import semver
@@ -37,7 +37,7 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
             "Please re-enter password to confirm: ")
 
         if _confirm_password(password_input, password_input_confirmation):
-            _update_admin_password_file(password_input)
+            esg_functions.set_security_admin_password(password_input)
             break
 
 
@@ -178,20 +178,19 @@ def _choose_publisher_db_user(force_install=False):
             "publisher_db_user", publisher_db_user_input)
 
 def _choose_publisher_db_user_passwd(force_install=False):
-    if config["publisher_db_user_passwd"]:
+    if config["publisher_db_user_passwd"] or esg_functions.get_publisher_password():
         print "Using previously configured publisher DB password"
         return
-    if os.path.isfile(config['pub_secret_file']):
-        with open(config['pub_secret_file'], "r") as secret_file:
-            publisher_db_user_passwd = secret_file.read()
-        print "Found existing value for property publisher_db_user_passwd"
-        return
 
-    if not config["publisher_db_user_passwd"] or force_install:
+    if force_install:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
         publisher_db_user_passwd_input = getpass.getpass(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
-        if publisher_db_user_passwd_input:
+
+        password_input_confirmation = getpass.getpass(
+            "Please re-enter password to confirm: ")
+
+        if _confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
             with open(config['pub_secret_file'], "w") as secret_file:
                 secret_file.write(publisher_db_user_passwd_input)
 
@@ -419,34 +418,6 @@ def _confirm_password(password_input, password_confirmation):
     else:
         print "Sorry, values did not match"
         return False
-
-
-def _update_admin_password_file(updated_password, password_file=config['esgf_secret_file']):
-    #TODO: Rename esgf_secret_file to esgf_admin_password_file
-    #TODO: Move this to esg_functions as set_security_admin_password()
-    '''Updates the esgf_secret_file'''
-    try:
-        security_admin_password_file = open(password_file, 'w+')
-        security_admin_password_file.write(updated_password)
-    except IOError:
-        logger.exception("Unable to update security_admin_password file: %s", password_file)
-    finally:
-        security_admin_password_file.close()
-
-    if not esg_functions.get_tomcat_group_id():
-        esg_functions.add_unix_group(config["tomcat_group"])
-    tomcat_group_id = esg_functions.get_tomcat_group_id()
-
-    os.chmod(config['esgf_secret_file'], 0640)
-    try:
-        os.chown(config['esgf_secret_file'], config[
-                 "installer_uid"], tomcat_group_id)
-    except OSError:
-        logger.exception("Unable to change ownership of %s", password_file)
-
-    # Use the same password when creating the postgress account
-    config["pg_sys_acct_passwd"] = updated_password
-    _update_postgres_password()
 
 
 def _update_postgres_password():

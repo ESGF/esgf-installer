@@ -71,7 +71,7 @@ def install_publisher():
 
 
 def generate_esgsetup_options(recommended_setup = 1):
-    '''Generate the string that will pass arguments to esgsetup'''
+    '''Generate the string that will pass arguments to esgsetup to initialize the database'''
     publisher_db_user = None
     try:
         publisher_db_user = config["publisher_db_user"]
@@ -80,7 +80,7 @@ def generate_esgsetup_options(recommended_setup = 1):
 
     security_admin_password = esg_functions.get_security_admin_password()
 
-    generate_esg_ini_command = "esgsetup --db".format(cdat_home=config["cdat_home"])
+    generate_esg_ini_command = "esgsetup --db"
     if recommended_setup == 1:
         generate_esg_ini_command += " --minimal-setup"
     if config["db_database"]:
@@ -119,6 +119,7 @@ def run_esgsetup():
     print "Running esgsetup"
     print "******************************* \n"
 
+    #Create an initial ESG configuration file (esg.ini); TODO: make break into separate function
     generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_root_id} --db-admin-password password'''.format(esg_root_id=esg_functions.get_esg_root_id())
 
     try:
@@ -126,6 +127,16 @@ def run_esgsetup():
         edit_esg_ini()
     except Exception:
         logger.exception("Could not finish esgsetup")
+        esg_functions.exit_with_error(1)
+
+    #Initialize the database
+    db_setup_command = generate_esgsetup_options()
+    print "db_setup_command:", db_setup_command
+
+    try:
+        esg_functions.stream_subprocess_output(db_setup_command)
+    except Exception:
+        logger.exception("Could not initialize database.")
         esg_functions.exit_with_error(1)
 
 def run_esginitialize():

@@ -90,8 +90,11 @@ def generate_esgsetup_options(recommended_setup = 1):
 
     if security_admin_password:
         generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
-    elif config["pg_sys_acct_passwd"]:
-        generate_esg_ini_command += " --db-admin-password %s" % (config["pg_sys_acct_passwd"])
+    # elif config["pg_sys_acct_passwd"]:
+    #     generate_esg_ini_command += " --db-admin-password %s" % (config["pg_sys_acct_passwd"])
+    else:
+        esg_functions.set_security_admin_password()
+
 
     if publisher_db_user:
         generate_esg_ini_command += " --db-user %s" % (publisher_db_user)
@@ -103,6 +106,7 @@ def generate_esgsetup_options(recommended_setup = 1):
         generate_esg_ini_command += " --db-port %s" % (config["postgress_port"])
 
     logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
+    print "generate_esg_ini_command in function: %s" % generate_esg_ini_command
     return generate_esg_ini_command
 
 def edit_esg_ini(node_short_name="test_node"):
@@ -128,6 +132,10 @@ def run_esgsetup():
     except Exception:
         logger.exception("Could not finish esgsetup")
         esg_functions.exit_with_error(1)
+
+    print "\n*******************************"
+    print "Initializing database with esgsetup"
+    print "******************************* \n"
 
     #Initialize the database
     db_setup_command = generate_esgsetup_options()

@@ -387,9 +387,10 @@ def setup_db_schemas(force_install):
     cur = conn.cursor()
 
     # create super user
-    cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
+    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD 'password';".format(db_user=config["postgress_user"]))
     # create 'esgcet' user
-    cur.execute("CREATE USER esgcet PASSWORD 'password';")
+    publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+    cur.execute("CREATE USER {publisher_db_user} PASSWORD 'password';".format(publisher_db_user=publisher_db_user))
     # create CoG database
     cur.execute("CREATE DATABASE cogdb;")
     # create ESGF database

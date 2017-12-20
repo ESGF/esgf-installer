@@ -647,6 +647,12 @@ def get_publisher_password():
     except OSError:
         logger.exception("%s not found", config['pub_secret_file'])
 
+def set_publisher_password(password):
+    '''Sets the publisher database user's password; saves it to pub_secret_file'''
+    with open(config['pub_secret_file'], "w") as secret_file:
+        secret_file.write(password)
+
+
 
 def set_postgres_password(password):
     '''Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass'''
@@ -671,6 +677,13 @@ def set_postgres_password(password):
     except OSError:
         logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
 
+
+def confirm_password(password_input, password_confirmation):
+    if password_confirmation == password_input:
+        return True
+    else:
+        print "Sorry, values did not match"
+        return False
 
 def set_java_keystore_password():
     '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''

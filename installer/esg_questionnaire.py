@@ -36,7 +36,7 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
         password_input_confirmation = getpass.getpass(
             "Please re-enter password to confirm: ")
 
-        if _confirm_password(password_input, password_input_confirmation):
+        if esg_functions.confirm_password(password_input, password_input_confirmation):
             esg_functions.set_security_admin_password(password_input)
             break
 
@@ -190,11 +190,8 @@ def _choose_publisher_db_user_passwd(force_install=False):
         password_input_confirmation = getpass.getpass(
             "Please re-enter password to confirm: ")
 
-        if _confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
-            with open(config['pub_secret_file'], "w") as secret_file:
-                secret_file.write(publisher_db_user_passwd_input)
-
-
+        if esg_functions.confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
+            esg_functions.set_publisher_password(publisher_db_user_passwd_input)
 
 def initial_setup_questionnaire(force_install=False):
     print "-------------------------------------------------------"
@@ -410,15 +407,6 @@ def _is_valid_password(password_input):
         return False
     else:
         return True
-
-
-def _confirm_password(password_input, password_confirmation):
-    if password_confirmation == password_input:
-        return True
-    else:
-        print "Sorry, values did not match"
-        return False
-
 
 def _update_postgres_password():
     '''Updates the Postgres system account password; gets saved to /esg/config/.esg_pg_pass'''

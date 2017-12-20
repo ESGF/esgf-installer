@@ -647,11 +647,24 @@ def get_publisher_password():
     except OSError:
         logger.exception("%s not found", config['pub_secret_file'])
 
-def set_publisher_password(password):
-    '''Sets the publisher database user's password; saves it to pub_secret_file'''
-    with open(config['pub_secret_file'], "w") as secret_file:
-        secret_file.write(password)
+def set_publisher_password(password=None):
+    '''Sets the publisher database user's password; saves it to pub_secret_file
+       If not password is provided as an argument, a prompt for a password is given.
+    '''
+    if not password:
+        while True:
+            db_user_password = getpass.getpass("Enter the password for database user {db_user}: ".format(db_user=config["postgress_user"]))
+            db_user_password_confirm = getpass.getpass("Re-enter the password to confirm: ")
+            if confirm_password(db_user_password, db_user_password_confirm):
+                password = db_user_password
+                break
 
+    try:
+        with open(config['pub_secret_file'], "w") as secret_file:
+            secret_file.write(password)
+        print "Updated password for database {db_user}".format(db_user=config["postgress_user"])
+    except OSError:
+        logger.exception("Could not update password for %s", config["postgress_user"])
 
 
 def set_postgres_password(password):

@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.6.0-devel-release"
-script_maj_version="2.6"
-script_release="Name"
+script_version="v2.5.15-devel-release"
+script_maj_version="2.5"
+script_release="Samhaim"
 envfile="/etc/esg.env"
 
 #--------------
@@ -97,6 +97,7 @@ install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
 esg_functions_file="${install_prefix}/bin/esg-functions"
 esg_init_file="${install_prefix}/bin/esg-init"
 #--------------
+esgf_nm_funcs_file="${install_prefix}/bin/esgf-nm-func"
 
 export UVCDAT_ANONYMOUS_LOG=False
 
@@ -5463,6 +5464,8 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
 
+    source $esgf_nm_funcs_file && nm_start
+
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
@@ -5488,6 +5491,7 @@ stop() {
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
     (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
 
+    source $esgf_nm_funcs_file && nm_stop
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
@@ -5513,6 +5517,7 @@ status() {
         echo "$(echo_strong "Stopped:") At least one process not running"
         ret=1
     fi
+    source $esgf_nm_funcs_file && nm_status
     #This is here for sanity checking...
     show_svc_list
     return ${ret}

@@ -663,8 +663,10 @@ def set_publisher_password(password=None):
         with open(config['pub_secret_file'], "w") as secret_file:
             secret_file.write(password)
         print "Updated password for database {db_user}".format(db_user=config["postgress_user"])
-    except IOError:
+    except IOError, error:
         logger.exception("Could not update password for %s", config["postgress_user"])
+        print "error:", error
+        exit_with_error(1)
 
 
 def set_postgres_password(password):

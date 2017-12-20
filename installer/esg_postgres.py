@@ -400,7 +400,7 @@ def setup_db_schemas(force_install):
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
     if not publisher_db_user:
         publisher_db_user = raw_input("What is the (low privilege) db account for publisher? [esgcet]: ") or "esgcet"
-    print "Create {publisher_db_user} user:".format(publisher_db_user=publisher_db_user), cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    print "Create {publisher_db_user} user:".format(publisher_db_user=publisher_db_user), cur.mogrify("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
     cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
 
     # create CoG database

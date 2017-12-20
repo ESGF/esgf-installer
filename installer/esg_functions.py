@@ -644,7 +644,7 @@ def get_publisher_password():
         with open(config['pub_secret_file'], "r") as secret_file:
             publisher_db_user_passwd = secret_file.read()
         return publisher_db_user_passwd
-    except OSError:
+    except IOError:
         logger.exception("%s not found", config['pub_secret_file'])
 
 def set_publisher_password(password=None):
@@ -663,7 +663,7 @@ def set_publisher_password(password=None):
         with open(config['pub_secret_file'], "w") as secret_file:
             secret_file.write(password)
         print "Updated password for database {db_user}".format(db_user=config["postgress_user"])
-    except OSError:
+    except IOError:
         logger.exception("Could not update password for %s", config["postgress_user"])
 
 

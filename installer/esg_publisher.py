@@ -92,8 +92,8 @@ def generate_esgsetup_options(recommended_setup = 1):
         generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
     # elif config["pg_sys_acct_passwd"]:
     #     generate_esg_ini_command += " --db-admin-password %s" % (config["pg_sys_acct_passwd"])
-    else:
-        esg_functions.set_security_admin_password()
+    # else:
+    #     esg_functions.set_security_admin_password()
 
 
     if publisher_db_user:

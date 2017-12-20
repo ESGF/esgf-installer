@@ -393,12 +393,13 @@ def setup_db_schemas(force_install):
         db_user_password = esg_functions.get_publisher_password()
 
     # create super user
-    print "query output:", cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    print "Create {db_user} user: ".format(db_user=config["postgress_user"]), cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
     cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
 
     # create 'esgcet' user
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
-    cur.execute("CREATE USER {publisher_db_user} PASSWORD {db_user_password};".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    print "Create {publisher_db_user} user:".format(publisher_db_user=publisher_db_user), cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
 
     # create CoG database
     cur.execute("CREATE DATABASE cogdb;")

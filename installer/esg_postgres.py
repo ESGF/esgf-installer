@@ -8,6 +8,7 @@ import getpass
 import configobj
 import esg_functions
 import esg_version_manager
+import esg_property_manager
 import esg_bash2py
 from time import sleep
 from distutils.spawn import find_executable
@@ -386,11 +387,19 @@ def setup_db_schemas(force_install):
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
+    db_user_password = esg_functions.get_publisher_password()
+    if not db_user_password:
+        esg_functions.set_publisher_password()
+        db_user_password = esg_functions.get_publisher_password()
+
     # create super user
-    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD 'password';".format(db_user=config["postgress_user"]))
+    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD {db_user_password};".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    print "query output:", cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD {db_user_password};".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+
     # create 'esgcet' user
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
-    cur.execute("CREATE USER {publisher_db_user} PASSWORD 'password';".format(publisher_db_user=publisher_db_user))
+    cur.execute("CREATE USER {publisher_db_user} PASSWORD {db_user_password};".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+
     # create CoG database
     cur.execute("CREATE DATABASE cogdb;")
     # create ESGF database

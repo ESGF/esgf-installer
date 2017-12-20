@@ -26,6 +26,7 @@ class test_ESG_publisher(unittest.TestCase):
         print "Setting up ESGF Publisher Test Fixture"
         print "******************************* \n"
         esg_postgres.setup_postgres()
+        esg_bash2py.mkdir_p(config["esg_config_dir"])
 
     @classmethod
     def tearDownClass(cls):

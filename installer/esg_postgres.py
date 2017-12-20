@@ -418,7 +418,7 @@ def setup_db_schemas(force_install):
     # download_config_files(force_install)
     # esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
     # restart_postgres()
-    conn = connect_to_db("dbsuper", db_name='esgcet', password="password")
+    conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
     cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())

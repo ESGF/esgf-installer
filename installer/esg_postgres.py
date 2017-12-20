@@ -393,8 +393,8 @@ def setup_db_schemas(force_install):
         db_user_password = esg_functions.get_publisher_password()
 
     # create super user
-    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD {db_user_password};".format(db_user=config["postgress_user"], db_user_password=db_user_password))
-    print "query output:", cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD {db_user_password};".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    print "query output:", cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
 
     # create 'esgcet' user
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")

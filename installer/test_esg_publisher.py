@@ -62,6 +62,7 @@ class test_ESG_publisher(unittest.TestCase):
         self.assertTrue(matches)
 
         output = esg_publisher.check_publisher_version()
+        print "esg_publisher version:", output
         match = re.search(r'\d.*', output).group()
         self.assertTrue(match)
 
@@ -72,7 +73,6 @@ class test_ESG_publisher(unittest.TestCase):
 
         os.environ["ESGINI"] = "/esg/config/esgcet/esg.ini"
         esg_publisher.run_esginitialize()
-        self.assertTrue(os.path.isdir("/esg/data"))
 
     def test_generate_esgsetup_options(self):
         output = esg_publisher.generate_esgsetup_options()

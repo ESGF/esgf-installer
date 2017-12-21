@@ -2,6 +2,7 @@ import unittest
 import esg_publisher
 import esg_postgres
 import esg_bash2py
+import esg_functions
 import os
 import shutil
 import fnmatch

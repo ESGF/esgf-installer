@@ -3,6 +3,7 @@ import esg_publisher
 import esg_postgres
 import esg_bash2py
 import esg_functions
+import esg_subsystem
 import os
 import shutil
 import fnmatch
@@ -85,6 +86,8 @@ class test_ESG_publisher(unittest.TestCase):
         print "\n*******************************"
         print "Publication Test"
         print "******************************* \n"
+
+        esg_subsystem.setup_thredds()
 
         if not esg_postgres.postgres_status():
             esg_postgres.start_postgres()

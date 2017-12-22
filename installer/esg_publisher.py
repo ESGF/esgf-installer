@@ -113,6 +113,7 @@ def run_esgsetup():
     print "Creating config file (esg.ini) with esgsetup"
     print "******************************* \n"
 
+    os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #Create an initial ESG configuration file (esg.ini); TODO: make break into separate function
     generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_root_id} --db-admin-password password'''.format(esg_root_id=esg_functions.get_esg_root_id())
 

@@ -87,6 +87,7 @@ class test_ESG_publisher(unittest.TestCase):
         print "Publication Test"
         print "******************************* \n"
 
+        esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
         esg_subsystem.setup_thredds()
 
         if not esg_postgres.postgres_status():

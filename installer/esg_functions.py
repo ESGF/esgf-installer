@@ -634,9 +634,9 @@ def set_security_admin_password(updated_password, password_file=config['esgf_sec
     except OSError:
         logger.exception("Unable to change ownership of %s", password_file)
 
-    # Use the same password when creating the postgress account
+    # Use the same password when creating the postgress account and publisher accounts
     set_postgres_password(updated_password)
-
+    set_publisher_password(updated_password)
 
 def get_publisher_password():
     '''Gets the publisher database user's password'''
@@ -817,6 +817,14 @@ def get_group_id(group_name):
 def get_user_id(user_name):
     ''' Returns the id of the Unix user '''
     return pwd.getpwnam(user_name).pw_uid
+
+def add_group(group_name):
+    '''Add a Unix user group'''
+    call_subprocess("groupadd {group_name}".format(group_name=group_name))
+
+def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
+    '''Add Unix user'''
+    pass
 
 def get_tomcat_user_id():
     ''' Returns the id of the Tomcat user '''

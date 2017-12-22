@@ -286,7 +286,6 @@ def system_component_installation():
         esg_subsystem.main()
         esg_publisher.main()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
-        esg_publisher.setup_esgcet()
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
 

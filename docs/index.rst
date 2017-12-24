@@ -9,8 +9,16 @@ Welcome to esgf-installer's documentation!
 
 
 .. toctree::
+   :caption: Installation
+   :maxdepth: 2
+
+   installation
+
+
+.. toctree::
    :caption: API
    :maxdepth: 2
+
 
    api
 
@@ -19,15 +27,14 @@ Welcome to esgf-installer's documentation!
    :caption: Issues
    :maxdepth: 2
 
-
    issues
 
 
 .. toctree::
-   :caption: Installation
+   :caption: Contributing
    :maxdepth: 2
 
-   installation
+   contribute_docs
 
 
 

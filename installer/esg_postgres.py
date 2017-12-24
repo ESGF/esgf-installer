@@ -8,12 +8,14 @@ import getpass
 import configobj
 import esg_functions
 import esg_version_manager
+import esg_property_manager
 import esg_bash2py
 from time import sleep
 from distutils.spawn import find_executable
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import esg_logging_manager
 import semver
+import re
 import yaml
 import re
 
@@ -281,7 +283,11 @@ def check_existing_pg_version(psql_path, force_install=False):
     else:
         try:
             postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
+<<<<<<< HEAD
             postgres_version_number = result = re.search("\d.*", postgres_version_found).group()
+=======
+            postgres_version_number = re.search("\d.*", postgres_version_found).group()
+>>>>>>> python_master
             print "postgres version number: ", postgres_version_number
             if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 1 and not force_install:
                 return True
@@ -290,27 +296,26 @@ def check_existing_pg_version(psql_path, force_install=False):
 
 
 
-def setup_postgres(force_install = False):
+def setup_postgres(force_install=False, backup_existing_db=None, default_continue_install = "N"):
     print "\n*******************************"
     print "Setting up Postgres"
     print "******************************* \n"
 
-    print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
-
     psql_path = find_executable("psql")
 
     if check_existing_pg_version(psql_path):
-        default_continue_install = "N"
-        continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
-        if continue_install.lower() in ["no", 'n']:
-            print "Skipping installation."
-            return True
-        else:
-            force_install = True
+        if default_continue_install == "N":
+            continue_install = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
+            if continue_install.lower() in ["no", 'n']:
+                print "Skipping installation."
+                return True
+            else:
+                force_install = True
 
-    backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
-    if backup_db_input.lower() in ["y", "yes"]:
-        backup_db("postgres", "postgres")
+    if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:
+        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
+        if backup_db_input.lower() in ["y", "yes"]:
+            backup_db("postgres", "postgres")
 
     download_postgres()
 
@@ -372,9 +377,14 @@ def setup_postgres(force_install = False):
 
 def setup_hba_conf_file():
     '''Modify the pg_hba.conf file for md5 authencation'''
+<<<<<<< HEAD
     with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
+=======
+    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
+>>>>>>> python_master
         hba_conf_file.write("local    all             postgres                    ident\n")
         hba_conf_file.write("local    all             all                         md5\n")
+        hba_conf_file.write("host     all             all         ::1/128         md5\n")
 
 def create_pg_pass_file():
     '''Creates the file to store login passwords for psql'''
@@ -394,10 +404,22 @@ def setup_db_schemas(force_install):
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
+    db_user_password = esg_functions.get_publisher_password()
+    if not db_user_password:
+        esg_functions.set_publisher_password()
+        db_user_password = esg_functions.get_publisher_password()
+
     # create super user
-    cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
+    print "Create {db_user} user: ".format(db_user=config["postgress_user"]), cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+
     # create 'esgcet' user
-    cur.execute("CREATE USER esgcet PASSWORD 'password';")
+    publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+    if not publisher_db_user:
+        publisher_db_user = raw_input("What is the (low privilege) db account for publisher? [esgcet]: ") or "esgcet"
+    print "Create {publisher_db_user} user:".format(publisher_db_user=publisher_db_user), cur.mogrify("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+
     # create CoG database
     cur.execute("CREATE DATABASE cogdb;")
     # create ESGF database
@@ -413,7 +435,7 @@ def setup_db_schemas(force_install):
     # download_config_files(force_install)
     # esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
     # restart_postgres()
-    conn = connect_to_db("dbsuper", db_name='esgcet', password="password")
+    conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
     cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())

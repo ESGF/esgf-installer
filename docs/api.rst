@@ -14,10 +14,6 @@ ESG Cert Manager
   :members:
 
 
-ESG Bootstrap
-------------------
-.. automodule:: esg_bootstrap
-  :members:
 
 ESG Functions
 ------------------

@@ -219,7 +219,7 @@ def setup_thredds():
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # TDS configuration root
-    esg_bash2py.mkdir_p("/esg/content/thredds")
+    esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
 
     # TDS memory configuration
     shutil.copyfile("thredds_conf/threddsConfig.xml", "/esg/content/thredds/threddsConfig.xml")

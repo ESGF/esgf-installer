@@ -19,6 +19,7 @@ import esg_subsystem
 import esg_property_manager
 import esg_logging_manager
 import esg_init
+import esg_questionnaire
 import yaml
 
 
@@ -283,8 +284,8 @@ def system_component_installation():
         esg_apache_manager.main()
     if "DATA" in node_type_list:
         esg_subsystem.main()
+        esg_publisher.main()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
-        esg_publisher.setup_esgcet()
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
 
@@ -395,12 +396,7 @@ def main(node_type_list):
     # log info
     install_log_info()
 
-    esg_setup.initial_setup_questionnaire()
-    #---------------------------------------
-    # Installation of prerequisites.
-    #---------------------------------------
-    # TODO: Uncomment this; only removed for testing speedup
-    # esg_setup.install_prerequisites()
+    esg_questionnaire.initial_setup_questionnaire()
 
     #---------------------------------------
     # Setup ESGF RPM repository

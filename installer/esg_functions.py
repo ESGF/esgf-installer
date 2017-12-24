@@ -612,6 +612,93 @@ def get_security_admin_password():
     else:
         return security_admin_password
 
+def set_security_admin_password(updated_password, password_file=config['esgf_secret_file']):
+    #TODO: Rename esgf_secret_file to esgf_admin_password_file
+    '''Updates the esgf_secret_file'''
+    try:
+        security_admin_password_file = open(password_file, 'w+')
+        security_admin_password_file.write(updated_password)
+    except IOError:
+        logger.exception("Unable to update security_admin_password file: %s", password_file)
+    finally:
+        security_admin_password_file.close()
+
+    if not get_tomcat_group_id():
+        add_unix_group(config["tomcat_group"])
+    tomcat_group_id = get_tomcat_group_id()
+
+    os.chmod(config['esgf_secret_file'], 0640)
+    try:
+        os.chown(config['esgf_secret_file'], config[
+                 "installer_uid"], tomcat_group_id)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", password_file)
+
+    # Use the same password when creating the postgress account and publisher accounts
+    set_postgres_password(updated_password)
+    set_publisher_password(updated_password)
+
+def get_publisher_password():
+    '''Gets the publisher database user's password'''
+    try:
+        with open(config['pub_secret_file'], "r") as secret_file:
+            publisher_db_user_passwd = secret_file.read()
+        return publisher_db_user_passwd
+    except IOError:
+        logger.exception("%s not found", config['pub_secret_file'])
+
+def set_publisher_password(password=None):
+    '''Sets the publisher database user's password; saves it to pub_secret_file
+       If not password is provided as an argument, a prompt for a password is given.
+    '''
+    if not password:
+        while True:
+            db_user_password = getpass.getpass("Enter the password for database user {db_user}: ".format(db_user=config["postgress_user"]))
+            db_user_password_confirm = getpass.getpass("Re-enter the password to confirm: ")
+            if confirm_password(db_user_password, db_user_password_confirm):
+                password = db_user_password
+                break
+
+    try:
+        with open(config['pub_secret_file'], "w") as secret_file:
+            secret_file.write(password)
+        print "Updated password for database {db_user}".format(db_user=config["postgress_user"])
+    except IOError, error:
+        logger.exception("Could not update password for %s", config["postgress_user"])
+        print "error:", error
+        exit_with_error(1)
+
+
+def set_postgres_password(password):
+    '''Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass'''
+
+    config["pg_sys_acct_passwd"] = password
+
+    try:
+        with open(config['pg_secret_file'], "w") as secret_file:
+            secret_file.write(config["pg_sys_acct_passwd"])
+    except IOError:
+        logger.exception("Could not open %s", config['pg_secret_file'])
+
+    os.chmod(config['pg_secret_file'], 0640)
+
+    if not get_tomcat_group_id():
+        add_unix_group(config["tomcat_group"])
+    tomcat_group_id = get_tomcat_group_id()
+
+    try:
+        os.chown(config['pg_secret_file'], config[
+                 "installer_uid"], tomcat_group_id)
+    except OSError:
+        logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
+
+
+def confirm_password(password_input, password_confirmation):
+    if password_confirmation == password_input:
+        return True
+    else:
+        print "Sorry, values did not match"
+        return False
 
 def set_java_keystore_password():
     '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''
@@ -730,6 +817,14 @@ def get_group_id(group_name):
 def get_user_id(user_name):
     ''' Returns the id of the Unix user '''
     return pwd.getpwnam(user_name).pw_uid
+
+def add_group(group_name):
+    '''Add a Unix user group'''
+    call_subprocess("groupadd {group_name}".format(group_name=group_name))
+
+def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
+    '''Add Unix user'''
+    pass
 
 def get_tomcat_user_id():
     ''' Returns the id of the Tomcat user '''

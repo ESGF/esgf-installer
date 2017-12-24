@@ -283,11 +283,7 @@ def check_existing_pg_version(psql_path, force_install=False):
     else:
         try:
             postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
-<<<<<<< HEAD
-            postgres_version_number = result = re.search("\d.*", postgres_version_found).group()
-=======
             postgres_version_number = re.search("\d.*", postgres_version_found).group()
->>>>>>> python_master
             print "postgres version number: ", postgres_version_number
             if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 1 and not force_install:
                 return True
@@ -377,11 +373,7 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
 
 def setup_hba_conf_file():
     '''Modify the pg_hba.conf file for md5 authencation'''
-<<<<<<< HEAD
     with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
-=======
-    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
->>>>>>> python_master
         hba_conf_file.write("local    all             postgres                    ident\n")
         hba_conf_file.write("local    all             all                         md5\n")
         hba_conf_file.write("host     all             all         ::1/128         md5\n")

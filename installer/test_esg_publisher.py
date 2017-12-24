@@ -87,6 +87,7 @@ class test_ESG_publisher(unittest.TestCase):
         print "Publication Test"
         print "******************************* \n"
 
+        esg_functions.call_subprocess("groupadd tomcat")
         esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
         esg_subsystem.setup_thredds()
 

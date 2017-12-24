@@ -350,6 +350,9 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
     setup_hba_conf_file()
     restart_postgres()
 
+    esg_bash2py.mkdir_p("/var/run/postgresql")
+    esg_bash2py.symlink_force("/tmp/.s.PGSQL.5432", "/var/run/postgresql/.s.PGSQL.5432")
+
     #TODO: Set password for postgres user
     setup_db_schemas(force_install)
     create_pg_pass_file()

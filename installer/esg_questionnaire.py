@@ -23,10 +23,6 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
 
 def _choose_admin_password(password_file=config["esgf_secret_file"]):
     '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
-    if esg_functions.get_security_admin_password():
-        logger.info("Previously set password found.")
-        return
-
     while True:
         password_input = getpass.getpass(
             "What is the admin password to use for this installation? (alpha-numeric only): ")
@@ -209,6 +205,8 @@ def initial_setup_questionnaire(force_install=False):
 
     if not esg_functions.get_security_admin_password() or force_install:
         _choose_admin_password()
+    else:
+        logger.info("Previously set password found.")
 
     _choose_organization_name()
     _choose_node_short_name()

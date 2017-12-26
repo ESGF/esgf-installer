@@ -251,10 +251,12 @@ def setup_ant():
     print "******************************* \n"
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        logger.info("Found existing Ant installation.  Skipping set up.")
         esg_functions.stream_subprocess_output("ant -version")
-        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install_ant") or "no"
-        if force_ant_install.lower() in ["n", "no"]:
+        if esg_property_manager.get_property("install_ant"):
+            setup_ant_answer = esg_property_manager.get_property("install_ant")
+        else:
+            setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install_ant") or "no"
+        if setup_ant_answer.lower() in ["n", "no"]:
             return
 
     esg_functions.stream_subprocess_output("yum -y install ant")

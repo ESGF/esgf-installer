@@ -208,7 +208,8 @@ def setup_java():
     if force_install:
         pass
     if check_for_existing_java():
-            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
+            setup_java_answer = raw_input("Do you want to continue with Java\
+             installation and setup? [y/N]: ") or esg_property_manager.get_property("install_java") or "N"
             if setup_java_answer.lower().strip() not in ["y", "yes"]:
                 print "Skipping Java installation"
                 return
@@ -250,7 +251,7 @@ def setup_ant():
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         logger.info("Found existing Ant installation.  Skipping set up.")
         esg_functions.stream_subprocess_output("ant -version")
-        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]: ") or "no"
+        force_ant_install = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install_ant") or "no"
         if force_ant_install.lower() in ["n", "no"]:
             return
 

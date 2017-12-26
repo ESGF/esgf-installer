@@ -164,7 +164,11 @@ def purge_cdat():
 
 def purge_apache():
     esg_functions.stream_subprocess_output("yum remove -y httpd httpd-devel mod_ssl")
-    shutil.rmtree("/etc/httpd")
+    try:
+        shutil.rmtree("/etc/httpd")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
 
 
 def main():

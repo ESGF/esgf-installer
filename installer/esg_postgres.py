@@ -283,7 +283,7 @@ def check_existing_pg_version(psql_path, force_install=False):
 
 
 
-def setup_postgres(force_install=False, backup_existing_db=None, default_continue_install = "N"):
+def setup_postgres(force_install=False, default_continue_install = "N"):
     print "\n*******************************"
     print "Setting up Postgres"
     print "******************************* \n"
@@ -299,6 +299,7 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
             else:
                 force_install = True
 
+    backup_existing_db = esg_property_manager.get_property("backup_database")
     if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:
         backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
         if backup_db_input.lower() in ["y", "yes"]:

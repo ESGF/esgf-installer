@@ -21,8 +21,31 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+def _choose_fqdn(force_install=False):
+    if esg_property_manager.get_property("esgf_host") and not force_install:
+        logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf_host"))
+        return
+    else:
+        default_host_name = socket.getfqdn()
+        defaultdomain_regex = r"^\w+-*\w*\W*(.+)"
+        defaultdomain = re.search(
+            defaultdomain_regex, default_host_name).group(1)
+        if not default_host_name:
+            default_host_name = "localhost.localdomain"
+        elif not defaultdomain:
+            default_host_name = default_host_name + ".localdomain"
+
+        default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(
+            default_host_name=default_host_name)) or default_host_name
+        esgf_host = default_host_name
+        logger.info("esgf_host = [%s]", esgf_host)
+        esg_property_manager.write_as_property("esgf_host", esgf_host)
+
 def _choose_admin_password(password_file=config["esgf_secret_file"]):
     '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
+    if esg_functions.get_security_admin_password():
+        return
+
     while True:
         password_input = getpass.getpass(
             "What is the admin password to use for this installation? (alpha-numeric only): ")
@@ -36,12 +59,12 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
             esg_functions.set_security_admin_password(password_input)
             break
 
-
 def _choose_organization_name(force_install=False):
-    esg_root_id = esg_property_manager.get_property("esg_root_id")
-    if esg_root_id:
-        logger.info("esg_root_id = [%s]", esg_root_id)
+    '''Choose the organization name for the installation'''
+    if esg_property_manager.get_property("esg_root_id") and not force_install:
+        logger.info("esg_root_id = [%s]", esg_property_manager.get_property("esg_root_id"))
         return
+
     elif force_install:
         try:
             default_org_name = tld.get_tld(
@@ -56,41 +79,40 @@ def _choose_organization_name(force_install=False):
             break
 
 def _choose_node_short_name(force_install=False):
-    node_short_name = esg_property_manager.get_property("node_short_name")
-    if not node_short_name or force_install:
-        while True:
-            node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=node_short_name)) or node_short_name
-            node_short_name_input.replace("", "_")
-            esg_property_manager.write_as_property(
-                "node_short_name", node_short_name_input)
-            break
+    '''Choose the short name for the node installation'''
+    if esg_property_manager.get_property("node_short_name") and not force_install:
+        logger.info("node_short_name = [%s]", esg_property_manager.get_property("node_short_name"))
+        return
     else:
-        logger.info("node_short_name = [%s]", node_short_name)
+        node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=None)) or None
+        node_short_name_input.replace("", "_")
+        esg_property_manager.write_as_property(
+            "node_short_name", node_short_name_input)
 
 
 def _choose_node_long_name(force_install=False):
-    node_long_name = esg_property_manager.get_property("node_long_name")
-    if not node_long_name or force_install:
-        while True:
-            node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
-                node_long_name=node_long_name)) or node_long_name
-            esg_property_manager.write_as_property(
-                "node_long_name", node_long_name_input)
-            break
-    else:
-        logger.info("node_long_name = [%s]", node_long_name)
+    if esg_property_manager.get_property("node_long_name") and not force_install:
+        logger.info("node_long_name = [%s]", esg_property_manager.get_property("node_long_name"))
+        return
 
+    else:
+        node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
+            node_long_name=None)) or None
+        esg_property_manager.write_as_property(
+            "node_long_name", node_long_name_input)
 
 def _choose_node_namespace(force_install=False):
-    node_namespace = esg_property_manager.get_property("node_namespace")
-    if not node_namespace or force_install:
+    if esg_property_manager.get_property("node_namespace") and not force_install:
+        logger.info("node_namespace = [%s]", esg_property_manager.get_property("node_namespace"))
+        return
+    else:
         try:
             top_level_domain = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True)
             domain = top_level_domain.domain
             suffix = top_level_domain.suffix
             default_node_namespace = suffix + "." + domain
-        except tld.exceptions.TldDomainNotFound, error:
+        except tld.exceptions.TldDomainNotFound:
             top_level_domain = None
             default_node_namespace = None
         while True:
@@ -104,24 +126,18 @@ def _choose_node_namespace(force_install=False):
                 esg_property_manager.write_as_property(
                     "node_namespace", node_namespace_input)
                 break
-    else:
-        logger.info("node_namespace = [%s]", node_namespace)
-
 
 def _choose_node_peer_group(force_install=False):
-    node_peer_group = esg_property_manager.get_property("node_peer_group")
-    if node_peer_group:
-        logger.info("node_peer_group = [%s]", node_peer_group)
+    if esg_property_manager.get_property("node_peer_group") and not force_install:
+        logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node_peer_group"))
         return
-    if not node_peer_group or force_install:
-        try:
-            node_peer_group
-        except NameError:
-            node_peer_group = "esgf-dev"
+    else:
         while True:
-            print "Only choose esgf-test for test federation install or esgf-prod for production installation.  Otherwise choose esgf-dev."
             node_peer_group_input = raw_input(
-                "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev) [{node_peer_group}]: ".format(node_peer_group=node_peer_group)) or node_peer_group
+                "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev) \
+                [{node_peer_group}]: \nOnly choose esgf-test for test federation install or esgf-prod\
+                for production installation.  Otherwise choose esgf-dev.".format(node_peer_group="esgf-dev"))\
+                or "esgf-dev"
             if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
                 print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input=node_peer_group_input)
                 print "Please choose either esgf-test, esgf-dev, or esgf-prod"
@@ -132,62 +148,69 @@ def _choose_node_peer_group(force_install=False):
                 break
 
 def _choose_esgf_index_peer(force_install=False):
-    esgf_index_peer = esg_property_manager.get_property("esgf_index_peer")
-    esgf_default_peer = esg_property_manager.get_property("esgf_default_peer")
-    esgf_host = esg_property_manager.get_property("esgf_host")
-    if not esgf_index_peer or force_install:
-        default_esgf_index_peer = esgf_default_peer or esgf_host or socket.getfqdn()
+    if esg_property_manager.get_property("esgf_index_peer") and not force_install:
+        logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf_index_peer"))
+        return
+    else:
+        default_esgf_index_peer = socket.getfqdn()
         esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
             default_esgf_index_peer=default_esgf_index_peer)) or default_esgf_index_peer
         esg_property_manager.write_as_property(
             "esgf_index_peer", esgf_index_peer_input)
-    else:
-        logger.info("esgf_index_peer = [%s]", esgf_index_peer)
 
 
 def _choose_mail_admin_address(force_install=False):
-    mail_admin_address = esg_property_manager.get_property("mail_admin_address")
-    if not mail_admin_address or force_install:
+    if esg_property_manager.get_property("mail_admin_address") and not force_install:
+        logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail_admin_address"))
+        return
+    else:
         mail_admin_address_input = raw_input(
-            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=mail_admin_address))
+            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail_admin_address")))
         if mail_admin_address_input:
             esg_property_manager.write_as_property(
                 "mail_admin_address", mail_admin_address_input)
         else:
             print " (The notification system will not be enabled without an email address)"
-    else:
-        logger.info("mail_admin_address = [%s]", mail_admin_address)
-
 
 def _choose_publisher_db_user(force_install=False):
-    default_publisher_db_user = None
+    '''Sets the name of the database user for the Publisher'''
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
-    if publisher_db_user:
+    if publisher_db_user and not force_install:
         print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
         logger.info("publisher_db_user: %s", publisher_db_user)
         return
-    if not publisher_db_user or force_install:
-        default_publisher_db_user = publisher_db_user or "esgcet"
+
+    else:
+        default_publisher_db_user = "esgcet"
         publisher_db_user_input = raw_input(
             "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ".format(default_publisher_db_user=default_publisher_db_user)) or default_publisher_db_user
         esg_property_manager.write_as_property(
             "publisher_db_user", publisher_db_user_input)
 
 def _choose_publisher_db_user_passwd(force_install=False):
-    if config["publisher_db_user_passwd"] or esg_functions.get_publisher_password():
-        print "Using previously configured publisher DB password"
-        return
+    '''Choose the password for the publisher (esgcet) database user'''
+    if esg_functions.get_publisher_password() and not force_install:
+        if _is_valid_password(esg_functions.get_publisher_password()):
+            print "Using previously configured publisher DB password"
+            return
+        else:
+            print "The current password is invalid.  Please set a new password"
 
-    if force_install:
-        publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
+    publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
+
+    while True:
         publisher_db_user_passwd_input = getpass.getpass(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
+        if not _is_valid_password(publisher_db_user_passwd_input):
+            print "The password that was entered is invalid.  Please enter a different password."
+            continue
 
         password_input_confirmation = getpass.getpass(
             "Please re-enter password to confirm: ")
 
         if esg_functions.confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
             esg_functions.set_publisher_password(publisher_db_user_passwd_input)
+            break
 
 def initial_setup_questionnaire(force_install=False):
     print "-------------------------------------------------------"
@@ -196,62 +219,36 @@ def initial_setup_questionnaire(force_install=False):
 
     esg_bash2py.mkdir_p(config['esg_config_dir'])
 
-    starting_directory = os.getcwd()
+    with esg_bash2py.pushd(config['esg_config_dir']):
 
-    os.chdir(config['esg_config_dir'])
+        esgf_host = esg_property_manager.get_property("esgf_host")
+        _choose_fqdn(esgf_host)
 
-    esgf_host = esg_property_manager.get_property("esgf_host")
-    _choose_fqdn(esgf_host)
-
-    if not esg_functions.get_security_admin_password() or force_install:
         _choose_admin_password()
-    else:
-        logger.info("Previously set password found.")
 
-    _choose_organization_name()
-    _choose_node_short_name()
-    _choose_node_long_name()
-    _choose_node_namespace()
-    _choose_node_peer_group()
-    _choose_esgf_index_peer()
-    _choose_mail_admin_address()
+        _choose_organization_name()
+        _choose_node_short_name()
+        _choose_node_long_name()
+        _choose_node_namespace()
+        _choose_node_peer_group()
+        _choose_esgf_index_peer()
+        _choose_mail_admin_address()
 
-    #TODO:Extract constructring DB string into separate function
-    db_properties = get_db_properties()
+        _choose_publisher_db_user()
+        _choose_publisher_db_user_passwd()
 
-    if not all(db_properties) or force_install:
-        _is_managed_db(db_properties)
-        _get_db_conn_str_questionnaire(db_properties)
-    else:
+        os.chmod(config['pub_secret_file'], 0640)
+        if "tomcat" not in esg_functions.get_group_list():
+            esg_functions.add_unix_group(config["tomcat_group"])
+        os.chown(config['esgf_secret_file'], config[
+                 "installer_uid"], esg_functions.get_tomcat_group_id())
+
         if db_properties["db_host"] == esgf_host or db_properties["db_host"] == "localhost":
-            print "db_connection_string = {db_user}@localhost".format(db_user=db_properties["db_user"])
+            logger.info("db publisher connection string %s@localhost",
+                        db_properties["db_user"])
         else:
-            connstring_ = "{db_user}@{db_host}:{db_port}/{db_database} [external = ${db_managed}]".format(db_user=db_properties["db_user"],
-                                                                                                          db_host=db_properties[
-                                                                                                              "db_host"],
-                                                                                                          db_port=db_properties[
-                                                                                                              "db_port"],
-                                                                                                          db_database=db_properties[
-                                                                                                              "db_database"],
-                                                                                                          db_managed=db_properties["db_managed"])
-
-    _choose_publisher_db_user()
-    _choose_publisher_db_user_passwd()
-
-    os.chmod(config['pub_secret_file'], 0640)
-    if "tomcat" not in esg_functions.get_group_list():
-        esg_functions.add_unix_group(config["tomcat_group"])
-    os.chown(config['esgf_secret_file'], config[
-             "installer_uid"], esg_functions.get_tomcat_group_id())
-
-    if db_properties["db_host"] == esgf_host or db_properties["db_host"] == "localhost":
-        logger.info("db publisher connection string %s@localhost",
-                    db_properties["db_user"])
-    else:
-        logger.info("db publisher connection string %s@%s:%s/%s",
-                    db_properties["db_user"], db_properties["db_host"], db_properties["db_port"], db_properties["db_database"])
-
-    os.chdir(starting_directory)
+            logger.info("db publisher connection string %s@%s:%s/%s",
+                        db_properties["db_user"], db_properties["db_host"], db_properties["db_port"], db_properties["db_database"])
 
     return True
 
@@ -263,8 +260,6 @@ def get_db_properties():
         db_properties_dict[key] = esg_property_manager.get_property(key)
 
     return db_properties_dict
-
-
 
 
 def _get_db_conn_str_questionnaire(db_properties, force_install=False):
@@ -375,26 +370,6 @@ def _is_managed_db(db_properties, force_install=False):
         db_properties["db_host"] = "localhost"
         return False
 
-def _choose_fqdn(esgf_host, force_install=False):
-    if not esgf_host or force_install:
-        default_host_name = esgf_host or socket.getfqdn()
-        defaultdomain_regex = r"^\w+-*\w*\W*(.+)"
-        defaultdomain = re.search(
-            defaultdomain_regex, default_host_name).group(1)
-        if not default_host_name:
-            default_host_name = "localhost.localdomain"
-        elif not defaultdomain:
-            default_host_name = default_host_name + ".localdomain"
-
-        default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(
-            default_host_name=default_host_name)) or default_host_name
-        esgf_host = default_host_name
-        logger.info("esgf_host = [%s]", esgf_host)
-        esg_property_manager.write_as_property("esgf_host", esgf_host)
-    else:
-        logger.info("esgf_host = [%s]", esgf_host)
-        esg_property_manager.write_as_property("esgf_host", esgf_host)
-
 
 def _is_valid_password(password_input):
     if not password_input or not str.isalnum(password_input):
@@ -405,22 +380,3 @@ def _is_valid_password(password_input):
         return False
     else:
         return True
-
-def _update_postgres_password():
-    '''Updates the Postgres system account password; gets saved to /esg/config/.esg_pg_pass'''
-    if not esg_functions.get_tomcat_group_id():
-        esg_functions.add_unix_group(config["tomcat_group"])
-    tomcat_group_id = esg_functions.get_tomcat_group_id()
-
-    try:
-        with open(config['pg_secret_file'], "w") as secret_file:
-            secret_file.write(config["pg_sys_acct_passwd"])
-    except IOError:
-        logger.exception("Could not open %s", config['pg_secret_file'])
-
-    os.chmod(config['pg_secret_file'], 0640)
-    try:
-        os.chown(config['pg_secret_file'], config[
-                 "installer_uid"], tomcat_group_id)
-    except OSError:
-        logger.exception("Unable to change ownership of %s", config["pg_secret_file"])

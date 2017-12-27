@@ -134,9 +134,7 @@ def _choose_node_peer_group(force_install=False):
     else:
         while True:
             node_peer_group_input = raw_input(
-                "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev) \
-                [{node_peer_group}]: \nOnly choose esgf-test for test federation install or esgf-prod\
-                for production installation.  Otherwise choose esgf-dev.".format(node_peer_group="esgf-dev"))\
+                "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev)[{node_peer_group}]: \nOnly choose esgf-test for test federation install or esgf-prod for production installation.  Otherwise choose esgf-dev.".format(node_peer_group="esgf-dev"))\
                 or "esgf-dev"
             if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
                 print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input=node_peer_group_input)

@@ -13,6 +13,7 @@ import stat
 import requests
 import esg_functions
 import esg_bash2py
+import esg_property_manager
 import yaml
 import zipfile
 from git import Repo
@@ -104,16 +105,19 @@ def download_orp_war(orp_url):
 
 def setup_orp():
     '''Setup the ORP subsystem'''
-    if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
-        orp_install = raw_input("Existing ORP installation found.  Do you want to continue with the ORP installation [y/N]: ") or "no"
-        if orp_install.lower() in ["no", "n"]:
-            return
     print "\n*******************************"
     print "Setting up ORP"
     print "******************************* \n"
+
+    if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
+        if esg_property_manager.get_property("setup_orp"):
+            orp_install = esg_property_manager.get_property("setup_orp")
+        else:
+            orp_install = raw_input("Existing ORP installation found.  Do you want to continue with the ORP installation [y/N]: ") or "no"
+        if orp_install.lower() in ["no", "n"]:
+            return
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
 
-    #COPY esgf-orp/esg-orp.war /usr/local/tomcat/webapps/esg-orp/esg-orp.war
     orp_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
     print "orp_url:", orp_url
 

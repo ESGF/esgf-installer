@@ -88,15 +88,17 @@ def generate_esgsetup_options(recommended_setup = 1):
 
     if publisher_db_user:
         generate_esg_ini_command += " --db-user %s" % (publisher_db_user)
-    if config["publisher_db_user_passwd"]:
-        generate_esg_ini_command += " --db-user-password %s" % (config["publisher_db_user_passwd"])
+
+    publisher_password = esg_functions.get_publisher_password()
+    if publisher_password:
+        generate_esg_ini_command += " --db-user-password %s" % (publisher_password)
     if config["postgress_host"]:
         generate_esg_ini_command += " --db-host %s" % (config["postgress_host"])
     if config["postgress_port"]:
         generate_esg_ini_command += " --db-port %s" % (config["postgress_port"])
 
     logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
-    print "generate_esg_ini_command in function: %s" % generate_esg_ini_command
+    # print "generate_esg_ini_command in function: %s" % generate_esg_ini_command
     return generate_esg_ini_command
 
 def edit_esg_ini(node_short_name="test_node"):

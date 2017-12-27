@@ -1,0 +1,233 @@
+# Sample model initialization file. Each line has the form:
+#
+# project | model_id | URL | description
+#
+# To configure the publisher database with this information:
+#
+# - In esg.ini, in the [initialize] section, uncomment the line:
+#     initial_models_table = %(home)s/.esgcet/esgcet_models_table.txt
+#
+# - Run:
+#     % esginitialize -c -i /esg/config/esgcet/esg.ini
+
+cmip5 | ACCESS | | ACCESS, Centre for Australian Weather and Climate Research (CAWCR)
+cmip5 | access | | ACCESS, Centre for Australian Weather and Climate Research (CAWCR)
+cmip5 | ACCESS1-0 | | ACCESS1-0, Centre for Australian Weather and Climate Research (CAWCR)
+cmip5 | ACCESS1-3 | | ACCESS1-3, Centre for Australian Weather and Climate Research (CAWCR)
+cmip5 | BCC-CSM1-1 | | BCC-CSM1.1, Beijing Climate Center, China Meteorological Administration
+cmip5 | bcc-csm1-1 | | BCC-CSM1.1, Beijing Climate Center, China Meteorological Administration
+cmip5 | bcc-csm1-1-m | | BCC-CSM1.1-m, Beijing Climate Center, China Meteorological Administration
+cmip5 | BNU-ESM | | BNU-ESM, College of Global Change and Earth System Science, Beijing Normal University
+cmip5 | bnu-esm | | BNU-ESM, College of Global Change and Earth System Science, Beijing Normal University
+cmip5 | CANAM4 | | CanAM4, Canadian Centre for Climate Modelling and Analysis
+cmip5 | CanAM4 | | CanAM4, Canadian Centre for Climate Modelling and Analysis
+cmip5 | canam4 | | CanAM4, Canadian Centre for Climate Modelling and Analysis
+cmip5 | CANCM4 | | CanCM4, Canadian Centre for Climate Modelling and Analysis
+cmip5 | CanCM4 | | CanCM4, Canadian Centre for Climate Modelling and Analysis
+cmip5 | cancm4 | | CanCM4, Canadian Centre for Climate Modelling and Analysis
+cmip5 | CANESM2 | | CanESM2, Canadian Centre for Climate Modelling and Analysis
+cmip5 | CanESM2 | | CanESM2, Canadian Centre for Climate Modelling and Analysis
+cmip5 | canesm2 | | CanESM2, Canadian Centre for Climate Modelling and Analysis
+cmip5 | CCSM4 | | Community Climate System Model 4
+cmip5 | ccsm4 | | Community Climate System Model 4
+cmip5 | CCSM4-RSMAS | | University of Miami - RSMAS
+cmip5 | ccsm4-rsmas | | University of Miami - RSMAS
+cmip5 | cesm-cam5-1-fv2 | | Community Earth System Model 1
+cmip5 | CESM1-BGC | | Community Earth System Model 1
+cmip5 | cesm1-bgc | | Community Earth System Model 1
+cmip5 | CESM1-CAM5 | | Community Earth System Model 1
+cmip5 | cesm1-cam5 | | Community Earth System Model 1
+cmip5 | CESM1-CAM5-1-FV2 | | Community Earth System Model 1
+cmip5 | CESM1-CHEM | | Community Earth System Model 1
+cmip5 | cesm1-chem | | Community Earth System Model 1
+cmip5 | CESM1-CHEM-CAM5 | | Community Earth System Model 1
+cmip5 | cesm1-chem-cam5 | | Community Earth System Model 1
+cmip5 | CESM1-FASTCHEM | | Community Earth System Model 1
+cmip5 | cesm1-fastchem | | Community Earth System Model 1
+cmip5 | CESM1-WACCM | | Community Earth System Model 1
+cmip5 | cesm1-waccm | | Community Earth System Model 1
+cmip5 | CFSv2-2011 | | CFSv2-2011, Center for Ocean-Land-Atmosphere Studies and National Centers for Environmental Prediction
+cmip5 | CMCC-CESM | | CMCC-CESM, Centro Euro-Mediterraneo per I Cambiamenti Climatici
+cmip5 | cmcc-cesm | | CMCC-CESM, Centro Euro-Mediterraneo per I Cambiamenti Climatici
+cmip5 | CMCC-CM | | CMCC-CM, Centro Euro-Mediterraneo per I Cambiamenti Climatici
+cmip5 | cmcc-cm | | CMCC-CM, Centro Euro-Mediterraneo per I Cambiamenti Climatici
+cmip5 | CMCC-CMS | | CMCC-CMS, Centro Euro-Mediterraneo per I Cambiamenti Climatici
+cmip5 | cmcc-cms | | CMCC-CMS, Centro Euro-Mediterraneo per I Cambiamenti Climatici
+cmip5 | CNRM-CERFACS | | CNRM-CERFACS, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique (CNRM/CERFACS)
+cmip5 | cnrm-cerfacs | | CNRM-CERFACS, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique (CNRM/CERFACS)
+cmip5 | CNRM-CM5 | | CNRM-CM5, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique (CNRM/CERFACS)
+cmip5 | cnrm-cm5 | | CNRM-CM5, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique (CNRM/CERFACS)
+cmip5 | CNRM-CM5-2 | | CNRM-CM5.2, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique (CNRM/CERFACS)
+cmip5 | cnrm-cm5-2 | | CNRM-CM5.2, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique (CNRM/CERFACS)
+cmip5 | CSIRO-MK3-5A | | CSIRO-Mk3.5A, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence (CSIRO-QCCCE)
+cmip5 | csiro-mk3-5A | | CSIRO-Mk3.5A, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence (CSIRO-QCCCE)
+cmip5 | CSIRO-MK3-6 | | CSIRO-Mk3.6, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence (CSIRO-QCCCE)
+cmip5 | csiro-mk3-6 | | CSIRO-Mk3.6, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence (CSIRO-QCCCE)
+cmip5 | CSIRO-Mk3-6-0 | | CSIRO-Mk3.6, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence (CSIRO-QCCCE)
+cmip5 | csiro-mk3-6-0 | | CSIRO-Mk3.6, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence (CSIRO-QCCCE)
+cmip5 | CSIRO-Mk3L-1-2 | | CSIRO-Mk3L-1-2, University of New South Wales, Australia
+cmip5 | csiro-mk3l-1-2 | | CSIRO-Mk3L-1-2, University of New South Wales, Australia
+cmip5 | EC-EARTH | | EC-EARTH consortium
+cmip5 | ec-earth | | EC-EARTH consortium
+cmip5 | FGOALS-G2 | | FGOALS-G2.0, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | FGOALS-g2 | | FGOALS-G2.0, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | fgoals-g2 | | FGOALS-G2.0, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | FGOALS-gl | | FGOALS-GL, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | FGOALS-GL | | FGOALS-GL, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | fgoals-gl | | FGOALS-GL, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | FGOALS-s2 | | FGOALS-S2.0, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | FGOALS-S2 | | FGOALS-S2.0, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | fgoals-s2 | | FGOALS-S2.0, LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+cmip5 | FIO-ESM | | FIO-ESM, First Institute of Oceanography, SOA, China
+cmip5 | fio-esm | | FIO-ESM, First Institute of Oceanography, SOA, China
+cmip5 | GEOS-5 | | NASA Global Modeling and Assimilation Office
+cmip5 | geos-5 | | NASA Global Modeling and Assimilation Office
+cmip5 | GFDL-CM2P1 | | GFDL-CM2.1, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-CM2p1 | | GFDL-CM2.1, Geophysical Fluid Dynamics Laboratory
+cmip5 | gfdl-cm2p1 | | GFDL-CM2.1, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-CM2p1 | | GFDL-CM2p1, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-CM3 | | GFDL-CM3, Geophysical Fluid Dynamics Laboratory
+cmip5 | gfdl-cm3 | | GFDL-CM3, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-ESM2G | | GFDL-ESM2G, Geophysical Fluid Dynamics Laboratory
+cmip5 | gfdl-esm2g | | GFDL-ESM2G, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-ESM2M | | GFDL-ESM2M, Geophysical Fluid Dynamics Laboratory
+cmip5 | gfdl-esm2m | | GFDL-ESM2M, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-HIRAM-C180 | | GFDL-HIRAM-C180, Geophysical Fluid Dynamics Laboratory
+cmip5 | gfdl-hiram-c180 | | GFDL-HIRAM-C180, Geophysical Fluid Dynamics Laboratory
+cmip5 | GFDL-HIRAM-C360 | | GFDL-HIRAM-C360, Geophysical Fluid Dynamics Laboratory
+cmip5 | gfdl-hiram-c360 | | GFDL-HIRAM-C360, Geophysical Fluid Dynamics Laboratory
+cmip5 | GISS-E2-H | | NASA Goddard Institute for Space Studies
+cmip5 | giss-e2-h | | NASA Goddard Institute for Space Studies
+cmip5 | GISS-E2-H-CC | | NASA Goddard Institute for Space Studies
+cmip5 | giss-e2-h-cc | | NASA Goddard Institute for Space Studies
+cmip5 | GISS-E2-R | | NASA Goddard Institute for Space Studies
+cmip5 | giss-e2-r | | NASA Goddard Institute for Space Studies
+cmip5 | GISS-E2-R-CC | | NASA Goddard Institute for Space Studies
+cmip5 | giss-e2-r-cc | | NASA Goddard Institute for Space Studies
+cmip5 | GISS-E2CS-H | | NASA Goddard Institute for Space Studies
+cmip5 | giss-e2cs-h | | NASA Goddard Institute for Space Studies
+cmip5 | GISS-E2CS-R | | NASA Goddard Institute for Space Studies
+cmip5 | giss-e2cs-r | | NASA Goddard Institute for Space Studies
+cmip5 | HadCM3 | | HadCM3, Met Office Hadley Centre
+cmip5 | HADCM3 | | HadCM3, Met Office Hadley Centre
+cmip5 | hadcm3 | | HadCM3, Met Office Hadley Centre
+cmip5 | HADCM3Q | | HadCM3Q, Met Office Hadley Centre
+cmip5 | hadcm3q | | HadCM3Q, Met Office Hadley Centre
+cmip5 | HadGEM2-A | | HadGEM2-A, National Institute of Meteorological Research/Korea Meteorological Administration
+cmip5 | HadGEM2-A | | HadGM2-A, National Institute of Meteorological Research/Korea Meteorological Administration
+cmip5 | HadGEM2-AO | | HadGEM2-AO, National Institute of Meteorological Research/Korea Meteorological Administration
+cmip5 | HADGEM2-AO | | HadGEM2-AO, National Institute of Meteorological Research/Korea Meteorological Administration
+cmip5 | hadgem2-ao | | HadGEM2-AO, National Institute of Meteorological Research/Korea Meteorological Administration
+cmip5 | HadGEM2-CC | | HadGEM2-CC, Met Office Hadley Centre
+cmip5 | HADGEM2-CC | | HadGEM2-CC, Met Office Hadley Centre
+cmip5 | hadgem2-cc | | HadGEM2-CC, Met Office Hadley Centre
+cmip5 | HadGEM2-ES | | HadGEM2-ES, Met Office Hadley Centre
+cmip5 | HADGEM2-ES | | HadGEM2-ES, Met Office Hadley Centre
+cmip5 | hadgem2-es | | HadGEM2-ES, Met Office Hadley Centre
+cmip5 | HadGEM2-ES | | HadGM2-ES, Met Office Hadley Centre
+cmip5 | HIGEM1-2 | | HiGEM1.2, Natural and Environmental Research Council/Met Office Hadley Centre
+cmip5 | higem1-2 | | HiGEM1.2, Natural and Environmental Research Council/Met Office Hadley Centre
+cmip5 | INMCM4 | | Institute for Numerical Mathematics
+cmip5 | inmcm4 | | Institute for Numerical Mathematics
+cmip5 | IPSL-CM5A-LR | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+cmip5 | ipsl-cm5a-lr | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+cmip5 | IPSL-CM5A-MR | | IPSL-CM5A-MR, Institut Pierre-Simon Laplace
+cmip5 | ipsl-cm5a-mr | | IPSL-CM5A-MR, Institut Pierre-Simon Laplace
+cmip5 | ipsl-cm5b | | IPSL-CM5B, Institut Pierre-Simon Laplace
+cmip5 | ipsl-cm5b-lr | | IPSL-CM5B-LR, Institut Pierre-Simon Laplace
+cmip5 | IPSL-CM5B-LR | | IPSL-CM5B-LR, Institut Pierre-Simon Laplace
+cmip5 | MIROC-ESM | | MIROC-ESM, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | miroc-esm | | MIROC-ESM, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | MIROC-ESM-CHEM | | MIROC-ESM-CHEM, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | miroc-esm-chem | | MIROC-ESM-CHEM, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | MIROC4H | | MIROC4h, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | MIROC4h | | MIROC4h, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | miroc4h | | MIROC4h, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | MIROC4M | | MIROC4m, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | miroc4m | | MIROC4m, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | MIROC5 | | MIROC5, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | miroc5 | | MIROC5, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology
+cmip5 | MPI-ESM-HR | | MPI-ESM-HR, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | mpi-esm-hr | | MPI-ESM-HR, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | MPI-ESM-LR | | MPI-ESM-LR, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | mpi-esm-lr | | MPI-ESM-LR, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | MPI-ESM-MR | | MPI-ESM-MR, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | MPI-ESM-P  | | MPI-ESM-P, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | MPI-ESM-P | | MPI-ESM-P, Max Planck Institute for Meteorology (MPI-M)
+cmip5 | MRI-AGCM3-2H | | MRI-AGCM3-2H
+cmip5 | MRI-AGCM3-2H | | MRI-AGCM3.2H, Meteorological Research Institute
+cmip5 | mri-agcm3-2h | | MRI-AGCM3.2H, Meteorological Research Institute
+cmip5 | mri-agcm3-2h | | mri-agcm3.2H, Meteorological Research Institute
+cmip5 | MRI-AGCM3-2H | | mri-agcm3.2H, Meteorological Research Institute
+cmip5 | MRI-AGCM3-2S | | MRI-AGCM3.2S, Meteorological Research Institute
+cmip5 | mri-agcm3-2s | | MRI-AGCM3.2S, Meteorological Research Institute
+cmip5 | MRI-CGCM3 | | MRI-CGCM3, Meteorological Research Institute
+cmip5 | mri-cgcm3 | | MRI-CGCM3, Meteorological Research Institute
+cmip5 | MRI-ESM1 | | MRI-ESM1, Meteorological Research Institute
+cmip5 | mri-esm1 | | MRI-ESM1, Meteorological Research Institute
+cmip5 | NICAM-09 | | NICAM-09, Nonhydrostatic Icosahedral Atmospheric Model Group
+cmip5 | NORESM1 | | NorESM1, Norwegian Climate Centre (NorClim)
+cmip5 | noresm1 | | NorESM1, Norwegian Climate Centre (NorClim)
+cmip5 | NorESM1-M | | NorESM1- M, Norwegian Climate Centre (NorClim)
+cmip5 | NorESM1-M | | NorESM1-M
+cmip5 | NorESM1-M | | NorESM1-M, Norwegian Climate Centre (NorClim)
+cmip5 | NorESM1-ME | | NorESM1-ME
+cmip5 | NorESM1-ME | | NorESM1-ME, Norwegian Climate Centre (NorClim)
+cmip5 | pcmdi-test | | PCMDI
+cmip5 | SP-CCSM4 | | SP-CCSM4
+cordex | IPSL-INERIS-WRF331F | | Institut Pierre-Simon Laplace
+cordex | WRF331F | | Institut Pierre-Simon Laplace
+cordex-adjust | IPSL-INERIS-WRF331F | | Institut Pierre-Simon Laplace
+euclipse | IPSL-CM5A-LR | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+euclipse | IPSL-CM5B-LR | | IPSL-CM5B-LR, Institut Pierre-Simon Laplace
+geomip | IPSL-CM5A-LR | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+ipcc4 |  bcc_cm1 | http://bcc.cma.gov.cn | Beijing Climate Center, China, BCC-CM1 Model
+ipcc4 |  bccr_bcm2_0 | http://www-pcmdi.llnl.gov/ipcc/model_documentation/BCCR_BCM2.0.htm | Bjerknes Centre for Climate Research, Norway, BCM2.0 Model
+ipcc4 |  cccma_cgcm3_1 | http://www.cccma.bc.ec.gc.ca/eng_index.shtml | Canadian Centre for Climate Modelling and Analysis, CGCM3.1 Model, T47
+ipcc4 |  cccma_cgcm3_1_t63 | http://www.cccma.bc.ec.gc.ca/eng_index.shtml | Canadian Centre for Climate Modelling and Analysis, CGCM3.1 Model, T63
+ipcc4 |  cnrm_cm3 | http://www.cnrm.meteo.fr/scenario2004/indexenglish.html | Meteo-France, Centre National de Recherches Meteorologiques, CM3 Model
+ipcc4 |  csiro_mk3_0 | http://www.dar.csiro.au/publications/gordon_2002a.pdf | CSIRO Atmospheric Research, Australia, Mk3.0 Model
+ipcc4 |  csiro_mk3_5 | http://www.dar.csiro.au/publications/gordon_2002a.pdf | CSIRO Atmospheric Research, Australia, Mk3.5 Model
+ipcc4 |  gfdl_cm2_0 | http://data1.gfdl.noaa.gov/nomads/forms/deccen/CM2.X/| NOAA Geophysical Fluid Dynamics Laboratory, CM2.0 Model
+ipcc4 |  gfdl_cm2_1 | http://data1.gfdl.noaa.gov/nomads/forms/deccen/CM2.X/| NOAA Geophysical Fluid Dynamics Laboratory, CM2.1 Model
+ipcc4 |  giss_aom | http://aom.giss.nasa.gov| NASA Goddard Institute for Space Studies, C4x3
+ipcc4 |  giss_model_e_h | http://www.giss.nasa.gov/tools/modelE | NASA Goddard Institute for Space Studies, ModelE20/HYCOM
+ipcc4 |  giss_model_e_r | http://www.giss.nasa.gov/tools/modelE | NASA Goddard Institute for Space Studies, ModelE20/Russell
+ipcc4 |  iap_fgoals1_0_g | http://www.iap.ac.cn/english/iap/index.htm | LASG, Institute of Atmospheric Physics, China, FGOALS1.0_g Model
+ipcc4 |  ingv_echam4 | http://www.bo.ingv.it | INGV, National Institute of Geophysics and Volcanology, Italy, ECHAM 4.6 Model
+ipcc4 |  inmcm3_0 | http://www.inm.ras.ru/en/index.htm | Institute for Numerical Mathematics, Russia, INMCM3.0 Model
+ipcc4 |  ipsl_cm4 | http://mc2.ipsl.jussieu.fr/simules.html | IPSL/LMD/LSCE, France, CM4 V1 Model
+ipcc4 |  miroc3_2_hires | http://www.ccsr.u-tokyo.ac.jp/kyosei/hasumi/MIROC/tech-repo.pdf| CCSR/NIES/FRCGC, MIROC Model V3.2, high resolution
+ipcc4 |  miroc3_2_medres | http://www.ccsr.u-tokyo.ac.jp/kyosei/hasumi/MIROC/tech-repo.pdf| CCSR/NIES/FRCGC, MIROC Model V3.2, medium resolution
+ipcc4 |  miub_echo_g | http://www-pcmdi.llnl.gov/projects/modeldoc/cmip/echo-g_tbls.html | Meteorological Institute of the University of Bonn, ECHO-G Model
+ipcc4 |  mpi_echam5 | http://www.mpimet.mpg.de/en/extra/models/echam/echam5.php | Max Planck Institute for Meteorology, Germany, ECHAM5 / MPI OM
+ipcc4 |  mri_cgcm2_3_2a | http://www.mri-jma.go.jp/Welcome.html| Meteorological Research Institute, Japan, CGCM2.3.2a
+ipcc4 |  ncar_ccsm3_0| http://www.ccsm.ucar.edu| NCAR Community Climate System Model, CCSM 3.0
+ipcc4 |  ncar_pcm1 | http://www.cgd.ucar.edu/pcm| Parallel Climate Model (Version 1)
+ipcc4 |  ukmo_hadcm3 | http://www.metoffice.com/research/hadleycentre/models/HadCM3.html | Hadley Centre for Climate Prediction, Met Office, UK, HadCM3 Model
+ipcc4 |  ukmo_hadgem1 | http://www.metoffice.gov.uk/research/hadleycentre/pubs/HCTN/HCTN_54.pdf| Hadley Centre for Climate Prediction, Met Office, UK, HadGEM1 Model
+lucid | IPSL-CM5A-LR | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+pmip3 | bcc-csm1-1 | | BCC, Beijing Climate Center, China Meteorological Administration
+pmip3 | CCSM4 | | NCAR, National Center for Atmospheric Research, USA
+pmip3 | CNRM-CM5 | | CNRM-CERFACS, Centre National de Recherches Meteorologiques / Centre Europeen de Recherche et Formation Avancees en Calcul Scientifique, France
+pmip3 | COSMOS-ASO | | FUB, Freie Universitaet Berlin, Institute for Meteorology, Germany
+pmip3 | CSIRO-Mk3-6-0 | | CSIRO-QCCCE, Commonwealth Scientific and Industrial Research Organization/Queensland Climate Change Centre of Excellence, Australia
+pmip3 | CSIRO-Mk3L-1-2 | | UNSW, University of New South Wales, Australia
+pmip3 | EC-EARTH-2-2 | | KNMI, Royal Netherlands Meteorological Institute, Netherlands
+pmip3 | FGOALS-g2 | | LASG-CESS, Institute of Atmospheric Physics, Chinese Academy of Sciences
+pmip3 | FGOALS-gl | | LASG, Institute of Atmospheric Physics, Chinese Academy of Sciences
+pmip3 | FGOALS-s2 | | LASG-IAP, Institute of Atmospheric Physics, Chinese Academy of Sciences
+pmip3 | GFDL-CM3 | | NOAA-GFDL, Geophysical Fluid Dynamics Laboratory, USA
+pmip3 | GISS-E2-R | | NASA-GISS, NASA Goddard Institute for Space Studies, USA
+pmip3 | HadCM3 | | UOED, UBRIS LEEDS EDINBURGH Hadley Centre, UK
+pmip3 | HadGEM2-ES | | MOHC, Met Office Hadley Centre, UK
+pmip3 | IPSL-CM5A-LR | | IPSL, Institut Pierre-Simon Laplace, France
+pmip3 | KCM1-2-2 | | CAU-GEOMAR, Christian-Albrechts University, Germany
+pmip3 | MIROC-ESM | | MIROC, Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology, Japan
+pmip3 | MPI-ESM-P | | MPI-M, Max Planck Institute for Meteorology, Germany
+pmip3 | MRI-CGCM3 | | MRI, Meteorological Research Institute, Japan
+tamip | IPSL-CM5A-LR | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+test | IPSL-CM5A-LR |  | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+test | IPSL-CM5A-LR | | IPSL-CM5A-LR, Institut Pierre-Simon Laplace
+test | ncar_ccsm3_0 | http://www.ccsm.ucar.edu| NCAR Community Climate System Model, CCSM 3.0
+test | test | http://www-pcmdi.llnl.gov | Test

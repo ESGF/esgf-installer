@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+  <display-name>THREDDS Data Server</display-name>
+  <description>THREDDS Data Server</description>
+
+  <!-- Provide the context path at init time (otherwise, not available till a request is made). -->
+  <!-- LOOK remove this -->
+  <context-param>
+    <param-name>ContextPath</param-name>
+    <param-value>thredds</param-value>
+  </context-param>
+
+  <!--
+     Spring listener to bootstrap Spring WebApplicationContext. Used to
+     handle Spring bean configuration outside of SpringMVC configuration.
+     Paths, by default, are relative to the application root.
+  -->
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>/WEB-INF/applicationContext.xml</param-value>
+  </context-param>
+
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+    <!-- ******************************** -->
+  <!-- web.xml entry for the esg node   -->
+  <!-- Access Control Filter chain      -->
+  <!-- ******************************** -->
+  <!-- bypass authentication/authorization for requests coming from LAS -->
+  <filter>
+    <filter-name>ipFilter</filter-name>
+    <filter-class>esg.orp.app.AuthenticationByIPFilter</filter-class>
+    <init-param>
+      <param-name>ip_whitelist</param-name>
+      <param-value>/esg/content/las/conf/server/las_servers.xml, /esg/content/las/conf/server/las_servers_static.xml</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>ipFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+    <!-- ******************************** -->
+  <!-- web.xml entry for the esg node   -->
+  <!-- Access Control Filter chain      -->
+  <!-- ******************************** -->
+  <filter>
+    <filter-name>authenticationFilter</filter-name>
+    <filter-class>esg.orp.app.AuthenticationFilter</filter-class>
+    <init-param>
+      <param-name>policyServiceClass</param-name>
+      <!-- <param-value>esg.orp.app.tds.TDSPolicyService</param-value> -->
+      <param-value>esg.orp.app.CompositePolicyService</param-value>
+    </init-param>
+    <init-param>
+      <param-name>policyServiceClasses</param-name>
+      <param-value>esg.orp.app.RegexPolicyService, esg.orp.app.LocalXmlPolicyService</param-value>
+    </init-param>
+    <init-param>
+      <param-name>authenticationNotRequiredPatterns</param-name>
+      <param-value>"[^?]*/thredds/$","[^?]*catalog\.html;jsessionid=.*","[^?]*((/admin/)(.*)|(/remoteCatalogService\?.*)|(?&lt;=\.(html|xml|css|gif|png|jpg|pdf|asp))(\?.*)?)"</param-value> 
+      <!--  Alternatively, e.g.:
+           <param-name>authenticationRequiredPatterns</param-name>
+           <param-value>"[^?]*/fileServer/.*", "[^?]*/dodsC/[^?]*(?&lt;!\.html)(\?.*)?"</param-value>
+      -->
+    </init-param>
+    <init-param>
+      <param-name>policyFiles</param-name>
+      <param-value>/esg/config/esgf_policies_local.xml, /esg/config/esgf_policies_common.xml</param-value>
+    </init-param>
+    <init-param>
+      <param-name>openidRelyingPartyUrl</param-name>
+      <param-value>https://my.esgf.node/esg-orp/home.htm</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trustoreFile</param-name>
+      <param-value>/esg/config/tomcat/esg-truststore.ts</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trustorePassword</param-name>
+      <param-value>changeit</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trimURIRegEx</param-name>
+      <param-value>\.ascii.*,\.dods.*,\.dds.*,\.das.*</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>authenticationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>authorizationFilter</filter-name>
+    <filter-class>esg.orp.app.AuthorizationFilter</filter-class>
+    <init-param>
+      <param-name>authorizationServiceClass</param-name>
+      <!-- <param-value>esg.datanode.security.app.NoAuthorizationServiceFilterCollaborator</param-value> -->
+      <param-value>esg.orp.app.SAMLAuthorizationServiceFilterCollaborator</param-value>
+    </init-param>
+    <init-param>
+      <param-name>urlTransformer</param-name>
+      <param-value>esg.orp.app.RegexReplaceAuthorizationFilterUrlTransformer</param-value>
+    </init-param>
+    <init-param>
+      <param-name>urlTransformerReplacements</param-name>
+      <param-value>"\?.*":"", "/dodsC/":"/fileServer/", "\.(asc|ascii|das|dds|dods|html)\Z":""</param-value>
+    </init-param>
+    <init-param>
+      <param-name>authorizationServiceUrl</param-name>
+      <param-value>
+        https://my.esgf.node/esg-orp/saml/soap/secure/authorizationService.htm
+      </param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>authorizationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  
+  <!-- **************************************** -->
+  <!-- web.xml entry for the esg node filter    -->
+  <!-- Calls to through this filter are setup   -->
+  <!-- such that they may be redirected for     -->
+  <!-- registration request servicing to aid    -->
+  <!-- end-user registration workflow           -->
+  <!-- **************************************** -->
+ <filter>
+    <filter-name>registrationFilter</filter-name>
+    <filter-class>esg.orp.app.RegistrationFilter</filter-class>
+    <init-param>
+      <param-name>registrationRelayUrl</param-name>
+      <param-value>https://my.esgf.node/esg-orp/registration-request.htm</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>registrationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- Authorization Enforcer -->
+ <filter>
+    <filter-name>enforcererFilter</filter-name>
+    <filter-class>esg.orp.app.FilterAuthorizationEnforcerer</filter-class>
+ </filter>
+ <filter-mapping>
+    <filter-name>enforcererFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+ </filter-mapping>
+
+    <!-- **************************************** -->
+  <!-- web.xml entry for the esg node filter    -->
+  <!-- Calls to retrieve files from this service-->
+  <!-- pass through this filter and get logged  -->
+  <!-- into the database.                       -->
+  <!-- **************************************** -->
+  <filter>
+    <filter-name>AccessLoggingFilter</filter-name>
+    <filter-class>esg.node.filters.AccessLoggingFilter</filter-class>
+    <init-param>
+      <param-name>service.name</param-name>
+      <param-value>thredds</param-value>
+    </init-param>
+    <init-param>
+      <param-name>exempt_extensions</param-name>
+      <param-value>.xml</param-value>
+    </init-param>
+    <init-param>
+      <param-name>exempt_services</param-name>
+      <param-value>thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC</param-value>
+    </init-param>
+    <init-param>
+      <param-name>extensions</param-name>
+      <param-value>.nc</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>AccessLoggingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!--@@esg_node_saml_filter_entry@@-->
+
+  <!--@@esg_drs_resolving_filter_entry@@-->
+
+
+  <!-- **************************************************************************************** -->
+
+  <!-- filters are done in Spring config  -->
+  <filter>
+    <filter-name>springDelegatingFilter</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>springDelegatingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -->
+
+  <!-- spring servlet -->
+  <servlet>
+    <servlet-name>spring</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>/WEB-INF/spring-servlet.xml</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>spring</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+  <welcome-file-list>
+    <welcome-file>/</welcome-file>
+  </welcome-file-list>
+
+  <error-page>
+    <error-code>404</error-code>
+    <location>/WEB-INF/jsp/errorpages/404.jsp</location>
+  </error-page>
+
+  <error-page>
+    <error-code>500</error-code>
+    <location>/WEB-INF/jsp/errorpages/500.jsp</location>
+  </error-page>
+
+  <!-- ++++++++++ Setup security restrictions ++++++++++ -->
+  <!-- Do not allow anything but GET  LOOK doesnt work
+  <security-constraint
+    <web-resource-collection>
+      <web-resource-name>not allowed</web-resource-name>
+      <url-pattern>/</url-pattern>
+      <http-method-omission>GET</http-method-omission>
+    </web-resource-collection>
+    <auth-constraint/>
+  </security-constraint -->
+
+  <!-- tdsConfig with HTTPS needed for /admin access  -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>sensitive read access</web-resource-name>
+      <url-pattern>/admin/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>tdsConfig</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- tdsTrigger with HTTPS needed for /admin/trigger  -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>allow feature collection rescan to be triggered externally</web-resource-name>
+      <url-pattern>/admin/collection/trigger</url-pattern>
+      <url-pattern>/admin/trigger</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>tdsTrigger</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- This allows "remote monitoring":
+    /thredds/admin/log gives access to logs.
+   -->
+
+  <!-- tdsMonitor with HTTPS needed for access to logs  -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>sensitive read access</web-resource-name>
+      <url-pattern>/admin/log/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>tdsMonitor</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <!-- default restricted access dataset uses DIGEST, but not HTTPS -->
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>restricted access datasets</web-resource-name>
+      <url-pattern>/restrictedAccess/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>restrictedDatasetUser</role-name>
+    </auth-constraint>
+    <!-- user-data-constraint>
+      <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint -->
+  </security-constraint>
+
+  <!-- can only have one login-config for entire context. -->
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>THREDDS Data Server</realm-name>
+  </login-config>
+
+  <!-- Define security roles. -->
+  <security-role>
+    <description>The configuration role allows users to configure the THREDDS server.</description>
+    <role-name>tdsConfig</role-name>
+  </security-role>
+
+  <security-role>
+    <description>User who can download tds logs for monitoring purposes.</description>
+    <role-name>tdsMonitor</role-name>
+  </security-role>
+
+  <security-role>
+    <description>User is allowed to trigger featureCollection rereads</description>
+    <role-name>tdsTrigger</role-name>
+  </security-role>
+
+  <security-role>
+    <description>User who can access restricted datasets.</description>
+    <role-name>restrictedDatasetUser</role-name>
+  </security-role>
+
+  <!-- deny-uncovered-http-methods/ -->
+
+</web-app>

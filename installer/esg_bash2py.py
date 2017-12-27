@@ -6,6 +6,9 @@ import errno
 import re
 import subprocess
 from contextlib import contextmanager
+import esg_logging_manager
+
+logger = esg_logging_manager.create_rotating_log(__name__)
 
 
 class Bash2PyException(Exception):
@@ -43,7 +46,7 @@ def mkdir_p(path, mode = 0777):
         os.makedirs(path, mode)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
-            print "{path} already exists".format(path=path)
+            logger.debug("%s already exists.", path)
             pass
         else:
             raise
@@ -88,7 +91,7 @@ def GetValue(name, local=locals()):
 def Array(value):
     '''
       if value is a List object, return the List; if value is plain String or Unicode String, convert to List;
-      otherwise convert the value to a List 
+      otherwise convert the value to a List
     '''
     if isinstance(value, list):
         return value
@@ -160,7 +163,7 @@ class Expand(object):
       return value
 
 def touch(path):
-    ''' 
+    '''
         Mimics Bash's touch command
     '''
     with open(path, 'a'):
@@ -183,7 +186,7 @@ def trim_string_from_head(string_name):
                 output -> esg_installarg_file
     '''
     #TODO: Might refactor to use this: config.config_dictionary["tomcat_dist_url"].rsplit("/",1)[-1]
-    # string_regex = r"\w*-*\w+$" 
+    # string_regex = r"\w*-*\w+$"
     # return re.search(string_regex, string_name).group()
     return string_name.rsplit("/",1)[-1]
 
@@ -223,6 +226,7 @@ def pushd(new_dir):
 
 
 def symlink_force(target, link_name):
+    logger.debug("Creating symlink from %s -> %s", target, link_name)
     try:
         os.symlink(target, link_name)
     except OSError, e:

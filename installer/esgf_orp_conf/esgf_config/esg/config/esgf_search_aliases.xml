@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- This file contains a list of aliases for ESGF search facets. -->
+<aliases xmlns="http://www.esgf.org/whitelist">
+
+    <set>
+       <value>project</value>
+       <value>model_cohort</value>
+    </set>
+
+    <set>
+       <value>project</value>
+       <value>model_cohort</value>
+    </set>
+
+    <set>
+       <value>activity</value>
+       <value>experiment_family</value>
+    </set>
+
+</aliases>

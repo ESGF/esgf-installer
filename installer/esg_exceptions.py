@@ -6,3 +6,6 @@ class WrongOSError(Exception):
 
 class UnverifiedScriptError(Exception):
     pass
+
+class NoNodeTypeError(Exception):
+    pass

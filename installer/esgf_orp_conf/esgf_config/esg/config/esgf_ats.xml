@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ats_whitelist xmlns="http://www.esgf.org/whitelist">
+    <attribute type="wheel" attributeService="https://esgf-node.jpl.nasa.gov/esgf-idp/saml/soap/secure/attributeService.htm" description="Administrator Group"/>
+</ats_whitelist>

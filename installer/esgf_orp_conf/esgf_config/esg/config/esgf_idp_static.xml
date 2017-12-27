@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<idp_whitelist xmlns="http://www.esgf.org/whitelist">
+
+    <value>https://ceda.ac.uk/openid/Provider/server</value>
+    <value>https://ceda.ac.uk/OpenID/Provider/server</value>
+    <value>https://esg-dn1.nsc.liu.se/esgf-idp/idp/openidServer.htm</value>
+    <value>https://esgf-node.jpl.nasa.gov/esgf-idp/idp/openidServer.htm</value>
+    <value>https://esgf-node.ipsl.upmc.fr/esgf-idp/idp/openidServer.htm</value>
+    <value>https://pcmdi.llnl.gov/esgf-idp/idp/openidServer.htm</value>
+    <value>https://esgf-data.dkrz.de/esgf-idp/idp/openidServer.htm</value>
+    <value>https://hydra.fsl.noaa.gov/esgf-idp/idp/openidServer.htm</value>
+    <value>https://esgdata.gfdl.noaa.gov/esgf-idp/idp/openidServer.htm</value>
+    <value>https://esgf.nci.org.au/esgf-idp/idp/openidServer.htm</value>
+    <value>https://my.esgf.node/esgf-idp/idp/openidServer.htm</value>
+    
+</idp_whitelist>

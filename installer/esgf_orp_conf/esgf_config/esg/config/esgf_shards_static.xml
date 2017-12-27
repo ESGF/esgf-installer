@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- This file contains a list of production ESGF Solr indexes.
+     IMPORTANT: use this file as a reference only: 
+     checking it out to your local server will override any 
+     custom configuration of replica nodes. -->
+<shards xmlns="http://www.esgf.org/whitelist">
+
+    <!-- local ESGF node -->
+    <value>my.esgf.node/solr</value>
+
+</shards>

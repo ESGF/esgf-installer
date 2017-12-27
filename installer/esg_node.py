@@ -388,7 +388,7 @@ def main(node_type_list):
     # install_conda()
 
     # Process User Response
-    begin_installation()
+    # begin_installation()
 
     #
     esg_setup.init_structure()

@@ -90,6 +90,7 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -372,6 +373,18 @@ When prompted for the cachain file, specify the chain file provided by your CA</
 <p>esg-functions: ESGF Node Application Stack Functions
 description: Installer Functions for the ESGF Node application stack</p>
 <dl class="function">
+<dt id="esg_functions.add_group">
+<code class="descclassname">esg_functions.</code><code class="descname">add_group</code><span class="sig-paren">(</span><em>group_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#add_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.add_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a Unix user group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.add_user">
+<code class="descclassname">esg_functions.</code><code class="descname">add_user</code><span class="sig-paren">(</span><em>user_name</em>, <em>sys_acct=False</em>, <em>comment=None</em>, <em>home_dir=None</em>, <em>groups=None</em>, <em>password=None</em>, <em>shell=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#add_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.add_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Unix user</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="esg_functions.append_to_path">
 <code class="descclassname">esg_functions.</code><code class="descname">append_to_path</code><span class="sig-paren">(</span><em>path_variable</em>, <em>path_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#append_to_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.append_to_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends path components to a variable, deduplicates the list,
@@ -529,6 +542,12 @@ this is only something for the testing phase for the most part.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="esg_functions.get_publisher_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_publisher_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_publisher_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_publisher_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the publisher database user&#8217;s password</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="esg_functions.get_security_admin_password">
 <code class="descclassname">esg_functions.</code><code class="descname">get_security_admin_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_security_admin_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_security_admin_password" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets the security_admin_password from the esgf_secret_file</p>
@@ -673,6 +692,25 @@ maximum length.</p>
 <dt id="esg_functions.set_java_keystore_password">
 <code class="descclassname">esg_functions.</code><code class="descname">set_java_keystore_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_java_keystore_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_java_keystore_password" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves the password for a Java keystore to /esg/config/.esg_keystore_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_postgres_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_postgres_password</code><span class="sig-paren">(</span><em>password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_postgres_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_postgres_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_publisher_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_publisher_password</code><span class="sig-paren">(</span><em>password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_publisher_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_publisher_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the publisher database user&#8217;s password; saves it to pub_secret_file
+If not password is provided as an argument, a prompt for a password is given.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_security_admin_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_security_admin_password</code><span class="sig-paren">(</span><em>updated_password</em>, <em>password_file='/esg/config/.esgf_pass'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_security_admin_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_security_admin_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the esgf_secret_file</p>
 </dd></dl>
 
 <dl class="function">

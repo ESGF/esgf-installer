@@ -7,3 +7,12 @@ Installation
 4. Activate the esgf-pub conda environment using ``source /usr/local/conda/bin/activate esgf-pub``
 5. Run an installation by invoking the ``esg_node.py`` script.
    Example: ``python esg_node.py --install --type data``
+
+
+Autoinstaller
+**************************
+Instead of answering prompts interactively on the command line, there is an option for configuring a node using a configuration file.
+1. Complete steps 1-4 listed above
+2. Edit the ```/esg/config/esgf.properties``` file with your node configuration.
+3. Run an installation by invoking the ``esg_node.py`` script.
+   Example: ``python esg_node.py --install --type data``

@@ -89,6 +89,7 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -378,7 +379,10 @@
     <span class="k">if</span> <span class="n">force_install</span><span class="p">:</span>
         <span class="k">pass</span>
     <span class="k">if</span> <span class="n">check_for_existing_java</span><span class="p">():</span>
-            <span class="n">setup_java_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with Java installation and setup? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
+            <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_java&quot;</span><span class="p">):</span>
+                <span class="n">setup_java_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_java&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">setup_java_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with Java installation and setup? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
             <span class="k">if</span> <span class="n">setup_java_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
                 <span class="nb">print</span> <span class="s2">&quot;Skipping Java installation&quot;</span>
                 <span class="k">return</span>
@@ -418,10 +422,12 @@
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/usr&quot;</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ant&quot;</span><span class="p">)):</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Found existing Ant installation.  Skipping set up.&quot;</span><span class="p">)</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;ant -version&quot;</span><span class="p">)</span>
-        <span class="n">force_ant_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with the Ant installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
-        <span class="k">if</span> <span class="n">force_ant_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_ant&quot;</span><span class="p">):</span>
+            <span class="n">setup_ant_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_ant&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">setup_ant_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with the Ant installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_ant&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
+        <span class="k">if</span> <span class="n">setup_ant_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
             <span class="k">return</span>
 
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install ant&quot;</span><span class="p">)</span></div>

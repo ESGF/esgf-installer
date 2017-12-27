@@ -89,6 +89,7 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -186,6 +187,7 @@
 <span class="kn">import</span> <span class="nn">esg_bash2py</span>
 <span class="kn">import</span> <span class="nn">esg_logging_manager</span>
 <span class="kn">import</span> <span class="nn">esg_functions</span>
+<span class="kn">import</span> <span class="nn">esg_property_manager</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
@@ -809,25 +811,36 @@
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">commercial_ca_directory</span><span class="p">):</span>
         <span class="nb">print</span> <span class="s2">&quot;Found commercial CA directory.&quot;</span>
-        <span class="n">commercial_ca_setup</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you have a commercial CA that you want to install [Y/n]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;yes&quot;</span>
-        <span class="k">if</span> <span class="n">commercial_ca_setup</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]:</span>
-            <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial key: &quot;</span><span class="p">)</span>
-            <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial cert: &quot;</span><span class="p">)</span>
-            <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the ca chain: &quot;</span><span class="p">)</span>
-            <span class="c1">#Backup existing certs</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">):</span>
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">):</span>
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_key_path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_cert_path&quot;</span><span class="p">):</span>
+            <span class="n">commercial_ca_setup</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you have a commercial CA that you want to install [Y/n]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;yes&quot;</span>
+            <span class="k">if</span> <span class="n">commercial_ca_setup</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_key_path&quot;</span><span class="p">):</span>
+                    <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_key_path&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial key: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_cert_path&quot;</span><span class="p">):</span>
+                    <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_cert_path&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial cert: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;cachain_path&quot;</span><span class="p">):</span>
+                    <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;cachain_path&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the ca chain: &quot;</span><span class="p">)</span>
 
-            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">)</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_cert_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">)</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">ca_chain_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/cachain.pem&quot;</span><span class="p">)</span>
+                <span class="c1">#Backup existing certs</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">):</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">):</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
 
-            <span class="nb">print</span> <span class="s2">&quot;Local installation of certs complete.&quot;</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">)</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_cert_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">)</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">ca_chain_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/cachain.pem&quot;</span><span class="p">)</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span></div>
+                <span class="nb">print</span> <span class="s2">&quot;Local installation of certs complete.&quot;</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span></div>
             <span class="c1"># file_list = [&quot;hostcert.pem&quot;, &quot;hostkey.pem&quot;]</span>
             <span class="c1"># with esg_bash2py.pushd(commercial_ca_directory):</span>
             <span class="c1">#     for file_name in file_list:</span>

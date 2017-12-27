@@ -89,6 +89,7 @@
               <p class="caption"><span class="caption-text">Installation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -181,6 +182,7 @@
 <span class="kn">import</span> <span class="nn">esg_functions</span>
 <span class="kn">import</span> <span class="nn">esg_logging_manager</span>
 <span class="kn">import</span> <span class="nn">esg_cert_manager</span>
+<span class="kn">import</span> <span class="nn">esg_property_manager</span>
 <span class="kn">import</span> <span class="nn">esg_init</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">pip</span>
@@ -273,8 +275,11 @@
     <span class="k">if</span> <span class="n">check_for_apache_installation</span><span class="p">():</span>
         <span class="nb">print</span> <span class="s2">&quot;Found existing Apache installation.&quot;</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;httpd -version&quot;</span><span class="p">)</span>
-        <span class="n">continue_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Would you like to continue the Apache installation anyway? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
-        <span class="k">if</span> <span class="n">continue_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_apache&quot;</span><span class="p">):</span>
+            <span class="n">setup_apache_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_apache&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">setup_apache_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Would you like to continue the Apache installation anyway? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
+        <span class="k">if</span> <span class="n">setup_apache_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
             <span class="k">return</span>
     <span class="n">install_apache_httpd</span><span class="p">()</span>
     <span class="n">install_mod_wsgi</span><span class="p">()</span>

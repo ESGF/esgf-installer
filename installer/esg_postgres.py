@@ -295,11 +295,12 @@ def setup_postgres(force_install=False, default_continue_install = "N"):
             setup_postgres_answer = esg_property_manager.get_property("install_postgres")
         else:
             setup_postgres_answer = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
-            if setup_postgres_answer.lower() in ["no", 'n']:
-                print "Skipping installation."
-                return True
-            else:
-                force_install = True
+
+        if setup_postgres_answer.lower() in ["no", 'n']:
+            print "Skipping installation."
+            return True
+        else:
+            force_install = True
 
     backup_existing_db = esg_property_manager.get_property("backup_database")
     if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:

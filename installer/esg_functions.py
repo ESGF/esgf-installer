@@ -646,6 +646,7 @@ def get_publisher_password():
         return publisher_db_user_passwd
     except IOError:
         logger.exception("%s not found", config['pub_secret_file'])
+        raise
 
 def set_publisher_password(password=None):
     '''Sets the publisher database user's password; saves it to pub_secret_file

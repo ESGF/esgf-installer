@@ -221,8 +221,7 @@ def initial_setup_questionnaire(force_install=False):
 
     with esg_bash2py.pushd(config['esg_config_dir']):
 
-        esgf_host = esg_property_manager.get_property("esgf_host")
-        _choose_fqdn(esgf_host)
+        _choose_fqdn()
 
         _choose_admin_password()
 

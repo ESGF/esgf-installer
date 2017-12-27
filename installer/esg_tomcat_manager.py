@@ -15,6 +15,7 @@ from lxml import etree
 import esg_functions
 import esg_bash2py
 import esg_logging_manager
+import esg_property_manager
 import esg_cert_manager
 from clint.textui import progress
 
@@ -34,8 +35,11 @@ def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
-        continue_tomcat = raw_input("Do you want to contine the Tomcat installation [y/N]: ") or "no"
-        if continue_tomcat.lower() in ["no", "n"]:
+        if esg_property_manager.get_property("setup_tomcat"):
+            setup_tomcat_answer = esg_property_manager.get_property("setup_tomcat")
+        else:
+            setup_tomcat_answer = raw_input("Do you want to contine the Tomcat installation [y/N]: ") or "no"
+        if setup_tomcat_answer.lower() in ["no", "n"]:
             return False
 
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"

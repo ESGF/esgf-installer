@@ -21,6 +21,13 @@ def create_rotating_log(name, path=PATH):
     # coloredlogs.install(level='DEBUG', logger=logger, stream=colored_log_file)
     # add formatter to handler
     handler.setFormatter(formatter)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(logging.INFO)
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setLevel(logging.DEBUG)
+    consoleHandler.setFormatter(formatter)
+
+    logger.addHandler(consoleHandler)
+
     logger.addHandler(handler)
     return logger

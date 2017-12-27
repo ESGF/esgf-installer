@@ -643,24 +643,30 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
         if not esg_property_manager.get_property("commercial_key_path") or not esg_property_manager.get_property("commercial_cert_path"):
             commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
             if commercial_ca_setup.lower() in ["yes", "y"]:
-                commercial_key_path = raw_input("Enter the file path of the commercial key: ")
-                commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
-                ca_chain_path = raw_input("Enter the file path of the ca chain: ")
-        else:
-            commercial_key_path = esg_property_manager.get_property("commercial_key_path")
-            commercial_cert_path = esg_property_manager.get_property("commercial_cert_path")
-            ca_chain_path = esg_property_manager.get_property("cachain_path")
-        #Backup existing certs
-        if os.path.isfile("/etc/certs/hostcert.pem"):
-            shutil.copyfile("/etc/certs/hostcert.pem", "/etc/certs/hostcert.pem.{date}.bak".format(date=str(datetime.date.today())))
-        if os.path.isfile("/etc/certs/hostkey.pem"):
-            shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
+                if esg_property_manager.get_property("commercial_key_path"):
+                    commercial_key_path = esg_property_manager.get_property("commercial_key_path")
+                else:
+                    commercial_key_path = raw_input("Enter the file path of the commercial key: ")
+                if esg_property_manager.get_property("commercial_cert_path"):
+                    commercial_cert_path = esg_property_manager.get_property("commercial_cert_path")
+                else:
+                    commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
+                if esg_property_manager.get_property("cachain_path"):
+                    ca_chain_path = esg_property_manager.get_property("cachain_path")
+                else:
+                    ca_chain_path = raw_input("Enter the file path of the ca chain: ")
 
-        shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
-        shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
-        shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
+                #Backup existing certs
+                if os.path.isfile("/etc/certs/hostcert.pem"):
+                    shutil.copyfile("/etc/certs/hostcert.pem", "/etc/certs/hostcert.pem.{date}.bak".format(date=str(datetime.date.today())))
+                if os.path.isfile("/etc/certs/hostkey.pem"):
+                    shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
 
-        print "Local installation of certs complete."
+                shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
+                shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
+                shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
+
+                print "Local installation of certs complete."
 
     else:
         return

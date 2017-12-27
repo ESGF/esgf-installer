@@ -18,7 +18,7 @@ def get_property(property_name, config_file=config["config_file"]):
         arg 1 - the string that you wish to get the property of (and make a variable)
         arg 2 - the path to the config file
     '''
-    parser = ConfigParser.SafeConfigParser()
+    parser = ConfigParser.SafeConfigParser(allow_no_value=True)
     parser.read(config_file)
     try:
         return parser.get("installer_properties", property_name)

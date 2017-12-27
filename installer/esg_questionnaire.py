@@ -22,10 +22,13 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
     config = yaml.load(config_file)
 
 def _choose_fqdn(force_install=False):
-    if esg_property_manager.get_property("esgf_host") and not force_install:
-        logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf_host"))
-        return
-    else:
+    try:
+        esg_property_manager.get_property("esgf_host")
+        if not force_install:
+            logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf_host"))
+            print "esgf_host = [%s]" % esg_property_manager.get_property("esgf_host")
+            return
+    except ValueError:
         default_host_name = socket.getfqdn()
         defaultdomain_regex = r"^\w+-*\w*\W*(.+)"
         defaultdomain = re.search(
@@ -61,11 +64,12 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
 
 def _choose_organization_name(force_install=False):
     '''Choose the organization name for the installation'''
-    if esg_property_manager.get_property("esg_root_id") and not force_install:
-        logger.info("esg_root_id = [%s]", esg_property_manager.get_property("esg_root_id"))
-        return
-
-    elif force_install:
+    try:
+        esg_property_manager.get_property("esg_root_id")
+        if not force_install:
+            logger.info("esg_root_id = [%s]", esg_property_manager.get_property("esg_root_id"))
+            return
+    except ValueError:
         try:
             default_org_name = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True).domain
@@ -80,32 +84,36 @@ def _choose_organization_name(force_install=False):
 
 def _choose_node_short_name(force_install=False):
     '''Choose the short name for the node installation'''
-    if esg_property_manager.get_property("node_short_name") and not force_install:
-        logger.info("node_short_name = [%s]", esg_property_manager.get_property("node_short_name"))
-        return
-    else:
+    try:
+        esg_property_manager.get_property("node_short_name")
+        if not force_install:
+            logger.info("node_short_name = [%s]", esg_property_manager.get_property("node_short_name"))
+            return
+    except ValueError:
         node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=None)) or None
         node_short_name_input.replace("", "_")
         esg_property_manager.write_as_property(
             "node_short_name", node_short_name_input)
 
-
 def _choose_node_long_name(force_install=False):
-    if esg_property_manager.get_property("node_long_name") and not force_install:
-        logger.info("node_long_name = [%s]", esg_property_manager.get_property("node_long_name"))
-        return
-
-    else:
+    try:
+        esg_property_manager.get_property("node_long_name")
+        if not force_install:
+            logger.info("node_long_name = [%s]", esg_property_manager.get_property("node_long_name"))
+            return
+    except ValueError:
         node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
             node_long_name=None)) or None
         esg_property_manager.write_as_property(
             "node_long_name", node_long_name_input)
 
 def _choose_node_namespace(force_install=False):
-    if esg_property_manager.get_property("node_namespace") and not force_install:
-        logger.info("node_namespace = [%s]", esg_property_manager.get_property("node_namespace"))
-        return
-    else:
+    try:
+        esg_property_manager.get_property("node_namespace")
+        if not force_install:
+            logger.info("node_namespace = [%s]", esg_property_manager.get_property("node_namespace"))
+            return
+    except ValueError:
         try:
             top_level_domain = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True)
@@ -128,10 +136,12 @@ def _choose_node_namespace(force_install=False):
                 break
 
 def _choose_node_peer_group(force_install=False):
-    if esg_property_manager.get_property("node_peer_group") and not force_install:
-        logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node_peer_group"))
-        return
-    else:
+    try:
+        esg_property_manager.get_property("node_peer_group")
+        if not force_install:
+            logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node_peer_group"))
+            return
+    except ValueError:
         while True:
             node_peer_group_input = raw_input(
                 "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev) \
@@ -148,22 +158,25 @@ def _choose_node_peer_group(force_install=False):
                 break
 
 def _choose_esgf_index_peer(force_install=False):
-    if esg_property_manager.get_property("esgf_index_peer") and not force_install:
-        logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf_index_peer"))
-        return
-    else:
+    try:
+        esg_property_manager.get_property("esgf_index_peer")
+        if not force_install:
+            logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf_index_peer"))
+            return
+    except ValueError:
         default_esgf_index_peer = socket.getfqdn()
         esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
             default_esgf_index_peer=default_esgf_index_peer)) or default_esgf_index_peer
         esg_property_manager.write_as_property(
             "esgf_index_peer", esgf_index_peer_input)
 
-
 def _choose_mail_admin_address(force_install=False):
-    if esg_property_manager.get_property("mail_admin_address") and not force_install:
-        logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail_admin_address"))
-        return
-    else:
+    try:
+        esg_property_manager.get_property("mail_admin_address")
+        if not force_install:
+            logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail_admin_address"))
+            return
+    except ValueError:
         mail_admin_address_input = raw_input(
             "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail_admin_address")))
         if mail_admin_address_input:
@@ -174,43 +187,44 @@ def _choose_mail_admin_address(force_install=False):
 
 def _choose_publisher_db_user(force_install=False):
     '''Sets the name of the database user for the Publisher'''
-    publisher_db_user = esg_property_manager.get_property("publisher_db_user")
-    if publisher_db_user and not force_install:
-        print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
-        logger.info("publisher_db_user: %s", publisher_db_user)
-        return
-
-    else:
+    try:
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+        if not force_install:
+            print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
+            logger.info("publisher_db_user: %s", publisher_db_user)
+            return
+    except ValueError:
         default_publisher_db_user = "esgcet"
         publisher_db_user_input = raw_input(
             "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ".format(default_publisher_db_user=default_publisher_db_user)) or default_publisher_db_user
         esg_property_manager.write_as_property(
             "publisher_db_user", publisher_db_user_input)
 
-def _choose_publisher_db_user_passwd(force_install=False):
+def _choose_publisher_db_user_passwd():
     '''Choose the password for the publisher (esgcet) database user'''
-    if esg_functions.get_publisher_password() and not force_install:
-        if _is_valid_password(esg_functions.get_publisher_password()):
+    try:
+        publisher_pass = esg_functions.get_publisher_password()
+        if _is_valid_password(publisher_pass):
             print "Using previously configured publisher DB password"
             return
         else:
             print "The current password is invalid.  Please set a new password"
+    except IOError:
+        publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
 
-    publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
+        while True:
+            publisher_db_user_passwd_input = getpass.getpass(
+                "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
+            if not _is_valid_password(publisher_db_user_passwd_input):
+                print "The password that was entered is invalid.  Please enter a different password."
+                continue
 
-    while True:
-        publisher_db_user_passwd_input = getpass.getpass(
-            "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
-        if not _is_valid_password(publisher_db_user_passwd_input):
-            print "The password that was entered is invalid.  Please enter a different password."
-            continue
+            password_input_confirmation = getpass.getpass(
+                "Please re-enter password to confirm: ")
 
-        password_input_confirmation = getpass.getpass(
-            "Please re-enter password to confirm: ")
-
-        if esg_functions.confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
-            esg_functions.set_publisher_password(publisher_db_user_passwd_input)
-            break
+            if esg_functions.confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
+                esg_functions.set_publisher_password(publisher_db_user_passwd_input)
+                break
 
 def initial_setup_questionnaire(force_install=False):
     print "-------------------------------------------------------"
@@ -246,6 +260,7 @@ def initial_setup_questionnaire(force_install=False):
 
 
 def _is_valid_password(password_input):
+    #TODO: move to esg_functions
     if not password_input or not str.isalnum(password_input):
         print "Invalid password... "
         return False

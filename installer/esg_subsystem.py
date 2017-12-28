@@ -566,65 +566,41 @@ def setup_cog():
         esg_functions.stream_subprocess_output("pip install -r requirements.txt")
     # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
-    # # manually install additional dependencies
+    # manually install additional dependencies
     Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", ".")
     with esg_bash2py.pushd("django-openid-auth"):
         esg_functions.stream_subprocess_output("python setup.py install")
-    # RUN cd $COG_DIR && \
-    #     git clone https://github.com/globusonline/transfer-api-client-python.git && \
-    #     cd transfer-api-client-python && \
-    #     source $COG_DIR/venv/bin/activate && \
-    #     python setup.py install && \
-    #     git pull && \
-    #     cd mkproxy && \
-    #     make  && \
-    #     cp mkproxy $COG_DIR/venv/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/.
-    #
-    # # collect static files to ./static directory
-    # # must use a minimal settings file (configured with sqllite3 database)
-    # COPY conf/cog_settings.cfg /usr/local/cog/cog_config/cog_settings.cfg
-    # RUN cd $COG_INSTALL_DIR && \
-    #     source $COG_DIR/venv/bin/activate && \
-    #     python manage.py collectstatic --no-input && \
-    #     rm /usr/local/cog/cog_config/cog_settings.cfg
-    #     #python setup.py -q setup_cog --esgf=false
-    #
-    # # for some unknown reason, must reinstall captcha
-    # #RUN source $COG_DIR/venv/bin/activate && \
-    # #    pip uninstall -y django-simple-captcha && \
-    # #    pip install django-simple-captcha==0.5.1
-    #
-    # # expose default django port
-    # EXPOSE 8000
-    #
-    # # create non-privileged user to run django
-    # RUN groupadd -r cogadmin && \
-    #     useradd -r -g cogadmin cogadmin && \
-    #     mkdir -p ~cogadmin && \
-    #     chown cogadmin:cogadmin ~cogadmin
-    #
-    # # change user prompt
-    # RUN echo 'export PS1="[\u@\h]\$ "' >> ~cogadmin/.bashrc
-    #
-    # # change ownership of application directories
-    # #RUN chown -R cogadmin:cogadmin $COG_DIR
-    #
-    # # expose software installation directories
-    # # needed by apache httpd running cog through mod_wsgi
-    # VOLUME $COG_DIR/venv
-    # VOLUME $COG_INSTALL_DIR
-    #
+
+    Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", ".")
+    with esg_bash2py.pushd("transfer-api-client-python"):
+        esg_functions.stream_subprocess_output("python setup.py install")
+        repo = Repo(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
+        git = repo.git
+        git.pull()
+        with esg_bash2py.pushd("mkproxy"):
+            esg_functions.stream_subprocess_output("make")
+            shutil.copyfile("mkproxy", "{COG_DIR}/venv/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/.".format(COG_DIR=COG_DIR))
+    # collect static files to ./static directory
+    # must use a minimal settings file (configured with sqllite3 database)
+    shutil.copyfile("cog_conf/cog_settings.cfg", "/usr/local/cog/cog_config/cog_settings.cfg")
+    esg_functions.stream_subprocess_output("python manage.py collectstatic --no-input")
+    os.remove("/usr/local/cog/cog_config/cog_settings.cfg")
+
+    # create non-privileged user to run django
+    esg_functions.stream_subprocess_output("groupadd -r cogadmin")
+    esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
+    esg_bash2py.mkdir_p("~cogadmin")
+    esg_functions.stream_subprocess_output("chown cogadmin:cogadmin ~cogadmin")
+    # change user prompt
+    with open("~cogadmin/.bashrc", "a") as cogadmin_bashrc:
+        cogadmin_bashrc.write('export PS1="[\u@\h]\$ "')
     # # startup
     # COPY  scripts/ /usr/local/bin/
     # COPY  conf/supervisord.cog.conf /etc/supervisor/conf.d/supervisord.cog.conf
     # #COPY  scripts/wait_for_postgres.sh /usr/local/bin/wait_for_postgres.sh
     # #COPY  scripts/process_esgf_config_archive.sh /usr/local/bin/process_esgf_config_archive.sh
-    #
-    # # wait for Postgred connection to be ready
-    # ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-    # # will override these CMD options at run time
-    # CMD ["localhost", "false", "true"]
-
+    shutil.copyfile("cog_scripts/wait_for_postgres.sh", "/usr/local/bin/wait_for_postgres.sh")
+    shutil.copyfile("cog_scripts/process_esgf_config_archive.sh", "/usr/local/bin/process_esgf_config_archive.sh")
 
 def main():
     setup_orp()

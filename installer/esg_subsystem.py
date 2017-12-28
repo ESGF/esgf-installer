@@ -552,7 +552,7 @@ def setup_cog():
     COG_INSTALL_DIR= "{COG_DIR}/cog_install".format(COG_DIR=COG_DIR)
     esg_bash2py.mkdir_p(COG_INSTALL_DIR)
 
-    # ENV LD_LIBRARY_PATH=/usr/local/lib
+    os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
     #
     # # install Python virtual environment
     # RUN cd $COG_DIR && \
@@ -561,24 +561,15 @@ def setup_cog():
     # # download CoG specific tag or branch
     clone_cog_repo(COG_INSTALL_DIR)
 
-    #
-    # # install CoG dependencies
-    # RUN cd $COG_INSTALL_DIR && \
-    #     source $COG_DIR/venv/bin/activate && \
-    #     pip install -r requirements.txt
-    #
-    # # setup CoG database and configuration
-    # RUN cd $COG_INSTALL_DIR && \
-    #     source $COG_DIR/venv/bin/activate && \
-    #     python setup.py install
-    #
+    # install CoG dependencies
+    with esg_bash2py.pushd(COG_INSTALL_DIR):
+        esg_functions.stream_subprocess_output("pip install -r requirements.txt")
+    # setup CoG database and configuration
+        esg_functions.stream_subprocess_output("python setup.py install")
     # # manually install additional dependencies
-    # RUN cd $COG_DIR && \
-    #     source $COG_DIR/venv/bin/activate && \
-    #     git clone https://github.com/EarthSystemCoG/django-openid-auth.git && \
-    #     cd django-openid-auth && \
-    #     python setup.py install
-    #
+    Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", ".")
+    with esg_bash2py.pushd("django-openid-auth"):
+        esg_functions.stream_subprocess_output("python setup.py install")
     # RUN cd $COG_DIR && \
     #     git clone https://github.com/globusonline/transfer-api-client-python.git && \
     #     cd transfer-api-client-python && \

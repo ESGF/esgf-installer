@@ -538,7 +538,7 @@ def clone_cog_repo(COG_INSTALL_DIR):
 
 def setup_django_openid_auth(target_directory):
     Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
-    with esg_bash2py.pushd("django-openid-auth"):
+    with esg_bash2py.pushd(os.path.join(target_directory)):
         esg_functions.stream_subprocess_output("python setup.py install")
 
 def transfer_api_client_python(COG_INSTALL_DIR):

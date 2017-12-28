@@ -90,6 +90,10 @@ class test_ESGF_subsystem(unittest.TestCase):
         print "active branch:", branch.name
         self.assertEquals(branch.name, "devel")
 
+    def test_setup_django_openid_auth(self):
+        esg_subsystem.setup_django_openid_auth("/tmp")
+        self.assertTrue(os.path.isdir("/tmp/django-openid-auth"))
+
 
     def test_main(self):
         esg_subsystem.main()

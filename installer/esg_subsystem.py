@@ -536,8 +536,8 @@ def clone_cog_repo(COG_INSTALL_DIR):
         # cog_repo_local = Repo(".")
         # cog_repo_local.git.checkout("devel")
 
-def setup_django_openid_auth():
-    Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", ".")
+def setup_django_openid_auth(target_directory):
+    Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
     with esg_bash2py.pushd("django-openid-auth"):
         esg_functions.stream_subprocess_output("python setup.py install")
 
@@ -577,7 +577,7 @@ def setup_cog():
     # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
     # manually install additional dependencies
-    setup_django_openid_auth()
+    setup_django_openid_auth(".")
 
     transfer_api_client_python(COG_INSTALL_DIR)
     # collect static files to ./static directory

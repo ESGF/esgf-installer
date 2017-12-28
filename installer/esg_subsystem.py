@@ -536,6 +536,22 @@ def clone_cog_repo(COG_INSTALL_DIR):
         # cog_repo_local = Repo(".")
         # cog_repo_local.git.checkout("devel")
 
+def setup_django_openid_auth():
+    Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", ".")
+    with esg_bash2py.pushd("django-openid-auth"):
+        esg_functions.stream_subprocess_output("python setup.py install")
+
+def transfer_api_client_python(COG_INSTALL_DIR):
+    Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", ".")
+    with esg_bash2py.pushd("transfer-api-client-python"):
+        esg_functions.stream_subprocess_output("python setup.py install")
+        repo = Repo(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
+        git = repo.git
+        git.pull()
+        with esg_bash2py.pushd("mkproxy"):
+            esg_functions.stream_subprocess_output("make")
+            shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages//globusonline/transfer/api_client/x509_proxy/.")
+
 def setup_cog():
     # choose CoG version
     COG_TAG = "v3.9.7"
@@ -553,12 +569,6 @@ def setup_cog():
     esg_bash2py.mkdir_p(COG_INSTALL_DIR)
 
     os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
-    #
-    # # install Python virtual environment
-    # RUN cd $COG_DIR && \
-    #     virtualenv venv
-    #
-    # # download CoG specific tag or branch
     clone_cog_repo(COG_INSTALL_DIR)
 
     # install CoG dependencies
@@ -567,19 +577,9 @@ def setup_cog():
     # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
     # manually install additional dependencies
-    Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", ".")
-    with esg_bash2py.pushd("django-openid-auth"):
-        esg_functions.stream_subprocess_output("python setup.py install")
+    setup_django_openid_auth()
 
-    Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", ".")
-    with esg_bash2py.pushd("transfer-api-client-python"):
-        esg_functions.stream_subprocess_output("python setup.py install")
-        repo = Repo(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
-        git = repo.git
-        git.pull()
-        with esg_bash2py.pushd("mkproxy"):
-            esg_functions.stream_subprocess_output("make")
-            shutil.copyfile("mkproxy", "{COG_DIR}/venv/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/.".format(COG_DIR=COG_DIR))
+    transfer_api_client_python(COG_INSTALL_DIR)
     # collect static files to ./static directory
     # must use a minimal settings file (configured with sqllite3 database)
     shutil.copyfile("cog_conf/cog_settings.cfg", "/usr/local/cog/cog_config/cog_settings.cfg")

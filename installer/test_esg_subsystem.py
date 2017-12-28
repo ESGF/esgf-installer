@@ -91,7 +91,7 @@ class test_ESGF_subsystem(unittest.TestCase):
         self.assertEquals(branch.name, "devel")
 
     def test_setup_django_openid_auth(self):
-        esg_subsystem.setup_django_openid_auth("/tmp")
+        esg_subsystem.setup_django_openid_auth("/tmp/django-openid-auth")
         self.assertTrue(os.path.isdir("/tmp/django-openid-auth"))
 
 

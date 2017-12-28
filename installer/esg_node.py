@@ -311,6 +311,22 @@ def done_remark():
 #     echo ""
 
 
+def setup_esgf_rpm_repo():
+    #TODO: implement
+    # echo '[esgf]' > /etc/yum.repos.d/esgf.repo
+	# echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
+	# if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
+	# 	echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo
+	# elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
+	# 	echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo
+	# fi
+	# echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
+    # 	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
+    # 	echo 'priority=90' >> /etc/yum.repos.d/esgf.repo
+    # 	echo 'gpgcheck=0' >> /etc/yum.repos.d/esgf.repo
+    # 	echo 'proxy=_none_' >> /etc/yum.repos.d/esgf.repo
+    pass
+
 def main(node_type_list):
     check_for_conda()
     # default distribution_url
@@ -383,6 +399,8 @@ def main(node_type_list):
     print "*******************************"
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
+
+    setup_esgf_rpm_repo()
 
     # install dependencies
     system_component_installation()

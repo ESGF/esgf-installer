@@ -94,6 +94,9 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.setup_django_openid_auth("/tmp/django-openid-auth")
         self.assertTrue(os.path.isdir("/tmp/django-openid-auth"))
 
+    def test_transfer_api_client_python(self):
+        esg_subsystem.transfer_api_client_python("/tmp/transfer-api-client-python")
+        self.assertTrue(os.path.isdir("/tmp/transfer-api-client-python"))
 
     def test_main(self):
         esg_subsystem.main()

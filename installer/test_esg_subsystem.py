@@ -98,6 +98,11 @@ class test_ESGF_subsystem(unittest.TestCase):
         esg_subsystem.transfer_api_client_python("/tmp/transfer-api-client-python")
         self.assertTrue(os.path.isdir("/tmp/transfer-api-client-python"))
 
+    def test_setup_cog(self):
+        esg_subsystem.setup_cog("/tmp/cog")
+        self.assertTrue(os.path.isdir("/tmp/cog"))
+        self.assertTrue(os.listdir("/tmp/cog"))
+
     def test_main(self):
         esg_subsystem.main()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))

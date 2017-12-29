@@ -538,14 +538,14 @@ def clone_cog_repo(COG_INSTALL_DIR):
 
 def setup_django_openid_auth(target_directory):
     Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
-    with esg_bash2py.pushd(os.path.join(target_directory)):
+    with esg_bash2py.pushd(target_directory):
         esg_functions.stream_subprocess_output("python setup.py install")
 
-def transfer_api_client_python(COG_INSTALL_DIR):
-    Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", ".")
-    with esg_bash2py.pushd("transfer-api-client-python"):
+def transfer_api_client_python(target_directory):
+    Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
+    with esg_bash2py.pushd(target_directory):
         esg_functions.stream_subprocess_output("python setup.py install")
-        repo = Repo(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
+        repo = Repo(os.path.join(target_directory))
         git = repo.git
         git.pull()
         with esg_bash2py.pushd("mkproxy"):
@@ -577,9 +577,9 @@ def setup_cog():
     # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
     # manually install additional dependencies
-    setup_django_openid_auth(".")
+    setup_django_openid_auth(os.path.join(COG_INSTALL_DIR, "django-openid-auth"))
 
-    transfer_api_client_python(COG_INSTALL_DIR)
+    transfer_api_client_python(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
     # collect static files to ./static directory
     # must use a minimal settings file (configured with sqllite3 database)
     shutil.copyfile("cog_conf/cog_settings.cfg", "/usr/local/cog/cog_config/cog_settings.cfg")

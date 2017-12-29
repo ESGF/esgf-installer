@@ -552,14 +552,13 @@ def transfer_api_client_python(target_directory):
             esg_functions.stream_subprocess_output("make")
             shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy")
 
-def setup_cog():
+def setup_cog(COG_DIR="/usr/local/cog"):
     # choose CoG version
     COG_TAG = "v3.9.7"
     # # env variable to execute CoG initialization
     # # may be overridden from command line after first container startup
     INIT = True
     # setup CoG environment
-    COG_DIR = "/usr/local/cog"
     esg_bash2py.mkdir_p(COG_DIR)
 
     COG_CONFIG_DIR = "{COG_DIR}/cog_config".format(COG_DIR=COG_DIR)
@@ -580,6 +579,10 @@ def setup_cog():
     setup_django_openid_auth(os.path.join(COG_INSTALL_DIR, "django-openid-auth"))
 
     transfer_api_client_python(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
+
+    # create or upgrade CoG installation
+    esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=$ESGF")
+
     # collect static files to ./static directory
     # must use a minimal settings file (configured with sqllite3 database)
     shutil.copyfile("cog_conf/cog_settings.cfg", "/usr/local/cog/cog_config/cog_settings.cfg")

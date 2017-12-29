@@ -550,7 +550,7 @@ def transfer_api_client_python(target_directory):
         git.pull()
         with esg_bash2py.pushd("mkproxy"):
             esg_functions.stream_subprocess_output("make")
-            shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages//globusonline/transfer/api_client/x509_proxy/.")
+            shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy")
 
 def setup_cog():
     # choose CoG version

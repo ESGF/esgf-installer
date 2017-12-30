@@ -267,6 +267,8 @@ def system_component_installation():
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
+    if "INDEX" in node_type_list:
+        esg_subsystem.setup_cog()
 
 def check_for_conda():
     if not os.path.isdir("/usr/local/conda"):

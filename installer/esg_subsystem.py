@@ -531,10 +531,7 @@ def clone_cog_repo(COG_INSTALL_DIR):
                 print "current line:", self._cur_line
 
     Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
-    # with esg_bash2py.pushd(COG_INSTALL_DIR):
     checkout_cog_branch(COG_INSTALL_DIR, "devel")
-        # cog_repo_local = Repo(".")
-        # cog_repo_local.git.checkout("devel")
 
 def setup_django_openid_auth(target_directory):
     Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
@@ -555,9 +552,6 @@ def transfer_api_client_python(target_directory):
 def setup_cog(COG_DIR="/usr/local/cog"):
     # choose CoG version
     COG_TAG = "v3.9.7"
-    # # env variable to execute CoG initialization
-    # # may be overridden from command line after first container startup
-    INIT = True
     # setup CoG environment
     esg_bash2py.mkdir_p(COG_DIR)
 
@@ -597,11 +591,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     # change user prompt
     with open("~cogadmin/.bashrc", "a") as cogadmin_bashrc:
         cogadmin_bashrc.write('export PS1="[\u@\h]\$ "')
-    # # startup
-    # COPY  scripts/ /usr/local/bin/
-    # COPY  conf/supervisord.cog.conf /etc/supervisor/conf.d/supervisord.cog.conf
-    # #COPY  scripts/wait_for_postgres.sh /usr/local/bin/wait_for_postgres.sh
-    # #COPY  scripts/process_esgf_config_archive.sh /usr/local/bin/process_esgf_config_archive.sh
+    # startup
     shutil.copyfile("cog_scripts/wait_for_postgres.sh", "/usr/local/bin/wait_for_postgres.sh")
     shutil.copyfile("cog_scripts/process_esgf_config_archive.sh", "/usr/local/bin/process_esgf_config_archive.sh")
 

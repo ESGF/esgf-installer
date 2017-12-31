@@ -7,7 +7,6 @@ import re
 import logging
 import esg_bash2py
 import esg_logging_manager
-import esg_init
 import esg_functions
 import yaml
 import semver

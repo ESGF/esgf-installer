@@ -18,7 +18,6 @@ import esg_apache_manager
 import esg_subsystem
 import esg_property_manager
 import esg_logging_manager
-import esg_init
 import esg_questionnaire
 import yaml
 

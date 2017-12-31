@@ -287,9 +287,9 @@ def done_remark():
         print "http://{esgf_host}/thredds".format(esgf_host=esgf_host)
         print "http://{esgf_host}/esg-orp".format(esgf_host=esgf_host)
     if "INDEX" in node_type_list:
-        print "http://${esgf_host}/"
+        print "http://${esgf_host}/".format(esgf_host=esgf_host)
     if "COMPUTE" in node_type_list:
-        print "http://${esgf_host}/las"
+        print "http://${esgf_host}/las".format(esgf_host=esgf_host)
 
     print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node_peer_group"))
     print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf_index_peer"))

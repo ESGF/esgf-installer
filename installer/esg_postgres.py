@@ -168,7 +168,8 @@ def restart_postgres():
     restart_process = esg_functions.call_subprocess("service postgresql restart")
     if restart_process["returncode"] !=0:
         print "Restart failed."
-        print restart_process["stderr"]
+        print "Error:",restart_process["stderr"]
+        sys.exit(1)
     sleep(7)
     postgres_status()
 
@@ -354,7 +355,9 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
     restart_postgres()
 
     esg_bash2py.mkdir_p("/var/run/postgresql")
+    os.chown("/var/run/postgresql/", postgres_user_id, postgres_group_id)
     esg_bash2py.symlink_force("/tmp/.s.PGSQL.5432", "/var/run/postgresql/.s.PGSQL.5432")
+
 
     #TODO: Set password for postgres user
     setup_db_schemas(force_install)

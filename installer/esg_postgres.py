@@ -165,7 +165,10 @@ def postgres_status():
 def restart_postgres():
     '''Restarts the postgres server'''
     print "Restarting postgres server"
-    esg_functions.call_subprocess("service postgresql restart")
+    restart_process = esg_functions.call_subprocess("service postgresql restart")
+    if restart_process["returncode"] !=0:
+        print "Restart failed."
+        print restart_process["stderr"]
     sleep(7)
     postgres_status()
 

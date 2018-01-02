@@ -233,21 +233,6 @@ def get_installation_type(script_version):
         return "master"
 
 
-def begin_installation():
-    """ Capture user response. """
-    while True:
-        start_installation = raw_input(
-            "Are you ready to begin the installation? [Y/n] ") or "Y"
-
-        if start_installation.lower() in ["n", "no"]:
-            print "Canceling installation"
-            sys.exit(0)
-        elif start_installation.lower() in ["y", "yes"]:
-            break
-        else:
-            print "Invalid option.  Please select a valid option [Y/n]"
-
-
 def install_log_info():
     if force_install:
         logger.info("(force install is ON)")
@@ -279,14 +264,6 @@ def system_component_installation():
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
-
-def check_for_conda():
-    if not os.path.isdir("/usr/local/conda"):
-        print "Please run the install_conda.sh script before attempting to install ESGF."
-    if "conda" not in find_executable("python"):
-        print 'Please activate the esgf-pub conda environment before running the install script by using the following command:'
-        print "source /usr/local/conda/bin/activate esgf-pub"
-        sys.exit(1)
 
 
 def done_remark():
@@ -354,17 +331,12 @@ def main(node_type_list):
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()
-    # download_esg_installarg()
+    download_esg_installarg()
 
-    # process command line arguments
-    # node_type_list = esg_cli_argument_manager.get_previous_node_type_config(
-    #     config["esg_config_type_file"])
-    # logger.debug("node_type_list: %s", node_type_list)
     cli_info = esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
     print "cli_info:", cli_info
     if cli_info:
         node_type_list = cli_info
-
 
     esg_setup.check_prerequisites()
 
@@ -393,12 +365,6 @@ def main(node_type_list):
     if devel is True:
         print "(Installing DEVELOPMENT tree...)"
 
-    # install_conda()
-
-    # Process User Response
-    # begin_installation()
-
-    #
     esg_setup.init_structure()
 
     # log info

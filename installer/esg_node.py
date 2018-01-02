@@ -6,6 +6,7 @@ import socket
 import platform
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
+from git import Repo
 import esg_functions
 import esg_bash2py
 import esg_setup
@@ -22,6 +23,7 @@ import esg_logging_manager
 import esg_init
 import esg_questionnaire
 import yaml
+import semver
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -51,11 +53,19 @@ recommended_setup = 1
 custom_setup = 0
 use_local_files = 0
 
+
+def set_version_info():
+    repo = Repo("../")
+    repo_tag = repo.git.describe()
+    split_repo_tag = repo_tag.split()
+    version = split_repo_tag[0]
+    maj_version = semver.parse_version_info(script_version).major
+    release = split_repo_tag[1]
+
+    return version, maj_version, release
+
 progname = "esg-node"
-#TODO: Look at parent repo and set version from tag using semver
-script_version = "v3.0"
-script_maj_version = "3.0"
-script_release = "Centaur"
+script_version, script_maj_version, script_release = set_version_info()
 force_install = False
 
 #--------------

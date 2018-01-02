@@ -59,7 +59,7 @@ def set_version_info():
     repo_tag = repo.git.describe()
     split_repo_tag = repo_tag.split()
     version = split_repo_tag[0]
-    maj_version = semver.parse_version_info(script_version).major
+    maj_version = semver.parse_version_info(version).major
     release = split_repo_tag[1]
 
     return version, maj_version, release

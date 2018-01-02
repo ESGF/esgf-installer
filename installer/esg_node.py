@@ -55,11 +55,12 @@ use_local_files = 0
 
 
 def set_version_info():
+    '''Gathers the version info from the latest git tag'''
     repo = Repo("../")
-    repo_tag = repo.git.describe()
-    split_repo_tag = repo_tag.split()
+    repo_tag = repo.git.describe().lstrip("v")
+    split_repo_tag = repo_tag.split("-")
     version = split_repo_tag[0]
-    maj_version = semver.parse_version_info(version).major
+    maj_version = semver.parse_version_info(version).major +".0"
     release = split_repo_tag[1]
 
     return version, maj_version, release

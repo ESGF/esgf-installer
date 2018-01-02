@@ -170,6 +170,8 @@ def restart_postgres():
         print "Restart failed."
         print "Error:",restart_process["stderr"]
         sys.exit(1)
+    else:
+        print restart_process["stdout"]
     sleep(7)
     postgres_status()
 

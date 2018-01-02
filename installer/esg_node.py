@@ -3,6 +3,7 @@ import subprocess
 import sys
 import logging
 import socket
+import platform
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
 import esg_functions
@@ -311,6 +312,23 @@ def done_remark():
 #     echo ""
 
 
+def setup_esgf_rpm_repo():
+    '''Creates the esgf repository definition file'''
+    with open("/etc/yum.repos.d/esgf.repo", "w") as esgf_repo:
+        esgf_repo.write('[esgf]\n')
+        esgf_repo.write('name=ESGF\n')
+        os_version = platform.platform()
+        if "centos" in os_version:
+            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/centos/6/x86_64".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+        if "redhat" in os_version:
+            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/redhat/6/x86_64".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+        esgf_repo.write('failovermethod=priority')
+        esgf_repo.write('enabled=1')
+        esgf_repo.write('priority=90')
+        esgf_repo.write('gpgcheck=0')
+        esgf_repo.write('proxy=_none_')
+
+
 def main(node_type_list):
     check_for_conda()
     # default distribution_url
@@ -383,6 +401,8 @@ def main(node_type_list):
     print "*******************************"
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
+
+    setup_esgf_rpm_repo()
 
     # install dependencies
     system_component_installation()

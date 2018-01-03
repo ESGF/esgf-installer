@@ -34,17 +34,14 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def exit_with_error(status):
-    '''
-        if positional parameter at position 1 is non-zero, then print error message.
-    '''
-    if int(status) != 0 and status != True:
+def exit_with_error(error=None):
         print(
             ""
             "Sorry... \n"
-            "This action did not complete successfully\n"
-            "Please re-run this task until successful before continuing further\n"
-            ""
+            "This action did not complete successfully\n")
+        if error:
+            print "The following error occurred:\n", error
+        print(
             "Also please review the installation FAQ it may assist you\n"
             "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
             ""
@@ -522,7 +519,7 @@ def stream_subprocess_output(command_string):
         process.wait()
     except (OSError, ValueError), error:
         logger.exception("Could not stream subprocess output")
-        exit_with_error(1)
+        exit_with_error(error)
 
 
 def call_subprocess(command_string, command_stdin = None):
@@ -536,7 +533,7 @@ def call_subprocess(command_string, command_stdin = None):
             command_process_stdout, command_process_stderr =  command_process.communicate()
     except (OSError, ValueError), error:
         logger.exception("Error with subprocess")
-        exit_with_error(1)
+        exit_with_error(error)
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)
         logger.debug("command_process_stderr: %s", command_process_stderr)
@@ -667,7 +664,7 @@ def set_publisher_password(password=None):
     except IOError, error:
         logger.exception("Could not update password for %s", config["postgress_user"])
         print "error:", error
-        exit_with_error(1)
+        exit_with_error(error)
 
 
 def set_postgres_password(password):
@@ -842,17 +839,15 @@ def add_unix_group(group_name):
     try:
         call_subprocess("groupadd {group_name}".format(group_name=group_name))
     except Exception, error:
-        print "error:", error
         print "Could not add group {group_name}".format(group_name=group_name)
-        exit_with_error(1)
+        exit_with_error(error)
 
 def add_unix_user(user_name):
     try:
         stream_subprocess_output("useradd {user_name}".format(user_name=user_name))
     except Exception, error:
-        print "error:", error
         print "Could not add user {user_name}".format(user_name=user_name)
-        exit_with_error(1)
+        exit_with_error(error)
 
 
 def get_dir_owner_and_group(path):
@@ -879,7 +874,7 @@ def extract_tarball(tarball_name, dest_dir="."):
         tar.close()
     except tarfile.TarError:
         logger.exception("Could not extract the tarfile: %s", tarball_name)
-        exit_with_error(1)
+        exit_with_error(error)
 
 def change_permissions_recursive(directory_path, uid=None, gid=None):
     '''Recursive changes permissions on a directory and its subdirectories'''

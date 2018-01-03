@@ -365,7 +365,6 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
     esg_functions.check_shmmax()
     write_postgress_env()
     write_postgress_install_log()
-    esg_functions.exit_with_error(0)
 
 
 '''Check if managed_db'''

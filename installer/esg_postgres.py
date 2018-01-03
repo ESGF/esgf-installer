@@ -413,15 +413,25 @@ def setup_db_schemas(force_install):
 
     # create super user
     print "Create {db_user} user: ".format(db_user=config["postgress_user"]), cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
-    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    try:
+        cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42710":
+            print "{db_user} role already exists. Skipping creation"
 
     # create 'esgcet' user
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
     if not publisher_db_user:
         publisher_db_user = raw_input("What is the (low privilege) db account for publisher? [esgcet]: ") or "esgcet"
     print "Create {publisher_db_user} user:".format(publisher_db_user=publisher_db_user), cur.mogrify("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
-    cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
-
+    try:
+        cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42710":
+            print "{db_user} role already exists. Skipping creation"
+            
     # create CoG database
     cur.execute("CREATE DATABASE cogdb;")
     # create ESGF database

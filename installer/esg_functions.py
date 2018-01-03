@@ -570,7 +570,6 @@ def check_shmmax(min_shmmax = 48):
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb *1024*1024
     cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
-    print "cur_value_bytes:", cur_value_bytes
     cur_value_bytes = cur_value_bytes.strip()
 
     if cur_value_bytes < set_value_bytes:

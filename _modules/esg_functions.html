@@ -862,12 +862,14 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to change ownership of </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;pg_secret_file&quot;</span><span class="p">])</span></div>
 
 
-<span class="k">def</span> <span class="nf">confirm_password</span><span class="p">(</span><span class="n">password_input</span><span class="p">,</span> <span class="n">password_confirmation</span><span class="p">):</span>
+<div class="viewcode-block" id="confirm_password"><a class="viewcode-back" href="../api.html#esg_functions.confirm_password">[docs]</a><span class="k">def</span> <span class="nf">confirm_password</span><span class="p">(</span><span class="n">password_input</span><span class="p">,</span> <span class="n">password_confirmation</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Helper function to confirm that passwords match.</span>
+<span class="sd">       Returns true if passwords match&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">password_confirmation</span> <span class="o">==</span> <span class="n">password_input</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Sorry, values did not match&quot;</span>
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="set_java_keystore_password"><a class="viewcode-back" href="../api.html#esg_functions.set_java_keystore_password">[docs]</a><span class="k">def</span> <span class="nf">set_java_keystore_password</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Saves the password for a Java keystore to /esg/config/.esg_keystore_pass&#39;&#39;&#39;</span>

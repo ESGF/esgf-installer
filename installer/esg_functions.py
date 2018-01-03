@@ -692,6 +692,8 @@ def set_postgres_password(password):
 
 
 def confirm_password(password_input, password_confirmation):
+    '''Helper function to confirm that passwords match.
+       Returns true if passwords match'''
     if password_confirmation == password_input:
         return True
     else:

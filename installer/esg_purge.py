@@ -10,6 +10,7 @@ import esg_functions
 logger = esg_logging_manager.create_rotating_log(__name__)
 
 def purge_postgres():
+    '''Removes postgres installation via yum'''
     print "\n*******************************"
     print "Purging Postgres"
     print "******************************* \n"

@@ -318,7 +318,6 @@ def setup_esgf_rpm_repo():
 
 
 def main(node_type_list):
-    check_for_conda()
     # default distribution_url
     esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
 
@@ -331,7 +330,7 @@ def main(node_type_list):
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()
-    download_esg_installarg()
+    download_esg_installarg(esg_dist_url)
 
     cli_info = esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
     print "cli_info:", cli_info

@@ -14,8 +14,8 @@ def purge_postgres():
     print "Purging Postgres"
     print "******************************* \n"
 
-    esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
-    esg_functions.stream_subprocess_output("yum remove -y postgresql postgresql-libs postgresql-server")
+    esg_functions.stream_subprocess_output("service postgresql stop")
+    esg_functions.stream_subprocess_output("yum remove -y postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
     try:
         # shutil.rmtree("/usr/local/pgsql")
         shutil.rmtree("/var/lib/pgsql")

@@ -165,15 +165,15 @@ def set_esg_dist_url():
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
-    if not os.path.isfile(config.esg_installarg_file) or force_install or os.path.getmtime(config.esg_installarg_file) < os.path.getmtime(os.path.realpath(__file__)):
+    if not os.path.isfile(config["esg_installarg_file"]) or force_install or os.path.getmtime(config["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_bash2py.trim_string_from_head(
-            config.esg_installarg_file)
-        esg_functions.download_update(config.esg_installarg_file, os.path.join(
+            config["esg_installarg_file"])
+        esg_functions.download_update(config["esg_installarg_file"], os.path.join(
             esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
         try:
-            if not os.path.getsize(config.esg_installarg_file) > 0:
-                os.remove(config.esg_installarg_file)
-            esg_bash2py.touch(config.esg_installarg_file)
+            if not os.path.getsize(config["esg_installarg_file"]) > 0:
+                os.remove(config["esg_installarg_file"])
+            esg_bash2py.touch(config["esg_installarg_file"])
         except IOError:
             logger.exception("Unable to access esg-installarg file")
 

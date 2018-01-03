@@ -652,12 +652,13 @@ def set_publisher_password(password=None):
        If not password is provided as an argument, a prompt for a password is given.
     '''
     if not password:
-        while True:
+        password_set = False
+        while not password_set:
             db_user_password = getpass.getpass("Enter the password for database user {db_user}: ".format(db_user=config["postgress_user"]))
             db_user_password_confirm = getpass.getpass("Re-enter the password to confirm: ")
             if confirm_password(db_user_password, db_user_password_confirm):
                 password = db_user_password
-                break
+                password_set = True
 
     try:
         with open(config['pub_secret_file'], "w") as secret_file:

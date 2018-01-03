@@ -188,7 +188,7 @@ def build_connection_string(user,db_name=None, host=None, password=None):
 
     return " ".join(db_connection_string)
 
-def connect_to_db(user, db_name=None,  host=None, password=None):
+def connect_to_db(user, db_name=None,  host="/tmp", password=None):
     ''' Connect to database '''
     #Using password auth currently;
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
@@ -354,10 +354,6 @@ def setup_postgres(force_install=False, backup_existing_db=None, default_continu
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
     os.chown("/var/lib/pgsql/data/postgresql.conf", postgres_user_id, postgres_group_id)
     setup_hba_conf_file()
-
-    esg_bash2py.mkdir_p("/var/run/postgresql")
-    os.chown("/var/run/postgresql/", postgres_user_id, postgres_group_id)
-    esg_bash2py.symlink_force("/tmp/.s.PGSQL.5432", "/var/run/postgresql/.s.PGSQL.5432")
 
     restart_postgres()
 

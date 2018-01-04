@@ -80,7 +80,10 @@ def create_certificate_chain_list():
     print "Please enter your Certificate Authority's certificate chain file(s)"
     print "[enter each cert file/url press return, press return with blank entry when done]"
     while True:
-        certfile_entry = raw_input("Enter certificate chain file name: ")
+        if esg_property_manager.get_property("certfile_entry").lower() in ["n", "no"]:
+            certfile_entry = None
+        else:
+            certfile_entry = raw_input("Enter certificate chain file name: ")
         if not certfile_entry:
             if not cert_files:
                 print "Adding default certificate chain file {default_cachain}".format(default_cachain=default_cachain)
@@ -365,7 +368,8 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
 
     #Check keystore output
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
-    check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
+    #TODO: Look at using pyjks to list Owner, Issuer, MD5, SHA1, and Serial Number
+    check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password}".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
     print "check_keystore_command:", check_keystore_command
     keystore_output = esg_functions.call_subprocess(check_keystore_command)
     if keystore_output["returncode"] == 0:

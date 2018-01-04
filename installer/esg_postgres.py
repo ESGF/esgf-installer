@@ -418,7 +418,7 @@ def setup_db_schemas(force_install):
     except psycopg2.ProgrammingError, error:
         #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
         if error.pgcode == "42710":
-            print "{db_user} role already exists. Skipping creation"
+            print "{db_user} role already exists. Skipping creation".format(db_user=config["postgress_user"])
 
     # create 'esgcet' user
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
@@ -430,12 +430,22 @@ def setup_db_schemas(force_install):
     except psycopg2.ProgrammingError, error:
         #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
         if error.pgcode == "42710":
-            print "{db_user} role already exists. Skipping creation"
-            
+            print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
+
     # create CoG database
-    cur.execute("CREATE DATABASE cogdb;")
+    try:
+        cur.execute("CREATE DATABASE cogdb;")
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42P04":
+            print "cogdb database already exists.  Skipping creation"
     # create ESGF database
-    cur.execute("CREATE DATABASE esgcet;")
+    try:
+        cur.execute("CREATE DATABASE esgcet;")
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42P04":
+            print "esgcet database already exists.  Skipping creation"
 
     print list_users(conn=conn)
 

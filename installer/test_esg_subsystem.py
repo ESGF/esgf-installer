@@ -103,6 +103,11 @@ class test_ESGF_subsystem(unittest.TestCase):
         self.assertTrue(os.path.isdir("/tmp/cog"))
         self.assertTrue(os.listdir("/tmp/cog"))
 
+    def test_setup_solr(self):
+        esg_subsystem.setup_solr(SOLR_INSTALL_DIR="/tmp/solr", SOLR_HOME="/tmp/solr-home")
+        self.assertTrue(os.path.isdir("/tmp/solr"))
+        pass
+
     def test_main(self):
         esg_subsystem.main()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))

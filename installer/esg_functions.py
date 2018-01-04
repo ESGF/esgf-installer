@@ -870,11 +870,17 @@ def track_extraction_progress(members):
        yield member
 
 def extract_tarball(tarball_name, dest_dir="."):
+    if dest_dir == ".":
+        dest_dir_name = os.getcwd()
+    else:
+        dest_dir_name = dest_dir
+    print "Extracting {tarball_name} ->  {dest_dir_name}".format(tarball_name=tarball_name, dest_dir_name=dest_dir_name)
+    
     try:
         tar = tarfile.open(tarball_name)
         tar.extractall(dest_dir, members = track_extraction_progress(tar))
         tar.close()
-    except tarfile.TarError:
+    except tarfile.TarError, error:
         logger.exception("Could not extract the tarfile: %s", tarball_name)
         exit_with_error(error)
 

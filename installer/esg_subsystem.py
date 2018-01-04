@@ -379,6 +379,7 @@ def setup_solr():
     SOLR_VERSION = "5.5.4"
     SOLR_INSTALL_DIR = "/usr/local/solr"
     SOLR_HOME = "/usr/local/solr-home"
+    os.environ["SOLR_HOME"] = SOLR_HOME
     SOLR_DATA_DIR = "/esg/solr-index"
     SOLR_INCLUDE= "{SOLR_HOME}/solr.in.sh".format(SOLR_HOME=SOLR_HOME)
 
@@ -412,7 +413,7 @@ def setup_solr():
 
     # add shards
     esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8984")
-    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8983")
+    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh slave 8983")
 
     # custom logging properties
     shutil.copyfile("solr_scripts/log4j.properties", "/{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))

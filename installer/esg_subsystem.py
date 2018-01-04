@@ -385,7 +385,7 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     download_solr_tarball(solr_tarball_url, SOLR_VERSION)
     #Extract solr tarball
     solr_extract_to_path = SOLR_INSTALL_DIR.rsplit("/",1)[0]
-    extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION, solr_extract_to_path)
+    extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION, target_path=solr_extract_to_path)
 
     esg_bash2py.mkdir_p(SOLR_DATA_DIR)
 
@@ -417,7 +417,7 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     esg_functions.call_subprocess("/usr/local/bin/remove_shard.sh slave 8983")
 
     # custom logging properties
-    shutil.copyfile("solr_scripts/log4j.properties", "/{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+    shutil.copyfile("solr_scripts/log4j.properties", "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
 
 def download_esg_search_war(esg_search_war_url):
     print "\n*******************************"

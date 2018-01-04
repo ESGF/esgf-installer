@@ -341,13 +341,13 @@ def download_solr_tarball(solr_tarball_url, SOLR_VERSION):
                 f.write(chunk)
                 f.flush()
 
-def extract_solr_tarball(solr_tarball_path, SOLR_VERSION):
-    '''Extract the solr tarball to /usr/local and symlink it to /usr/local/solr'''
+def extract_solr_tarball(solr_tarball_path, SOLR_VERSION, target_path="/usr/local"):
+    '''Extract the solr tarball to {target_path} and symlink it to /usr/local/solr'''
     print "\n*******************************"
     print "Extracting Solr"
     print "******************************* \n"
 
-    with esg_bash2py.pushd("/usr/local"):
+    with esg_bash2py.pushd(target_path):
         esg_functions.extract_tarball(solr_tarball_path)
         os.remove(solr_tarball_path)
         esg_bash2py.symlink_force("solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), "solr")
@@ -384,7 +384,8 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     solr_tarball_url = "http://archive.apache.org/dist/lucene/solr/{SOLR_VERSION}/solr-{SOLR_VERSION}.tgz".format(SOLR_VERSION=SOLR_VERSION)
     download_solr_tarball(solr_tarball_url, SOLR_VERSION)
     #Extract solr tarball
-    extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION)
+    solr_extract_to_path = SOLR_INSTALL_DIR.rsplit("/",1)[0]
+    extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION, solr_extract_to_path)
 
     esg_bash2py.mkdir_p(SOLR_DATA_DIR)
 

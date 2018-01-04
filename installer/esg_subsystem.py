@@ -368,7 +368,7 @@ def download_template_directory():
 
         esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
 
-def setup_solr():
+def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
 
     print "\n*******************************"
@@ -377,10 +377,7 @@ def setup_solr():
 
     # # Solr/Jetty web application
     SOLR_VERSION = "5.5.4"
-    SOLR_INSTALL_DIR = "/usr/local/solr"
-    SOLR_HOME = "/usr/local/solr-home"
     os.environ["SOLR_HOME"] = SOLR_HOME
-    SOLR_DATA_DIR = "/esg/solr-index"
     SOLR_INCLUDE= "{SOLR_HOME}/solr.in.sh".format(SOLR_HOME=SOLR_HOME)
 
     #Download solr tarball

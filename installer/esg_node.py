@@ -3,8 +3,10 @@ import subprocess
 import sys
 import logging
 import socket
+import platform
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
+from git import Repo
 import esg_functions
 import esg_bash2py
 import esg_setup
@@ -20,6 +22,7 @@ import esg_property_manager
 import esg_logging_manager
 import esg_questionnaire
 import yaml
+import semver
 
 
 logger = esg_logging_manager.create_rotating_log(__name__)
@@ -49,11 +52,20 @@ recommended_setup = 1
 custom_setup = 0
 use_local_files = 0
 
+
+def set_version_info():
+    '''Gathers the version info from the latest git tag'''
+    repo = Repo("../")
+    repo_tag = repo.git.describe().lstrip("v")
+    split_repo_tag = repo_tag.split("-")
+    version = split_repo_tag[0]
+    maj_version = str(semver.parse_version_info(version).major) +".0"
+    release = split_repo_tag[1]
+
+    return version, maj_version, release
+
 progname = "esg-node"
-#TODO: Look at parent repo and set version from tag using semver
-script_version = "v3.0"
-script_maj_version = "3.0"
-script_release = "Centaur"
+script_version, script_maj_version, script_release = set_version_info()
 force_install = False
 
 #--------------
@@ -152,15 +164,15 @@ def set_esg_dist_url():
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
-    if not os.path.isfile(config.esg_installarg_file) or force_install or os.path.getmtime(config.esg_installarg_file) < os.path.getmtime(os.path.realpath(__file__)):
+    if not os.path.isfile(config["esg_installarg_file"]) or force_install or os.path.getmtime(config["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
         esg_installarg_file_name = esg_bash2py.trim_string_from_head(
-            config.esg_installarg_file)
-        esg_functions.download_update(config.esg_installarg_file, os.path.join(
+            config["esg_installarg_file"])
+        esg_functions.download_update(config["esg_installarg_file"], os.path.join(
             esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
         try:
-            if not os.path.getsize(config.esg_installarg_file) > 0:
-                os.remove(config.esg_installarg_file)
-            esg_bash2py.touch(config.esg_installarg_file)
+            if not os.path.getsize(config["esg_installarg_file"]) > 0:
+                os.remove(config["esg_installarg_file"])
+            esg_bash2py.touch(config["esg_installarg_file"])
         except IOError:
             logger.exception("Unable to access esg-installarg file")
 
@@ -220,21 +232,6 @@ def get_installation_type(script_version):
         return "master"
 
 
-def begin_installation():
-    """ Capture user response. """
-    while True:
-        start_installation = raw_input(
-            "Are you ready to begin the installation? [Y/n] ") or "Y"
-
-        if start_installation.lower() in ["n", "no"]:
-            print "Canceling installation"
-            sys.exit(0)
-        elif start_installation.lower() in ["y", "yes"]:
-            break
-        else:
-            print "Invalid option.  Please select a valid option [Y/n]"
-
-
 def install_log_info():
     if force_install:
         logger.info("(force install is ON)")
@@ -268,14 +265,6 @@ def system_component_installation():
         esg_setup.setup_cdat()
     if "INDEX" in node_type_list:
         esg_subsystem.setup_cog()
-
-def check_for_conda():
-    if not os.path.isdir("/usr/local/conda"):
-        print "Please run the install_conda.sh script before attempting to install ESGF."
-    if "conda" not in find_executable("python"):
-        print 'Please activate the esgf-pub conda environment before running the install script by using the following command:'
-        print "source /usr/local/conda/bin/activate esgf-pub"
-        sys.exit(1)
 
 
 def done_remark():
@@ -313,23 +302,23 @@ def done_remark():
 
 
 def setup_esgf_rpm_repo():
-    #TODO: implement
-    # echo '[esgf]' > /etc/yum.repos.d/esgf.repo
-	# echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
-	# if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
-	# 	echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo
-	# elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
-	# 	echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo
-	# fi
-	# echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
-    # 	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo
-    # 	echo 'priority=90' >> /etc/yum.repos.d/esgf.repo
-    # 	echo 'gpgcheck=0' >> /etc/yum.repos.d/esgf.repo
-    # 	echo 'proxy=_none_' >> /etc/yum.repos.d/esgf.repo
-    pass
+    '''Creates the esgf repository definition file'''
+    with open("/etc/yum.repos.d/esgf.repo", "w") as esgf_repo:
+        esgf_repo.write('[esgf]\n')
+        esgf_repo.write('name=ESGF\n')
+        os_version = platform.platform()
+        if "centos" in os_version:
+            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/centos/6/x86_64".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+        if "redhat" in os_version:
+            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/redhat/6/x86_64".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+        esgf_repo.write('failovermethod=priority')
+        esgf_repo.write('enabled=1')
+        esgf_repo.write('priority=90')
+        esgf_repo.write('gpgcheck=0')
+        esgf_repo.write('proxy=_none_')
+
 
 def main(node_type_list):
-    check_for_conda()
     # default distribution_url
     esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
 
@@ -342,17 +331,12 @@ def main(node_type_list):
 
     # select_distribution_mirror(install_type)
     # set_esg_dist_url()
-    # download_esg_installarg()
+    download_esg_installarg(esg_dist_url)
 
-    # process command line arguments
-    # node_type_list = esg_cli_argument_manager.get_previous_node_type_config(
-    #     config["esg_config_type_file"])
-    # logger.debug("node_type_list: %s", node_type_list)
     cli_info = esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
     print "cli_info:", cli_info
     if cli_info:
         node_type_list = cli_info
-
 
     esg_setup.check_prerequisites()
 
@@ -381,12 +365,6 @@ def main(node_type_list):
     if devel is True:
         print "(Installing DEVELOPMENT tree...)"
 
-    # install_conda()
-
-    # Process User Response
-    # begin_installation()
-
-    #
     esg_setup.init_structure()
 
     # log info

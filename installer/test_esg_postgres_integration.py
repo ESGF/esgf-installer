@@ -4,6 +4,7 @@ import os
 import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esg_purge import purge_postgres
+import esg_bash2py
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -18,6 +19,7 @@ class test_ESG_postgres_integration(unittest.TestCase):
         print "******************************* \n"
         esg_postgres.stop_postgress()
         purge_postgres()
+        esg_bash2py.mkdir_p(config["esg_config_dir"])
 
     @classmethod
     def tearDownClass(cls):
@@ -43,7 +45,7 @@ class test_ESG_postgres_integration(unittest.TestCase):
 
     def test_setup_postgres(self):
         '''Tests the entire postgres setup; Essentially an integration test'''
-        esg_postgres.setup_postgres(backup_existing_db="N", default_continue_install = "Y")
+        esg_postgres.setup_postgres(default_continue_install = "Y")
 
 
 

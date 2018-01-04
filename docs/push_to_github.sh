@@ -37,14 +37,14 @@ fi
 #Generate the new html pages for the documentation
 make html
 
-# while getopts ":m" opt; do
-#   case ${opt} in
-#     m ) # process option a
-#       ;;
-#     \? ) echo "Usage: cmd [-m]"
-#       ;;
-#   esac
-# done
+while getopts ":m:" opt; do
+  case ${opt} in
+    m) comment="$OPTARG"
+      ;;
+    \? ) echo "Usage: cmd [-m]"
+      ;;
+  esac
+done
 
 
 #Change to installer docs directory
@@ -61,8 +61,11 @@ git add .nojekyll
 git add _static/*
 
 #Commit message
-git commit -m 'updated autodocumentation'
-
-
+if [ -z "$comment" ]
+  then
+    git commit -m 'updated autodocumentation'
+  else
+    git commit -m "$comment"
+fi
 #Push to Github Pages
 git push -u origin gh-pages

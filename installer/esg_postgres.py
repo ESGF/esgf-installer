@@ -17,6 +17,7 @@ import esg_logging_manager
 import semver
 import re
 import yaml
+import re
 
 logger = esg_logging_manager.create_rotating_log(__name__)
 
@@ -25,28 +26,31 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
 
 
 def download_postgres():
-    #Edit distributions .repo file per https://wiki.postgresql.org/wiki/YUM_Installation
-    config = configobj.ConfigObj('/etc/yum.repos.d/CentOS-Base.repo')
-    try:
-        config["updates"]["exclude"]
-        config["base"]["exclude"]
-    except KeyError:
-        config["updates"]["exclude"] ="postgresql*"
-        config["base"]["exclude"] ="postgresql*"
-        config.write()
+    print "\n*******************************"
+    print "Downloading Postgres"
+    print "******************************* \n"
 
-    esg_functions.stream_subprocess_output("rpm -Uvh https://yum.postgresql.org/9.6/redhat/rhel-6-x86_64/pgdg-redhat96-9.6-3.noarch.rpm")
-    esg_functions.stream_subprocess_output("yum -y install postgresql96-server postgresql96 postgresql96-devel")
+    #Edit distributions .repo file per https://wiki.postgresql.org/wiki/YUM_Installation
+    # config = configobj.ConfigObj('/etc/yum.repos.d/CentOS-Base.repo')
+    # try:
+    #     config["updates"]["exclude"]
+    #     config["base"]["exclude"]
+    # except KeyError:
+    #     config["updates"]["exclude"] ="postgresql*"
+    #     config["base"]["exclude"] ="postgresql*"
+    #     config.write()
+
+    esg_functions.stream_subprocess_output("yum -y install postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
 
 def initialize_postgres():
     try:
-        if os.listdir("/var/lib/pgsql/9.6/data"):
+        if os.listdir("/var/lib/pgsql/data"):
             print "Data directory already exists. Skipping initialize_postgres()."
             return
     except OSError, error:
         print "error:", error
-    esg_functions.stream_subprocess_output("service postgresql-9.6 initdb")
-    os.chmod(os.path.join(config["postgress_install_dir"], "9.6", "data"), 0700)
+    esg_functions.stream_subprocess_output("service postgresql initdb")
+    os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 def check_for_postgres_sys_acct():
     try:
@@ -140,10 +144,10 @@ def create_postgres_log_dir():
 def start_postgres():
     ''' Start db '''
     #if the data directory doesn't exist or is empty
-    if not os.path.isdir("/var/lib/pgsql/9.6/data/") or not os.listdir("/var/lib/pgsql/9.6/data/"):
+    if not os.path.isdir("/var/lib/pgsql/data/") or not os.listdir("/var/lib/pgsql/data/"):
         initialize_postgres()
-    esg_functions.stream_subprocess_output("service postgresql-9.6 start")
-    esg_functions.stream_subprocess_output("chkconfig postgresql-9.6 on")
+    esg_functions.stream_subprocess_output("service postgresql start")
+    esg_functions.stream_subprocess_output("chkconfig postgresql on")
 
     sleep(3)
     if postgres_status():
@@ -151,7 +155,7 @@ def start_postgres():
 
 def postgres_status():
     '''Checks the status of the postgres server'''
-    status = esg_functions.call_subprocess("service postgresql-9.6 status")
+    status = esg_functions.call_subprocess("service postgresql status")
     print "Postgres server status:", status["stdout"]
     if "running" in status["stdout"]:
         return True
@@ -161,7 +165,13 @@ def postgres_status():
 def restart_postgres():
     '''Restarts the postgres server'''
     print "Restarting postgres server"
-    esg_functions.call_subprocess("service postgresql-9.6 restart")
+    restart_process = esg_functions.call_subprocess("service postgresql restart")
+    if restart_process["returncode"] !=0:
+        print "Restart failed."
+        print "Error:",restart_process["stderr"]
+        sys.exit(1)
+    else:
+        print restart_process["stdout"]
     sleep(7)
     postgres_status()
 
@@ -178,7 +188,7 @@ def build_connection_string(user,db_name=None, host=None, password=None):
 
     return " ".join(db_connection_string)
 
-def connect_to_db(user, db_name=None,  host=None, password=None):
+def connect_to_db(user, db_name=None,  host="/tmp", password=None):
     ''' Connect to database '''
     #Using password auth currently;
     #if the user is postgres, the effective user id (euid) needs to be postgres' user id.
@@ -193,14 +203,18 @@ def connect_to_db(user, db_name=None,  host=None, password=None):
     try:
         conn = psycopg2.connect(db_connection_string)
         print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
+        if not conn:
+            print "Failed to connect to {db_name}".format(db_name=db_name)
+            raise Exception
 
         #Set effective user id (euid) back to root
         if os.geteuid() != root_id:
             os.seteuid(root_id)
 
         return conn
-    except Exception:
+    except Exception, error:
         logger.exception("Unable to connect to the database.")
+        print "Error connecting to database:", error
         esg_functions.exit_with_error(1)
 
 def check_for_postgres_db_user():
@@ -267,6 +281,7 @@ def update_log_dir_in_config_file():
 
 
 def check_existing_pg_version(psql_path, force_install=False):
+    '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version = config["postgress_min_version"])
 
     if not psql_path:
@@ -338,11 +353,12 @@ def setup_postgres(force_install=False, default_continue_install = "N"):
         # download_config_files(force_install)
         # update_port_in_config_file()
         # update_log_dir_in_config_file()
-    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/9.6/data/postgresql.conf")
+    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/data/postgresql.conf")
     postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
-    os.chown("/var/lib/pgsql/9.6/data/postgresql.conf", postgres_user_id, postgres_group_id)
+    os.chown("/var/lib/pgsql/data/postgresql.conf", postgres_user_id, postgres_group_id)
     setup_hba_conf_file()
+
     restart_postgres()
 
     #TODO: Set password for postgres user
@@ -353,7 +369,6 @@ def setup_postgres(force_install=False, default_continue_install = "N"):
     esg_functions.check_shmmax()
     write_postgress_env()
     write_postgress_install_log()
-    esg_functions.exit_with_error(0)
 
 
 '''Check if managed_db'''
@@ -368,7 +383,7 @@ def setup_postgres(force_install=False, default_continue_install = "N"):
 
 def setup_hba_conf_file():
     '''Modify the pg_hba.conf file for md5 authencation'''
-    with open("/var/lib/pgsql/9.6/data/pg_hba.conf", "w") as hba_conf_file:
+    with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
         hba_conf_file.write("local    all             postgres                    ident\n")
         hba_conf_file.write("local    all             all                         md5\n")
         hba_conf_file.write("host     all             all         ::1/128         md5\n")
@@ -383,7 +398,7 @@ def create_pg_pass_file():
 
 def stop_postgress():
     '''Stops the postgres server'''
-    esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
+    esg_functions.stream_subprocess_output("service postgresql stop")
 
 def setup_db_schemas(force_install):
     '''Load ESGF schemas'''
@@ -398,19 +413,39 @@ def setup_db_schemas(force_install):
 
     # create super user
     print "Create {db_user} user: ".format(db_user=config["postgress_user"]), cur.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
-    cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    try:
+        cur.execute("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42710":
+            print "{db_user} role already exists. Skipping creation".format(db_user=config["postgress_user"])
 
     # create 'esgcet' user
     publisher_db_user = esg_property_manager.get_property("publisher_db_user")
     if not publisher_db_user:
         publisher_db_user = raw_input("What is the (low privilege) db account for publisher? [esgcet]: ") or "esgcet"
     print "Create {publisher_db_user} user:".format(publisher_db_user=publisher_db_user), cur.mogrify("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
-    cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    try:
+        cur.execute("CREATE USER {publisher_db_user} PASSWORD \'{db_user_password}\';".format(publisher_db_user=publisher_db_user, db_user_password=db_user_password))
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42710":
+            print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
     # create CoG database
-    cur.execute("CREATE DATABASE cogdb;")
+    try:
+        cur.execute("CREATE DATABASE cogdb;")
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42P04":
+            print "cogdb database already exists.  Skipping creation"
     # create ESGF database
-    cur.execute("CREATE DATABASE esgcet;")
+    try:
+        cur.execute("CREATE DATABASE esgcet;")
+    except psycopg2.ProgrammingError, error:
+        #Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+        if error.pgcode == "42P04":
+            print "esgcet database already exists.  Skipping creation"
 
     print list_users(conn=conn)
 
@@ -436,7 +471,7 @@ def setup_db_schemas(force_install):
     load_esgf_data(cur)
     list_tables(conn)
     # IMPORTANT: change connections to require encrypted password
-    esg_functions.replace_string_in_file("/var/lib/pgsql/9.6/data/pg_hba.conf", "ident", "md5")
+    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
 
 def load_esgf_data(cur):
     # # load ESGF data

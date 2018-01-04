@@ -7,7 +7,7 @@
 -- Started on 2016-06-20 11:43:29 MDT
 
 SET statement_timeout = 0;
-SET lock_timeout = 0;
+-- SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -31,7 +31,7 @@ SET default_with_oids = false;
 
 --
 -- TOC entry 228 (class 1259 OID 286445)
--- Name: group; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: group; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 CREATE TABLE "group" (
@@ -71,7 +71,7 @@ ALTER SEQUENCE group_id_seq OWNED BY "group".id;
 
 --
 -- TOC entry 230 (class 1259 OID 286453)
--- Name: notification_types; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: notification_types; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 CREATE TABLE notification_types (
@@ -85,7 +85,7 @@ ALTER TABLE esgf_security.notification_types OWNER TO dbsuper;
 
 --
 -- TOC entry 231 (class 1259 OID 286459)
--- Name: permission; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: permission; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 CREATE TABLE permission (
@@ -100,7 +100,7 @@ ALTER TABLE esgf_security.permission OWNER TO dbsuper;
 
 --
 -- TOC entry 232 (class 1259 OID 286463)
--- Name: role; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: role; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 CREATE TABLE role (
@@ -138,7 +138,7 @@ ALTER SEQUENCE role_id_seq OWNED BY role.id;
 
 --
 -- TOC entry 234 (class 1259 OID 286471)
--- Name: user; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: user; Type: TABLE; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 CREATE TABLE "user" (
@@ -214,7 +214,7 @@ ALTER TABLE ONLY "user" ALTER COLUMN id SET DEFAULT nextval('user_id_seq'::regcl
 
 --
 -- TOC entry 2412 (class 2606 OID 286691)
--- Name: group_name_key; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: group_name_key; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY "group"
@@ -223,7 +223,7 @@ ALTER TABLE ONLY "group"
 
 --
 -- TOC entry 2414 (class 2606 OID 286693)
--- Name: group_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: group_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY "group"
@@ -232,7 +232,7 @@ ALTER TABLE ONLY "group"
 
 --
 -- TOC entry 2416 (class 2606 OID 286695)
--- Name: permission_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: permission_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY permission
@@ -241,7 +241,7 @@ ALTER TABLE ONLY permission
 
 --
 -- TOC entry 2418 (class 2606 OID 286697)
--- Name: role_name_key; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: role_name_key; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY role
@@ -250,7 +250,7 @@ ALTER TABLE ONLY role
 
 --
 -- TOC entry 2420 (class 2606 OID 286699)
--- Name: role_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: role_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY role
@@ -259,7 +259,7 @@ ALTER TABLE ONLY role
 
 --
 -- TOC entry 2423 (class 2606 OID 286701)
--- Name: user_openid_key; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: user_openid_key; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY "user"
@@ -268,7 +268,7 @@ ALTER TABLE ONLY "user"
 
 --
 -- TOC entry 2425 (class 2606 OID 286703)
--- Name: user_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: user_pkey; Type: CONSTRAINT; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 ALTER TABLE ONLY "user"
@@ -277,7 +277,7 @@ ALTER TABLE ONLY "user"
 
 --
 -- TOC entry 2421 (class 1259 OID 286756)
--- Name: ix_esgf_security_user_openid; Type: INDEX; Schema: esgf_security; Owner: dbsuper; Tablespace: 
+-- Name: ix_esgf_security_user_openid; Type: INDEX; Schema: esgf_security; Owner: dbsuper; Tablespace:
 --
 
 CREATE INDEX ix_esgf_security_user_openid ON "user" USING btree (openid);
@@ -315,4 +315,3 @@ ALTER TABLE ONLY permission
 --
 -- PostgreSQL database dump complete
 --
-

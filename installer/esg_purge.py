@@ -10,12 +10,13 @@ import esg_functions
 logger = esg_logging_manager.create_rotating_log(__name__)
 
 def purge_postgres():
+    '''Removes postgres installation via yum'''
     print "\n*******************************"
     print "Purging Postgres"
     print "******************************* \n"
 
-    esg_functions.stream_subprocess_output("service postgresql-9.6 stop")
-    esg_functions.stream_subprocess_output("yum remove -y postgresql postgresql-libs postgresql-server")
+    esg_functions.stream_subprocess_output("service postgresql stop")
+    esg_functions.stream_subprocess_output("yum remove -y postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
     try:
         # shutil.rmtree("/usr/local/pgsql")
         shutil.rmtree("/var/lib/pgsql")

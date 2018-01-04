@@ -80,7 +80,10 @@ def create_certificate_chain_list():
     print "Please enter your Certificate Authority's certificate chain file(s)"
     print "[enter each cert file/url press return, press return with blank entry when done]"
     while True:
-        certfile_entry = raw_input("Enter certificate chain file name: ")
+        if esg_property_manager.get_property("certfile_entry").lower() in ["n", "no"]:
+            certfile_entry = None
+        else:
+            certfile_entry = raw_input("Enter certificate chain file name: ")
         if not certfile_entry:
             if not cert_files:
                 print "Adding default certificate chain file {default_cachain}".format(default_cachain=default_cachain)
@@ -117,7 +120,7 @@ def create_certificate_chain(cert_files):
         for cert in cert_files:
             if not os.path.isfile(cert):
                 print "{cert} not found. Exiting.".format(cert=cert)
-                esg_functions.exit_with_error(1)
+                esg_functions.exit_with_error()
 
             with open(cert, "r") as cert_file_handle:
                 cert_file_contents = cert_file_handle.read()
@@ -196,7 +199,7 @@ def convert_per_to_dem(private_key, key_output_dir):
     convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
     if convert_to_der["returncode"] !=0:
         print "Problem with preparing initial keystore...Exiting."
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error(convert_to_der["stderr"])
     return derkey
 
 def check_cachain_validity(ca_chain_bundle):
@@ -306,7 +309,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
 
     if len(intermediate_certs) < 1:
         print "No intermediate_certs files given"
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error()
 
     if not os.path.isfile(private_key):
         print "Private key file {private_key} does not exist".format(private_key=private_key)
@@ -335,7 +338,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
         print "The keypair was congruent"
     else:
         print "The keypair was not congruent"
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error()
 
 
     print "creating keystore... "
@@ -365,7 +368,9 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
 
     #Check keystore output
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
-    check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password} | egrep '(Owner|Issuer|MD5|SHA1|Serial number):'".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
+    #TODO: Look at using pyjks to list Owner, Issuer, MD5, SHA1, and Serial Number
+    check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password}".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
+    print "check_keystore_command:", check_keystore_command
     keystore_output = esg_functions.call_subprocess(check_keystore_command)
     if keystore_output["returncode"] == 0:
         print "Mmmm, freshly baked keystore!"
@@ -374,7 +379,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
         print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
     else:
         print "Failed to check keystore"
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error(keystore_output["stderr"])
 
 def check_associate_cert_with_private_key(cert, private_key):
     """
@@ -418,7 +423,7 @@ def create_empty_java_keystore(keystore_name, keystore_alias, keystore_password,
     keystore_output = esg_functions.call_subprocess(generate_keystore_string)
     if keystore_output["returncode"] !=0:
         print "Problem with generating initial keystore...Exiting."
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error(keystore_output["stderr"])
 
 
 def backup_previous_keystore(keystore_name):
@@ -448,11 +453,11 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
     #Exit if public_cert(signed CSR isn't found)
     if not os.path.isfile(public_cert):
         print "{public_cert} not found. Exiting.".format(public_cert=public_cert)
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error()
 
     if not os.path.isfile(private_key):
         print "{private_key} not found. Exiting.".format(private_key=private_key)
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error()
 
     print "private key = ", private_key
     print "public cert = ", public_cert
@@ -540,13 +545,13 @@ def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
         extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
         if extract_cert_output["returncode"] !=0:
             print "Could not extract certificate from keystore"
-            esg_functions.exit_with_error(1)
+            esg_functions.exit_with_error(extract_cert_output["stderr"])
 
         print "Importing keystore's certificate into truststore... "
         import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
         if import_to_truststore_output["returncode"] !=0:
             print "Could not import the certificate into the truststore"
-            esg_functions.exit_with_error(1)
+            esg_functions.exit_with_error(import_to_truststore_output["stderr"])
 
         sync_with_java_truststore(truststore_file)
 
@@ -566,7 +571,7 @@ def sync_with_java_truststore(truststore_file):
 
     if not os.path.join(truststore_file):
         print "{truststore_file} does not exist. Exiting."
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error()
 
     print "Syncing {truststore_file} with {java_truststore} ... ".format(truststore_file=truststore_file, java_truststore=jssecacerts_path)
     if filecmp.cmp(truststore_file, jssecacerts_path):

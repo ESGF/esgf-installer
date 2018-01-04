@@ -408,9 +408,12 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     shutil.copyfile("solr_scripts/add_shard.sh", "/usr/local/bin/add_shard.sh")
     shutil.copyfile("solr_scripts/remove_shard.sh", "/usr/local/bin/remove_shard.sh")
 
+    os.chmod("/usr/local/bin/add_shard.sh", 0555)
+    os.chmod("/usr/local/bin/remove_shard.sh", 0555)
+
     # add shards
     esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8984")
-    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh slave 8983")
+    esg_functions.call_subprocess("/usr/local/bin/remove_shard.sh slave 8983")
 
     # custom logging properties
     shutil.copyfile("solr_scripts/log4j.properties", "/{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))

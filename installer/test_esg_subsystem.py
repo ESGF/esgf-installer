@@ -74,8 +74,8 @@ class test_ESGF_subsystem(unittest.TestCase):
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"))
 
     def test_setup_solr(self):
-        esg_subsystem.setup_solr()
-        self.assertTrue(os.path.isdir("/usr/local/solr"))
+        esg_subsystem.setup_solr(SOLR_INSTALL_DIR="/tmp/solr", SOLR_HOME="/tmp/solr-home")
+        self.assertTrue(os.path.isdir("/tmp/solr"))
 
     def test_setup_esg_search(self):
         esg_subsystem.setup_esg_search()
@@ -103,10 +103,6 @@ class test_ESGF_subsystem(unittest.TestCase):
         self.assertTrue(os.path.isdir("/tmp/cog"))
         self.assertTrue(os.listdir("/tmp/cog"))
 
-    def test_setup_solr(self):
-        esg_subsystem.setup_solr(SOLR_INSTALL_DIR="/tmp/solr", SOLR_HOME="/tmp/solr-home")
-        self.assertTrue(os.path.isdir("/tmp/solr"))
-        pass
 
     def test_main(self):
         esg_subsystem.main()

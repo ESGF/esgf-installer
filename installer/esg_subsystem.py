@@ -368,14 +368,35 @@ def download_template_directory():
 
         esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
 
-def start_solr():
+def start_solr(SOLR_INSTALL_DIR, SOLR_HOME):
+    print "\n*******************************"
+    print "Starting Solr"
+    print "******************************* \n"
     # %(ENV_SOLR_INSTALL_DIR)s/bin/solr start -f -d %(ENV_SOLR_INSTALL_DIR)s/server -s %(ENV_SOLR_HOME)s/master-8984 -p 8984 -a '-Denable.master=true' -m 512m
-    pass
+    # -f starts solr in the foreground; -d Defines a server directory;
+    # -s Sets the solr.solr.home system property; -p Start Solr on the defined port;
+    # -a Start Solr with additional JVM parameters,
+    # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
+    solr_process = esg_functions.call_subprocess("{SOLR_INSTALL_DIR}/bin/solr start -f -d {SOLR_INSTALL_DIR}/server -s {SOLR_HOME}/master-8984 -p 8984 -a '-Denable.master=true' -m 512m")
+    if solr_process["returncode"] != 1:
+        print "Could not start solr"
+        esg_functions.exit_with_error(solr_process["stderr"])
+    else:
+        solr_status(SOLR_INSTALL_DIR)
 
-def solr_status():
-    pass
-def stop_solr():
-    pass
+def solr_status(SOLR_INSTALL_DIR):
+    '''Check the status of solr'''
+    esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+
+def stop_solr(SOLR_INSTALL_DIR):
+    '''Stop the solr process'''
+    solr_process = esg_functions.call_subprocess("{SOLR_INSTALL_DIR}/bin/solr stop")
+    if solr_process["returncode"] != 1:
+        print "Could not stop solr"
+        solr_status(SOLR_INSTALL_DIR)
+        esg_functions.exit_with_error(solr_process["stderr"])
+    else:
+        solr_status(SOLR_INSTALL_DIR)
 
 def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
@@ -427,6 +448,9 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
 
     # custom logging properties
     shutil.copyfile("solr_scripts/log4j.properties", "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+
+    #start solr
+    start_solr(SOLR_INSTALL_DIR, SOLR_HOME)
 
 def download_esg_search_war(esg_search_war_url):
     print "\n*******************************"

@@ -533,11 +533,13 @@ def call_subprocess(command_string, command_stdin = None):
             command_process_stdout, command_process_stderr =  command_process.communicate()
     except (OSError, ValueError), error:
         logger.exception("Error with subprocess")
-        exit_with_error(error)
+        # exit_with_error(error)
+        raise 
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)
         logger.debug("command_process_stderr: %s", command_process_stderr)
         logger.debug("command_process.returncode: %s", command_process.returncode)
+    #TODO: if command_process.returncode != 0: raise exception
         return {"stdout" : command_process_stdout, "stderr" : command_process_stderr, "returncode": command_process.returncode}
 
 
@@ -875,7 +877,7 @@ def extract_tarball(tarball_name, dest_dir="."):
     else:
         dest_dir_name = dest_dir
     print "Extracting {tarball_name} ->  {dest_dir_name}".format(tarball_name=tarball_name, dest_dir_name=dest_dir_name)
-    
+
     try:
         tar = tarfile.open(tarball_name)
         tar.extractall(dest_dir, members = track_extraction_progress(tar))

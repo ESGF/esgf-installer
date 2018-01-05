@@ -368,6 +368,15 @@ def download_template_directory():
 
         esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
 
+def start_solr():
+    # %(ENV_SOLR_INSTALL_DIR)s/bin/solr start -f -d %(ENV_SOLR_INSTALL_DIR)s/server -s %(ENV_SOLR_HOME)s/master-8984 -p 8984 -a '-Denable.master=true' -m 512m
+    pass
+
+def solr_status():
+    pass
+def stop_solr():
+    pass
+
 def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
 

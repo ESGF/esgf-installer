@@ -378,12 +378,13 @@ def start_solr(SOLR_INSTALL_DIR, SOLR_HOME):
     # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
     start_solr_command = "{SOLR_INSTALL_DIR}/bin/solr start -f -d {SOLR_INSTALL_DIR}/server -s {SOLR_HOME}/master-8984 -p 8984 -a '-Denable.master=true' -m 512m".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR, SOLR_HOME=SOLR_HOME)
     print "start solr command:", start_solr_command
-    solr_process = esg_functions.call_subprocess(start_solr_command)
-    if solr_process["returncode"] != 1:
-        print "Could not start solr"
-        esg_functions.exit_with_error(solr_process["stderr"])
-    else:
-        solr_status(SOLR_INSTALL_DIR)
+    solr_process = esg_functions.stream_subprocess_output(start_solr_command)
+    solr_status(SOLR_INSTALL_DIR)
+    # if solr_process["returncode"] != 1:
+    #     print "Could not start solr"
+    #     esg_functions.exit_with_error(solr_process["stderr"])
+    # else:
+    #     solr_status(SOLR_INSTALL_DIR)
 
 def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''

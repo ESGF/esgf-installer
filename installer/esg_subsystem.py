@@ -376,9 +376,9 @@ def start_solr(SOLR_INSTALL_DIR, SOLR_HOME):
     # -s Sets the solr.solr.home system property; -p Start Solr on the defined port;
     # -a Start Solr with additional JVM parameters,
     # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
-    start_solr_command = "{SOLR_INSTALL_DIR}/bin/solr start -f -d {SOLR_INSTALL_DIR}/server -s {SOLR_HOME}/master-8984 -p 8984 -a '-Denable.master=true' -m 512m".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR, SOLR_HOME=SOLR_HOME)
+    start_solr_command = "{SOLR_INSTALL_DIR}/bin/solr start -d {SOLR_INSTALL_DIR}/server -s {SOLR_HOME}/master-8984 -p 8984 -a '-Denable.master=true' -m 512m".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR, SOLR_HOME=SOLR_HOME)
     print "start solr command:", start_solr_command
-    solr_process = esg_functions.stream_subprocess_output(start_solr_command)
+    esg_functions.stream_subprocess_output(start_solr_command)
     solr_status(SOLR_INSTALL_DIR)
     # if solr_process["returncode"] != 1:
     #     print "Could not start solr"

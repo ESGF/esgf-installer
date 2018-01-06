@@ -258,13 +258,21 @@ def system_component_installation():
         esg_tomcat_manager.main()
         esg_apache_manager.main()
     if "DATA" in node_type_list:
+        print "\n*******************************"
+        print "Installing Data Node Components"
+        print "******************************* \n"
         esg_subsystem.main()
         esg_publisher.main()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
     if "INDEX" in node_type_list:
+        print "\n*******************************"
+        print "Installing Index Node Components"
+        print "******************************* \n"
         esg_subsystem.setup_cog()
+        esg_subsystem.setup_solr()
+        esg_subsystem.setup_esg_search()
 
 
 def done_remark():

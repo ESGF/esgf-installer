@@ -380,11 +380,6 @@ def start_solr(SOLR_INSTALL_DIR, SOLR_HOME):
     print "start solr command:", start_solr_command
     esg_functions.stream_subprocess_output(start_solr_command)
     solr_status(SOLR_INSTALL_DIR)
-    # if solr_process["returncode"] != 1:
-    #     print "Could not start solr"
-    #     esg_functions.exit_with_error(solr_process["stderr"])
-    # else:
-    #     solr_status(SOLR_INSTALL_DIR)
 
 def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''
@@ -399,6 +394,13 @@ def stop_solr(SOLR_INSTALL_DIR):
         esg_functions.exit_with_error(solr_process["stderr"])
     else:
         solr_status(SOLR_INSTALL_DIR)
+
+def add_shards():
+    print "\n*******************************"
+    print "Adding Shards"
+    print "******************************* \n"
+    esg_functions.stream_subprocess_output("/usr/local/bin/add_shard.sh master 8984")
+    esg_functions.stream_subprocess_output("/usr/local/bin/add_shard.sh slave 8983")
 
 def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
@@ -445,8 +447,7 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     os.chmod("/usr/local/bin/remove_shard.sh", 0555)
 
     # add shards
-    esg_functions.call_subprocess("/usr/local/bin/add_shard.sh master 8984")
-    esg_functions.call_subprocess("/usr/local/bin/remove_shard.sh slave 8983")
+    add_shards()
 
     # custom logging properties
     shutil.copyfile("solr_scripts/log4j.properties", "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))

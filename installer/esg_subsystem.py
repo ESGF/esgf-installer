@@ -477,6 +477,7 @@ def setup_esg_search():
     print "******************************* \n"
 
     ESGF_REPO = "http://aims1.llnl.gov/esgf"
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-search")
     esg_search_war_url = "{ESGF_REPO}/esg-search/esg-search.war".format(ESGF_REPO=ESGF_REPO)
     download_esg_search_war(esg_search_war_url)
     #Extract esg-search war

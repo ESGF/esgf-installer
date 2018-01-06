@@ -77,10 +77,6 @@ set ADMINEMAIL "root@localhost"
 # Should be be N for upgrade and Y for fresh install
 set GLOBUS "y"
 
-# Default answer for automatic peering
-# Should be be N for upgrade and Y for fresh install
-set AUTOMATICPEER "y"
-
 # Should thredds be installed?  Y for new installations and upgrades 2.5.9 or earlier
 # For now, N is recommended for 2.5.13 or later (until new version released)
 set THREDDS "Y"

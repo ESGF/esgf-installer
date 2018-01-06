@@ -295,7 +295,7 @@ expect {
         send ${SOLRREINDEX}\n ; exp_continue
     }
     "Automatic peer with super-node" {
-        send ${AUTOMATICPEER}\n ; exp_continue
+        send N\n ; exp_continue
     }
 
     # Victory conditions

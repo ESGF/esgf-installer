@@ -316,14 +316,14 @@ def setup_esgf_rpm_repo():
         esgf_repo.write('name=ESGF\n')
         os_version = platform.platform()
         if "centos" in os_version:
-            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/centos/6/x86_64".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/centos/6/x86_64\n".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
         if "redhat" in os_version:
-            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/redhat/6/x86_64".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
-        esgf_repo.write('failovermethod=priority')
-        esgf_repo.write('enabled=1')
-        esgf_repo.write('priority=90')
-        esgf_repo.write('gpgcheck=0')
-        esgf_repo.write('proxy=_none_')
+            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/redhat/6/x86_64\n".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+        esgf_repo.write('failovermethod=priority\n')
+        esgf_repo.write('enabled=1\n')
+        esgf_repo.write('priority=90\n')
+        esgf_repo.write('gpgcheck=0\n')
+        esgf_repo.write('proxy=_none_\n')
 
 
 def main(node_type_list):

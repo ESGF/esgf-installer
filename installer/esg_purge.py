@@ -163,6 +163,20 @@ def purge_cdat():
     pass
 
 
+def purge_cog():
+    try:
+        shutil.rmtree("/usr/local/cog")
+    except OSError, error:
+        logger.exception("Couldn't delete /usr/local/cog")
+    try:
+        os.remove("/usr/local/bin/wait_for_postgres.sh")
+    except OSError, error:
+        logger.exception("Couldn't delete /usr/local/bin/wait_for_postgres.sh")
+    try:
+        os.remove("/usr/local/bin/wait_for_postgres.sh")
+    except OSError, error:
+        logger.exception("Couldn't delete /usr/local/bin/process_esgf_config_archive.sh")
+
 def purge_apache():
     esg_functions.stream_subprocess_output("yum remove -y httpd httpd-devel mod_ssl")
     try:
@@ -181,6 +195,7 @@ def main():
     purge_base()
     purge_cdat()
     purge_apache()
+    purge_cog()
 
 if __name__ == '__main__':
     main()

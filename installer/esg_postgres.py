@@ -291,8 +291,12 @@ def check_existing_pg_version(psql_path, force_install=False):
             postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
             postgres_version_number = re.search("\d.*", postgres_version_found).group()
             print "postgres version number: ", postgres_version_number
-            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 1 and not force_install:
+            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0 and not force_install:
+                print "Found acceptible Postgres version"
                 return True
+            else:
+                print "The Postgres version on the system does not meet the minimum requirements"
+                return False
         except OSError:
             logger.exception("Unable to check existing Postgres version \n")
 
@@ -311,7 +315,7 @@ def setup_postgres(force_install=False, default_continue_install = "N"):
         else:
             setup_postgres_answer = raw_input("Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
 
-        if setup_postgres_answer.lower() in ["no", 'n']:
+        if setup_postgres_answer.lower().strip() in ["no", 'n']:
             print "Skipping installation."
             return True
         else:

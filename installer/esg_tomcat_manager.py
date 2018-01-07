@@ -212,7 +212,8 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
 
         #SET the server.xml variables to contain proper values
         logger.debug("Editing %s/conf/server.xml accordingly...", config["tomcat_install_dir"])
-        edit_tomcat_server_xml(config["keystore_password"])
+        keystore_password = esg_functions.get_java_keystore_password()
+        edit_tomcat_server_xml(keystore_password)
 
 def edit_tomcat_server_xml(keystore_password):
     server_xml_path = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")

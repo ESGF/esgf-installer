@@ -535,6 +535,17 @@ def transfer_api_client_python(target_directory):
             esg_functions.stream_subprocess_output("make")
             shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy")
 
+def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
+    # change ownership of COG_CONFIG_DIR/site_media
+    apache_user = esg_functions.get_user_id("apache")
+    apache_group = esg_functions.get_group_id("apache")
+    esg_functions.change_permissions_recursive("{COG_DIR}".format(COG_DIR=COG_DIR), apache_user, apache_group)
+    esg_functions.change_permissions_recursive("{COG_CONFIG_DIR}".format(COG_CONFIG_DIR=COG_CONFIG_DIR), apache_user, apache_group)
+
+    # # create location where Python eggs can be unpacked by user 'apache'
+    PYTHON_EGG_CACHE_DIR = "/var/www/.python-eggs"
+    esg_functions.change_permissions_recursive("{PYTHON_EGG_CACHE_DIR}".format(PYTHON_EGG_CACHE_DIR=PYTHON_EGG_CACHE_DIR), apache_user, apache_group)
+
 def setup_cog(COG_DIR="/usr/local/cog"):
     # choose CoG version
     COG_TAG = "v3.9.7"
@@ -574,9 +585,13 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
     esg_bash2py.mkdir_p("~cogadmin")
     esg_functions.stream_subprocess_output("chown cogadmin:cogadmin ~cogadmin")
+
     # change user prompt
     with open("~cogadmin/.bashrc", "a") as cogadmin_bashrc:
         cogadmin_bashrc.write('export PS1="[\u@\h]\$ "')
+
+    change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR)
+    
     # startup
     shutil.copyfile("cog_scripts/wait_for_postgres.sh", "/usr/local/bin/wait_for_postgres.sh")
     shutil.copyfile("cog_scripts/process_esgf_config_archive.sh", "/usr/local/bin/process_esgf_config_archive.sh")

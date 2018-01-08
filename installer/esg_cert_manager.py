@@ -635,43 +635,60 @@ def setup_temp_ca():
         print "new_ca_output:", new_ca_output
 
 
+def set_commercial_ca_paths():
+    if esg_property_manager.get_property("commercial_key_path"):
+        commercial_key_path = esg_property_manager.get_property("commercial_key_path")
+    else:
+        commercial_key_path = raw_input("Enter the file path of the commercial key: ")
+
+    if esg_property_manager.get_property("commercial_cert_path"):
+        commercial_cert_path = esg_property_manager.get_property("commercial_cert_path")
+    else:
+        commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
+
+    if esg_property_manager.get_property("cachain_path"):
+        ca_chain_path = esg_property_manager.get_property("cachain_path")
+    else:
+        ca_chain_path = raw_input("Enter the file path of the ca chain: ")
+
+    return (commercial_key_path, commercial_cert_path, ca_chain_path)
+
+def backup_existing_certs():
+    '''Backup existing SSL certs on system'''
+    if os.path.isfile("/etc/certs/hostcert.pem"):
+        shutil.copyfile("/etc/certs/hostcert.pem", "/etc/certs/hostcert.pem.{date}.bak".format(date=str(datetime.date.today())))
+    if os.path.isfile("/etc/certs/hostkey.pem"):
+        shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
+
+def install_commerical_certs(commercial_key_path, commercial_cert_path, ca_chain_path):
+    '''Install the signed, commericial SSL credentials to /etc/certs'''
+    shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
+    shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
+    shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
+
+
 def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     '''Checks if Commerical CA directory has been created; asks user if they would like proceed with
     Commercial CA installation if directory is found'''
 
     print "*******************************"
-    print "Checking for Commerical CA"
+    print "Checking for Commercial CA"
     print "******************************* \n"
 
-    if os.listdir(commercial_ca_directory):
-        print "Found commercial CA directory."
-        if not esg_property_manager.get_property("commercial_key_path") or not esg_property_manager.get_property("commercial_cert_path"):
-            commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
-            if commercial_ca_setup.lower() in ["yes", "y"]:
-                if esg_property_manager.get_property("commercial_key_path"):
-                    commercial_key_path = esg_property_manager.get_property("commercial_key_path")
-                else:
-                    commercial_key_path = raw_input("Enter the file path of the commercial key: ")
-                if esg_property_manager.get_property("commercial_cert_path"):
-                    commercial_cert_path = esg_property_manager.get_property("commercial_cert_path")
-                else:
-                    commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
-                if esg_property_manager.get_property("cachain_path"):
-                    ca_chain_path = esg_property_manager.get_property("cachain_path")
-                else:
-                    ca_chain_path = raw_input("Enter the file path of the ca chain: ")
+    if esg_property_manager.get_property("install_signed_certs"):
+        commercial_ca_setup = esg_property_manager.get_property("install_signed_certs")
+    else:
+        commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
 
-                #Backup existing certs
-                if os.path.isfile("/etc/certs/hostcert.pem"):
-                    shutil.copyfile("/etc/certs/hostcert.pem", "/etc/certs/hostcert.pem.{date}.bak".format(date=str(datetime.date.today())))
-                if os.path.isfile("/etc/certs/hostkey.pem"):
-                    shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
+    if commercial_ca_setup.lower() in ["yes", "y"]:
+        commercial_key_path, commercial_cert_path, ca_chain_path = set_commercial_ca_paths()
 
-                shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
-                shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
-                shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
+        #Backup existing certs
+        backup_existing_certs()
 
-                print "Local installation of certs complete."
+        install_commerical_certs(commercial_key_path, commercial_cert_path, ca_chain_path)
+
+        print "Local installation of certs complete."
 
     else:
         return

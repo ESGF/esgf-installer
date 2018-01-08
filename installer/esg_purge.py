@@ -185,6 +185,16 @@ def purge_apache():
         if error.errno == errno.ENOENT:
             pass
 
+#TODO: define purge_conda()
+def purge_conda():
+    pass
+
+#TODO: define purge_solr
+def purge_solr():
+    pass
+#TODO: define purge_dashboard()
+def purge_dashboard():
+    pass
 
 def main():
     purge_postgres()

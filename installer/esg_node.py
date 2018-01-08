@@ -291,12 +291,10 @@ def done_remark():
     print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node_peer_group"))
     print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf_index_peer"))
 
-#     if [ -d "${thredds_content_dir}/thredds" ]; then
-#         echo
-#         echo "[Note: Use UNIX group permissions on ${thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]"
-#         echo " %> chgrp -R <appropriate unix group for publishing users> ${thredds_content_dir}/thredds"
-#     fi
-#
+    if os.path.isdir(os.path.join("{thredds_content_dir}".format(thredds_content_dir=thredds_content_dir), "thredds")):
+        print "[Note: Use UNIX group permissions on {thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]".format(thredds_content_dir=thredds_content_dir)
+        print " %> chgrp -R <appropriate unix group for publishing users> {thredds_content_dir}/thredds".format(thredds_content_dir=thredds_content_dir)
+        
     print '''
         -------------------------------------------------------
         Administrators of this node should subscribe to the

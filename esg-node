@@ -1561,6 +1561,18 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+specify_local_mirror() {
+
+    loc_mirror_ans='Y';
+    while [ 1 ]; do
+        read -e -p "Enter local mirror url:" localmirrorurl
+        read -e -p "you entered $mirrorurl. Is this correct?(Y/n)" loc_mirror_resp
+        [ -n "${loc_mirror_resp}" ] && loc_mirror_ans=$(echo ${loc_mirror_resp}|tr 'a-z' 'A-Z')
+        if [ "$loc_mirror_ans" = "Y" ]; then
+            break;
+        fi
+    done
+}
 update_apache_conf() {
 
 	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"}
@@ -6229,15 +6241,20 @@ main() {
             unset CDAT_HOME
         fi
 	# Determining ESGF distribution mirror
-        if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
-       	 get_esgf_dist_mirror "interactive" $devel
+        if [[ $@ == *uselocalmirror* || $@ == *use-local-mirror* ]]; then
+            esg_dist_url_root="${localmirrorurl}/dist"
+            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
         else
-       	 get_esgf_dist_mirror "fastest" $devel
-        fi
+            if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
+       	    get_esgf_dist_mirror "interactive" $devel
+            else
+       	    get_esgf_dist_mirror "fastest" $devel
+            fi
 
-	# Setting esg_dist_url with previously gathered information
-        esg_dist_url_root="${esgf_dist_mirror}/dist"
-        esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+	        # Setting esg_dist_url with previously gathered information
+            esg_dist_url_root="${esgf_dist_mirror}/dist"
+            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+        fi
 
     # Sourcing esg-init file
         [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
@@ -6410,6 +6427,10 @@ main() {
 					update_apache_conf
 					exit 0;
 					;;
+                --use-local-mirror | uselocalmirror)
+                    debug_print "allowing selection of local distribution mirror. Can be an http/file url"
+                    specify_local_mirror
+                    ;;
                 --write-env)
                     (( (sel & WRITE_ENV_BIT) == 0 )) && ((sel+=WRITE_ENV_BIT))
                     echo

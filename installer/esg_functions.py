@@ -534,7 +534,7 @@ def call_subprocess(command_string, command_stdin = None):
     except (OSError, ValueError), error:
         logger.exception("Error with subprocess")
         # exit_with_error(error)
-        raise 
+        raise
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)
         logger.debug("command_process_stderr: %s", command_process_stderr)
@@ -701,6 +701,16 @@ def confirm_password(password_input, password_confirmation):
     else:
         print "Sorry, values did not match"
         return False
+
+def is_valid_password(password_input):
+    if not password_input or not str.isalnum(password_input):
+        print "Invalid password... "
+        return False
+    if not password_input or len(password_input) < 6:
+        print "Sorry password must be at least six characters :-( "
+        return False
+    else:
+        return True
 
 def set_java_keystore_password():
     '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''

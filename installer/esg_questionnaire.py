@@ -49,7 +49,7 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
     while True:
         password_input = getpass.getpass(
             "What is the admin password to use for this installation? (alpha-numeric only): ")
-        if not _is_valid_password(password_input):
+        if not esg_functions.is_valid_password(password_input):
             continue
 
         password_input_confirmation = getpass.getpass(
@@ -188,7 +188,7 @@ def _choose_publisher_db_user(force_install=False):
 def _choose_publisher_db_user_passwd(force_install=False):
     '''Choose the password for the publisher (esgcet) database user'''
     if esg_functions.get_publisher_password() and not force_install:
-        if _is_valid_password(esg_functions.get_publisher_password()):
+        if esg_functions.is_valid_password(esg_functions.get_publisher_password()):
             print "Using previously configured publisher DB password"
             return
         else:
@@ -199,7 +199,7 @@ def _choose_publisher_db_user_passwd(force_install=False):
     while True:
         publisher_db_user_passwd_input = getpass.getpass(
             "What is the db password for publisher user ({publisher_db_user})?: ".format(publisher_db_user=publisher_db_user))
-        if not _is_valid_password(publisher_db_user_passwd_input):
+        if not esg_functions.is_valid_password(publisher_db_user_passwd_input):
             print "The password that was entered is invalid.  Please enter a different password."
             continue
 
@@ -241,14 +241,3 @@ def initial_setup_questionnaire(force_install=False):
                  "installer_uid"], esg_functions.get_tomcat_group_id())
 
     return True
-
-
-def _is_valid_password(password_input):
-    if not password_input or not str.isalnum(password_input):
-        print "Invalid password... "
-        return False
-    if not password_input or len(password_input) < 6:
-        print "Sorry password must be at least six characters :-( "
-        return False
-    else:
-        return True

@@ -355,10 +355,6 @@ def setup_dashboard():
     run_dashboard_script()
 
     # create non-privileged user to run the dashboard application
-    # RUN groupadd dashboard && \
-    #     useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard && \
-    #     chown -R dashboard:dashboard /usr/local/esgf-dashboard-ip
-    # RUN chmod a+w /var/run
     esg_functions.stream_subprocess_output("groupadd dashboard")
     esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard")
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
@@ -391,8 +387,6 @@ def clone_dashboard_repo():
                 print "current line:", self._cur_line
 
     Repo.clone_from("https://github.com/ESGF/esgf-dashboard.git", "/usr/local/esgf-dashboard", progress=Progress())
-
-
 
 def run_dashboard_script():
     #default values

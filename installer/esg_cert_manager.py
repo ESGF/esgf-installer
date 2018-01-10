@@ -77,12 +77,12 @@ def create_certificate_chain_list():
     default_cachain = "/etc/esgfcerts/cachain.pem"
     cert_files = []
     #Enter ca_chain file into list
-    print "Please enter your Certificate Authority's certificate chain file(s)"
-    print "[enter each cert file/url press return, press return with blank entry when done]"
     while True:
         if esg_property_manager.get_property("certfile_entry").lower() in ["n", "no"]:
             certfile_entry = None
         else:
+            print "Please enter your Certificate Authority's certificate chain file(s)"
+            print "[enter each cert file/url press return, press return with blank entry when done]"
             certfile_entry = raw_input("Enter certificate chain file name: ")
         if not certfile_entry:
             if not cert_files:

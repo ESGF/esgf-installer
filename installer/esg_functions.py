@@ -722,23 +722,25 @@ def is_valid_password(password_input):
     else:
         return True
 
-def set_java_keystore_password():
+def set_java_keystore_password(keystore_password=None):
     '''Saves the password for a Java keystore to /esg/config/.esg_keystore_pass'''
-    while True:
-        keystore_password_input = getpass.getpass("Please enter the password for this keystore: ")
-        if not keystore_password_input:
-            print "Invalid password. The password can not be blank."
-            continue
+    if not keystore_password:
+        while True:
+            keystore_password_input = getpass.getpass("Please enter the password for this keystore: ")
+            if not keystore_password_input:
+                print "Invalid password. The password can not be blank."
+                continue
 
-        keystore_password_input_confirmation = getpass.getpass("Please re-enter the password for this keystore: ")
-        if keystore_password_input == keystore_password_input_confirmation:
-            config["keystore_password"] = keystore_password_input
-            break
-        else:
-            print "Sorry, values did not match. Please try again."
-            continue
+            keystore_password_input_confirmation = getpass.getpass("Please re-enter the password for this keystore: ")
+            if keystore_password_input == keystore_password_input_confirmation:
+                keystore_password = keystore_password_input
+                break
+            else:
+                print "Sorry, values did not match. Please try again."
+                continue
+
     with open(config['ks_secret_file'], 'w') as keystore_file:
-        keystore_file.write(config["keystore_password"])
+        keystore_file.write(keystore_password)
     os.chmod(config['ks_secret_file'], 0640)
     os.chown(config['ks_secret_file'], get_user_id("root"), get_group_id("tomcat"))
     return True

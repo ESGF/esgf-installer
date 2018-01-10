@@ -149,7 +149,7 @@ def create_password_hash(tomcat_user_password):
     print "password hash:",  password_hash["stdout"]
     return password_hash["stdout"].split(":")[1]
 
-def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=os.path.join(config["tomcat_conf_dir"],"conf", "tomcat-users.xml")):
+def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=os.path.join(config["tomcat_conf_dir"], "tomcat-users.xml")):
     '''Adds a new user to the tomcat-users.xml file'''
     tree = etree.parse(tomcat_users_file)
     root = tree.getroot()

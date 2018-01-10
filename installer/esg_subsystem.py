@@ -181,12 +181,18 @@ def add_tomcat_user():
     print "Create user credentials\n"
     done_adding_users = False
     while not done_adding_users:
-        default_user = "dnode_user"
-        tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user= default_user)) or default_user
+        if esg_property_manager.get_property("tomcat_user"):
+            tomcat_username = esg_property_manager.get_property("tomcat_user")
+        else:
+            default_user = "dnode_user"
+            tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user= default_user)) or default_user
 
         valid_password = False
         while not valid_password:
-            tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
+            tomcat_user_password = esg_functions.get_security_admin_password()
+            if not tomcat_user_password:
+                tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
+
             if esg_functions.is_valid_password(tomcat_user_password):
                 valid_password = True
 

@@ -15,6 +15,8 @@ import esg_functions
 import esg_bash2py
 import esg_property_manager
 import yaml
+import getpass
+from lxml import etree
 import zipfile
 from git import Repo
 from clint.textui import progress
@@ -141,6 +143,83 @@ def download_thredds_war(thredds_url):
                 f.write(chunk)
                 f.flush()
 
+def create_password_hash(tomcat_user_password):
+    '''Creates a hash for a Tomcat user's password using Tomcat's digest.sh script'''
+    password_hash = esg_functions.call_subprocess("/usr/local/tomcat/bin/digest.sh -a SHA {tomcat_user_password}".format(tomcat_user_password=tomcat_user_password))
+    print "password hash:",  password_hash["stdout"]
+    return password_hash["stdout"].split(":")[1]
+
+def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=os.path.join(config["tomcat_conf_dir"],"conf", "tomcat-users.xml")):
+    '''Adds a new user to the tomcat-users.xml file'''
+    tree = etree.parse(tomcat_users_file)
+    root = tree.getroot()
+    roles = root.find("tomcat-users")
+    new_user = etree.SubElement(roles, "user")
+    new_user.set("username", tomcat_username)
+    new_user.set("password", password_hash)
+    new_user.set("roles", "tdsConfig")
+
+def add_another_user():
+    '''Helper function for deciding to add more Tomcat users or not'''
+    valid_selection = False
+    done_adding_users = None
+    while not valid_selection:
+        another_user = raw_input("Would you like to add another user? [y/N]: ") or "n"
+        if another_user.lower() in ["n", "no"]:
+            valid_selection = True
+            done_adding_users = True
+        if another_user.lower() in ["y", "yes"]:
+            valid_selection = True
+            done_adding_users = False
+        else:
+            print "Invalid selection"
+            continue
+    return done_adding_users
+
+def add_tomcat_user():
+    '''Add a user to the default Tomcat user database (tomcat-users.xml) for container-managed authentication'''
+    print "Create user credentials\n"
+    done_adding_users = False
+    while not done_adding_users:
+        default_user = "dnode_user"
+        tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user= default_user)) or default_user
+
+        valid_password = False
+        while not valid_password:
+            tomcat_user_password = getpass.getpass("Please enter password for user, \"{tomcat_username}\" [********]:   ".format(tomcat_username=tomcat_username))
+            if esg_functions.is_valid_password(tomcat_user_password):
+                valid_password = True
+
+        password_hash = create_password_hash(tomcat_user_password)
+
+        update_tomcat_users_file(tomcat_username, password_hash)
+
+        done_adding_users = add_another_user()
+
+def get_webxml_file():
+    '''Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)'''
+    web_xml_path = os.path.join("{tomcat_install_dir}".format(tomcat_install_dir=config["tomcat_install_dir"]), "webapps", "thredds", "WEB-INF","web.xml")
+    web_xml_download_url = "https://aims1.llnl.gov/esgf/dist/devel/thredds/thredds.web.xml"
+    esg_functions.download_update(web_xml_path, web_xml_download_url)
+
+    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
+
+    esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+def update_mail_admin_address():
+    mail_admin_address = esg_property_manager.get_property("mail_admin_address")
+    esg_functions.stream_subprocess_output('sed -i "s/support@my.group/$mail_admin_address/g" /esg/content/thredds/threddsConfig.xml')
+
+
+def esgsetup_thredds():
+    esgsetup_command = '''esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password {security_admin_password}'''.format(security_admin_password=esg_functions.get_security_admin_password())
+    try:
+        esg_functions.stream_subprocess_output(esgsetup_command)
+    except Exception:
+        logger.exception("Could not finish esgsetup")
+        esg_functions.exit_with_error(1)
+
 def setup_thredds():
 
     if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
@@ -163,11 +242,20 @@ def setup_thredds():
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
+    add_tomcat_user()
+
+    esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+    shutil.copyfile("thredds_conf/thredds.xml", "{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+
+    get_webxml_file()
+
     # TDS configuration root
     esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
 
     # TDS memory configuration
     shutil.copyfile("thredds_conf/threddsConfig.xml", "/esg/content/thredds/threddsConfig.xml")
+
+    update_mail_admin_address()
 
     # ESGF root catalog
     shutil.copyfile("thredds_conf/catalog.xml", "/esg/content/thredds/catalog.xml-esgcet")
@@ -220,6 +308,8 @@ def setup_thredds():
 
     # change ownership of source directory
     esg_functions.change_permissions_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    esgsetup_thredds()
 
     # cleanup
     shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
@@ -591,14 +681,14 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         cogadmin_bashrc.write('export PS1="[\u@\h]\$ "')
 
     change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR)
-    
+
     # startup
     shutil.copyfile("cog_scripts/wait_for_postgres.sh", "/usr/local/bin/wait_for_postgres.sh")
     shutil.copyfile("cog_scripts/process_esgf_config_archive.sh", "/usr/local/bin/process_esgf_config_archive.sh")
 
 def main():
     setup_orp()
-    setup_node_manager_old()
+    # setup_node_manager_old()
     setup_thredds()
     setup_dashboard()
 

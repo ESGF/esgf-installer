@@ -231,7 +231,9 @@ def check_for_postgres_db_user():
         create_postgres_db_user()
 
 def create_postgres_db_user():
-    postgres_db_user_password = _choose_postgres_user_password()
+    postgres_db_user_password = esg_functions.get_postgres_password()
+    if not postgres_db_user_password:
+        postgres_db_user_password = _choose_postgres_user_password()
     create_pg_db_user_command = '''sudo -u postgres psql -c "create user {postgress_user} with superuser password '{postgres_db_user_password}';" '''.format(postgress_user=config["postgress_user"], postgres_db_user_password=postgres_db_user_password)
     create_pg_db_user_output = esg_functions.call_subprocess(create_pg_db_user_command)
     if create_pg_db_user_output["returncode"] == 0:

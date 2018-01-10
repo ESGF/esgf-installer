@@ -692,6 +692,16 @@ def set_postgres_password(password):
     except OSError:
         logger.exception("Unable to change ownership of %s", config["pg_secret_file"])
 
+def get_postgres_password():
+    '''Gets the Postgres superuser account password from /esg/config/.esg_pg_pass'''
+    pg_password = None
+    try:
+        with open(config['pg_secret_file'], "r") as secret_file:
+            pg_password = secret_file.read()
+    except IOError:
+        logger.exception("Could not open %s", config['pg_secret_file'])
+
+    return pg_password
 
 def confirm_password(password_input, password_confirmation):
     '''Helper function to confirm that passwords match.

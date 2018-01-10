@@ -57,6 +57,7 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
 
         if esg_functions.confirm_password(password_input, password_input_confirmation):
             esg_functions.set_security_admin_password(password_input)
+            esg_functions.set_java_keystore_password(password_input)
             break
 
 def _choose_organization_name(force_install=False):

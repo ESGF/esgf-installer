@@ -231,6 +231,7 @@ def update_mail_admin_address():
 
 
 def esgsetup_thredds():
+    os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     esgsetup_command = '''esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password {security_admin_password}'''.format(security_admin_password=esg_functions.get_security_admin_password())
     try:
         esg_functions.stream_subprocess_output(esgsetup_command)
@@ -342,7 +343,7 @@ def setup_thredds():
     esgsetup_thredds()
 
     # cleanup
-    shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
+    # shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
 
 
 def download_stats_api_war(stats_api_url):

@@ -172,7 +172,11 @@ def add_another_user():
     valid_selection = False
     done_adding_users = None
     while not valid_selection:
-        another_user = raw_input("Would you like to add another user? [y/N]:") or "n"
+        if esg_property_manager.get_property("add_another_user"):
+            another_user = esg_property_manager.get_property("add_another_user")
+        else:
+            another_user = raw_input("Would you like to add another user? [y/N]:") or "n"
+            
         if another_user.lower().strip() in ["n", "no"]:
             valid_selection = True
             done_adding_users = True

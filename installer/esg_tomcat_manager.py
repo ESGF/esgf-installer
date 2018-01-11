@@ -100,9 +100,6 @@ def copy_config_files():
     try:
         shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
-    #     shutil.copyfile("certs/esg-truststore.ts", "/esg/config/tomcat/esg-truststore.ts")
-    #     shutil.copyfile("certs/esg-truststore.ts-orig", "/esg/config/tomcat/esg-truststore.ts-orig")
-    #     shutil.copyfile("certs/keystore-tomcat", "/esg/config/tomcat/keystore-tomcat")
         esg_bash2py.mkdir_p("/esg/config/tomcat")
         shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
     #
@@ -146,6 +143,7 @@ def restart_tomcat():
     start_tomcat()
 
 def check_tomcat_status():
+    #TODO: use process management module for check
     return esg_functions.call_subprocess("ps -aux | grep tomcat | grep -v grep")
 
 def run_tomcat_config_test():
@@ -183,6 +181,10 @@ def check_server_xml():
     if realm_element:
         return True
 
+def download_server_config_file(esg_dist_url):
+    server_xml_url = "{esg_dist_url}/externals/bootstrap/node.server.xml-v{tomcat_major_version}".format(esg_dist_url=esg_dist_url, tomcat_major_version=config['tomcat_major_version'].strip("''"))
+    esg_functions.download_update(os.path.join(config["tomcat_install_dir"],"conf", "server.xml"), server_xml_url)
+
 def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
@@ -213,23 +215,41 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
         #SET the server.xml variables to contain proper values
         logger.debug("Editing %s/conf/server.xml accordingly...", config["tomcat_install_dir"])
         keystore_password = esg_functions.get_java_keystore_password()
-        edit_tomcat_server_xml(keystore_password)
+        edit_server_xml(keystore_password)
 
-def edit_tomcat_server_xml(keystore_password):
-    server_xml_path = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")
-    tree = etree.parse(server_xml_path)
+def edit_server_xml(keystore_password):
+    '''Edit the placeholder values in the Tomcat server.xml configuration file'''
+    xml_file = os.path.join(config["tomcat_install_dir"],"conf", "server.xml")
+    xml_file_output = '{}_out.xml'.format(os.path.splitext(xml_file)[0])
+
+    parser = etree.XMLParser(remove_comments=False)
+    tree = etree.parse(xml_file, parser)
     root = tree.getroot()
 
-    pathname = root.find(".//Resource[@pathname]")
-    pathname.set('pathname', config["tomcat_users_file"])
-    connector_element = root.find(".//Connector[@truststoreFile]")
-    connector_element.set('truststoreFile', config["truststore_file"])
-    connector_element.set('truststorePass', config["truststore_password"])
-    connector_element.set('keystoreFile', config["keystore_file"])
-    connector_element.set('keystorePass', keystore_password)
-    connector_element.set('keyAlias', config["keystore_alias"])
-    tree.write(open(server_xml_path, "wb"), pretty_print = True)
-    tree.write(os.path.join(config["tomcat_install_dir"],"conf", "test_output.xml"), pretty_print = True)
+    for param in root.iter():
+        if param.tag == "Resource" or param.tag == "Realm":
+            replaced_pathname = param.get("pathname").replace("@@tomcat_users_file@@", config["tomcat_users_file"])
+            param.set("pathname", replaced_pathname)
+        if param.tag == "Connector":
+            replaced_fqdn = param.get("proxyName").replace("placeholder.fqdn", esg_functions.get_esgf_host())
+            param.set("proxyName", replaced_fqdn)
+
+            replaced_truststore_file = param.get("truststoreFile").replace("@@truststore_file@@", config["truststore_file"])
+            param.set("truststoreFile", replaced_truststore_file)
+
+            replaced_truststore_pass = param.get("truststorePass").replace("@@truststore_password@@", config["truststore_password"])
+            param.set("truststorePass", replaced_truststore_pass)
+
+            replaced_key_alias = param.get("keyAlias").replace("@@keystore_alias@@", config["keystore_alias"])
+            param.set("keyAlias", replaced_key_alias)
+
+            replaced_keystore_file = param.get("keystoreFile").replace("@@keystore_file@@", config["keystore_file"])
+            param.set("keystoreFile", replaced_keystore_file)
+
+            replaced_keystore_pass = param.get("keystorePass").replace("@@keystore_password@@", keystore_password)
+            param.set("keystorePass", replaced_keystore_pass)
+
+    tree.write(xml_file_output)
 
 
 def setup_temp_certs():

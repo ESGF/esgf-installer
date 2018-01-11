@@ -518,7 +518,9 @@ def stream_subprocess_output(command_string):
         # wait for the subprocess to exit
         process.wait()
     except (OSError, ValueError), error:
-        logger.exception("Could not stream subprocess output")
+        # logger.exception("Could not stream subprocess output")
+        print "Could not stream subprocess output"
+        raise
         exit_with_error(error)
 
 

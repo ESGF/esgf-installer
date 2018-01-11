@@ -261,8 +261,8 @@ def system_component_installation():
         print "\n*******************************"
         print "Installing Data Node Components"
         print "******************************* \n"
-        esg_subsystem.main()
         esg_publisher.main()
+        esg_subsystem.main()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
@@ -294,7 +294,7 @@ def done_remark():
     if os.path.isdir(os.path.join("{thredds_content_dir}".format(thredds_content_dir=thredds_content_dir), "thredds")):
         print "[Note: Use UNIX group permissions on {thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]".format(thredds_content_dir=thredds_content_dir)
         print " %> chgrp -R <appropriate unix group for publishing users> {thredds_content_dir}/thredds".format(thredds_content_dir=thredds_content_dir)
-        
+
     print '''
         -------------------------------------------------------
         Administrators of this node should subscribe to the

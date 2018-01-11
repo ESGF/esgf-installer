@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiResourceLocking="false">
+<!--
+This app uses digest authentication.
+-->
+<Realm className="org.apache.catalina.realm.MemoryRealm" digest="SHA" />
+
+</Context>
+~               

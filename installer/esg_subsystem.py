@@ -153,11 +153,19 @@ def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=o
     '''Adds a new user to the tomcat-users.xml file'''
     tree = etree.parse(tomcat_users_file)
     root = tree.getroot()
-    roles = root.find("tomcat-users")
-    new_user = etree.SubElement(roles, "user")
-    new_user.set("username", tomcat_username)
-    new_user.set("password", password_hash)
-    new_user.set("roles", "tdsConfig")
+    updated_dnode_user = False
+    for param in root.iter():
+        if param == "user" and param.get("username") == "dnode_user":
+            param.set("password", password_hash)
+            updated_dnode_user = True
+
+    if not updated_dnode_user:
+        new_user = etree.SubElement(root, "user")
+        new_user.set("username", tomcat_username)
+        new_user.set("password", password_hash)
+        new_user.set("roles", "tdsConfig")
+
+    tree.write(open(tomcat_users_file, "wb"), pretty_print=True)
 
 def add_another_user():
     '''Helper function for deciding to add more Tomcat users or not'''

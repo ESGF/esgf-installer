@@ -516,11 +516,12 @@ def stream_subprocess_output(command_string):
             for line in iter(process.stdout.readline, b''):
                 print line,
         # wait for the subprocess to exit
-        print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
         process.wait()
+        print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
     except (OSError, ValueError), error:
         # logger.exception("Could not stream subprocess output")
         print "Could not stream subprocess output"
+        print "stream_subprocess_output error:", error
         raise
         exit_with_error(error)
 

@@ -101,8 +101,12 @@ def copy_config_files():
         shutil.copyfile("tomcat_conf/server.xml", "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile("tomcat_conf/context.xml", "/usr/local/tomcat/conf/context.xml")
         esg_bash2py.mkdir_p("/esg/config/tomcat")
+
         shutil.copyfile("certs/tomcat-users.xml", "/esg/config/tomcat/tomcat-users.xml")
-    #
+        tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
+        tomcat_group_id = grp.getgrnam("tomcat").gr_gid
+        os.chown("/esg/config/tomcat/tomcat-users.xml", tomcat_user_id, tomcat_group_id)
+        
         shutil.copy("tomcat_conf/setenv.sh", os.path.join(CATALINA_HOME, "bin"))
     except OSError, error:
         # if error.errno == errno.EEXIST:

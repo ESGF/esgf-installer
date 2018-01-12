@@ -157,13 +157,14 @@ def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=o
     for param in root.iter():
         if param == "user" and param.get("username") == "dnode_user":
             param.set("password", password_hash)
+            param.set("roles", "tdrAdmin,tdsConfig")
             updated_dnode_user = True
 
     if not updated_dnode_user:
         new_user = etree.SubElement(root, "user")
         new_user.set("username", tomcat_username)
         new_user.set("password", password_hash)
-        new_user.set("roles", "tdsConfig")
+        new_user.set("roles", "tdrAdmin,tdsConfig")
 
     tree.write(open(tomcat_users_file, "wb"), pretty_print=True)
 

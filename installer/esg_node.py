@@ -307,16 +307,16 @@ def done_remark():
 #     echo ""
 
 
-def setup_esgf_rpm_repo():
+def setup_esgf_rpm_repo(esg_dist_url):
     '''Creates the esgf repository definition file'''
     with open("/etc/yum.repos.d/esgf.repo", "w") as esgf_repo:
         esgf_repo.write('[esgf]\n')
         esgf_repo.write('name=ESGF\n')
         os_version = platform.platform()
         if "centos" in os_version:
-            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/centos/6/x86_64\n".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+            esgf_repo.write("baseurl={esg_dist_url}/RPM/centos/6/x86_64\n".format(esg_dist_url=esg_dist_url))
         if "redhat" in os_version:
-            esgf_repo.write("baseurl={esgf_dist_mirror}/RPM/redhat/6/x86_64\n".format(esgf_dist_mirror=config["esgf_dist_mirror"]))
+            esgf_repo.write("baseurl={esg_dist_url}/RPM/redhat/6/x86_64\n".format(esg_dist_url=esg_dist_url))
         esgf_repo.write('failovermethod=priority\n')
         esgf_repo.write('enabled=1\n')
         esgf_repo.write('priority=90\n')
@@ -385,7 +385,7 @@ def main(node_type_list):
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
 
-    setup_esgf_rpm_repo()
+    setup_esgf_rpm_repo(esg_dist_url)
 
     # install dependencies
     system_component_installation()

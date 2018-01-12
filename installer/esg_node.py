@@ -385,7 +385,7 @@ def main(node_type_list):
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
 
-    setup_esgf_rpm_repo(esg_dist_url)
+    # setup_esgf_rpm_repo(esg_dist_url)
 
     # install dependencies
     system_component_installation()

@@ -240,51 +240,82 @@ def esgsetup_thredds():
         logger.exception("Could not finish esgsetup")
         esg_functions.exit_with_error(1)
 
-def setup_thredds():
+def copy_public_directory():
+    '''HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
+    So have to manually move over this directory to avert server not starting! -gavin'''
+    content_dir = os.path.join("{thredds_content_dir}".format(thredds_content_dir=config["thredds_content_dir"]), "thredds")
+    if not os.path.isdir(content_dir):
+        esg_bash2py.mkdir_p(content_dir)
+        try:
+            public_dir = "{tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public".format(tomcat_install_dir=config["tomcat_install_dir"])
+            shutil.copy(public_dir, content_dir)
+        except OSError, error:
+            esg_functions.exit_with_error(error)
 
-    if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
-        thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " ) or "no"
-        if thredds_install.lower() in ["no", "n"]:
-            return
+        tomcat_user = esg_functions.get_user_id("tomcat")
+        tomcat_group = esg_functions.get_group_id("tomcat")
+        esg_functions.change_permissions_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
 
-    print "\n*******************************"
-    print "Setting up Thredds"
-    print "******************************* \n"
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
-    thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
-    download_thredds_war(thredds_url)
+#TODO: implement
+def verify_thredds_credentials():
+    # verify_thredds_credentials() {
+    #     local ret=0
+    #     local thredds_esg_ini_file=${ESGINI:-${publisher_home_dir}/${publisher_config_file}}
+    #     local tomcat_username
+    #     local tomcat_password_hash
+    #
+    #     echo "Inspecting tomcat... "
+    #     read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9\$]*\)\".*/\1 \2/p' ${tomcat_users_file}))
+    #
+    #     echo -n "Inspecting publisher... "
+    #     local thredds_username=$(sed -n 's@^[^#]*[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
+    #     local thredds_password=$(sed -n 's@^[^#]*[ ]*thredds_password[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
+    #     local thredds_password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${thredds_password} | cut -d ":" -f 2) && echo ")" || (echo -n "x" && ((ret++)) )
+    #
+    #     echo -n "Checking username... "
+    #     echo -n "${tomcat_username} = ${thredds_username} "
+    #     if [ "${tomcat_username}" = "${thredds_username}" ]; then
+    #         [OK]
+    #     else
+    #         [FAIL]
+    #         ((ret++))
+    #     fi
+    #
+    #     echo -n "Checking password... "
+    #     echo -n "${tomcat_password_hash} = ${thredds_password_hash} "
+    #     if [ "${tomcat_password_hash}" = "${thredds_password_hash}" ]; then
+    #         [OK]
+    #     else
+    #         [FAIL]
+    #         ((ret++))
+    #     fi
+    #     ((ret == 0)) && echo "Verified" && return 0
+    #
+    #     echo
+    #     echo "Sorry, your credentials are not valid..."
+    #
+    #     local answer="N"
+    #     read -e -p "Would you like to reset the app server's credentials accordingly? [y/N]: " doreset
+    #     [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
+    #
+    #     local security_admin_password=""
+    #     [ -e "${esgf_secret_file}" ] && security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null) || (echo "error: cannot find passwd file" && return 1)
+    #     [ -z "${security_admin_password}" ] && echo "node admin password not found" && return 1
+    #
+    #     if [ "${answer}" = "Y" ]; then
+    #         echo -n "Editing files accordingly... "
+    #         #edit publisher
+    #         sed -i 's#^[ ]*\(thredds_username[ ]*=[ ]*\).*$#\1'${tomcat_username}'#' ${thredds_esg_ini_file} && echo -n ":" || (echo -n "x" && ((ret++)) )
+    #         sed -i 's#^[ ]*\(thredds_password[ ]*=[ ]*\).*$#\1'${security_admin_password}'#' ${thredds_esg_ini_file} && echo -n "-" || (echo -n "x" && ((ret++)) )
+    #         #edit tomcat-users.xml
+    #         sed -i 's#'${tomcat_password_hash}'#'$($tomcat_install_dir/bin/digest.sh -a SHA ${security_admin_password} | cut -d ":" -f 2)'#' ${tomcat_users_file} && echo ")" || (echo "x" && ((ret++)) )
+    #     fi
+    #     echo
+    #     return $ret
+    # }
+    pass
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
-        with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
-            zf.extractall()
-        os.remove("thredds.war")
-        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
-
-    add_tomcat_user()
-
-    esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
-    shutil.copyfile("thredds_conf/thredds.xml", "{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
-
-    get_webxml_file()
-
-    # TDS configuration root
-    esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
-
-    # TDS memory configuration
-    shutil.copyfile("thredds_conf/threddsConfig.xml", "/esg/content/thredds/threddsConfig.xml")
-
-    update_mail_admin_address()
-
-    # ESGF root catalog
-    shutil.copyfile("thredds_conf/catalog.xml", "/esg/content/thredds/catalog.xml-esgcet")
-
-    esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
-
-    # TDS customized applicationContext.xml file with ESGF authorizer
-    shutil.copyfile("thredds_conf/applicationContext.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml")
-
+def copy_jar_files():
     # TDS jars necessary to support ESGF security filters
     # some jars are retrieved from the ESGF repository
     # other jars are copied from the unpacked ORP or NM distributions
@@ -327,6 +358,56 @@ def setup_thredds():
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/postgresql-8.4-703.jdbc3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
+
+def setup_thredds():
+
+    if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
+        thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " ) or "no"
+        if thredds_install.lower() in ["no", "n"]:
+            return
+
+    print "\n*******************************"
+    print "Setting up Thredds"
+    print "******************************* \n"
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
+    thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.1", "thredds.war")
+    download_thredds_war(thredds_url)
+
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
+            zf.extractall()
+        os.remove("thredds.war")
+        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
+        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
+        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    add_tomcat_user()
+
+    esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+    shutil.copyfile("thredds_conf/thredds.xml", "{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+
+    get_webxml_file()
+
+    copy_public_directory()
+
+    # TDS configuration root
+    esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
+
+    # TDS memory configuration
+    shutil.copyfile("thredds_conf/threddsConfig.xml", "/esg/content/thredds/threddsConfig.xml")
+
+    update_mail_admin_address()
+
+    # ESGF root catalog
+    shutil.copyfile("thredds_conf/catalog.xml", "/esg/content/thredds/catalog.xml-esgcet")
+
+    esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
+
+    # TDS customized applicationContext.xml file with ESGF authorizer
+    shutil.copyfile("thredds_conf/applicationContext.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml")
+
+    copy_jar_files()
+    
     # TDS customized logging (uses DEBUG)
     shutil.copyfile("thredds_conf/log4j2.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
 
@@ -342,6 +423,8 @@ def setup_thredds():
     esg_functions.change_permissions_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     esgsetup_thredds()
+
+    verify_thredds_credentials()
 
     # cleanup
     # shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")

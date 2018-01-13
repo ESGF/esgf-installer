@@ -309,6 +309,11 @@ def done_remark():
 
 def setup_esgf_rpm_repo(esg_dist_url):
     '''Creates the esgf repository definition file'''
+
+    print "*******************************"
+    print "Setting up ESGF RPM repository"
+    print "******************************* \n"
+    
     with open("/etc/yum.repos.d/esgf.repo", "w") as esgf_repo:
         esgf_repo.write('[esgf]\n')
         esgf_repo.write('name=ESGF\n')
@@ -377,13 +382,6 @@ def main(node_type_list):
     install_log_info()
 
     esg_questionnaire.initial_setup_questionnaire()
-
-    #---------------------------------------
-    # Setup ESGF RPM repository
-    #---------------------------------------
-    print "*******************************"
-    print "Setting up ESGF RPM repository"
-    print "******************************* \n"
 
     # setup_esgf_rpm_repo(esg_dist_url)
 

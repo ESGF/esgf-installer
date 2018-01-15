@@ -12,7 +12,7 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def get_property(property_name, config_file=config["config_file"]):
+def get_property(property_name, config_file=config["config_file"], section_name="installer_properties"):
     '''
         Gets a single property from the config_file using ConfigParser
         arg 1 - the string that you wish to get the property of (and make a variable)
@@ -21,7 +21,7 @@ def get_property(property_name, config_file=config["config_file"]):
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
     parser.read(config_file)
     try:
-        return parser.get("installer_properties", property_name)
+        return parser.get(section_name, property_name)
     except ConfigParser.NoSectionError:
         logger.debug("could not find property %s", property_name)
     except ConfigParser.NoOptionError:

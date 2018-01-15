@@ -149,7 +149,7 @@ def create_password_hash(tomcat_user_password):
     print "password hash:",  password_hash["stdout"]
     return password_hash["stdout"].split(":")[1]
 
-def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=os.path.join(config["tomcat_conf_dir"], "tomcat-users.xml")):
+def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=config["tomcat_users_file"]):
     '''Adds a new user to the tomcat-users.xml file'''
     tree = etree.parse(tomcat_users_file)
     root = tree.getroot()
@@ -256,64 +256,40 @@ def copy_public_directory():
         tomcat_group = esg_functions.get_group_id("tomcat")
         esg_functions.change_permissions_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
 
-#TODO: implement
 def verify_thredds_credentials():
-    # verify_thredds_credentials() {
-    #     local ret=0
-    #     local thredds_esg_ini_file=${ESGINI:-${publisher_home_dir}/${publisher_config_file}}
-    #     local tomcat_username
-    #     local tomcat_password_hash
+    thredds_ini_file = "/esg/config/esgcet/esg.ini"
+
+    print "Inspecting tomcat... "
+    tree = etree.parse(config["tomcat_users_file"])
+    root = tree.getroot()
+    user_element = root.find("user")
+    tomcat_username = user_element.get("username")
+    tomcat_password_hash = user_element.get("password")
+
+    print "Inspecting publisher... "
+    # import ConfigParser
+    # parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+    # parser.read(config_file)
     #
-    #     echo "Inspecting tomcat... "
-    #     read tomcat_username tomcat_password_hash < <(echo $(sed -n 's/.*username=\"\([^ ]*\)\"[ ]*password=\"\([a-zA-Z0-9\$]*\)\".*/\1 \2/p' ${tomcat_users_file}))
-    #
-    #     echo -n "Inspecting publisher... "
-    #     local thredds_username=$(sed -n 's@^[^#]*[ ]*thredds_username[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n ":" || (echo -n "x" && ((ret++)) )
-    #     local thredds_password=$(sed -n 's@^[^#]*[ ]*thredds_password[ ]*=[ ]*\(.*\)$@\1@p' ${thredds_esg_ini_file}) && echo -n "-" || (echo -n "x" && ((ret++)) )
-    #     local thredds_password_hash=$($tomcat_install_dir/bin/digest.sh -a SHA ${thredds_password} | cut -d ":" -f 2) && echo ")" || (echo -n "x" && ((ret++)) )
-    #
-    #     echo -n "Checking username... "
-    #     echo -n "${tomcat_username} = ${thredds_username} "
-    #     if [ "${tomcat_username}" = "${thredds_username}" ]; then
-    #         [OK]
-    #     else
-    #         [FAIL]
-    #         ((ret++))
-    #     fi
-    #
-    #     echo -n "Checking password... "
-    #     echo -n "${tomcat_password_hash} = ${thredds_password_hash} "
-    #     if [ "${tomcat_password_hash}" = "${thredds_password_hash}" ]; then
-    #         [OK]
-    #     else
-    #         [FAIL]
-    #         ((ret++))
-    #     fi
-    #     ((ret == 0)) && echo "Verified" && return 0
-    #
-    #     echo
-    #     echo "Sorry, your credentials are not valid..."
-    #
-    #     local answer="N"
-    #     read -e -p "Would you like to reset the app server's credentials accordingly? [y/N]: " doreset
-    #     [ -n "${doreset}" ] && answer=$(echo ${doreset} | tr 'a-z' 'A-Z')
-    #
-    #     local security_admin_password=""
-    #     [ -e "${esgf_secret_file}" ] && security_admin_password=$(cat ${esgf_secret_file} 2> /dev/null) || (echo "error: cannot find passwd file" && return 1)
-    #     [ -z "${security_admin_password}" ] && echo "node admin password not found" && return 1
-    #
-    #     if [ "${answer}" = "Y" ]; then
-    #         echo -n "Editing files accordingly... "
-    #         #edit publisher
-    #         sed -i 's#^[ ]*\(thredds_username[ ]*=[ ]*\).*$#\1'${tomcat_username}'#' ${thredds_esg_ini_file} && echo -n ":" || (echo -n "x" && ((ret++)) )
-    #         sed -i 's#^[ ]*\(thredds_password[ ]*=[ ]*\).*$#\1'${security_admin_password}'#' ${thredds_esg_ini_file} && echo -n "-" || (echo -n "x" && ((ret++)) )
-    #         #edit tomcat-users.xml
-    #         sed -i 's#'${tomcat_password_hash}'#'$($tomcat_install_dir/bin/digest.sh -a SHA ${security_admin_password} | cut -d ":" -f 2)'#' ${tomcat_users_file} && echo ")" || (echo "x" && ((ret++)) )
-    #     fi
-    #     echo
-    #     return $ret
-    # }
-    pass
+    # section1 = config['DEFAULT']
+    print "Inspecting publisher... "
+    thredds_username = esg_property_manager.get_property("thredds_username", config_file=thredds_ini_file, section_name="DEFAULT")
+    thredds_password = esg_property_manager.get_property("thredds_password", config_file=thredds_ini_file, section_name="DEFAULT")
+    thredds_password_hash = create_password_hash(thredds_password)
+
+    print "Checking username... "
+    if tomcat_username != thredds_username:
+        print "The user_name property in {tomcat_users_file} doesn't match the user_name in {thredds_ini_file}".format(tomcat_users_file=config["tomcat_users_file"], thredds_ini_file=thredds_ini_file)
+        raise Exception
+        # sys.exit(1)
+
+    print "Checking password... "
+    if tomcat_password_hash != thredds_password_hash:
+        print "The password property in {tomcat_users_file} doesn't match the password in {thredds_ini_file}".format(tomcat_users_file=config["tomcat_users_file"], thredds_ini_file=thredds_ini_file)
+        raise Exception
+
+    print "Verified Thredds crendentials"
+    return True
 
 def copy_jar_files():
     # TDS jars necessary to support ESGF security filters
@@ -407,7 +383,7 @@ def setup_thredds():
     shutil.copyfile("thredds_conf/applicationContext.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml")
 
     copy_jar_files()
-    
+
     # TDS customized logging (uses DEBUG)
     shutil.copyfile("thredds_conf/log4j2.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
 

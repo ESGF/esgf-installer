@@ -29,6 +29,22 @@ logger = esg_logging_manager.create_rotating_log(__name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+def setup_esg_config_permissions():
+    '''Set permissions on /esg directory and subdirectories'''
+    # echo "set permissions"
+    # chmod 644 /esg/config/*
+    # chown root:tomcat /esg/config/.esg*
+    # chmod 640 /esg/config/.esg*
+    #
+    # chown -R tomcat:tomcat /esg/config/tomcat
+    # chmod 755 /esg/config/tomcat
+    # chmod 600 /esg/config/tomcat/*
+    #
+    # chmod 755 /esg/config/esgcet
+    # chmod 644 /esg/config/esgcet/*
+    # chmod 640 /esg/config/esgcet/esg.ini
+    pass
+
 
 def download_orp_war(orp_url):
 
@@ -334,10 +350,20 @@ def copy_jar_files():
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/postgresql-8.4-703.jdbc3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
-def dowload_thredds_xml():
+def download_thredds_xml():
     '''Download the thredds.xml file from the distribution mirror'''
     thredds_xml_url = "https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-thredds.xml"
     esg_functions.download_update("{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]), thredds_xml_url)
+
+def download_thredds_config_xml():
+    '''Download the threddsConfig.xml file from the distribution mirror'''
+    thredds_config_url = "https://aims1.llnl.gov/esgf/dist/thredds/threddsConfig.xml.tmpl"
+    esg_functions.download_update("/esg/content/thredds/threddsConfig.xml", thredds_config_url)
+
+def download_application_context():
+    '''Download the applicationContext.xml file from the distribution mirror'''
+    application_context_url = "https://aims1.llnl.gov/esgf/dist/thredds/applicationContext.xml"
+    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml", application_context_url)
 
 def setup_thredds():
 
@@ -364,28 +390,20 @@ def setup_thredds():
     add_tomcat_user()
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
-    dowload_thredds_xml()
-
+    download_thredds_xml()
     get_webxml_file()
-
     copy_public_directory()
-
     # TDS configuration root
     esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
-
     # TDS memory configuration
-    shutil.copyfile("thredds_conf/threddsConfig.xml", "/esg/content/thredds/threddsConfig.xml")
-
+    download_thredds_config_xml()
     update_mail_admin_address()
 
     # ESGF root catalog
     shutil.copyfile("thredds_conf/catalog.xml", "/esg/content/thredds/catalog.xml-esgcet")
-
     esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
-
     # TDS customized applicationContext.xml file with ESGF authorizer
-    shutil.copyfile("thredds_conf/applicationContext.xml", "/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml")
-
+    download_application_context()
     copy_jar_files()
 
     # TDS customized logging (uses DEBUG)
@@ -780,6 +798,7 @@ def main():
     # setup_node_manager_old()
     setup_thredds()
     setup_dashboard()
+    setup_esg_config_permissions()
 
 
 if __name__ == '__main__':

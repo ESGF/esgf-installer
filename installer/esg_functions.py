@@ -20,7 +20,7 @@ import grp
 import getpass
 import netifaces
 import getpass
-from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
+from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError, SubprocessError
 from time import sleep
 from distutils.spawn import find_executable
 from clint.textui import progress
@@ -517,7 +517,9 @@ def stream_subprocess_output(command_string):
                 print line,
         # wait for the subprocess to exit
         process.wait()
-        print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
+        if process.returncode != "1" or process.returncode !=1:
+            print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
+            raise SubprocessError
     except (OSError, ValueError), error:
         # logger.exception("Could not stream subprocess output")
         print "Could not stream subprocess output"

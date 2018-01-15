@@ -334,6 +334,10 @@ def copy_jar_files():
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/postgresql-8.4-703.jdbc3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
+def dowload_thredds_xml():
+    '''Download the thredds.xml file from the distribution mirror'''
+    thredds_xml_url = "https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-thredds.xml"
+    esg_functions.download_update("{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]), thredds_xml_url)
 
 def setup_thredds():
 
@@ -360,7 +364,7 @@ def setup_thredds():
     add_tomcat_user()
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
-    shutil.copyfile("thredds_conf/thredds.xml", "{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+    dowload_thredds_xml()
 
     get_webxml_file()
 

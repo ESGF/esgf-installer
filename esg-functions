@@ -666,7 +666,7 @@ stop_tomcat() {
 
 #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
 check_postgress_process() {
-    /etc/init.d/postgresql status
+    service postgresql status
 }
 
 check_esgf_httpd_process() {

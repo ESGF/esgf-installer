@@ -706,7 +706,7 @@ start_postgress() {
     _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
     check_postgress_process && return 1
     echo "Starting Postgress..."
-	/etc/init.d/postgresql start
+	service postgresql start
     check_shmmax
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
@@ -718,7 +718,7 @@ stop_postgress() {
     _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
     check_postgress_process
     [ $? != 0 ] && return 1
-	/etc/init.d/postgresql stop
+	service postgresql stop
     check_shmmax
 	/bin/ps -elf | grep postgres | grep -v grep
     return 0
@@ -1698,7 +1698,7 @@ setup_apache_frontend() {
 		fi
 		hn=${esgf_host:-`hostname -f`}
 		echo -e "$hn\ny" >answers
-		/etc/init.d/httpd stop >/dev/null;
+		service httpd stop >/dev/null;
 		#/usr/sbin/apachectl stop > /dev/null;
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
@@ -1721,7 +1721,7 @@ setup_apache_frontend() {
 		done
 		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
-		/etc/init.d/esgf-httpd start
+		service esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
     else
 
@@ -5454,9 +5454,9 @@ start() {
     echo "$(echo_strong "starting services...") ($sel)"
     run_startup_hooks
 
-    /etc/init.d/ntpd status
+    service ntpd status
     if [ $? != 0 ]; then
-        /etc/init.d/ntpd start
+        service ntpd start
     fi
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
@@ -5470,10 +5470,10 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-    /etc/init.d/esgf-httpd status
+    service esgf-httpd status
 	#/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		/etc/init.d/esgf-httpd start
+		service esgf-httpd start
 		#echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -5495,7 +5495,7 @@ stop() {
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
-	/etc/init.d/esgf-httpd stop
+	service esgf-httpd stop
 
 
 

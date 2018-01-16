@@ -3,6 +3,7 @@ import re
 import socket
 import tld
 import urlparse
+import logging
 import getpass
 from esg_exceptions import UnverifiedScriptError
 from distutils.spawn import find_executable
@@ -16,7 +17,8 @@ import yaml
 import semver
 import readline
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+# logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger(__name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

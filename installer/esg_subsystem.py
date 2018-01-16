@@ -14,6 +14,7 @@ import requests
 import esg_functions
 import esg_bash2py
 import esg_property_manager
+from distutils.dir_util import copy_tree
 import yaml
 import getpass
 from lxml import etree
@@ -264,7 +265,7 @@ def copy_public_directory():
         esg_bash2py.mkdir_p(content_dir)
         try:
             public_dir = "{tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public".format(tomcat_install_dir=config["tomcat_install_dir"])
-            shutil.copy(public_dir, content_dir)
+            copy_tree(public_dir, content_dir)
         except OSError, error:
             esg_functions.exit_with_error(error)
 

@@ -517,7 +517,7 @@ def stream_subprocess_output(command_string):
                 print line,
         # wait for the subprocess to exit
         process.wait()
-        if process.returncode != "1" or process.returncode !=1:
+        if process.returncode != 1:
             print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
             raise SubprocessError
     except (OSError, ValueError), error:

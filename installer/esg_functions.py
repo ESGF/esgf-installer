@@ -915,8 +915,7 @@ def extract_tarball(tarball_name, dest_dir="."):
         exit_with_error(error)
 
 def change_ownership_recursive(directory_path, uid=None, gid=None):
-    '''Recursive changes ownership on a directory and its subdirectories; Mimics chown -R'''
-    #recursively change permissions
+    '''Recursively changes ownership on a directory and its subdirectories; Mimics chown -R'''
     for root, dirs, files in os.walk(readlinkf(directory_path)):
         for directory in dirs:
             os.chown(os.path.join(root, directory), uid, gid)
@@ -926,6 +925,14 @@ def change_ownership_recursive(directory_path, uid=None, gid=None):
                 os.chown(file_path, uid, gid)
             except OSError:
                 logger.exception("Could not change permissions on : %s", file_path)
+
+def change_permissions_recursive(path, mode):
+    '''Recursively changes permissions on a directory and its subdirectories; Mimics chmod -R'''
+    for root, dirs, files in os.walk(path, topdown=False):
+        for dir in [os.path.join(root,d) for d in dirs]:
+            os.chmod(dir, mode)
+        for file in [os.path.join(root, f) for f in files]:
+            os.chmod(file, mode)
 
 def replace_string_in_file(file_name, original_string, new_string):
     '''Goes into a file and replaces string'''

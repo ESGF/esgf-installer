@@ -914,8 +914,8 @@ def extract_tarball(tarball_name, dest_dir="."):
         logger.exception("Could not extract the tarfile: %s", tarball_name)
         exit_with_error(error)
 
-def change_permissions_recursive(directory_path, uid=None, gid=None):
-    '''Recursive changes permissions on a directory and its subdirectories'''
+def change_ownership_recursive(directory_path, uid=None, gid=None):
+    '''Recursive changes ownership on a directory and its subdirectories; Mimics chown -R'''
     #recursively change permissions
     for root, dirs, files in os.walk(readlinkf(directory_path)):
         for directory in dirs:

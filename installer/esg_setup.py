@@ -237,7 +237,7 @@ def setup_java():
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
         #recursively change permissions
-        esg_functions.change_permissions_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
+        esg_functions.change_ownership_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
     set_default_java()
     print check_java_version("java")

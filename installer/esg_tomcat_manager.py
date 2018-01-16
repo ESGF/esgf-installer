@@ -129,7 +129,7 @@ def create_tomcat_user():
     tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
     tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
     tomcat_group_id = grp.getgrnam("tomcat").gr_gid
-    esg_functions.change_permissions_recursive(tomcat_directory, tomcat_user_id, tomcat_group_id)
+    esg_functions.change_ownership_recursive(tomcat_directory, tomcat_user_id, tomcat_group_id)
 
     os.chmod("/usr/local/tomcat/webapps", 0775)
 

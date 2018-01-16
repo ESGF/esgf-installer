@@ -88,7 +88,7 @@ def setup_orp():
         os.remove("esg-orp.war")
         TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # properties to read the Tomcat keystore, used to sign the authentication cookie
     # these values are the same for all ESGF nodes
@@ -241,7 +241,7 @@ def get_webxml_file():
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
 
-    esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 def update_mail_admin_address():
     mail_admin_address = esg_property_manager.get_property("mail_admin_address")
@@ -271,7 +271,7 @@ def copy_public_directory():
 
         tomcat_user = esg_functions.get_user_id("tomcat")
         tomcat_group = esg_functions.get_group_id("tomcat")
-        esg_functions.change_permissions_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
+        esg_functions.change_ownership_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
 
 def verify_thredds_credentials():
     thredds_ini_file = "/esg/config/esgcet/esg.ini"
@@ -395,7 +395,7 @@ def setup_thredds():
         os.remove("thredds.war")
         TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     download_tomcat_users_xml()
     add_tomcat_user()
@@ -426,10 +426,10 @@ def setup_thredds():
     # change ownership of content directory
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-    esg_functions.change_permissions_recursive("/esg/content/thredds/", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    esg_functions.change_ownership_recursive("/esg/content/thredds/", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # change ownership of source directory
-    esg_functions.change_permissions_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     esgsetup_thredds()
 
@@ -473,7 +473,7 @@ def setup_dashboard():
         os.remove("esgf-stats-api.war")
         TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esgf-stats-api", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esgf-stats-api", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     # execute dashboard installation script (without the postgres schema)
     run_dashboard_script()
@@ -483,7 +483,7 @@ def setup_dashboard():
     esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard")
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
     DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
-    esg_functions.change_permissions_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
+    esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
     os.chmod("/var/run", stat.S_IWRITE)
     os.chmod("/var/run", stat.S_IWGRP)
     os.chmod("/var/run", stat.S_IWOTH)
@@ -642,9 +642,9 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
 
     SOLR_USER_ID = pwd.getpwnam("solr").pw_uid
     SOLR_GROUP_ID = grp.getgrnam("solr").gr_gid
-    esg_functions.change_permissions_recursive("/usr/local/solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), SOLR_USER_ID, SOLR_GROUP_ID)
-    esg_functions.change_permissions_recursive(SOLR_HOME, SOLR_USER_ID, SOLR_GROUP_ID)
-    esg_functions.change_permissions_recursive(SOLR_DATA_DIR, SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_ownership_recursive("/usr/local/solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_ownership_recursive(SOLR_HOME, SOLR_USER_ID, SOLR_GROUP_ID)
+    esg_functions.change_ownership_recursive(SOLR_DATA_DIR, SOLR_USER_ID, SOLR_GROUP_ID)
 
     #
     #Copy shard files
@@ -696,7 +696,7 @@ def setup_esg_search():
 
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-    esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/esg-search", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-search", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 #TODO: This is duplicating checkout_publisher_branch in esg_publisher; Should be generalized
 def checkout_cog_branch(cog_path, branch_name):
@@ -747,12 +747,12 @@ def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     # change ownership of COG_CONFIG_DIR/site_media
     apache_user = esg_functions.get_user_id("apache")
     apache_group = esg_functions.get_group_id("apache")
-    esg_functions.change_permissions_recursive("{COG_DIR}".format(COG_DIR=COG_DIR), apache_user, apache_group)
-    esg_functions.change_permissions_recursive("{COG_CONFIG_DIR}".format(COG_CONFIG_DIR=COG_CONFIG_DIR), apache_user, apache_group)
+    esg_functions.change_ownership_recursive("{COG_DIR}".format(COG_DIR=COG_DIR), apache_user, apache_group)
+    esg_functions.change_ownership_recursive("{COG_CONFIG_DIR}".format(COG_CONFIG_DIR=COG_CONFIG_DIR), apache_user, apache_group)
 
     # # create location where Python eggs can be unpacked by user 'apache'
     PYTHON_EGG_CACHE_DIR = "/var/www/.python-eggs"
-    esg_functions.change_permissions_recursive("{PYTHON_EGG_CACHE_DIR}".format(PYTHON_EGG_CACHE_DIR=PYTHON_EGG_CACHE_DIR), apache_user, apache_group)
+    esg_functions.change_ownership_recursive("{PYTHON_EGG_CACHE_DIR}".format(PYTHON_EGG_CACHE_DIR=PYTHON_EGG_CACHE_DIR), apache_user, apache_group)
 
 def setup_cog(COG_DIR="/usr/local/cog"):
     # choose CoG version

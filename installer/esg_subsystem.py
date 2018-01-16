@@ -366,6 +366,15 @@ def download_application_context():
     application_context_url = "https://aims1.llnl.gov/esgf/dist/thredds/applicationContext.xml"
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml", application_context_url)
 
+def download_tomcat_users_xml():
+    '''Download the tomcat-users.xml template from the distribution mirror'''
+    tomcat_users_xml_url = "https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-users.xml"
+    tomcat_users_xml_local_path = "{tomcat_conf_dir}/tomcat-users.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"])
+    esg_functions.download_update(tomcat_users_xml_local_path, tomcat_users_xml_url)
+    tomcat_user_id = esg_functions.get_user_id("tomcat")
+    tomcat_group_id = esg_functions.get_group_id("tomcat")
+    os.chown(tomcat_users_xml_local_path, tomcat_user_id, tomcat_group_id)
+
 def setup_thredds():
 
     if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
@@ -388,6 +397,7 @@ def setup_thredds():
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_permissions_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
+    download_tomcat_users_xml()
     add_tomcat_user()
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))

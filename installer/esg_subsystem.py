@@ -32,20 +32,24 @@ with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as co
 
 def setup_esg_config_permissions():
     '''Set permissions on /esg directory and subdirectories'''
-    # echo "set permissions"
-    # chmod 644 /esg/config/*
-    # chown root:tomcat /esg/config/.esg*
-    # chmod 640 /esg/config/.esg*
-    #
-    # chown -R tomcat:tomcat /esg/config/tomcat
-    # chmod 755 /esg/config/tomcat
-    # chmod 600 /esg/config/tomcat/*
-    #
-    # chmod 755 /esg/config/esgcet
-    # chmod 644 /esg/config/esgcet/*
-    # chmod 640 /esg/config/esgcet/esg.ini
-    pass
+    esg_functions.change_permissions_recursive("/esg/config", 0644)
 
+    root_id = esg_functions.get_user_id("root")
+    tomcat_group_id = esg_functions.get_user_id("tomcat")
+    for file_name in  glob.glob("/esg/config/.esg*"):
+        os.chown(file_name, root_id, tomcat_group_id)
+        os.chmod(file_name, 0640)
+
+    tomcat_user_id = esg_functions.get_user_id("tomcat")
+    esg_functions.change_ownership_recursive("/esg/config/tomcat", tomcat_user_id, tomcat_group_id)
+    os.chmod("/esg/config/tomcat", 0755)
+    for file_name in  glob.glob("/esg/config/tomcat/*"):
+        os.chmod(file_name, 0600)
+
+    os.chmod("/esg/config/esgcet", 0755)
+    for file_name in  glob.glob("/esg/config/esgcet/*"):
+        os.chmod(file_name, 0644)
+    os.chmod("/esg/config/esgcet/esg.ini", 640)
 
 def download_orp_war(orp_url):
 

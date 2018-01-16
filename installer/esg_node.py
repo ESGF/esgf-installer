@@ -244,6 +244,31 @@ def install_log_info():
     if node_types["COMPUTE"]:
         logger.info("(compute node type selected)")
 
+#TODO: implement
+def show_summary():
+    #####
+    # Show user summary and environment variables that have been set
+    #####
+    # show_summary() {
+    #     if [ $((show_summary_latch == 0)) = 1 ]; then return 0; fi
+    #     echo
+    #     echo "-------------------"
+    #     echo "  esgf node run summary: "
+    #     echo "-------------------"
+    #     echo "The following environment variables were used during last full install"
+    #     echo "They are written to the file ${envfile}"
+    #     echo "Please source this file when using these tools"
+    #     echo
+    #     cat ${envfile}
+    #     echo "-------------------"
+    #     echo "Installation Log:"
+    #     echo
+    #     cat ${install_manifest}
+    #     echo "-------------------"
+    #     echo
+    #     return 0
+    # }
+    pass
 
 def system_component_installation():
     #---------------------------------------
@@ -302,6 +327,8 @@ def done_remark():
         with the body: "subscribe esgf-node-admins"
         -------------------------------------------------------
 '''
+
+    show_summary()
 #
 #     #echo "(\"Test Project\" -> pcmdi.${esg_root_id}.${node_short_name}.test.mytest)"
 #     echo ""
@@ -313,7 +340,7 @@ def setup_esgf_rpm_repo(esg_dist_url):
     print "*******************************"
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
-    
+
     with open("/etc/yum.repos.d/esgf.repo", "w") as esgf_repo:
         esgf_repo.write('[esgf]\n')
         esgf_repo.write('name=ESGF\n')

@@ -67,6 +67,24 @@ def download_orp_war(orp_url):
                 f.write(chunk)
                 f.flush()
 
+def setup_providers_dropdown():
+    '''Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs'''
+    known_providers_url = "https://aims1.llnl.gov/esgf/dist/lists/esgf_known_providers.xml"
+    config_dir = os.path.join("{esg_root_dir}".format(esg_root_dir=config["esg_root_dir"]), "config")
+    known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir),"esgf_known_providers.xml")
+
+    # add /esg/config/ to common.loader in catalina.properties if not already present
+    edit_catalina_props_command = '''perl -p -i -e "s@^(common\.loader=.*)\$@\1,{config_dir}@ unless m{config_dir}" {tomcat_install_dir}/conf/catalina.properties'''.format(config_dir=config_dir, tomcat_install_dir=config["tomcat_install_dir"])
+    esg_functions.call_subprocess(edit_catalina_props_command)
+
+    esg_functions.download_update(known_providers_file, known_providers_url)
+
+    esg_property_manager.write_as_property("orp_provider_list", known_providers_file)
+
+    tomcat_user_id = esg_functions.get_user_id("tomcat")
+    tomcat_group_id = esg_functions.get_group_id("tomcat")
+    os.chown("/esg/config/esgf.properties", tomcat_user_id, tomcat_group_id)
+
 
 def setup_orp():
     '''Setup the ORP subsystem'''
@@ -98,6 +116,8 @@ def setup_orp():
     # properties to read the Tomcat keystore, used to sign the authentication cookie
     # these values are the same for all ESGF nodes
     shutil.copyfile("esgf_orp_conf/esg-orp.properties", "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")
+
+    setup_providers_dropdown()
 
 
 # ESGF OLD NODE MANAGER

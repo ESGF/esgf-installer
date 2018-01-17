@@ -246,7 +246,7 @@ def get_webxml_file():
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
 
-    esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 def update_mail_admin_address():
     mail_admin_address = esg_property_manager.get_property("mail_admin_address")
@@ -407,7 +407,9 @@ def setup_thredds():
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
     download_thredds_xml()
-    get_webxml_file()
+    # get_webxml_file()
+    shutil.copyfile("thredds_conf/web.xml", "/usr/local/tomcat/webapps/thredds/web.xml")
+    os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
     copy_public_directory()
     # TDS configuration root
     esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))

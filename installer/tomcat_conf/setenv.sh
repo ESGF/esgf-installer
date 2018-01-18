@@ -10,3 +10,4 @@ export JAVA_HOME="/usr/local/java"
 #export CATALINA_OPTS="-Xmx2048m -server -Xms1024m -XX:MaxPermSize=512m -Dsun.security.ssl.allowUnsafeRenegotiation=false -Djavax.net.ssl.trustStore='/esg/config/tomcat/esg-truststore.ts' -Djavax.net.ssl.trustStorePassword='changeit'"
 # IMPORTANT : when running on single host, Tomcat will be killed if it exceeds the memory limits
 export CATALINA_OPTS="-Xmx512m -server -Xms512m -XX:MaxPermSize=512m -Dsun.security.ssl.allowUnsafeRenegotiation=false -Djavax.net.ssl.trustStore='/esg/config/tomcat/esg-truststore.ts' -Djavax.net.ssl.trustStorePassword='changeit'"
+export CATALINA_PID="usr/local/tomcat/catalina.pid"

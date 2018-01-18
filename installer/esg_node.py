@@ -4,6 +4,8 @@ import sys
 import logging
 import socket
 import platform
+import shutil
+import stat
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
 from git import Repo
@@ -271,45 +273,45 @@ def show_summary():
     # }
     pass
 
-#TODO: implement; rename
-def setup_sensible_confs():
-    # 	#place for post-install configuration overrides, binary replacements etc
-    #
-    # 	#quick-fix for removing insecure commons-fileupload jar file
-    # 	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
-    # 		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
-    # 		cp ${tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/;
-    # 	fi
-    # 	#configuration overrides
-    # 	tmpservername='placeholder.fqdn';
-    # 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
-    # 	servername=$esgf_host;
-    # 	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
-    # 	sconffiles="esgf_ats.xml.tmpl esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
-    # 	for i in `echo $sconffiles`; do
-    # 		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
-    # 		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;
-    # 		if [ "$cksum" != "$ccksum" ]; then
-    # 			echo "Checksum did not tally for file $i. Giving up.";
-    # 			continue;
-    # 		fi
-    # 		if echo $i|grep tmpl >/dev/null; then
-    # 			fn=`echo $i|sed "s/\(.*\).tmpl/\1/"`;
-    # 		    curl -s --insecure ${esg_dist_url_root}/confs/$i|sed "s/\(.*\)$quotedtmpservername\(.*\)/\1$quotedservername\2/" >$esg_config_dir/$fn;
-    # 		else
-    # 			fn=$i;
-    # 		    curl -s --insecure ${esg_dist_url_root}/confs/$i >$esg_config_dir/$fn;
-    # 		fi
-    # 		chown apache:apache $esg_config_dir/$fn;
-    # 		chmod a+r $esg_config_dir/$fn;
-    #
-    # 	done
-    # 	chmod a+r $esg_config_dir/esgf_idp_static.xml
-    #
-    # }
-    pass
+def setup_whitelist_files(esg_dist_url_root):
+    '''Setups up whitelist XML files from the distribution mirror'''
 
-def system_component_installation():
+    #quick-fix for removing insecure commons-fileupload jar file
+    try:
+        if os.stat("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar").st_size != 0:
+            os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
+            shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
+    except OSError, error:
+        logger.exception(error)
+
+    conf_file_list = ["esgf_ats.xml.tmpl", "esgf_azs.xml.tmpl", "esgf_idp.xml.tmpl"]
+
+    apache_user_id = esg_functions.get_user_id("apache")
+    apache_group_id = esg_functions.get_group_id("apache")
+    for file_name in conf_file_list:
+        local_file_name = file_name.split(".tmpl")[0]
+        local_file_path = os.path.join(config["esg_config_dir"], local_file_name)
+        remote_file_url = "https://aims1.llnl.gov/esgf/dist/confs/{file_name}".format(file_name=file_name)
+
+        esg_functions.download_update(local_file_path, remote_file_url)
+
+        #replace placeholder.fqdn
+        tree = etree.parse(local_file_path)
+        #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
+        updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+        tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
+        tree.write(file_name)
+
+        os.chown(local_file_path, apache_user_id, apache_group_id)
+        current_mode = os.stat(local_file_path)
+        #add read permissions to all, i.e. chmod a+r
+        os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+        #TODO: Terrible original design; this file is unrelated to the function and shouldn't be modified here
+        current_mode = os.stat("/esg/config/esgf_idp_static.xml")
+        os.chmod("/esg/config/esgf_idp_static.xml", current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+def system_component_installation(esg_dist_url):
     #---------------------------------------
     # Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
@@ -338,7 +340,7 @@ def system_component_installation():
         esg_subsystem.setup_solr()
         esg_subsystem.setup_esg_search()
 
-    setup_sensible_confs()
+    setup_whitelist_files(esg_dist_url)
 
 
 def done_remark():
@@ -454,7 +456,7 @@ def main(node_type_list):
     # setup_esgf_rpm_repo(esg_dist_url)
 
     # install dependencies
-    system_component_installation()
+    system_component_installation(esg_dist_url)
     done_remark()
 
 

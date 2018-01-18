@@ -271,6 +271,44 @@ def show_summary():
     # }
     pass
 
+#TODO: implement; rename
+def setup_sensible_confs():
+    # 	#place for post-install configuration overrides, binary replacements etc
+    #
+    # 	#quick-fix for removing insecure commons-fileupload jar file
+    # 	if [ -s /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar ]; then
+    # 		rm -f /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar;
+    # 		cp ${tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar /usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/;
+    # 	fi
+    # 	#configuration overrides
+    # 	tmpservername='placeholder.fqdn';
+    # 	quotedtmpservername=`echo "$tmpservername" | sed 's/[./*?|]/\\\\&/g'`;
+    # 	servername=$esgf_host;
+    # 	quotedservername=`echo "$servername" | sed 's/[./*?|]/\\\\&/g'`;
+    # 	sconffiles="esgf_ats.xml.tmpl esgf_azs.xml.tmpl esgf_idp.xml.tmpl";
+    # 	for i in `echo $sconffiles`; do
+    # 		cksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i.md5|awk '{print $1}'`;
+    # 		ccksum=`curl -s --insecure ${esg_dist_url_root}/confs/$i|md5sum|awk '{print $1}'`;
+    # 		if [ "$cksum" != "$ccksum" ]; then
+    # 			echo "Checksum did not tally for file $i. Giving up.";
+    # 			continue;
+    # 		fi
+    # 		if echo $i|grep tmpl >/dev/null; then
+    # 			fn=`echo $i|sed "s/\(.*\).tmpl/\1/"`;
+    # 		    curl -s --insecure ${esg_dist_url_root}/confs/$i|sed "s/\(.*\)$quotedtmpservername\(.*\)/\1$quotedservername\2/" >$esg_config_dir/$fn;
+    # 		else
+    # 			fn=$i;
+    # 		    curl -s --insecure ${esg_dist_url_root}/confs/$i >$esg_config_dir/$fn;
+    # 		fi
+    # 		chown apache:apache $esg_config_dir/$fn;
+    # 		chmod a+r $esg_config_dir/$fn;
+    #
+    # 	done
+    # 	chmod a+r $esg_config_dir/esgf_idp_static.xml
+    #
+    # }
+    pass
+
 def system_component_installation():
     #---------------------------------------
     # Installation of basic system components.
@@ -299,6 +337,8 @@ def system_component_installation():
         esg_subsystem.setup_cog()
         esg_subsystem.setup_solr()
         esg_subsystem.setup_esg_search()
+
+    setup_sensible_confs()
 
 
 def done_remark():

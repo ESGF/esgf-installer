@@ -65,7 +65,7 @@
     </init-param>
     <init-param>
       <param-name>authenticationNotRequiredPatterns</param-name>
-      <param-value>"[^?]*/thredds/$","[^?]*catalog\.html;jsessionid=.*","[^?]*((/admin/)(.*)|(/remoteCatalogService\?.*)|(?&lt;=\.(html|xml|css|gif|png|jpg|pdf|asp))(\?.*)?)"</param-value> 
+      <param-value>"[^?]*/thredds/$","[^?]*catalog\.html;jsessionid=.*","[^?]*((/admin/)(.*)|(/remoteCatalogService\?.*)|(?&lt;=\.(html|xml|css|gif|png|jpg|pdf|asp))(\?.*)?)"</param-value>
       <!--  Alternatively, e.g.:
            <param-name>authenticationRequiredPatterns</param-name>
            <param-value>"[^?]*/fileServer/.*", "[^?]*/dodsC/[^?]*(?&lt;!\.html)(\?.*)?"</param-value>
@@ -77,7 +77,7 @@
     </init-param>
     <init-param>
       <param-name>openidRelyingPartyUrl</param-name>
-      <param-value>https://my.esgf.node/esg-orp/home.htm</param-value>
+      <param-value>https://esgf-dev2.llnl.gov/esg-orp/home.htm</param-value>
     </init-param>
     <init-param>
       <param-name>trustoreFile</param-name>
@@ -95,7 +95,7 @@
     <init-param>
       <!-- URL of an authentication service -->
       <param-name>authenticateUrl</param-name>
-      <param-value>https://my.esgf.node/esgf-auth/home/</param-value>
+      <param-value>https://esgf-dev2.llnl.gov/esgf-auth/home/</param-value>
     </init-param>
     <init-param>
       <!-- name of the html query parameter signalling a return-to URL for -->
@@ -144,7 +144,7 @@
     <init-param>
       <param-name>authorizationServiceUrl</param-name>
       <param-value>
-        https://my.esgf.node/esg-orp/saml/soap/secure/authorizationService.htm
+        https://esgf-dev2.llnl.gov/esg-orp/saml/soap/secure/authorizationService.htm
       </param-value>
     </init-param>
   </filter>
@@ -152,7 +152,7 @@
     <filter-name>authorizationFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
-  
+
   <!-- **************************************** -->
   <!-- web.xml entry for the esg node filter    -->
   <!-- Calls to through this filter are setup   -->
@@ -165,7 +165,7 @@
     <filter-class>esg.orp.app.RegistrationFilter</filter-class>
     <init-param>
       <param-name>registrationRelayUrl</param-name>
-      <param-value>https://my.esgf.node/esg-orp/registration-request.htm</param-value>
+      <param-value>https://esgf-dev2.llnl.gov/esg-orp/registration-request.htm</param-value>
     </init-param>
   </filter>
   <filter-mapping>

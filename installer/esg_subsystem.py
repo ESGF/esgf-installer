@@ -15,6 +15,7 @@ import glob
 import esg_functions
 import esg_bash2py
 import esg_property_manager
+import esg_tomcat_manager
 from distutils.dir_util import copy_tree
 import yaml
 import getpass
@@ -457,6 +458,8 @@ def setup_thredds():
 
     # change ownership of source directory
     esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    esg_tomcat_manager.restart_tomcat()
 
     esgsetup_thredds()
 

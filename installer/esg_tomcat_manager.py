@@ -10,6 +10,7 @@ import requests
 import errno
 import getpass
 import logging
+import sys
 from time import sleep
 import OpenSSL
 from lxml import etree
@@ -136,6 +137,7 @@ def create_tomcat_user():
     os.chmod("/usr/local/tomcat/webapps", 0775)
 
 def start_tomcat():
+    # TODO: check returncode
     print "\n*******************************"
     print "Attempting to start Tomcat"
     print "******************************* \n"
@@ -145,10 +147,15 @@ def stop_tomcat():
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
 
 def restart_tomcat():
+    print "\n*******************************"
+    print "Restarting Tomcat"
+    print "******************************* \n"
     stop_tomcat()
     print "Sleeping for 7 seconds to allow shutdown"
     sleep(7)
     start_tomcat()
+    print "Sleeping for 30 seconds to allow Tomcat restart"
+    sleep()
 
 def check_tomcat_status():
     #TODO: use process management module for check

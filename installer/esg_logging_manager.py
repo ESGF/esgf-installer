@@ -1,8 +1,16 @@
 import logging
 import coloredlogs
 from logging.handlers import RotatingFileHandler
+import os
 
-PATH = "esgf_log.out"
+logs_dir = os.path.join(os.path.dirname(__file__), 'logs')
+
+try:
+    os.makedirs(logs_dir)
+except OSError as exc:  # Python >2.5
+    pass
+
+PATH = os.path.join(logs_dir, "esgf_log.out")
 #----------------------------------------------------------------------
 logger = logging.getLogger('esgf_logger')
 logger.setLevel(logging.DEBUG)

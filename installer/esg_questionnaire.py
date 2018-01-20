@@ -10,14 +10,14 @@ from distutils.spawn import find_executable
 import esg_functions
 import esg_property_manager
 import esg_version_manager
-import esg_logging_manager
+import logging
 import esg_bash2py
 import esg_init
 import yaml
 import semver
 import readline
 
-# logger = logging.getLogger("esgf_logger" +"."+ __file__)
+# logger = logging.getLogger("esgf_logger" +"."+ __name__)
 logger = logging.getLogger(__name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:

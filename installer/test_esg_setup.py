@@ -5,12 +5,12 @@ import os
 import shutil
 import errno
 import esg_functions
-import esg_logging_manager
+import logging
 from distutils.spawn import find_executable
 import sys
 import esg_setup
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 
 class test_ESG_Setup(unittest.TestCase):

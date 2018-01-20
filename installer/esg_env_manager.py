@@ -3,9 +3,9 @@ import subprocess
 import logging
 from esg_init import EsgInit
 import esg_bash2py
-import esg_logging_manager
+import logging
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 config = EsgInit()
 

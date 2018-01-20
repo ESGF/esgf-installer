@@ -13,13 +13,13 @@ import esg_bash2py
 from time import sleep
 from distutils.spawn import find_executable
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-import esg_logging_manager
+import logging
 import semver
 import re
 import yaml
 import re
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

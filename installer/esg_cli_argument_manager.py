@@ -8,12 +8,12 @@ from time import sleep
 import esg_functions
 import esg_setup
 import esg_apache_manager
-import esg_logging_manager
+import logging
 import esg_bash2py
 from esg_exceptions import NoNodeTypeError
 import yaml
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

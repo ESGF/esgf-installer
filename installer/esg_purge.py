@@ -7,7 +7,7 @@ import errno
 import logging
 import esg_functions
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 def purge_postgres():
     '''Removes postgres installation via yum'''

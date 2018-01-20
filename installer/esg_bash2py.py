@@ -8,7 +8,7 @@ import subprocess
 from contextlib import contextmanager
 import logging
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 
 class Bash2PyException(Exception):

@@ -3,7 +3,7 @@
 import unittest
 import esg_tomcat_manager
 import esg_bash2py
-import esg_logging_manager
+import logging
 from distutils.spawn import find_executable
 import os
 import shutil
@@ -12,7 +12,7 @@ import yaml
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 class test_ESG_tomcat(unittest.TestCase):
 

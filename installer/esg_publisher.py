@@ -15,13 +15,13 @@ import esg_version_manager
 import esg_bash2py
 from time import sleep
 from git import Repo
-import esg_logging_manager
+import logging
 import esg_init
 import yaml
 import re
 from pip.operations import freeze
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

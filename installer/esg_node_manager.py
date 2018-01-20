@@ -24,10 +24,10 @@ import esg_bootstrap
 import esg_property_manager
 import esg_version_manager
 import esg_postgres
-import esg_logging_manager
+import logging
 from esg_tomcat_manager import stop_tomcat
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

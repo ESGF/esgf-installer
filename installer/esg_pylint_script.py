@@ -8,9 +8,9 @@ import time
 from pylint.lint import Run
 from contextlib import contextmanager
 import esg_bash2py
-import esg_logging_manager
+import logging
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 # create folder pylint_score_reports
 esg_bash2py.mkdir_p("pylint_score_reports")

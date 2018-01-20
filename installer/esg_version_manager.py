@@ -6,12 +6,12 @@ import subprocess
 import re
 import logging
 import esg_bash2py
-import esg_logging_manager
+import logging
 import esg_functions
 import yaml
 import semver
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

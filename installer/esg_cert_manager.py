@@ -14,12 +14,12 @@ import errno
 import jks
 import OpenSSL
 import esg_bash2py
-import esg_logging_manager
+import logging
 import esg_functions
 import esg_property_manager
 
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 consoleHandler = logging.StreamHandler()
 logger.addHandler(consoleHandler)

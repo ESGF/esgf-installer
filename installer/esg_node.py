@@ -21,13 +21,13 @@ import esg_mirror_manager
 import esg_apache_manager
 import esg_subsystem
 import esg_property_manager
-import esg_logging_manager
+import logging
 import esg_questionnaire
 import yaml
 import semver
 
 
-# logger = logging.getLogger("esgf_logger" +"."+ __file__)
+# logger = logging.getLogger("esgf_logger" +"."+ __name__)
 logger = logging.getLogger(__name__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:

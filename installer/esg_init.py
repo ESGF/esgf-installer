@@ -4,10 +4,10 @@ import pwd
 import platform
 import socket
 import multiprocessing
-import esg_logging_manager
+import logging
 import yaml
 
-logger = logging.getLogger("esgf_logger" +"."+ __file__)
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 def init():
     """ Return a list of all local variables."""

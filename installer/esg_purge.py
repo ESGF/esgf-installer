@@ -4,7 +4,7 @@ import glob
 import subprocess
 import datetime
 import errno
-import esg_logging_manager
+import logging
 import esg_functions
 
 logger = logging.getLogger("esgf_logger" +"."+ __file__)

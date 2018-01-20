@@ -23,7 +23,7 @@ from lxml import etree
 import zipfile
 from git import Repo
 from clint.textui import progress
-import esg_logging_manager
+import logging
 import re
 
 logger = logging.getLogger("esgf_logger" +"."+ __file__)

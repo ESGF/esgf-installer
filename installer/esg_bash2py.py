@@ -6,7 +6,7 @@ import errno
 import re
 import subprocess
 from contextlib import contextmanager
-import esg_logging_manager
+import logging
 
 logger = logging.getLogger("esgf_logger" +"."+ __file__)
 

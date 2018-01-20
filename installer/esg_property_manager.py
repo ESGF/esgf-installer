@@ -4,7 +4,7 @@ Property reading and writing...
 import os
 import re
 import yaml
-import esg_logging_manager
+import logging
 import ConfigParser
 
 logger = logging.getLogger("esgf_logger" +"."+ __file__)

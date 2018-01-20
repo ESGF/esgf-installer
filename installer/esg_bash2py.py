@@ -8,7 +8,7 @@ import subprocess
 from contextlib import contextmanager
 import esg_logging_manager
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 
 class Bash2PyException(Exception):

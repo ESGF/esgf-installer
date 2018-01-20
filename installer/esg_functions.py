@@ -30,9 +30,7 @@ import esg_property_manager
 import esg_logging_manager
 
 
-# logger = esg_logging_manager.create_rotating_log(__name__)
-logger = logging.getLogger("esgf_logger")
-print "esg_functions logger:", logger
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

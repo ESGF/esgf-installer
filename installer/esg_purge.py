@@ -7,7 +7,7 @@ import errno
 import esg_logging_manager
 import esg_functions
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 def purge_postgres():
     '''Removes postgres installation via yum'''

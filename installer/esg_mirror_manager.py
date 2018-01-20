@@ -10,7 +10,7 @@ from collections import OrderedDict
 import esg_logging_manager
 import yaml
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

@@ -7,7 +7,7 @@ import multiprocessing
 import esg_logging_manager
 import yaml
 
-LOGGER = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 def init():
     """ Return a list of all local variables."""

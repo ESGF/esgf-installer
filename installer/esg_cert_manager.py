@@ -19,7 +19,7 @@ import esg_functions
 import esg_property_manager
 
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 consoleHandler = logging.StreamHandler()
 logger.addHandler(consoleHandler)

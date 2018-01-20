@@ -5,7 +5,7 @@ from esg_init import EsgInit
 import esg_bash2py
 import esg_logging_manager
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 config = EsgInit()
 

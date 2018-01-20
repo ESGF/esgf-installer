@@ -10,7 +10,7 @@ from distutils.spawn import find_executable
 import sys
 import esg_setup
 
-logger = esg_logging_manager.create_rotating_log(__name__)
+logger = logging.getLogger("esgf_logger" +"."+ __file__)
 
 
 class test_ESG_Setup(unittest.TestCase):

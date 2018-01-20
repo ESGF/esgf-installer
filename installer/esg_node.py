@@ -9,6 +9,7 @@ import stat
 from esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
 from git import Repo
+import esg_logging_manager
 import esg_functions
 import esg_bash2py
 import esg_setup
@@ -23,7 +24,6 @@ import esg_subsystem
 import esg_property_manager
 import logging
 import esg_questionnaire
-import esg_logging_manager
 import yaml
 import semver
 

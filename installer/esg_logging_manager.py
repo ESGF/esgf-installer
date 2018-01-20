@@ -15,31 +15,31 @@ PATH = os.path.join(logs_dir, "esgf_log.out")
 logger = logging.getLogger('esgf_logger')
 logger.setLevel(logging.DEBUG)
 
-# add the handlers to the logger
-if not len(logger.handlers):
-    # create file handler which logs even debug messages
-    # add a rotating handler
-    fh = RotatingFileHandler(PATH, maxBytes=10*1024*1024,
-                                  backupCount=5)
-    # fh = logging.FileHandler(PATH)
-    fh.setLevel(logging.DEBUG)
+print logger.handlers
 
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+# add a rotating handler
+fh = RotatingFileHandler(PATH, maxBytes=10*1024*1024,
+                              backupCount=5)
+# fh = logging.FileHandler(PATH)
+fh.setLevel(logging.DEBUG)
 
-    # create formatter
-    formatter = logging.Formatter("%(levelname)s - %(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
 
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
+# create formatter
+formatter = logging.Formatter("%(levelname)s - %(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
 
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
 
-    #added coloredlogs
-    colored_log_file = open("esgf_colored_log.out", "w")
-    coloredlogs.install(level='DEBUG', logger=logger, stream=colored_log_file)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+#added coloredlogs
+colored_log_file = open("esgf_colored_log.out", "w")
+coloredlogs.install(level='DEBUG', logger=logger, stream=colored_log_file)
 
 def create_rotating_log(name, path=PATH):
     """

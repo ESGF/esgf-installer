@@ -32,9 +32,6 @@ import logging
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
-with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
-
 def exit_with_error(error=None):
         print(
             ""
@@ -958,3 +955,14 @@ def get_config_ip(interface_value):
     netifaces.ifaddresses(interface_value)
     ip = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
     return ip
+
+def main():
+    import esg_logging_manager
+
+    logger = logging.getLogger("esgf_logger" +"."+ __name__)
+    
+    with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
+        config = yaml.load(config_file)
+
+if __name__ == '__main__':
+    main()

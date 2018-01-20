@@ -29,6 +29,8 @@ import esg_bash2py
 import esg_property_manager
 import logging
 
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
+    config = yaml.load(config_file)
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -960,7 +962,7 @@ def main():
     import esg_logging_manager
 
     logger = logging.getLogger("esgf_logger" +"."+ __name__)
-    
+
     with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
         config = yaml.load(config_file)
 

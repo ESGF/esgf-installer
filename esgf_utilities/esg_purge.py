@@ -203,6 +203,11 @@ def purge_dashboard():
     pass
 
 def main():
+    from esgf_utilities import esg_logging_manager
+
+    esg_logging_manager.main()
+    logger = logging.getLogger("esgf_logger" + "." + __name__)
+
     purge_postgres()
     purge_tomcat()
     purge_thredds()

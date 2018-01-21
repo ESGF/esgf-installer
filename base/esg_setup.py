@@ -6,7 +6,7 @@ import logging
 import platform
 import netifaces
 import yaml
-from esgf_installer.esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
+from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_functions

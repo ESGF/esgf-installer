@@ -4,7 +4,7 @@ import glob
 import datetime
 import errno
 import logging
-from esgf_installer.esgf_utilities import esg_functions
+from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 

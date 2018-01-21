@@ -12,20 +12,20 @@ import semver
 from git import Repo
 from lxml import etree
 #This needs to be imported before other esg_* modules to properly setup the root logger
-from esgf_installer.esgf_utilities import esg_logging_manager
-from esgf_installer.esgf_utilities import esg_functions
-from esgf_installer.esgf_utilities import esg_bash2py
+from esgf_utilities import esg_logging_manager
+from esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
 from esgf_installer.base import esg_setup
 from esgf_installer.base import esg_postgres
 from esgf_installer.data_node import esg_publisher
-from esgf_installer.esgf_utilities import esg_cli_argument_manager
+from esgf_utilities import esg_cli_argument_manager
 from esgf_installer.base import esg_tomcat_manager
-from esgf_installer.esgf_utilities import esg_version_manager
+from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_mirror_manager
 from esgf_installer.base import esg_apache_manager
-from esgf_installer.esgf_utilities import esg_property_manager
-from esgf_installer.esgf_utilities import esg_questionnaire
-from esgf_installer.esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
+from esgf_utilities import esg_property_manager
+from esgf_utilities import esg_questionnaire
+from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)

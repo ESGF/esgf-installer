@@ -3,7 +3,7 @@ import os
 import subprocess
 import logging
 import yaml
-from esgf_installer.esgf_utilities import esg_bash2py
+from esgf_utilities import esg_bash2py
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 

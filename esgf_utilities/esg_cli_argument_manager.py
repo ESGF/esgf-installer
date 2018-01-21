@@ -6,11 +6,11 @@ import argparse
 import pprint
 from time import sleep
 import yaml
-from esgf_installer.esgf_utilities import esg_functions
+from esgf_utilities import esg_functions
 from esgf_installer.base import esg_setup
 from esgf_installer.base import esg_apache_manager
-from esgf_installer.esgf_utilities import esg_bash2py
-from esgf_installer.esgf_utilities.esg_exceptions import NoNodeTypeError
+from esgf_utilities import esg_bash2py
+from esgf_utilities.esg_exceptions import NoNodeTypeError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 

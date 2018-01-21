@@ -6,8 +6,8 @@ import re
 import logging
 import yaml
 import semver
-from esgf_installer.esgf_utilities import esg_bash2py
-from esgf_installer.esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 

@@ -1,0 +1,352 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>esg_init &#8212; esgf-installer 2.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for esg_init</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Initializes global configuration variables&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pwd</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">esg_logging_manager</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../index.html#esg_init.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; Return a list of all local variables.&quot;&quot;&quot;</span>
+    <span class="c1">#--------------</span>
+    <span class="c1"># User Defined / Settable (public)</span>
+    <span class="c1">#--------------</span>
+    <span class="n">install_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="s2">&quot;usr&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">)</span>
+    <span class="n">esg_root_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="s2">&quot;esg&quot;</span><span class="p">)</span>
+    <span class="n">esg_config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span>
+    <span class="n">esg_config_type_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;config_type&quot;</span><span class="p">)</span>
+    <span class="n">esgf_secret_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;.esgf_pass&quot;</span><span class="p">)</span>
+    <span class="n">pg_secret_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;.esg_pg_pass&quot;</span><span class="p">)</span>
+    <span class="n">pub_secret_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;.esg_pg_publisher_pass&quot;</span><span class="p">)</span>
+    <span class="n">ks_secret_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;.esg_keystore_pass&quot;</span><span class="p">)</span>
+    <span class="n">install_manifest</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;esgf-install-manifest&quot;</span><span class="p">)</span>
+
+    <span class="c1">#--------------------------------</span>
+    <span class="c1"># Internal esgf node code versions</span>
+    <span class="c1">#--------------------------------</span>
+    <span class="n">apache_frontend_version</span> <span class="o">=</span> <span class="s2">&quot;v1.02&quot;</span>
+    <span class="n">cdat_version</span> <span class="o">=</span> <span class="s2">&quot;2.2.0&quot;</span>
+    <span class="c1"># cdat_tag = &quot;1.5.1.esgf-v1.7.0&quot;</span>
+    <span class="n">esgcet_version</span> <span class="o">=</span> <span class="s2">&quot;3.0.1&quot;</span>
+    <span class="n">publisher_tag</span> <span class="o">=</span> <span class="s2">&quot;v3.0.1&quot;</span>
+    <span class="c1"># see esgf-node-manager project:</span>
+    <span class="n">esgf_node_manager_version</span> <span class="o">=</span> <span class="s2">&quot;0.7.16&quot;</span>
+    <span class="n">esgf_node_manager_db_version</span> <span class="o">=</span> <span class="s2">&quot;0.1.5&quot;</span>
+    <span class="c1"># see esgf-security project:</span>
+    <span class="n">esgf_security_version</span> <span class="o">=</span> <span class="s2">&quot;2.7.6&quot;</span>
+    <span class="n">esgf_security_db_version</span> <span class="o">=</span> <span class="s2">&quot;0.1.5&quot;</span>
+    <span class="c1"># see esg-orp project:</span>
+    <span class="n">esg_orp_version</span> <span class="o">=</span> <span class="s2">&quot;2.8.10&quot;</span>
+    <span class="c1"># see esgf-idp project:</span>
+    <span class="n">esgf_idp_version</span> <span class="o">=</span> <span class="s2">&quot;2.7.2&quot;</span>
+    <span class="c1"># see esg-search project:</span>
+    <span class="n">esg_search_version</span> <span class="o">=</span> <span class="s2">&quot;4.8.4&quot;</span>
+    <span class="c1"># see esgf-web-fe project:</span>
+    <span class="n">esgf_web_fe_version</span> <span class="o">=</span> <span class="s2">&quot;2.6.5&quot;</span>
+    <span class="c1"># see esgf-dashboard project:</span>
+    <span class="n">esgf_dashboard_version</span> <span class="o">=</span> <span class="s2">&quot;1.3.18&quot;</span>
+    <span class="n">esgf_dashboard_db_version</span> <span class="o">=</span> <span class="s2">&quot;0.01&quot;</span>
+    <span class="c1"># see esgf-desktop project:</span>
+    <span class="n">esgf_desktop_version</span> <span class="o">=</span> <span class="s2">&quot;0.0.20&quot;</span>
+
+    <span class="c1">#--------------------------------</span>
+    <span class="c1"># External programs&#39; versions</span>
+    <span class="c1">#--------------------------------</span>
+    <span class="n">openssl_version</span> <span class="o">=</span> <span class="s2">&quot;0.9.8r&quot;</span>
+    <span class="n">openssl_min_version</span> <span class="o">=</span> <span class="s2">&quot;0.9.8e&quot;</span>
+    <span class="n">openssl_max_version</span> <span class="o">=</span> <span class="s2">&quot;0.9.9z&quot;</span>
+    <span class="n">java_version</span> <span class="o">=</span> <span class="s2">&quot;1.8.0_112&quot;</span>
+    <span class="n">java_min_version</span> <span class="o">=</span> <span class="s2">&quot;1.8.0_112&quot;</span>
+    <span class="n">ant_version</span> <span class="o">=</span> <span class="s2">&quot;1.9.1&quot;</span>
+    <span class="n">ant_min_version</span> <span class="o">=</span> <span class="s2">&quot;1.9.1&quot;</span>
+    <span class="n">postgress_version</span> <span class="o">=</span> <span class="s2">&quot;8.4.20&quot;</span>
+    <span class="n">postgress_min_version</span> <span class="o">=</span> <span class="s2">&quot;8.4.20&quot;</span>
+    <span class="n">tomcat_version</span> <span class="o">=</span> <span class="s2">&quot;8.5.9&quot;</span>
+    <span class="n">tomcat_min_version</span> <span class="o">=</span> <span class="s2">&quot;8.5.9&quot;</span>
+    <span class="n">tds_version</span> <span class="o">=</span> <span class="s2">&quot;5.0.0&quot;</span>
+    <span class="n">tds_min_version</span> <span class="o">=</span> <span class="s2">&quot;5.0.0&quot;</span>
+    <span class="n">python_version</span> <span class="o">=</span> <span class="s2">&quot;2.7&quot;</span>
+
+    <span class="c1">#--------------------------------</span>
+    <span class="c1"># Script vars (~external)</span>
+    <span class="c1">#--------------------------------</span>
+    <span class="n">openssl_install_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;openssl&quot;</span><span class="p">)</span>
+    <span class="n">postgress_install_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="s2">&quot;var&quot;</span><span class="p">,</span> <span class="s2">&quot;lib&quot;</span><span class="p">,</span> <span class="s2">&quot;pgsql&quot;</span><span class="p">)</span>
+    <span class="n">postgress_bin_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="s2">&quot;usr&quot;</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">)</span>
+    <span class="n">postgress_lib_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="s2">&quot;usr&quot;</span><span class="p">,</span> <span class="s2">&quot;lib64&quot;</span><span class="p">,</span> <span class="s2">&quot;pgsql&quot;</span><span class="p">)</span>
+    <span class="n">postgress_user</span> <span class="o">=</span> <span class="s2">&quot;dbsuper&quot;</span>
+    <span class="n">pg_sys_acct_passwd</span> <span class="o">=</span> <span class="s2">&quot;changeme&quot;</span>
+    <span class="n">pub_secret</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">publisher_db_user_passwd</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pub_secret_file</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">filedata</span><span class="p">:</span>
+            <span class="n">pub_secret</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">publisher_db_user_passwd</span> <span class="o">=</span> <span class="n">pub_secret</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+    <span class="n">postgress_host</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">postgress_port</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
+    <span class="c1"># Double Check HERE</span>
+    <span class="n">cdat_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;uvcdat&quot;</span><span class="p">,</span> <span class="s2">&quot;2.2.0&quot;</span><span class="p">)</span>
+    <span class="n">java_opts</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">java_install_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;java&quot;</span><span class="p">)</span>
+    <span class="n">ant_install_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;ant&quot;</span><span class="p">)</span>
+    <span class="n">tomcat_install_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+    <span class="n">tomcat_conf_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+    <span class="n">tomcat_opts</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">tomcat_user</span> <span class="o">=</span> <span class="s2">&quot;tomcat&quot;</span>
+    <span class="n">tomcat_group</span> <span class="o">=</span> <span class="n">tomcat_user</span>
+    <span class="n">globus_location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;globus&quot;</span><span class="p">)</span>
+    <span class="n">mail_smtp_host</span> <span class="o">=</span> <span class="s2">&quot;smtp.&quot;</span><span class="o">+</span><span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">mail_admin_address</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">publisher_home</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">publisher_config</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">ESGINI</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ESGINI&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">publisher_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;esgcet&quot;</span><span class="p">)</span>
+        <span class="n">publisher_config</span> <span class="o">=</span> <span class="s2">&quot;esg.ini&quot;</span>
+        <span class="n">ESGINI</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">publisher_home</span><span class="p">,</span> <span class="n">publisher_config</span><span class="p">)</span>
+
+    <span class="c1">############################################</span>
+    <span class="c1">####  DO NOT EDIT BELOW THIS POINT!!!!! ####</span>
+    <span class="c1">############################################</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GIT_SSL_NO_VERIFY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENSSL_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">openssl_install_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PGHOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">postgress_install_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PGBINDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">postgress_bin_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PGLIBDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">postgress_lib_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PGUSER&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">postgress_user</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PGHOST&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">postgress_host</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PGPORT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">postgress_port</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CDAT_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cdat_home</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JAVA_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">java_install_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JAVA_OPTS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">java_opts</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ANT_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ant_install_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CATALINA_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tomcat_install_dir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CATALINA_BASE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CATALINA_HOME&quot;</span><span class="p">]</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CATALINA_OPTS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tomcat_opts</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GLOBUS_LOCATION&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">globus_location</span>
+
+    <span class="n">myPATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENSSL_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/bin:&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JAVA_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/bin:&quot;</span> <span class="o">+</span> \
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ANT_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/bin:&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CDAT_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/bin:&quot;</span> <span class="o">+</span> \
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CDAT_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/Externals/bin:&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CATALINA_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> \
+        <span class="s2">&quot;/bin:&quot;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GLOBUS_LOCATION&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/bin:&quot;</span> <span class="o">+</span> <span class="n">install_prefix</span> <span class="o">+</span> \
+        <span class="s2">&quot;/bin:/sbin:/usr/bin:/usr/sbin&quot;</span>
+
+    <span class="n">myLD_LIBRARY_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENSSL_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/lib:&quot;</span> <span class="o">+</span> \
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CDAT_HOME&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/Externals/lib:&quot;</span> <span class="o">+</span> \
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GLOBUS_LOCATION&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/lib:&quot;</span> <span class="o">+</span> \
+        <span class="n">install_prefix</span> <span class="o">+</span> <span class="s2">&quot;/geoip/lib:/usr/lib64:/usr/lib&quot;</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">myPATH</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">myLD_LIBRARY_PATH</span> <span class="o">+</span> \
+            <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;LD_LIBRARY_PATH not found initially&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">myLD_LIBRARY_PATH</span>
+
+    <span class="c1">#--------------</span>
+    <span class="c1"># ID Setting</span>
+    <span class="c1">#--------------</span>
+    <span class="n">installer_user</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">installer_uid</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">installer_user</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
+    <span class="n">installer_gid</span> <span class="o">=</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">installer_user</span><span class="p">)</span><span class="o">.</span><span class="n">pw_gid</span>
+    <span class="n">installer_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/usr&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;esgf&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SUDO_UID&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="c1"># print &quot;SUDO_UID not found&quot;</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ESG_USER_UID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SUDO_UID&quot;</span><span class="p">]</span>
+        <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SUDO_UID&quot;</span><span class="p">]</span>
+
+    <span class="c1"># [[ $SUDO_GID ]] &amp;&amp; ESG_USER_GID=${SUDO_GID} &amp;&amp; unset SUDO_GID</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SUDO_GID&quot;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="c1"># print &quot;SUDO_GID not found&quot;</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ESG_USER_GID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SUDO_GID&quot;</span><span class="p">]</span>
+        <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SUDO_GID&quot;</span><span class="p">]</span>
+
+    <span class="c1">#--------------</span>
+    <span class="c1"># Script vars (internal)</span>
+    <span class="c1">#--------------</span>
+    <span class="n">esg_backup_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;backups&quot;</span><span class="p">)</span>
+    <span class="n">esg_log_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">)</span>
+    <span class="n">esg_tools_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;tools&quot;</span><span class="p">)</span>
+    <span class="n">esg_etc_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">)</span>
+    <span class="n">workdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">installer_home</span><span class="p">,</span> <span class="s2">&quot;workbench&quot;</span><span class="p">,</span> <span class="s2">&quot;esg&quot;</span><span class="p">)</span>
+    <span class="n">word_size</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">architecture</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;bit&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">number_of_cpus</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+    <span class="n">date_format</span> <span class="o">=</span> <span class="s2">&quot;+%Y_%m_</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span>
+    <span class="n">num_backups_to_keep</span> <span class="o">=</span> <span class="s2">&quot;7&quot;</span>
+    <span class="n">compress_extensions</span> <span class="o">=</span> <span class="s2">&quot;.tar.gz|.tar.bz2|.tgz|.bz2|.tar&quot;</span>
+    <span class="n">certificate_extensions</span> <span class="o">=</span> <span class="s2">&quot;pem|crt|cert|key&quot;</span>
+    <span class="n">openssl_dist_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;http://www.openssl.org/source/openssl-&quot;</span><span class="p">,</span>
+                                    <span class="n">openssl_version</span><span class="p">,</span> <span class="s2">&quot;.tar.gz&quot;</span><span class="p">)</span>
+    <span class="n">esgf_dist_mirror</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;aims1.llnl.gov&quot;</span><span class="p">,</span> <span class="s2">&quot;esgf&quot;</span><span class="p">)</span>
+    <span class="n">esg_dist_url_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esgf_dist_mirror</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">)</span>
+    <span class="n">esgf_coffee_dist_mirror</span> <span class="o">=</span> <span class="s2">&quot;distrib-coffee.ipsl.jussieu.fr/pub/esgf&quot;</span>
+    <span class="n">esg_coffee_dist_url_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esgf_coffee_dist_mirror</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">)</span>
+    <span class="n">java_dist_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/java/$</span><span class="si">%s</span><span class="s2">/jdk</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">.tar.gz&quot;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">java_version</span><span class="p">,</span> <span class="n">java_version</span><span class="p">,</span> <span class="n">word_size</span><span class="p">)</span>
+    <span class="n">java_rpm_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/java/</span><span class="si">{1}</span><span class="s2">/jdk-8u112-linux-x64.rpm&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="n">java_version</span><span class="p">)</span>
+    <span class="n">ant_dist_url</span> <span class="o">=</span> <span class="s2">&quot;http://archive.apache.org/dist/ant/binaries/apache-ant-&quot;</span> <span class="o">+</span> \
+        <span class="n">ant_version</span> <span class="o">+</span> <span class="s2">&quot;-bin.tar.gz&quot;</span>
+    <span class="n">openssl_workdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">workdir</span><span class="p">,</span> <span class="s2">&quot;openssl&quot;</span><span class="p">)</span>
+    <span class="n">esgf_dashboard_ip_workdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">workdir</span><span class="p">,</span> <span class="s2">&quot;esgf-dashboard-ip&quot;</span><span class="p">)</span>
+    <span class="n">db_database</span> <span class="o">=</span> <span class="s2">&quot;esgcet&quot;</span>
+    <span class="n">node_db_name</span> <span class="o">=</span> <span class="n">db_database</span>
+    <span class="n">postgress_jar</span> <span class="o">=</span> <span class="s2">&quot;postgresql-8.4-703.jdbc3.jar&quot;</span>
+    <span class="n">postgress_driver</span> <span class="o">=</span> <span class="s2">&quot;org.postgresql.Driver&quot;</span>
+    <span class="n">postgress_protocol</span> <span class="o">=</span> <span class="s2">&quot;jdbc:postgresql:&quot;</span>
+    <span class="n">pg_sys_acct</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span>
+    <span class="n">pg_sys_acct_group</span> <span class="o">=</span> <span class="n">pg_sys_acct</span>
+    <span class="n">publisher_repo</span> <span class="o">=</span> <span class="s2">&quot;git://github.com/ESGF/esg-publisher.git&quot;</span>
+    <span class="n">apache_frontend_repo</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/ESGF/apache-frontend.git&quot;</span>
+    <span class="n">publisher_repo_https</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/ESGF/esg-publisher.git&quot;</span>
+    <span class="n">esgcet_egg_file</span> <span class="o">=</span> <span class="s2">&quot;esgcet-</span><span class="si">%s</span><span class="s2">-py</span><span class="si">%s</span><span class="s2">.egg&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">esgcet_version</span><span class="p">,</span> <span class="n">python_version</span><span class="p">)</span>
+    <span class="n">esg_testdir</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">+</span> <span class="s2">&quot;/../esg_test&quot;</span>
+    <span class="n">tomcat_major_version</span> <span class="o">=</span> <span class="n">tomcat_version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">tomcat_http_path</span> <span class="o">=</span> <span class="s2">&quot;http://archive.apache.org/dist/tomcat/tomcat&quot;</span>
+    <span class="n">tomcat_dist_url</span> <span class="o">=</span> <span class="n">tomcat_http_path</span><span class="o">+</span><span class="s2">&quot;-</span><span class="si">{0}</span><span class="s2">/v</span><span class="si">{1}</span><span class="s2">/bin/apache-tomcat-</span><span class="si">{1}</span><span class="s2">.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">tomcat_major_version</span><span class="p">,</span> <span class="n">tomcat_version</span><span class="p">)</span>
+    <span class="n">tomcat_pid_file</span> <span class="o">=</span> <span class="s2">&quot;/var/run/tomcat-jsvc.pid&quot;</span>
+    <span class="n">thredds_content_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">)</span>
+    <span class="c1"># #NOTE: This root dir should match a root set in the thredds setup</span>
+    <span class="c1"># thredds_root_dir=${esg_root_dir}/data</span>
+    <span class="n">thredds_root_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_root_dir</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">)</span>
+    <span class="n">thredds_replica_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">thredds_root_dir</span><span class="p">,</span> <span class="s2">&quot;replica&quot;</span><span class="p">)</span>
+    <span class="c1"># #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!</span>
+    <span class="n">show_summary_latch</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">source_latch</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
+    <span class="n">scripts_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">install_prefix</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">)</span>
+    <span class="n">esg_installarg_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">scripts_dir</span><span class="p">,</span> <span class="s2">&quot;esg-installarg&quot;</span><span class="p">)</span>
+    <span class="n">no_globus</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">force_install</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="c1"># extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz</span>
+    <span class="c1"># extkeytool_download_url= esg_dist_url + &quot;/etc/idptools.tar.gz&quot;</span>
+    <span class="c1"># tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml</span>
+    <span class="n">tomcat_users_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tomcat_conf_dir</span><span class="p">,</span> <span class="s2">&quot;tomcat-users.xml&quot;</span><span class="p">)</span>
+    <span class="n">keystore_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tomcat_conf_dir</span><span class="p">,</span> <span class="s2">&quot;keystore-tomcat&quot;</span><span class="p">)</span>
+    <span class="n">keystore_alias</span> <span class="o">=</span> <span class="s2">&quot;my_esgf_node&quot;</span>
+    <span class="n">keystore_password</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">truststore_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tomcat_conf_dir</span><span class="p">,</span> <span class="s2">&quot;esg-truststore.ts&quot;</span><span class="p">)</span>
+    <span class="n">truststore_password</span> <span class="o">=</span> <span class="s2">&quot;changeit&quot;</span>
+    <span class="n">globus_global_certs_dir</span> <span class="o">=</span> <span class="s2">&quot;/etc/grid-security/certificates&quot;</span>
+    <span class="c1"># #NOTE: java keystore style DN...</span>
+    <span class="c1"># default_dname=&quot;OU=ESGF.ORG, O=ESGF&quot; #zoiks: allow this to be empty to</span>
+    <span class="c1"># allow prompting of user for fields!</span>
+    <span class="c1"># zoiks: allow this to be empty to allow prompting of user for fields!</span>
+    <span class="n">default_distinguished_name</span> <span class="o">=</span> <span class="s2">&quot;OU=ESGF.ORG, O=ESGF&quot;</span>
+    <span class="n">config_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">esg_config_dir</span><span class="p">,</span> <span class="s2">&quot;esgf.properties&quot;</span><span class="p">)</span>
+    <span class="n">index_config</span> <span class="o">=</span> <span class="s2">&quot;master slave&quot;</span>
+
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;esg_config.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">esg_config</span><span class="p">:</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="nb">locals</span><span class="p">(),</span> <span class="n">esg_config</span><span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">init</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, William Hill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>esg_node &#8212; esgf-installer 2.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for esg_node</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">from</span> <span class="nn">esg_exceptions</span> <span class="k">import</span> <span class="n">UnprivilegedUserError</span><span class="p">,</span> <span class="n">WrongOSError</span><span class="p">,</span> <span class="n">UnverifiedScriptError</span>
+<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
+<span class="kn">import</span> <span class="nn">esg_functions</span>
+<span class="kn">import</span> <span class="nn">esg_bash2py</span>
+<span class="kn">import</span> <span class="nn">esg_setup</span>
+<span class="kn">import</span> <span class="nn">esg_postgres</span>
+<span class="kn">import</span> <span class="nn">esg_publisher</span>
+<span class="kn">import</span> <span class="nn">esg_cli_argument_manager</span>
+<span class="kn">import</span> <span class="nn">esg_tomcat_manager</span>
+<span class="kn">import</span> <span class="nn">esg_version_manager</span>
+<span class="kn">import</span> <span class="nn">esg_mirror_manager</span>
+<span class="kn">import</span> <span class="nn">esg_apache_manager</span>
+<span class="kn">import</span> <span class="nn">esg_subsystem</span>
+<span class="kn">import</span> <span class="nn">esg_property_manager</span>
+<span class="kn">import</span> <span class="nn">esg_logging_manager</span>
+<span class="kn">import</span> <span class="nn">esg_init</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LANG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;POSIX&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">umask</span><span class="p">(</span><span class="mi">022</span><span class="p">)</span>
+
+<span class="n">node_types</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;INSTALL&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;DATA&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;INDEX&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                          <span class="s2">&quot;IDP&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;COMPUTE&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;MIN&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;MAX&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">}</span>
+<span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;ALL&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;DATA&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">node_types</span><span class="p">[</span>
+    <span class="s2">&quot;INDEX&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;IDP&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;COMPUTE&quot;</span><span class="p">]</span>
+
+<span class="n">node_type_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">def</span> <span class="nf">get_node_type</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">node_types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">node_type_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<span class="n">devel</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">recommended_setup</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">custom_setup</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">use_local_files</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="n">progname</span> <span class="o">=</span> <span class="s2">&quot;esg-node&quot;</span>
+<span class="c1">#TODO: Look at parent repo and set version from tag using semver</span>
+<span class="n">script_version</span> <span class="o">=</span> <span class="s2">&quot;v3.0&quot;</span>
+<span class="n">script_maj_version</span> <span class="o">=</span> <span class="s2">&quot;3.0&quot;</span>
+<span class="n">script_release</span> <span class="o">=</span> <span class="s2">&quot;Centaur&quot;</span>
+<span class="n">force_install</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1">#--------------</span>
+<span class="c1"># User Defined / Settable (public)</span>
+<span class="c1">#--------------</span>
+<span class="c1">#--------------</span>
+
+
+<span class="n">esg_root_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esg_root_id</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">esgf_node_info</span><span class="p">():</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        The goal of this script is to automate as many tasks as possible</span>
+<span class="s1">     regarding the installation, maintenance and use of the ESGF</span>
+<span class="s1">     software stack that is know as the </span><span class="se">\&quot;</span><span class="s1">ESGF Node</span><span class="se">\&quot;</span><span class="s1">.  A software</span>
+<span class="s1">     stack is a collection of tools that work in concert to perform a</span>
+<span class="s1">     particular task or set of tasks that are semantically united. The</span>
+<span class="s1">     software stack is comprised of: Tomcat, Thredds, CDAT &amp; CDMS,</span>
+<span class="s1">     PostgreSQL, MyProxy, and several ESGF.org custom software</span>
+<span class="s1">     applications running on a LINUX (RedHat/CentOS) operating system.</span>
+
+<span class="s1">     Through the installation process there are different accounts</span>
+<span class="s1">     that are created that facilitate the communication between the</span>
+<span class="s1">     software stack entities.  These credentials are internal to the</span>
+<span class="s1">     stack.  It is recommended that you use the defaults provided</span>
+<span class="s1">     throughout this installation.  The security impact with regards</span>
+<span class="s1">     to the visibility and accessibility of the constituent components</span>
+<span class="s1">     of the stack depends on other factors to be addressed by your</span>
+<span class="s1">     organization.</span>
+
+<span class="s1">     Please be sure that you have gotten your created an account on</span>
+<span class="s1">     your ESGF IDP Peer.</span>
+
+<span class="s1">     The primary IDP Peer for ESGF is pcmdi.llnl.gov</span>
+<span class="s1">     You may register for an account at PCMDI at the following URL:</span>
+<span class="s1">     http://pcmdi.llnl.gov/esgf-web-fe/createAccount</span>
+
+<span class="s1">     Note: Account creation is prerequisite for publication!</span>
+
+<span class="s1">     ESGF P2P Node:                                             ESGF P2P Node:</span>
+<span class="s1">      ---------                                                   ---------</span>
+<span class="s1">     |Tomcat   |                                                 |Tomcat   |</span>
+<span class="s1">     |-Node Mgr|   &lt;================= P2P =================&gt;     |-Node Mgr|</span>
+<span class="s1">     |-Thredds |                                                 |-Thredds |</span>
+<span class="s1">     |-ORP     |                                                 |-ORP     |</span>
+<span class="s1">     |---------|                                                 |---------|</span>
+<span class="s1">     |CDAT/CDMS|                                                 |CDAT/CDMS|</span>
+<span class="s1">     |---------|                                                 |---------|</span>
+<span class="s1">     |Postgres |                                                 |Postgres |</span>
+<span class="s1">     |---------|                                                 |---------|</span>
+<span class="s1">     | MyProxy |  &lt;===(HTTPS)===&gt; [ESGF Peer Node(s)]*           | MyProxy |</span>
+<span class="s1">     |---------|                                                 |---------|</span>
+<span class="s1">     | GridFTP |  &lt;=============&gt; [End User(s)]*                 | GridFTP |</span>
+<span class="s1">     &gt;---------&lt;                                                 &gt;---------&lt;</span>
+<span class="s1">     | CentOS  |                                                 | CentOS  |</span>
+<span class="s1">     |(Virtual)|                                                 |(Virtual)|</span>
+<span class="s1">     | Machine |                                                 | Machine |</span>
+<span class="s1">     |---------|                                                 |---------|</span>
+<span class="s1">      ---------                                                   ---------</span>
+
+<span class="s1">     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)</span>
+
+
+<span class="se">\033</span><span class="s1">[01;31m</span>
+<span class="s1">  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF</span>
+<span class="s1">  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F</span>
+<span class="s1">  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F</span>
+<span class="s1">  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F</span>
+<span class="s1">    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF</span><span class="se">\033</span><span class="s1">[0m</span>
+<span class="se">\033</span><span class="s1">[01;33m    E:::::E             S:::::S            G:::::G                F:::::F</span>
+<span class="s1">    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF</span>
+<span class="s1">    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F</span>
+<span class="s1">    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F</span>
+<span class="s1">    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF</span><span class="se">\033</span><span class="s1">[0m</span>
+<span class="se">\033</span><span class="s1">[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F</span>
+<span class="s1">    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F</span>
+<span class="s1">  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF</span>
+<span class="s1">  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF</span>
+<span class="s1">  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF</span>
+<span class="s1">  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.org</span>
+<span class="se">\033</span><span class="s1">[0m</span>
+<span class="s1">     -ESGF.org </span><span class="se">\n\n</span><span class="s1"></span>
+
+<span class="s1">    &#39;&#39;&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">select_distribution_mirror</span><span class="p">(</span><span class="n">install_type</span><span class="p">):</span>
+     <span class="c1"># Determining ESGF distribution mirror</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;before selecting distribution mirror: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">esgf_dist_mirror</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">argument</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">for</span> <span class="n">argument</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">,</span> <span class="s2">&quot;upgrade&quot;</span><span class="p">]):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;interactive&quot;</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">esgf_dist_mirror</span> <span class="o">=</span> <span class="n">esg_mirror_manager</span><span class="o">.</span><span class="n">get_esgf_dist_mirror</span><span class="p">(</span>
+            <span class="s2">&quot;interactive&quot;</span><span class="p">,</span> <span class="n">install_type</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;fastest&quot;</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">esgf_dist_mirror</span> <span class="o">=</span> <span class="n">esg_mirror_manager</span><span class="o">.</span><span class="n">get_esgf_dist_mirror</span><span class="p">(</span>
+            <span class="s2">&quot;fastest&quot;</span><span class="p">,</span> <span class="n">install_type</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;selected distribution mirror: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">esgf_dist_mirror</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">set_esg_dist_url</span><span class="p">():</span>
+    <span class="c1"># Setting esg_dist_url with previously gathered information</span>
+    <span class="n">esg_dist_url_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="s2">&quot;http://&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">esgf_dist_mirror</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;esg_dist_url_root: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">esg_dist_url_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">devel</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;http://&quot;</span><span class="p">,</span> <span class="n">esg_dist_url_root</span><span class="p">,</span> <span class="s2">&quot;/devel&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="n">esg_dist_url_root</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;esg_dist_url: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="download_esg_installarg"><a class="viewcode-back" href="../index.html#esg_node.download_esg_installarg">[docs]</a><span class="k">def</span> <span class="nf">download_esg_installarg</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Downloading esg-installarg file &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">)</span> <span class="ow">or</span> <span class="n">force_install</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)):</span>
+        <span class="n">esg_installarg_file_name</span> <span class="o">=</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">trim_string_from_head</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">esg_dist_url</span><span class="p">,</span> <span class="s2">&quot;esgf-installer&quot;</span><span class="p">,</span> <span class="n">esg_installarg_file_name</span><span class="p">),</span> <span class="n">force_download</span><span class="o">=</span><span class="n">force_install</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">)</span>
+            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">esg_installarg_file</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Unable to access esg-installarg file&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="check_selected_node_type"><a class="viewcode-back" href="../index.html#esg_node.check_selected_node_type">[docs]</a><span class="k">def</span> <span class="nf">check_selected_node_type</span><span class="p">(</span><span class="n">node_types</span><span class="p">,</span> <span class="n">node_type_list</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Make sure a valid node_type has been selected before performing and install &#39;&#39;&#39;</span>
+
+    <span class="c1"># node_options_modified = create_new_list_from_keys(node_types)</span>
+    <span class="c1"># logger.debug(&quot;node_options_modified: %s&quot;, node_options_modified)</span>
+    <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;option: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">option</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">node_types</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                Sorry no suitable node type has been selected</span>
+<span class="s1">                Please run the script again with --set-type and provide any number of type values (</span><span class="se">\&quot;</span><span class="s1">data</span><span class="se">\&quot;</span><span class="s1">, </span><span class="se">\&quot;</span><span class="s1">index</span><span class="se">\&quot;</span><span class="s1">, </span><span class="se">\&quot;</span><span class="s1">idp</span><span class="se">\&quot;</span><span class="s1">, </span><span class="se">\&quot;</span><span class="s1">compute</span><span class="se">\&quot;</span><span class="s1"> [or </span><span class="se">\&quot;</span><span class="s1">all</span><span class="se">\&quot;</span><span class="s1">]) you wish to install</span>
+<span class="s1">                (no quotes - and they can be specified in any combination or use </span><span class="se">\&quot;</span><span class="s1">all</span><span class="se">\&quot;</span><span class="s1"> as a shortcut)</span>
+
+<span class="s1">                Ex:  esg-node --set-type data</span>
+<span class="s1">                esg-node install</span>
+
+<span class="s1">                or do so as a single command line:</span>
+
+<span class="s1">                Ex:  esg-node --type data install</span>
+
+<span class="s1">                Use the --help | -h option for more information</span>
+
+<span class="s1">                Note: The type value is recorded upon successfully starting the node.</span>
+<span class="s1">                the value is used for subsequent launches so the type value does not have to be</span>
+<span class="s1">                always specified.  A simple </span><span class="se">\&quot;</span><span class="s1">esg-node start</span><span class="se">\&quot;</span><span class="s1"> will launch with the last type used</span>
+<span class="s1">                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.</span>
+<span class="s1">                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)</span><span class="se">\n\n</span><span class="s1"></span>
+<span class="s1">                  &#39;&#39;&#39;</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="init_connection"><a class="viewcode-back" href="../index.html#esg_node.init_connection">[docs]</a><span class="k">def</span> <span class="nf">init_connection</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; Initialize Connection to node.&quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;esg-node initializing...&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">())</span>
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_installation_type</span><span class="p">(</span><span class="n">script_version</span><span class="p">):</span>
+    <span class="c1"># Determining if devel or master directory of the ESGF distribution mirror</span>
+    <span class="c1"># will be use for download of binaries</span>
+    <span class="k">if</span> <span class="s2">&quot;devel&quot;</span> <span class="ow">in</span> <span class="n">script_version</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Using devel version&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;devel&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;master&quot;</span>
+
+
+<div class="viewcode-block" id="begin_installation"><a class="viewcode-back" href="../index.html#esg_node.begin_installation">[docs]</a><span class="k">def</span> <span class="nf">begin_installation</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; Capture user response. &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">start_installation</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
+            <span class="s2">&quot;Are you ready to begin the installation? [Y/n] &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;Y&quot;</span>
+
+        <span class="k">if</span> <span class="n">start_installation</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Canceling installation&quot;</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">start_installation</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Invalid option.  Please select a valid option [Y/n]&quot;</span></div>
+
+
+<span class="k">def</span> <span class="nf">install_log_info</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">force_install</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;(force install is ON)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;DATA&quot;</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;(data node type selected)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;INDEX&quot;</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;(index node type selected)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;IDP&quot;</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;(idp node type selected)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node_types</span><span class="p">[</span><span class="s2">&quot;COMPUTE&quot;</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;(compute node type selected)&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">system_component_installation</span><span class="p">():</span>
+    <span class="c1">#---------------------------------------</span>
+    <span class="c1"># Installation of basic system components.</span>
+    <span class="c1"># (Only when one setup in the sequence is okay can we move to the next)</span>
+    <span class="c1">#---------------------------------------</span>
+
+    <span class="k">if</span> <span class="s2">&quot;INSTALL&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">esg_setup</span><span class="o">.</span><span class="n">setup_java</span><span class="p">()</span>
+        <span class="n">esg_setup</span><span class="o">.</span><span class="n">setup_ant</span><span class="p">()</span>
+        <span class="n">esg_postgres</span><span class="o">.</span><span class="n">setup_postgres</span><span class="p">()</span>
+        <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+        <span class="n">esg_apache_manager</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">esg_subsystem</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="s2">&quot;COMPUTE&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">esg_publisher</span><span class="o">.</span><span class="n">setup_esgcet</span><span class="p">()</span>
+        <span class="c1">#CDAT only used on with Publisher; move</span>
+        <span class="n">esg_setup</span><span class="o">.</span><span class="n">setup_cdat</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">check_for_conda</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s2">&quot;/usr/local/conda&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Please run the install_conda.sh script before attempting to install ESGF.&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;conda&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">find_executable</span><span class="p">(</span><span class="s2">&quot;python&quot;</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s1">&#39;Please activate the esgf-pub conda environment before running the install script by using the following command:&#39;</span>
+        <span class="nb">print</span> <span class="s2">&quot;source /usr/local/conda/bin/activate esgf-pub&quot;</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="done_remark"><a class="viewcode-back" href="../index.html#esg_node.done_remark">[docs]</a><span class="k">def</span> <span class="nf">done_remark</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Prints info to denote that the installation has completed&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Finished!...&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;In order to see if this node has been installed properly you may direct your browser to:&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">or</span> <span class="s2">&quot;INSTALL&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+        <span class="nb">print</span> <span class="s2">&quot;http://</span><span class="si">{esgf_host}</span><span class="s2">/thredds&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_host</span><span class="o">=</span><span class="n">esgf_host</span><span class="p">)</span>
+        <span class="nb">print</span> <span class="s2">&quot;http://</span><span class="si">{esgf_host}</span><span class="s2">/esg-orp&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_host</span><span class="o">=</span><span class="n">esgf_host</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;http://$</span><span class="si">{esgf_host}</span><span class="s2">/&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;COMPUTE&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;http://$</span><span class="si">{esgf_host}</span><span class="s2">/las&quot;</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Your peer group membership -- :  [</span><span class="si">{node_peer_group}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_peer_group</span><span class="o">=</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;node_peer_group&quot;</span><span class="p">))</span>
+    <span class="nb">print</span> <span class="s2">&quot;Your specified </span><span class="se">\&quot;</span><span class="s2">index</span><span class="se">\&quot;</span><span class="s2"> peer - :[</span><span class="si">{esgf_index_peer}</span><span class="s2">]) (url = http://</span><span class="si">{esgf_index_peer}</span><span class="s2">/)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_index_peer</span><span class="o">=</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf_index_peer&quot;</span><span class="p">))</span>
+
+<span class="c1">#     if [ -d &quot;${thredds_content_dir}/thredds&quot; ]; then</span>
+<span class="c1">#         echo</span>
+<span class="c1">#         echo &quot;[Note: Use UNIX group permissions on ${thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]&quot;</span>
+<span class="c1">#         echo &quot; %&gt; chgrp -R &lt;appropriate unix group for publishing users&gt; ${thredds_content_dir}/thredds&quot;</span>
+<span class="c1">#     fi</span>
+<span class="c1">#</span>
+    <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        -------------------------------------------------------</span>
+<span class="s1">        Administrators of this node should subscribe to the</span>
+<span class="s1">        esgf-node-admins@lists.llnl.gov by sending email to: &quot;majordomo@lists.llnl.gov&quot;</span>
+<span class="s1">        with the body: &quot;subscribe esgf-node-admins&quot;</span>
+<span class="s1">        -------------------------------------------------------</span>
+<span class="s1">&#39;&#39;&#39;</span></div>
+<span class="c1">#</span>
+<span class="c1">#     #echo &quot;(\&quot;Test Project\&quot; -&gt; pcmdi.${esg_root_id}.${node_short_name}.test.mytest)&quot;</span>
+<span class="c1">#     echo &quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">):</span>
+    <span class="n">check_for_conda</span><span class="p">()</span>
+    <span class="c1"># default distribution_url</span>
+    <span class="n">esg_dist_url</span> <span class="o">=</span> <span class="s2">&quot;http://aims1.llnl.gov/esgf/dist&quot;</span>
+
+    <span class="c1"># initialize connection</span>
+    <span class="n">init_connection</span><span class="p">()</span>
+
+    <span class="c1"># determine installation type</span>
+    <span class="n">install_type</span> <span class="o">=</span> <span class="n">get_installation_type</span><span class="p">(</span><span class="n">script_version</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;install_type:&quot;</span><span class="p">,</span> <span class="n">install_type</span>
+
+    <span class="c1"># select_distribution_mirror(install_type)</span>
+    <span class="c1"># set_esg_dist_url()</span>
+    <span class="c1"># download_esg_installarg()</span>
+
+    <span class="c1"># process command line arguments</span>
+    <span class="c1"># node_type_list = esg_cli_argument_manager.get_previous_node_type_config(</span>
+    <span class="c1">#     config[&quot;esg_config_type_file&quot;])</span>
+    <span class="c1"># logger.debug(&quot;node_type_list: %s&quot;, node_type_list)</span>
+    <span class="n">cli_info</span> <span class="o">=</span> <span class="n">esg_cli_argument_manager</span><span class="o">.</span><span class="n">process_arguments</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">devel</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;cli_info:&quot;</span><span class="p">,</span> <span class="n">cli_info</span>
+    <span class="k">if</span> <span class="n">cli_info</span><span class="p">:</span>
+        <span class="n">node_type_list</span> <span class="o">=</span> <span class="n">cli_info</span>
+
+
+    <span class="n">esg_setup</span><span class="o">.</span><span class="n">check_prerequisites</span><span class="p">()</span>
+
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">verify_esg_node_script</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span>
+        <span class="vm">__file__</span><span class="p">),</span> <span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">script_version</span><span class="p">,</span> <span class="n">script_maj_version</span><span class="p">,</span> <span class="n">devel</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;node_type_list: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node_type_list</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;node_type_list: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node_type_list</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;node_type_list after process_arguments:&quot;</span><span class="p">,</span> <span class="n">node_type_list</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    -----------------------------------</span>
+<span class="s1">    ESGF Node Installation Program</span>
+<span class="s1">    -----------------------------------&#39;&#39;&#39;</span>
+
+    <span class="c1">#If not type not set from CLI argument, look at previous node type setting</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">[</span><span class="n">node_type</span> <span class="k">for</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="k">if</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="n">node_types</span><span class="o">.</span><span class="n">keys</span><span class="p">()]:</span>
+        <span class="n">previous_node_type</span> <span class="o">=</span> <span class="n">esg_cli_argument_manager</span><span class="o">.</span><span class="n">get_previous_node_type_config</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_type_file&quot;</span><span class="p">])</span>
+        <span class="nb">print</span> <span class="s2">&quot;previous_node_type:&quot;</span><span class="p">,</span> <span class="n">previous_node_type</span>
+    <span class="n">check_selected_node_type</span><span class="p">(</span><span class="n">node_types</span><span class="p">,</span> <span class="n">node_type_list</span><span class="p">)</span>
+
+    <span class="c1"># Display node information to user</span>
+    <span class="n">esgf_node_info</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">devel</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;(Installing DEVELOPMENT tree...)&quot;</span>
+
+    <span class="c1"># install_conda()</span>
+
+    <span class="c1"># Process User Response</span>
+    <span class="n">begin_installation</span><span class="p">()</span>
+
+    <span class="c1">#</span>
+    <span class="n">esg_setup</span><span class="o">.</span><span class="n">init_structure</span><span class="p">()</span>
+
+    <span class="c1"># log info</span>
+    <span class="n">install_log_info</span><span class="p">()</span>
+
+    <span class="n">esg_setup</span><span class="o">.</span><span class="n">initial_setup_questionnaire</span><span class="p">()</span>
+    <span class="c1">#---------------------------------------</span>
+    <span class="c1"># Installation of prerequisites.</span>
+    <span class="c1">#---------------------------------------</span>
+    <span class="c1"># TODO: Uncomment this; only removed for testing speedup</span>
+    <span class="c1"># esg_setup.install_prerequisites()</span>
+
+    <span class="c1">#---------------------------------------</span>
+    <span class="c1"># Setup ESGF RPM repository</span>
+    <span class="c1">#---------------------------------------</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up ESGF RPM repository&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="c1"># install dependencies</span>
+    <span class="n">system_component_installation</span><span class="p">()</span>
+    <span class="n">done_remark</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, William Hill.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

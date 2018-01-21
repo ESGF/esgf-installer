@@ -5,6 +5,7 @@ import datetime
 import errno
 import logging
 from esgf_utilities import esg_functions
+from esgf_utilities.esg_exceptions import SubprocessError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -30,7 +31,10 @@ def purge_tomcat():
 
     # esg-node --stop may not actually cause Tomcat to exit properly,
     # so force-kill all remaining instances
-    esg_functions.call_subprocess("pkill -9 -u tomcat")
+    try:
+        esg_functions.call_subprocess("pkill -9 -u tomcat")
+    except SubprocessError, error:
+        print "Error killing tomcat:", error
     try:
         shutil.rmtree("/etc/logrotate.d/esgf_tomcat")
     except OSError, error:

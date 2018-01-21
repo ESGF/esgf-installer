@@ -437,7 +437,10 @@ def stream_subprocess_output(command_string):
         if process.returncode != 0:
             print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
             logger.debug("stderr %s", process.stderr)
-            raise SubprocessError(process.stderr)
+            if process.stderr:
+                raise SubprocessError(process.stderr)
+            else:
+                raise SubprocessError(process.stdout)
     except (OSError, ValueError), error:
         # logger.exception("Could not stream subprocess output")
         print "Could not stream subprocess output"
@@ -923,6 +926,7 @@ def get_config_ip(interface_value):
 def main():
     import esg_logging_manager
 
+    esg_logging_manager.main()
     logger = logging.getLogger("esgf_logger" + "." + __name__)
 
     with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:

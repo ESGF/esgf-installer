@@ -490,11 +490,11 @@ def setup_db_schemas(force_install):
 def load_esgf_data(cur):
     # # load ESGF data
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
-    cur.execute(open("sqldata/esgf_security_data.sql", "r").read())
+    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
 
     # # initialize migration table
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"
-    cur.execute(open("sqldata/esgf_migrate_version.sql", "r").read())
+    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_migrate_version.sql"), "r").read())
 
 
 def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
@@ -519,11 +519,11 @@ def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
             conn.close()
         f.close()
 
-
+#TODO: write out settings to esg.env
 def write_postgress_env():
     pass
 
-
+#TODO:write out settings to install_manifest
 def write_postgress_install_log():
     pass
 
@@ -562,7 +562,6 @@ def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres"
     try:
         cur.execute("select schema_name from information_schema.schemata;")
         schemas = cur.fetchall()
-        # print "schemas: ", schemas
         schema_list = [schema[0] for schema in schemas]
         return schema_list
     except Exception, error:

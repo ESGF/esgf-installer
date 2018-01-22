@@ -14,9 +14,9 @@ import yaml
 import semver
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from ..esgf_utilities import esg_functions
-from ..esgf_utilities import esg_property_manager
-from ..esgf_utilities import esg_bash2py
+from esgf_utilities import esg_functions
+from esgf_utilities import esg_property_manager
+from esgf_utilities import esg_bash2py
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 

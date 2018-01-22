@@ -30,7 +30,7 @@ from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, U
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
-with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 os.environ['LANG'] = "POSIX"
@@ -109,7 +109,6 @@ def esgf_node_info():
      software stack is comprised of: Tomcat, Thredds, CDAT & CDMS,
      PostgreSQL, MyProxy, and several ESGF.org custom software
      applications running on a LINUX (RedHat/CentOS) operating system.
-
      Through the installation process there are different accounts
      that are created that facilitate the communication between the
      software stack entities.  These credentials are internal to the
@@ -118,14 +117,13 @@ def esgf_node_info():
      to the visibility and accessibility of the constituent components
      of the stack depends on other factors to be addressed by your
      organization.
-
+     
      Please be sure that you have gotten your created an account on
      your ESGF IDP Peer.
 
-     The primary IDP Peer for ESGF is pcmdi.llnl.gov
-     You may register for an account at PCMDI at the following URL:
-     http://pcmdi.llnl.gov/esgf-web-fe/createAccount
-
+     The primary IDP Peer for ESGF is esgf-node.llnl.gov
+     You may register for an account at LLNL at the following URL:
+     https://esgf-node.llnl.gov/user/add/
      Note: Account creation is prerequisite for publication!
 
      ESGF P2P Node:                                             ESGF P2P Node:

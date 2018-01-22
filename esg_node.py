@@ -15,14 +15,14 @@ from lxml import etree
 from esgf_utilities import esg_logging_manager
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
-from esgf_installer.base import esg_setup
-from esgf_installer.base import esg_postgres
-from esgf_installer.data_node import esg_publisher
+from base import esg_setup
+from base import esg_postgres
+from data_node import esg_publisher
 from esgf_utilities import esg_cli_argument_manager
-from esgf_installer.base import esg_tomcat_manager
+from base import esg_tomcat_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_mirror_manager
-from esgf_installer.base import esg_apache_manager
+from base import esg_apache_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_questionnaire
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
@@ -345,7 +345,7 @@ def system_component_installation(esg_dist_url):
         print "Installing Data Node Components"
         print "******************************* \n"
         esg_publisher.main()
-        from esgf_installer.data_node import esg_dashboard, orp, thredds
+        from data_node import esg_dashboard, orp, thredds
         thredds.main()
         orp.main()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
@@ -355,7 +355,7 @@ def system_component_installation(esg_dist_url):
         print "\n*******************************"
         print "Installing Index Node Components"
         print "******************************* \n"
-        from esgf_installer.index_node import esg_cog, esg_search, solr
+        from index_node import esg_cog, esg_search, solr
         esg_cog.main()
         solr.main()
         esg_search.main()

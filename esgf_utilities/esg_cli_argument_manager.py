@@ -7,8 +7,8 @@ import pprint
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
-from esgf_installer.base import esg_setup
-from esgf_installer.base import esg_apache_manager
+from base import esg_setup
+from base import esg_apache_manager
 from esgf_utilities import esg_bash2py
 from esgf_utilities.esg_exceptions import NoNodeTypeError
 

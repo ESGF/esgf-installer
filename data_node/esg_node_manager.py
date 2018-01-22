@@ -10,7 +10,7 @@ from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_installer.base.esg_tomcat_manager import stop_tomcat
+from base.esg_tomcat_manager import stop_tomcat
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 

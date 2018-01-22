@@ -124,6 +124,7 @@ def esgf_node_info():
      The primary IDP Peer for ESGF is esgf-node.llnl.gov
      You may register for an account at LLNL at the following URL:
      https://esgf-node.llnl.gov/user/add/
+     
      Note: Account creation is prerequisite for publication!
 
      ESGF P2P Node:                                             ESGF P2P Node:

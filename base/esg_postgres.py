@@ -363,7 +363,7 @@ def setup_postgres(force_install=False, default_continue_install="N"):
 
     # start the postgres server
     start_postgres()
-    shutil.copyfile("postgres_conf/postgresql.conf", "/var/lib/pgsql/data/postgresql.conf")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "postgres_conf/postgresql.conf"), "/var/lib/pgsql/data/postgresql.conf")
     postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
     os.chown("/var/lib/pgsql/data/postgresql.conf", postgres_user_id, postgres_group_id)

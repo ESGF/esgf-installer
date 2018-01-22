@@ -143,6 +143,7 @@ def prefix_to_path(path, prepend_value):
               WHAT YOU WANT; that your libs are found before any user libs are
 
     '''
+    #TODO: Use sys.path.insert
     os.environ[path] = path_unique(prepend_value) + ":" + path
     return path_unique(prepend_value) + ":" + path
 
@@ -381,7 +382,7 @@ def fetch_remote_file(local_file, remote_file):
         sys.exit()
 
 
-def create_backup_file(file_name, backup_extension=".bak"):
+def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
     backup_file_name = os.path.join(file_name, backup_extension)
     try:

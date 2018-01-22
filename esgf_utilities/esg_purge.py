@@ -6,7 +6,7 @@ import errno
 import logging
 import psutil
 import esg_functions
-from esgf_utilities.esg_exceptions import SubprocessError
+from esg_exceptions import SubprocessError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -207,7 +207,7 @@ def purge_dashboard():
     pass
 
 def main():
-    from esgf_utilities import esg_logging_manager
+    import esg_logging_manager
 
     esg_logging_manager.main()
     logger = logging.getLogger("esgf_logger" + "." + __name__)

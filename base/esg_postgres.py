@@ -473,10 +473,10 @@ def setup_db_schemas(force_install):
     conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
     cur = conn.cursor()
     # load ESGF schemas
-    cur.execute(open("sqldata/esgf_esgcet.sql", "r").read())
-    cur.execute(open("sqldata/esgf_node_manager.sql", "r").read())
-    cur.execute(open("sqldata/esgf_security.sql", "r").read())
-    cur.execute(open("sqldata/esgf_dashboard.sql", "r").read())
+    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
+    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
+    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
+    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_dashboard.sql"), "r").read())
 
     # # list database users
     print list_users(conn=conn)

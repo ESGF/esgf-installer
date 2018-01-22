@@ -128,7 +128,13 @@ def create_tomcat_user():
     print "Creating Tomcat User"
     print "******************************* \n"
 
-    esg_functions.call_subprocess("groupadd tomcat")
+    if "tomcat" in esg_functions.get_user_list():
+        logger.info("Tomcat user already exists")
+        return
+        
+    if not "tomcat" in esg_functions.get_group_list():
+        esg_functions.call_subprocess("groupadd tomcat")
+
     esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
     tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(
         TOMCAT_VERSION=TOMCAT_VERSION)

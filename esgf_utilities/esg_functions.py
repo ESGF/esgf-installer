@@ -808,8 +808,14 @@ def add_group(group_name):
     call_subprocess("groupadd {group_name}".format(group_name=group_name))
 
 
-def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
+# def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
+def add_user(name, password="", group="", full_name ="", home_dir="", shell=""):
     '''Add Unix user'''
+    #check if root_user
+    existing_user_ids = [user.pw_uid for user in pwd.getpwall()]
+    uid = max(existing_user_ids)+1
+    user_string = "{}:{}:{}:{}:{}:{}:{}".format(name,password,uid,group,full_name,home_dir,shell)
+
     pass
 
 

@@ -167,7 +167,7 @@ def purge_base():
                 logger.exception("Couldn't delete %s", directory)
 
     # Solr may leave stuck java processes.  Kill them with extreme prejudice
-    esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
+    # esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
 
 def purge_cdat():
     pass

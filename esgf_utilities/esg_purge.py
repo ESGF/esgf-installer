@@ -4,7 +4,8 @@ import glob
 import datetime
 import errno
 import logging
-from esgf_utilities import esg_functions
+import psutil
+import esg_functions
 from esgf_utilities.esg_exceptions import SubprocessError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -32,12 +33,14 @@ def purge_tomcat():
     print "Purging Tomcat"
     print "******************************* \n"
 
-    # esg-node --stop may not actually cause Tomcat to exit properly,
-    # so force-kill all remaining instances
-    try:
-        esg_functions.call_subprocess("pkill -9 -u tomcat")
-    except SubprocessError, error:
-        print "Error killing tomcat:", error
+    #Get all processes belonging to Tomcat
+    tomcat_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username']) if proc.info["username"] == "tomcat"]
+    if tomcat_processes:
+        for proc in tomcat_processes:
+            try:
+                os.kill(proc.info["pid"])
+            except OSError, error:
+                logger.exception("Could not kill %s process with pid %s", proc.info["name"], proc.info["pid"])
     try:
         shutil.rmtree("/etc/logrotate.d/esgf_tomcat")
     except OSError, error:
@@ -59,7 +62,8 @@ def purge_tomcat():
             logger.exception("Could not delete symlink /usr/local/tomcat")
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
-    esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
+    #TODO: stop processes with Python
+    # esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
 
 def purge_java():
     print "\n*******************************"

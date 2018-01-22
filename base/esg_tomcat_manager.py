@@ -15,10 +15,10 @@ import psutil
 from lxml import etree
 from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
-from ..esgf_utilities import esg_functions
-from ..esgf_utilities import esg_bash2py
-from ..esgf_utilities import esg_property_manager
-from ..esgf_utilities import esg_cert_manager
+from esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
+from esgf_utilities import esg_cert_manager
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 

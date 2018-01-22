@@ -11,8 +11,8 @@ from lxml import etree
 import zipfile
 from clint.textui import progress
 from esgf_utilities import esg_functions
-from ..esgf_utilities import esg_bash2py
-from ..esgf_utilities import esg_property_manager
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
 from ..base import esg_tomcat_manager
 
 

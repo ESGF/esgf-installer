@@ -57,7 +57,7 @@ use_local_files = 0
 
 def set_version_info():
     '''Gathers the version info from the latest git tag'''
-    repo = Repo("../")
+    repo = Repo(os.path.dirname(__file__))
     repo_tag = repo.git.describe().lstrip("v")
     split_repo_tag = repo_tag.split("-")
     version = split_repo_tag[0]
@@ -117,7 +117,7 @@ def esgf_node_info():
      to the visibility and accessibility of the constituent components
      of the stack depends on other factors to be addressed by your
      organization.
-     
+
      Please be sure that you have gotten your created an account on
      your ESGF IDP Peer.
 

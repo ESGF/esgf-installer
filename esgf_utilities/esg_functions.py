@@ -23,9 +23,9 @@ import requests
 import yaml
 import netifaces
 from clint.textui import progress
-from esgf_utilities.esg_exceptions import UnverifiedScriptError, SubprocessError
-from esgf_utilities import esg_bash2py
-from esgf_utilities import esg_property_manager
+from esg_exceptions import UnverifiedScriptError, SubprocessError
+import esg_bash2py
+import esg_property_manager
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

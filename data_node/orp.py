@@ -31,17 +31,20 @@ def download_orp_war(orp_url):
 
 def update_common_loader(config_dir):
     '''add /esg/config/ to common.loader in catalina.properties if not already present'''
-    with open("{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=config["tomcat_install_dir"])) as f:
+    catalina_properties_file ="{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=config["tomcat_install_dir"])
+    with open(catalina_properties_file) as f:
         for line in f:
             if "common.loader" in line:
                 common_loader = line
                 print "common_loader:", common_loader
                 break
-        if common_loader and config_dir in common_loader:
-            logger.info("%s already listed in common.loader", config_dir)
-        else:
-            logger.info("Adding %s to common.loader", config_dir)
-            common_loader += common_loader + "," + config_dir
+    if common_loader and config_dir in common_loader:
+        logger.info("%s already listed in common.loader", config_dir)
+        return
+    else:
+        logger.info("Adding %s to common.loader", config_dir)
+        updated_common_loader = common_loader + "," + config_dir
+        esg_functions.replace_string_in_file(catalina_properties_file, common_loader, updated_common_loader)
 
 
 

@@ -157,9 +157,9 @@ def start_tomcat():
     check_tomcat_status()
 
 
-def stop_tomcat(seconds=5):
+def stop_tomcat():
     try:
-        esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh {seconds} stop".format(seconds=seconds))
+        esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop"
     except SubprocessError, error:
         esg_functions.exit_with_error(error)
 

@@ -180,7 +180,7 @@ def restart_tomcat():
 
 def check_tomcat_status():
     try:
-        tomcat_pid = open("/tmp/catalina.pid", "r").read()
+        tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
         if psutil.pid_exists(int(tomcat_pid)):
             print "Tomcat is running"
             return

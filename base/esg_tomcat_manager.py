@@ -328,6 +328,7 @@ def main():
         extract_tomcat_tarball()
         remove_example_webapps()
         create_tomcat_user()
+        os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         start_tomcat()
 

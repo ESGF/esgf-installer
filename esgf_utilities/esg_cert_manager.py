@@ -13,9 +13,10 @@ import requests
 import yaml
 import jks
 import OpenSSL
-from esgf_utilities import esg_bash2py
-from esgf_utilities import esg_functions
-from esgf_utilities import esg_property_manager
+import esg_bash2py
+import esg_functions
+import esg_property_manager
+from esg_exceptions import SubprocessError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -204,11 +205,14 @@ def check_cachain_validity(ca_chain_bundle):
     '''Verify that the CA chain is valid'''
     print "checking that chain is valid... "
     if os.path.isfile(ca_chain_bundle):
-        valid_chain = esg_functions.call_subprocess("openssl verify -CAfile {ca_chain_bundle} {ca_chain_bundle}".format(ca_chain_bundle=ca_chain_bundle))
-        if "error" in valid_chain['stdout'] or "error" in valid_chain['stderr']:
-            print "The chain is not valid.  (hint: did you include the root cert for the chain?)"
-        else:
-            print "{ca_chain_bundle} is valid.".format(ca_chain_bundle=ca_chain_bundle)
+        try:
+            valid_chain = esg_functions.call_subprocess("openssl verify -CAfile {ca_chain_bundle} {ca_chain_bundle}".format(ca_chain_bundle=ca_chain_bundle))
+            if "error" in valid_chain['stdout'] or "error" in valid_chain['stderr']:
+                print "The chain is not valid.  (hint: did you include the root cert for the chain?)"
+            else:
+                print "{ca_chain_bundle} is valid.".format(ca_chain_bundle=ca_chain_bundle)
+        except SubprocessError, error:
+            print "Error verifying cachain:", error
     else:
         print "Hmmm... no chain provided [{ca_chain_bundle}], skipping this check..."
 

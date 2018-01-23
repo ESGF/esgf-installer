@@ -930,6 +930,29 @@ def get_config_ip(interface_value):
     return ip
 
 
+def bump_git_tag(bump_level="patch", commit_message=None):
+    import semver
+    from git import Repo
+    '''Bump the git tag version when a new release cut'''
+    if not find_executable("git"):
+        print "Git is not installed"
+        return False
+
+    repo = Repo(".")
+    current_tag = repo.git.describe()
+    if bump_level == "patch":
+        semver.bump_patch(current_tag)
+    if bump_level == "minor":
+        semver.bump_minor(current_tag)
+    if bump_level == "major":
+        semver.bump_major(current_tag)
+    new_tag = repo.create_tag(current_tag, message='Automatic tag "{0}"'.format(current_tag))
+    repo.remotes.origin.push(new_tag)
+
+
+    pass
+
+
 def main():
     import esg_logging_manager
 

@@ -49,13 +49,13 @@ def install_apache_httpd():
     esg_functions.stream_subprocess_output("yum clean all")
 
     # Custom ESGF Apache files that setup proxying
-    shutil.copyfile("apache_conf/esgf-httpd", "/etc/init.d/esgf-httpd")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
     os.chmod("/etc/init.d/esgf-httpd", 0755)
-    shutil.copyfile("apache_conf/esgf-httpd.conf",
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd.conf"),
                     "/etc/httpd/conf/esgf-httpd.conf")
-    shutil.copyfile("apache_conf/esgf-httpd-local.conf",
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-local.conf"),
                     "/etc/httpd/conf/esgf-httpd-local.conf")
-    shutil.copyfile("apache_conf/esgf-httpd-locals.conf",
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-locals.conf"),
                     "/etc/httpd/conf/esgf-httpd-locals.conf")
 
 
@@ -85,10 +85,10 @@ def make_python_eggs_dir():
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
     esg_bash2py.mkdir_p("/etc/certs")
-    shutil.copyfile("apache_certs/esgf-ca-bundle.crt",
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_certs/esgf-ca-bundle.crt"),
                     "/etc/certs/esgf-ca-bundle.crt")
-    shutil.copyfile("apache_html/index.html", "/var/www/html/index.html")
-    shutil.copyfile("apache_conf/ssl.conf", "/etc/httpd/conf.d/ssl.conf")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
 
 
 def main():

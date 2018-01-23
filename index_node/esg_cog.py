@@ -8,7 +8,7 @@ from esgf_utilities import esg_bash2py
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
-
+current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -99,7 +99,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
 
     # collect static files to ./static directory
     # must use a minimal settings file (configured with sqllite3 database)
-    shutil.copyfile("cog_conf/cog_settings.cfg", "{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
+    shutil.copyfile(os.path.join(current_directory, "cog_conf/cog_settings.cfg"), "{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
     esg_functions.stream_subprocess_output("python manage.py collectstatic --no-input")
     os.remove("{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
 
@@ -116,8 +116,8 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR)
 
     # startup
-    shutil.copyfile("cog_scripts/wait_for_postgres.sh", "/usr/local/bin/wait_for_postgres.sh")
-    shutil.copyfile("cog_scripts/process_esgf_config_archive.sh", "/usr/local/bin/process_esgf_config_archive.sh")
+    shutil.copyfile(os.path.join(current_directory, "cog_scripts/wait_for_postgres.sh"), "/usr/local/bin/wait_for_postgres.sh")
+    shutil.copyfile(os.path.join(current_directory, "cog_scripts/process_esgf_config_archive.sh"), "/usr/local/bin/process_esgf_config_archive.sh")
 
 def main():
     setup_cog()

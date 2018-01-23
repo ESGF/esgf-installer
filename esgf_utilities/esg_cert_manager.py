@@ -19,9 +19,8 @@ from esgf_utilities import esg_property_manager
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
+current_directory = os.path.join(os.path.dirname(__file__))
 
-consoleHandler = logging.StreamHandler()
-logger.addHandler(consoleHandler)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -620,9 +619,9 @@ def setup_temp_ca():
 
     #Copy CA perl script and openssl conf file that it uses.  The CA perl script
     #is used to create a temporary root CA
-    shutil.copyfile("apache_certs/CA.pl", "/etc/tempcerts/CA.pl")
-    shutil.copyfile("apache_certs/openssl.cnf", "/etc/tempcerts/openssl.cnf")
-    shutil.copyfile("apache_certs/myproxy-server.config", "/etc/tempcerts/myproxy-server.config")
+    shutil.copyfile(os.path.join(current_directory, "apache_certs/CA.pl"), "/etc/tempcerts/CA.pl")
+    shutil.copyfile(os.path.join(current_directory, "apache_certs/openssl.cnf"), "/etc/tempcerts/openssl.cnf")
+    shutil.copyfile(os.path.join(current_directory, "apache_certs/myproxy-server.config"), "/etc/tempcerts/myproxy-server.config")
     os.chmod("/etc/tempcerts/CA.pl", 0755)
     os.chmod("/etc/tempcerts/openssl.cnf", 0755)
 

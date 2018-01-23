@@ -8,6 +8,7 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 
+current_directory = os.path.join(os.path.dirname(__file__))
 
 def download_solr_tarball(solr_tarball_url, SOLR_VERSION):
     print "\n*******************************"
@@ -122,8 +123,8 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
 
     #
     #Copy shard files
-    shutil.copyfile("solr_scripts/add_shard.sh", "/usr/local/bin/add_shard.sh")
-    shutil.copyfile("solr_scripts/remove_shard.sh", "/usr/local/bin/remove_shard.sh")
+    shutil.copyfile(os.path.join(current_directory, "solr_scripts/add_shard.sh"), "/usr/local/bin/add_shard.sh")
+    shutil.copyfile(os.path.join(current_directory, "solr_scripts/remove_shard.sh"), "/usr/local/bin/remove_shard.sh")
 
     os.chmod("/usr/local/bin/add_shard.sh", 0555)
     os.chmod("/usr/local/bin/remove_shard.sh", 0555)
@@ -132,7 +133,7 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     add_shards()
 
     # custom logging properties
-    shutil.copyfile("solr_scripts/log4j.properties", "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+    shutil.copyfile(os.path.join(current_directory, "solr_scripts/log4j.properties"), "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
 
     #start solr
     start_solr(SOLR_INSTALL_DIR, SOLR_HOME)

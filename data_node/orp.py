@@ -75,7 +75,7 @@ def setup_orp():
 
     # properties to read the Tomcat keystore, used to sign the authentication cookie
     # these values are the same for all ESGF nodes
-    shutil.copyfile("esgf_orp_conf/esg-orp.properties", "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "esgf_orp_conf/esg-orp.properties"), "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")
 
     setup_providers_dropdown()
 

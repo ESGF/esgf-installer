@@ -13,7 +13,7 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
-from ..base import esg_tomcat_manager
+from base import esg_tomcat_manager
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)

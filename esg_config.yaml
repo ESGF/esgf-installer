@@ -28,8 +28,8 @@ esg_root_dir: /esg
 esg_search_version: 4.8.4
 esg_testdir: /usr/local/src/esgf/workbench/esg/../esg_test
 esg_tools_dir: /esg/tools
-esgcet_egg_file: esgcet-3.0.1-py2.7.egg
-esgcet_version: 3.0.1
+esgcet_egg_file: esgcet-3.4.0a1-py2.7.egg
+esgcet_version: 3.4.0a1
 esgf_coffee_dist_mirror: distrib-coffee.ipsl.jussieu.fr/pub/esgf
 esgf_dashboard_db_version: '0.01'
 esgf_dashboard_ip_workdir: /usr/local/src/esgf/workbench/esg/esgf-dashboard-ip

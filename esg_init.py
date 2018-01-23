@@ -30,8 +30,8 @@ def init():
     apache_frontend_version = "v1.02"
     cdat_version = "2.2.0"
     # cdat_tag = "1.5.1.esgf-v1.7.0"
-    esgcet_version = "3.0.1"
-    publisher_tag = "v3.0.1"
+    esgcet_version = "3.4.0a1"
+    publisher_tag = "v3.4.0a1"
     # see esgf-node-manager project:
     esgf_node_manager_version = "0.7.16"
     esgf_node_manager_db_version = "0.1.5"

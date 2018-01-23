@@ -215,29 +215,29 @@ def copy_jar_files():
     urllib.urlretrieve("{esgf_devel_url}/filters/openws-1.3.1.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/openws-1.3.1.jar")
     urllib.urlretrieve("{esgf_devel_url}/filters/xmltooling-1.2.2.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmltooling-1.2.2.jar")
 
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar")
-    shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar")
+    shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar")
 
     try:
-        shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
+        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/commons-dbcp-1.4.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
     try:
-        shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
+        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/commons-dbutils-1.3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
     try:
-        shutil.copyfile(os.path.join(current_directory,"/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
+        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/commons-pool-1.5.4.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
     try:
-        shutil.copyfile(os.path.join(current_directory, "/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar"), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
+        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/postgresql-8.4-703.jdbc3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 

@@ -154,12 +154,16 @@ def start_tomcat():
     if start_process["returncode"] != 0:
         esg_functions.exit_with_error(start_process["stderr"])
 
+    check_tomcat_status()
 
-def stop_tomcat():
+
+def stop_tomcat(seconds=5):
     try:
-        esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
+        esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh {seconds} stop".format(seconds=seconds))
     except SubprocessError, error:
         esg_functions.exit_with_error(error)
+
+    check_tomcat_status()
 
 
 def restart_tomcat():
@@ -176,7 +180,7 @@ def restart_tomcat():
 
 def check_tomcat_status():
     try:
-        tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
+        tomcat_pid = open("/tmp/catalina.pid", "r").read()
         if psutil.pid_exists(tomcat_pid):
             print "Tomcat is running"
             return

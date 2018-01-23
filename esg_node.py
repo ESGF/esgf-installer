@@ -124,7 +124,7 @@ def esgf_node_info():
      The primary IDP Peer for ESGF is esgf-node.llnl.gov
      You may register for an account at LLNL at the following URL:
      https://esgf-node.llnl.gov/user/add/
-     
+
      Note: Account creation is prerequisite for publication!
 
      ESGF P2P Node:                                             ESGF P2P Node:
@@ -345,8 +345,8 @@ def system_component_installation(esg_dist_url):
         print "******************************* \n"
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
-        thredds.main()
         orp.main()
+        thredds.main()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()

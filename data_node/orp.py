@@ -9,6 +9,8 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
 
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
+
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
@@ -27,6 +29,22 @@ def download_orp_war(orp_url):
                 f.write(chunk)
                 f.flush()
 
+def update_common_loader(config_dir):
+    '''add /esg/config/ to common.loader in catalina.properties if not already present'''
+    with open("{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=config["tomcat_install_dir"])) as f:
+        for line in f:
+            if "common.loader" in line:
+                common_loader = line
+                print "common_loader:", common_loader
+                break
+        if common_loader and config_dir in common_loader:
+            logger.info("%s already listed in common.loader", config_dir)
+        else:
+            logger.info("Adding %s to common.loader", config_dir)
+            common_loader += common_loader + "," + config_dir
+
+
+
 def setup_providers_dropdown():
     '''Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs'''
     known_providers_url = "https://aims1.llnl.gov/esgf/dist/lists/esgf_known_providers.xml"
@@ -34,8 +52,7 @@ def setup_providers_dropdown():
     known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir),"esgf_known_providers.xml")
 
     # add /esg/config/ to common.loader in catalina.properties if not already present
-    edit_catalina_props_command = '''perl -p -i -e "s@^(common\.loader=.*)\$@\1,{config_dir}@ unless m{config_dir}" {tomcat_install_dir}/conf/catalina.properties'''.format(config_dir=config_dir, tomcat_install_dir=config["tomcat_install_dir"])
-    esg_functions.call_subprocess(edit_catalina_props_command)
+    update_common_loader(config_dir)
 
     esg_functions.download_update(known_providers_file, known_providers_url)
 

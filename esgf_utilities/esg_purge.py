@@ -35,6 +35,7 @@ def purge_tomcat():
 
     #Get all processes belonging to Tomcat
     tomcat_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username']) if proc.info["username"] == "tomcat"]
+    logger.info("tomcat processes: %s", tomcat_processes)
     if tomcat_processes:
         for proc in tomcat_processes:
             try:
@@ -60,6 +61,12 @@ def purge_tomcat():
             pass
         else:
             logger.exception("Could not delete symlink /usr/local/tomcat")
+
+    try:
+        os.remove("/tmp/catalina.pid")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     #TODO: stop processes with Python

@@ -186,7 +186,7 @@ def check_tomcat_status():
             return
         else:
             print "Tomcat stopped."
-    except OSError:
+    except IOError:
         print "PID file not found.  Tomcat not running"
 
 

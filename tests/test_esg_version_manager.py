@@ -3,6 +3,7 @@
 import unittest
 import os
 from context import esgf_utilities
+from esgf_utilities import esg_version_manager
 import semver
 import yaml
 
@@ -18,11 +19,11 @@ class test_ESG_version_manager(unittest.TestCase):
         # output = esg_version_manager.check_module_version("esgcet", "3.0.1")
         # self.assertEqual(output,0)
 
-        output = esgf_utilities.esg_version_manager.check_module_version("pylint", "1.9")
+        output = esg_version_manager.check_module_version("pylint", "1.9")
         self.assertEqual(output,1)
 
     def test_get_current_esgf_library_version(self):
-        output = esgf_utilities.esg_version_manager.get_current_esgf_library_version("esgf-security")
+        output = esg_version_manager.get_current_esgf_library_version("esgf-security")
         self.assertEqual(output, True)
 
     def test_get_current_webapp_version(self):

@@ -1,8 +1,8 @@
 #!/usr/bin/local/env python
 
 import unittest
-import esg_version_manager
 import os
+from esgf_utilities import esg_version_manager
 import semver
 import yaml
 

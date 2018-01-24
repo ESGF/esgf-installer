@@ -6,6 +6,7 @@ from context import esgf_utilities
 import semver
 import yaml
 
+current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)

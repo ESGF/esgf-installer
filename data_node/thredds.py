@@ -275,6 +275,8 @@ def setup_thredds():
     print "\n*******************************"
     print "Setting up Thredds"
     print "******************************* \n"
+    esg_tomcat_manager.stop_tomcat()
+
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
     thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.2", "thredds.war")
     download_thredds_war(thredds_url)
@@ -323,7 +325,8 @@ def setup_thredds():
     # change ownership of source directory
     esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
-    # esg_tomcat_manager.restart_tomcat()
+    #restart tomcat to put modifications in effect.
+    esg_tomcat_manager.start_tomcat()
 
     esgsetup_thredds()
 

@@ -3,13 +3,21 @@ import coloredlogs
 from logging.handlers import RotatingFileHandler
 import os
 
-def main():
-    logs_dir = os.path.join(os.path.dirname(__file__), 'logs')
+def create_logging_directory():
+    logs_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'logs')
 
     try:
         os.makedirs(logs_dir)
-    except OSError as exc:  # Python >2.5
+    except OSError, error:
+        print "Could not make logging directory", error
         pass
+
+    return logs_dir
+
+
+def main():
+
+    logs_dir = create_logging_directory()
 
     error_log_path = os.path.join(logs_dir, "esgf_error_log.out")
     info_log_path = os.path.join(logs_dir, "esgf_info_log.out")

@@ -323,7 +323,7 @@ def setup_thredds():
     # change ownership of source directory
     esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
-    esg_tomcat_manager.restart_tomcat()
+    # esg_tomcat_manager.restart_tomcat()
 
     esgsetup_thredds()
 

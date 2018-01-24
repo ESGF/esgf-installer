@@ -20,7 +20,7 @@ def checkout_cog_branch(cog_path, branch_name):
     publisher_repo_local.git.checkout(branch_name)
     return publisher_repo_local
 
-def clone_cog_repo(COG_INSTALL_DIR, COG_TAG):
+def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="devel"):
     '''Clone the COG repo from Github'''
     print "\n*******************************"
     print "Cloning COG repo"

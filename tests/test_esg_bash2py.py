@@ -1,6 +1,7 @@
 #!/usr/bin/local/env python
 
 import unittest
+from context import esgf_utilities
 from esgf_utilities import esg_bash2py
 import os
 import yaml

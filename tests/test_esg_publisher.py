@@ -3,6 +3,9 @@ import os
 import shutil
 import fnmatch
 import re
+from context import esgf_utilities
+from context import base
+from context import data_node
 from data_node import esg_publisher
 from data_node import thredds
 from base import esg_postgres

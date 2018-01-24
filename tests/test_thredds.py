@@ -4,6 +4,9 @@ import unittest
 import os
 import shutil
 import logging
+from context import esgf_utilities
+from context import base
+from context import data_node
 from base import esg_tomcat_manager
 from data_node import thredds
 import yaml

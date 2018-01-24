@@ -1,6 +1,7 @@
 import os
 import unittest
 import ConfigParser
+from context import esgf_utilities
 from esgf_utilities import esg_property_manager
 import yaml
 

@@ -4,6 +4,7 @@ import unittest
 import os
 import shutil
 import logging
+from context import esgf_utilities
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 import yaml

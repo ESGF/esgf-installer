@@ -3,6 +3,9 @@
 import unittest
 import shutil
 import os
+from context import esgf_utilities
+from context import base
+from context import index_node
 from esgf_utilities import esg_purge
 from esgf_utilities import esg_bash2py
 from base import esg_tomcat_manager

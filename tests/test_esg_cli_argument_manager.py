@@ -2,6 +2,7 @@ import unittest
 import os
 import sys
 import pprint
+from context import esgf_utilities
 from esgf_utilities import esg_cli_argument_manager
 
 class test_ESG_CLI_Argument_Manager(unittest.TestCase):

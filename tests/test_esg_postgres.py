@@ -1,10 +1,12 @@
 #!/usr/bin/local/env python
 
 import unittest
-from base import esg_postgres
 import os
 import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from context import esgf_utilities
+from context import base
+from base import esg_postgres
 from esgf_utilities.esg_purge import purge_postgres
 
 current_directory = os.path.join(os.path.dirname(__file__))

@@ -5,6 +5,8 @@ import os
 import shutil
 import logging
 from distutils.spawn import find_executable
+from context import esgf_utilities
+from context import base
 from base import esg_tomcat_manager
 from esgf_utilities import esg_bash2py
 import yaml

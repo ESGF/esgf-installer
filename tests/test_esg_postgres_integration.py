@@ -3,6 +3,7 @@ import os
 from base import esg_postgres
 import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from context import esgf_utilities
 from esgf_utilities.esg_purge import purge_postgres
 from esgf_utilities import esg_bash2py
 

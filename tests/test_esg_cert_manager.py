@@ -4,6 +4,7 @@ import unittest
 import logging
 import os
 import shutil
+from context import esgf_utilities
 from esgf_utilities import esg_cert_manager
 from esgf_utilities import esg_functions
 import yaml

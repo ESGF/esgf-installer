@@ -6,6 +6,8 @@ import shutil
 import errno
 import logging
 from distutils.spawn import find_executable
+from context import esgf_utilities
+from context import base
 from esgf_utilities import esg_functions
 from base import esg_setup
 import yaml

@@ -343,10 +343,12 @@ def system_component_installation(esg_dist_url):
         print "\n*******************************"
         print "Installing Data Node Components"
         print "******************************* \n"
+        esg_tomcat_manager.stop_tomcat()
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
         orp.main()
         thredds.main()
+        esg_tomcat_manager.start_tomcat()
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()

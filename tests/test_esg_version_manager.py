@@ -7,7 +7,7 @@ import semver
 import yaml
 
 
-with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
+with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 

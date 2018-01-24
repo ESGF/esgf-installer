@@ -13,6 +13,7 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
+from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 
 
@@ -136,7 +137,7 @@ def get_webxml_file():
 
 def update_mail_admin_address():
     mail_admin_address = esg_property_manager.get_property("mail_admin_address")
-    esg_functions.stream_subprocess_output('sed -i "s/support@my.group/$mail_admin_address/g" /esg/content/thredds/threddsConfig.xml')
+    esg_functions.stream_subprocess_output('sed -i "s/support@my.group/{mail_admin_address}/g" /esg/content/thredds/threddsConfig.xml'.format(mail_admin_address=mail_admin_address))
 
 
 def esgsetup_thredds():
@@ -144,9 +145,9 @@ def esgsetup_thredds():
     esgsetup_command = '''esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password {security_admin_password}'''.format(security_admin_password=esg_functions.get_security_admin_password())
     try:
         esg_functions.stream_subprocess_output(esgsetup_command)
-    except Exception:
-        logger.exception("Could not finish esgsetup")
-        esg_functions.exit_with_error(1)
+    except SubprocessError, error:
+        logger.exception("Could not finish esgsetup: \n %s", error)
+        # esg_functions.exit_with_error(1)
 
 def copy_public_directory():
     '''HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...

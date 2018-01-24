@@ -27,18 +27,18 @@ class test_ESG_version_manager(unittest.TestCase):
         self.assertEqual(output, True)
 
     def test_get_current_webapp_version(self):
-        output = esgf_utilities.esg_version_manager.get_current_webapp_version("esg-orp")
+        output = esg_version_manager.get_current_webapp_version("esg-orp")
         self.assertEqual(output, "2.9.0")
 
     def test_check_webapp_version(self):
-        output = esgf_utilities.esg_version_manager.check_webapp_version("esg-orp", "2.0")
+        output = esg_version_manager.check_webapp_version("esg-orp", "2.0")
         self.assertEqual(output, 0)
 
-        output = esgf_utilities.esg_version_manager.check_webapp_version("esg-orp", "4.0")
+        output = esg_version_manager.check_webapp_version("esg-orp", "4.0")
         self.assertEqual(output, 1)
 
     def test_compare_versions(self):
-        self.assertTrue(esgf_utilities.esg_version_manager.compare_versions("1.8.0_131", "1.8.0_111"))
+        self.assertTrue(esg_version_manager.compare_versions("1.8.0_131", "1.8.0_111"))
 
 
 if __name__ == '__main__':

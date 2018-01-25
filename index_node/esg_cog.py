@@ -36,11 +36,17 @@ def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="devel"):
     Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
     checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
 
+#TODO:Probably need to add a force_install param to force an update
 def setup_django_openid_auth(target_directory):
     print "\n*******************************"
     print "Setting up Django OpenID Auth"
     print "******************************* \n"
-    Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
+
+    if os.path.isdir(target_directory):
+        logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
+    else:
+        Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
+
     with esg_bash2py.pushd(target_directory):
         esg_functions.stream_subprocess_output("python setup.py install")
 
@@ -48,7 +54,11 @@ def transfer_api_client_python(target_directory):
     print "\n*******************************"
     print "Setting up Transfer API Client"
     print "******************************* \n"
-    Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
+    if os.path.isdir(target_directory):
+        logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
+    else:
+        Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
+
     with esg_bash2py.pushd(target_directory):
         # esg_functions.stream_subprocess_output("python setup.py install")
         repo = Repo(os.path.join(target_directory))

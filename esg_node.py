@@ -334,6 +334,7 @@ def system_component_installation(esg_dist_url):
     #---------------------------------------
 
     if "INSTALL" in node_type_list:
+        #TODO: check status of base components; if all running, skip setup
         esg_setup.setup_java()
         esg_setup.setup_ant()
         esg_postgres.setup_postgres()

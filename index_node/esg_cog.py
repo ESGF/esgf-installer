@@ -2,7 +2,7 @@ import os
 import shutil
 import logging
 import yaml
-from git import Repo
+from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 
@@ -92,7 +92,10 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     esg_bash2py.mkdir_p(COG_INSTALL_DIR)
 
     os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
-    clone_cog_repo(COG_INSTALL_DIR, COG_TAG)
+    try:
+        clone_cog_repo(COG_INSTALL_DIR, COG_TAG)
+    except GitCommandError, error:
+        logger.exception("Failed to clone COG repo: \n %s", error)
 
     # install CoG dependencies
     with esg_bash2py.pushd(COG_INSTALL_DIR):

@@ -75,7 +75,7 @@ def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=c
         new_user.set("password", password_hash)
         new_user.set("roles", "tdrAdmin,tdsConfig")
 
-    tree.write(open(tomcat_users_file, "w", encoding='utf-8', xml_declaration=True), pretty_print=True)
+    tree.write(open(tomcat_users_file, "w"), pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 def add_another_user():
     '''Helper function for deciding to add more Tomcat users or not'''

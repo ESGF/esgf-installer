@@ -95,7 +95,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     transfer_api_client_python(os.path.join(COG_INSTALL_DIR, "transfer-api-client-python"))
 
     # create or upgrade CoG installation
-    esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=$ESGF")
+    esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=true")
 
     # collect static files to ./static directory
     # must use a minimal settings file (configured with sqllite3 database)

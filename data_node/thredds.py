@@ -75,7 +75,7 @@ def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=c
         new_user.set("password", password_hash)
         new_user.set("roles", "tdrAdmin,tdsConfig")
 
-    tree.write(open(tomcat_users_file, "w"), pretty_print=True)
+    tree.write(open(tomcat_users_file, "w", encoding='utf-8', xml_declaration=True), pretty_print=True)
 
 def add_another_user():
     '''Helper function for deciding to add more Tomcat users or not'''
@@ -165,35 +165,32 @@ def copy_public_directory():
         tomcat_group = esg_functions.get_group_id("tomcat")
         esg_functions.change_ownership_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
 
-def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini"):
+def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini", tomcat_users_file=config["tomcat_users_file"]):
 
     print "Inspecting tomcat... "
-    tree = etree.parse(config["tomcat_users_file"])
+    tree = etree.parse(tomcat_users_file)
     root = tree.getroot()
     user_element = root.find("user")
     tomcat_username = user_element.get("username")
     tomcat_password_hash = user_element.get("password")
 
     print "Inspecting publisher... "
-    # import ConfigParser
-    # parser = ConfigParser.SafeConfigParser(allow_no_value=True)
-    # parser.read(config_file)
-    #
-    # section1 = config['DEFAULT']
-    print "Inspecting publisher... "
     thredds_username = esg_property_manager.get_property("thredds_username", config_file=thredds_ini_file, section_name="DEFAULT")
     thredds_password = esg_property_manager.get_property("thredds_password", config_file=thredds_ini_file, section_name="DEFAULT")
     thredds_password_hash = create_password_hash(thredds_password)
 
     print "Checking username... "
+    logger.debug("tomcat_username: %s", tomcat_username)
+    logger.debug("thredds_username: %s", thredds_username)
     if tomcat_username != thredds_username:
-        print "The user_name property in {tomcat_users_file} doesn't match the user_name in {thredds_ini_file}".format(tomcat_users_file=config["tomcat_users_file"], thredds_ini_file=thredds_ini_file)
+        print "The user_name property in {tomcat_users_file} doesn't match the user_name in {thredds_ini_file}".format(tomcat_users_file=tomcat_users_file, thredds_ini_file=thredds_ini_file)
         raise Exception
-        # sys.exit(1)
 
     print "Checking password... "
+    logger.debug("tomcat_password_hash: %s", tomcat_password_hash)
+    logger.debug("thredds_password_hash: %s", thredds_password_hash)
     if tomcat_password_hash != thredds_password_hash:
-        print "The password property in {tomcat_users_file} doesn't match the password in {thredds_ini_file}".format(tomcat_users_file=config["tomcat_users_file"], thredds_ini_file=thredds_ini_file)
+        print "The password property in {tomcat_users_file} doesn't match the password in {thredds_ini_file}".format(tomcat_users_file=tomcat_users_file, thredds_ini_file=thredds_ini_file)
         raise Exception
 
     print "Verified Thredds crendentials"

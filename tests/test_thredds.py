@@ -60,8 +60,8 @@ class test_Thredds(unittest.TestCase):
 
         password_hash = thredds.create_password_hash("test_password")
         thredds.update_tomcat_users_file("test_user", password_hash, tomcat_users_file="/tmp/mock_tomcat_users.xml")
-        
-        output = thredds.verify_thredds_credentials(thredds_ini_file="/tmp/mock_esg.ini")
+
+        output = thredds.verify_thredds_credentials(thredds_ini_file="/tmp/mock_esg.ini", tomcat_users_file="/tmp/mock_tomcat_users.xml")
         logger.info("output: %s", output)
         self.assertTrue(output)
 

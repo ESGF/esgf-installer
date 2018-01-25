@@ -26,29 +26,15 @@ class test_Thredds(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Subsystem Test Fixture"
         print "******************************* \n"
-        esg_tomcat_manager.main()
-    # def setUp(self):
-    #     # purge_and_clone_fresh_repos.main(os.path.join(os.environ["HOME"], "Development", "ESGF"))
-    #     pass
+        if not os.path.isdir("/usr/local/tomcat"):
+            esg_tomcat_manager.main()
 
     @classmethod
     def tearDownClass(cls):
         print "\n*******************************"
         print "Cleaning up ESGF Subsystem Test Fixture"
         print "******************************* \n"
-        try:
-            shutil.rmtree("/usr/local/esgf-dashboard")
-        except OSError, error:
-            print "error:", error
-        try:
-            shutil.rmtree("/esg")
-        except OSError, error:
-            print "error deleting /esg:", error
-
-        try:
-            shutil.rmtree("/tmp/cog")
-        except OSError, error:
-            print "error deleting /tmp/cog:", error
+        pass
 
     def test_setup_thredds(self):
         thredds.setup_thredds()

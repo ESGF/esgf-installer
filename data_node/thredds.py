@@ -328,7 +328,7 @@ def setup_thredds():
 
     esgsetup_thredds()
 
-    verify_thredds_credentials()
+    # verify_thredds_credentials()
 
     # cleanup
     # shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")

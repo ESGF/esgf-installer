@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<tomcat-users>
+  <role rolename="tdsConfig"/>
+  <role rolename="manager"/>
+  <role rolename="tdrAdmin"/>
+  <!--@@user_entry@@-->
+</tomcat-users>

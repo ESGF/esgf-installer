@@ -28,6 +28,15 @@ class test_Thredds(unittest.TestCase):
         print "******************************* \n"
         if not os.path.isdir("/usr/local/tomcat"):
             esg_tomcat_manager.main()
+        try:
+            os.remove("/tmp/mock_esg.ini")
+        except OSError:
+            pass
+
+        try:
+            os.remove("/tmp/mock_tomcat_users.xml")
+        except OSError:
+            pass
 
     @classmethod
     def tearDownClass(cls):
@@ -44,8 +53,14 @@ class test_Thredds(unittest.TestCase):
         self.assertEqual(output, "5.0")
 
     def test_verify_thredds_credentials(self):
-        if not os.path.isdir("/tmp/mock_esg.ini"):
+        if not os.path.isfile("/tmp/mock_esg.ini"):
             shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_esg.ini"), "/tmp/mock_esg.ini")
+        if not os.path.isfile("/tmp/mock_tomcat_users.xml"):
+            shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_tomcat_users.xml"), "/tmp/mock_tomcat_users.xml")
+
+        password_hash = thredds.create_password_hash("test_password")
+        thredds.update_tomcat_users_file("test_user", password_hash, tomcat_users_file="/tmp/mock_tomcat_users.xml")
+        
         output = thredds.verify_thredds_credentials(thredds_ini_file="/tmp/mock_esg.ini")
         logger.info("output: %s", output)
         self.assertTrue(output)

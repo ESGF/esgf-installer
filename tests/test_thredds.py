@@ -57,6 +57,13 @@ class test_Thredds(unittest.TestCase):
         output = thredds.check_thredds_version()
         self.assertEqual(output, "5.0")
 
+    def test_verify_thredds_credentials(self):
+        if not os.path.isdir("/tmp/mock_esg.ini"):
+            shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_esg.ini"), "/tmp/mock_esg.ini")
+        output = thredds.verify_thredds_credentials(thredds_ini_file="/tmp/mock_esg.ini")
+        logger.info("output: %s", output)
+        self.assertTrue(output)
+
 
 if __name__ == '__main__':
     unittest.main()

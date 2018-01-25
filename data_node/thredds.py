@@ -165,8 +165,7 @@ def copy_public_directory():
         tomcat_group = esg_functions.get_group_id("tomcat")
         esg_functions.change_ownership_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
 
-def verify_thredds_credentials():
-    thredds_ini_file = "/esg/config/esgcet/esg.ini"
+def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini"):
 
     print "Inspecting tomcat... "
     tree = etree.parse(config["tomcat_users_file"])

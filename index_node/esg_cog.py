@@ -50,7 +50,7 @@ def transfer_api_client_python(target_directory):
     print "******************************* \n"
     Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
     with esg_bash2py.pushd(target_directory):
-        esg_functions.stream_subprocess_output("python setup.py install")
+        # esg_functions.stream_subprocess_output("python setup.py install")
         repo = Repo(os.path.join(target_directory))
         git = repo.git
         git.pull()

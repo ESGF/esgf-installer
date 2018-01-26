@@ -32,7 +32,7 @@ def _choose_fqdn(force_install=False):
             default_host_name=default_host_name)) or default_host_name
         esgf_host = default_host_name
         logger.info("esgf_host = [%s]", esgf_host)
-        esg_property_manager.write_as_property("esgf_host", esgf_host)
+        esg_property_manager.set_property("esgf_host", esgf_host)
 
 def _choose_admin_password(password_file=config["esgf_secret_file"]):
     '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
@@ -69,7 +69,7 @@ def _choose_organization_name(force_install=False):
         while True:
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ".format(default_org_name=default_org_name)) or default_org_name
             org_name_input.replace("", "_")
-            esg_property_manager.write_as_property("esg_root_id", org_name_input)
+            esg_property_manager.set_property("esg_root_id", org_name_input)
             break
 
 def _choose_node_short_name(force_install=False):
@@ -80,7 +80,7 @@ def _choose_node_short_name(force_install=False):
     else:
         node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=None)) or None
         node_short_name_input.replace("", "_")
-        esg_property_manager.write_as_property(
+        esg_property_manager.set_property(
             "node_short_name", node_short_name_input)
 
 
@@ -92,7 +92,7 @@ def _choose_node_long_name(force_install=False):
     else:
         node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
             node_long_name=None)) or None
-        esg_property_manager.write_as_property(
+        esg_property_manager.set_property(
             "node_long_name", node_long_name_input)
 
 def _choose_node_namespace(force_install=False):
@@ -117,7 +117,7 @@ def _choose_node_namespace(force_install=False):
                 print "Namespace entered is not in a valid format.  Valid format is [suffix].[domain].  Example: gov.llnl"
                 continue
             else:
-                esg_property_manager.write_as_property(
+                esg_property_manager.set_property(
                     "node_namespace", node_namespace_input)
                 break
 
@@ -135,7 +135,7 @@ def _choose_node_peer_group(force_install=False):
                 print "Please choose either esgf-test, esgf-dev, or esgf-prod"
                 continue
             else:
-                esg_property_manager.write_as_property(
+                esg_property_manager.set_property(
                     "node_peer_group", node_peer_group_input)
                 break
 
@@ -147,7 +147,7 @@ def _choose_esgf_index_peer(force_install=False):
         default_esgf_index_peer = socket.getfqdn()
         esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
             default_esgf_index_peer=default_esgf_index_peer)) or default_esgf_index_peer
-        esg_property_manager.write_as_property(
+        esg_property_manager.set_property(
             "esgf_index_peer", esgf_index_peer_input)
 
 
@@ -159,7 +159,7 @@ def _choose_mail_admin_address(force_install=False):
         mail_admin_address_input = raw_input(
             "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail.admin.address")))
         if mail_admin_address_input:
-            esg_property_manager.write_as_property(
+            esg_property_manager.set_property(
                 "mail_admin_address", mail_admin_address_input)
         else:
             print " (The notification system will not be enabled without an email address)"
@@ -176,7 +176,7 @@ def _choose_publisher_db_user(force_install=False):
         default_publisher_db_user = "esgcet"
         publisher_db_user_input = raw_input(
             "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ".format(default_publisher_db_user=default_publisher_db_user)) or default_publisher_db_user
-        esg_property_manager.write_as_property(
+        esg_property_manager.set_property(
             "publisher_db_user", publisher_db_user_input)
 
 def _choose_publisher_db_user_passwd(force_install=False):

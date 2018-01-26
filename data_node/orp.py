@@ -59,7 +59,7 @@ def setup_providers_dropdown():
 
     esg_functions.download_update(known_providers_file, known_providers_url)
 
-    esg_property_manager.write_as_property("orp_provider_list", known_providers_file)
+    esg_property_manager.set_property("orp_provider_list", known_providers_file)
 
     tomcat_user_id = esg_functions.get_user_id("tomcat")
     tomcat_group_id = esg_functions.get_group_id("tomcat")

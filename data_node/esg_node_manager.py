@@ -81,34 +81,34 @@ def init():
         esgf_node_manager_db_version=config["esgf_node_manager_db_version"], python_version=config["python_version"])
 
 
-    # get_property node_use_ssl && [ -z "${node_use_ssl}" ] && write_as_property node_use_ssl true
+    # get_property node_use_ssl && [ -z "${node_use_ssl}" ] && set_property node_use_ssl true
     node_use_ssl = esg_property_manager.get_property("node_use_ssl")
-    esg_property_manager.write_as_property("node_use_ssl", True)
+    esg_property_manager.set_property("node_use_ssl", True)
 
     # get_property node_manager_service_app_home ${tomcat_install_dir}/webapps/${node_manager_app_context_root}
-    # write_as_property node_manager_service_app_home
+    # set_property node_manager_service_app_home
     node_manager_service_app_home = esg_property_manager.get_property("node_manager_service_app_home", "{tomcat_install_dir}/webapps/{node_manager_app_context_root}".format(
         tomcat_install_dir=config["tomcat_install_dir"], node_manager_app_context_root=node_manager_app_context_root))
-    esg_property_manager.write_as_property(
+    esg_property_manager.set_property(
         "node_manager_service_app_home", node_manager_service_app_home)
 
-    # write_as_property node_manager_service_endpoint "http$([ "${node_use_ssl}" = "true" ] && echo "s" || echo "")://${esgf_host}/${node_manager_app_context_root}/node"
+    # set_property node_manager_service_endpoint "http$([ "${node_use_ssl}" = "true" ] && echo "s" || echo "")://${esgf_host}/${node_manager_app_context_root}/node"
     if node_use_ssl:
         node_manager_service_endpoint = "https://{esgf_host}/{node_manager_app_context_root}/node".format(
             esgf_host=esgf_host, node_manager_app_context_root=node_manager_app_context_root)
     else:
         node_manager_service_endpoint = "http://{esgf_host}/{node_manager_app_context_root}/node".format(
             esgf_host=esgf_host, node_manager_app_context_root=node_manager_app_context_root)
-    esg_property_manager.write_as_property(
+    esg_property_manager.set_property(
         "node_manager_service_endpoint", node_manager_service_endpoint)
 
-    # get_property node_use_ips && [ -z "${node_use_ips}" ] && write_as_property node_use_ips true
+    # get_property node_use_ips && [ -z "${node_use_ips}" ] && set_property node_use_ips true
     node_use_ips = esg_property_manager.get_property("node_use_ips")
-    esg_property_manager.write_as_property("node_use_ips", True)
+    esg_property_manager.set_property("node_use_ips", True)
 
-    # get_property node_poke_timeout && [ -z "${node_poke_timeout}" ] && write_as_property node_poke_timeout 6000
+    # get_property node_poke_timeout && [ -z "${node_poke_timeout}" ] && set_property node_poke_timeout 6000
     node_poke_timeout = esg_property_manager.get_property("node_poke_timeout")
-    esg_property_manager.write_as_property("node_poke_timeout", 6000)
+    esg_property_manager.set_property("node_poke_timeout", 6000)
 
     # Database information....
     node_db_node_manager_schema_name = "esgf_node_manager"

@@ -513,7 +513,7 @@ def check_shmmax(min_shmmax=48):
         # TODO: replace with Python to update file
         call_subprocess(
             "sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
-        esg_property_manager.write_as_property("kernal_shmmax", set_value_mb)
+        esg_property_manager.set_property("kernal_shmmax", set_value_mb)
 
 
 def get_esg_root_id():

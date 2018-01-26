@@ -140,7 +140,7 @@ def check_for_my_ip(force_install=False):
         else:
             my_ip_address = ip_addresses[0]
 
-    esg_property_manager.write_as_property("esgf_host_ip", my_ip_address)
+    esg_property_manager.set_property("esgf_host_ip", my_ip_address)
     esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
     return esgf_host_ip
 

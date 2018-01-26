@@ -28,7 +28,7 @@ def get_property(property_name, config_file=config["config_file"], section_name=
         logger.debug("could not find property %s", property_name)
 
 
-def write_as_property(property_name, property_value=None, config_file=config["config_file"]):
+def set_property(property_name, property_value=None, config_file=config["config_file"]):
     '''
         Writes variable out to property file using ConfigParser
         arg 1 - The string of the variable you wish to write as property to property file

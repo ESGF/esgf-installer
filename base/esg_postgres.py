@@ -322,8 +322,8 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     psql_path = find_executable("psql")
 
     if check_existing_pg_version(psql_path):
-        if esg_property_manager.get_property("install_postgres"):
-            setup_postgres_answer = esg_property_manager.get_property("install_postgres")
+        if esg_property_manager.get_property("install.postgres"):
+            setup_postgres_answer = esg_property_manager.get_property("install.postgres")
         else:
             setup_postgres_answer = raw_input(
                 "Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
@@ -334,7 +334,7 @@ def setup_postgres(force_install=False, default_continue_install="N"):
         else:
             force_install = True
 
-    backup_existing_db = esg_property_manager.get_property("backup_database")
+    backup_existing_db = esg_property_manager.get_property("backup.database")
     if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:
         backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
         if backup_db_input.lower() in ["y", "yes"]:
@@ -435,7 +435,7 @@ def setup_db_schemas(force_install):
             print "{db_user} role already exists. Skipping creation".format(db_user=config["postgress_user"])
 
     # create 'esgcet' user
-    publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+    publisher_db_user = esg_property_manager.get_property("publisher.db.user")
     if not publisher_db_user:
         publisher_db_user = raw_input(
             "What is the (low privilege) db account for publisher? [esgcet]: ") or "esgcet"

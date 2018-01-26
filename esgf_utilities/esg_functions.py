@@ -500,7 +500,7 @@ def check_shmmax(min_shmmax=48):
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
     '''
-    kernel_shmmax = esg_property_manager.get_property("kernel_shmmax")
+    kernel_shmmax = esg_property_manager.get_property("kernel.shmmax")
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
     cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
@@ -520,7 +520,7 @@ def get_esg_root_id():
     try:
         esg_root_id = config["esg_root_id"]
     except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg_root_id")
+        esg_root_id = esg_property_manager.get_property("esg.root.id")
     return esg_root_id
 
 

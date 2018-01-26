@@ -82,8 +82,8 @@ def add_another_user():
     valid_selection = False
     done_adding_users = None
     while not valid_selection:
-        if esg_property_manager.get_property("add_another_user"):
-            another_user = esg_property_manager.get_property("add_another_user")
+        if esg_property_manager.get_property("add.another.user"):
+            another_user = esg_property_manager.get_property("add.another.user")
         else:
             another_user = raw_input("Would you like to add another user? [y/N]:") or "n"
 
@@ -103,8 +103,8 @@ def add_tomcat_user():
     print "Create user credentials\n"
     done_adding_users = False
     while not done_adding_users:
-        if esg_property_manager.get_property("tomcat_user"):
-            tomcat_username = esg_property_manager.get_property("tomcat_user")
+        if esg_property_manager.get_property("tomcat.user"):
+            tomcat_username = esg_property_manager.get_property("tomcat.user")
         else:
             default_user = "dnode_user"
             tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user= default_user)) or default_user
@@ -136,7 +136,7 @@ def get_webxml_file():
     os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 def update_mail_admin_address():
-    mail_admin_address = esg_property_manager.get_property("mail_admin_address")
+    mail_admin_address = esg_property_manager.get_property("mail.admin.address")
     esg_functions.stream_subprocess_output('sed -i "s/support@my.group/{mail_admin_address}/g" /esg/content/thredds/threddsConfig.xml'.format(mail_admin_address=mail_admin_address))
 
 
@@ -175,8 +175,8 @@ def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini", to
     tomcat_password_hash = user_element.get("password")
 
     print "Inspecting publisher... "
-    thredds_username = esg_property_manager.get_property("thredds_username", config_file=thredds_ini_file, section_name="DEFAULT")
-    thredds_password = esg_property_manager.get_property("thredds_password", config_file=thredds_ini_file, section_name="DEFAULT")
+    thredds_username = esg_property_manager.get_property("thredds.username", config_file=thredds_ini_file, section_name="DEFAULT")
+    thredds_password = esg_property_manager.get_property("thredds.password", config_file=thredds_ini_file, section_name="DEFAULT")
     thredds_password_hash = create_password_hash(thredds_password)
 
     print "Checking username... "

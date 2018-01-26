@@ -77,7 +77,7 @@ def create_certificate_chain_list():
     cert_files = []
     #Enter ca_chain file into list
     while True:
-        if esg_property_manager.get_property("certfile_entry").lower() in ["n", "no"]:
+        if esg_property_manager.get_property("certfile.entry").lower() in ["n", "no"]:
             certfile_entry = None
         else:
             print "Please enter your Certificate Authority's certificate chain file(s)"
@@ -638,18 +638,18 @@ def setup_temp_ca():
 
 
 def set_commercial_ca_paths():
-    if esg_property_manager.get_property("commercial_key_path"):
-        commercial_key_path = esg_property_manager.get_property("commercial_key_path")
+    if esg_property_manager.get_property("commercial.key.path"):
+        commercial_key_path = esg_property_manager.get_property("commercial.key.path")
     else:
         commercial_key_path = raw_input("Enter the file path of the commercial key: ")
 
-    if esg_property_manager.get_property("commercial_cert_path"):
-        commercial_cert_path = esg_property_manager.get_property("commercial_cert_path")
+    if esg_property_manager.get_property("commercial.cert.path"):
+        commercial_cert_path = esg_property_manager.get_property("commercial.cert.path")
     else:
         commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
 
-    if esg_property_manager.get_property("cachain_path"):
-        ca_chain_path = esg_property_manager.get_property("cachain_path")
+    if esg_property_manager.get_property("cachain.path"):
+        ca_chain_path = esg_property_manager.get_property("cachain.path")
     else:
         ca_chain_path = raw_input("Enter the file path of the ca chain: ")
 
@@ -677,8 +677,8 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     print "Checking for Commercial CA"
     print "******************************* \n"
 
-    if esg_property_manager.get_property("install_signed_certs"):
-        commercial_ca_setup = esg_property_manager.get_property("install_signed_certs")
+    if esg_property_manager.get_property("install.signed.certs"):
+        commercial_ca_setup = esg_property_manager.get_property("install.signed.certs")
     else:
         commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
 

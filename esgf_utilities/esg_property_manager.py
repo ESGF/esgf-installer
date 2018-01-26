@@ -12,7 +12,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 #TODO:rename config["config_file"] to config["property_file"]
-def get_property(property_name, config_file=config["config_file"], section_name="installer_properties"):
+def get_property(property_name, config_file=config["config_file"], section_name="installer.properties"):
     '''
         Gets a single property from the config_file using ConfigParser
         arg 1 - the string that you wish to get the property of (and make a variable)
@@ -37,10 +37,10 @@ def write_as_property(property_name, property_value=None, config_file=config["co
     parser = ConfigParser.SafeConfigParser()
     parser.read(config_file)
     try:
-        parser.add_section("installer_properties")
+        parser.add_section("installer.properties")
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
 
-    parser.set('installer_properties', property_name, property_value)
+    parser.set('installer.properties', property_name, property_value)
     with open(config_file, "w") as config_file_object:
         parser.write(config_file_object)

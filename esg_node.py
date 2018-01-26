@@ -376,8 +376,8 @@ def done_remark():
     if "COMPUTE" in node_type_list:
         print "http://{esgf_host}/las".format(esgf_host=esgf_host)
 
-    print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node_peer_group"))
-    print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf_index_peer"))
+    print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node.peer.group"))
+    print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf.index.peer"))
 
     if os.path.isdir(os.path.join("{thredds_content_dir}".format(thredds_content_dir=config["thredds_content_dir"]), "thredds")):
         print "[Note: Use UNIX group permissions on {thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]".format(thredds_content_dir=config["thredds_content_dir"])
@@ -392,7 +392,7 @@ def done_remark():
 '''
 
     show_summary()
-    print "(\"Test Project\" -> pcmdi.{esg_root_id}.{node_short_name}.test.mytest)".format(esg_root_id=esg_root_id, node_short_name=esg_property_manager.get_property("node_short_name"))
+    print "(\"Test Project\" -> pcmdi.{esg_root_id}.{node_short_name}.test.mytest)".format(esg_root_id=esg_root_id, node_short_name=esg_property_manager.get_property("node.short.name"))
 
 def setup_esgf_rpm_repo(esg_dist_url):
     '''Creates the esgf repository definition file'''

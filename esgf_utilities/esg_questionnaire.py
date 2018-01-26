@@ -15,8 +15,8 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 def _choose_fqdn(force_install=False):
-    if esg_property_manager.get_property("esgf_host") and not force_install:
-        logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf_host"))
+    if esg_property_manager.get_property("esgf.host") and not force_install:
+        logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf.host"))
         return
     else:
         default_host_name = socket.getfqdn()
@@ -55,8 +55,8 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
 
 def _choose_organization_name(force_install=False):
     '''Choose the organization name for the installation'''
-    if esg_property_manager.get_property("esg_root_id") and not force_install:
-        logger.info("esg_root_id = [%s]", esg_property_manager.get_property("esg_root_id"))
+    if esg_property_manager.get_property("esg.root.id") and not force_install:
+        logger.info("esg_root_id = [%s]", esg_property_manager.get_property("esg.root.id"))
         return
 
     elif force_install:
@@ -74,8 +74,8 @@ def _choose_organization_name(force_install=False):
 
 def _choose_node_short_name(force_install=False):
     '''Choose the short name for the node installation'''
-    if esg_property_manager.get_property("node_short_name") and not force_install:
-        logger.info("node_short_name = [%s]", esg_property_manager.get_property("node_short_name"))
+    if esg_property_manager.get_property("node.short.name") and not force_install:
+        logger.info("node_short_name = [%s]", esg_property_manager.get_property("node.short.name"))
         return
     else:
         node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=None)) or None
@@ -85,8 +85,8 @@ def _choose_node_short_name(force_install=False):
 
 
 def _choose_node_long_name(force_install=False):
-    if esg_property_manager.get_property("node_long_name") and not force_install:
-        logger.info("node_long_name = [%s]", esg_property_manager.get_property("node_long_name"))
+    if esg_property_manager.get_property("node.long.name") and not force_install:
+        logger.info("node_long_name = [%s]", esg_property_manager.get_property("node.long.name"))
         return
 
     else:
@@ -96,8 +96,8 @@ def _choose_node_long_name(force_install=False):
             "node_long_name", node_long_name_input)
 
 def _choose_node_namespace(force_install=False):
-    if esg_property_manager.get_property("node_namespace") and not force_install:
-        logger.info("node_namespace = [%s]", esg_property_manager.get_property("node_namespace"))
+    if esg_property_manager.get_property("node.namespace") and not force_install:
+        logger.info("node_namespace = [%s]", esg_property_manager.get_property("node.namespace"))
         return
     else:
         try:
@@ -122,8 +122,8 @@ def _choose_node_namespace(force_install=False):
                 break
 
 def _choose_node_peer_group(force_install=False):
-    if esg_property_manager.get_property("node_peer_group") and not force_install:
-        logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node_peer_group"))
+    if esg_property_manager.get_property("node.peer.group") and not force_install:
+        logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node.peer.group"))
         return
     else:
         while True:
@@ -140,8 +140,8 @@ def _choose_node_peer_group(force_install=False):
                 break
 
 def _choose_esgf_index_peer(force_install=False):
-    if esg_property_manager.get_property("esgf_index_peer") and not force_install:
-        logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf_index_peer"))
+    if esg_property_manager.get_property("esgf.index.peer") and not force_install:
+        logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf.index.peer"))
         return
     else:
         default_esgf_index_peer = socket.getfqdn()
@@ -152,12 +152,12 @@ def _choose_esgf_index_peer(force_install=False):
 
 
 def _choose_mail_admin_address(force_install=False):
-    if esg_property_manager.get_property("mail_admin_address") and not force_install:
-        logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail_admin_address"))
+    if esg_property_manager.get_property("mail.admin.address") and not force_install:
+        logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail.admin.address"))
         return
     else:
         mail_admin_address_input = raw_input(
-            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail_admin_address")))
+            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail.admin.address")))
         if mail_admin_address_input:
             esg_property_manager.write_as_property(
                 "mail_admin_address", mail_admin_address_input)
@@ -166,7 +166,7 @@ def _choose_mail_admin_address(force_install=False):
 
 def _choose_publisher_db_user(force_install=False):
     '''Sets the name of the database user for the Publisher'''
-    publisher_db_user = esg_property_manager.get_property("publisher_db_user")
+    publisher_db_user = esg_property_manager.get_property("publisher.db.user")
     if publisher_db_user and not force_install:
         print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
         logger.info("publisher_db_user: %s", publisher_db_user)
@@ -188,7 +188,7 @@ def _choose_publisher_db_user_passwd(force_install=False):
         else:
             print "The current password is invalid.  Please set a new password"
 
-    publisher_db_user = esg_property_manager.get_property("publisher_db_user") or "esgcet"
+    publisher_db_user = esg_property_manager.get_property("publisher.db.user") or "esgcet"
 
     while True:
         publisher_db_user_passwd_input = getpass.getpass(

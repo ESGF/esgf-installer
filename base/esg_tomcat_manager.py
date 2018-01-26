@@ -38,8 +38,8 @@ def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
-        if esg_property_manager.get_property("install_tomcat"):
-            setup_tomcat_answer = esg_property_manager.get_property("install_tomcat")
+        if esg_property_manager.get_property("install.tomcat"):
+            setup_tomcat_answer = esg_property_manager.get_property("install.tomcat")
         else:
             setup_tomcat_answer = raw_input(
                 "Do you want to contine the Tomcat installation [y/N]: ") or "no"

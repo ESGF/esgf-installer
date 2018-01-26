@@ -111,7 +111,7 @@ def check_for_my_ip(force_install=False):
     try:
         esgf_host_ip
     except NameError:
-        esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
+        esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
 
     if esgf_host_ip and not force_install:
         logger.info("Using IP: %s", esgf_host_ip)
@@ -141,7 +141,7 @@ def check_for_my_ip(force_install=False):
             my_ip_address = ip_addresses[0]
 
     esg_property_manager.write_as_property("esgf_host_ip", my_ip_address)
-    esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
+    esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
     return esgf_host_ip
 
 
@@ -187,8 +187,8 @@ def setup_java():
     if force_install:
         pass
     if check_for_existing_java():
-            if esg_property_manager.get_property("install_java"):
-                setup_java_answer = esg_property_manager.get_property("install_java")
+            if esg_property_manager.get_property("install.java"):
+                setup_java_answer = esg_property_manager.get_property("install.java")
             else:
                 setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
             if setup_java_answer.lower().strip() not in ["y", "yes"]:
@@ -231,10 +231,10 @@ def setup_ant():
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         esg_functions.stream_subprocess_output("ant -version")
-        if esg_property_manager.get_property("install_ant"):
-            setup_ant_answer = esg_property_manager.get_property("install_ant")
+        if esg_property_manager.get_property("install.ant"):
+            setup_ant_answer = esg_property_manager.get_property("install.ant")
         else:
-            setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install_ant") or "no"
+            setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install.ant") or "no"
         if setup_ant_answer.lower() in ["n", "no"]:
             return
 

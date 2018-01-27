@@ -958,7 +958,7 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
     parser.read(manifest_file)
 
     try:
-        parser.add_section(datetime.date.today())
+        parser.add_section(datetime.date.today().strftime("%B %d, %Y"))
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
 

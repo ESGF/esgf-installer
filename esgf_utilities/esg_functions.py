@@ -949,8 +949,22 @@ def bump_git_tag(bump_level="patch", commit_message=None):
     new_tag = repo.create_tag(current_tag, message='Automatic tag "{0}"'.format(current_tag))
     repo.remotes.origin.push(new_tag)
 
+def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
+    # from configobj import ConfigObj
+    # config = ConfigObj("/esg/esgf-install-manifest")
+    # config.filename = filename
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(manifest_file)
 
-    pass
+    try:
+        parser.add_section(datetime.date.today())
+    except ConfigParser.DuplicateSectionError:
+        logger.debug("section already exists")
+
+    parser.set(datetime.today(), component, install_path + " " + version)
+    with open(config_file, "w") as config_file_object:
+        parser.write(config_file_object)
+
 
 
 def main():

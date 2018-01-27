@@ -71,7 +71,7 @@ class test_ESG_Functions(unittest.TestCase):
     def test_write_to_install_manifest(self):
         esg_functions.write_to_install_manifest("foo_app", "/tmp/foo", "1.0", "/tmp/install_manifest")
         self.assertTrue(os.path.isfile("/tmp/install_manifest"))
-        prop = esg_property_manager.get_property("foo_app", config_file="/tmp/install_manifest", section_name=datetime.date.today())
+        prop = esg_property_manager.get_property("foo_app", config_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
         self.assertTrue("1.0" in prop)
 
 

@@ -9,6 +9,7 @@ from context import esgf_utilities
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
+from esgf_utilities.esg_exceptions import SubprocessError
 import yaml
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -26,8 +27,14 @@ class test_ESG_Functions(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        esg_functions.call_subprocess("groupdel test_esgf_group")
-        shutil.rmtree("/esg/test_backup")
+        try:
+            esg_functions.call_subprocess("groupdel test_esgf_group")
+        except SubprocessError:
+            pass
+        try:
+            shutil.rmtree("/esg/test_backup")
+        except OSError:
+            pass
 
     def test_path_unique(self):
         output = esg_functions.path_unique("usr/local/bin:/usr/test/bin:usr/local/bin")

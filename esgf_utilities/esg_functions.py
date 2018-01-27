@@ -17,6 +17,7 @@ import errno
 import pwd
 import grp
 import getpass
+import ConfigParser
 from time import sleep
 from distutils.spawn import find_executable
 import requests

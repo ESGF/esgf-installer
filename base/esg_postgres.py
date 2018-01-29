@@ -313,6 +313,8 @@ def check_existing_pg_version(psql_path, force_install=False):
         except OSError:
             logger.exception("Unable to check existing Postgres version \n")
 
+    return postgres_version_number
+
 
 def setup_postgres(force_install=False, default_continue_install="N"):
     print "\n*******************************"
@@ -377,7 +379,8 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     ''' function calls '''
     esg_functions.check_shmmax()
     write_postgress_env()
-    write_postgress_install_log()
+    write_postgress_install_log(psql_path)
+    log_postgres_properties()
 
 
 '''Check if managed_db'''
@@ -519,14 +522,20 @@ def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
             conn.close()
         f.close()
 
+
+def log_postgres_properties():
+    esg_property_manager.set_property("db.user", config["postgress_user"])
+    esg_property_manager.set_property("db.host", config["postgress_host"])
+    esg_property_manager.set_property("db.port", config["postgress_port"])
+    esg_property_manager.set_property("db.database", "esgcet")
+
 #TODO: write out settings to esg.env
 def write_postgress_env():
     pass
 
-#TODO:write out settings to install_manifest
-def write_postgress_install_log():
-    pass
-
+def write_postgress_install_log(psql_path):
+    postgres_version = check_existing_pg_version(psql_path)
+    esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version)
 
 def _choose_postgres_user_password():
     while True:

@@ -263,6 +263,15 @@ def download_tomcat_users_xml():
     tomcat_group_id = esg_functions.get_group_id("tomcat")
     os.chown(tomcat_users_xml_local_path, tomcat_user_id, tomcat_group_id)
 
+def write_tds_install_log():
+    thredds_version = check_thredds_version()
+    thredds_install_dir = os.path.join("{}".format(config["tomcat_install_dir"]), "webapps", "thredds")
+    esg_functions.write_to_install_manifest("webapp:thredds", thredds_install_dir, thredds_version)
+
+    esgf_host = esg_function.get_esgf_host()
+    esg_property_manager.set_property("thredds_service_endpoint", "http://${}/thredds".format(esgf_host))
+    esg_property_manager.set_property("thredds_service_app_home", "{}/webapps/thredds}".format(config["tomcat_install_dir"]))
+
 def setup_thredds():
 
     if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
@@ -328,10 +337,13 @@ def setup_thredds():
 
     esgsetup_thredds()
 
+    write_tds_install_log()
+
     # verify_thredds_credentials()
 
     # cleanup
     # shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
+
 
 def main():
     setup_thredds()

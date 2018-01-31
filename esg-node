@@ -80,8 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.6.0-devel-release"
 script_maj_version="2.6"
+script_sub_version="0"
+script_version="v2.6.0-devel-release"
 script_release="Name"
 envfile="/etc/esg.env"
 

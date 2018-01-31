@@ -10,6 +10,7 @@
 devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
 script_maj_version="2.0"
+script_sub_version="0"
 esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
 
 id_check() {
@@ -19,7 +20,7 @@ id_check() {
 }
 
 get_latest() {
-    esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
+    esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")/$script_maj_version/$script_sub_version
     script_install_dir=${install_prefix}/bin
     mkdir -p ${script_install_dir}
     #NOTE: boot script location is a RedHat/CentOS thing... to make this cross distro compatible clean this up.
@@ -30,7 +31,7 @@ get_latest() {
 
     local ret
     verbose_print "Checking...."
-    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/${fetch_file}
+    checked_get ${esg_dist_url}/esgf-installer/${fetch_file}
     ret=$?
     ((ret == 1)) && echo "ESGF Node install script (${fetch_file}) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node install script ($fetch_file) from ESGF distribution site"
@@ -38,49 +39,49 @@ get_latest() {
     chmod 755 ${fetch_file}
     [ -e ${init_scripts_dir}/${fetch_file} ] && cp -v ${fetch_file} ${init_scripts_dir}/${fetch_file}
 
-    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-functions
+    checked_get ${esg_dist_url}/esgf-installer/esg-functions
     ((ret == 1)) && echo "esg-functions script (esg-functions) already up-to-date"
     ((ret == 0)) && echo "Updated esg-functions script (esg-functions) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-functions
 
-    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-init
+    checked_get ${esg_dist_url}/esgf-installer/esg-init
     ((ret == 1)) && echo "esg-init script (esg-init) already up-to-date"
     ((ret == 0)) && echo "Updated esg-init script (esg-init) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-init
 
-	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-bootstrap
+	checked_get ${esg_dist_url}/esgf-installer/esg-bootstrap
     ((ret == 1)) && echo "ESGF Node bootstrap script (esg-bootstrap) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node bootstrap script (esg-bootstrap) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-bootstrap
 
-	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/setup-autoinstall
+	checked_get ${esg_dist_url}/esgf-installer/setup-autoinstall
     ((ret == 1)) && echo "ESGF Node Auto-install script (esg-bootstrap) already up-to-date"
     ((ret == 0)) && echo "Updated Auto-install script (setup-autoinstall) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 setup-autoinstall
 
-	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-purge.sh
+	checked_get ${esg_dist_url}/esgf-installer/esg-purge.sh
     ((ret == 1)) && echo "ESGF Node Purge script (esg-purge.sh) already up-to-date"
     ((ret == 0)) && echo "Updated ESGF Node Purge script (esg-purge.sh) from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 esg-purge.sh
 
-	checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/jar_security_scan
+	checked_get ${esg_dist_url}/esgf-installer/jar_security_scan
     ((ret == 1)) && echo "jar_security_scan script already up-to-date"
     ((ret == 0)) && echo "Updated jar_security_scan script from ESGF distribution site"
     (( ret > 1 )) && popd >& /dev/null && return 1
     chmod 755 jar_security_scan
 
-    checked_get ${esg_dist_url}/esgf-installer/$script_maj_version/esg-autoinstall
+    checked_get ${esg_dist_url}/esgf-installer/esg-autoinstall
       ((ret == 1)) && echo "esg-autoinstall script already up-to-date"
       ((ret == 0)) && echo "Updated esg-autoinstall script from ESGF distribution site"
       (( ret > 1 )) && popd >& /dev/null && return 1
       chmod 755 esg-autoinstall
 
-      checked_get esg-autoinstall.conf ${esg_dist_url}/esgf-installer/$script_maj_version/esg-autoinstall.template
+      checked_get esg-autoinstall.conf ${esg_dist_url}/esgf-installer/esg-autoinstall.template
         ((ret == 1)) && echo "esg-autoinstall.conf script already up-to-date"
         ((ret == 0)) && echo "Updated esg-autoinstall.conf script from ESGF distribution site"
         (( ret > 1 )) && popd >& /dev/null && return 1
@@ -154,7 +155,7 @@ self_verify() {
     md5sum /dev/null >& /dev/null
     [ $? != 0 ] && echo "Could not find program \"md5sum\". Please find program and put it in your path and try again, Sorry :-(" && exit 1
     #echo "diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl ${esg_dist_url}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null "
-    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s ${esg_dist_url}/esgf-installer/$script_maj_version/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
+    diff <(md5sum ${0} | tr -s " " | cut -d " " -f 1) <(curl -s ${esg_dist_url}/esgf-installer/${0##*/}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
     [ $? != 0 ] && return 3
     verbose_print "[VERIFIED]"
     return 0

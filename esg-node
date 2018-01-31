@@ -1568,7 +1568,7 @@ specify_local_mirror() {
     loc_mirror_ans='Y';
     while [ 1 ]; do
         read -e -p "Enter local mirror url:" localmirrorurl
-        read -e -p "you entered $mirrorurl. Is this correct?(Y/n)" loc_mirror_resp
+        read -e -p "You entered $localmirrorurl. Is this correct?(Y/n)" loc_mirror_resp
         [ -n "${loc_mirror_resp}" ] && loc_mirror_ans=$(echo ${loc_mirror_resp}|tr 'a-z' 'A-Z')
         if [ "$loc_mirror_ans" = "Y" ]; then
             break;
@@ -5304,7 +5304,7 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/$script_maj_version >& /dev/null
+	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/$script_maj_version/$script_sub_version/esgf-installer >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
@@ -5330,7 +5330,7 @@ self_verify() {
                 echo "Updating local script with script from distribution server..."
                 /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
                 local update_ret=$?
-                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/${script_maj_version}/${esg_functions_file##*/} && echo "(w/ functions file)"
+                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/$script_maj_version/$script_sub_version/esgf-installer/${esg_functions_file##*/} && echo "(w/ functions file)"
                 echo "Please re-run this updated script $0"
                 echo
                 exit $update_ret

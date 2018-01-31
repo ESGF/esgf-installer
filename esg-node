@@ -240,8 +240,9 @@ printf "
     fi
 
     if [ "${MAJREV}" = 6 ] ; then
-    	DIST=`cat /etc/redhat-release | sed s/release.*//`
-        DISTRIB=`echo $DIST`
+    	DISTRIB=`cat /etc/redhat-release | sed s/release.*//`
+    elif [  "${MAJREV}" = 7 ] ; then
+    	DISTRIB=`cat /etc/redhat-release | sed s/release.*// | awk '{print $1}' `
     fi
 
     if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi

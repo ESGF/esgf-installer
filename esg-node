@@ -6244,6 +6244,7 @@ main() {
         fi
 	# Determining ESGF distribution mirror
         if [[ $@ == *uselocalmirror* || $@ == *use-local-mirror* ]]; then
+            specify_local_mirror
             esg_dist_url_root="${localmirrorurl}/dist"
             esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
         else
@@ -6431,7 +6432,6 @@ main() {
 					;;
                 --use-local-mirror | uselocalmirror)
                     debug_print "allowing selection of local distribution mirror. Can be an http/file url"
-                    specify_local_mirror
                     ;;
                 --write-env)
                     (( (sel & WRITE_ENV_BIT) == 0 )) && ((sel+=WRITE_ENV_BIT))

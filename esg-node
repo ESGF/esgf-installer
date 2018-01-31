@@ -1571,6 +1571,7 @@ specify_local_mirror() {
         read -e -p "You entered $localmirrorurl. Is this correct?(Y/n)" loc_mirror_resp
         [ -n "${loc_mirror_resp}" ] && loc_mirror_ans=$(echo ${loc_mirror_resp}|tr 'a-z' 'A-Z')
         if [ "$loc_mirror_ans" = "Y" ]; then
+            esgf_dist_mirror=$localmirrorurl
             break;
         fi
     done

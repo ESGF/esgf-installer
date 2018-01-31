@@ -9,7 +9,7 @@
 #uses: wget
 devel=${devel:-0}
 install_prefix=${prefix:-"/usr/local"}
-script_maj_version="2.0"
+script_maj_version="2.6"
 script_sub_version="0"
 esg_dist_url=http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist$( ((devel == 1)) && echo "/devel" || echo "")
 

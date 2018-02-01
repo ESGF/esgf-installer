@@ -57,9 +57,6 @@ set NAMESPACE "localdomain.localhost"
 # Peer Group (valid values are usually "esgf-test" and "esgf-prod")
 set PEERGROUP "esgf-test"
 
-# Default Peer (set this to empty for the default peergroup member, or to your own FQDN)
-set DEFAULTPEER ""
-
 # Hostname of the node to publish to
 set PUBLISHNODE "esgf-node.llnl.gov"
 

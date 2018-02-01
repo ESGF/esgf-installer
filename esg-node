@@ -1951,9 +1951,9 @@ setup_temp_ca() {
 	echo -e "y\ny" >setuphost.ans
 	cat setupca.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >setupca.ans
 	cat reqhost.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >reqhost.ans
-    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/CA.pl >CA.pl
-    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/openssl.cnf >openssl.cnf
-    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/myproxy-server.config >myproxy-server.config
+    curl -s -L --insecure ${esg_dist_url}/esgf-installer/CA.pl >CA.pl
+    curl -s -L --insecure ${esg_dist_url}/esgf-installer/openssl.cnf >openssl.cnf
+    curl -s -L --insecure ${esg_dist_url}/esgf-installer/myproxy-server.config >myproxy-server.config
 	perl CA.pl -newca <setupca.ans
 	openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
 	perl CA.pl -newreq-nodes <reqhost.ans
@@ -2262,7 +2262,7 @@ setup_root_app() {
     echo "*******************************"
     echo
 
-    local root_app_dist_url=${esg_dist_url}/ROOT.tgz
+    local root_app_dist_url=${esg_dist_url_root}/ROOT.tgz
 
     mkdir -p ${workdir}
     pushd ${workdir} >& /dev/null
@@ -2851,7 +2851,7 @@ my_setup_globus() {
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-globus
     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
+    checked_get ./${fetch_file} ${esg_dist_url}/esgf-installer/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
     popd >& /dev/null
@@ -3150,7 +3150,7 @@ setup_subsystem_new() {
 
     echo
     echo "-------------------------------"
-    echo "LOADING installer for ${subsystem}... "
+    echo "LOADING installer for ${subsystem}... (setup_subsystem_new)"
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
@@ -5303,7 +5303,7 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/$script_maj_version/$script_sub_version/esgf-installer >& /dev/null
+	_verify ${esg_dist_url}/esgf-installer >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
@@ -5329,7 +5329,7 @@ self_verify() {
                 echo "Updating local script with script from distribution server..."
                 /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
                 local update_ret=$?
-                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/$script_maj_version/$script_sub_version/esgf-installer/${esg_functions_file##*/} && echo "(w/ functions file)"
+                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/${esg_functions_file##*/} && echo "(w/ functions file)"
                 echo "Please re-run this updated script $0"
                 echo
                 exit $update_ret
@@ -6245,7 +6245,7 @@ main() {
         if [[ $@ == *uselocalmirror* || $@ == *use-local-mirror* ]]; then
             specify_local_mirror
             esg_dist_url_root="${localmirrorurl}/dist"
-            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/${script_maj_version}/${script_sub_version}
         else
             if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
        	    get_esgf_dist_mirror "interactive" $devel
@@ -6255,7 +6255,7 @@ main() {
 
 	        # Setting esg_dist_url with previously gathered information
             esg_dist_url_root="${esgf_dist_mirror}/dist"
-            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/${script_maj_version}/${script_sub_version}
         fi
 
     # Sourcing esg-init file
@@ -6769,8 +6769,8 @@ main() {
                     [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     (cd ${scripts_dir}
                     local fetch_file=esg-globus
-                    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}"
-                    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+                    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/esgf-installer/${fetch_file}"
+                    checked_get ./${fetch_file} ${esg_dist_url}/esgf-installer/${fetch_file}
                     (( $? > 1 )) && popd && return 1
                     chmod 755 ${fetch_file})
                     (source ${scripts_dir}/esg-globus && setup_globus_online $@)

@@ -1563,8 +1563,8 @@ EOF
 
 specify_local_mirror() {
 
-    loc_mirror_ans='Y';
     while [ 1 ]; do
+        loc_mirror_ans='Y';
         read -e -p "Enter local mirror url:" localmirrorurl
         read -e -p "You entered $localmirrorurl. Is this correct?(Y/n)" loc_mirror_resp
         [ -n "${loc_mirror_resp}" ] && loc_mirror_ans=$(echo ${loc_mirror_resp}|tr 'a-z' 'A-Z')

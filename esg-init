@@ -33,6 +33,7 @@ init() {
 
     esgcet_version=${esgcet_version:-"3.3.3"}
     publisher_tag=${publisher_tag:-"v3.3.3"}
+
     esgprep_version="2.7"
     cmor_version="3.3.0"  # concidence its same as esgcet
 
@@ -43,28 +44,28 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.15"}
+    esgf_security_version=${esgf_security_version:-"2.7.17"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.9.7"}
+    esg_orp_version=${esg_orp_version:-"2.9.10"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.7.11"}
+    esgf_idp_version=${esgf_idp_version:-"2.7.12"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"4.13.4"}
+    esg_search_version=${esg_search_version:-"4.15.3"}
 
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.3"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.11"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:
     esgf_desktop_version=${esgf_desktop_version:-"0.0.22"}
 
-    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.1"}
+    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.5"}
 
     #--------------------------------
     # External programs' versions

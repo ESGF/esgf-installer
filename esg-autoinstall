@@ -57,10 +57,7 @@ expect {
     "What peer group(s) will this node participate in?" {
         send ${PEERGROUP}\n ; exp_continue
     }
-    "What is the default peer to this node?" {
-        send ${DEFAULTPEER}\n ; exp_continue
-    }
-    "What is the hostname of the node do you plan to publish to?" {
+    "What is the hostname of the index node you plan to publish to?" {
         send ${PUBLISHNODE}\n ; exp_continue
     }
     "What email address should notifications be sent as?" {

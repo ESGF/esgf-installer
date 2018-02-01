@@ -80,8 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.6.0-devel-release"
 script_maj_version="2.6"
+script_sub_version="0"
+script_version="v2.6.0-devel-release"
 script_release="Name"
 envfile="/etc/esg.env"
 
@@ -239,12 +240,11 @@ printf "
     	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
     fi
 
-    if [ "${MAJREV}" = 6 ] ; then
-    	DIST=`cat /etc/redhat-release | sed s/release.*//`
-        DISTRIB=`echo $DIST`
+    if [ "${MAJREV}" = 6 -o "${MAJREV}" = 7 ] ; then
+    	DISTRIB=`cat /etc/redhat-release | sed s/release.*// | awk '{print $1}' `
     fi
 
-    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
+    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6/7 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
 
 
     #----------------------------------------
@@ -705,7 +705,7 @@ start_postgress() {
     _is_managed_db && echo "Please be sure external database is running at this point..." && return 0
     check_postgress_process && return 1
     echo "Starting Postgress..."
-	/etc/init.d/postgresql start
+	service postgresql start
     check_shmmax
     sleep 3
     /bin/ps -elf | grep postgres | grep -v grep
@@ -717,7 +717,7 @@ stop_postgress() {
     _is_managed_db && echo "Please be sure external database is NOT running at this point..." && return 0
     check_postgress_process
     [ $? != 0 ] && return 1
-	/etc/init.d/postgresql stop
+	service postgresql stop
     check_shmmax
 	/bin/ps -elf | grep postgres | grep -v grep
     return 0
@@ -1561,6 +1561,19 @@ EOF
     echo "Tomcat logfile rotation file installed $([ -e "${tomcat_logrotate_file}" ] && [OK] || [FAIL])"
 }
 
+specify_local_mirror() {
+
+    while [ 1 ]; do
+        loc_mirror_ans='Y';
+        read -e -p "Enter local mirror url:" localmirrorurl
+        read -e -p "You entered $localmirrorurl. Is this correct?(Y/n)" loc_mirror_resp
+        [ -n "${loc_mirror_resp}" ] && loc_mirror_ans=$(echo ${loc_mirror_resp}|tr 'a-z' 'A-Z')
+        if [ "$loc_mirror_ans" = "Y" ]; then
+            esgf_dist_mirror=$localmirrorurl
+            break;
+        fi
+    done
+}
 update_apache_conf() {
 
 	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"}
@@ -1698,7 +1711,7 @@ setup_apache_frontend() {
 		fi
 		hn=${esgf_host:-`hostname -f`}
 		echo -e "$hn\ny" >answers
-		/etc/init.d/httpd stop >/dev/null;
+		service httpd stop >/dev/null;
 		#/usr/sbin/apachectl stop > /dev/null;
 		chkconfig --levels 2345 httpd off
 		bash copyfiles.sh ${tomcat_install_dir}/conf <answers;
@@ -1721,7 +1734,7 @@ setup_apache_frontend() {
 		done
 		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
-		/etc/init.d/esgf-httpd start
+		service esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
     else
 
@@ -1938,9 +1951,9 @@ setup_temp_ca() {
 	echo -e "y\ny" >setuphost.ans
 	cat setupca.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >setupca.ans
 	cat reqhost.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >reqhost.ans
-    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/CA.pl >CA.pl
-    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/openssl.cnf >openssl.cnf
-    curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/myproxy-server.config >myproxy-server.config
+    curl -s -L --insecure ${esg_dist_url}/esgf-installer/CA.pl >CA.pl
+    curl -s -L --insecure ${esg_dist_url}/esgf-installer/openssl.cnf >openssl.cnf
+    curl -s -L --insecure ${esg_dist_url}/esgf-installer/myproxy-server.config >myproxy-server.config
 	perl CA.pl -newca <setupca.ans
 	openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
 	perl CA.pl -newreq-nodes <reqhost.ans
@@ -2249,7 +2262,7 @@ setup_root_app() {
     echo "*******************************"
     echo
 
-    local root_app_dist_url=${esg_dist_url}/ROOT.tgz
+    local root_app_dist_url=${esg_dist_url_root}/ROOT.tgz
 
     mkdir -p ${workdir}
     pushd ${workdir} >& /dev/null
@@ -2838,7 +2851,7 @@ my_setup_globus() {
     pushd ${scripts_dir} >& /dev/null
     local fetch_file=esg-globus
     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
-    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file} $((force_install))
+    checked_get ./${fetch_file} ${esg_dist_url}/esgf-installer/${fetch_file} $((force_install))
     (( $? > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
     popd >& /dev/null
@@ -3137,7 +3150,7 @@ setup_subsystem_new() {
 
     echo
     echo "-------------------------------"
-    echo "LOADING installer for ${subsystem}... "
+    echo "LOADING installer for ${subsystem}... (setup_subsystem_new)"
     mkdir -p ${workdir}
     [ $? != 0 ] && checked_done 1
     pushd ${workdir} >& /dev/null
@@ -5290,7 +5303,7 @@ self_verify() {
 
     [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
-	_verify ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/$script_maj_version >& /dev/null
+	_verify ${esg_dist_url}/esgf-installer >& /dev/null
     local ret=$?
     if (( ${ret} == 3 )); then
         printf "WARNING: $0 could not be verified!! \n(This file, ${0}, may have been tampered with or there is a newer version posted at the distribution server.\nPlease update this script.)\n\n"
@@ -5316,7 +5329,7 @@ self_verify() {
                 echo "Updating local script with script from distribution server..."
                 /usr/local/bin/esg-bootstrap $( ((devel == 1)) && echo "--devel" || echo "")
                 local update_ret=$?
-                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/${script_maj_version}/${esg_functions_file##*/} && echo "(w/ functions file)"
+                ((update_ret == 0))  && checked_get ${esg_functions_file} ${esg_dist_url}/esgf-installer/${esg_functions_file##*/} && echo "(w/ functions file)"
                 echo "Please re-run this updated script $0"
                 echo
                 exit $update_ret
@@ -5454,9 +5467,9 @@ start() {
     echo "$(echo_strong "starting services...") ($sel)"
     run_startup_hooks
 
-    /etc/init.d/ntpd status
+    service ntpd status
     if [ $? != 0 ]; then
-        /etc/init.d/ntpd start
+        service ntpd start
     fi
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
@@ -5468,10 +5481,10 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-    /etc/init.d/esgf-httpd status
+    service esgf-httpd status
 	#/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		/etc/init.d/esgf-httpd start
+		service esgf-httpd start
 		#echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -5492,7 +5505,7 @@ stop() {
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
-	/etc/init.d/esgf-httpd stop
+	service esgf-httpd stop
 
 
 
@@ -5658,26 +5671,13 @@ initial_setup_questionnaire() {
     fi
 
     unset input
-
-    get_property esgf_default_peer ${esgf_default_peer}
-    if [ -z "${esgf_default_peer}" ] || ((force_install)); then
-        unset input
-	default=${esgf_default_peer:-${esgf_host:-$(hostname --fqdn)}}
-        read -e -p "What is the default peer to this node? [${default}]: " input
-        [ -z "${input}" ] && esgf_default_peer=${default} && write_as_property esgf_default_peer
-        [ -n "${input}" ] && esgf_default_peer=${input}   && write_as_property esgf_default_peer
-    else
-        echo "esgf_default_peer = [${esgf_default_peer}]"
-    fi
-
-    unset input
     unset default
 
     get_property esgf_index_peer ${esgf_index_peer}
     if [ -z "${esgf_index_peer}" ] || ((force_install)); then
         unset input
         default=${esgf_default_peer:-${esgf_host:-$(hostname --fqdn)}}
-        read -e -p "What is the hostname of the node do you plan to publish to? [${default}]: " input
+        read -e -p "What is the hostname of the index node you plan to publish to? [${default}]: " input
         [ -z "${input}" ] && esgf_index_peer=${default} && write_as_property esgf_index_peer
         [ -n "${input}" ] && esgf_index_peer=${input}     && write_as_property esgf_index_peer
     else
@@ -6229,15 +6229,21 @@ main() {
             unset CDAT_HOME
         fi
 	# Determining ESGF distribution mirror
-        if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
-       	 get_esgf_dist_mirror "interactive" $devel
+        if [[ $@ == *uselocalmirror* || $@ == *use-local-mirror* ]]; then
+            specify_local_mirror
+            esg_dist_url_root="${localmirrorurl}/dist"
+            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/${script_maj_version}/${script_sub_version}
         else
-       	 get_esgf_dist_mirror "fastest" $devel
-        fi
+            if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
+       	    get_esgf_dist_mirror "interactive" $devel
+            else
+       	    get_esgf_dist_mirror "fastest" $devel
+            fi
 
-	# Setting esg_dist_url with previously gathered information
-        esg_dist_url_root="${esgf_dist_mirror}/dist"
-        esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
+	        # Setting esg_dist_url with previously gathered information
+            esg_dist_url_root="${esgf_dist_mirror}/dist"
+            esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/${script_maj_version}/${script_sub_version}
+        fi
 
     # Sourcing esg-init file
         [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
@@ -6410,6 +6416,9 @@ main() {
 					update_apache_conf
 					exit 0;
 					;;
+                --use-local-mirror | uselocalmirror)
+                    debug_print "allowing selection of local distribution mirror. Can be an http/file url"
+                    ;;
                 --write-env)
                     (( (sel & WRITE_ENV_BIT) == 0 )) && ((sel+=WRITE_ENV_BIT))
                     echo
@@ -6747,8 +6756,8 @@ main() {
                     [ $? != 0 ] && printf "$([FAIL]) \n\tMust be root for this option\n\n" && exit 1
                     (cd ${scripts_dir}
                     local fetch_file=esg-globus
-                    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file}"
-                    checked_get ./${fetch_file} ${esg_dist_url}/externals/bootstrap/${fetch_file}
+                    verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/esgf-installer/${fetch_file}"
+                    checked_get ./${fetch_file} ${esg_dist_url}/esgf-installer/${fetch_file}
                     (( $? > 1 )) && popd && return 1
                     chmod 755 ${fetch_file})
                     (source ${scripts_dir}/esg-globus && setup_globus_online $@)

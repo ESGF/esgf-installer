@@ -235,7 +235,8 @@ vercomp() {
 }
 
 checked_done() {
-    if (($1)); then
+    local status=$1
+    if (($status)); then
         echo ""
         echo "Sorry..."
         echo "This action did not complete successfully"
@@ -247,7 +248,7 @@ checked_done() {
         if [ ! -z $CONDA_DEFAULT_ENV ] ; then
             source deactivate
         fi
-        exit $1
+        exit $status
     fi
 
     return 0
@@ -666,7 +667,7 @@ stop_tomcat() {
 
 #This function "succeeds" (is true; returns 0)  if there *are* running processes found running
 check_postgress_process() {
-    /etc/init.d/postgresql status
+    service postgresql status
 }
 
 check_esgf_httpd_process() {

@@ -43,11 +43,11 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.16"}
+    esgf_security_version=${esgf_security_version:-"2.7.17"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.9.9"}
+    esg_orp_version=${esg_orp_version:-"2.9.10"}
 
     #see esgf-idp project:
     esgf_idp_version=${esgf_idp_version:-"2.7.12"}
@@ -58,13 +58,13 @@ init() {
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.4"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.11"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:
     esgf_desktop_version=${esgf_desktop_version:-"0.0.22"}
 
-    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.1"}
+    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.5"}
 
     #--------------------------------
     # External programs' versions

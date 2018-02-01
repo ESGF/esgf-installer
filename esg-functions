@@ -235,7 +235,8 @@ vercomp() {
 }
 
 checked_done() {
-    if (($1)); then
+    local status=$1
+    if (($status)); then
         echo ""
         echo "Sorry..."
         echo "This action did not complete successfully"
@@ -247,7 +248,7 @@ checked_done() {
         if [ ! -z $CONDA_DEFAULT_ENV ] ; then
             source deactivate
         fi
-        exit $1
+        exit $status
     fi
 
     return 0

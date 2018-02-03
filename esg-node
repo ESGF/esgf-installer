@@ -2122,7 +2122,7 @@ configure_tomcat() {
 
 generate_esgf_csrs(){
     [ -z "${esgf_host}" ] && get_property esgf_host
-    if [ $((sel & INDEX_BIT)) != 0 ]; then
+    if [ $((sel & IDP_BIT)) != 0 ]; then
 	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
 	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
@@ -2208,7 +2208,7 @@ install_local_certs(){
 		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem" "myproxy-server.config")
 		certdir=/etc/tempcerts;
 	else
-    		if [ $((sel & INDEX_BIT)) != 0 ]; then
+    		if [ $((sel & IDP_BIT)) != 0 ]; then
 			flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem")
 		else
 			flist=("hostcert.pem" "hostkey.pem")
@@ -2224,7 +2224,7 @@ install_local_certs(){
 			echo "File $fl is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
 		fi
 	done
-    	if [ $((sel & INDEX_BIT)) != 0 ]; then
+    	if [ $((sel & IDP_BIT)) != 0 ]; then
 		cert=cacert.pem
 		localhash=`openssl x509 -in $cert -noout -hash`;
 		globuspack=globus_simple_ca_${localhash}_setup-0.tar.gz
@@ -2237,7 +2237,7 @@ install_local_certs(){
 		return;
 	fi
 	cd $certdir
-    	if [ $((sel & INDEX_BIT)) != 0 ]; then
+    	if [ $((sel & IDP_BIT)) != 0 ]; then
 		cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
 		cp cakey.pem /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
 		cp $globuspack /var/lib/globus-connect-server/myproxy-ca/

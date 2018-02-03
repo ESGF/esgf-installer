@@ -5481,10 +5481,10 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-    service esgf-httpd status
+    service httpd status
 	#/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		service esgf-httpd start
+		service httpd start
 		#echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -5505,7 +5505,7 @@ stop() {
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
-	service esgf-httpd stop
+	service httpd stop
 
 
 

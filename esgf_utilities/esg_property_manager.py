@@ -18,6 +18,7 @@ def get_property(property_name, config_file=config["config_file"], section_name=
         arg 1 - the string that you wish to get the property of (and make a variable)
         arg 2 - the path to the config file
     '''
+    property_name = property_name.replace("_", ".")
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
     parser.read(config_file)
     try:
@@ -34,6 +35,7 @@ def set_property(property_name, property_value=None, config_file=config["config_
         arg 1 - The string of the variable you wish to write as property to property file
         arg 2 - The value to set the variable to (default: None)
     '''
+    property_name = property_name.replace("_", ".")
     parser = ConfigParser.SafeConfigParser()
     parser.read(config_file)
     try:

@@ -1040,13 +1040,13 @@ setup_esgcet() {
     conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython
 
     if [ $ESGF_INSECURE > 0 ] ; then
-        if ["$mode" = "I" ];
+        if [ "$mode" = "I" ]; then
         	pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
         else
         	pipcmd="pip install --upgrade --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
         fi
     else
-        if ["$mode" = "I" ];
+        if [ "$mode" = "I" ]; then
 	        pipcmd="pip install"
         else
 	        pipcmd="pip install --upgrade"

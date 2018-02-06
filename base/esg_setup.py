@@ -173,7 +173,7 @@ def download_java(java_tarfile):
     print "Downloading Java from ", config["java_dist_url"]
     if not esg_functions.download_update(java_tarfile, config["java_dist_url"], force_install):
         logger.error("ERROR: Could not download Java")
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error("Java failed to download")
 
 def write_java_install_log(java_path):
     java_version = re.search("1.8.0_\w+", check_java_version(java_path)).group()

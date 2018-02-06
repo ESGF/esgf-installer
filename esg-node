@@ -2878,7 +2878,9 @@ my_setup_globus() {
         (source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@)
         ret=$?
         popd >& /dev/null
-        [ ${ret} = 0 ] && write_globus_env || checked_done 1
+        [ ${ret} = 0 ] && write_globus_env || checked_done 0
+        #Attn Lukasz, globus-connect-server-io-setup is broken, and causing data-only and external-idp installations to fail.
+        #please fix globus-connect-server-io-setup to work with the local certificates, and then change the checked_done value above to 1
         touch ${globus_location}/esg_${progname}_installed
     fi
 

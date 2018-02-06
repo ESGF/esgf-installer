@@ -532,7 +532,7 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
     os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
 
 
-def add_my_cert_to_truststore(truststore_file, keystore_file, keystore_alias):
+def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystore_file=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     #----------------------------------------------------------------
     #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
     #----------------------------------------------------------------

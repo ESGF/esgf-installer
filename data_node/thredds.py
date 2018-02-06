@@ -375,8 +375,8 @@ def write_tds_install_log():
     esg_functions.write_to_install_manifest("webapp:thredds", thredds_install_dir, thredds_version)
 
     esgf_host = esg_functions.get_esgf_host()
-    esg_property_manager.set_property("thredds_service_endpoint", "http://${}/thredds".format(esgf_host))
-    esg_property_manager.set_property("thredds_service_app_home", "{}/webapps/thredds}".format(config["tomcat_install_dir"]))
+    esg_property_manager.set_property("thredds_service_endpoint", "http://{}/thredds".format(esgf_host))
+    esg_property_manager.set_property("thredds_service_app_home", "{}/webapps/thredds".format(config["tomcat_install_dir"]))
 
 def setup_thredds(node_type_list):
 

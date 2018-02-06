@@ -1,7 +1,9 @@
 import os
 import zipfile
 import logging
+import stat
 import yaml
+from git import Repo
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
@@ -81,3 +83,63 @@ def setup_idp():
 
     write_idp_install_log(idp_service_app_home)
     write_security_lib_install_log()
+
+
+def setup_slcs():
+    print "*******************************"
+    print "Setting up SLCS Oauth Server"
+    print "*******************************"
+
+    continue_install = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "y"
+    if continue_install.lower() in ["n", "no"]:
+        print "Skipping installation of SLCS server"
+        return
+
+    esg_functions.stream_subprocess_output("yum  -y install ansible")
+
+    #create slcs Database
+    esg_postgres.postgres_create_db("slcsdb")
+
+    with esg_bash2py.pushd("/usr/local/src"):
+        Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd())
+
+        apache_user = esg_functions.get_user_id("apache")
+        apache_group = esg_functions.get_group_id("apache")
+        esg_functions.change_ownership_recursive("esgf-slcs-server-playbook", apache_user, apache_group)
+
+        with esg_bash2py.pushd("esgf-slcs-server-playbook"):
+            #TODO: extract to function
+            publisher_repo_local = Repo(os.getcwd())
+            publisher_repo_local.git.checkout("devel")
+
+            esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
+
+            #add group read and execute permissions
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/", stat.S_IRGRP | stat.S_IXGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", stat.S_IRGRP | stat.S_IXGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", stat.S_IRGRP)
+
+            # with open("playbook/overrides/production_venv_only.yml", "r+") as esg_config:
+            #     yaml.dump(locals(), esg_config)
+            esgf_host = esg_functions.get_esgf_host()
+
+            #TODO: look at replacing strings with yaml module
+            esg_functions.replace_string_in_file("playbook/overrides/production_venv_only.yml", "test_server_name", esgf_host)
+            esg_functions.replace_string_in_file("playbook/overrides/production_venv_only.yml", "test_email", esg_property_manager.get_property("mail_admin_address"))
+            esg_functions.replace_string_in_file("playbook/overrides/production_venv_only.yml", "abc123", esg_functions.get_postgres_password())
+
+            esg_property_manager.set_property("short.lived.certificate.server", esgf_host)
+
+            esg_bash2py.mkdir_p("/usr/local/esgf-slcs-server")
+            esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
+
+            #TODO: check if there's an ansible Python module
+            esg_functions.stream_subprocess_output('ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml')
+
+
+def main():
+    setup_idp()
+    setup_slcs()
+
+if __name__ == '__main__':
+    main()

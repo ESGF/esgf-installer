@@ -958,13 +958,26 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
     parser.read(manifest_file)
 
     try:
-        parser.add_section(datetime.date.today().strftime("%B %d, %Y"))
+        # parser.add_section(datetime.date.today().strftime("%B %d, %Y"))
+        parser.add_section("install_manifest")
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
 
     parser.set(datetime.date.today().strftime("%B %d, %Y"), component, install_path + " " + version)
     with open(manifest_file, "w") as config_file_object:
         parser.write(config_file_object)
+
+def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(manifest_file)
+
+    try:
+        return parser.get(section_name, component)
+    except ConfigParser.NoSectionError:
+        logger.debug("could not find component %s", component)
+    except ConfigParser.NoOptionError:
+        logger.debug("could not find component %s", component)
+
 
 
 

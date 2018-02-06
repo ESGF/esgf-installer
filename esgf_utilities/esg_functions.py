@@ -963,7 +963,7 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
 
-    parser.set(datetime.date.today().strftime("%B %d, %Y"), component, install_path + " " + version)
+    parser.set("install_manifest", component, install_path + " " + version + " - " + datetime.date.today().strftime("%B %d, %Y"))
     with open(manifest_file, "w") as config_file_object:
         parser.write(config_file_object)
 

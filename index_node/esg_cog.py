@@ -2,6 +2,7 @@ import os
 import shutil
 import logging
 import yaml
+import pip
 from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
@@ -100,7 +101,13 @@ def setup_cog(COG_DIR="/usr/local/cog"):
 
     # install CoG dependencies
     with esg_bash2py.pushd(COG_INSTALL_DIR):
-        esg_functions.stream_subprocess_output("pip install -r requirements.txt")
+        # "pip install -r requirements.txt"
+        with open("requirements.txt", "r") as req_file:
+            requirements = req_file.readlines()
+        for req in requirements:
+            pip.main(["install", req.strip()])
+
+        # esg_functions.stream_subprocess_output("pip install -r requirements.txt")
         # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
         # manually install additional dependencies

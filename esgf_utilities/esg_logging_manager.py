@@ -2,6 +2,7 @@ import logging
 import coloredlogs
 from logging.handlers import RotatingFileHandler
 import os
+import errno
 
 def create_logging_directory():
     logs_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'logs')
@@ -9,8 +10,8 @@ def create_logging_directory():
     try:
         os.makedirs(logs_dir)
     except OSError, error:
-        print "Could not make logging directory", error
-        pass
+        if error.errno == errno.EEXIST:
+            pass
 
     return logs_dir
 

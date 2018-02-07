@@ -20,7 +20,7 @@ def checkout_cog_branch(cog_path, branch_name):
     publisher_repo_local.git.checkout(branch_name)
     return publisher_repo_local
 
-def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="devel"):
+def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="master"):
     '''Clone the COG repo from Github'''
     print "\n*******************************"
     print "Cloning COG repo"
@@ -33,7 +33,8 @@ def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="devel"):
                 print('Downloading: (==== {} ====)\r'.format(message))
                 print "current line:", self._cur_line
 
-    Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
+    # Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
+    Repo.clone_from("https://github.com/William-Hill/COG.git", COG_INSTALL_DIR, progress=Progress())
     checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
 
 #TODO:Probably need to add a force_install param to force an update
@@ -93,7 +94,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
 
     os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
     try:
-        clone_cog_repo(COG_INSTALL_DIR, COG_TAG)
+        clone_cog_repo(COG_INSTALL_DIR)
     except GitCommandError, error:
         logger.exception("Failed to clone COG repo: \n %s", error)
 

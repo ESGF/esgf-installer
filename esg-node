@@ -4856,12 +4856,6 @@ check_for_group_intersection_with() {
     local visited=()
     for target_node in ${target_nodes[@]}; do
         grep -q ${target_node} <<<${visited[@]} && debug_print "  already visited ${target_node}" && continue
-        local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
-        if [ -z "${target_groups}" ]; then
-            printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n"
-            ((ret=ret+100))
-            continue
-        fi
 
         #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
         #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
@@ -5424,7 +5418,7 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
-    lsof -Pni |egrep httpd | head -n1
+    lsof -Pni |egrep httpd | head -n2
     local dashboard_pid=$(pgrep dashboard)
     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
 

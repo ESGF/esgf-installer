@@ -37,8 +37,7 @@ class test_Cog(unittest.TestCase):
 
         repo = esg_cog.checkout_cog_branch("/tmp/cog/cog_install", "master")
         branch = repo.active_branch
-        print "active branch:", branch.name
-        self.assertEquals(branch.name, "devel")
+        self.assertEquals(branch.name, "master")
 
     def test_setup_django_openid_auth(self):
         esg_cog.setup_django_openid_auth("/tmp/django-openid-auth")

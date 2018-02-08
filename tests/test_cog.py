@@ -18,7 +18,9 @@ class test_Cog(unittest.TestCase):
         print "\n*******************************"
         print "Setting up COG Test Fixture"
         print "******************************* \n"
+        os.environ["COG_CONFIG_DIR"] = "/tmp/cog/cog_config"
         pass
+
 
     @classmethod
     def tearDownClass(cls):
@@ -29,6 +31,7 @@ class test_Cog(unittest.TestCase):
             shutil.rmtree("/tmp/cog")
         except OSError, error:
             print "error deleting /tmp/cog:", error
+
 
 
     def test_clone_cog_repo(self):

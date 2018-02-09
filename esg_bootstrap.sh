@@ -77,9 +77,9 @@ install_dependencies_yum(){
 
 copy_autoinstall_file(){
   mkdir -p /esg/config
-  cp esgf.properties /esg/config/esgf.properties
+  cp esgf.properties.template /esg/config/esgf.properties
 
-  [ $? != 0 ] && printf "[FAIL] \n\tFailed to copy esgf.properties file to /esg/config\n\n" && return 1
+  [ $? != 0 ] && printf "[FAIL] \n\tFailed to copy esgf.properties.template file to /esg/config\n\n" && return 1
 }
 
 intialize_config_file(){

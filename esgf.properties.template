@@ -1,5 +1,5 @@
 [installer_properties]
-esgf_host_ip = 198.128.245.132
+esgf_host_ip =
 #Usually the fully qualified domain name (fqdn) of your server
 esgf_host=
 node_short_name=
@@ -11,7 +11,7 @@ node_peer_group=
 #Usually the fully qualified domain name (fqdn) of your server
 esgf_index_peer=
 mail_admin_address=
-publisher_db_user=esgcet
+publisher_db_user=
 
 #Base install third party components
 install_java=

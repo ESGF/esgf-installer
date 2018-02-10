@@ -44,220 +44,6 @@ def initialize_postgres():
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 
-def check_for_postgres_sys_acct():
-    try:
-        postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    except KeyError:
-        print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct=config["pg_sys_acct"])
-    else:
-        return True
-
-
-def create_postgres_group():
-    groupadd_command = "/usr/sbin/groupadd -r %s" % (
-        config["pg_sys_acct_group"])
-    groupadd_output = esg_functions.call_subprocess(groupadd_command)
-    if groupadd_output["returncode"] != 0 or groupadd_output["returncode"] != 9:
-        print "ERROR: *Could not add postgres system group: %s" % (config["pg_sys_acct_group"])
-        esg_functions.exit_with_error(1)
-    else:
-        print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
-
-
-def set_pg_sys_account_password():
-    if not config["pg_sys_acct_passwd"]:
-        while True:
-            pg_sys_acct_passwd_input = getpass.getpass(
-                "Create password for postgress system account: ")
-            if not pg_sys_acct_passwd_input:
-                print "Please enter a password: "
-                continue
-            else:
-                config["pg_sys_acct_passwd"] = pg_sys_acct_passwd_input
-                break
-        with open(config["pg_secret_file"], "w") as secret_file:
-            secret_file.write(config["pg_sys_acct_passwd"])
-
-        # Change pg_secret_file permissions
-        if os.path.isfile(config["pg_secret_file"]):
-            os.chmod(config["pg_secret_file"], 0640)
-            tomcat_group_id = grp.getgrnam(config["tomcat_group"]).gr_gid
-            os.chown(config["pg_secret_file"], config["installer_uid"], tomcat_group_id)
-
-        sleep(3)
-
-
-def create_postgres_system_user(pg_sys_acct_homedir):
-    print "Creating account..."
-    useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF'
-    -d {pg_sys_acct_homedir} -g {pg_sys_acct_group} -p
-    {pg_sys_acct_passwd} -s /bin/bash {pg_sys_acct}'''.format(pg_sys_acct_homedir=pg_sys_acct_homedir,
-                                                              pg_sys_acct_group=config["pg_sys_acct_group"],
-                                                              pg_sys_acct_passwd=config["pg_sys_acct_passwd"],
-                                                              pg_sys_acct=config["pg_sys_acct"])
-    useradd_output = esg_functions.call_subprocess(useradd_command)
-
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-
-    if useradd_output["returncode"] != 0 or useradd_output["returncode"] != 9:
-        print "ERROR: Could not add postgres system account user"
-        esg_functions.exit_with_error(1)
-    elif not postgres_user_id:
-        print " ERROR: Problem with {pg_sys_acct} creation!!!".format(pg_sys_acct=config["pg_sys_acct"])
-        esg_functions.exit_with_error(1)
-    else:
-        print "Created postgres user with group id: {postgres_user_id}".format(postgres_user_id=pwd.getpwnam(config["pg_sys_acct"]).pw_uid)
-
-
-def get_postgres_user_shell():
-    return pwd.getpwnam(config["pg_sys_acct"])[6]
-
-
-def set_postgres_user_shell():
-    print "Noticed that the existing postgres user [{pg_sys_acct}] does not have the bash shell... Hmmm... making it so ".format(pg_sys_acct=config["pg_sys_acct"])
-    change_shell_command = "sed -i 's#\('{pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd".format(
-        pg_sys_acct=config["pg_sys_acct"])
-    esg_functions.call_subprocess(change_shell_command)
-    if get_postgres_user_shell() == "/bin/bash":
-        print "[OK]"
-        print "Postgres user shell is properly configured"
-    else:
-        print "[FAIL]"
-        print "Postgres user shell is not properly configured. The shell is {postgres_shell}. It should be /bin/bash".format(postgres_shell=get_postgres_user_shell())
-
-
-def change_pg_install_dir_ownership():
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
-    os.chown(config["postgress_install_dir"], postgres_user_id, postgres_group_id)
-
-
-def start_postgres():
-    ''' Start db '''
-    # if the data directory doesn't exist or is empty
-    if not os.path.isdir("/var/lib/pgsql/data/") or not os.listdir("/var/lib/pgsql/data/"):
-        initialize_postgres()
-    esg_functions.stream_subprocess_output("service postgresql start")
-    esg_functions.stream_subprocess_output("chkconfig postgresql on")
-
-    sleep(3)
-    if postgres_status():
-        return True
-
-
-def postgres_status():
-    '''Checks the status of the postgres server'''
-    status = esg_functions.call_subprocess("service postgresql status")
-    print "Postgres server status:", status["stdout"]
-    if "running" in status["stdout"]:
-        return True
-    else:
-        return False
-
-
-def restart_postgres():
-    '''Restarts the postgres server'''
-    print "Restarting postgres server"
-    restart_process = esg_functions.call_subprocess("service postgresql restart")
-    if restart_process["returncode"] != 0:
-        print "Restart failed."
-        print "Error:", restart_process["stderr"]
-        sys.exit(1)
-    else:
-        print restart_process["stdout"]
-    sleep(7)
-    postgres_status()
-
-
-def build_connection_string(user, db_name=None, host=None, password=None):
-    '''Creates the db connection string using the params as options '''
-    db_connection_string = ["user={user}".format(user=user)]
-    if db_name:
-        db_connection_string.append("dbname={db_name}".format(db_name=db_name))
-    if host:
-        db_connection_string.append("host={host}".format(host=host))
-    if password:
-        db_connection_string.append("password={password}".format(password=password))
-
-    return " ".join(db_connection_string)
-
-
-def connect_to_db(user, db_name=None,  host="/tmp", password=None):
-    ''' Connect to database '''
-    # Using password auth currently;
-    # if the user is postgres, the effective user id (euid) needs to be postgres' user id.
-    # Essentially change user from root to postgres
-    root_id = pwd.getpwnam("root").pw_uid
-    if user == "postgres":
-        postgres_id = pwd.getpwnam("postgres").pw_uid
-
-        os.seteuid(postgres_id)
-    db_connection_string = build_connection_string(user, db_name, host, password)
-    print "db_connection_string: ", db_connection_string
-    try:
-        conn = psycopg2.connect(db_connection_string)
-        print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
-        if not conn:
-            print "Failed to connect to {db_name}".format(db_name=db_name)
-            raise Exception
-
-        # Set effective user id (euid) back to root
-        if os.geteuid() != root_id:
-            os.seteuid(root_id)
-
-        return conn
-    except Exception, error:
-        logger.exception("Unable to connect to the database.")
-        print "Error connecting to database:", error
-        esg_functions.exit_with_error(1)
-
-
-
-def download_config_files(force_install):
-    ''' Download config files '''
-    # #Get files
-    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
-    hba_conf_file = "pg_hba.conf"
-    if esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install) > 1:
-        esg_functions.exit_with_error(1)
-    os.chmod(hba_conf_file, 0600)
-
-    postgres_conf_file = "postgresql.conf"
-    if esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", postgres_conf_file), force_install) > 1:
-        esg_functions.exit_with_error(1)
-    os.chmod(postgres_conf_file, 0600)
-
-
-def update_port_in_config_file():
-    postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(
-        postgress_port=config["postgress_port"])) or config["postgress_port"]
-    print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port=postgres_port_input)
-
-    with open('postgresql.conf', 'r') as pg_conf_file:
-        filedata = pg_conf_file.read()
-    filedata = filedata.replace('@@postgress_port@@', config["postgress_port"])
-
-    # Write the file out again
-    with open('postgresql.conf', 'w') as pg_conf_file:
-        pg_conf_file.write(filedata)
-
-
-def update_log_dir_in_config_file():
-    ''' Edit postgres config file '''
-    print "Setting Postgress Log Dir in config_file: {postgress_install_dir} ".format(postgress_install_dir=config["postgress_install_dir"])
-
-    with open('postgresql.conf', 'r') as pg_conf_file:
-        filedata = pg_conf_file.read()
-    filedata = filedata.replace('@@postgress_install_dir@@', config["postgress_install_dir"])
-
-    # Write the file out again
-    with open('postgresql.conf', 'w') as pg_conf_file:
-        pg_conf_file.write(filedata)
-
-    os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
-             grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
-
-
 def check_existing_pg_version(psql_path, force_install=False):
     '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=config["postgress_min_version"])
@@ -338,33 +124,11 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     setup_db_schemas(force_install)
     create_pg_pass_file()
 
-    ''' function calls '''
     esg_functions.check_shmmax()
     write_postgress_env()
     write_postgress_install_log(psql_path)
     log_postgres_properties()
 
-
-def setup_hba_conf_file():
-    '''Modify the pg_hba.conf file for md5 authencation'''
-    with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                    ident\n")
-        hba_conf_file.write("local    all             all                         md5\n")
-        hba_conf_file.write("host     all             all         ::1/128         md5\n")
-
-
-def create_pg_pass_file():
-    '''Creates the file to store login passwords for psql'''
-    pg_pass_file_path = os.path.join(os.environ["HOME"], ".pgpass")
-    with open(pg_pass_file_path, "w") as pg_pass_file:
-        pg_pass_file.write('localhost:5432:cogdb:dbsuper:password')
-        pg_pass_file.write('localhost:5432:esgcet:dbsuper:password')
-    os.chmod(pg_pass_file_path, 0600)
-
-
-def stop_postgress():
-    '''Stops the postgres server'''
-    esg_functions.stream_subprocess_output("service postgresql stop")
 
 
 def setup_db_schemas(force_install):
@@ -474,6 +238,260 @@ def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
         f.close()
 
 
+#----------------------------------------------------------
+# Postgresql connections functions
+#----------------------------------------------------------
+
+def build_connection_string(user, db_name=None, host=None, password=None):
+    '''Creates the db connection string using the params as options '''
+    db_connection_string = ["user={user}".format(user=user)]
+    if db_name:
+        db_connection_string.append("dbname={db_name}".format(db_name=db_name))
+    if host:
+        db_connection_string.append("host={host}".format(host=host))
+    if password:
+        db_connection_string.append("password={password}".format(password=password))
+
+    return " ".join(db_connection_string)
+
+
+def connect_to_db(user, db_name=None,  host="/tmp", password=None):
+    ''' Connect to database '''
+    # Using password auth currently;
+    # if the user is postgres, the effective user id (euid) needs to be postgres' user id.
+    # Essentially change user from root to postgres
+    root_id = pwd.getpwnam("root").pw_uid
+    if user == "postgres":
+        postgres_id = pwd.getpwnam("postgres").pw_uid
+
+        os.seteuid(postgres_id)
+    db_connection_string = build_connection_string(user, db_name, host, password)
+    print "db_connection_string: ", db_connection_string
+    try:
+        conn = psycopg2.connect(db_connection_string)
+        print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
+        if not conn:
+            print "Failed to connect to {db_name}".format(db_name=db_name)
+            raise Exception
+
+        # Set effective user id (euid) back to root
+        if os.geteuid() != root_id:
+            os.seteuid(root_id)
+
+        return conn
+    except Exception, error:
+        logger.exception("Unable to connect to the database.")
+        print "Error connecting to database:", error
+        esg_functions.exit_with_error(1)
+
+#----------------------------------------------------------
+# Postgresql user/group management functions
+#----------------------------------------------------------
+def create_pg_pass_file():
+    '''Creates the file to store login passwords for psql'''
+    pg_pass_file_path = os.path.join(os.environ["HOME"], ".pgpass")
+    with open(pg_pass_file_path, "w") as pg_pass_file:
+        pg_pass_file.write('localhost:5432:cogdb:dbsuper:password')
+        pg_pass_file.write('localhost:5432:esgcet:dbsuper:password')
+    os.chmod(pg_pass_file_path, 0600)
+
+
+def check_for_postgres_sys_acct():
+    try:
+        postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+    except KeyError:
+        print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct=config["pg_sys_acct"])
+    else:
+        return True
+
+
+def create_postgres_group():
+    '''Creates postgres Unix group'''
+    groupadd_command = "/usr/sbin/groupadd -r %s" % (
+        config["pg_sys_acct_group"])
+    groupadd_output = esg_functions.call_subprocess(groupadd_command)
+    if groupadd_output["returncode"] != 0 or groupadd_output["returncode"] != 9:
+        print "ERROR: *Could not add postgres system group: %s" % (config["pg_sys_acct_group"])
+        esg_functions.exit_with_error(1)
+    else:
+        print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
+
+
+def set_pg_sys_account_password():
+    if not config["pg_sys_acct_passwd"]:
+        while True:
+            pg_sys_acct_passwd_input = getpass.getpass(
+                "Create password for postgress system account: ")
+            if not pg_sys_acct_passwd_input:
+                print "Please enter a password: "
+                continue
+            else:
+                config["pg_sys_acct_passwd"] = pg_sys_acct_passwd_input
+                break
+        with open(config["pg_secret_file"], "w") as secret_file:
+            secret_file.write(config["pg_sys_acct_passwd"])
+
+        # Change pg_secret_file permissions
+        if os.path.isfile(config["pg_secret_file"]):
+            os.chmod(config["pg_secret_file"], 0640)
+            tomcat_group_id = grp.getgrnam(config["tomcat_group"]).gr_gid
+            os.chown(config["pg_secret_file"], config["installer_uid"], tomcat_group_id)
+
+        sleep(3)
+
+
+def create_postgres_system_user(pg_sys_acct_homedir):
+    '''Create Postgres Unix user'''
+    print "Creating account..."
+    useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF'
+    -d {pg_sys_acct_homedir} -g {pg_sys_acct_group} -p
+    {pg_sys_acct_passwd} -s /bin/bash {pg_sys_acct}'''.format(pg_sys_acct_homedir=pg_sys_acct_homedir,
+                                                              pg_sys_acct_group=config["pg_sys_acct_group"],
+                                                              pg_sys_acct_passwd=config["pg_sys_acct_passwd"],
+                                                              pg_sys_acct=config["pg_sys_acct"])
+    useradd_output = esg_functions.call_subprocess(useradd_command)
+
+    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+
+    if useradd_output["returncode"] != 0 or useradd_output["returncode"] != 9:
+        print "ERROR: Could not add postgres system account user"
+        esg_functions.exit_with_error(1)
+    elif not postgres_user_id:
+        print " ERROR: Problem with {pg_sys_acct} creation!!!".format(pg_sys_acct=config["pg_sys_acct"])
+        esg_functions.exit_with_error(1)
+    else:
+        print "Created postgres user with group id: {postgres_user_id}".format(postgres_user_id=pwd.getpwnam(config["pg_sys_acct"]).pw_uid)
+
+
+def get_postgres_user_shell():
+    return pwd.getpwnam(config["pg_sys_acct"])[6]
+
+
+def set_postgres_user_shell():
+    print "Noticed that the existing postgres user [{pg_sys_acct}] does not have the bash shell... Hmmm... making it so ".format(pg_sys_acct=config["pg_sys_acct"])
+    change_shell_command = "sed -i 's#\('{pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd".format(
+        pg_sys_acct=config["pg_sys_acct"])
+    esg_functions.call_subprocess(change_shell_command)
+    if get_postgres_user_shell() == "/bin/bash":
+        print "[OK]"
+        print "Postgres user shell is properly configured"
+    else:
+        print "[FAIL]"
+        print "Postgres user shell is not properly configured. The shell is {postgres_shell}. It should be /bin/bash".format(postgres_shell=get_postgres_user_shell())
+
+
+def change_pg_install_dir_ownership():
+    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
+    postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
+    os.chown(config["postgress_install_dir"], postgres_user_id, postgres_group_id)
+
+
+
+#----------------------------------------------------------
+# Postgresql process management functions
+#----------------------------------------------------------
+
+def start_postgres():
+    ''' Start db '''
+    # if the data directory doesn't exist or is empty
+    if not os.path.isdir("/var/lib/pgsql/data/") or not os.listdir("/var/lib/pgsql/data/"):
+        initialize_postgres()
+    esg_functions.stream_subprocess_output("service postgresql start")
+    esg_functions.stream_subprocess_output("chkconfig postgresql on")
+
+    sleep(3)
+    if postgres_status():
+        return True
+
+
+def stop_postgress():
+    '''Stops the postgres server'''
+    esg_functions.stream_subprocess_output("service postgresql stop")
+
+
+def postgres_status():
+    '''Checks the status of the postgres server'''
+    status = esg_functions.call_subprocess("service postgresql status")
+    print "Postgres server status:", status["stdout"]
+    if "running" in status["stdout"]:
+        return True
+    else:
+        return False
+
+
+def restart_postgres():
+    '''Restarts the postgres server'''
+    print "Restarting postgres server"
+    restart_process = esg_functions.call_subprocess("service postgresql restart")
+    if restart_process["returncode"] != 0:
+        print "Restart failed."
+        print "Error:", restart_process["stderr"]
+        sys.exit(1)
+    else:
+        print restart_process["stdout"]
+    sleep(7)
+    postgres_status()
+
+
+#----------------------------------------------------------
+# Postgresql configuration management functions
+#----------------------------------------------------------
+
+def setup_hba_conf_file():
+    '''Modify the pg_hba.conf file for md5 authencation'''
+    with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
+        hba_conf_file.write("local    all             postgres                    ident\n")
+        hba_conf_file.write("local    all             all                         md5\n")
+        hba_conf_file.write("host     all             all         ::1/128         md5\n")
+
+def download_config_files(force_install):
+    ''' Download config files '''
+    # #Get files
+    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+    hba_conf_file = "pg_hba.conf"
+    if esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install) > 1:
+        esg_functions.exit_with_error(1)
+    os.chmod(hba_conf_file, 0600)
+
+    postgres_conf_file = "postgresql.conf"
+    if esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", postgres_conf_file), force_install) > 1:
+        esg_functions.exit_with_error(1)
+    os.chmod(postgres_conf_file, 0600)
+
+
+def update_port_in_config_file():
+    postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(
+        postgress_port=config["postgress_port"])) or config["postgress_port"]
+    print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port=postgres_port_input)
+
+    with open('postgresql.conf', 'r') as pg_conf_file:
+        filedata = pg_conf_file.read()
+    filedata = filedata.replace('@@postgress_port@@', config["postgress_port"])
+
+    # Write the file out again
+    with open('postgresql.conf', 'w') as pg_conf_file:
+        pg_conf_file.write(filedata)
+
+
+def update_log_dir_in_config_file():
+    ''' Edit postgres config file '''
+    print "Setting Postgress Log Dir in config_file: {postgress_install_dir} ".format(postgress_install_dir=config["postgress_install_dir"])
+
+    with open('postgresql.conf', 'r') as pg_conf_file:
+        filedata = pg_conf_file.read()
+    filedata = filedata.replace('@@postgress_install_dir@@', config["postgress_install_dir"])
+
+    # Write the file out again
+    with open('postgresql.conf', 'w') as pg_conf_file:
+        pg_conf_file.write(filedata)
+
+    os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
+             grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
+
+
+#----------------------------------------------------------
+# Postgresql logging functions
+#----------------------------------------------------------
 def log_postgres_properties():
     esg_property_manager.set_property("db.user", config["postgress_user"])
     esg_property_manager.set_property("db.host", config["postgress_host"])
@@ -488,7 +506,6 @@ def write_postgress_install_log(psql_path):
     postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
     postgres_version_number = re.search("\d.*", postgres_version_found).group()
     esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
-
 
 #----------------------------------------------------------
 # Postgresql informational functions

@@ -132,16 +132,6 @@ def change_pg_install_dir_ownership():
     os.chown(config["postgress_install_dir"], postgres_user_id, postgres_group_id)
 
 
-def create_postgres_log_dir():
-    ''' Create log directory '''
-    esg_bash2py.mkdir_p(os.path.join(config["postgress_install_dir"], "log"))
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    try:
-        os.chown(os.path.join(config["postgress_install_dir"], "log"), postgres_user_id, -1)
-    except OSError, error:
-        print " ERROR: Could not change ownership of postgres' log to \"{pg_sys_acct}\" user".format(pg_sys_acct=config["pg_sys_acct"])
-
-
 def start_postgres():
     ''' Start db '''
     # if the data directory doesn't exist or is empty
@@ -221,31 +211,6 @@ def connect_to_db(user, db_name=None,  host="/tmp", password=None):
         print "Error connecting to database:", error
         esg_functions.exit_with_error(1)
 
-
-def check_for_postgres_db_user():
-    ''' Need to be able to run psql as the postgres system user instead of root to avoid the peer authencation error '''
-    check_for_pg_user_command = '''sudo -u postgres psql -U postgres -c "select count(*) from pg_roles where rolname='{postgress_user}'" postgres'''.format(
-        postgress_user=config["postgress_user"])
-    check_for_pg_user_output = esg_functions.call_subprocess(check_for_pg_user_command)
-    print "check_for_postgres_db_user: ", check_for_pg_user_output
-    count = int(check_for_pg_user_output["stdout"].strip().split("\n")[-2].strip())
-    print "count: ", count
-    print "count type: ", type(count)
-    if count > 0:
-        print "{postgress_user} user found".format(postgress_user=config["postgress_user"])
-    else:
-        create_postgres_db_user()
-
-
-def create_postgres_db_user():
-    postgres_db_user_password = esg_functions.get_postgres_password()
-    if not postgres_db_user_password:
-        postgres_db_user_password = _choose_postgres_user_password()
-    create_pg_db_user_command = '''sudo -u postgres psql -c "create user {postgress_user} with superuser password '{postgres_db_user_password}';" '''.format(
-        postgress_user=config["postgress_user"], postgres_db_user_password=postgres_db_user_password)
-    create_pg_db_user_output = esg_functions.call_subprocess(create_pg_db_user_command)
-    if create_pg_db_user_output["returncode"] == 0:
-        print "Successfully created {postgress_user} db user".format(postgress_user=config["postgress_user"])
 
 
 def download_config_files(force_install):
@@ -378,17 +343,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     write_postgress_env()
     write_postgress_install_log(psql_path)
     log_postgres_properties()
-
-
-'''Check if managed_db'''
-# db_properties = esg_setup.get_db_properties()
-# if esg_setup._is_managed_db(db_properties):
-#     return True
-
-'''Check if should perform upgrade'''
-# upgrade  = None
-# if not found_valid_version:
-#     upgrade
 
 
 def setup_hba_conf_file():
@@ -534,18 +488,6 @@ def write_postgress_install_log(psql_path):
     postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
     postgres_version_number = re.search("\d.*", postgres_version_found).group()
     esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
-
-def _choose_postgres_user_password():
-    while True:
-        postgres_user_password = getpass.getpass(
-            "Enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
-        postgres_user_password_confirmation = getpass.getpass(
-            "Re-enter password for postgres user {postgress_user}: ".format(postgress_user=config["postgress_user"]))
-        if postgres_user_password != postgres_user_password_confirmation:
-            print "The passwords did not match. Enter same password twice."
-            continue
-        else:
-            return postgres_user_password
 
 
 #----------------------------------------------------------

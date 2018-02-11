@@ -79,7 +79,7 @@ def setup_postgres(force_install=False, default_continue_install="N"):
                 "Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install
 
         if setup_postgres_answer.lower().strip() in ["no", 'n']:
-            print "Skipping installation."
+            logger.info("Skipping Postgres installation. Using existing Postgres version")
             return True
         else:
             force_install = True
@@ -318,7 +318,10 @@ def create_postgres_group():
 
 
 def set_pg_sys_account_password():
-    if not config["pg_sys_acct_passwd"]:
+    if esg_functions.get_postgres_password():
+        logger.info("Postgres password already set")
+        return
+    else:
         while True:
             pg_sys_acct_passwd_input = getpass.getpass(
                 "Create password for postgress system account: ")
@@ -328,16 +331,7 @@ def set_pg_sys_account_password():
             else:
                 config["pg_sys_acct_passwd"] = pg_sys_acct_passwd_input
                 break
-        with open(config["pg_secret_file"], "w") as secret_file:
-            secret_file.write(config["pg_sys_acct_passwd"])
-
-        # Change pg_secret_file permissions
-        if os.path.isfile(config["pg_secret_file"]):
-            os.chmod(config["pg_secret_file"], 0640)
-            tomcat_group_id = grp.getgrnam(config["tomcat_group"]).gr_gid
-            os.chown(config["pg_secret_file"], config["installer_uid"], tomcat_group_id)
-
-        sleep(3)
+        esg_functions.set_postgres_password(pg_sys_acct_passwd_input)
 
 
 def create_postgres_system_user(pg_sys_acct_homedir):

@@ -38,6 +38,11 @@ install_miniconda(){
 }
 
 install_dependencies_pip(){
+  echo
+  echo "-----------------------------------"
+  echo "Installing dependencies from pip"
+  echo "-----------------------------------"
+  echo
   # activate virtual env and fetch some pre-requisites
   source ${CDAT_HOME}/bin/activate esgf-pub && \
       conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
@@ -76,6 +81,11 @@ install_dependencies_yum(){
 
 
 copy_autoinstall_file(){
+  echo
+  echo "-----------------------------------"
+  echo "Copying esgf.properties.template to /esg/config/esgf.properties"
+  echo "-----------------------------------"
+  echo
   mkdir -p /esg/config
   cp esgf.properties.template /esg/config/esgf.properties
 
@@ -83,6 +93,11 @@ copy_autoinstall_file(){
 }
 
 intialize_config_file(){
+  echo
+  echo "-----------------------------------"
+  echo "Initializing esg_config.yaml file"
+  echo "-----------------------------------"
+  echo
   python esg_init.py
 }
 

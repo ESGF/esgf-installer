@@ -9,7 +9,6 @@ import logging
 import getpass
 from time import sleep
 from distutils.spawn import find_executable
-import configobj
 import yaml
 import semver
 import psycopg2
@@ -36,10 +35,11 @@ def download_postgres():
 def initialize_postgres():
     try:
         if os.listdir("/var/lib/pgsql/data"):
-            print "Data directory already exists. Skipping initialize_postgres()."
+            logger.info("Data directory already exists. Skipping initialize_postgres().")
             return
     except OSError, error:
-        print "error:", error
+        logger.error(error)
+        
     esg_functions.stream_subprocess_output("service postgresql initdb")
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 

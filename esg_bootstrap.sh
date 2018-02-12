@@ -10,6 +10,12 @@ set -o errexit
 # exit if any pipe commands fail
 set -o pipefail
 
+function cleanup {
+  echo "An error occurred"
+}
+
+trap cleanup EXIT
+
 install_miniconda(){
   # install Anaconda
   echo
@@ -79,7 +85,6 @@ install_dependencies_yum(){
 
 }
 
-
 copy_autoinstall_file(){
   echo
   echo "-----------------------------------"
@@ -102,9 +107,5 @@ intialize_config_file(){
 }
 
 if [ ! -d "/usr/local/conda" ]; then
-    install_miniconda
-    install_dependencies_pip
-    copy_autoinstall_file
-    intialize_config_file
-    install_dependencies_yum
+    install_miniconda && install_dependencies_pip && copy_autoinstall_file && intialize_config_file && install_dependencies_yum
 fi

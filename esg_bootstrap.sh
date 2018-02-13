@@ -92,7 +92,7 @@ copy_autoinstall_file(){
   echo "-----------------------------------"
   echo
   mkdir -p /esg/config
-  cp esgf.properties.template /esg/config/esgf.properties
+  cp -v esgf.properties.template /esg/config/esgf.properties
 
   [ $? != 0 ] && printf "[FAIL] \n\tFailed to copy esgf.properties.template file to /esg/config\n\n" && return 1
 }
@@ -107,5 +107,5 @@ intialize_config_file(){
 }
 
 if [ ! -d "/usr/local/conda" ]; then
-    install_miniconda; install_dependencies_pip; copy_autoinstall_file; intialize_config_file; install_dependencies_yum
+    install_miniconda; install_dependencies_pip; copy_autoinstall_file; install_dependencies_yum
 fi

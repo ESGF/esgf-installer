@@ -107,5 +107,5 @@ intialize_config_file(){
 }
 
 if [ ! -d "/usr/local/conda" ]; then
-    install_miniconda && install_dependencies_pip && copy_autoinstall_file && intialize_config_file && install_dependencies_yum
+    install_miniconda; install_dependencies_pip; copy_autoinstall_file; intialize_config_file; install_dependencies_yum
 fi

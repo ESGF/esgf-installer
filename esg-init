@@ -34,7 +34,7 @@ init() {
     esgcet_version=${esgcet_version:-"3.3.3"}
     publisher_tag=${publisher_tag:-"v3.3.3"}
 
-    esgprep_version="2.7"
+    esgprep_version="2.7.37"
     cmor_version="3.3.0"  # concidence its same as esgcet
 
 

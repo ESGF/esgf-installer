@@ -9,6 +9,7 @@ import shutil
 import stat
 import yaml
 import semver
+import pip
 from git import Repo
 from lxml import etree
 #This needs to be imported before other esg_* modules to properly setup the root logger
@@ -344,6 +345,7 @@ def system_component_installation(esg_dist_url):
         print "\n*******************************"
         print "Installing Data Node Components"
         print "******************************* \n"
+        pip.main(['install', "esgprep"])
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
         orp.main()

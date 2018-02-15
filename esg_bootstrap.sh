@@ -58,12 +58,9 @@ install_dependencies_pip(){
   echo
   # activate virtual env and fetch some pre-requisites
   source ${CDAT_HOME}/bin/activate esgf-pub && \
-      conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
+      conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient SQLAlchemy sqlalchemy-migrate
 
   # install other python pre-requisites
-      pip install SQLAlchemy
-      pip install sqlalchemy_migrate
-      pip install esgprep
       pip install -r requirements.txt
 
   source deactivate

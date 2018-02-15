@@ -86,7 +86,7 @@ def init():
             pub_secret = filedata.read().strip()
         publisher_db_user_passwd = pub_secret
     except IOError, error:
-        LOGGER.debug(error)
+        logger.debug(error)
 
     postgress_host = "localhost"
     postgress_port = "5432"
@@ -150,7 +150,7 @@ def init():
         os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
             ':' + os.environ["LD_LIBRARY_PATH"]
     except KeyError:
-        LOGGER.exception("LD_LIBRARY_PATH not found initially")
+        logger.exception("LD_LIBRARY_PATH not found initially")
         os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
 
     #--------------

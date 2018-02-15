@@ -54,11 +54,14 @@ install_dependencies_pip(){
       conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
 
   # install other python pre-requisites
-  source ${CDAT_HOME}/bin/activate esgf-pub && \
-      pip install SQLAlchemy==0.7.10 && \
-      pip install sqlalchemy_migrate && \
-      pip install esgprep && \
+      pip install SQLAlchemy
+      pip install sqlalchemy_migrate
+      pip install esgprep
       pip install -r requirements.txt
+
+  source deactivate
+
+  [ $? != 0 ] && printf "[FAIL] \n\tCould not download dependencies from pip\n\n" && return 1
 }
 
 install_dependencies_yum(){
@@ -104,8 +107,10 @@ initialize_config_file(){
   echo "-----------------------------------"
   echo
   python esg_init.py
+
+  [ $? != 0 ] && printf "[FAIL] \n\tFailed to initialize esg_config.yaml\n\n" && return 1
 }
 
 if [ ! -d "/usr/local/conda" ]; then
-    install_miniconda; install_dependencies_pip; install_dependencies_yum; initialize_config_file
+    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
 fi

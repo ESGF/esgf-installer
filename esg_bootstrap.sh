@@ -113,5 +113,5 @@ initialize_config_file(){
 
 if [ ! -d "/usr/local/conda" ]; then
     install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
-    echo "Bootsrap complete!"
+    echo "Bootstrap complete!"
 fi

@@ -81,16 +81,12 @@ install_dependencies_yum(){
   yum -y remove rpmforge-release
   yum -y install epel-release
 
-  [ $? != 0 ] && printf "[FAIL] \n\tCould not configure epel repository\n\n" && return 1
-
   yum -y install yum-plugin-priorities sqlite-devel freetype-devel git \
   curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel \
   libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel \
   lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel \
   perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel \
   gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel *ExtUtils*
-
-  [ $? != 0 ] && printf "[FAIL] \n\tFailed to installed all dependencies from yum\n\n" && return 1
 
 }
 
@@ -111,14 +107,14 @@ initialize_config_file(){
   echo "Initializing esg_config.yaml file"
   echo "-----------------------------------"
   echo
-  
+
   source ${CDAT_HOME}/bin/activate esgf-pub
     python esg_init.py
   source deactivate
 
-  [ $? != 0 ] && printf "[FAIL] \n\tFailed to initialize esg_config.yaml\n\n" && return 1
 }
 
 if [ ! -d "/usr/local/conda" ]; then
     install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
+    echo "Bootsrap complete!"
 fi

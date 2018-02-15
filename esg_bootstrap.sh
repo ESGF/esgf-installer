@@ -10,11 +10,18 @@ set -o errexit
 # exit if any pipe commands fail
 set -o pipefail
 
-function cleanup {
-  echo "An error occurred"
-}
+set -E
+set -o functrace
+function handle_error {
+    local retval=$?
+    local line=${last_lineno:-$1}
+    echo "Failed at $line: $BASH_COMMAND"
+    echo "Trace: " "$@"
+    echo "return code: " "$?"
+    exit $retval
+ }
+trap 'handle_error $LINENO ${BASH_LINENO[@]}' ERR
 
-trap cleanup EXIT
 
 install_miniconda(){
   # install Anaconda
@@ -61,7 +68,6 @@ install_dependencies_pip(){
 
   source deactivate
 
-  [ $? != 0 ] && printf "[FAIL] \n\tCould not download dependencies from pip\n\n" && return 1
 }
 
 install_dependencies_yum(){
@@ -97,7 +103,6 @@ copy_autoinstall_file(){
   mkdir -p /esg/config
   cp -v esgf.properties.template /esg/config/esgf.properties
 
-  [ $? != 0 ] && printf "[FAIL] \n\tFailed to copy esgf.properties.template file to /esg/config\n\n" && return 1
 }
 
 initialize_config_file(){
@@ -106,7 +111,10 @@ initialize_config_file(){
   echo "Initializing esg_config.yaml file"
   echo "-----------------------------------"
   echo
-  python esg_init.py
+  
+  source ${CDAT_HOME}/bin/activate esgf-pub
+    python esg_init.py
+  source deactivate
 
   [ $? != 0 ] && printf "[FAIL] \n\tFailed to initialize esg_config.yaml\n\n" && return 1
 }

@@ -1037,7 +1037,7 @@ setup_esgcet() {
 
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython
+    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy
 
     if [ $ESGF_INSECURE > 0 ] ; then
 
@@ -1047,10 +1047,10 @@ setup_esgcet() {
     fi
 
     $pipcmd esgprep==${esgprep_version}
-    $pipcmd SQLAlchemy==0.7.10
     $pipcmd sqlalchemy_migrate
     $pipcmd cdf2cim
     $pipcmd hurry
+    $pipcmd psycopg2-binary
 
     #clone publisher
     local publisher_git_protocol="git://"

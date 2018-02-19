@@ -24,6 +24,12 @@ expect {
     "This action did not complete successfully" { exit 1 }
 
     # Actual script responses
+    "Enter local mirror url:" {
+        send ${LOCMIRRORURL}\n ; exp_continue
+    }
+    "You entered ${LOCMIRRORURL}. Is this correct?(Y/n)" {
+        send y\n ; exp_continue
+    }
     "Please select the ESGF distribution mirror for this installation" {
         send \n ; exp_continue
     }

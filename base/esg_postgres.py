@@ -259,10 +259,10 @@ def connect_to_db(user, db_name=None,  host="/tmp", password=None):
 
         os.seteuid(postgres_id)
     db_connection_string = build_connection_string(user, db_name, host, password)
-    print "db_connection_string: ", db_connection_string
+    logger.debug("db_connection_string: %s", db_connection_string)
     try:
         conn = psycopg2.connect(db_connection_string)
-        print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
+        logger.debug("Connected to %s database as user '%s'", db_name, user)
         if not conn:
             print "Failed to connect to {db_name}".format(db_name=db_name)
             raise Exception
@@ -516,10 +516,10 @@ def create_database(cursor, database_name):
             logger.info("%s database already exists.  Skipping creation.", database_name)
 
 
-def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres"):
+def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres", password=None):
     '''This prints a list of all schemas known to postgres.'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
+        conn = connect_to_db(db_name, user_name, password=password)
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")

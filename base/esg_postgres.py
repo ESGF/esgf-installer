@@ -274,7 +274,8 @@ def connect_to_db(user, db_name=None,  host="/tmp", password=None):
         return conn
     except Exception, error:
         logger.exception("Unable to connect to the database.")
-        esg_functions.exit_with_error(error)
+        raise
+        # esg_functions.exit_with_error(error)
 
 #----------------------------------------------------------
 # Postgresql user/group management functions

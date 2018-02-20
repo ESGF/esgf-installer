@@ -39,7 +39,7 @@ def initialize_postgres():
             return
     except OSError, error:
         logger.error(error)
-        
+
     esg_functions.stream_subprocess_output("service postgresql initdb")
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
@@ -83,8 +83,8 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             return True
         else:
             force_install = True
+            backup_db("postgres", "postgres")
 
-    backup_db("postgres", "postgres")
     download_postgres()
 
     '''Create system account (postgres) if it doesn't exist '''

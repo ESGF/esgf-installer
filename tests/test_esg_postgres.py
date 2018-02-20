@@ -145,7 +145,7 @@ class test_ESG_postgres(unittest.TestCase):
 
     def test_add_schema_from_file(self):
         esg_postgres.setup_db_schemas(False)
-        output = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet")
+        output = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
         print "output:", output
         # cur2 = conn2.cursor()
         # user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")

@@ -22,6 +22,9 @@ from esg_exceptions import SubprocessError
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
 
+NO_LIST = ["n", "no", "N", "No", "NO"]
+YES_LIST = ["y", "yes", "Y", "Yes", "YES" ]
+
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -77,7 +80,11 @@ def create_certificate_chain_list():
     cert_files = []
     #Enter ca_chain file into list
     while True:
+<<<<<<< HEAD
         if esg_property_manager.get_property("certfile.entry").lower() in ["n", "no"]:
+=======
+        if esg_property_manager.get_property("certfile.entry") in NO_LIST:
+>>>>>>> python_devel
             certfile_entry = None
         else:
             print "Please enter your Certificate Authority's certificate chain file(s)"
@@ -682,7 +689,7 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     else:
         commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
 
-    if commercial_ca_setup.lower() in ["yes", "y"]:
+    if commercial_ca_setup in YES_LIST:
         commercial_key_path, commercial_cert_path, ca_chain_path = set_commercial_ca_paths()
 
         #Backup existing certs

@@ -10,6 +10,19 @@ set -o errexit
 # exit if any pipe commands fail
 set -o pipefail
 
+set -E
+set -o functrace
+function handle_error {
+    local retval=$?
+    local line=${last_lineno:-$1}
+    echo "Failed at $line: $BASH_COMMAND"
+    echo "Trace: " "$@"
+    echo "return code: " "$?"
+    exit $retval
+ }
+trap 'handle_error $LINENO ${BASH_LINENO[@]}' ERR
+
+
 install_miniconda(){
   # install Anaconda
   echo
@@ -38,16 +51,20 @@ install_miniconda(){
 }
 
 install_dependencies_pip(){
+  echo
+  echo "-----------------------------------"
+  echo "Installing dependencies from pip"
+  echo "-----------------------------------"
+  echo
   # activate virtual env and fetch some pre-requisites
   source ${CDAT_HOME}/bin/activate esgf-pub && \
-      conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient
+      conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient SQLAlchemy sqlalchemy-migrate
 
   # install other python pre-requisites
-  source ${CDAT_HOME}/bin/activate esgf-pub && \
-      pip install SQLAlchemy==0.7.10 && \
-      pip install sqlalchemy_migrate && \
-      pip install esgprep && \
       pip install -r requirements.txt
+
+  source deactivate
+
 }
 
 install_dependencies_yum(){
@@ -61,8 +78,6 @@ install_dependencies_yum(){
   yum -y remove rpmforge-release
   yum -y install epel-release
 
-  [ $? != 0 ] && printf "[FAIL] \n\tCould not configure epel repository\n\n" && return 1
-
   yum -y install yum-plugin-priorities sqlite-devel freetype-devel git \
   curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel \
   libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel \
@@ -70,26 +85,33 @@ install_dependencies_yum(){
   perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel \
   gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel *ExtUtils*
 
-  [ $? != 0 ] && printf "[FAIL] \n\tFailed to installed all dependencies from yum\n\n" && return 1
-
 }
-
 
 copy_autoinstall_file(){
+  echo
+  echo "-----------------------------------"
+  echo "Copying esgf.properties.template to /esg/config/esgf.properties"
+  echo "-----------------------------------"
+  echo
   mkdir -p /esg/config
-  cp esgf.properties /esg/config/esgf.properties
+  cp -v esgf.properties.template /esg/config/esgf.properties
 
-  [ $? != 0 ] && printf "[FAIL] \n\tFailed to copy esgf.properties file to /esg/config\n\n" && return 1
 }
 
-intialize_config_file(){
-  python esg_init.py
+initialize_config_file(){
+  echo
+  echo "-----------------------------------"
+  echo "Initializing esg_config.yaml file"
+  echo "-----------------------------------"
+  echo
+
+  source ${CDAT_HOME}/bin/activate esgf-pub
+    python esg_init.py
+  source deactivate
+
 }
 
 if [ ! -d "/usr/local/conda" ]; then
-    install_miniconda
-    install_dependencies_pip
-    install_dependencies_yum
-    copy_autoinstall_file
-    intialize_config_file
+    install_dependencies_yum; install_miniconda; install_dependencies_pip; copy_autoinstall_file; initialize_config_file
+    echo "Bootstrap complete!"
 fi

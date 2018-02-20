@@ -59,7 +59,7 @@ def setup_providers_dropdown():
 
     esg_functions.download_update(known_providers_file, known_providers_url)
 
-    esg_property_manager.write_as_property("orp_provider_list", known_providers_file)
+    esg_property_manager.set_property("orp_provider_list", known_providers_file)
 
     tomcat_user_id = esg_functions.get_user_id("tomcat")
     tomcat_group_id = esg_functions.get_group_id("tomcat")
@@ -73,8 +73,8 @@ def setup_orp():
     print "******************************* \n"
 
     if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
-        if esg_property_manager.get_property("install_orp"):
-            orp_install = esg_property_manager.get_property("install_orp")
+        if esg_property_manager.get_property("install.orp"):
+            orp_install = esg_property_manager.get_property("install.orp")
         else:
             orp_install = raw_input("Existing ORP installation found.  Do you want to continue with the ORP installation [y/N]: ") or "no"
         if orp_install.lower() in ["no", "n"]:

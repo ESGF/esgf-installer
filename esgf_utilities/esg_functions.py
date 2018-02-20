@@ -17,6 +17,7 @@ import errno
 import pwd
 import grp
 import getpass
+import ConfigParser
 from time import sleep
 from distutils.spawn import find_executable
 import requests
@@ -500,7 +501,7 @@ def check_shmmax(min_shmmax=48):
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
     '''
-    kernel_shmmax = esg_property_manager.get_property("kernel_shmmax")
+    kernel_shmmax = esg_property_manager.get_property("kernel.shmmax")
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
     cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
@@ -513,14 +514,14 @@ def check_shmmax(min_shmmax=48):
         # TODO: replace with Python to update file
         call_subprocess(
             "sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
-        esg_property_manager.write_as_property("kernal_shmmax", set_value_mb)
+        esg_property_manager.set_property("kernal_shmmax", set_value_mb)
 
 
 def get_esg_root_id():
     try:
         esg_root_id = config["esg_root_id"]
     except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg_root_id")
+        esg_root_id = esg_property_manager.get_property("esg.root.id")
     return esg_root_id
 
 
@@ -949,8 +950,35 @@ def bump_git_tag(bump_level="patch", commit_message=None):
     new_tag = repo.create_tag(current_tag, message='Automatic tag "{0}"'.format(current_tag))
     repo.remotes.origin.push(new_tag)
 
+def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
+    # from configobj import ConfigObj
+    # config = ConfigObj("/esg/esgf-install-manifest")
+    # config.filename = filename
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(manifest_file)
 
-    pass
+    try:
+        # parser.add_section(datetime.date.today().strftime("%B %d, %Y"))
+        parser.add_section("install_manifest")
+    except ConfigParser.DuplicateSectionError:
+        logger.debug("section already exists")
+
+    parser.set("install_manifest", component, install_path + " " + version + " - " + datetime.date.today().strftime("%B %d, %Y"))
+    with open(manifest_file, "w") as config_file_object:
+        parser.write(config_file_object)
+
+def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(manifest_file)
+
+    try:
+        return parser.get(section_name, component)
+    except ConfigParser.NoSectionError:
+        logger.debug("could not find component %s", component)
+    except ConfigParser.NoOptionError:
+        logger.debug("could not find component %s", component)
+
+
 
 
 def main():

@@ -349,7 +349,7 @@ def system_component_installation(esg_dist_url):
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
         orp.main()
-        thredds.main()
+        thredds.main(node_type_list)
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
@@ -361,6 +361,14 @@ def system_component_installation(esg_dist_url):
         esg_cog.main()
         solr.main()
         esg_search.main()
+    if "IDP" in node_type_list:
+        print "\n*******************************"
+        print "Installing IDP Node Components"
+        print "******************************* \n"
+        from idp_node import idp
+        from idp_node import esg_security
+        idp.main()
+        esg_security.setup_security(node_type_list, esg_dist_url)
 
     setup_whitelist_files(esg_dist_url)
 
@@ -378,8 +386,8 @@ def done_remark():
     if "COMPUTE" in node_type_list:
         print "http://{esgf_host}/las".format(esgf_host=esgf_host)
 
-    print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node_peer_group"))
-    print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf_index_peer"))
+    print "Your peer group membership -- :  [{node_peer_group}]".format(node_peer_group=esg_property_manager.get_property("node.peer.group"))
+    print "Your specified \"index\" peer - :[{esgf_index_peer}]) (url = http://{esgf_index_peer}/)".format(esgf_index_peer=esg_property_manager.get_property("esgf.index.peer"))
 
     if os.path.isdir(os.path.join("{thredds_content_dir}".format(thredds_content_dir=config["thredds_content_dir"]), "thredds")):
         print "[Note: Use UNIX group permissions on {thredds_content_dir}/thredds/esgcet to enable users to be able to publish thredds catalogs from data therein]".format(thredds_content_dir=config["thredds_content_dir"])
@@ -394,7 +402,7 @@ def done_remark():
 '''
 
     show_summary()
-    print "(\"Test Project\" -> pcmdi.{esg_root_id}.{node_short_name}.test.mytest)".format(esg_root_id=esg_root_id, node_short_name=esg_property_manager.get_property("node_short_name"))
+    print "(\"Test Project\" -> pcmdi.{esg_root_id}.{node_short_name}.test.mytest)".format(esg_root_id=esg_root_id, node_short_name=esg_property_manager.get_property("node.short.name"))
 
 def setup_esgf_rpm_repo(esg_dist_url):
     '''Creates the esgf repository definition file'''
@@ -477,6 +485,57 @@ def main(node_type_list):
     # install dependencies
     system_component_installation(esg_dist_url)
     done_remark()
+
+def system_launch():
+    #---------------------------------------
+    #System Launch...
+    #---------------------------------------
+    #     sanity_check_web_xmls
+    #     setup_root_app
+    #     [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
+    # # Hard coded to remove node manager, desktop and dashboard
+    # rm -rf /usr/local/tomcat/webapps/esgf-node-manager
+    # rm -rf /usr/local/tomcat/webapps/esgf-desktop
+    # rm -rf /usr/local/tomcat/webapps/esgf-dashboard
+    # #fix for sensible values for conf files post node-manager removal
+    # setup_sensible_confs
+    #     start ${sel}
+    #     install_bash_completion_file
+    #     done_remark
+    #     echo "${script_version}" > ${esg_root_dir}/version
+    #     echo "${script_version}"
+    #     echo
+    #     write_as_property version ${script_version}
+    #     write_as_property release ${script_release}
+    #     write_as_property gridftp_config
+    #     echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
+    #
+    #     esg_node_finally
+    # }
+    #
+    # esg_node_finally() {
+    #     debug_print "(esg_datanode: cleaning up etc...)"
+    #     chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
+    #
+    # if [ $((sel & IDP_BIT)) != 0 ]; then
+    # export PGPASSWORD=${pg_sys_acct_passwd}
+    #
+    # echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.
+    # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
+    #     echo "Node installation is complete."
+    # fi
+    # if [ -p /tmp/outputpipe ]; then
+    #     echo "Installer ran to completion. Now cleaning up. There will be a 'Killed' message in your setup-autoinstall terminal, which is not a cause for concern." >/tmp/outputpipe;
+    # fi
+    #
+    # #exec 1>&3 3>&- 2>&4 4>&-
+    # #wait $tpid
+    # #rm $OUTPUT_PIPE
+    #
+    #
+    #     exit 0
+    # }
+    pass
 
 
 if __name__ == '__main__':

@@ -4,9 +4,12 @@ import unittest
 import os
 import shutil
 import logging
+import datetime
 from context import esgf_utilities
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
+from esgf_utilities.esg_exceptions import SubprocessError
 import yaml
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -24,8 +27,14 @@ class test_ESG_Functions(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        esg_functions.call_subprocess("groupdel test_esgf_group")
-        shutil.rmtree("/esg/test_backup")
+        try:
+            esg_functions.call_subprocess("groupdel test_esgf_group")
+        except SubprocessError:
+            pass
+        try:
+            shutil.rmtree("/esg/test_backup")
+        except OSError:
+            pass
 
     def test_path_unique(self):
         output = esg_functions.path_unique("usr/local/bin:/usr/test/bin:usr/local/bin")
@@ -58,6 +67,12 @@ class test_ESG_Functions(unittest.TestCase):
         esg_functions.add_unix_group("test_esgf_group")
         print "group_list:", esg_functions.get_group_list()
         self.assertTrue("test_esgf_group" in esg_functions.get_group_list())
+
+    def test_write_to_install_manifest(self):
+        esg_functions.write_to_install_manifest("foo_app", "/tmp/foo", "1.0", "/tmp/install_manifest")
+        self.assertTrue(os.path.isfile("/tmp/install_manifest"))
+        prop = esg_property_manager.get_property("foo_app", config_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
+        self.assertTrue("1.0" in prop)
 
 
 if __name__ == '__main__':

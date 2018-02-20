@@ -178,11 +178,11 @@ def write_esgcet_install_log():
         datafile.write(str(datetime.date.today()) + "python:esgcet=" +
                        config["esgcet_version"] + "\n")
 
-    esg_property_manager.write_as_property(
+    esg_property_manager.set_property(
         "publisher_config", config["publisher_config"])
-    esg_property_manager.write_as_property(
+    esg_property_manager.set_property(
         "publisher_home", config["publisher_home"])
-    esg_property_manager.write_as_property("monitor.esg.ini", os.path.join(config[
+    esg_property_manager.set_property("monitor.esg.ini", os.path.join(config[
                                     "publisher_home"], config["publisher_config"]))
     return 0
 

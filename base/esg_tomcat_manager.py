@@ -38,8 +38,8 @@ def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
-        if esg_property_manager.get_property("install_tomcat"):
-            setup_tomcat_answer = esg_property_manager.get_property("install_tomcat")
+        if esg_property_manager.get_property("install.tomcat"):
+            setup_tomcat_answer = esg_property_manager.get_property("install.tomcat")
         else:
             setup_tomcat_answer = raw_input(
                 "Do you want to contine the Tomcat installation [y/N]: ") or "no"
@@ -326,6 +326,12 @@ def setup_temp_certs():
     temp_ca_name = "{hostname}-CA".format(hostname=esg_functions.get_esgf_host())
     new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca")
 
+def write_tomcat_install_log():
+    esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
+    esg_property_manager.set_property("tomcat.install.dir", config["tomcat_install_dir"])
+    esg_property_manager.set_property("esgf.http.port", "80")
+    esg_property_manager.set_property("esgf.https.port", "443")
+
 
 def main():
     print "\n*******************************"
@@ -338,6 +344,7 @@ def main():
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         start_tomcat()
+        write_tomcat_install_log()
 
 
 if __name__ == '__main__':

@@ -111,7 +111,7 @@ def check_for_my_ip(force_install=False):
     try:
         esgf_host_ip
     except NameError:
-        esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
+        esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
 
     if esgf_host_ip and not force_install:
         logger.info("Using IP: %s", esgf_host_ip)
@@ -140,8 +140,8 @@ def check_for_my_ip(force_install=False):
         else:
             my_ip_address = ip_addresses[0]
 
-    esg_property_manager.write_as_property("esgf_host_ip", my_ip_address)
-    esgf_host_ip = esg_property_manager.get_property("esgf_host_ip")
+    esg_property_manager.set_property("esgf_host_ip", my_ip_address)
+    esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
     return esgf_host_ip
 
 
@@ -173,7 +173,11 @@ def download_java(java_tarfile):
     print "Downloading Java from ", config["java_dist_url"]
     if not esg_functions.download_update(java_tarfile, config["java_dist_url"], force_install):
         logger.error("ERROR: Could not download Java")
-        esg_functions.exit_with_error(1)
+        esg_functions.exit_with_error("Java failed to download")
+
+def write_java_install_log(java_path):
+    java_version = re.search("1.8.0_\w+", check_java_version(java_path)).group()
+    esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
 
 def setup_java():
     '''
@@ -187,8 +191,8 @@ def setup_java():
     if force_install:
         pass
     if check_for_existing_java():
-            if esg_property_manager.get_property("install_java"):
-                setup_java_answer = esg_property_manager.get_property("install_java")
+            if esg_property_manager.get_property("install.java"):
+                setup_java_answer = esg_property_manager.get_property("install.java")
             else:
                 setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
             if setup_java_answer.lower().strip() not in ["y", "yes"]:
@@ -220,7 +224,13 @@ def setup_java():
 
     set_default_java()
     print check_java_version("java")
+    write_java_install_log("java")
     # print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
+
+
+def write_ant_install_log():
+    ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
+    esg_functions.write_to_install_manifest("ant", "/usr/bin/ant", ant_version)
 
 def setup_ant():
     '''Install ant via yum'''
@@ -231,14 +241,15 @@ def setup_ant():
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         esg_functions.stream_subprocess_output("ant -version")
-        if esg_property_manager.get_property("install_ant"):
-            setup_ant_answer = esg_property_manager.get_property("install_ant")
+        if esg_property_manager.get_property("install.ant"):
+            setup_ant_answer = esg_property_manager.get_property("install.ant")
         else:
-            setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install_ant") or "no"
+            setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("install.ant") or "no"
         if setup_ant_answer.lower() in ["n", "no"]:
             return
 
     esg_functions.stream_subprocess_output("yum -y install ant")
+    write_ant_install_log()
 
 def setup_cdat():
     print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])

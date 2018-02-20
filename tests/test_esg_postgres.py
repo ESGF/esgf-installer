@@ -7,6 +7,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from context import esgf_utilities
 from context import base
 from base import esg_postgres
+from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities.esg_purge import purge_postgres
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -25,7 +26,10 @@ class test_ESG_postgres(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
-        esg_postgres.stop_postgress()
+        try:
+            esg_postgres.stop_postgress()
+        except SubprocessError, error:
+            pass
         purge_postgres()
         esg_postgres.download_postgres()
         esg_postgres.start_postgres()

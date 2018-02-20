@@ -173,7 +173,6 @@ def setup_db_schemas(force_install):
     # TODO: move download_config_files() here
 
     load_esgf_schemas(db_user_password)
-    load_esgf_data(cur)
 
     # IMPORTANT: change connections to require encrypted password
     esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
@@ -187,6 +186,9 @@ def load_esgf_schemas(db_user_password):
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_dashboard.sql"), "r").read())
+
+    load_esgf_data(cur)
+    cur.close()
 
 def load_esgf_data(cur):
     # # load ESGF data

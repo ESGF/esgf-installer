@@ -1040,13 +1040,25 @@ setup_esgcet() {
     conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy
 
     if [ $ESGF_INSECURE > 0 ] ; then
-
-	pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
+        if [ "$mode" = "I" ]; then
+        	pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
+        else
+        	pipcmd="pip install --upgrade --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
+        fi
     else
-	pipcmd="pip install"
+        if [ "$mode" = "I" ]; then
+	        pipcmd="pip install"
+        else
+	        pipcmd="pip install --upgrade"
+        fi
     fi
 
-    $pipcmd esgprep==${esgprep_version}
+    if [ "$mode" = "I" ]; then
+        $pipcmd esgprep==${esgprep_version}
+    else
+        $pipcmd esgprep>=${esgprep_version}
+    fi
+
     $pipcmd sqlalchemy_migrate
     $pipcmd cdf2cim
     $pipcmd hurry
@@ -1734,7 +1746,7 @@ setup_apache_frontend() {
 		done
 		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
-		service esgf-httpd start
+		service httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
     else
 
@@ -2122,7 +2134,7 @@ configure_tomcat() {
 
 generate_esgf_csrs(){
     [ -z "${esgf_host}" ] && get_property esgf_host
-    if [ $((sel & INDEX_BIT)) != 0 ]; then
+    if [ $((sel & IDP_BIT)) != 0 ]; then
 	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
 -subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
 	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
@@ -2208,7 +2220,7 @@ install_local_certs(){
 		flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem" "myproxy-server.config")
 		certdir=/etc/tempcerts;
 	else
-    		if [ $((sel & INDEX_BIT)) != 0 ]; then
+    		if [ $((sel & IDP_BIT)) != 0 ]; then
 			flist=("cakey.pem" "cacert.pem" "hostcert.pem" "hostkey.pem")
 		else
 			flist=("hostcert.pem" "hostkey.pem")
@@ -2224,7 +2236,7 @@ install_local_certs(){
 			echo "File $fl is not found in $certdir; Please place it there and reexecute esg-node --install-local-certs";
 		fi
 	done
-    	if [ $((sel & INDEX_BIT)) != 0 ]; then
+    	if [ $((sel & IDP_BIT)) != 0 ]; then
 		cert=cacert.pem
 		localhash=`openssl x509 -in $cert -noout -hash`;
 		globuspack=globus_simple_ca_${localhash}_setup-0.tar.gz
@@ -2237,7 +2249,7 @@ install_local_certs(){
 		return;
 	fi
 	cd $certdir
-    	if [ $((sel & INDEX_BIT)) != 0 ]; then
+    	if [ $((sel & IDP_BIT)) != 0 ]; then
 		cp cacert.pem /var/lib/globus-connect-server/myproxy-ca/cacert.pem
 		cp cakey.pem /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
 		cp $globuspack /var/lib/globus-connect-server/myproxy-ca/
@@ -2866,7 +2878,9 @@ my_setup_globus() {
         (source ${scripts_dir}/${fetch_file} && setup_globus_services "${directive}" $@)
         ret=$?
         popd >& /dev/null
-        [ ${ret} = 0 ] && write_globus_env || checked_done 1
+        [ ${ret} = 0 ] && write_globus_env || checked_done 0
+        #Attn Lukasz, globus-connect-server-io-setup is broken, and causing data-only and external-idp installations to fail.
+        #please fix globus-connect-server-io-setup to work with the local certificates, and then change the checked_done value above to 1
         touch ${globus_location}/esg_${progname}_installed
     fi
 
@@ -4842,12 +4856,6 @@ check_for_group_intersection_with() {
     local visited=()
     for target_node in ${target_nodes[@]}; do
         grep -q ${target_node} <<<${visited[@]} && debug_print "  already visited ${target_node}" && continue
-        local target_groups=$(curl -s http://${target_node}/esgf-node-manager/registration.xml | sed  -n 's#.*nodePeerGroup="\([^"]*\)".*hostname="'${target_node}'".*#\1#p')
-        if [ -z "${target_groups}" ]; then
-            printf "  Warning: Could not glean peer group membership from target peer (${target_node})\n"
-            ((ret=ret+100))
-            continue
-        fi
 
         #Histogram threshold approach... turns out to be easier on memory and faster than above... GO Bash/AWK!!! (snort laugh)
         #Thanks Estani, I should use the "here statements" more often just got used to 'cat <(echo ${foo})' instead of <<<${foo}
@@ -5410,7 +5418,7 @@ show_svc_list() {
     echo "---------------------------"
     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
     eval ${command}
-    lsof -Pni |egrep httpd | head -n1
+    lsof -Pni |egrep httpd | head -n2
     local dashboard_pid=$(pgrep dashboard)
     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
 
@@ -5481,10 +5489,10 @@ start() {
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
 
     sleep 3
-    service esgf-httpd status
+    service httpd status
 	#/usr/sbin/apachectl status
 	if [ $? != 0 ]; then
-		service esgf-httpd start
+		service httpd start
 		#echo 'Executing: /usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start'
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
 	fi
@@ -5505,7 +5513,7 @@ stop() {
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
-	service esgf-httpd stop
+	service httpd stop
 
 
 

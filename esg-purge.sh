@@ -169,6 +169,7 @@ esg-purge-final () {
     # Final cleanup -- anything that prints warning or informational
     # message for the user should happen here so they don't get
     # scrolled off the screen.
+    rm -f /etc/yum.repos.d/esgf.repo
 
     rm -f /usr/local/etc/esg-autoinstall.template
     if [ -f /usr/local/etc/esg-autoinstall.conf ] ; then

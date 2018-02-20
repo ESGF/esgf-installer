@@ -166,8 +166,8 @@ class test_ESG_postgres(unittest.TestCase):
             print "tables before:", before_tables_list
             print "tables before length:", len(before_tables_list)
 
-            cur.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_esgcet.sql"), "r").read())
-            cur2.execute(open("mock_files/esgf_esgcet.sql", "r").read())
+            cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_esgcet.sql"), "r").read())
+            # cur2.execute(open("mock_files/esgf_esgcet.sql", "r").read())
 
             cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
             tables = cur2.fetchall()
@@ -179,19 +179,19 @@ class test_ESG_postgres(unittest.TestCase):
 
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
         print "schemas_list before:", schemas_list
-        cur.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_node_manager.sql"), "r").read())
+        cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_node_manager.sql"), "r").read())
         # cur2.execute(open(os.path.join(os.path.dirname(__file__), mock_files/esgf_node_manager.sql", "r").read())
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
         print "schemas_list after:", schemas_list
         self.assertTrue("esgf_node_manager" in schemas_list)
 
-        cur.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_security.sql"), "r").read())
+        cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_security.sql"), "r").read())
         # cur2.execute(open("mock_files/esgf_security.sql", "r").read())
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
         print "schemas_list after:", schemas_list
         self.assertTrue("esgf_security" in schemas_list)
 
-        cur.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_dashboard.sql"), "r").read())
+        cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_dashboard.sql"), "r").read())
         # cur2.execute(open("mock_files/esgf_dashboard.sql", "r").read())
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
         print "schemas_list after:", schemas_list
@@ -201,7 +201,7 @@ class test_ESG_postgres(unittest.TestCase):
         # user_list = esg_postgres.list_users(conn=conn2)
         # print "user_list before load_esgf_data:", user_list
         # esg_postgres.load_esgf_data(cur2)
-        cur.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_security_data.sql"), "r").read())
+        cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_security_data.sql"), "r").read())
         # cur2.execute(open("mock_files/esgf_security_data.sql", "r").read())
         roles_list = esg_postgres.list_roles(conn=conn2)
         print "roles_list after load_esgf_data:", roles_list

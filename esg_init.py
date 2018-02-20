@@ -58,8 +58,8 @@ def init():
     openssl_version = "0.9.8r"
     openssl_min_version = "0.9.8e"
     openssl_max_version = "0.9.9z"
-    java_version = "1.8.0_112"
-    java_min_version = "1.8.0_112"
+    java_version = "1.8.0_131"
+    java_min_version = "1.8.0_131"
     ant_version = "1.9.1"
     ant_min_version = "1.9.1"
     postgress_version = "8.4.20"
@@ -195,11 +195,11 @@ def init():
     certificate_extensions = "pem|crt|cert|key"
     openssl_dist_url = os.path.join("http://www.openssl.org/source/openssl-",
                                     openssl_version, ".tar.gz")
-    esgf_dist_mirror = os.path.join("aims1.llnl.gov", "esgf")
+    esgf_dist_mirror = os.path.join("http://aims1.llnl.gov", "esgf")
     esg_dist_url_root = os.path.join(esgf_dist_mirror, "dist")
     esgf_coffee_dist_mirror = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
     esg_coffee_dist_url_root = os.path.join(esgf_coffee_dist_mirror, "dist")
-    java_dist_url = "%s/java/$%s/jdk%s-%s.tar.gz" % (
+    java_dist_url = "%s/java/%s/jdk%s-%s.tar.gz" % (
         esg_dist_url_root, java_version, java_version, word_size)
     java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
         esg_dist_url_root, java_version)

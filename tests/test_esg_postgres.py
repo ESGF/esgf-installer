@@ -49,14 +49,12 @@ class test_ESG_postgres(unittest.TestCase):
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         cur.execute("DROP USER IF EXISTS testuser;")
-        # if "testuser" in users_list:
-        #     cur.execute("DROP USER testuser;")
+        cur.execute("DROP DATABASE IF EXISTS esgcet;")
         if "dbsuper" in users_list:
             cur.execute("DROP USER dbsuper;")
         if "esgcet" in users_list:
             cur.execute("DROP USER esgcet;")
         cur.execute("DROP DATABASE IF EXISTS unittestdb;")
-        cur.execute("DROP DATABASE IF EXISTS esgcet;")
         conn.close()
         purge_postgres()
 
@@ -145,8 +143,9 @@ class test_ESG_postgres(unittest.TestCase):
 
     def test_add_schema_from_file(self):
         esg_postgres.setup_db_schemas(False, publisher_password="changeit")
-        output = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
-        print "output:", output
+        db_schemas = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
+        print "db_schemas:", db_schemas
+        self.assertTrue("esgf_security" in db_schemas)
         # cur2 = conn2.cursor()
         # user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
         # conn = esg_postgres.connect_to_db("postgres","postgres")

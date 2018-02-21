@@ -144,7 +144,7 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(schemas_list)
 
     def test_add_schema_from_file(self):
-        esg_postgres.setup_db_schemas(False)
+        esg_postgres.setup_db_schemas(False, publisher_password="changeit")
         output = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
         print "output:", output
         # cur2 = conn2.cursor()

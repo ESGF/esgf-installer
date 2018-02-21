@@ -182,6 +182,7 @@ def setup_db_schemas(force_install, publisher_password=None):
 
 def load_esgf_schemas(db_user_password):
     conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
@@ -191,6 +192,7 @@ def load_esgf_schemas(db_user_password):
 
     load_esgf_data(cur)
     cur.close()
+    conn.close()
 
 def load_esgf_data(cur):
     # # load ESGF data

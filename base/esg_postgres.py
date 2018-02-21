@@ -148,15 +148,17 @@ def create_pg_publisher_user(cursor, db_user_password):
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
-def setup_db_schemas(force_install):
+def setup_db_schemas(force_install, publisher_password=None):
     '''Load ESGF schemas'''
     conn = connect_to_db("postgres")
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
-    db_user_password = esg_functions.get_publisher_password()
-    if not db_user_password:
-        esg_functions.set_publisher_password()
+    try:
+        db_user_password = esg_functions.get_publisher_password()
+    except IOError, error:
+        logger.debug(error)
+        esg_functions.set_publisher_password(publisher_password)
         db_user_password = esg_functions.get_publisher_password()
 
     create_pg_super_user(cur, db_user_password)

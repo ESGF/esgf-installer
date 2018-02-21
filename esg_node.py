@@ -315,7 +315,10 @@ def setup_whitelist_files(esg_dist_url_root):
         #replace placeholder.fqdn
         tree = etree.parse(local_file_path)
         #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
-        updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+        if file_name == "esgf_ats.xml":
+            updated_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+        else:
+            updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
         tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
         tree.write(file_name)
 

@@ -45,15 +45,12 @@ class test_ESG_postgres(unittest.TestCase):
         #Tests have already been cleaned up with self.test_setup()
         if not conn:
             return
-        users_list = esg_postgres.list_users(conn=conn)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         cur.execute("DROP USER IF EXISTS testuser;")
         cur.execute("DROP DATABASE IF EXISTS esgcet;")
-        if "dbsuper" in users_list:
-            cur.execute("DROP USER dbsuper;")
-        if "esgcet" in users_list:
-            cur.execute("DROP USER esgcet;")
+        cur.execute("DROP USER IF EXISTS dbsuper;")
+        cur.execute("DROP USER IF EXISTS esgcet;")
         cur.execute("DROP DATABASE IF EXISTS unittestdb;")
         conn.close()
         purge_postgres()
@@ -146,79 +143,6 @@ class test_ESG_postgres(unittest.TestCase):
         db_schemas = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
         print "db_schemas:", db_schemas
         self.assertTrue("esgf_security" in db_schemas)
-        # cur2 = conn2.cursor()
-        # user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
-        # conn = esg_postgres.connect_to_db("postgres","postgres")
-        # conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        # cur = conn.cursor()
-        # if "dbsuper" not in user_list:
-        #     cur.execute("CREATE USER dbsuper with CREATEROLE superuser PASSWORD 'password';")
-        # if "esgcet" not in user_list:
-        #     cur.execute("CREATE USER esgcet PASSWORD 'password';")
-        #     cur.execute("CREATE DATABASE esgcet;")
-        #     cur.execute("GRANT dbsuper TO esgcet;")
-        # conn.commit()
-        # conn.close()
-        #
-        # conn2 = esg_postgres.connect_to_db("esgcet", db_name="esgcet",password='password')
-        # cur2 = conn2.cursor()
-        # try:
-        #     cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
-        #     tables = cur2.fetchall()
-        #     before_tables_list = [table[1]  for table in tables if table[0] == 'public']
-        #     print "tables before:", before_tables_list
-        #     print "tables before length:", len(before_tables_list)
-        #
-        #     cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_esgcet.sql"), "r").read())
-        #     # cur2.execute(open("mock_files/esgf_esgcet.sql", "r").read())
-        #
-        #     cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
-        #     tables = cur2.fetchall()
-        #     after_tables_list = [table[1] for table in tables if table[0] == 'public']
-        #     print "tables after:", after_tables_list
-        #     print "tables after length:", len(after_tables_list)
-        # except Exception, error:
-        #     print 'error:', error
-        #
-        # schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
-        # print "schemas_list before:", schemas_list
-        # cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_node_manager.sql"), "r").read())
-        # # cur2.execute(open(os.path.join(os.path.dirname(__file__), mock_files/esgf_node_manager.sql", "r").read())
-        # schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
-        # print "schemas_list after:", schemas_list
-        # self.assertTrue("esgf_node_manager" in schemas_list)
-        #
-        # cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_security.sql"), "r").read())
-        # # cur2.execute(open("mock_files/esgf_security.sql", "r").read())
-        # schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
-        # print "schemas_list after:", schemas_list
-        # self.assertTrue("esgf_security" in schemas_list)
-        #
-        # cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_dashboard.sql"), "r").read())
-        # # cur2.execute(open("mock_files/esgf_dashboard.sql", "r").read())
-        # schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn2)
-        # print "schemas_list after:", schemas_list
-        # self.assertTrue("esgf_dashboard" in schemas_list)
-        # self.assertIsNotNone(after_tables_list)
-        #
-        # # user_list = esg_postgres.list_users(conn=conn2)
-        # # print "user_list before load_esgf_data:", user_list
-        # # esg_postgres.load_esgf_data(cur2)
-        # cur2.execute(open(os.path.join(os.path.dirname(__file__), "mock_files/esgf_security_data.sql"), "r").read())
-        # # cur2.execute(open("mock_files/esgf_security_data.sql", "r").read())
-        # roles_list = esg_postgres.list_roles(conn=conn2)
-        # print "roles_list after load_esgf_data:", roles_list
-        # cur2.execute("SELECT table_schema,table_name FROM information_schema.tables ORDER BY table_schema,table_name;")
-        # tables = cur2.fetchall()
-        # after_tables_list = [table[1] for table in tables if table[0] == 'public']
-        # print "tables after esgf_security_data:", after_tables_list
-        #
-        # databases = esg_postgres.postgres_list_dbs(conn2)
-        # print "databases after esgf_security_data:", databases
-        # # self.assertTrue("admin" in roles_list)
-        # # conn2.close()
-        #
-        # self.test_tear_down()
 
     def test_create_pg_pass_file(self):
         esg_postgres.create_pg_pass_file()

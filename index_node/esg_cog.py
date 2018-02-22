@@ -6,6 +6,7 @@ import pip
 from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
+from esgf_utilities.esg_exceptions import SubprocessError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -125,8 +126,19 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         # os.remove("{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
 
     # create non-privileged user to run django
-    esg_functions.stream_subprocess_output("groupadd -r cogadmin")
-    esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
+    try:
+        esg_functions.stream_subprocess_output("groupadd -r cogadmin")
+    except SubprocessError, error:
+        logger.debug(error[0]["returncode"])
+        if error[0]["returncode"] == 9:
+            pass
+    try:
+        esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
+    except SubprocessError, error:
+        logger.debug(error[0]["returncode"])
+        if error[0]["returncode"] == 9:
+            pass
+
     esg_bash2py.mkdir_p("~cogadmin")
     esg_functions.stream_subprocess_output("chown cogadmin:cogadmin ~cogadmin")
 

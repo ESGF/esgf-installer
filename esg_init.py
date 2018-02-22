@@ -226,7 +226,6 @@ def init():
     tomcat_pid_file = "/var/run/tomcat-jsvc.pid"
     thredds_content_dir = os.path.join(esg_root_dir, "content")
     # #NOTE: This root dir should match a root set in the thredds setup
-    # thredds_root_dir=${esg_root_dir}/data
     thredds_root_dir = os.path.join(esg_root_dir, "data")
     thredds_replica_dir = os.path.join(thredds_root_dir, "replica")
     # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
@@ -236,9 +235,7 @@ def init():
     esg_installarg_file = os.path.join(scripts_dir, "esg-installarg")
     no_globus = False
     force_install = False
-    # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
-    # extkeytool_download_url= esg_dist_url + "/etc/idptools.tar.gz"
-    # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
+    extkeytool_download_url= esg_dist_url_root + "/etc/idptools.tar.gz"
     tomcat_users_file = os.path.join(tomcat_conf_dir, "tomcat-users.xml")
     keystore_file = os.path.join(tomcat_conf_dir, "keystore-tomcat")
     keystore_alias = "my_esgf_node"

@@ -1012,7 +1012,9 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         tree = etree.parse(local_file_path)
         #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
         if file_name == "esgf_ats.xml.tmpl":
-            updated_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            placeholder_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').get("attributeService")
+            updated_string = placeholder_string.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            tree.find('.//{http://www.esgf.org/whitelist}attribute').set("attributeService", updated_string)
         else:
             updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
         tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string

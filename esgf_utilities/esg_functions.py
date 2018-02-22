@@ -1023,7 +1023,7 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         else:
             updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
             tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
-        tree.write(local_file_name)
+        tree.write(local_file_path)
 
         os.chown(local_file_path, apache_user_id, apache_group_id)
         current_mode = os.stat(local_file_path)

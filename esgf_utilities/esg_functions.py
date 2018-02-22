@@ -989,7 +989,7 @@ def update_fileupload_jar():
         logger.exception(error)
 
     try:
-        shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
+        shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.2.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
     except OSError, error:
         logger.exception(error)
 
@@ -1030,7 +1030,7 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         #add read permissions to all, i.e. chmod a+r
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-    update_idp_static_xml_permissions(whitelist_file_dir)
+    # update_idp_static_xml_permissions(whitelist_file_dir)
 
 def main():
     import esg_logging_manager

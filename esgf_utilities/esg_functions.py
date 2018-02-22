@@ -994,6 +994,11 @@ def update_fileupload_jar():
         logger.exception(error)
 
 
+def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
+    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
+    current_mode = os.stat(xml_file_path)
+    os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
 def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
     '''Setups up whitelist XML files from the distribution mirror'''
 
@@ -1017,7 +1022,7 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
             tree.find('.//{http://www.esgf.org/whitelist}attribute').set("attributeService", updated_string)
         else:
             updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
-        tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
+            tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
         tree.write(file_name)
 
         os.chown(local_file_path, apache_user_id, apache_group_id)
@@ -1025,10 +1030,7 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         #add read permissions to all, i.e. chmod a+r
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-        #TODO: Terrible original design; this file is unrelated to the function and shouldn't be modified here
-        current_mode = os.stat("/esg/config/esgf_idp_static.xml")
-        os.chmod("/esg/config/esgf_idp_static.xml", current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-
+    update_idp_static_xml_permissions(whitelist_file_dir)
 
 def main():
     import esg_logging_manager

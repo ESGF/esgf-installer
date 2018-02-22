@@ -333,6 +333,7 @@ def system_component_installation(esg_dist_url):
         idp.main()
         esg_security.setup_security(node_type_list, esg_dist_url)
 
+    esg_functions.update_fileupload_jar()
     esg_functions.setup_whitelist_files(esg_dist_url)
 
 

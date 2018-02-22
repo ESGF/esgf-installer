@@ -980,10 +980,7 @@ def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manife
         logger.debug("could not find component %s", component)
 
 
-
-def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
-    '''Setups up whitelist XML files from the distribution mirror'''
-
+def update_fileupload_jar():
     #quick-fix for removing insecure commons-fileupload jar file
     try:
         os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
@@ -994,6 +991,10 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
     except OSError, error:
         logger.exception(error)
+
+
+def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
+    '''Setups up whitelist XML files from the distribution mirror'''
 
     conf_file_list = ["esgf_ats.xml.tmpl", "esgf_azs.xml.tmpl", "esgf_idp.xml.tmpl"]
 

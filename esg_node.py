@@ -11,7 +11,6 @@ import yaml
 import semver
 import pip
 from git import Repo
-from lxml import etree
 #This needs to be imported before other esg_* modules to properly setup the root logger
 from esgf_utilities import esg_logging_manager
 from esgf_utilities import esg_functions

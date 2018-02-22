@@ -986,12 +986,15 @@ def update_fileupload_jar():
     try:
         os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
     except OSError, error:
-        logger.exception(error)
+        logger.debug(error)
 
     try:
-        shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.2.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
-    except OSError, error:
-        logger.exception(error)
+        os.path.isfile("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.3.2.jar")
+    except OSError:
+        try:
+            shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.2.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.3.2.jar")
+        except OSError, error:
+            logger.exception(error)
 
 
 def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):

@@ -75,5 +75,9 @@ class test_ESG_Functions(unittest.TestCase):
         self.assertTrue("1.0" in prop)
 
 
+    def test_setup_whitelist_files(self):
+        esg_functions.setup_whitelist_files("http://aims1.llnl.gov/esgf/dist", whitelist_file_dir="/tmp")
+        self.assertTrue(os.path.isfile("/tmp/esgf_ats.xml"))
+
 if __name__ == '__main__':
     unittest.main()

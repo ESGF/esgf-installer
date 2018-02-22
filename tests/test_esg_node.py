@@ -20,10 +20,6 @@ class test_ESG_Node(unittest.TestCase):
         print "maj_version:", maj_version
         print "release:", release
 
-    def test_setup_whitelist_files(self):
-        esg_node.setup_whitelist_files("http://aims1.llnl.gov/esgf/dist", whitelist_file_dir="/tmp")
-        self.assertTrue(os.path.isfile("/tmp/esgf_ats.xml"))
-
 
 if __name__ == '__main__':
     unittest.main()

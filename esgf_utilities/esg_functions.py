@@ -444,7 +444,7 @@ def stream_subprocess_output(command_string):
             if process.stderr:
                 raise SubprocessError({"stderr": process.stderr, "returncode": process.returncode})
             else:
-                raise SubprocessError(process.stdout)
+                raise SubprocessError({"stdout": process.stdout, "returncode": process.returncode})
     except (OSError, ValueError), error:
         # logger.exception("Could not stream subprocess output")
         print "Could not stream subprocess output"

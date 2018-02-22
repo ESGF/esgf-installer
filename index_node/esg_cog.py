@@ -122,7 +122,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         # must use a minimal settings file (configured with sqllite3 database)
         shutil.copyfile(os.path.join(current_directory, "cog_conf/cog_settings.cfg"), "{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
         esg_functions.stream_subprocess_output("python manage.py collectstatic --no-input")
-        os.remove("{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
+        # os.remove("{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
 
     # create non-privileged user to run django
     esg_functions.stream_subprocess_output("groupadd -r cogadmin")

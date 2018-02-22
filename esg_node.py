@@ -290,14 +290,17 @@ def show_summary():
     # }
     pass
 
-def setup_whitelist_files(esg_dist_url_root):
+def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
     '''Setups up whitelist XML files from the distribution mirror'''
 
     #quick-fix for removing insecure commons-fileupload jar file
     try:
-        if os.stat("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar").st_size != 0:
-            os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
-            shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
+        os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
+    except OSError, error:
+        logger.exception(error)
+
+    try:
+        shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.1.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/")
     except OSError, error:
         logger.exception(error)
 
@@ -307,7 +310,7 @@ def setup_whitelist_files(esg_dist_url_root):
     apache_group_id = esg_functions.get_group_id("apache")
     for file_name in conf_file_list:
         local_file_name = file_name.split(".tmpl")[0]
-        local_file_path = os.path.join(config["esg_config_dir"], local_file_name)
+        local_file_path = os.path.join(whitelist_file_dir, local_file_name)
         remote_file_url = "https://aims1.llnl.gov/esgf/dist/confs/{file_name}".format(file_name=file_name)
 
         esg_functions.download_update(local_file_path, remote_file_url)
@@ -315,7 +318,7 @@ def setup_whitelist_files(esg_dist_url_root):
         #replace placeholder.fqdn
         tree = etree.parse(local_file_path)
         #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
-        if file_name == "esgf_ats.xml":
+        if file_name == "esgf_ats.xml.tmpl":
             updated_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
         else:
             updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")

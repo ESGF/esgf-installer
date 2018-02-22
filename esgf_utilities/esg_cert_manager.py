@@ -473,9 +473,18 @@ def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert
     #Copy and rename private_key and cert
     try:
         shutil.copyfile(private_key, "/etc/certs/hostkey.pem")
+    except shutil.Error:
+        if os.path.samefile(private_key, "/etc/certs/hostkey.pem"):
+            logger.debug("%s and /etc/certs/hostkey.pem are the same file", private_key)
+        else:
+            logger.exception("Error copying private key.")
+    try:
         shutil.copyfile(public_cert, "/etc/certs/hostcert.pem")
     except shutil.Error:
-        logger.exception("Error copying cert files.")
+        if os.path.samefile(public_cert, "/etc/certs/hostcert.pem"):
+            logger.debug("%s and /etc/certs/hostcert.pem are the same file", public_cert)
+        else:
+            logger.exception("Error copying host cert.")
 
     cert_files = create_certificate_chain_list()
     create_certificate_chain(cert_files)

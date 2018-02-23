@@ -16,6 +16,7 @@ import socket
 import errno
 import pwd
 import grp
+import stat
 import getpass
 import ConfigParser
 from time import sleep
@@ -24,6 +25,7 @@ import requests
 import yaml
 import netifaces
 from clint.textui import progress
+from lxml import etree
 from esg_exceptions import UnverifiedScriptError, SubprocessError
 import esg_bash2py
 import esg_property_manager
@@ -440,9 +442,9 @@ def stream_subprocess_output(command_string):
             print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
             logger.debug("stderr %s", process.stderr)
             if process.stderr:
-                raise SubprocessError(process.stderr)
+                raise SubprocessError({"stderr": process.stderr, "returncode": process.returncode})
             else:
-                raise SubprocessError(process.stdout)
+                raise SubprocessError({"stdout": process.stdout, "returncode": process.returncode})
     except (OSError, ValueError), error:
         # logger.exception("Could not stream subprocess output")
         print "Could not stream subprocess output"
@@ -979,7 +981,59 @@ def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manife
         logger.debug("could not find component %s", component)
 
 
+def update_fileupload_jar():
+    #quick-fix for removing insecure commons-fileupload jar file
+    try:
+        os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
+    except OSError, error:
+        logger.debug(error)
 
+    try:
+        os.path.isfile("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.3.2.jar")
+    except OSError:
+        try:
+            shutil.copyfile("{tomcat_install_dir}/webapps/esg-search/WEB-INF/lib/commons-fileupload-1.3.2.jar".format(tomcat_install_dir=config["tomcat_install_dir"]), "/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.3.2.jar")
+        except OSError, error:
+            logger.exception(error)
+
+
+def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
+    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
+    current_mode = os.stat(xml_file_path)
+    os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
+    '''Setups up whitelist XML files from the distribution mirror'''
+
+    conf_file_list = ["esgf_ats.xml.tmpl", "esgf_azs.xml.tmpl", "esgf_idp.xml.tmpl"]
+
+    apache_user_id = get_user_id("apache")
+    apache_group_id = get_group_id("apache")
+    for file_name in conf_file_list:
+        local_file_name = file_name.split(".tmpl")[0]
+        local_file_path = os.path.join(whitelist_file_dir, local_file_name)
+        remote_file_url = "https://aims1.llnl.gov/esgf/dist/confs/{file_name}".format(file_name=file_name)
+
+        download_update(local_file_path, remote_file_url)
+
+        #replace placeholder.fqdn
+        tree = etree.parse(local_file_path)
+        #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
+        if file_name == "esgf_ats.xml.tmpl":
+            placeholder_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').get("attributeService")
+            updated_string = placeholder_string.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            tree.find('.//{http://www.esgf.org/whitelist}attribute').set("attributeService", updated_string)
+        else:
+            updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
+        tree.write(local_file_path)
+
+        os.chown(local_file_path, apache_user_id, apache_group_id)
+        current_mode = os.stat(local_file_path)
+        #add read permissions to all, i.e. chmod a+r
+        os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+    # update_idp_static_xml_permissions(whitelist_file_dir)
 
 def main():
     import esg_logging_manager

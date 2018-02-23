@@ -80,9 +80,9 @@ custom=0
 use_local_files=0
 
 progname="esg-node"
-script_version="v2.0-RC5.4.0-devel"
-script_maj_version="2.0"
-script_release="Centaur"
+script_version="v2.5.15-devel-release"
+script_maj_version="2.5"
+script_release="Samhaim"
 envfile="/etc/esg.env"
 
 #--------------
@@ -96,18 +96,266 @@ install_prefix=${install_prefix:-${ESGF_INSTALL_PREFIX:-"/usr/local"}}
 #--------------
 esg_functions_file="${install_prefix}/bin/esg-functions"
 esg_init_file="${install_prefix}/bin/esg-init"
-esg_setup_file="${install_prefix}/bin/esg-setup"
 #--------------
+esgf_nm_funcs_file="${install_prefix}/bin/esgf-nm-func"
 
 export UVCDAT_ANONYMOUS_LOG=False
 
 [ -e "${envfile}" ] && source ${envfile} && ((VERBOSE)) && printf "sourcing environment from: ${envfile} \n"
 
+init_structure() {
+
+    #--------------
+    #Prepare necessary support filesystem structure and files
+    #--------------
+
+    (($DEBUG)) && echo "init_structure: esg_dist_url = ${esg_dist_url}"
+
+    #--------------
+    #Let's go down the line and make sure that we have what we need structurally on the filesystem
+    local config_check=8
+    if [ ! -e ${scripts_dir} ]; then mkdir -p ${scripts_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_backup_dir} ]; then mkdir -p ${esg_backup_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_tools_dir} ]; then mkdir -p ${esg_tools_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_log_dir} ]; then mkdir -p ${esg_log_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_config_dir} ]; then mkdir -p ${esg_config_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${esg_etc_dir} ]; then mkdir -p ${esg_etc_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${tomcat_conf_dir} ]; then mkdir -p ${tomcat_conf_dir} && ((config_check--)); else ((config_check--)); fi
+    if [ ! -e ${config_file} ]; then touch ${config_file} && ((config_check--)); else ((config_check--)); fi
+    debug_print ${config_check}
+    ((config_check != 0 )) && echo "ERROR: checklist incomplete $([FAIL])" && checked_done 1 || verbose_print "checklist $([OK])"
+    #--------------
+
+    chmod 777 ${esg_etc_dir} 2> /dev/null
+
+    [ -w "${envfile}" ] && write_paths
+
+    #--------------
+    #Setup variables....
+    #--------------
+
+    check_for_my_ip
+
+    esgf_host=${esgf_host}
+    [ -z "${esgf_host}" ] && get_property esgf_host
+
+    esgf_default_peer=${esgf_default_peer}
+    [ -z "${esgf_default_peer}" ] && get_property esgf_default_peer
+
+    esgf_idp_peer_name=${esgf_idp_peer_name}
+    [ -z "${esgf_idp_peer_name}" ] && get_property esgf_idp_peer_name
+
+    esgf_idp_peer=${esgf_idp_peer}
+    [ -z "${esgf_idp_peer}" ] && get_property esgf_idp_peer
+    myproxy_endpoint=${esgf_idp_peer%%/*}
+
+    [ -z "${myproxy_port}" ] && get_property myproxy_port
+    myproxy_port=${myproxy_port:-7512}
+
+    esg_root_id=${esg_root_id}
+    [ -z "${esg_root_id}" ] && get_property esg_root_id
+
+    node_peer_group=${node_peer_group}
+    [ -z "${node_peer_group}" ] && get_property node_peer_group
+
+    [ -z "${node_short_name}" ] && get_property node_short_name
+
+    #NOTE: Calls to get_property must be made AFTER we touch the file ${config_file} to make sure it exists
+    #this is actually an issue with dedup_properties that gets called in the get_property function
+
+    #Get the distinguished name from environment... if not, then esgf.properties... and finally this can be overwritten by the --dname option
+    #Here node_dn is written in the /XX=yy/AAA=bb (macro->micro) scheme.
+    #We transform it to dname which is written in the java style AAA=bb, XX=yy (micro->macro) scheme using "standard2java_dn" function
+    dname=${dname}
+    [ -z "${dname}" ] && get_property node_dn && dname=$(standard2java_dn ${node_dn})
+
+    gridftp_config=${gridftp_config}
+    [ -z "${gridftp_config}" ] && get_property gridftp_config "bdm end-user"
+
+    publisher_config=${publisher_config}
+    [ -z "${publisher_config}" ] && get_property publisher_config "esg.ini"
+
+    publisher_home=${publisher_home}
+    [ -z "${publisher_home}" ] && get_property publisher_home ${esg_config_dir}/esgcet
+
+    # Sites can override default keystore_alias in esgf.properties (keystore.alias=)
+    get_property keystore_alias ${keystore_alias}
+
+    export ESGINI=${publisher_home}/${publisher_config}
+    ((DEBUG)) && echo "ESGINI = ${ESGINI}"
+
+    return 0
+}
+
+write_paths() {
+    ((show_summary_latch++))
+    echo "export ESGF_HOME=${esg_root_dir}" >> ${envfile}
+    echo "export ESG_USER_HOME=${installer_home}" >> ${envfile}
+    echo "export ESGF_INSTALL_WORKDIR=${workdir}" >> ${envfile}
+    echo "export ESGF_INSTALL_PREFIX=${install_prefix}" >> ${envfile}
+    echo "export PATH=$myPATH:\$PATH" >> ${envfile}
+    echo "export LD_LIBRARY_PATH=$myLD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> ${envfile}
+    dedup ${envfile} && source ${envfile}
+}
+
+#checking for what we expect to be on the system a-priori
+#that we are not going to install or be responsible for
+check_prerequisites() {
+
+printf "
+\033[01;31m
+  EEEEEEEEEEEEEEEEEEEEEE   SSSSSSSSSSSSSSS         GGGGGGGGGGGGGFFFFFFFFFFFFFFFFFFFFFF
+  E::::::::::::::::::::E SS:::::::::::::::S     GGG::::::::::::GF::::::::::::::::::::F
+  E::::::::::::::::::::ES:::::SSSSSS::::::S   GG:::::::::::::::GF::::::::::::::::::::F
+  EE::::::EEEEEEEEE::::ES:::::S     SSSSSSS  G:::::GGGGGGGG::::GFF::::::FFFFFFFFF::::F
+    E:::::E       EEEEEES:::::S             G:::::G       GGGGGG  F:::::F       FFFFFF\033[0m
+\033[01;33m    E:::::E             S:::::S            G:::::G                F:::::F
+    E::::::EEEEEEEEEE    S::::SSSS         G:::::G                F::::::FFFFFFFFFF
+    E:::::::::::::::E     SS::::::SSSSS    G:::::G    GGGGGGGGGG  F:::::::::::::::F
+    E:::::::::::::::E       SSS::::::::SS  G:::::G    G::::::::G  F:::::::::::::::F
+    E::::::EEEEEEEEEE          SSSSSS::::S G:::::G    GGGGG::::G  F::::::FFFFFFFFFF\033[0m
+\033[01;32m    E:::::E                         S:::::SG:::::G        G::::G  F:::::F
+    E:::::E       EEEEEE            S:::::S G:::::G       G::::G  F:::::F
+  EE::::::EEEEEEEE:::::ESSSSSSS     S:::::S  G:::::GGGGGGGG::::GFF:::::::FF
+  E::::::::::::::::::::ES::::::SSSSSS:::::S   GG:::::::::::::::GF::::::::FF
+  E::::::::::::::::::::ES:::::::::::::::SS      GGG::::::GGG:::GF::::::::FF
+  EEEEEEEEEEEEEEEEEEEEEE SSSSSSSSSSSSSSS           GGGGGG   GGGGFFFFFFFFFFF.llnl.gov
+\033[0m
+"
+    printf "Checking that you have root privs on $(hostname)... "
+    id | grep root >& /dev/null
+    [ $? != 0 ] && printf "$([FAIL]) \n\tMust run this program with root's effective UID\n\n" && return 1
+    [OK]
 
 
+    #----------------------------------------
+    echo "Checking requisites... "
+
+    # checking for OS, architecture, distribution and version
+
+    OS=`uname -s`
+    MACH=`uname -m`
+
+    if [ "${OS}" = "Linux" ] && [ "${MACH}" = "x86_64" ] && [ -f /etc/redhat-release ] ; then
+    	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
+    fi
+
+    if [ "${MAJREV}" = 6 ] ; then
+    	DIST=`cat /etc/redhat-release | sed s/release.*//`
+        DISTRIB=`echo $DIST`
+    fi
+
+    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
 
 
+    #----------------------------------------
 
+    echo
+    return 0
+}
+
+
+#####
+# Java
+#####
+setup_java() {
+
+    echo -n "Checking for java >= ${java_min_version} and valid JAVA_HOME... "
+    [ -e ${java_install_dir} ] && check_version $java_install_dir/bin/java ${java_min_version}
+    [ $? == 0 ] && (( ! force_install )) && [OK] && return 0
+
+    echo
+    echo "*******************************"
+    echo "Setting up Java... ${java_version}"
+    echo "*******************************"
+    echo
+
+    local last_java_truststore_file
+
+    local default="Y"
+    ((force_install)) && default="N"
+    local dosetup
+    if [ -x ${java_install_dir}/bin/java ]; then
+        echo "Detected an existing java installation..."
+        read -e -p "Do you want to continue with Java installation and setup? $([ "$default" = "N" ] && echo "[y/N]" || echo "[Y/n]") " dosetup
+        [ -z ${dosetup} ] && dosetup=${default}
+        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+            echo "Skipping Java installation and setup - will assume Java is setup properly"
+            return 0
+        fi
+        last_java_truststore_file=$(readlink -f ${truststore_file})
+        echo
+    fi
+
+    mkdir -p ${workdir}
+    [ $? != 0 ] && checked_done 1
+    pushd ${workdir} #>& /dev/null
+
+    local java_dist_file=${java_dist_url##*/}
+    #strip off -(32|64).tar.gz at the end
+    java_dist_dir=$(echo ${java_dist_file} | awk 'gsub(/-(32|64)('$compress_extensions')/,"")')
+
+    #Check to see if we have an Java distribution directory
+    if [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
+        echo "Don't see java distribution dir ${java_install_dir%/*}/${java_dist_dir}"
+        if [ ! -e ${java_dist_file} ]; then
+            echo "Don't see java distribution file $(pwd)/${java_dist_file} either"
+            echo "Downloading Java from ${java_dist_url}"
+            checked_get ${java_dist_file} ${java_dist_url} $((force_install))
+            [ $? != 0 ] && echo " ERROR: Could not download Java" && popd && checked_done 1
+            echo "unpacking ${java_dist_file}..."
+            tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
+            [ $? != 0 ] && echo " ERROR: Could not extract Java" && popd && checked_done 1
+        fi
+    fi
+
+    #If you don't see the directory but see the tar.gz distribution
+    #then expand it
+    if [ -e ${java_dist_file} ] && [ ! -e ${java_install_dir%/*}/${java_dist_dir} ]; then
+        echo "unpacking ${java_dist_file}..."
+        tar xzf ${java_dist_file} -C ${java_install_dir%/*} # i.e. /usr/local
+        [ $? != 0 ] && echo " ERROR: Could not extract Java..." && popd && checked_done 1
+    fi
+
+    if [ ! -e ${java_install_dir} ]; then
+        ln -s ${java_install_dir%/*}/${java_dist_dir} ${java_install_dir}
+        [ $? != 0 ] && \
+            echo " ERROR: Could not create sym link ${java_install_dir%/*}/${java_dist_dir} -> ${java_install_dir}" && popd && checked_done 1
+    else
+        unlink ${java_install_dir}
+        [ $? != 0 ] && mv ${java_install_dir} ${java_install_dir}.$(date ${date_format}).bak
+
+        ln -s ${java_install_dir%/*}/${java_dist_dir} ${java_install_dir}
+        [ $? != 0 ] && \
+            echo " ERROR*: Could not create sym link ${java_install_dir%/*}/${java_dist_dir} -> ${java_install_dir}" && popd && checked_done 1
+    fi
+    debug_print "chown -R ${installer_uid}:${installer_gid} ${java_install_dir}"
+    chown    ${installer_uid}:${installer_gid} ${java_install_dir}
+    chown -R ${installer_uid}:${installer_gid} $(readlink -f ${java_install_dir})
+
+    popd >& /dev/null
+
+    ${java_install_dir}/bin/java -version
+    [ $? != 0 ] && echo "ERROR cannot run ${java_install_dir}/bin/java" && checked_done 1
+    write_java_env
+    write_java_install_log
+
+    #-----------------------------
+    #In the situation where this function is called under update
+    #semantics i.e. there is already a previous installation of java
+    #and installation of tomcat with tomcat setup with a properly
+    #generated/configured jssecacerts file and there is a valid
+    #ESGF_IDP_PEER being pointed to.  We should copy over that
+    #jssecacerts into this newly installed VM to satisfy SSL.
+    if [ -n "${last_java_truststore_file}" ] && [ -e "${last_java_truststore_file}" ]; then
+        mkdir -p ${java_install_dir}/conf
+        cp -v ${last_java_truststore_file} ${java_install_dir}/conf
+        chmod 644 ${java_install_dir}/conf/${last_java_truststore_file##*/}
+    fi
+    #-----------------------------
+
+    checked_done 0
+}
 
 write_java_env() {
     ((show_summary_latch++))
@@ -592,7 +840,8 @@ setup_cdat() {
     CDAT_HOME=${cdat_home}
     #-----------------------------------------------------
 
-    check_version_with "cdat" "${cdat_home}/bin/python -c \"import cdat_info; print cdat_info.Version\"" ${cdat_version} 2> /dev/null
+
+    check_version_with "cdat" " source $cdat_home/bin/activate esgf-pub && python -c \"import cdat_info; print cdat_info.Version\" && source deactivate" ${cdat_version} 2> /dev/null
     local ret=$?
     ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
@@ -603,7 +852,11 @@ setup_cdat() {
     echo
 
     local dosetup="N"
-    if [ -x ${cdat_home}/bin/uvcdat ]; then
+
+# TODO - remove old installation
+# upgrate existing installation
+
+    if [ -x ${cdat_home}/bin/python ]; then
         echo "Detected an existing CDAT installation..."
         read -e -p "Do you want to continue with CDAT installation and setup? [y/N] " dosetup
         if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
@@ -622,17 +875,37 @@ setup_cdat() {
     #((force_install)) && [ -d ${workdir}/uvcdat ] && \rm -rf ${workdir}/uvcdat && \rm -rf ${workdir}/uvcdat_build
     #---------
 
+    # TODO check for conda
 
-# TODO - this all should be handled by yum
-    yum -y install uvcdat
-    [ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat\n\n" && return 1
 
-    ${cdat_home}/bin/python -c "import cdms2" 2>/dev/null
+    if [ ! -f Miniconda2-latest-Linux-x86_64.sh ] ; then
+       wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+       [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
+    fi
+
+     bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
+      [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
+
+    export PATH=${cdat_home}/bin:$PATH
+
+    if [ $ESGF_INSECURE > 0 ] ; then
+        conda config --set ssl_verify False
+#        binstar config --set verify_ssl False
+    fi
+
+    # create a default environment for the publisher with cduitl (and cdms2)
+    if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
+    unset LD_LIBRARY_PATH
+
+	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
+	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
+    fi
+
+    source activate esgf-pub
+    python -c "import cdms2" 2>/dev/null
     [ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && popd && checked_done 1
+    source deactivate
 
-    curl -k -O https://bootstrap.pypa.io/ez_setup.py
-    ${cdat_home}/bin/python ez_setup.py
-    ${cdat_home}/bin/easy_install pip
 
     popd >& /dev/null
     echo
@@ -642,24 +915,6 @@ setup_cdat() {
 
     write_cdat_env
 
-    #----------------
-    #BIG HACK....
-    #----------------
-    #First let me explain...  this is regarding git or any program that
-    #dynamically loads the libz library. If it gets the lib from CDAT's
-    #installed/built libz (as posted in the LD_LIBRARY_PATH, written to
-    #etc/esg.env and sourced at the top of this script) it will result
-    #in the following warning:
-    #
-    #/usr/local/uvcdat/Externals/lib/libz.so.1: no version information available (required by git)
-    #
-    #The easiest and least invasive thing to do is to remove or rename
-    #CDAT's libz.  So that is what we are doing here.  CDAT should not
-    #have built its own libz in the first place, if there is libz
-    #already on the system.  So this bit of hacking in most clean
-    #install scenarios is moot (though it in-turn means you have to
-    #install libz on your system to get past, at least git building).
-    [[ ${cdat_home} ]] && [ -d ${cdat_home} ] && [  $(ls libz.* 2> /dev/null | wc -l) -gt 0 ] && tar cvzf ${cdat_home}/Externals/lib/libz.tgz ${cdat_home}/Externals/lib/libz.* && rm ${cdat_home}/Externals/lib/libz.*
     #----------------
 
 #    write_cdat_install_log
@@ -671,7 +926,6 @@ write_cdat_env() {
     echo "export CDAT_HOME=${cdat_home}" >> ${envfile}
     echo "export UVCDAT_ANONYMOUS_LOG=False" >> ${envfile}
     prefix_to_path PATH ${cdat_home}/bin >> ${envfile}
-    prefix_to_path PATH ${cdat_home}/Externals/bin >> ${envfile}
     prefix_to_path LD_LIBRARY_PATH ${cdat_home}/Externals/lib >> ${envfile}
     dedup ${envfile} && source ${envfile}
     return 0
@@ -715,7 +969,6 @@ _housekeeping_cdat_to_uvcdat() {
     dedup ${envfile} && source ${envfile}
 }
 
-
 #####
 # ESGCET Package
 #####
@@ -731,8 +984,6 @@ setup_esgcet() {
         local esgini_dburl=$(sed -n 's@^[^#]*[ ]*dburl[ ]*=[ ]*\(.*\)$@\1@p' ${ESGINI} | head -n1 | sed 's@\r@@')
         local db_connect_str="postgresql://${publisher_db_user}:${publisher_db_user_passwd}@$([ -n "${db_host}" ] && ([ "${db_host}" = "${esgf_host}" ] || [ "${db_host}" = "localhost" ]) && echo "localhost" || echo ${db_host}):${db_port}/${db_database}"
         debug_print "[${esgini_dburl}] =? [${db_connect_str}]"
-        echo "esgini_dburl: ${esgini_dburl}"
-        echo "db_connect_str: ${db_connect_str}"
         if [ "${esgini_dburl}" != "${db_connect_str}" ]; then
             printf "\n [ERROR]: publisher database connection string mis-match... (inspecting ${ESGINI}'s \"dburl\" value) \n"
             printf " Attempting to address the issue... "
@@ -784,16 +1035,22 @@ setup_esgcet() {
     pushd ${workdir} >& /dev/null
 
     echo "$(pwd)"
-    curl -s -L --insecure $esg_dist_url/externals/piplist.txt|while read ln; do
-      echo "wget $esg_dist_url/externals/$ln" && wget --no-check-certificate $esg_dist_url/externals/$ln
-      diff <(md5sum ${ln} | tr -s " " | cut -d " " -f 1) <(curl -s -L --insecure $esg_dist_url/externals/${ln}.md5 | tr -s " " | cut -d " " -f 1) >& /dev/null
-      if [ $? -eq 0 ]; then
-         [OK]
-         echo "${cdat_home}/bin/pip install $ln" && ${cdat_home}/bin/pip install $ln
-      else
-         [FAIL]
-      fi
-    done
+
+    unset LD_LIBRARY_PATH
+    source ${cdat_home}/bin/activate esgf-pub
+    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython
+
+    if [ $ESGF_INSECURE > 0 ] ; then
+
+	pipcmd="pip install  --index-url=http://pypi.python.org/simple --trusted-host pypi.python.org"
+    else
+	pipcmd="pip install"
+    fi
+
+    $pipcmd esgprep==${esgprep_version}
+    $pipcmd SQLAlchemy==0.7.10
+    $pipcmd sqlalchemy_migrate
+    $pipcmd cdf2cim
 
     #clone publisher
     local publisher_git_protocol="git://"
@@ -821,9 +1078,15 @@ setup_esgcet() {
     #install publisher
     (
 	cd src/python/esgcet
-	$cdat_home/bin/python setup.py install
+
+
+	python setup.py install
     )
     [ $? != 0 ] && checked_done 1
+
+
+
+
 
     if [ "${mode}" = "I" ]; then
 
@@ -880,9 +1143,10 @@ setup_esgcet() {
         [ ! -z "${input}" ] && esg_root_id=${input}
 
 
-        echo "$cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
+        echo "esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}"
         mkdir -p ${publisher_home}
-        ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
+
+        ESGINI=${publisher_home}/${publisher_config} esgsetup --config $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --rootid ${esg_root_id}
 	sed -i s/"host\.sample\.gov"/${esgf_host}/g ${publisher_home}/${publisher_config}
 	sed -i s/"LASatYourHost"/LASat${node_short_name}/g ${publisher_home}/${publisher_config}
         [ $? != 0 ] && popd && checked_done 1
@@ -891,6 +1155,10 @@ setup_esgcet() {
     chown -R ${installer_uid}:${installer_gid} ${publisher_home}
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     #Let's make sure the group is there before we attempt to assign a file to it....
+
+
+
+
     if [ ! $(getent group ${tomcat_group}) ]; then
         /usr/sbin/groupadd -r ${tomcat_group}
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
@@ -907,20 +1175,59 @@ setup_esgcet() {
             echo "ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ******") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ******") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )"
         fi
 
-        ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${pg_sys_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
+        ESGINI=${publisher_home}/${publisher_config} esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${pg_sys_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
         [ $? != 0 ] && popd && checked_done 1
     fi
 
-    echo "${cdat_home}/bin/esginitialize -c"
-    ${cdat_home}/bin/esginitialize -c
+    unset choice
+
+    has_cmor=`conda list | grep cmor | awk '{print $1}'`
+
+    if [ ! -z  $has_cmor ] ; then
+        echo  found cmor installation for PrePARE - upgrading to specified version ${cmor_version}
+
+
+        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
+    fi
+
+    if [ ! -d /usr/local/cmip6-cmor-tables ] ; then
+
+      read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
+      choice=$(echo ${choice} | tr 'A-Z' 'a-z')
+      if [ -z $choice ] ; then
+          choice="n"
+      fi
+      if [ $choice == "y" ] ; then
+        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
+        pip install esgfpid
+        pushd /usr/local
+        git clone https://github.com/PCMDI/cmip6-cmor-tables
+        esgf_pub_group="esgfpub"
+        if [ ! $(getent group ${esgf_pub_group}) ]; then
+            /usr/sbin/groupadd -r ${esgf_pub_group}
+            [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add esgf_pub system group: ${esgf_pub_roup}" && popd && checked_done 1
+        fi
+        chgrp -R ${esgf_pub_group} cmip6-cmor-tables
+        chmod -R g+rwx cmip6-cmor-tables
+        popd
+      fi
+    fi
+
+    echo "esginitialize -c"
+    esginitialize -c
     [ $? != 0 ] && popd && checked_done 1
+
+
+
 
     popd >& /dev/null
     echo
     echo
     write_esgcet_env
     write_esgcet_install_log
+
     checked_done 0
+    source deactivate
 }
 
 write_esgcet_env() {
@@ -964,16 +1271,17 @@ test_esgcet() {
     checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url_root}/externals/${fetch_file} $((force_install))
     (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
+    source ${cdat_home}/bin/activate esgf-pub
 
     #Run test...
     echo "$cdat_home/bin/esginitialize -c "
-    $cdat_home/bin/esginitialize -c
+    esginitialize -c
     echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
-    $cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
+    esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
     [ $? != 0 ] && echo " ERROR: ESG directory scan failed" && popd && checked_done 1
 
     echo "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test"
-    $cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test
+    esgpublish --service fileservice --map mytest.txt --project test --model test
     [ $? != 0 ] && echo " ERROR: ESG publish failed" && popd && checked_done 1
 
 
@@ -1254,7 +1562,9 @@ EOF
 }
 
 update_apache_conf() {
-	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
+
+	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"}
+    conf_file=/etc/httpd/conf/esgf-httpd.conf
 	pushd $localworkdir;
 	if [ ! -d apache_frontend ]; then
 		mkdir apache_frontend && pushd apache_frontend && git clone ${apache_frontend_repo} && popd
@@ -1266,10 +1576,24 @@ update_apache_conf() {
 	fi
 	pushd apache_frontend/apache-frontend;
 	if [ $devel -eq 1 ]; then
-		git checkout $apache_frontend_version;
+		git checkout $apache_frontend_tag;
 	else
 		git checkout master;
 	fi
+
+    if [ -f $conf_file ] ; then
+        echo "Backing up previous version of $conf_file"
+        datestr=`date +%y%m%d`
+
+        conf_file_backup="${conf_file}.${datestr}.bak"
+        if [ -f $conf_file_backup ] ; then
+            echo "WARNING:  esgf-httpd.conf already backed up today."
+            cp $conf_file_backup "${conf_file_backup}.1"
+        fi
+
+        cp $conf_file $conf_file_backup
+
+    fi
 
 	quotedwsgipath=`echo "/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so"|sed 's/[./*?|"]/\\\\&/g'`
 	allowedips=`sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf|grep Allow|sort -u`;
@@ -1350,6 +1674,15 @@ setup_sensible_confs() {
 
 }
 setup_apache_frontend() {
+
+
+      if [ -f /opt/esgf/python/bin/pip ] ; then
+        export LD_LIBRARY_PATH=/opt/esgf/python/lib:/opt/esgf/python/lib/python2.7:/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server
+        /opt/esgf/python/bin/pip install --upgrade pip
+        /opt/esgf/python/bin/pip install --upgrade virtualenv
+        unset LD_LIBRARY_PATH
+      fi
+
 	olddir=`pwd`;
 	localworkdir=${ESGF_INSTALL_WORKDIR:-"${installer_home}/workbench/esg"};
 	cd $localworkdir;
@@ -1359,7 +1692,7 @@ setup_apache_frontend() {
 	if [ $? -eq 0 ]; then
 		cd apache-frontend;
 		if [ $devel -eq 1 ]; then
-			git checkout $apache_frontend_version;
+			git checkout $apache_frontend_tag;
 			else
 			git checkout master;
 		fi
@@ -1390,6 +1723,29 @@ setup_apache_frontend() {
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 		/etc/init.d/esgf-httpd start
 		#/usr/sbin/apachectl -f /etc/httpd/conf/esgf-httpd.conf -k start
+    else
+
+
+        conf_file=/etc/httpd/conf/esgf-httpd.conf
+        if [ -f $conf_file ] ; then
+             esgf_httpd_ver=`grep ESGF-HTTPD-CONF $conf_file | awk '{print $4}'`
+             if [ -z $esgf_httpd_ver ] ; then
+                echo "esgf-httpd.conf is missing versioning, attempting to update."
+                update_apache_conf
+             else
+                check_version_atleast $esgf_httpd_ver $apache_frontend_version
+                if [ $? == 0 ] ; then
+                    echo "esgf-httpd.conf version is sufficient"
+                else
+                    echo "esgf-httpd version is out-of-date, attempting to update."
+                    update_apache_conf
+                fi
+             fi
+        else
+            echo "esgf-httpd.conf file not found, attempting to update. This condition is not expected to occur and should be reported to ESGF support"
+            update_apache_conf
+        fi
+
 	fi
 }
 #helper function to poke at tomcat ports...
@@ -1585,30 +1941,17 @@ setup_temp_ca() {
     curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/CA.pl >CA.pl
     curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/openssl.cnf >openssl.cnf
     curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/myproxy-server.config >myproxy-server.config
-
-  #Create new a new CA certificate
-  perl CA.pl -newca <setupca.ans
-
-  #Overwrite generate cakey.pem with clearkey.pem
+	perl CA.pl -newca <setupca.ans
 	openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
-  # create a certificate request CSR
 	perl CA.pl -newreq-nodes <reqhost.ans
-
-  #sign the CSR (newreq.pem) created in the previous step; output is newcert.pem
 	perl CA.pl -sign <setuphost.ans
-
-  #move cacert.pem that was created in the newca step to current dir
 	openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
 	cp CA/private/cakey.pem cakey.pem
-
-  #transforms newcert.pem that was created in the sign step to hostcert.pem
 	openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem
-  #copies newkey.pem that was created in the newreq-nodes step to hostkey.pem
 	mv newkey.pem hostkey.pem
 	chmod 400 cakey.pem
 	chmod 400 hostkey.pem
 	rm -f new*.pem
-
 	ESGF_OPENSSL=/usr/bin/openssl
 	cert=cacert.pem
 	tmpsubj='/O=ESGF/OU=ESGF.ORG/CN=placeholder'
@@ -1616,31 +1959,16 @@ setup_temp_ca() {
 	certsubj=`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;
 	quotedcertsubj=`echo "$certsubj" | sed 's/[./*?|]/\\\\&/g'`;
 	echo "quotedcertsubj=~$quotedcertsubj~";
-
-  #gets hash of cacert.pem
 	localhash=`$ESGF_OPENSSL x509 -in $cert -noout -hash`;
-
-  #make directory using the hash calculated in previous step
 	tgtdir="globus_simple_ca_${localhash}_setup-0";
 	mkdir $tgtdir;
-  #Copy the cacert to the localhash.0 file
 	cp $cert $tgtdir/${localhash}.0;
-
-  #Copy print_templ to signing_policy_template
 	print_templ >signing_policy_template;
-
-  #Create localhash.signing_policy from signing_policy_template
 	sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;
-
-  #copy the localhash
 	cp $tgtdir/${localhash}.signing_policy signing-policy
-
-  #create tarball from tgtdir
 	tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
 	rm -rf $tgtdir;
 	rm -f signing_policy_template;
-
-  #copy generate keys and certs to /etc/certs
 	mkdir -p /etc/certs
 	cp openssl.cnf /etc/certs/
 	cp host*.pem /etc/certs/
@@ -1736,7 +2064,11 @@ configure_tomcat() {
     #(first try getting it from distribution server otherwise copy Java's)
             if [ ! -e ${truststore_file} ]; then
                 fetch_file=${truststore_file##*/} # i.e. esg-truststore.ts
+            if [ "$node_peer_group" = "esgf-test" ]; then
+                checked_get ${truststore_file} ${esg_dist_url_root}/certs/test-federation/${fetch_file} $((force_install))
+            else
                 checked_get ${truststore_file} ${esg_dist_url_root}/certs/${fetch_file} $((force_install))
+            fi
                 if (( $? > 1 )); then
                     echo " INFO: Could not download certificates ${fetch_file} for tomcat - will copy local java certificate file"
                     echo "(note - the truststore password will probably not match!)"
@@ -1990,6 +2322,51 @@ test_tomcat() {
     checked_done 0
 }
 
+setup_slcs(){
+
+    read -e -p "Would you like to install the SLCS OAuth server on this node? [y/N] " choice
+      choice=$(echo ${choice} | tr 'A-Z' 'a-z')
+      if [ -z $choice ] ; then
+          choice="n"
+      fi
+      if [ $choice == "y" ] ; then
+        yum  -y install ansible
+
+        start_postgress
+        export PGPASSWORD=`cat /esg/config/.esg_pg_pass` && createdb -U dbsuper slcsdb
+        pushd /usr/local/src
+
+        git clone https://github.com/ESGF/esgf-slcs-server-playbook.git
+        chown -R apache:apache esgf-slcs-server-playbook
+
+        pushd esgf-slcs-server-playbook
+        if [ $devel -eq 1 ]; then
+            git checkout devel;
+        fi
+        chgrp -R apache /var/lib/globus-connect-server/myproxy-ca/
+        chmod g+rx /var/lib/globus-connect-server/myproxy-ca/
+        chmod g+rx /var/lib/globus-connect-server/myproxy-ca/private
+        chmod g+r /var/lib/globus-connect-server/myproxy-ca/private/cakey.pem
+
+        sed -i "s/test_server_name/$(hostname --fqdn)/" playbook/overrides/production_venv_only.yml
+        get_property mail_admin_address
+        sed -i "s/test_email/$mail_admin_address/" playbook/overrides/production_venv_only.yml
+        sed -i "s/abc123/$(cat /esg/config/.esg_pg_pass)/g" playbook/overrides/production_venv_only.yml
+
+        write_as_property short_lived_certificate_server $esgf_host
+
+        mkdir -p /usr/local/esgf-slcs-server
+        chown -R apache:apache /usr/local/esgf-slcs-server
+
+        ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml
+
+        popd
+        popd
+    fi
+
+}
+
+
 #called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags
 select_idp_peer() {
 
@@ -2141,7 +2518,7 @@ setup_tds() {
     echo -n "Checking for thredds (tds) >= ${tds_min_version} "
     check_webapp_version "thredds" ${tds_min_version} "Implementation-Version"
     local ret=$?
-    ((ret == 0)) && (( ! force_install )) && [OK] && return 0
+    # ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
     echo "*******************************"
@@ -2151,11 +2528,13 @@ setup_tds() {
 
     local upgrade=${1:-0}
 
+    local default="Y"
     local dosetup
     if [ -d ${tomcat_install_dir}/webapps/thredds ]; then
         echo "Detected an existing thredds installation..."
-        read -e -p "Do you want to continue with thredds installation and setup? [y/N] " dosetup
-        if [ "${dosetup}" != "Y" ] && [ "${dosetup}" != "y" ]; then
+        read -e -p "Do you want to continue with thredds installation and setup? [Y/n] " dosetup
+        [ -z "${dosetup}" ] && dosetup=${default}
+        if [ "${dosetup}" == "N" ] || [ "${dosetup}" == "n" ]; then
             echo "Skipping thredds installation and setup - will assume thredds is setup properly"
             return 0
         fi
@@ -2339,8 +2718,11 @@ setup_tds() {
     start_tomcat
     start_postgress
     #set in cdms setup (prerequisite)
+
     echo "$cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ********")"
-    ESGINI=${publisher_home}/${publisher_config} $cdat_home/bin/esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
+
+    source ${cdat_home}/bin/activate esgf-pub
+    ESGINI=${publisher_home}/${publisher_config} esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --thredds --publish --gateway ${myproxy_endpoint} $([ -n "${security_admin_password}" ] && echo "--thredds-password ${security_admin_password}")
 
     ((created_brand_new_thredds_content_dir)) && chown -R ${tomcat_user}:${tomcat_group} ${thredds_content_dir}
 
@@ -2380,6 +2762,8 @@ setup_tds() {
     [OK]
     write_tds_env
     write_tds_install_log
+
+    source deactivate
     checked_done 0
 }
 
@@ -2413,7 +2797,7 @@ test_tds() {
     start_postgress
 
     echo "$cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds"
-    $cdat_home/bin/esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
+    esgpublish --service fileservice --use-existing pcmdi.${esg_root_id}.${node_short_name}.test.mytest --noscan --thredds
     [ $? != 0 ] && [FAIL] && echo " ERROR: Not able to run esgpublish command" && popd && checked_done 1
     sleep 2
     echo "curl http://${esgf_host_ip}/thredds"
@@ -2728,6 +3112,7 @@ setup_subsystem() {
     local fetch_file=esg-${subsystem}
     verbose_print "checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))"
     checked_get ./${fetch_file} ${esg_dist_url}/${server_dir}/${fetch_file} $((force_install))
+
     local ret=$?
     (( $ret > 1 )) && popd && return 1
     chmod 755 ${fetch_file}
@@ -2808,6 +3193,9 @@ show_summary() {
 
 write_env() {
     echo "Generating default ${envfile} file"
+
+    echo "modified"
+
     [ -e ${envfile} ] && cp ${envfile} ${envfile}.bak
     cat /dev/null > ${envfile}
     write_paths
@@ -2819,6 +3207,9 @@ write_env() {
     write_tomcat_env
     write_tds_env
     write_globus_env
+    echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
+    dedup ${envfile}
+
     echo "-------------------"
     cat ${envfile}
     echo "-------------------"
@@ -2890,8 +3281,13 @@ fetch_esgf_certificates() {
     mkdir -p ${globus_global_certs_dir}
     [ $? != 0 ] && echo "Could not create directory: [${globus_global_certs_dir}] :-(" && return 1
     local esg_trusted_certs_file=esg_trusted_certificates.tar
-    debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
-    curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    if [ "$node_peer_group" = "esgf-test" ]; then
+        debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/test-federation/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+        curl -s -L --insecure ${esg_dist_url_root}/certs/test-federation/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    else
+        debug_print "curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')"
+        curl -s -L --insecure ${esg_dist_url_root}/certs/${esg_trusted_certs_file} | (cd ${globus_global_certs_dir}; pax -r -s ',.*/,,p')
+    fi
     local ret=$?
     rmdir ${globus_global_certs_dir}/$(echo ${esg_trusted_certs_file} | awk 'gsub(/('$compress_extensions')/,"")')
     if [ $ret == 0 ]; then
@@ -2927,11 +3323,19 @@ fetch_esgf_truststore() {
     local truststore_file_=${1:-${truststore_file}}
     [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
     [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
-    checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
+    if [ "$node_peer_group" = "esgf-test" ]; then
+        checked_get ${truststore_file} ${esg_dist_url_root}/certs/test-federation/${truststore_file_##*/}
+    else
+        checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
+    fi
     (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
 	apache_truststore='/etc/certs/esgf-ca-bundle.crt'
     [ -e "${apache_truststore}" ] && mv -v ${apache_truststore}{,.bak}
-    checked_get ${apache_truststore} ${esg_dist_url_root}/certs/${apache_truststore##*/}
+    if [ "$node_peer_group" = "esgf-test" ]; then
+        checked_get ${apache_truststore} ${esg_dist_url_root}/certs/test-federation/${apache_truststore##*/}
+    else
+        checked_get ${apache_truststore} ${esg_dist_url_root}/certs/${apache_truststore##*/}
+    fi
     (( $? > 1 )) && [FAIL] && mv -v ${apache_truststore}{.bak,} || [OK] && cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
 
     # For the IDP it is good to trust yourself ;-)...
@@ -4903,7 +5307,7 @@ self_verify() {
         fi
 
         case ${choice} in
-            c | C | y)
+            c | C)
                 echo "Continuing..."
                 echo
                 return $ret
@@ -5012,7 +5416,6 @@ show_svc_list() {
 run_startup_hooks() {
     echo_strong "Running startup hooks..."
 	setup_sensible_confs
-	update_apache_conf
     ( esgcet_startup_hook )
     ( tds_startup_hook )
     (source ${scripts_dir}/esg-orp >& /dev/null && orp_startup_hook)
@@ -5058,7 +5461,10 @@ start() {
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress
     [ $((sel & ALL_BIT)) != 0 ] && start_tomcat
-    #switched off dashboard after consultation with Sandro [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+
+    [ $((sel & ALL_BIT)) != 0 ] && (source ${scripts_dir}/esg-dashboard >& /dev/null && start_dashboard_services)
+
+    source $esgf_nm_funcs_file && nm_start
 
     (( ! no_globus )) && [ $((sel & DATA_BIT+IDP_BIT)) != 0 ] && start_globus ${sel} ${gridftp_config}
     [ $((sel & INDEX_BIT)) != 0 ] && (source ${scripts_dir}/esg-search >& /dev/null && start_search_services ${index_config})
@@ -5083,11 +5489,15 @@ stop() {
     read_sel
     (source ${scripts_dir}/esg-search >& /dev/null && stop_search_services)
     stop_globus $(( sel == 0 ? ALL_BIT : sel)) ${gridftp_config}
-    #Turned off(source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+    (source ${scripts_dir}/esg-dashboard >& /dev/null && stop_dashboard_services)
+
+    source $esgf_nm_funcs_file && nm_stop
     stop_tomcat
     stop_postgress
     #/usr/sbin/apachectl stop
 	/etc/init.d/esgf-httpd stop
+
+
 
     run_shutdown_hooks
     show_svc_list
@@ -5107,6 +5517,7 @@ status() {
         echo "$(echo_strong "Stopped:") At least one process not running"
         ret=1
     fi
+    source $esgf_nm_funcs_file && nm_status
     #This is here for sanity checking...
     show_svc_list
     return ${ret}
@@ -5429,16 +5840,16 @@ esgf_node_info() {
      Please be sure that you have gotten your created an account on
      your ESGF IDP Peer.
 
-     The primary IDP Peer for ESGF is pcmdi.llnl.gov
-     You may register for an account at PCMDI at the following URL:
-     http://pcmdi.llnl.gov/esgf-web-fe/createAccount
+     The primary IDP Peer for ESGF is esgf-node.llnl.gov
+     You may register for an account at LLNL at the following URL:
+     https://esgf-node.llnl.gov/user/add/
 
      Note: Account creation is prerequisite for publication!
 
      ESGF P2P Node:                                             ESGF P2P Node:
       ---------                                                   ---------
      |Tomcat   |                                                 |Tomcat   |
-     |-Node Mgr|   <================= P2P =================>     |-Node Mgr|
+     |         |   <================= P2P =================>     |         |
      |-Thredds |                                                 |-Thredds |
      |-ORP     |                                                 |-ORP     |
      |---------|                                                 |---------|
@@ -5808,12 +6219,7 @@ upgrade_mode=0
 install_mode=0
 main() {
         # Sourcing esg-functions file
-        # If esg_functions_file exists, then source that file; if that file sources successfully
         [ -e ${esg_functions_file} ] && source ${esg_functions_file} && ((VERBOSE)) && printf "sourcing from: ${esg_functions_file} \n"
-
-        # If esg_setup_file exists, then source that file; if that file sources successfully
-        printf "attemtping to source esg-setup file \n"
-        [ -e ${esg_setup_file} ] && source ${esg_setup_file} && ((VERBOSE)) && printf "sourcing from: ${esg_setup_file} \n"
 
         # Initializing
         debug_print "esg-node initializing..."
@@ -5822,6 +6228,10 @@ main() {
 	# Determining if devel or master directory of the ESGF distribution mirror will be use for download of binaries
         [ -z "$(echo ${script_version} | sed -n 's/-devel/\0/p')" ] && devel=0 || devel=1
 
+        res=`echo $CDAT_HOME | grep -c conda`
+        if [ $res == 0 ]; then
+            unset CDAT_HOME
+        fi
 	# Determining ESGF distribution mirror
         if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
        	 get_esgf_dist_mirror "interactive" $devel
@@ -5829,15 +6239,12 @@ main() {
        	 get_esgf_dist_mirror "fastest" $devel
         fi
 
-
 	# Setting esg_dist_url with previously gathered information
         esg_dist_url_root="${esgf_dist_mirror}/dist"
         esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
 
-
-        # Sourcing esg-init file
+    # Sourcing esg-init file
         [ -e ${esg_init_file} ] && source ${esg_init_file} && ((VERBOSE)) && printf "sourcing from: ${esg_init_file} \n"
-
 
 	# Downloading esg-installarg file
 	if [ ! -e ${esg_installarg_file} ] || ((force_install)) || [ ${esg_installarg_file} -ot $0 ]; then
@@ -6617,7 +7024,7 @@ main() {
 	yum -y remove rpmforge-release
 	yum -y install epel-release
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not configure epel repository\n\n" && return 1
-        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel '*ExtUtils*'
+        yum -y install yum-plugin-priorities sqlite-devel freetype-devel git curl-devel autoconf automake bison file flex gcc gcc-c++ gettext-devel libtool uuid-devel libuuid-devel libxml2 libxml2-devel libxslt libxslt-devel lsof make openssl-devel pam-devel pax readline-devel tk-devel wget zlib-devel perl-Archive-Tar perl-XML-Parser libX11-devel libtool-ltdl-devel e2fsprogs-devel gcc-gfortran libicu-devel libgtextutils-devel httpd httpd-devel mod_ssl libjpeg-turbo-devel ntp '*ExtUtils*'
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update prerequisites\n\n" && return 1
 
     #---------------------------------------
@@ -6662,7 +7069,9 @@ main() {
         [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && setup_tds ${upgrade_mode}
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT+COMPUTE_BIT)) != 0 ] && test_tds
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem node-manager esgf-node-manager #(tomcat off)
+
         [ $((sel & INSTALL_BIT)) != 0 ] && setup_subsystem dashboard esgf-dashboard #(tomcat off)
+
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && setup_subsystem desktop esgf-desktop #(tomcat off)
 
         # Compute Languages and Tools Setup
@@ -6709,6 +7118,9 @@ main() {
         [ $((sel & TEST_BIT))    != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && (( ! no_globus )) && debug_print "calling... test_globus [${DATA_BIT}]"  && test_globus  ${DATA_BIT} ${gridftp_config}
 
     [ $((sel & INSTALL_BIT)) != 0 ] && (( ! no_globus )) && debug_print "installing local certs" && install_local_certs "firstrun"
+
+    #OAuth SLCS setup
+    [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & IDP_BIT))  != 0 ] && (( ! no_globus )) && setup_slcs
 
     #---------------------------------------
     # Index type install...
@@ -6773,6 +7185,8 @@ main() {
         write_as_property version ${script_version}
         write_as_property release ${script_release}
         write_as_property gridftp_config
+        echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
+
         esg_node_finally
     }
 
@@ -6794,6 +7208,8 @@ main() {
     #exec 1>&3 3>&- 2>&4 4>&-
     #wait $tpid
     #rm $OUTPUT_PIPE
+
+
         exit 0
     }
 

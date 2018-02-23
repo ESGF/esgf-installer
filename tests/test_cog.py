@@ -9,6 +9,7 @@ from context import index_node
 from esgf_utilities import esg_purge
 from esgf_utilities import esg_bash2py
 from base import esg_tomcat_manager
+from base import esg_apache_manager
 from index_node import esg_cog
 
 class test_Cog(unittest.TestCase):
@@ -18,6 +19,7 @@ class test_Cog(unittest.TestCase):
         print "\n*******************************"
         print "Setting up COG Test Fixture"
         print "******************************* \n"
+        esg_apache_manager.main()
         pass
 
     @classmethod

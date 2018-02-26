@@ -83,8 +83,8 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             return True
         else:
             force_install = True
+            backup_db("postgres", "postgres")
 
-    backup_db("postgres", "postgres")
     download_postgres()
 
     '''Create system account (postgres) if it doesn't exist '''
@@ -148,15 +148,17 @@ def create_pg_publisher_user(cursor, db_user_password):
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
-def setup_db_schemas(force_install):
+def setup_db_schemas(force_install, publisher_password=None):
     '''Load ESGF schemas'''
     conn = connect_to_db("postgres")
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
-    db_user_password = esg_functions.get_publisher_password()
-    if not db_user_password:
-        esg_functions.set_publisher_password()
+    try:
+        db_user_password = esg_functions.get_publisher_password()
+    except IOError, error:
+        logger.debug(error)
+        esg_functions.set_publisher_password(publisher_password)
         db_user_password = esg_functions.get_publisher_password()
 
     create_pg_super_user(cur, db_user_password)
@@ -173,7 +175,6 @@ def setup_db_schemas(force_install):
     # TODO: move download_config_files() here
 
     load_esgf_schemas(db_user_password)
-    load_esgf_data(cur)
 
     # IMPORTANT: change connections to require encrypted password
     esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
@@ -181,12 +182,17 @@ def setup_db_schemas(force_install):
 
 def load_esgf_schemas(db_user_password):
     conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
     # load ESGF schemas
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_dashboard.sql"), "r").read())
+
+    load_esgf_data(cur)
+    cur.close()
+    conn.close()
 
 def load_esgf_data(cur):
     # # load ESGF data
@@ -257,10 +263,10 @@ def connect_to_db(user, db_name=None,  host="/tmp", password=None):
 
         os.seteuid(postgres_id)
     db_connection_string = build_connection_string(user, db_name, host, password)
-    print "db_connection_string: ", db_connection_string
+    logger.debug("db_connection_string: %s", db_connection_string)
     try:
         conn = psycopg2.connect(db_connection_string)
-        print "Connected to {db_name} database as user '{user}'".format(db_name=db_name, user=user)
+        logger.debug("Connected to %s database as user '%s'", db_name, user)
         if not conn:
             print "Failed to connect to {db_name}".format(db_name=db_name)
             raise Exception
@@ -272,8 +278,8 @@ def connect_to_db(user, db_name=None,  host="/tmp", password=None):
         return conn
     except Exception, error:
         logger.exception("Unable to connect to the database.")
-        print "Error connecting to database:", error
-        esg_functions.exit_with_error(1)
+        raise
+        # esg_functions.exit_with_error(error)
 
 #----------------------------------------------------------
 # Postgresql user/group management functions
@@ -515,10 +521,10 @@ def create_database(cursor, database_name):
             logger.info("%s database already exists.  Skipping creation.", database_name)
 
 
-def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres"):
+def postgres_list_db_schemas(conn=None, user_name="postgres", db_name="postgres", password=None):
     '''This prints a list of all schemas known to postgres.'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
+        conn = connect_to_db(user_name, db_name, password=password)
     cur = conn.cursor()
     try:
         cur.execute("select schema_name from information_schema.schemata;")
@@ -529,25 +535,24 @@ def postgres_list_db_schemas(conn=None, db_name="postgres", user_name="postgres"
         logger.exception("Could not list database schemas")
 
 
-def postgres_list_schemas_tables(conn=None, db_name="postgres", user_name="postgres"):
+def postgres_list_schemas_tables(conn=None, user_name="postgres", db_name="postgres"):
     '''List all Postgres tables in all schemas, in the schemaname.tablename format, in the ESGF database'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("SELECT schemaname,relname FROM pg_stat_user_tables;")
         schemas_tables = cur.fetchall()
-        print "schemas_tables: ", schemas_tables
+        logger.debug("schemas_tables: %s", schemas_tables)
         return schemas_tables
     except Exception, error:
         logger.exception("Could not list schema tables")
 
 
-def postgres_list_dbs(conn=None, db_name="postgres", user_name="postgres"):
+def postgres_list_dbs(conn=None, user_name="postgres", db_name="postgres" ):
     '''This prints a list of all databases known to postgres.'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
-    # conn = connect_to_db("postgres", "dbsuper")
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
@@ -558,10 +563,10 @@ def postgres_list_dbs(conn=None, db_name="postgres", user_name="postgres"):
         logger.exception("Could not list databases")
 
 
-def list_users(conn=None, db_name="postgres", user_name="postgres"):
+def list_users(conn=None, user_name="postgres", db_name="postgres"):
     '''List all users in database'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     try:
         cur.execute("""SELECT usename FROM pg_user;""")
@@ -572,10 +577,10 @@ def list_users(conn=None, db_name="postgres", user_name="postgres"):
         logger.exception("Could not list users")
 
 
-def list_roles(conn=None, db_name="postgres", user_name="postgres"):
+def list_roles(conn=None, user_name="postgres", db_name="postgres"):
     '''List all roles'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
+        conn = connect_to_db(user_name, db_name)
     cur = conn.cursor()
     cur.execute("""SELECT rolname FROM pg_roles;""")
     roles = cur.fetchall()
@@ -583,10 +588,10 @@ def list_roles(conn=None, db_name="postgres", user_name="postgres"):
     return roles_list
 
 
-def list_tables(conn=None, db_name="postgres", user_name="postgres"):
+def list_tables(conn=None, user_name="postgres", db_name="postgres"):
     '''List all tables in current database'''
     if not conn:
-        conn = connect_to_db(db_name, user_name)
+        conn = connect_to_db(user_name, db_name)
     current_database = conn.get_dsn_parameters()["dbname"]
     cur = conn.cursor()
     cur.execute(
@@ -605,7 +610,7 @@ def postgres_clean_schema_migration(repository_id):
     # The SQL LIKE strings are generally defined in
     # "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
     # each relevant repository.
-    conn = connect_to_db(config["node_db_name"], config["postgress_user"])
+    conn = connect_to_db(config["postgress_user"], config["node_db_name"])
     cur = conn.cursor()
 
     try:

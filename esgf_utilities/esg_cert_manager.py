@@ -80,11 +80,7 @@ def create_certificate_chain_list():
     cert_files = []
     #Enter ca_chain file into list
     while True:
-<<<<<<< HEAD
-        if esg_property_manager.get_property("certfile.entry").lower() in ["n", "no"]:
-=======
         if esg_property_manager.get_property("certfile.entry") in NO_LIST:
->>>>>>> python_devel
             certfile_entry = None
         else:
             print "Please enter your Certificate Authority's certificate chain file(s)"

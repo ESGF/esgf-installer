@@ -8,6 +8,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
 from base import esg_tomcat_manager
+from base import esg_postgres
 
 #####
 # Install The ESGF Idp Services
@@ -46,7 +47,7 @@ def write_idp_install_log(idp_service_app_home):
 def write_security_lib_install_log():
     pass
 
-def setup_idp():
+def setup_idp(esg_dist_url):
     print "*******************************"
     print "Setting up The ESGF Idp Services"
     print "*******************************"
@@ -98,7 +99,7 @@ def setup_slcs():
     esg_functions.stream_subprocess_output("yum  -y install ansible")
 
     #create slcs Database
-    esg_postgres.postgres_create_db("slcsdb")
+    esg_postgres.create_database("slcsdb")
 
     with esg_bash2py.pushd("/usr/local/src"):
         Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd())
@@ -119,14 +120,16 @@ def setup_slcs():
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", stat.S_IRGRP | stat.S_IXGRP)
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", stat.S_IRGRP)
 
-            # with open("playbook/overrides/production_venv_only.yml", "r+") as esg_config:
-            #     yaml.dump(locals(), esg_config)
-            esgf_host = esg_functions.get_esgf_host()
+            with open("playbook/overrides/production_venv_only.yml", "r+") as yaml_file:
+                production_venv_only = yaml_file.load()
+            production_venv_only["server_name"] = esg_functions.get_esgf_host()
+            production_venv_only["server_email"] = esg_property_manager.get_property("mail_admin_address")
+            db_password = esg_functions.get_postgres_password()
+            production_venv_only["esgf_slcsdb"]["password"] = db_password
+            production_venv_only["esgf_userdb"]["password"] = db_password
 
-            #TODO: look at replacing strings with yaml module
-            esg_functions.replace_string_in_file("playbook/overrides/production_venv_only.yml", "test_server_name", esgf_host)
-            esg_functions.replace_string_in_file("playbook/overrides/production_venv_only.yml", "test_email", esg_property_manager.get_property("mail_admin_address"))
-            esg_functions.replace_string_in_file("playbook/overrides/production_venv_only.yml", "abc123", esg_functions.get_postgres_password())
+            with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
+                yaml.dump(production_venv_only, yaml_file)
 
             esg_property_manager.set_property("short.lived.certificate.server", esgf_host)
 
@@ -137,8 +140,8 @@ def setup_slcs():
             esg_functions.stream_subprocess_output('ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml')
 
 
-def main():
-    setup_idp()
+def main(esg_dist_url):
+    setup_idp(esg_dist_url)
     setup_slcs()
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ def initialize_postgres():
             return
     except OSError, error:
         logger.error(error)
-        
+
     esg_functions.stream_subprocess_output("service postgresql initdb")
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
@@ -165,7 +165,7 @@ def setup_db_schemas(force_install):
     create_pg_publisher_user(cur, db_user_password)
 
     # create CoG and publisher databases
-    create_database(cur, "cogdb")
+    # create_database(cur, "cogdb")
     create_database(cur, "esgcet")
     cur.close()
     conn.close()

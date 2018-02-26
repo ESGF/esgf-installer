@@ -167,8 +167,8 @@ def setup_db_schemas(force_install, publisher_password=None):
     create_pg_publisher_user(cur, db_user_password)
 
     # create CoG and publisher databases
-    # create_database(cur, "cogdb")
-    create_database(cur, "esgcet")
+    # create_database("cogdb", cur)
+    create_database("esgcet", cur)
     cur.close()
     conn.close()
 
@@ -512,7 +512,11 @@ def write_postgress_install_log(psql_path):
 #----------------------------------------------------------
 
 
-def create_database(cursor, database_name):
+def create_database(database_name, cursor=None):
+    if not cursor:
+        conn = connect_to_db("postgres")
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
     try:
         cursor.execute("CREATE DATABASE {};".format(database_name))
     except psycopg2.ProgrammingError, error:

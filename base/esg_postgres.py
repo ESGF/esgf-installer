@@ -226,14 +226,13 @@ def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
             f = open(backup_file, 'w')
             for row in cur:
                 f.write("insert into t values (" + str(row) + ");")
+            f.close()
     except psycopg2.DatabaseError, e:
         print 'Error %s' % e
         sys.exit(1)
     finally:
         if conn:
             conn.close()
-        f.close()
-
 
 #----------------------------------------------------------
 # Postgresql connections functions

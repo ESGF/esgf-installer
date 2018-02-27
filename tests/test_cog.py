@@ -9,6 +9,7 @@ from context import index_node
 from esgf_utilities import esg_purge
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_cert_manager
+from esgf_utilities import esg_functions
 from base import esg_tomcat_manager
 from base import esg_apache_manager
 from base import esg_setup
@@ -21,6 +22,8 @@ class test_Cog(unittest.TestCase):
         print "\n*******************************"
         print "Setting up COG Test Fixture"
         print "******************************* \n"
+        esg_functions.call_subprocess("groupadd tomcat")
+        esg_functions.call_subprocess("useradd tomcat")
         esg_setup.setup_java()
         esg_cert_manager.main()
         esg_apache_manager.main()

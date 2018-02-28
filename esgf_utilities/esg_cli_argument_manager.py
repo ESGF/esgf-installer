@@ -274,7 +274,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
         print "args.type:", args.type
-        set_node_type_value(args.install)
+        set_node_type_value(args.type)
         # for arg in args.type:
         #     set_node_type_value(arg, node_type_list, True)
         # set_node_type_config(node_type_list, config["esg_config_type_file"])

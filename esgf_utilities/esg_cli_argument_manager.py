@@ -86,6 +86,9 @@ def get_node_status():
     pass
 
 def show_esgf_process_list():
+    print "\n*******************************"
+    print "Active ESGF processes"
+    print "******************************* \n"
     procs = ["postgres", "jsvc", "globus-gr", "java", "myproxy", "httpd", "postmaster"]
     esgf_processes = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']) if any(proc_name in p.info['name'] for proc_name in procs)]
     for process in esgf_processes:

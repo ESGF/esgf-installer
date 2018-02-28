@@ -87,7 +87,8 @@ def get_node_status():
     pass
 
 def show_svc_list():
-    esgf_processes = [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if p.info['name'] in ["postgres", "jsvc", "globus-gr", "java", "myproxy"]]
+    procs = ["postgres", "jsvc", "globus-gr", "java", "myproxy"]
+    esgf_processes = [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if any(proc_name in p.info['name'] for proc_name in procs)]
     print "esgf_processes:", esgf_processes
     # show_svc_list() {
     #     id | grep root >& /dev/null

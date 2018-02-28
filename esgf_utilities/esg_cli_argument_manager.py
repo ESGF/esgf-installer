@@ -82,13 +82,14 @@ def get_node_status():
 
     #TODO conditionally reflect the status of globus (gridftp) process
         #This is here for sanity checking...
-    show_svc_list()
+    show_esgf_process_list()
     pass
 
-def show_svc_list():
+def show_esgf_process_list():
     procs = ["postgres", "jsvc", "globus-gr", "java", "myproxy", "httpd", "postmaster"]
     esgf_processes = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']) if any(proc_name in p.info['name'] for proc_name in procs)]
-    print "esgf_processes:", esgf_processes
+    for process in esgf_processes:
+        print process
 
 
 def update_script(script_name, script_directory):

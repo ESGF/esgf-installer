@@ -123,7 +123,6 @@ def get_node_type(config_file=config["esg_config_type_file"]):
     try:
         last_config_type = open(config_file, "r")
         node_type_list = last_config_type.read().split()
-        logger.debug("node_type_list is now: %s", " ".join(node_type_list))
         if node_type_list:
             return node_type_list
         else:
@@ -167,15 +166,7 @@ def _define_acceptable_arguments():
     return (args, parser)
 
 def process_arguments(node_type_list, devel, esg_dist_url):
-    logger.debug("node_type_list at start of process_arguments: %s", node_type_list)
-    logger.info("node_type_list at start of process_arguments: %s", node_type_list)
-    print "node_type_list at start of process_arguments: %s", node_type_list
-
     args, parser = _define_acceptable_arguments()
-
-    logging.debug(pprint.pformat(args))
-    logger.info("args: %s", args)
-    print "args:", args
 
     if len(sys.argv) == 1:
         parser.print_help()

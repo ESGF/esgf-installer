@@ -90,24 +90,8 @@ def show_svc_list():
     procs = ["postgres", "jsvc", "globus-gr", "java", "myproxy", "httpd", "postmaster"]
     esgf_processes = [p.info for p in psutil.process_iter(attrs=['pid', 'name', 'username', 'cmdline']) if any(proc_name in p.info['name'] for proc_name in procs)]
     print "esgf_processes:", esgf_processes
-    # show_svc_list() {
-    #     id | grep root >& /dev/null
-    #     [ $? != 0 ] && echo "(display of node process list limited to root)" && return 0
-    #     echo
-    #     echo "---------------------------"
-    #     echo "$(echo_strong Running Node Services...) "; ((sel != 0)) && show_type || echo ""
-    #     echo "---------------------------"
-    #     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
-    #     eval ${command}
-    #     lsof -Pni |egrep httpd | head -n1
-    #     local dashboard_pid=$(pgrep dashboard)
-    #     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
-    #
-    #     echo "---------------------------"
-    #     echo
-    #     return 0
-    # }
-    pass
+
+
 def update_script(script_name, script_directory):
     '''
         arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
@@ -233,11 +217,11 @@ def process_arguments(node_type_list, devel, esg_dist_url):
 
     if args.install:
         if args.type:
-            set_node_type_value(args.type + args.install)
+            set_node_type_value(args.type)
             # for arg in args.type:
             #     node_type_list = set_node_type_value(arg, node_type_list, True)
-        else:
-            set_node_type_value(args.install)
+        # else:
+        #     set_node_type_value(args.install)
         installer_mode_dictionary["upgrade_mode"] = False
         installer_mode_dictionary["install_mode"] = True
         print "node_type_list before returning from args.install:", node_type_list

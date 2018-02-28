@@ -3,12 +3,15 @@ import sys
 import shutil
 import logging
 import argparse
+import psutil
 import pprint
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
 from base import esg_setup
 from base import esg_apache_manager
+from base import esg_tomcat_manager
+from base import esg_postgres
 from esgf_utilities import esg_bash2py
 from esgf_utilities.esg_exceptions import NoNodeTypeError
 
@@ -84,12 +87,12 @@ def get_node_status():
 
     #TODO conditionally reflect the status of globus (gridftp) process
         #This is here for sanity checking...
-        show_svc_list
-        return ${ret}
-    }
+    show_svc_list()
     pass
 
-def show_svc_list()
+def show_svc_list():
+    esgf_processes = [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if p.info['name'] in ["postgres", "jsvc", "globus-gr", "java", "myproxy"]]
+    print "esgf_processes:", esgf_processes
     # show_svc_list() {
     #     id | grep root >& /dev/null
     #     [ $? != 0 ] && echo "(display of node process list limited to root)" && return 0
@@ -177,7 +180,7 @@ def _define_acceptable_arguments():
     return (args, parser)
 
 
-def get_previous_node_type_config(config_file):
+def get_previous_node_type_config(config_file=config["esg_config_type_file"]):
     '''
         Helper method for reading the last state of node type config from config dir file "config_type"
         Every successful, explicit call to --type|-t gets recorded in the "config_type" file

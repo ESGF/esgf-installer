@@ -425,8 +425,7 @@ def main(node_type_list):
 
     #If not type not set from CLI argument, look at previous node type setting
     if not [node_type for node_type in node_type_list if node_type in node_types.keys()]:
-        previous_node_type = esg_cli_argument_manager.get_previous_node_type_config(
-            config["esg_config_type_file"])
+        previous_node_type = esg_cli_argument_manager.get_previous_node_type_config()
         print "previous_node_type:", previous_node_type
     check_selected_node_type(node_types, node_type_list)
 

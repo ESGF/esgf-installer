@@ -190,9 +190,10 @@ def check_tomcat_status():
         tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
         if psutil.pid_exists(int(tomcat_pid)):
             print "Tomcat is running"
-            return
+            return tomcat_pid
         else:
             print "Tomcat stopped."
+            return False
     except IOError:
         print "PID file not found.  Tomcat not running"
 

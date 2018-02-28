@@ -198,12 +198,9 @@ def download_esg_installarg(esg_dist_url):
 
 def check_selected_node_type(node_types, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
-
-    # node_options_modified = create_new_list_from_keys(node_types)
-    # logger.debug("node_options_modified: %s", node_options_modified)
     for option in node_type_list:
         logger.debug("option: %s", option)
-        if option in node_types.keys():
+        if option.upper() in node_types.keys():
             continue
         else:
             print '''
@@ -290,7 +287,7 @@ def show_summary():
     pass
 
 
-def system_component_installation(esg_dist_url):
+def system_component_installation(esg_dist_url, node_type_list):
     #---------------------------------------
     # Installation of basic system components.
     # (Only when one setup in the sequence is okay can we move to the next)
@@ -425,8 +422,7 @@ def main(node_type_list):
 
     #If not type not set from CLI argument, look at previous node type setting
     if not [node_type for node_type in node_type_list if node_type in node_types.keys()]:
-        previous_node_type = esg_cli_argument_manager.get_previous_node_type_config(
-            config["esg_config_type_file"])
+        previous_node_type = esg_cli_argument_manager.get_node_type()
         print "previous_node_type:", previous_node_type
     check_selected_node_type(node_types, node_type_list)
 
@@ -446,7 +442,7 @@ def main(node_type_list):
     # setup_esgf_rpm_repo(esg_dist_url)
 
     # install dependencies
-    system_component_installation(esg_dist_url)
+    system_component_installation(esg_dist_url, node_type_list)
     done_remark()
 
 def system_launch():

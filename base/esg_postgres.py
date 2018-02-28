@@ -167,8 +167,8 @@ def setup_db_schemas(force_install, publisher_password=None):
     create_pg_publisher_user(cur, db_user_password)
 
     # create CoG and publisher databases
-    create_database(cur, "cogdb")
-    create_database(cur, "esgcet")
+    # create_database("cogdb", cur)
+    create_database("esgcet", cur)
     cur.close()
     conn.close()
 
@@ -226,14 +226,13 @@ def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
             f = open(backup_file, 'w')
             for row in cur:
                 f.write("insert into t values (" + str(row) + ");")
+            f.close()
     except psycopg2.DatabaseError, e:
         print 'Error %s' % e
         sys.exit(1)
     finally:
         if conn:
             conn.close()
-        f.close()
-
 
 #----------------------------------------------------------
 # Postgresql connections functions
@@ -405,7 +404,7 @@ def postgres_status():
     status = esg_functions.call_subprocess("service postgresql status")
     print "Postgres server status:", status["stdout"]
     if "running" in status["stdout"]:
-        return True
+        return (True, status)
     else:
         return False
 
@@ -512,7 +511,11 @@ def write_postgress_install_log(psql_path):
 #----------------------------------------------------------
 
 
-def create_database(cursor, database_name):
+def create_database(database_name, cursor=None):
+    if not cursor:
+        conn = connect_to_db("postgres")
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
     try:
         cursor.execute("CREATE DATABASE {};".format(database_name))
     except psycopg2.ProgrammingError, error:

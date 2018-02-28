@@ -75,6 +75,9 @@ def get_node_status():
         print "httpd is stopped"
         node_running = False
 
+    print "\n*******************************"
+    print "ESGF Node Status"
+    print "******************************* \n"
     if node_running:
         print "Node is running"
     else:

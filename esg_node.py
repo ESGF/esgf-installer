@@ -316,6 +316,9 @@ def system_component_installation(esg_dist_url, node_type_list):
         print "\n*******************************"
         print "Installing Index Node Components"
         print "******************************* \n"
+        if "DATA" not in node_type_list:
+            from data_node import orp
+            orp.main()
         from index_node import esg_cog, esg_search, solr
         esg_cog.main()
         solr.main()

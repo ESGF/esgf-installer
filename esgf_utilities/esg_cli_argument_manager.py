@@ -61,7 +61,8 @@ def get_node_status():
     tomcat_status = esg_tomcat_manager.check_tomcat_status()
     if tomcat_status:
         print "Tomcat is running"
-        tomcat_process = psutil.Process(tomcat_status)
+        tomcat_pid = int(tomcat_status.strip())
+        tomcat_process = psutil.Process(tomcat_pid)
         pinfo = tomcat_process.as_dict(attrs=['pid', 'username', 'cpu_percent', 'name'])
         print pinfo
     else:

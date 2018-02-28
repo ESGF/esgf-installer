@@ -20,11 +20,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-progname = "esg-node"
-script_version = "v3.0"
-script_maj_version = "3.0"
-script_release = "Centaur"
-
 node_type_dictionary = {"INSTALL": False , "TEST": False, "DATA":False, "INDEX":False, "IDP":False, "COMPUTE":False, "MIN": False, "MAX": False}
 installer_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
 
@@ -53,7 +48,7 @@ def get_node_status():
         Return a tuple with the node's status
     '''
     node_running = True
-    node_type = get_previous_node_type_config()
+    node_type = get_node_type()
     postgres_status = esg_postgres.postgres_status()
     if postgres_status:
         print "Postgres is running"
@@ -120,34 +115,36 @@ def update_script(script_name, script_directory):
     pass
 
 #Formerly get_bit_value
-def set_node_type_value(node_type, node_type_list, boolean_value):
-    print "initial node_type_list in set_node_type_value", node_type_list
-    if node_type == "install":
-        node_type_dictionary["INSTALL"] = True
-    elif node_type == "data":
-        node_type_dictionary["DATA"] = True
-    elif node_type == "index":
-        node_type_dictionary["INDEX"] = True
-    elif node_type == "idp":
-        node_type_dictionary["IDP"] = True
-    elif node_type == "compute":
-        node_type_dictionary["COMPUTE"] = True
-    elif node_type == "min":
-        node_type_dictionary["MIN"] = True
-    elif node_type == "max":
-        node_type_dictionary["MAX"] = True
-    elif node_type == "all":
-        node_type_dictionary["ALL"] = True
-    else:
-        raise ValueError("Invalid node type reference")
+def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
+    with open(config_file, "w") as esg_config_file:
+        esg_config_file.write(" ".join(node_type))
+    # print "initial node_type_list in set_node_type_value", node_type_list
+    # if node_type == "install":
+    #     node_type_dictionary["INSTALL"] = True
+    # elif node_type == "data":
+    #     node_type_dictionary["DATA"] = True
+    # elif node_type == "index":
+    #     node_type_dictionary["INDEX"] = True
+    # elif node_type == "idp":
+    #     node_type_dictionary["IDP"] = True
+    # elif node_type == "compute":
+    #     node_type_dictionary["COMPUTE"] = True
+    # elif node_type == "min":
+    #     node_type_dictionary["MIN"] = True
+    # elif node_type == "max":
+    #     node_type_dictionary["MAX"] = True
+    # elif node_type == "all":
+    #     node_type_dictionary["ALL"] = True
+    # else:
+    #     raise ValueError("Invalid node type reference")
+    #
+    # return get_node_type(node_type_list)
 
-    return get_node_type(node_type_list)
-
-def get_node_type(node_type_list):
-    for key, value in node_type_dictionary.items():
-        if value:
-            node_type_list.append(key)
-    return node_type_list
+# def get_node_type(node_type_list):
+#     for key, value in node_type_dictionary.items():
+#         if value:
+#             node_type_list.append(key)
+#     return node_type_list
 
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
@@ -180,7 +177,7 @@ def _define_acceptable_arguments():
     return (args, parser)
 
 
-def get_previous_node_type_config(config_file=config["esg_config_type_file"]):
+def get_node_type(config_file=config["esg_config_type_file"]):
     '''
         Helper method for reading the last state of node type config from config dir file "config_type"
         Every successful, explicit call to --type|-t gets recorded in the "config_type" file
@@ -203,18 +200,18 @@ def get_previous_node_type_config(config_file=config["esg_config_type_file"]):
 
 
 
-def set_node_type_config(node_type_list, config_file):
-    '''Write the node type list as a string to file '''
-    logger.debug("new node_type_list: %s", node_type_list)
-    if node_type_list:
-        try:
-            config_type_file = open(config_file, "w")
-            config_type_file.write(" ".join(node_type_list))
-        except IOError:
-            logger.exception("Unable to save node type \n")
-        else:
-            logger.debug("Wrote %s to file as new node_type_string", " ".join(node_type_list))
-            config_type_file.close()
+# def set_node_type_config(node_type_list, config_file):
+#     '''Write the node type list as a string to file '''
+#     logger.debug("new node_type_list: %s", node_type_list)
+#     if node_type_list:
+#         try:
+#             config_type_file = open(config_file, "w")
+#             config_type_file.write(" ".join(node_type_list))
+#         except IOError:
+#             logger.exception("Unable to save node type \n")
+#         else:
+#             logger.debug("Wrote %s to file as new node_type_string", " ".join(node_type_list))
+#             config_type_file.close()
 
 
 def process_arguments(node_type_list, devel, esg_dist_url):
@@ -234,11 +231,13 @@ def process_arguments(node_type_list, devel, esg_dist_url):
 
     if args.install:
         if args.type:
-            for arg in args.type:
-                node_type_list = set_node_type_value(arg, node_type_list, True)
+            set_node_type_value(args.type + args.install)
+            # for arg in args.type:
+            #     node_type_list = set_node_type_value(arg, node_type_list, True)
+        else:
+            set_node_type_value(args.install)
         installer_mode_dictionary["upgrade_mode"] = False
         installer_mode_dictionary["install_mode"] = True
-        set_node_type_value("install", node_type_list, True)
         print "node_type_list before returning from args.install:", node_type_list
         return node_type_list
         logger.debug("Install Services")
@@ -254,17 +253,17 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        get_previous_node_type_config(config["esg_config_type_file"])
+        get_node_type(config["esg_config_type_file"])
         install_local_certs()
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        get_previous_node_type_config(config["esg_config_type_file"])
+        get_node_type(config["esg_config_type_file"])
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        get_previous_node_type_config(config["esg_config_type_file"])
+        get_node_type(config["esg_config_type_file"])
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -275,8 +274,10 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         logger.debug("selecting type")
         logger.debug("args.type: %s", args.type)
         print "args.type:", args.type
-        for arg in args.type:
-            set_node_type_value(arg, node_type_list, True)
+        set_node_type_value(args.install)
+        # for arg in args.type:
+        #     set_node_type_value(arg, node_type_list, True)
+        # set_node_type_config(node_type_list, config["esg_config_type_file"])
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
@@ -288,7 +289,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         set_node_type_config(node_type_list, config["esg_config_type_file"])
         sys.exit(0)
     elif args.gettype:
-        get_previous_node_type_config(config["esg_config_type_file"])
+        get_node_type(config["esg_config_type_file"])
         show_type()
         sys.exit(0)
     elif args.start:

@@ -20,7 +20,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-node_type_dictionary = {"INSTALL": False , "TEST": False, "DATA":False, "INDEX":False, "IDP":False, "COMPUTE":False, "MIN": False, "MAX": False}
 installer_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
 
 def setup_sensible_confs():
@@ -106,27 +105,6 @@ def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
     node_type = [node.upper() for node in node_type]
     with open(config_file, "w") as esg_config_file:
         esg_config_file.write(" ".join(node_type))
-    # print "initial node_type_list in set_node_type_value", node_type_list
-    # if node_type == "install":
-    #     node_type_dictionary["INSTALL"] = True
-    # elif node_type == "data":
-    #     node_type_dictionary["DATA"] = True
-    # elif node_type == "index":
-    #     node_type_dictionary["INDEX"] = True
-    # elif node_type == "idp":
-    #     node_type_dictionary["IDP"] = True
-    # elif node_type == "compute":
-    #     node_type_dictionary["COMPUTE"] = True
-    # elif node_type == "min":
-    #     node_type_dictionary["MIN"] = True
-    # elif node_type == "max":
-    #     node_type_dictionary["MAX"] = True
-    # elif node_type == "all":
-    #     node_type_dictionary["ALL"] = True
-    # else:
-    #     raise ValueError("Invalid node type reference")
-    #
-    # return get_node_type(node_type_list)
 
 
 def get_node_type(config_file=config["esg_config_type_file"]):
@@ -150,12 +128,6 @@ def get_node_type(config_file=config["esg_config_type_file"]):
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
         sys.exit(1)
 
-
-# def get_node_type(node_type_list):
-#     for key, value in node_type_dictionary.items():
-#         if value:
-#             node_type_list.append(key)
-#     return node_type_list
 
 def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
@@ -187,21 +159,6 @@ def _define_acceptable_arguments():
     args = parser.parse_args()
     return (args, parser)
 
-
-# def set_node_type_config(node_type_list, config_file):
-#     '''Write the node type list as a string to file '''
-#     logger.debug("new node_type_list: %s", node_type_list)
-#     if node_type_list:
-#         try:
-#             config_type_file = open(config_file, "w")
-#             config_type_file.write(" ".join(node_type_list))
-#         except IOError:
-#             logger.exception("Unable to save node type \n")
-#         else:
-#             logger.debug("Wrote %s to file as new node_type_string", " ".join(node_type_list))
-#             config_type_file.close()
-
-
 def process_arguments(node_type_list, devel, esg_dist_url):
     logger.debug("node_type_list at start of process_arguments: %s", node_type_list)
     logger.info("node_type_list at start of process_arguments: %s", node_type_list)
@@ -220,16 +177,11 @@ def process_arguments(node_type_list, devel, esg_dist_url):
     if args.install:
         if args.type:
             set_node_type_value(args.type)
-            # for arg in args.type:
-            #     node_type_list = set_node_type_value(arg, node_type_list, True)
-        # else:
-        #     set_node_type_value(args.install)
         installer_mode_dictionary["upgrade_mode"] = False
         installer_mode_dictionary["install_mode"] = True
-        node_type_list = get_node_type()
-        print "node_type_list before returning from args.install:", node_type_list
-        return node_type_list + ["INSTALL"]
         logger.debug("Install Services")
+        node_type_list = get_node_type()
+        return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:
         installer_mode_dictionary["upgrade_mode"] = True
         installer_mode_dictionary["install_mode"] = False
@@ -260,13 +212,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         cert_howto()
         sys.exit(0)
     elif args.type:
-        logger.debug("selecting type")
-        logger.debug("args.type: %s", args.type)
-        print "args.type:", args.type
         set_node_type_value(args.type)
-        # for arg in args.type:
-        #     set_node_type_value(arg, node_type_list, True)
-        # set_node_type_config(node_type_list, config["esg_config_type_file"])
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
@@ -309,11 +255,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         start(node_type_list)
         sys.exit(0)
     elif args.status:
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
         get_node_status()
-        #TODO: Exit with status code dependent on what is returned from get_node_status()
         sys.exit(0)
     elif args.updatesubinstaller:
         esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")

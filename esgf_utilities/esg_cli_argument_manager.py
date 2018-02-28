@@ -126,6 +126,29 @@ def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
     #
     # return get_node_type(node_type_list)
 
+
+def get_node_type(config_file=config["esg_config_type_file"]):
+    '''
+        Helper method for reading the last state of node type config from config dir file "config_type"
+        Every successful, explicit call to --type|-t gets recorded in the "config_type" file
+        If the configuration type is not explicity set the value is read from this file.
+    '''
+    try:
+        last_config_type = open(config_file, "r")
+        node_type_list = last_config_type.read().split()
+        logger.debug("node_type_list is now: %s", " ".join(node_type_list))
+        if node_type_list:
+            return node_type_list
+        else:
+            raise NoNodeTypeError
+    except IOError:
+        raise NoNodeTypeError
+    except NoNodeTypeError:
+        logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
+        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
+        sys.exit(1)
+
+
 # def get_node_type(node_type_list):
 #     for key, value in node_type_dictionary.items():
 #         if value:
@@ -161,29 +184,6 @@ def _define_acceptable_arguments():
 
     args = parser.parse_args()
     return (args, parser)
-
-
-def get_node_type(config_file=config["esg_config_type_file"]):
-    '''
-        Helper method for reading the last state of node type config from config dir file "config_type"
-        Every successful, explicit call to --type|-t gets recorded in the "config_type" file
-        If the configuration type is not explicity set the value is read from this file.
-    '''
-    try:
-        last_config_type = open(config_file, "r")
-        node_type_list = last_config_type.read().split()
-        logger.debug("node_type_list is now: %s", " ".join(node_type_list))
-        if node_type_list:
-            return node_type_list
-        else:
-            raise NoNodeTypeError
-    except IOError:
-        raise NoNodeTypeError
-    except NoNodeTypeError:
-        logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
-        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
-        sys.exit(1)
-
 
 
 # def set_node_type_config(node_type_list, config_file):
@@ -224,6 +224,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         #     set_node_type_value(args.install)
         installer_mode_dictionary["upgrade_mode"] = False
         installer_mode_dictionary["install_mode"] = True
+        node_type_list = get_node_type()
         print "node_type_list before returning from args.install:", node_type_list
         return node_type_list
         logger.debug("Install Services")

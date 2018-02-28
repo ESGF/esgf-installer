@@ -404,7 +404,7 @@ def postgres_status():
     status = esg_functions.call_subprocess("service postgresql status")
     print "Postgres server status:", status["stdout"]
     if "running" in status["stdout"]:
-        return True
+        return (True, status)
     else:
         return False
 

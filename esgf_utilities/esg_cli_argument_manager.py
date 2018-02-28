@@ -47,8 +47,66 @@ def stop(node_bit):
     pass
 def get_node_status():
     '''
-        Return a tuple with the node's status and a numeric return code
+        Return a tuple with the node's status
     '''
+    node_running = True
+    node_type = get_previous_node_type_config()
+    postgres_status = esg_postgres.postgres_status()
+    if postgres_status:
+        print "Postgres is running"
+        print postgres_status[1]
+    else:
+        print "Postgres is stopped"
+        print postgres_status[1]
+        node_running = False
+
+    tomcat_status = esg_tomcat_manager.check_tomcat_status()
+    if tomcat_status:
+        print "Tomcat is running"
+        tomcat_process = psutil.Process(tomcat_status)
+        pinfo = tomcat_process.as_dict(attrs=['pid', 'username', 'cpu_percent', 'name'])
+        print pinfo
+    else:
+        print "Tomcat is stopped."
+        node_running = False
+
+    apache_status = esg_apache_manager.check_apache_status()
+    if apache_status:
+        print "Httpd is running"
+    else:
+        print "httpd is stopped"
+        node_running = False
+
+    if node_running:
+        print "Node is running"
+    else:
+        print "Node is stopped"
+
+    #TODO conditionally reflect the status of globus (gridftp) process
+        #This is here for sanity checking...
+        show_svc_list
+        return ${ret}
+    }
+    pass
+
+def show_svc_list()
+    # show_svc_list() {
+    #     id | grep root >& /dev/null
+    #     [ $? != 0 ] && echo "(display of node process list limited to root)" && return 0
+    #     echo
+    #     echo "---------------------------"
+    #     echo "$(echo_strong Running Node Services...) "; ((sel != 0)) && show_type || echo ""
+    #     echo "---------------------------"
+    #     local command="lsof -Pni |egrep  'postgres|jsvc|globus-gr|java|myproxy' $(((! DEBUG)) && echo "| grep -v \(CLOSE_WAIT\)") $(((! VERBOSE)) && echo "|grep \(LISTEN\)")"
+    #     eval ${command}
+    #     lsof -Pni |egrep httpd | head -n1
+    #     local dashboard_pid=$(pgrep dashboard)
+    #     [ -n "${dashboard_pid}" ] && echo "esgf-dash ${dashboard_pid}"
+    #
+    #     echo "---------------------------"
+    #     echo
+    #     return 0
+    # }
     pass
 def update_script(script_name, script_directory):
     '''

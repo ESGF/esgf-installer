@@ -51,6 +51,11 @@ def download_template_directory():
 
         esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
 
+# #Helper Method to figure out the version of solr-home installation
+# check_solr_version() {
+#     [ "$(cat ${solr_install_dir}/VERSION)" = "${solr_version}" ]
+# }
+
 def start_solr(SOLR_INSTALL_DIR, SOLR_HOME):
     print "\n*******************************"
     print "Starting Solr"
@@ -68,6 +73,13 @@ def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''
     esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
 
+def check_solr_process():
+    try:
+        solr_pid = [proc for proc in psutil.net_connections() if proc.laddr.port == 8984][0].pid
+        print " Solr process for {solr_config_type} running on port [{solr_server_port}] with pid {solr_pid}".format(solr_config_type, "8984", solr_pid)
+    except:
+        print "Solr not running"
+
 def stop_solr(SOLR_INSTALL_DIR):
     '''Stop the solr process'''
     solr_process = esg_functions.call_subprocess("{SOLR_INSTALL_DIR}/bin/solr stop")
@@ -84,6 +96,17 @@ def add_shards():
     print "******************************* \n"
     esg_functions.stream_subprocess_output("/usr/local/bin/add_shard.sh master 8984")
     esg_functions.stream_subprocess_output("/usr/local/bin/add_shard.sh slave 8983")
+
+
+#NOTE: Only write entries to the install log that refer to "resident"/"local" indexes (master and slave)
+# write_solr_install_log() {
+#     if [ "${solr_config_type}" = "master" ] || [ "${solr_config_type}" = "slave" ]; then
+#         local entry="$(date ${date_format}) esg-search:solr-${solr_config_type}=${solr_version} ${solr_install_dir}"
+#         echo ${entry} >> ${install_manifest}
+#         dedup ${install_manifest}
+#     fi
+#     return 0
+# }
 
 def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''

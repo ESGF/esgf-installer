@@ -25,8 +25,10 @@ def get_property(property_name, config_file=config["config_file"], section_name=
         return parser.get(section_name, property_name)
     except ConfigParser.NoSectionError:
         logger.debug("could not find property %s", property_name)
+        raise
     except ConfigParser.NoOptionError:
         logger.debug("could not find property %s", property_name)
+        raise
 
 
 def set_property(property_name, property_value=None, config_file=config["config_file"]):

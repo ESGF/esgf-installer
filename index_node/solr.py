@@ -108,6 +108,7 @@ def add_shards():
 #     return 0
 # }
 
+
 def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
 
@@ -157,7 +158,8 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
 
     # custom logging properties
     shutil.copyfile(os.path.join(current_directory, "solr_scripts/log4j.properties"), "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
-
+    esg_bash2py.mkdir_p("/esg/solr-logs")
+    
     #start solr
     start_solr(SOLR_INSTALL_DIR, SOLR_HOME)
 

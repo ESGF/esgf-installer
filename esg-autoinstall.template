@@ -109,3 +109,6 @@ set PGPORT 5432
 
 # Force recreation of SOLR replica indexes
 set SOLRREINDEX ""
+
+#If you want to use a local esgf-mirror, set this variable with the correct url. ex: http://blah.blah/esgf
+set LOCMIRRORURL ""

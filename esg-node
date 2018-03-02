@@ -7096,7 +7096,7 @@ main() {
     #---------------------------------------
 
     #---subsystems-----
-        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
+        [ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT+INDEX_BIT)) != 0 ] && echo "orp security subsystem" && setup_subsystem orp esg-orp $@
         #[ $((sel & INSTALL_BIT)) != 0 ] && [ $((sel & DATA_BIT)) != 0 ] && echo "drslib subsystem"  && setup_subsystem drslib esgf-drslib $@
 
     #---filters (TDS)--

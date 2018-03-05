@@ -2,6 +2,7 @@ import os
 import shutil
 import pwd
 import grp
+import psutil
 import requests
 import yaml
 from clint.textui import progress
@@ -56,7 +57,7 @@ def download_template_directory():
 #     [ "$(cat ${solr_install_dir}/VERSION)" = "${solr_version}" ]
 # }
 
-def start_solr(SOLR_INSTALL_DIR, SOLR_HOME):
+def start_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home"):
     print "\n*******************************"
     print "Starting Solr"
     print "******************************* \n"
@@ -73,14 +74,14 @@ def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''
     esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
 
-def check_solr_process():
+def check_solr_process(solr_config_type="master"):
     try:
         solr_pid = [proc for proc in psutil.net_connections() if proc.laddr.port == 8984][0].pid
         print " Solr process for {solr_config_type} running on port [{solr_server_port}] with pid {solr_pid}".format(solr_config_type, "8984", solr_pid)
     except:
         print "Solr not running"
 
-def stop_solr(SOLR_INSTALL_DIR):
+def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr"):
     '''Stop the solr process'''
     solr_process = esg_functions.call_subprocess("{SOLR_INSTALL_DIR}/bin/solr stop")
     if solr_process["returncode"] != 1:
@@ -159,7 +160,7 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     # custom logging properties
     shutil.copyfile(os.path.join(current_directory, "solr_scripts/log4j.properties"), "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
     esg_bash2py.mkdir_p("/esg/solr-logs")
-    
+
     #start solr
     start_solr(SOLR_INSTALL_DIR, SOLR_HOME)
 

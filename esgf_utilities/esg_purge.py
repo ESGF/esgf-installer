@@ -159,22 +159,6 @@ def purge_base():
             except OSError, error:
                 logger.exception("Couldn't delete %s", directory)
 
-    for directory in  glob.glob("/usr/local/esgf-solr-*"):
-        for directory in root_dirs:
-            try:
-                shutil.rmtree(directory)
-            except OSError, error:
-                logger.exception("Couldn't delete %s", directory)
-
-    for directory in  glob.glob("/usr/local/solr*"):
-        for directory in root_dirs:
-            try:
-                shutil.rmtree(directory)
-            except OSError, error:
-                logger.exception("Couldn't delete %s", directory)
-
-    # Solr may leave stuck java processes.  Kill them with extreme prejudice
-    # esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
 
 def purge_cdat():
     pass
@@ -206,9 +190,26 @@ def purge_apache():
 def purge_conda():
     pass
 
-#TODO: define purge_solr
 def purge_solr():
-    pass
+
+    solr_process = esg_functions.call_subprocess("/usr/local/solr/bin/solr stop")
+    if solr_process["returncode"] != 1:
+        print "Could not stop solr"
+
+    for directory in  glob.glob("/usr/local/esgf-solr-*"):
+        try:
+            shutil.rmtree(directory)
+        except OSError, error:
+            logger.exception("Couldn't delete %s", directory)
+
+    for directory in  glob.glob("/usr/local/solr*"):
+        try:
+            shutil.rmtree(directory)
+        except OSError, error:
+            logger.exception("Couldn't delete %s", directory)
+    # Solr may leave stuck java processes.  Kill them with extreme prejudice
+    # esg_functions.call_subprocess("pkill -9 -f 'java.*/usr/local/tomcat'")
+
 #TODO: define purge_dashboard()
 def purge_dashboard():
     pass

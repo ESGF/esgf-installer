@@ -8,6 +8,7 @@ import yaml
 from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
+from esgf_utilities.esg_exceptions import SubprocessError
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -137,8 +138,18 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     esg_bash2py.mkdir_p(SOLR_HOME)
 
     # create non-privilged user to run Solr server
-    esg_functions.stream_subprocess_output("groupadd solr")
-    esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
+    try:
+        esg_functions.stream_subprocess_output("groupadd solr")
+    except SubprocessError, error:
+        if error["returncode"] == "9":
+            #group already exists
+            pass
+    try:
+        esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
+    except SubprocessError, error:
+        if error["returncode"] == "9":
+            #user already exists
+            pass
 
     SOLR_USER_ID = pwd.getpwnam("solr").pw_uid
     SOLR_GROUP_ID = grp.getgrnam("solr").gr_gid

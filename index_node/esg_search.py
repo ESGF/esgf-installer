@@ -41,7 +41,7 @@ def write_search_service_install_log(search_web_service_dir, esg_search_version)
 
 def setup_publisher_resources():
      esgf_publisher_resources_repo = "https://github.com/ESGF/esgf-publisher-resources.git"
-     Repo.clone_from(esgf_publisher_resources_repo, config["esg_config_dir"])
+     Repo.clone_from(esgf_publisher_resources_repo, os.path.join(config["esg_config_dir"],"esgf-publisher-resources"))
 
 
 def search_startup_hook():
@@ -166,8 +166,8 @@ def setup_search_service():
     fetch_crawl_launcher()
     fetch_index_optimization_launcher()
 
-
-
+    #restart tomcat to put modifications in effect.
+    esg_tomcat_manager.start_tomcat()
 
 def write_search_rss_properties():
     node_short_name = esg_property_manager.get_property("node.short.name")

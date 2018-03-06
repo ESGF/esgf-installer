@@ -170,10 +170,10 @@ class test_ESG_publisher(unittest.TestCase):
     #
     #     print '''
     #         {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
-    #         '''.format(cdat_home=config["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir)
+    #         '''.format(cdat_home=config["cdat_home"], esg_org_name=esg_org_name, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir)
     #     esgprep_output = subprocess.call('''
     #         {cdat_home}/bin/esgprep mapfile --dataset ipsl.fr.test.mytest --project test {esgcet_testdir}; mv ipsl.fr.test.mytest.map test_mapfile.txt
-    #         '''.format(cdat_home=config["cdat_home"], esg_root_id=esg_root_id, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir), shell=True)
+    #         '''.format(cdat_home=config["cdat_home"], esg_org_name=esg_org_name, node_short_name=node_short_name, esgcet_testdir=esgcet_testdir), shell=True)
     #     if esgprep_output != 0:
     #         print " ERROR: ESG Mapfile generation failed"
     #         os.chdir(starting_directory)

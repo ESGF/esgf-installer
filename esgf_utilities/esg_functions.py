@@ -519,14 +519,6 @@ def check_shmmax(min_shmmax=48):
         esg_property_manager.set_property("kernal_shmmax", set_value_mb)
 
 
-def get_esg_root_id():
-    try:
-        esg_root_id = config["esg_root_id"]
-    except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg.root.id")
-    return esg_root_id
-
-
 def get_esgf_host():
     ''' Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN) '''
     try:

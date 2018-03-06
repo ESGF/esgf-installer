@@ -55,8 +55,8 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
 
 def _choose_organization_name(force_install=False):
     '''Choose the organization name for the installation'''
-    if esg_property_manager.get_property("esg.root.id") and not force_install:
-        logger.info("esg_root_id = [%s]", esg_property_manager.get_property("esg.root.id"))
+    if esg_property_manager.get_property("esg.org.name") and not force_install:
+        logger.info("esg_org_name = [%s]", esg_property_manager.get_property("esg.org.name"))
         return
 
     elif force_install:
@@ -69,7 +69,7 @@ def _choose_organization_name(force_install=False):
         while True:
             org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ".format(default_org_name=default_org_name)) or default_org_name
             org_name_input.replace("", "_")
-            esg_property_manager.set_property("esg_root_id", org_name_input)
+            esg_property_manager.set_property("esg_org_name", org_name_input)
             break
 
 def _choose_node_short_name(force_install=False):

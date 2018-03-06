@@ -18,8 +18,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-esg_root_id = esg_functions.get_esg_root_id()
-
 def check_publisher_version():
     '''Check if an existing version of the Publisher is found on the system'''
     module_list = list(freeze.freeze())
@@ -109,7 +107,8 @@ def run_esgsetup():
 
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #Create an initial ESG configuration file (esg.ini); TODO: make break into separate function
-    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_root_id} --db-admin-password password'''.format(esg_root_id=esg_functions.get_esg_root_id())
+    esg_org_name = esg_property_manager.get_property("esg.org.name")
+    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_org_name} --db-admin-password password'''.format(esg_org_name=esg_functions.get_esg_org_name())
 
     try:
         esg_functions.stream_subprocess_output(generate_esg_ini_command)

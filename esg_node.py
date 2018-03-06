@@ -96,7 +96,7 @@ def setup_esg_config_permissions():
         os.chmod(file_name, 0644)
     os.chmod("/esg/config/esgcet/esg.ini", 640)
 
-esg_root_id = esg_functions.get_esg_root_id()
+esg_org_name = esg_property_manager.get_property("esg.org.name")
 
 def esgf_node_info():
 
@@ -365,7 +365,7 @@ def done_remark():
 '''
 
     show_summary()
-    print "(\"Test Project\" -> pcmdi.{esg_root_id}.{node_short_name}.test.mytest)".format(esg_root_id=esg_root_id, node_short_name=esg_property_manager.get_property("node.short.name"))
+    print "(\"Test Project\" -> pcmdi.{esg_org_name}.{node_short_name}.test.mytest)".format(esg_org_name=esg_org_name, node_short_name=esg_property_manager.get_property("node.short.name"))
 
 def setup_esgf_rpm_repo(esg_dist_url):
     '''Creates the esgf repository definition file'''

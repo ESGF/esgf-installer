@@ -3,6 +3,7 @@ import shutil
 import pwd
 import grp
 import psutil
+import logging
 import requests
 import yaml
 from clint.textui import progress

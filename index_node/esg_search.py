@@ -133,10 +133,9 @@ def setup_search_service():
 
         with esg_bash2py.pushd(search_web_service_dir):
             print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
-            try:
-                esg_functions.extract_tarball(os.path.join(search_web_service_dir,search_service_war_file))
-            except Exception, error:
-                esg_functions.exit_with_error(error)
+            with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-search.war", 'r') as zf:
+                zf.extractall()
+            os.remove("esg-search.war")
 
     print "Checking for Solr schema update"
     new_solr_xml = "{}/WEB-INF/solr-home/mycore/conf/schema.xml".format(search_web_service_dir)

@@ -119,7 +119,7 @@ def setup_search_service():
         #Extract in workdir to get esg-search.war file
         try:
             esg_functions.extract_tarball(search_service_dist_file)
-        except tarfile.ReadError, error:
+        except Exception, error:
             esg_functions.exit_with_error(error)
 
         search_service_dist_dir = "esg-search-{}".format(esg_search_version)
@@ -129,13 +129,13 @@ def setup_search_service():
 
             search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
             esg_bash2py.mkdir_p(search_web_service_dir)
-            shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_web_service_dir, search_service_war_file))
+            shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_service_war_file))
 
         with esg_bash2py.pushd(search_web_service_dir):
             print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
             try:
                 esg_functions.extract_tarball(os.path.join(search_web_service_dir,search_service_war_file))
-            except tarfile.ReadError, error:
+            except Exception, error:
                 esg_functions.exit_with_error(error)
 
     print "Checking for Solr schema update"

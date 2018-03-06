@@ -124,7 +124,7 @@ def setup_search_service():
 
             search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
             esg_bash2py.mkdir_p(search_web_service_dir)
-            shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_web_service_dir))
+            shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_web_service_dir, search_service_war_file))
 
             with esg_bash2py.pushd(search_web_service_dir):
                 print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())

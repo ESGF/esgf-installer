@@ -12,6 +12,8 @@ from esgf_utilities.esg_exceptions import SubprocessError
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
+
 def download_solr_tarball(solr_tarball_url, SOLR_VERSION):
     print "\n*******************************"
     print "Download Solr version {SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION)

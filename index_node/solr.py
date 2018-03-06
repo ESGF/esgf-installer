@@ -141,14 +141,14 @@ def setup_solr(SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-ho
     try:
         esg_functions.stream_subprocess_output("groupadd solr")
     except SubprocessError, error:
-        if error["returncode"] == "9":
-            #group already exists
+        logger.debug(error[0]["returncode"])
+        if error[0]["returncode"] == 9:
             pass
     try:
         esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
     except SubprocessError, error:
-        if error["returncode"] == "9":
-            #user already exists
+        logger.debug(error[0]["returncode"])
+        if error[0]["returncode"] == 9:
             pass
 
     SOLR_USER_ID = pwd.getpwnam("solr").pw_uid

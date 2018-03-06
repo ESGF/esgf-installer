@@ -5,6 +5,7 @@ import shutil
 import filecmp
 import errno
 import ConfigParser
+import tarfile
 import yaml
 import requests
 from clint.textui import progress
@@ -116,7 +117,11 @@ def setup_search_service():
         esg_functions.download_update(search_service_dist_file, search_service_dist_url)
 
         #Extract in workdir to get esg-search.war file
-        esg_functions.extract_tarball(search_service_dist_file)
+        try:
+            esg_functions.extract_tarball(search_service_dist_file)
+        except tarfile.ReadError, error:
+            esg_functions.exit_with_error(error)
+
         search_service_dist_dir = "esg-search-{}".format(esg_search_version)
         with esg_bash2py.pushd(search_service_dist_dir):
             esg_tomcat_manager.stop_tomcat()
@@ -126,9 +131,12 @@ def setup_search_service():
             esg_bash2py.mkdir_p(search_web_service_dir)
             shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_web_service_dir, search_service_war_file))
 
-            with esg_bash2py.pushd(search_web_service_dir):
-                print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
-                esg_functions.extract_tarball(search_service_war_file)
+        with esg_bash2py.pushd(search_web_service_dir):
+            print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
+            try:
+                esg_functions.extract_tarball(os.path.join(search_web_service_dir,search_service_war_file))
+            except tarfile.ReadError, error:
+                esg_functions.exit_with_error(error)
 
     print "Checking for Solr schema update"
     new_solr_xml = "{}/WEB-INF/solr-home/mycore/conf/schema.xml".format(search_web_service_dir)

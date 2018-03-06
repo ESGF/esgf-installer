@@ -3,6 +3,7 @@ import zipfile
 import logging
 import shutil
 import filecmp
+import errno
 import ConfigParser
 import yaml
 import requests
@@ -15,6 +16,7 @@ from esgf_utilities import esg_version_manager
 from base import esg_tomcat_manager
 import solr
 
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -81,7 +83,11 @@ def setup_search_service():
 
     esg_search_version = "4.9.2"
     print "Checking for search service {}".format(esg_search_version)
-    installed_esg_search_version = esg_version_manager.get_current_webapp_version("esg-search")
+    try:
+        installed_esg_search_version = esg_version_manager.get_current_webapp_version("esg-search")
+    except IOError,error:
+        if error.errno == errno.ENOENT:
+            logger.info("No existing version of esg-search found.")
 
     if os.path.isdir("/usr/local/tomcat/webapps/esg-search"):
         if esg_property_manager.get_property("install.esg.search"):

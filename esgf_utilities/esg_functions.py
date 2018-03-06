@@ -878,6 +878,7 @@ def extract_tarball(tarball_name, dest_dir="."):
         tar.close()
     except tarfile.TarError, error:
         logger.exception("Could not extract the tarfile: %s", tarball_name)
+        raise
         exit_with_error(error)
 
 

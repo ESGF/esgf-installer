@@ -133,7 +133,7 @@ def setup_search_service():
 
         with esg_bash2py.pushd(search_web_service_dir):
             print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
-            with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-search.war", 'r') as zf:
+            with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
                 zf.extractall()
             os.remove("esg-search.war")
 

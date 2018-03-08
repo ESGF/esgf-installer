@@ -98,7 +98,7 @@ def check_for_existing_solr_install():
             if backup_esg_search.lower in ["y", "yes"]:
                 esg_functions.backup("/usr/local/tomcat/webapps/esg-search")
 
-def download_esg_search():
+def download_esg_search(esg_search_version):
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
         search_service_dist_url = "https://aims1.llnl.gov/esgf/dist/devel/esg-search/esg-search-{}.tar.gz".format(esg_search_version)
@@ -111,24 +111,23 @@ def download_esg_search():
         except Exception, error:
             esg_functions.exit_with_error(error)
 
-def copy_esg_search_war_to_tomcat():
+def copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file):
     search_service_dist_dir = "esg-search-{}".format(esg_search_version)
     with esg_bash2py.pushd(search_service_dist_dir):
         esg_tomcat_manager.stop_tomcat()
-        search_service_war_file = "esg-search.war"
 
-        search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
         esg_bash2py.mkdir_p(search_web_service_dir)
         shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_service_war_file))
 
-def extract_esg_search_war():
+
+def extract_esg_search_war(search_web_service_dir, search_service_war_file):
     with esg_bash2py.pushd(search_web_service_dir):
         print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
             zf.extractall()
         os.remove("esg-search.war")
 
-def update_solr_cores_schema():
+def update_solr_cores_schema(search_web_service_dir):
     print "Checking for Solr schema update"
     new_solr_xml = "{}/WEB-INF/solr-home/mycore/conf/schema.xml".format(search_web_service_dir)
 
@@ -160,13 +159,14 @@ def setup_search_service():
     print "*******************************"
     print "Setting up The ESGF Search Service..."
     print "*******************************"
+    esg_search_version = "4.9.2"
+    search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
+    search_service_war_file = "esg-search.war"
+    download_esg_search(esg_search_version)
 
-    download_esg_search()
-
-    copy_esg_search_war_to_tomcat()
-    extract_esg_search_war()
-    update_solr_cores_schema()
-
+    copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file)
+    extract_esg_search_war(search_web_service_dir, search_service_war_file)
+    update_solr_cores_schema(search_web_service_dir)
 
     TOMCAT_USER_ID = esg_functions.get_user_id("tomcat")
     TOMCAT_GROUP_ID = esg_functions.get_group_id("tomcat")

@@ -321,7 +321,7 @@ def system_component_installation(esg_dist_url, node_type_list):
             orp.main()
         from index_node import esg_cog, esg_search, solr
         esg_cog.main()
-        solr.main()
+        solr.main(config["index_config"])
         esg_search.main()
     if "IDP" in node_type_list:
         print "\n*******************************"

@@ -73,15 +73,7 @@ def stop_search_services():
 # Solr Search Service Setup and Configuration
 #---------------------------------------------------------
 
-def setup_search_service():
-    '''
-    Install The Search Service...
-    - Takes boolean arg: 0 = setup / install mode (default)
-                         1 = updated mode
-
-    In setup mode it is an idempotent install (default)
-    In update mode it will always pull down latest after archiving old'''
-
+def check_for_existing_solr_install():
     esg_search_version = "4.9.2"
     print "Checking for search service {}".format(esg_search_version)
     try:
@@ -97,7 +89,7 @@ def setup_search_service():
             esg_search_install = raw_input("Existing esg-search installation found.  Do you want to continue with the esg-search installation [y/N]: " ) or "no"
         if esg_search_install.lower() in ["no", "n"]:
             print "Using existing esg-search installation. Skipping setup."
-            return
+            return True
         else:
             if esg_property_manager.get_property("backup.esg.search"):
                 backup_esg_search = esg_property_manager.get_property("backup.esg.search")
@@ -106,10 +98,7 @@ def setup_search_service():
             if backup_esg_search.lower in ["y", "yes"]:
                 esg_functions.backup("/usr/local/tomcat/webapps/esg-search")
 
-    print "*******************************"
-    print "Setting up The ESGF Search Service..."
-    print "*******************************"
-
+def download_esg_search():
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
         search_service_dist_url = "https://aims1.llnl.gov/esgf/dist/devel/esg-search/esg-search-{}.tar.gz".format(esg_search_version)
@@ -122,21 +111,24 @@ def setup_search_service():
         except Exception, error:
             esg_functions.exit_with_error(error)
 
-        search_service_dist_dir = "esg-search-{}".format(esg_search_version)
-        with esg_bash2py.pushd(search_service_dist_dir):
-            esg_tomcat_manager.stop_tomcat()
-            search_service_war_file = "esg-search.war"
+def copy_esg_search_war_to_tomcat():
+    search_service_dist_dir = "esg-search-{}".format(esg_search_version)
+    with esg_bash2py.pushd(search_service_dist_dir):
+        esg_tomcat_manager.stop_tomcat()
+        search_service_war_file = "esg-search.war"
 
-            search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
-            esg_bash2py.mkdir_p(search_web_service_dir)
-            shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_service_war_file))
+        search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
+        esg_bash2py.mkdir_p(search_web_service_dir)
+        shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_service_war_file))
 
-        with esg_bash2py.pushd(search_web_service_dir):
-            print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
-            with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
-                zf.extractall()
-            os.remove("esg-search.war")
+def extract_esg_search_war():
+    with esg_bash2py.pushd(search_web_service_dir):
+        print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
+            zf.extractall()
+        os.remove("esg-search.war")
 
+def update_solr_cores_schema():
     print "Checking for Solr schema update"
     new_solr_xml = "{}/WEB-INF/solr-home/mycore/conf/schema.xml".format(search_web_service_dir)
 
@@ -152,6 +144,29 @@ def setup_search_service():
                 else:
                     print "Copying {new_solr_xml} -> {old_solr_xml}".format(old_solr_xml=old_solr_xml, new_solr_xml=new_solr_xml)
                     shutil.copyfile(new_solr_xml, old_solr_xml)
+
+def setup_search_service():
+    '''
+    Install The Search Service...
+    - Takes boolean arg: 0 = setup / install mode (default)
+                         1 = updated mode
+
+    In setup mode it is an idempotent install (default)
+    In update mode it will always pull down latest after archiving old'''
+
+    if check_for_existing_solr_install():
+        return
+
+    print "*******************************"
+    print "Setting up The ESGF Search Service..."
+    print "*******************************"
+
+    download_esg_search()
+
+    copy_esg_search_war_to_tomcat()
+    extract_esg_search_war()
+    update_solr_cores_schema()
+
 
     TOMCAT_USER_ID = esg_functions.get_user_id("tomcat")
     TOMCAT_GROUP_ID = esg_functions.get_group_id("tomcat")

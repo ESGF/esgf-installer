@@ -104,8 +104,10 @@ esg-purge-base () {
     # The default esg.ini file uses esg_dataroot, so we'll try
     # to unmount that first.  If esg.ini was changed, there may be
     # others.
-    if [ -d /esg/gridftp_root/esg_dataroot ] ; then
-        umount -f /esg/gridftp_root/esg_dataroot
+    if [ -d /esg/gridftp_root ] ; then
+        for mount in $(grep /esg/gridftp_root /proc/mounts | cut -d' ' -f2) ; do
+            umount -f $mount
+        done
     fi
 
     rm -rf /esg

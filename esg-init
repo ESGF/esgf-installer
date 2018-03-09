@@ -51,7 +51,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"2.9.10"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.7.12"}
+    esgf_idp_version=${esgf_idp_version:-"2.7.13"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"4.15.5"}
@@ -59,7 +59,7 @@ init() {
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.11"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.12"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:

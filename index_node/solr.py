@@ -231,6 +231,7 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
 
     # add shards
     for config_type in solr_config_types:
+        logger.debug("config_type: %s", config_type)
         add_shards(config_type)
 
     # custom logging properties

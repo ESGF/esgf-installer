@@ -113,7 +113,7 @@ def download_esg_search(esg_search_version):
 
 def copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file):
     search_service_dist_dir = "esg-search-{}".format(esg_search_version)
-    with esg_bash2py.pushd(search_service_dist_dir):
+    with esg_bash2py.pushd(os.path.join(config["workdir"],search_service_dist_dir)):
         esg_tomcat_manager.stop_tomcat()
 
         esg_bash2py.mkdir_p(search_web_service_dir)

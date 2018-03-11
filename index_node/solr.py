@@ -233,6 +233,7 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     for config_type in solr_config_types:
         logger.debug("config_type: %s", config_type)
         add_shards(config_type)
+        write_solr_install_log(config_type, SOLR_VERSION, SOLR_INSTALL_DIR)
 
     # custom logging properties
     shutil.copyfile(os.path.join(current_directory, "solr_scripts/log4j.properties"), "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))

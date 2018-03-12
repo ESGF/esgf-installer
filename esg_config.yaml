@@ -1,4 +1,3 @@
-
 ESGINI: /esg/config/esgcet/esg.ini
 ant_dist_url: http://archive.apache.org/dist/ant/binaries/apache-ant-1.9.1-bin.tar.gz
 ant_install_dir: /usr/local/ant
@@ -14,12 +13,13 @@ config_file: /esg/config/esgf.properties
 date_format: +%Y_%m_%d_%H%M%S
 db_database: esgcet
 default_distinguished_name: OU=ESGF.ORG, O=ESGF
+error: !!python/object/apply:exceptions.IOError [2, No such file or directory, /esg/config/.esg_pg_publisher_pass]
 esg_backup_dir: /esg/backups
 esg_coffee_dist_url_root: distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist
 esg_config: !!python/object:__builtin__.file {}
 esg_config_dir: /esg/config
 esg_config_type_file: /esg/config/config_type
-esg_dist_url_root: aims1.llnl.gov/esgf/dist
+esg_dist_url_root: http://aims1.llnl.gov/esgf/dist
 esg_etc_dir: /esg/etc
 esg_installarg_file: /usr/local/bin/esg-installarg
 esg_log_dir: /esg/log
@@ -35,7 +35,7 @@ esgf_dashboard_db_version: '0.01'
 esgf_dashboard_ip_workdir: /usr/local/src/esgf/workbench/esg/esgf-dashboard-ip
 esgf_dashboard_version: 1.3.18
 esgf_desktop_version: 0.0.20
-esgf_dist_mirror: aims1.llnl.gov/esgf
+esgf_dist_mirror: http://aims1.llnl.gov/esgf
 esgf_idp_version: 2.7.2
 esgf_node_manager_db_version: 0.1.5
 esgf_node_manager_version: 0.7.16
@@ -54,18 +54,18 @@ installer_gid: 20
 installer_home: /usr/local/src/esgf
 installer_uid: 501
 installer_user: williamhill
-java_dist_url: http://aims1.llnl.gov/esgf/dist/java/1.8.0_131/jdk1.8.0_131-64.tar.gz
+java_dist_url: http://aims1.llnl.gov/esgf/dist/java/1.8.0_162/jdk1.8.0_162-64.tar.gz
 java_install_dir: /usr/local/java
-java_min_version: 1.8.0_131
+java_min_version: 1.8.0_162
 java_opts: ''
-java_rpm_url: http://aims1.llnl.gov/esgf/dist/java/1.8.0_131/jdk-8u131-linux-x64.rpm
-java_version: 1.8.0_131
+java_rpm_url: http://aims1.llnl.gov/esgf/dist/java/1.8.0_162/jdk-8u112-linux-x64.rpm
+java_version: 1.8.0_162
 keystore_alias: my_esgf_node
 keystore_file: /esg/config/tomcat/keystore-tomcat
 keystore_password: ''
 ks_secret_file: /esg/config/.esg_keystore_pass
 mail_admin_address: ''
-mail_smtp_host: smtp.local
+mail_smtp_host: smtp.t-mobile.com
 myLD_LIBRARY_PATH: /usr/local/openssl/lib:/usr/local/uvcdat/2.2.0/Externals/lib:/usr/local/globus/lib:/usr/local/geoip/lib:/usr/lib64:/usr/lib
 myPATH: /usr/local/openssl/bin:/usr/local/java/bin:/usr/local/ant/bin:/usr/local/uvcdat/2.2.0/bin:/usr/local/uvcdat/2.2.0/Externals/bin:/usr/local/tomcat/bin:/usr/local/globus/bin:/usr/local/bin:/sbin:/usr/bin:/usr/sbin
 no_globus: false
@@ -100,7 +100,7 @@ publisher_db_user_passwd: ''
 publisher_home: /esg/config/esgcet
 publisher_repo: git://github.com/ESGF/esg-publisher.git
 publisher_repo_https: https://github.com/ESGF/esg-publisher.git
-publisher_tag: v3.0.1
+publisher_tag: v3.4.0a1
 python_version: '2.7'
 scripts_dir: /usr/local/bin
 show_summary_latch: 0

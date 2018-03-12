@@ -81,7 +81,7 @@ def setup_orp():
             return
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
 
-    orp_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
+    orp_url = os.path.join(config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
     print "orp_url:", orp_url
 
     download_orp_war(orp_url)

@@ -22,7 +22,7 @@ def setup_globus(installation_type):
             logger.info("Globus Setup for Data-Node... (GridFTP server) ")
             directive = "datanode"
             setup_globus_services(directive)
-            write_globus_env
+            write_globus_env()
             esgbash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
         if installation_type == "IDP":
@@ -30,7 +30,7 @@ def setup_globus(installation_type):
             directive = "gateway"
             setup_mode = "install"
             setup_globus_services(directive, setup_mode)
-            write_globus_env
+            write_globus_env()
             esgbash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
 def write_globus_env():
@@ -203,346 +203,291 @@ def setup_globus_services(config_type):
         return
 
     logger.debug("setup_globus_services for %s", config_type)
-setup_globus_services() {
+
+    globus_location = "/usr/local/globus"
+    esg_bash2py.mkdir_p(os.path.join(globus_location, "bin"))
+
+    if config_type == "datanode":
+        print "*******************************"
+        print "Setting up ESGF Globus GridFTP Service(s)"
+        print "*******************************"
+
+        create_globus_account()
+        install_globus(config_type)
+        setup_gcs_io("firstrun")
+        setup_gridftp_metrics_logging()
+
+        config_gridftp_server()
+        config_gridftp_metrics_logging("end-user")
+
+        if os.path.exists("/usr/sbin/globus-gridftp-server"):
+            esg_property_manager.set_property("gridftp_app_home", "/usr/sbin/globus-gridftp-server")
+    elif config_type == "gateway":
+        print "*******************************"
+        print "Setting up The ESGF Globus MyProxy Services"
+        print "*******************************"
+
+        install_globus(config_type)
+        setup_gcs_id("firstrun")
+        config_myproxy_server()
+    else:
+        print "You must provide a configuration type arg [datanode | gateway]"
+        return
 
 
-    mkdir -p ${globus_location}/bin
-    if [ "${config_type}" = "datanode" ]; then
+def start_globus_services(config_type):
+    print "Starting Globus services for {}".format(config_type)
 
-        echo
-        echo "*******************************"
-        echo "Setting up ESGF Globus GridFTP Service(s)"
-        echo "*******************************"
-        echo
+    if config_type == "datanode":
+        start_gridftp_server()
+        esg_property_manager.set_property("gridftp_endpoint", "gsiftp://{}".format(esg_functions.get_esgf_host()))
+    elif config_type == "gateway":
+        start_myproxy_server()
+    else:
+        print "You must provide a configuration type arg [datanode | gateway]"
+        return
 
-        create_globus_account
-        install_globus datanode
-        setup_gcs_io firstrun
-        [ $? -ne 0 ] && return 3
-        setup_gridftp_metrics_logging
+def stop_globus_services(config_type):
+    print "stop_globus_services for {}".format(config_type)
 
-        config_gridftp_server && config_gridftp_metrics_logging "end-user"
-        [ $? != 0 ] && echo " WARNING: Unable to complete gridftp configuration!!" && return 2
-
-        [ -e /usr/sbin/globus-gridftp-server ] && \
-            write_as_property gridftp_app_home /usr/sbin/globus-gridftp-server || \
-            echo "WARNING: Cannot find executable /usr/sbin/globus-gridftp-server"
-
-    elif [ "${config_type}" = "gateway" ]; then
-
-        echo
-        echo "*******************************"
-        echo "Setting up The ESGF Globus MyProxy Services"
-        echo "*******************************"
-        echo
-
-        shift
-        install_globus gateway
-        setup_gcs_id firstrun
-        [ $? -ne 0 ] && return 3
-        config_myproxy_server $@
-        [ $? != 0 ] && return 3
-
-    else
-        echo "You must provide a configuration type arg [datanode | gateway]"
-        return 1
-    fi
-
-    return 0
-}
+    if config_type == "datanode":
+        stop_gridftp_server()
+    elif config_type == "gateway":
+        stop_myproxy_server()
+    else:
+        print "You must provide a configuration type arg [datanode | gateway]"
+        return
 
 
-#arg1 - config_type ("datanode" | "gateway")
-start_globus_services() {
-    local config_type="$1"
-    echo "Starting Globus services for ${config_type}"
-    if [ "${config_type}" = "datanode" ]; then
-        start_gridftp_server
-        write_as_property gridftp_endpoint "gsiftp://${esgf_host:-$(hostname --fqdn)}"
-        #zoiks TODO: setup code to check on the crontab for gridftp usage parser.
-        return $?
-    elif [ "${config_type}" = "gateway" ]; then
-        start_myproxy_server
-        return $?
-    else
-        echo "You must provide a configuration type arg [datanode | gateway]"
-        return 1
-    fi
-}
-
-#arg1 - config_type ("datanode" | "gateway")
-stop_globus_services() {
-    local config_type="$1"
-    echo "stop_globus_services for ${config_type}"
-    if [ "${config_type}" = "datanode" ]; then
-        stop_gridftp_server
-        return $?
-    elif [ "${config_type}" = "gateway" ]; then
-        stop_myproxy_server
-        return $?
-    else
-        echo "You must provide a configuration type arg [datanode | gateway]"
-        return 1
-    fi
-}
-
-#arg1 - config_type ("datanode" | "gateway")
-test_globus_services() {
-    local config_type="$1"
-    debug_print "test_globus_services for ${config_type} -> [$@]"
-    if [ "${config_type}" = "datanode" ]; then
-        shift
-        test_auth_service
-        test_gridftp_server $@
-        return $?
-    elif [ "${config_type}" = "gateway" ]; then
-        shift
-        test_myproxy_server $@
-        return $?
-    else
-        echo "You must provide a configuration type arg [datanode | gateway]"
-        return 1
-    fi
-}
 
 #--------------------------------------------------------------
 # GLOBUS INSTALL (subset)
 #--------------------------------------------------------------
-
 # All methods below this point should be considered "private" functions
 
-install_globus() {
-    local config_type
-    if [ $1 = "datanode" ]; then
-        config_type="globus-connect-server-io"
-    elif [ $1 = "gateway" ]; then
-        config_type="globus-connect-server-id"
-    else
-        echo "You must provide a configuration type arg [datanode | gateway]"
-        checked_done 1
-    fi
+def _install_globus(config_type):
+    if config_type == "datanode":
+        globus_type = "globus-connect-server-io"
+    elif config_type == "gateway":
+        globus_type = "globus-connect-server-id"
+    else:
+        print "You must provide a configuration type arg [datanode | gateway]"
+        return
 
-    mkdir -p $globus_workdir
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw $globus_workdir
-    pushd $globus_workdir >& /dev/null
+    globus_workdir= os.path.join(config["workdir"],"extra", "globus")
+    esg_bash2.py.mkdir_p(globus_workdir)
+    # chmod a+rw $globus_workdir
+    os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+    with esg_bash2.py.pushd(globus_workdir):
+        # Setup Globus RPM repo
+        globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
+        globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
+        esg_functions.download_update(globus_connect_server_file, globus_connect_server_url)
+        esg_functions.stream_subprocess_output("rpm --import http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus")
+        esg_functions.stream_subprocess_output("rpm -i globus-connect-server-repo-latest.noarch.rpm")
 
-    # Setup Globus RPM repo
-    wget -O globus-connect-server-repo-latest.noarch.rpm http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm
-    [ $? != 0 ] && echo "ERROR: Could not download the Globus Repo RPM" && popd && checked_done 1
-    rpm --import http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus
-    [ $? != 0 ] && echo "ERROR: Could not download the Globus Repo GPG Key" && popd && checked_done 1
-    rpm -i globus-connect-server-repo-latest.noarch.rpm
+        # Install Globus and ESGF RPMs
+        esg_functions.stream_subprocess_output("yum -y install {}".format(globus_type))
+        esg_functions.stream_subprocess_output("yum -y update {}".format(globus_type))
 
-    # Install Globus and ESGF RPMs
-    yum -y install ${config_type}
-    yum -y update ${config_type}
-    if [ ${config_type} = 'globus-connect-server-io' ]; then
-        yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface
-        yum -y update globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface
-    else
-        yum -y install mhash pam-pgsql
-        yum -y update mhash pam-pgsql
-    fi
+        if globus_type == "globus-connect-server-io":
+            esg_functions.stream_subprocess_output("yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
+            esg_functions.stream_subprocess_output("yum -y update globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
+        else:
+            esg_functions.stream_subprocess_output("yum -y install mhash pam-pgsql")
+            esg_functions.stream_subprocess_output("yum -y update mhash pam-pgsql")
 
-    popd >& /dev/null
-    checked_done 0
-}
+
 
 #--------------------------------------------------------------
 # GRID FTP
 #--------------------------------------------------------------
-
-setup_gridftp_metrics_logging() {
-
-    echo -n "Checking for esg_usage_parser >= ${usage_parser_version} "
-    check_version ${esg_tools_dir}/esg_usage_parser ${usage_parser_version}
-    [ $? == 0 ] && (( ! force_install )) && echo " [OK]" && return 0
-
-    echo "GridFTP Usage - Configuration..."
-    echo
-    echo "*******************************"
-    echo "Setting up GridFTP Usage..."
-    echo "*******************************"
-    echo
-
-    mkdir -p ${esg_backup_dir}  && \
-        mkdir -p ${esg_tools_dir} && \
-        mkdir -p ${esg_log_dir} && \
-        mkdir -p ${esg_config_dir}
-    [ $? != 0 ] && echo "ERROR: could not create ${esg_root_dir} dir and/or subdirectories" && checked_done 1
-
-    yum -y install perl-DBD-Pg
-    [ $? == 0 ] && echo "Successfully intalled perl DBD" || echo "ERROR: Was not able to install perl DBD"
-
-    local esg_usage_parser_dist_file=${esg_usage_parser_dist_url##*/}
-    #strip off "-##-##-####.tar.bz2 at the end
-    esg_usage_parser_dist_dir=${globus_workdir}/$(echo ${esg_usage_parser_dist_file} | awk 'gsub(/('$compress_extensions')/,"")')
-    esg_usage_parser_dist_dir=${esg_usage_parser_dist_dir%-*}
-
-    #NOTE: Things are done this way because the distribution does not create its own top level directory (grrrr)
-    mkdir -p ${esg_usage_parser_dist_dir}
-    [ $? != 0 ] && checked_done 1
-    chmod a+rw ${globus_workdir}
-    pushd ${esg_usage_parser_dist_dir} >& /dev/null
-
-    echo "Downloading Globus GridFTP Usage Parser from ${esg_usage_parser_dist_url}"
-    wget -O ${esg_usage_parser_dist_file} ${esg_usage_parser_dist_url}
-
-    # expand it and go from there....
-    if [ -e ${esg_usage_parser_dist_file} ]; then
-        pwd
-        tar xvjf ${esg_usage_parser_dist_file}
-    fi
-
-    #pushd esg-usage-parser
-    cp -v esg_usage_parser ${esg_tools_dir}
-    chmod 755 ${esg_tools_dir}/esg_usage_parser
-    popd >& /dev/null
-}
-
 #http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/ESGUsageParser
-#http://rainbow.llnl.gov/dist/esg-node/esg-node
+def setup_gridftp_metrics_logging():
+    usage_parser_version = "0.1.1"
+    print "Checking for esg_usage_parser >= {} ".format(usage_parser_version)
+    # TODO: check version at os.path.join(config["esg_tools_dir"], "esg_usage_parser")
 
-config_gridftp_metrics_logging() {
-    echo 'Configuring gridftp metrics collection ...'
+    print "GridFTP Usage - Configuration..."
+    print "*******************************"
+    print "Setting up GridFTP Usage..."
+    print "*******************************"
 
-    mkdir -p ${gridftp_server_usage_config%/*}
-    #generate config file for gridftp server
-    printf "DBNAME=${node_db_name}
-DBHOST=${postgress_host}
-DBPORT=${postgress_port}
-DBUSER=${postgress_user}
-DBPASS=${pg_sys_acct_passwd}
-USAGEFILE=${gridftp_server_usage_log}
-TMPFILE=${esg_log_dir}/__up_tmpfile
-DEBUG=0
-NODBWRITE=0\n" > ${gridftp_server_usage_config}
+    directory_list = [config["esg_backup_dir"], config["esg_tools_dir"], config["esg_log_dir"], config["esg_config_dir"]]
+    for directory in directory_list:
+        esg_bash2py.mkdir_p(directory)
 
-    echo 'Setting up a cron job, /etc/cron.d/esg_usage_parser ...'
-    local cronscript=${gridftp_server_usage_config%.*}.cron
-    echo "5 0,12 * * * root ESG_USAGE_PARSER_CONF=${gridftp_server_usage_config} ${esg_tools_dir}/esg_usage_parser" > /etc/cron.d/esg_usage_parser
+    esg_functions.stream_subprocess_output("yum -y install perl-DBD-Pg")
 
-    return 0
-}
+    esg_usage_parser_dist_file = "esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
+    esg_usage_parser_dist_url= "https://aims1.llnl.gov/esgf/dist//globus/gridftp/esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
+    esg_usage_parser_dist_dir = os.path.join(globus_workdir, "esg_usage_parser-{}".format(usage_parser_version))
+    esg_bash2py.mkdir_p(esg_usage_parser_dist_dir)
+    # chmod a+rw $globus_workdir
+    os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+    with esg_bash2py.pushd(esg_usage_parser_dist_dir):
+        print "Downloading Globus GridFTP Usage Parser from {}".format(esg_usage_parser_dist_url)
+        esg_functions.dowload_update(esg_usage_parser_dist_file, esg_usage_parser_dist_url)
+
+        esg_functions.extract_tarball(esg_usage_parser_dist_file)
+
+        shutil.copyfile("esg_usage_parser", os.path.join(config["esg_tools_dir"], "esg_usage_parser"))
+        os.chmod(os.path.join(config["esg_tools_dir"], "esg_usage_parser"), 0755)
 
 
-setup_gridftp_jail() {
-    echo
-    echo
-    echo "*******************************"
-    echo "Setting up GridFTP... chroot jail"
-    echo "*******************************"
-    echo
+def config_gridftp_metrics_logging():
+    '''generate config file for gridftp server'''
+    print 'Configuring gridftp metrics collection ...'
+    gridftp_server_usage_config= "{esg_config_dir}/gridftp/esg-server-usage-gridftp.conf".format(config["esg_config_dir"])
+    gridftp_server_usage_config_dir = os.path.join(config["esg_config_dir"], "gridftp", "esg-server-usage-gridftp")
+    esg_bash2py.mkdir_p(gridftp_server_usage_config_dir)
 
-    [ -z "${gridftp_chroot_jail}" ] && echo "setup_gridftp_jail() rendered impotent \$gridftp_chroot_jail not set" && return 2
-    [ ! -e ${gridftp_chroot_jail}  ] && echo "${gridftp_chroot_jail} does not exist, making it..." && mkdir -p ${gridftp_chroot_jail}
+    with open(gridftp_server_usage_config, "w") as config_file:
+        config_file.write("DBNAME={}\n".format(esg_property_manager.get_property("db.database")))
+        config_file.write("DBHOST={}\n".format(esg_property_manager.get_property("db.host")))
+        config_file.write("DBPORT={}\n".format(esg_property_manager.get_property("db.port")))
+        config_file.write("DBUSER={}\n".format(esg_property_manager.get_property("db.user")))
+        config_file.write("DBPASS={}\n".format(esg_functions.get_postgres_password()))
+        gridftp_server_usage_log = "{esg_log_dir}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
+        config_file.write("USAGEFILE={}\n".format(gridftp_server_usage_log)
+        config_file.write("TMPFILE={}\n".format(os.path.join(config["esg_log_dir"], "__up_tmpfile"))
+        config_file.write("DEBUG=0\n")
+        config_file.write("NODBWRITE=0\n")
 
-    echo "Creating chroot jail @ ${gridftp_chroot_jail}"
-    globus-gridftp-server-setup-chroot -r ${gridftp_chroot_jail}
+    print 'Setting up a cron job, /etc/cron.d/esg_usage_parser ...'
+    with open("/etc/cron.d/esg_usage_parser", "w") as cron_file:
+        cron_file.write("5 0,12 * * * root ESG_USAGE_PARSER_CONF={gridftp_server_usage_config} {esg_tools_dir}/esg_usage_parser".format(gridftp_server_usage_config=gridftp_server_usage_config, esg_tools_dir=config["esg_tools_dir"]))
 
-    mkdir -p ${gridftp_chroot_jail}/etc/grid-security/sharing/${globus_sys_acct}
-    chown ${globus_sys_acct}:${globus_sys_acct_group} ${gridftp_chroot_jail}/etc/grid-security/sharing/${globus_sys_acct}
-    chmod 700 ${gridftp_chroot_jail}/etc/grid-security/sharing/${globus_sys_acct}
+def setup_gridftp_jail(globus_sys_acct):
 
-    [ ! -e "${ESGINI}" ] && echo "Cannot find ESGINI=[${ESGINI}] file that describes data dir location" && return 1
-    echo "Reading ESGINI=[${ESGINI}] for thredds_dataset_roots to mount..."
+    print "*******************************"
+    print "Setting up GridFTP... chroot jail"
+    print "*******************************"
 
-    while read mount_name mount_dir; do
-        [ -z ${mount_name} ] && debug_print "blank entry: [${mount_name}]" && continue;
-        [ -z ${mount_dir} ] && debug_print "blank dir entry: [${mount_dir}]" && continue;
-        echo "mounting [${mount_dir}] into chroot jail [${gridftp_chroot_jail}/] as [${mount_name##*/}]"
-        if [ -z "${mount_name}" ] || [ -z "${mount_dir}" ] ; then
-            echo 'WARNING: Was not able to find the mount directory [${mount_dir}] or mount name [${mount_name}] to use for proper chroot gridftp installation!!!'
-            return 999
-        fi
-        local real_mount_dir=$(readlink -f ${mount_dir})
-        local gridftp_mount_dir=${gridftp_chroot_jail}/${mount_name##*/}
-        local chroot_mount=($(mount -l | grep ^${real_mount_dir}' ' | awk '{print $3}' | sort -u))
-        if (( ${#chroot_mount[@]} == 0 )); then
-            [ ! -e ${gridftp_mount_dir}} ] && mkdir -p ${gridftp_mount_dir}
-            ((DEBUG)) && echo "mount --bind ${real_mount_dir} ${gridftp_mount_dir}"
-            mount --bind ${real_mount_dir} ${gridftp_mount_dir}
-        else
-            echo "There is already a mount for [${mount_dir}] -> [${chroot_mount}] on this host, NOT re-mounting"
-        fi
-    done < <(echo "$(python <(curl -s ${esg_dist_url}/utils/pull_key.py) -k thredds_dataset_roots -f ${ESGINI} | awk ' BEGIN {FS="|"} { if ($0 !~ /^[[:space:]]*#/) {print $1" "$2}}')")
-    return $?
-}
+    gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
+    if not os.path.exists(gridftp_chroot_jail):
+        print "{} does not exist, making it...".format(gridftp_chroot_jail)
+        esg_bash2.py.mkdir_p(gridftp_chroot_jail)
 
-post_gridftp_jail_setup() {
-    #Write our trimmed version of /etc/password in the chroot location
-    [ ! -e ${gridftp_chroot_jail} ] && return 1
+        print "Creating chroot jail @ {}".format(gridftp_chroot_jail)
+        esg_functions.stream_subprocess_output("globus-gridftp-server-setup-chroot -r {}".format(gridftp_chroot_jail))
 
-    if $(echo "${gridftp_chroot_jail}" | grep "${esg_root_dir}" >& /dev/null); then echo "*"; else (echo "illegal chroot location: ${gridftp_chroot_jail}" && return 1); fi
+        globus_jail_path = os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_sys_acct)
+        esg_bash2py.mkdir_p(globus_jail_path)
+        globus_id = esg_functions.get_user_id("globus")
+        globus_group = esg_functions.get_group_id("globus")
+        esg_functions.change_ownership_recursive(globus_jail_path, globus_id, globus_group)
+        esg_functions.change_permissions_recursive(globus_jail_path, 0700)
+
+        if not os.path.exists("/esg/config/esgcet/esg.ini"):
+            print "Cannot find ESGINI=[{}] file that describes data dir location".format("/esg/config/esgcet/esg.ini")
+            return
+
+        print "Reading ESGINI=[${}] for thredds_dataset_roots to mount....".format("/esg/config/esgcet/esg.ini")
+
+        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+        parser.read("/esg/config/esgcet/esg.ini")
+
+        try:
+            dataset_list = parser.get("DEFAULT", "thredds_dataset_roots").strip().split("\n")
+        except ConfigParser.NoSectionError:
+            logger.debug("could not find property %s", property_name)
+            raise
+        except ConfigParser.NoOptionError:
+            logger.debug("could not find property %s", property_name)
+            raise
+
+        for dataset in dataset_list:
+            mount_name, mount_dir = dataset.split("|")
+            print "mounting [{mount_dir}] into chroot jail [{gridftp_chroot_jail}/] as [{mount_name}]".format(mount_dir=mount_dir, mount_name=mount_name, gridftp_chroot_jail=gridftp_chroot_jail)
+            real_mount_dir = esg_functions.readlink_f(mount_dir)
+            gridftp_mount_dir = os.path.join(gridftp_chroot_jail, mount_name)
+            esg_bash2py.mkdir_p(gridftp_mount_dir)
+            esg_functions.stream_subprocess_output("mount --bind {} {}".format(real_mount_dir, gridftp_mount_dir))
+
+def post_gridftp_jail_setup():
+    '''Write our trimmed version of /etc/password in the chroot location'''
+    gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
+    if not os.path.exists(gridftp_chroot_jail):
+        logger.error("%s does not exist. Exiting.", gridftp_chroot_jail)
+        return
 
     # Add a test data file if already not added
-    if [ ! -f ${gridftp_chroot_jail}/esg_dataroot/test/sftlf.nc ]; then
-        mkdir -p ${gridftp_chroot_jail}/esg_dataroot/test
-        echo test > ${gridftp_chroot_jail}/esg_dataroot/test/sftlf.nc
-    fi
+    test_data_file = os.path.join(gridftp_chroot_jail, "esg_dataroot", "test", "sftlf.nc")
+    if not os.path.isfile(test_data_file):
+        esg_bash2py.mkdir_p(os.path.join(gridftp_chroot_jail, "esg_dataroot", "test"))
+        with open(test_data_file, "w") as test_file:
+            test_file.write("test")
 
-    echo -n "writing sanitized passwd file to [${gridftp_chroot_jail}/etc/passwd]"
-    if [ -e ${gridftp_chroot_jail}/etc/passwd ]; then
-        cat > ${gridftp_chroot_jail}/etc/passwd <<EOF
-root:x:0:0:root:/root:/bin/bash
-bin:x:1:1:bin:/bin:/dev/null
-ftp:x:14:50:FTP User:/var/ftp:/dev/null
-globus:x:101:156:Globus System User:/home/globus:/bin/bash
-EOF
-        echo " [OK]"
-    else
-        echo " [FAILED]"
-    fi
+    print "writing sanitized passwd file to [{}/etc/passwd]".format(gridftp_chroot_jail)
+    sanitized_passwd = os.path.join(gridftp_chroot_jail, "etc", "passwd")
+    if not os.path.exists(sanitized_passwd):
+        with open(sanitized_passwd, "w") as sanitized_passwd_file:
+            sanitized_passwd.write("root:x:0:0:root:/root:/bin/bash\n")
+            sanitized_passwd.write("bin:x:1:1:bin:/bin:/dev/null\n")
+            sanitized_passwd.write("ftp:x:14:50:FTP User:/var/ftp:/dev/null\n")
+            sanitized_passwd.write("globus:x:101:156:Globus System User:/home/globus:/bin/bash\n")
 
     #Write our trimmed version of /etc/group in the chroot location
-    echo -n "writing sanitized group file to [${gridftp_chroot_jail}/etc/group]"
-    if [ -e ${gridftp_chroot_jail}/etc/group ]; then
-        cat > ${gridftp_chroot_jail}/etc/group <<EOF
-root:x:0:root
-bin:x:1:root,bin,daemon
-ftp:x:50:
-globus:x:156:
-EOF
-        echo " [OK]"
-    else
-        echo " [FAILED]"
-    fi
-}
+    print "writing sanitized group file to [{}/etc/group]".format(gridftp_chroot_jail)
+    sanitized_group = os.path.join(gridftp_chroot_jail, "etc", "group")
+    if not os.path.exists(sanitized_group):
+        with open(sanitized_group, "w") as santized_group_file:
+            santized_group_file.write("root:x:0:root\n")
+            santized_group_file.write("bin:x:1:root,bin,daemon\n")
+            santized_group_file.write("ftp:x:50:\n")
+            santized_group_file.write("globus:x:156:\n")
+
+
+def setup_gcs_io(first_run=None):
+    if first_run == "firstrun":
+        cert_dir = "/etc/tempcerts"
+    else:
+        cert_dir = "/etc/esgfcerts"
+
+    with esg_bash2py.pushd(cert_dir):
+        if os.path.isfile("hostkey.pem"):
+            shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
+        if os.path.isfile("hostcert.pem"):
+            shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
+
+    print '*******************************'
+    print ' Registering the Data node with Globus Platform'
+    print '*******************************'
+    print 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
+    print 'download data through Globus. This uses the GridFTP server on the data node.'
+    print 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
+    print 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
+    print 'go to www.globus.org/SignUp.'
+    print 'This step can be skipped, but users will not be able to download datasets'
+    print 'from the GridFTP server on the data node through the ESGF web interface.'
+
+    if esg_property_manager.get_property("register.gridftp"):
+        register_gridftp_answer = esg_property_manager.get_property("register.gridftp")
+    else:
+        register_gridftp_answer = raw_input(
+        "Do you want to register the GridFTP server with Globus?: ") or "Y"
+
+    if register_gridftp_answer.lower() in ["y", "yes"]:
+        GLOBUS_SETUP = True
+    else:
+        GLOBUS_SETUP = False
+
+    if GLOBUS_SETUP:
+        if esg_property_manager.get_property("globus.user"):
+            globus_user= esg_property_manager.get_property("globus.user")
+        else:
+            while True:
+                globus_user = raw_input("Please provide a Globus username: ")
+                if globus_user:
+                    break
+                else:
+                    print "Globus username cannot be blank."
 
 setup_gcs_io() {
 
-    if [ "x$1" = "xfirstrun" ]; then
-        pushd /etc/tempcerts >& /dev/null
-    else
-        pushd /etc/esgfcerts >& /dev/null
-    fi
-    if [ -s hostkey.pem -a -s hostcert.pem ]; then
-        cp host*.pem /etc/grid-security
-    fi
-    popd >& /dev/null
 
     local input
-
-    echo '*******************************'
-    echo ' Registering the Data node with Globus Platform'
-    echo '*******************************'
-    echo
-    echo 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
-    echo 'download data through Globus. This uses the GridFTP server on the data node.'
-    echo 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
-    echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
-    echo 'go to www.globus.org/SignUp.'
-    echo
-    echo 'This step can be skipped, but users will not be able to download datasets'
-    echo 'from the GridFTP server on the data node through the ESGF web interface.'
-    echo
-
-    while [ 1 ]; do
-        read -e -p 'Do you want to register the GridFTP server with Globus? [Y/n]: ' input
-        [ -z "${input}" -o "${input}" = 'Y' -o "${input}" = 'y' ] && export GLOBUS_SETUP='yes' && break
-        [ "${input}" = 'N' -o "${input}" = 'n' ] && export GLOBUS_SETUP='no' && break
-    done
 
     if [ $GLOBUS_SETUP = 'yes' ]; then
 

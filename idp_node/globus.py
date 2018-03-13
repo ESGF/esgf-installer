@@ -479,37 +479,28 @@ def setup_gcs_io(first_run=None):
         else:
             while True:
                 globus_user = raw_input("Please provide a Globus username: ")
-                if globus_user:
-                    break
-                else:
+                if not globus_user:
                     print "Globus username cannot be blank."
+                else:
+                    break
+
+    if esg_property_manager.get_property("globus.password"):
+        globus_password = esg_property_manager.get_property("globus.password")
+    else:
+        while True:
+            globus_password = raw_input("Please enter your Globus password: ")
+            if not globus_password:
+                print "The Globus password can not be blank"
+                continue
+            else:
+                esg_property_manager.set_property("globus.password", globus_password)
+                break
 
 setup_gcs_io() {
 
-
     local input
-
     if [ $GLOBUS_SETUP = 'yes' ]; then
 
-        if [ -z "$GLOBUS_USER" ]; then
-            local input
-            while [ 1 ]; do
-                read -e -p "Please provide a Globus username [${globus_user}]: " input
-                [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
-                [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
-            done
-            unset input
-        fi
-
-        if [ -z "$GLOBUS_PASSWORD" ]; then
-            local input
-            while [ 1 ]; do
-                read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-                [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
-                [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
-            done
-            unset input
-        fi
 
         local myproxy_hostname=${myproxy_endpoint:-${esgf_idp_peer:-%(HOSTNAME)s}}
 

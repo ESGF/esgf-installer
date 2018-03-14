@@ -484,128 +484,133 @@ def setup_gcs_io(first_run=None):
                 else:
                     break
 
-    if esg_property_manager.get_property("globus.password"):
-        globus_password = esg_property_manager.get_property("globus.password")
-    else:
-        while True:
-            globus_password = raw_input("Please enter your Globus password: ")
-            if not globus_password:
-                print "The Globus password can not be blank"
-                continue
-            else:
-                esg_property_manager.set_property("globus.password", globus_password)
-                break
+        if esg_property_manager.get_property("globus.password"):
+            globus_password = esg_property_manager.get_property("globus.password")
+        else:
+            while True:
+                globus_password = raw_input("Please enter your Globus password: ")
+                if not globus_password:
+                    print "The Globus password can not be blank"
+                    continue
+                else:
+                    esg_property_manager.set_property("globus.password", globus_password)
+                    break
 
-setup_gcs_io() {
+        if esg_property_manager.get_property("myproxy_endpoint"):
+            myproxy_hostname = esg_property_manager.get_property("myproxy_endpoint")
+        else:
+            myproxy_hostname = esg_functions.get_esgf_host().upper()
 
-    local input
-    if [ $GLOBUS_SETUP = 'yes' ]; then
+        # with open("/etc/globus-connect-server-esgf.conf", "w") as globus_server_file:
+        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+        parser.read("/etc/globus-connect-server-esgf.conf")
+
+        try:
+            parser.add_section("Globus")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('Globus', "User", GLOBUS_USER)
+        parser.set('Globus', "Password", GLOBUS_PASSWORD)
+
+        try:
+            parser.add_section("Endpoint")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('Endpoint', "Name", esg_property_manager.get_property("node.short.name"))
+        parser.set('Endpoint', "Public", "True")
+
+        try:
+            parser.add_section("Security")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('Security', "FetchCredentialFromRelay", "True")
+        parser.set('Security', "CertificateFile", "/etc/grid-security/hostcert.pem")
+        parser.set('Security', "KeyFile", "/etc/grid-security/hostkey.pem")
+        parser.set('Security', "TrustedCertificateDirectory", "/etc/grid-security/certificates/")
+        parser.set('Security', "IdentityMethod", "MyProxy")
+        parser.set('Security', "AuthorizationMethod", "Gridmap")
+
+        try:
+            parser.add_section("GridFTP")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
+        gridftp_server_port_range = "50000,51000"
+        parser.set('GridFTP', "IncomingPortRange", gridftp_server_port_range)
+        gridftp_server_source_range = "50000,51000"
+        parser.set('GridFTP', "OutgoingPortRange", gridftp_server_source_range)
+        parser.set('GridFTP', "RestrictPaths", "R/,N/etc,N/tmp,N/dev")
+        parser.set('GridFTP', "Sharing", "False")
+        parser.set('GridFTP', "SharingRestrictPaths", "R/")
+        parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", GLOBUS_USER))
+
+        try:
+            parser.add_section("MyProxy")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('MyProxy', "Server", myproxy_hostname)
+
+        with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
+            parser.write(config_file_object)
 
 
-        local myproxy_hostname=${myproxy_endpoint:-${esgf_idp_peer:-%(HOSTNAME)s}}
-
-        cat >/etc/globus-connect-server-esgf.conf <<EOF
-[Globus]
-User = %(GLOBUS_USER)s
-Password = %(GLOBUS_PASSWORD)s
-[Endpoint]
-Name = %(SHORT_HOSTNAME)s
-Public = True
-[Security]
-FetchCredentialFromRelay = True
-CertificateFile = /etc/grid-security/hostcert.pem
-KeyFile = /etc/grid-security/hostkey.pem
-TrustedCertificateDirectory = /etc/grid-security/certificates/
-IdentityMethod = MyProxy
-AuthorizationMethod = Gridmap
-[GridFTP]
-Server = %(HOSTNAME)s
-IncomingPortRange = ${gridftp_server_port_range}
-OutgoingPortRange = ${gridftp_server_source_range}
-RestrictPaths = R/,N/etc,N/tmp,N/dev
-Sharing = False
-SharingRestrictPaths = R/
-SharingStateDir = ${gridftp_chroot_jail}/etc/grid-security/sharing/\$USER
-[MyProxy]
-Server = ${myproxy_hostname}
-EOF
-
-        globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v
-        return $?
-    fi
+        esg_functions.stream_subprocess_output("globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v")
 
     # Create a substitution of GCS configuration files for GridFTP server
-    [ ! -d /etc/gridftp.d ] && mkdir /etc/gridftp.d
-    cat >/etc/gridftp.d/globus-connect-esgf <<EOF
-port_range 50000,51000
-\$GLOBUS_TCP_SOURCE_RANGE 50000,51000
-restrict_paths R/,N/etc,N/tmp,N/dev
-\$GRIDMAP "/etc/grid-security/grid-mapfile"
-\$X509_USER_CERT "/etc/grid-security/hostcert.pem"
-\$X509_USER_KEY "/etc/grid-security/hostkey.pem"
-log_single /var/log/gridftp.log
-log_level ALL
-\$X509_CERT_DIR "/etc/grid-security/certificates"
-EOF
+    esg_bash2py.mkdir_p("/etc/gridftp.d")
 
-    return 0
+    with open("/etc/gridftp.d/globus-connect-esgf", "w") as globus_connect_file:
+        globus_connect_file.write("port_range 50000,51000\n")
+        globus_connect_file.write("GLOBUS_TCP_SOURCE_RANGE 50000,51000\n")
+        globus_connect_file.write("restrict_paths R/,N/etc,N/tmp,N/dev\n")
+        globus_connect_file.write("GRIDMAP '/etc/grid-security/grid-mapfile'\n")
+        globus_connect_file.write("X509_USER_CERT '/etc/grid-security/hostcert.pem'\n")
+        globus_connect_file.write("X509_USER_KEY '/etc/grid-security/hostkey.pem'\n")
+        globus_connect_file.write("log_single /var/log/gridftp.log\n")
+        globus_connect_file.write("log_level ALL\n")
+        globus_connect_file.write("X509_CERT_DIR '/etc/grid-security/certificates'\n")
 
-}
 
-# (OLD WAY) http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/GridFTPServerWithTokenAuthorizationModuleConfig
-# http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/EnhancedEndUserDownloadGridFTPModule
-config_gridftp_server() {
+def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail):
+    print "GridFTP - Configuration..."
+    print "*******************************"
+    print "Setting up GridFTP..."
+    print "*******************************"
 
-    echo "GridFTP - Configuration..."
-    echo
-    echo "*******************************"
-    echo "Setting up GridFTP..."
-    echo "*******************************"
-    echo
-
-    write_as_property gridftp_server_port
-
-    #TODO: Decide how to maintain semantic integrity
-    [ -z ${globus_sys_acct} ] && echo " ERROR: globus_sys_acct=[${globus_sys_acct}] must be set" && checked_done 1
+    gridftp_server_port = "2811"
+    esg_property_manager.set_property("gridftp_server_port", gridftp_server_port)
 
     # generate ESG SAML Auth config file
-    write_esgsaml_auth_conf
+    write_esgsaml_auth_conf()
 
-    dnode_root_dn_wildcard='^.*$'
-    grid-mapfile-add-entry -dn ${dnode_root_dn_wildcard} -ln ${globus_sys_acct}
+    dnode_root_dn_wildcard = '^.*$'
+    esg_functions.stream_subprocess_output("grid-mapfile-add-entry -dn {} -ln {}".format(dnode_root_dn_wildcard, globus_sys_acct))
 
-    echo "chroot_path ${gridftp_chroot_jail}" > /etc/gridftp.d/globus-esgf
-    echo 'usage_stats_id 2811' >> /etc/gridftp.d/globus-esgf
-    echo 'usage_stats_target localhost:0\!all' >> /etc/gridftp.d/globus-esgf
-    echo 'acl customgsiauthzinterface' >> /etc/gridftp.d/globus-esgf
-    echo "\$GLOBUS_USAGE_DEBUG \"MESSAGES,${gridftp_server_usage_log}\"" >> /etc/gridftp.d/globus-esgf
-    echo '$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_esgsaml.conf"' >> /etc/gridftp.d/globus-esgf
-    echo '#$GLOBUS_GSI_AUTHZ_DEBUG_LEVEL "10"' >> /etc/gridftp.d/globus-esgf
-    echo '#$GLOBUS_GSI_AUTHZ_DEBUG_FILE "/var/log/gridftp-debug.log"' >> /etc/gridftp.d/globus-esgf
+    with open("/etc/gridftp.d/globus-esgf", "w") as globus_esgf_file:
+        globus_esgf_file.write("chroot_path {}\n".format(gridftp_chroot_jail))
+        globus_esgf_file.write("usage_stats_id 2811\n")
+        globus_esgf_file.write("usage_stats_target localhost:0\!all\n")
+        globus_esgf_file.write("acl customgsiauthzinterface\n")
+        gridftp_server_usage_log = "{}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
+        globus_esgf_file.write("GLOBUS_USAGE_DEBUG \"MESSAGES,{}\n".format(gridftp_server_usage_log))
+        globus_esgf_file.write("GSI_AUTHZ_CONF '/etc/grid-security/authz_callouts_esgsaml.conf'\n")
+        globus_esgf_file.write("GLOBUS_GSI_AUTHZ_DEBUG_FILE '/var/log/gridftp-debug.log'\n")
 
-    checked_done 0
-}
+def write_esgsaml_auth_conf():
+    '''By making this a separate function it may be called directly in the
+    event that the gateway_service_root needs to be repointed. (another Estani gem :-))'''
+    orp_security_authorization_service_endpoint = esg_property_manager.get_property("orp_security_authorization_service_endpoint")
+    with open("/etc/grid-security/esgsaml_auth.conf", "w") as esgsaml_conf_file:
+        logger.info("---------esgsaml_auth.conf---------")
+        logger.info("AUTHSERVICE=%s", orp_security_authorization_service_endpoint)
+        logger.info("---------------------------------")
+        esgsaml_conf_file.write("AUTHSERVICE={}".format(orp_security_authorization_service_endpoint))
 
-#By making this a separate function it may be called directly in the
-#event that the gateway_service_root needs to be repointed. (another Estani gem :-))
-write_esgsaml_auth_conf() {
-    get_property orp_security_authorization_service_endpoint
-    echo "AUTHSERVICE=${orp_security_authorization_service_endpoint}" > /etc/grid-security/esgsaml_auth.conf
-    echo
-    echo "---------esgsaml_auth.conf---------"
-    cat /etc/grid-security/esgsaml_auth.conf
-    echo "---------------------------------"
-    echo
-    return 0
-}
-
-test_auth_service() {
-    echo -n "Testing authorization service on ${esgf_host} ... "
-    ! globus_adq_client https://${esgf_host}/esg-orp/saml/soap/secure/authorizationService.htm https://${esgf_host}/esgf-idp/openid/rootAdmin gsiftp://${esgf_host}:${gridftp_server_port}//esg_dataroot/test/sftlf.nc | grep -q 'NOT PERMIT' >& /dev/null
-    local ret=$?
-    [ ${ret} == 0 ] && [OK] || [FAIL]
-    return ${ret}
-}
 
 test_gridftp_server() {
     local ret=0
@@ -640,60 +645,38 @@ test_gridftp_server() {
     return ${ret}
 }
 
-configure_esgf_publisher_for_gridftp() {
-    echo -n " configuring publisher to use this GridFTP server... "
-    if [ -e ${publisher_home}/${publisher_config} ]; then
-        cp ${publisher_home}/${publisher_config}{,.bak}
-        sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}
-        echo "[OK]"
-        return 0
-    fi
-    echo "[FAIL]"
-    return 1
-}
-
-#see caller start_globus_services() above.
-#returns true  (0) if this function actively started the process
-#returns false (1) if this function did not have to start the process since already running
-start_gridftp_server() {
-    local global_x509_cert_dir=${global_x509_cert_dir:-${X509_CERT_DIR:-"/etc/grid-security/certificates"}}
-    local ret=0
-    echo " GridFTP - Starting server... $*"
-    #TODO: Does it matter if root starts the server vs the globus_sys_acct ??? Neill?
-    #      Is there a difference between who starts the server and who the server
-    #      xfrs file as?
-    write_esgsaml_auth_conf
-    setup_gridftp_jail
-    post_gridftp_jail_setup
-
-    echo -n " syncing local certificates into chroot jail... "
-    [ -n "${gridftp_chroot_jail}" ] && [ "${gridftp_chroot_jail}" != "/" ] && [ -e "${gridftp_chroot_jail}/etc/grid-security/certificates" ] && \
-        rm -rf ${gridftp_chroot_jail}/etc/grid-security/certificates && \
-        mkdir -p ${gridftp_chroot_jail}/etc/grid-security && \
-        (cd /etc/grid-security; tar cpf - certificates) | tar xpf - -C ${gridftp_chroot_jail}/etc/grid-security
-    [ $? == 0 ] && echo "[OK]" || echo "[FAIL]"
-
-    configure_esgf_publisher_for_gridftp
-
-    service globus-gridftp-server start
-
-    return 0
-}
+def configure_esgf_publisher_for_gridftp():
+    print " configuring publisher to use this GridFTP server... "
+    publisher_path = os.path.join(config["publisher_home"], config["publisher_config"])
+    if os.path.exists(publisher_path):
+        shutil.copyfile(publisher_path, publisher_path+".bak")
+        esg_functions.stream_subprocess_output('''sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}''')
 
 
-stop_gridftp_server() {
-    service globus-gridftp-server stop
-    return 0
-}
+def start_gridftp_server():
+    global_x509_cert_dir = "/etc/grid-security/certificates"
+    print " GridFTP - Starting server... $*"
+    write_esgsaml_auth_conf()
+    setup_gridftp_jail()
+    post_gridftp_jail_setup()
+
+    print " syncing local certificates into chroot jail... "
+    if os.path.exists(gridftp_chroot_jail) and gridftp_chroot_jail != "/" and os.path.exists(os.path.join(gridftp_chroot_jail, "etc", "grid-security", "certificates")):
+        shutil.rmtree(os.path.join(gridftp_chroot_jail, "etc", "grid-security", "certificates"))
+        esg_bash2py.mkdir_p(os.path.join(gridftp_chroot_jail, "etc", "grid-security"))
+        shutil.copytree("/etc/grid-security/certificates", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "certificates"))
+
+    configure_esgf_publisher_for_gridftp()
+
+    esg_functions.stream_subprocess_output("service globus-gridftp-server start")
 
 
-#This function "succeeds" (is true -> returns 0)  if there *are* running processes found
-check_gridftp_process() {
-    local port="$1"
-    val=$(ps -elf | grep globus-gridftp-server | grep -v grep | grep "${port}" | awk ' END { print NR }')
-    [ $(($val > 0 )) == 1 ] && echo " gridftp-server process is running on port [${port}]..." && return 0
-    return 1
-}
+def stop_gridftp_server():
+    esg_functions.stream_subprocess_output("service globus-gridftp-server stop")
+
+def check_gridftp_process(port_number):
+    gridftp_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "globus-gridftp-server" in proc.info["name"]]
+    # print " gridftp-server process is running on port [${port}]..."
 
 
 #--------------------------------------------------------------

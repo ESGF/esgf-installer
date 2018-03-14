@@ -391,7 +391,7 @@ def setup_thredds(node_type_list):
     esg_tomcat_manager.stop_tomcat()
 
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
-    thredds_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.2", "thredds.war")
+    thredds_url = os.path.join(config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.2", "thredds.war")
     download_thredds_war(thredds_url)
 
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):

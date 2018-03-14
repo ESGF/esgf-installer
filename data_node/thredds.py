@@ -306,7 +306,7 @@ def copy_jar_files():
     # TDS jars necessary to support ESGF security filters
     # some jars are retrieved from the ESGF repository
     # other jars are copied from the unpacked ORP or NM distributions
-    esgf_devel_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel")
+    esgf_devel_url = os.path.join(config["esgf_dist_mirror"], "dist", "devel")
     urllib.urlretrieve("{esgf_devel_url}/filters/XSGroupRole-1.0.0.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar")
     urllib.urlretrieve("{esgf_devel_url}/filters/commons-httpclient-3.1.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar")
     urllib.urlretrieve("{esgf_devel_url}/filters/commons-lang-2.6.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar")

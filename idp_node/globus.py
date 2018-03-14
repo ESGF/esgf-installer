@@ -501,7 +501,6 @@ def setup_gcs_io(first_run=None):
         else:
             myproxy_hostname = esg_functions.get_esgf_host().upper()
 
-        # with open("/etc/globus-connect-server-esgf.conf", "w") as globus_server_file:
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
         parser.read("/etc/globus-connect-server-esgf.conf")
 
@@ -679,184 +678,189 @@ def check_gridftp_process(port_number):
     # print " gridftp-server process is running on port [${port}]..."
 
 
-#--------------------------------------------------------------
-# MY PROXY
-#--------------------------------------------------------------
-
-# This function bascially copies and renames the signed cert into the right place.
-# It also does the bookkeeping needed in the overall property file to reflect the DN
-# arg (optional) -> the signed certificate (.pem) file to be installed
-install_globus_keypair() {
-    #--------------------------------------------------
-    #Install signed globus pem file
-    #--------------------------------------------------
-    local globus_grid_security_dir=${globus_global_certs_dir%/*}
-    if [ -d  ${globus_grid_security_dir} ]; then
-        local globus_signed_cert=${1:-${globus_grid_security_dir}/${esgf_host:-$(hostname --fqdn)}-esg-node-globus.pem}
-        if [ -e "${globus_signed_cert}" ]; then
-            [ -e ${globus_grid_security_dir}/hostcert.pem ] && mv ${globus_grid_security_dir}/hostcert.pem{,.bak}
-            mv -v ${globus_signed_cert} ${globus_grid_security_dir}/hostcert.pem && \
-                chmod 644 ${globus_grid_security_dir}/hostcert.pem && \
-                openssl x509 -noout -text -in ${globus_grid_security_dir}/hostcert.pem
-        else
-            echo "ERROR: Could not find certificate ${globus_signed_cert}"
-            exit 5
-        fi
-    else
-        echo "ERROR: Could not locate target globus key location:[${globus_grid_security_dir}]"
-        exit 6
-    fi
-
-    [ -e "${globus_grid_security_dir}/hostcert.pem" ] && \
-        write_as_property node_dn $(extract_openssl_dn ${globus_grid_security_dir}/hostcert.pem) && echo "properly updated [OK]"
-    echo
-}
-
-globus_check_certificates() {
-    debug_print "globus_check_certificates..."
-    local my_cert=/etc/grid-security/hostcert.pem
-    #do this in a subshell
-    (source ${esg_functions_file} && check_cert_expiry_for_files ${my_cert})
-}
-
-
 #--------------------
 # Register with Globus Web Service and get a host certificate
 #--------------------
+def setup_gcs_id(first_run=None):
+    if first_run == "firstrun":
+        cert_dir = "/etc/tempcerts"
+    else:
+        cert_dir = "/etc/esgfcerts"
 
-setup_gcs_id() {
+    with esg_bash2py.pushd(cert_dir):
+        myproxyca_dir = "/var/lib/globus-connect-server/myproxy-ca"
+
+        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir), "newcerts")
+        os.chmod(myproxyca_dir, 0700)
+        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir), "private")
+        os.chmod(os.path.join(myproxyca_dir), "private", 0700)
+
+        shutil.copyfile("cacert.pem", os.path.join(myproxyca_dir, "cacert.pem"))
+        shutil.copyfile("cakey.pem", os.path.join(myproxyca_dir, "private", "cakey.pem"))
+        shutil.copyfile("signing-policy", os.path.join(myproxyca_dir, "signing-policy"))
+
+        shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
+        shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
+
+        simpleCA_cert = "cacert.pem"
+        simpleCA_cert_hash = esg_functions.get_md5sum(simpleCA_cert)
+        simpleCA_tar_file = "globus_simple_ca_{}_setup-0.tar.gz".format(simpleCA_cert_hash)
+        shutil.copyfile(simpleCA_tar_file, os.path.join(myproxyca_dir, simpleCA_tar_file))
+        shutil.copyfile(simpleCA_tar_file, os.path.join("/etc/grid-security/certificates", simpleCA_tar_file))
 
 
-    if [ "x$1" = "xfirstrun" ]; then
-        pushd /etc/tempcerts >& /dev/null
-    else
-        pushd /etc/esgfcerts >& /dev/null
-    fi
+    print '*******************************'
+    print ' Registering the IdP node with Globus Platform'
+    print '*******************************'
+    print 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
+    print 'download data through Globus. This uses the GridFTP server on the data node.'
+    print 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
+    print 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
+    print 'go to www.globus.org/SignUp.'
+    print 'This step can be skipped, but users will not be able to download datasets'
+    print 'from the GridFTP server on the data node through the ESGF web interface.'
 
-    myproxyca_dir=/var/lib/globus-connect-server/myproxy-ca
-    [ ! -d ${myproxyca_dir}/newcerts ] && mkdir -p ${myproxyca_dir}/newcerts && chmod 700 ${myproxyca_dir}
-    [ ! -d ${myproxyca_dir}/private ] && mkdir -p ${myproxyca_dir}/private && chmod 700 ${myproxyca_dir}/private
-    cp cacert.pem ${myproxyca_dir}
-    cp cakey.pem ${myproxyca_dir}/private
-    cp signing-policy ${myproxyca_dir}
-    if [ -s hostkey.pem -a -s hostcert.pem ]; then
-        cp host*.pem /etc/grid-security
-    fi
-    localhash=`openssl x509 -noout -hash -in cacert.pem`
-    cp globus_simple_ca_${localhash}_setup-0.tar.gz ${myproxyca_dir}
-    cp globus_simple_ca_${localhash}_setup-0.tar.gz /etc/grid-security/certificates
-    popd >& /dev/null
 
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
+    if esg_property_manager.get_property("register.myproxy"):
+        register_myproxy_answer = esg_property_manager.get_property("register.myproxy")
+    else:
+        register_myproxy_answer = raw_input(
+        "Do you want to register the MyProxy server with Globus?: ") or "Y"
 
-    local input
+    if register_myproxy_answer.lower() in ["y", "yes"]:
+        GLOBUS_SETUP = True
+    else:
+        GLOBUS_SETUP = False
 
-    echo '*******************************'
-    echo ' Registering the IdP node with Globus Platform'
-    echo '*******************************'
-    echo
-    echo 'The installer will create a Globus (www.globus.org) endpoint to allow users to'
-    echo 'download data through Globus. This uses the GridFTP server on the data node.'
-    echo 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
-    echo 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
-    echo 'go to www.globus.org/SignUp.'
-    echo
-    echo 'This step can be skipped, but users will not be able to download datasets'
-    echo 'from the GridFTP server on the data node through the ESGF web interface.'
-    echo
+    if GLOBUS_SETUP:
+        if esg_property_manager.get_property("globus.user"):
+            globus_user= esg_property_manager.get_property("globus.user")
+        else:
+            while True:
+                globus_user = raw_input("Please provide a Globus username: ")
+                if not globus_user:
+                    print "Globus username cannot be blank."
+                else:
+                    break
 
-    while [ 1 ]; do
-        read -e -p 'Do you want to register the MyProxy server with Globus? [Y/n]: ' input
-        [ -z "${input}" -o "${input}" = 'Y' -o "${input}" = 'y' ] && export GLOBUS_SETUP='yes' && break
-        [ "${input}" = 'N' -o "${input}" = 'n' ] && export GLOBUS_SETUP='no' && break
-    done
+        if esg_property_manager.get_property("globus.password"):
+            globus_password = esg_property_manager.get_property("globus.password")
+        else:
+            while True:
+                globus_password = raw_input("Please enter your Globus password: ")
+                if not globus_password:
+                    print "The Globus password can not be blank"
+                    continue
+                else:
+                    esg_property_manager.set_property("globus.password", globus_password)
+                    break
 
-    if [ $GLOBUS_SETUP = 'yes' ]; then
+        if esg_property_manager.get_property("myproxy_endpoint"):
+            myproxy_hostname = esg_property_manager.get_property("myproxy_endpoint")
+        else:
+            myproxy_hostname = esg_functions.get_esgf_host().upper()
 
-        if [ -z "$GLOBUS_USER" ]; then
-            local input
-            while [ 1 ]; do
-                read -e -p "Please provide a Globus username [${globus_user}]: " input
-                [ -n "${input}" ] && export GLOBUS_USER="${input}" && break
-                [ -n "${globus_user}" ] && export GLOBUS_USER="${globus_user}" && break
-            done
-            unset input
-        fi
+        myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
+        esg_bash2py.mkdir_p(myproxy_config_dir)
+        globus_server_conf_file = os.path.join(myproxy_config_dir, globus-connect-server.conf)
 
-        if [ -z "$GLOBUS_PASSWORD" ]; then
-            local input
-            while [ 1 ]; do
-                read -es -p "Globus password [$([ -n "${globus_password}" ] && echo "*********")]: " input
-                [ -n "${input}" ] && export GLOBUS_PASSWORD="${input}" && break
-                [ -n "${globus_password}" ] && export GLOBUS_PASSWORD="${globus_password}" && break
-            done
-            unset input
-        fi
+        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+        parser.read(globus_server_conf_file)
 
-        cat >${myproxy_config_dir}/globus-connect-server.conf <<EOF
-[Globus]
-User = %(GLOBUS_USER)s
-Password = %(GLOBUS_PASSWORD)s
-[Endpoint]
-Name = %(SHORT_HOSTNAME)s
-Public = True
-[Security]
-FetchCredentialFromRelay = True
-CertificateFile = /etc/grid-security/hostcert.pem
-KeyFile = /etc/grid-security/hostkey.pem
-TrustedCertificateDirectory = /etc/grid-security/certificates/
-IdentityMethod = MyProxy
-[GridFTP]
-Server = %(HOSTNAME)s
-RestrictPaths = R/,N/etc,N/tmp,N/dev
-Sharing = False
-SharingRestrictPaths = R/
-[MyProxy]
-Server = %(HOSTNAME)s
-EOF
+        try:
+            parser.add_section("Globus")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
 
-        globus-connect-server-id-setup -c ${myproxy_config_dir}/globus-connect-server.conf -v
-        return $?
-    fi
+        parser.set('Globus', "User", GLOBUS_USER)
+        parser.set('Globus', "Password", GLOBUS_PASSWORD)
+
+        try:
+            parser.add_section("Endpoint")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('Endpoint', "Name", esg_property_manager.get_property("node.short.name"))
+        parser.set('Endpoint', "Public", "True")
+
+        try:
+            parser.add_section("Security")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('Security', "FetchCredentialFromRelay", "True")
+        parser.set('Security', "CertificateFile", "/etc/grid-security/hostcert.pem")
+        parser.set('Security', "KeyFile", "/etc/grid-security/hostkey.pem")
+        parser.set('Security', "TrustedCertificateDirectory", "/etc/grid-security/certificates/")
+        parser.set('Security', "IdentityMethod", "MyProxy")
+        parser.set('Security', "AuthorizationMethod", "Gridmap")
+
+        try:
+            parser.add_section("GridFTP")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
+        parser.set('GridFTP', "RestrictPaths", "R/,N/etc,N/tmp,N/dev")
+        parser.set('GridFTP', "Sharing", "False")
+        parser.set('GridFTP', "SharingRestrictPaths", "R/")
+
+        try:
+            parser.add_section("MyProxy")
+        except ConfigParser.DuplicateSectionError:
+            logger.debug("section already exists")
+
+        parser.set('MyProxy', "Server", esg_functions.get_esgf_host())
+
+        with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
+            parser.write(config_file_object)
+
+        esg_functions.stream_subprocess_output("globus-connect-server-id-setup -c {}/globus-connect-server.conf -v".format(myproxy_config_dir))
 
     # Create a substitution of Globus generated confguration files for MyProxy server
-    [ ! -d /etc/myproxy.d ] && mkdir /etc/myproxy.d
-    cat >/etc/myproxy.d/globus-connect-esgf <<EOF
-export MYPROXY_USER=root
-export X509_CERT_DIR="/etc/grid-security/certificates"
-export X509_USER_CERT="/etc/grid-security/hostcert.pem"
-export X509_USER_KEY="/etc/grid-security/hostkey.pem"
-export X509_USER_PROXY=""
-export MYPROXY_OPTIONS="\${MYPROXY_OPTIONS:+\$MYPROXY_OPTIONS }-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"
-EOF
+    esg_bash2py.mkdir_p("/etc/myproxy.d")
+    with open("/etc/myproxy.d/globus-connect-esgf", "w") as globus_connect_conf_file:
+        globus_connect_conf_file.write("export MYPROXY_USER=root")
+        globus_connect_conf_file.write('export X509_CERT_DIR="/etc/grid-security/certificates"')
+        globus_connect_conf_file.write('export X509_USER_CERT="/etc/grid-security/hostcert.pem"')
+        globus_connect_conf_file.write('export X509_USER_KEY="/etc/grid-security/hostkey.pem"')
+        globus_connect_conf_file.write('export X509_USER_PROXY=""')
+        globus_connect_conf_file.write('export MYPROXY_OPTIONS="\${MYPROXY_OPTIONS:+\$MYPROXY_OPTIONS }-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
 
-    cat >/esg/config/myproxy/myproxy-server.config <<EOF
-        authorized_retrievers      "*"
-        default_retrievers         "*"
-        authorized_renewers        "*"
-        authorized_key_retrievers  "*"
-        trusted_retrievers         "*"
-        default_trusted_retrievers "none"
-        max_cert_lifetime          "72"
-        disable_usage_stats        "true"
-        cert_dir                   "/etc/grid-security/certificates"
+    with open("/esg/config/myproxy/myproxy-server.config", "w") as myproxy_server_file:
+        myproxy_server_file.write('authorized_retrievers      "*"')
+        myproxy_server_file.write('default_retrievers         "*"')
+        myproxy_server_file.write('authorized_renewers        "*"')
+        myproxy_server_file.write('authorized_key_retrievers  "*"')
+        myproxy_server_file.write('trusted_retrievers         "*"')
+        myproxy_server_file.write('default_trusted_retrievers "none"')
+        myproxy_server_file.write('max_cert_lifetime          "72"')
+        myproxy_server_file.write('disable_usage_stats        "true"')
+        myproxy_server_file.write('cert_dir                   "/etc/grid-security/certificates"')
 
-        pam_id "myproxy"
-        pam "required"
+        myproxy_server_file.write('pam_id "myproxy"')
+        myproxy_server_file.write('pam "required"')
 
-        certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
-        certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"
-        certificate_issuer_key_passphrase "globus"
-        certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"
-        certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"
-        certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
-        certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp
-        certificate_extapp /esg/config/myproxy/esg_attribute_callout_app
-EOF
+        myproxy_server_file.write('certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"')
+        myproxy_server_file.write('certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"')
+        myproxy_server_file.write('certificate_issuer_key_passphrase "globus"')
+        myproxy_server_file.write('certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"')
+        myproxy_server_file.write('certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"')
+        myproxy_server_file.write('certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"')
+        myproxy_server_file.write('certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp')
+        myproxy_server_file.write('certificate_extapp /esg/config/myproxy/esg_attribute_callout_app')
 
-    return 0
-}
+
+
+def config_myproxy_server(install_mode="install"):
+    if install_mode not in ["install", "update"]:
+        print "The install mode must be either 'install' or 'update'"
+        esg_functions.exit_with_error("ERROR: You have entered an invalid argument: [{}]".format(install_mode))
+
+    print "MyProxy - Configuration... [{}]".format(install_mode)
+
+
+
 
 
 # Note: myproxy servers live on gateway machines

@@ -533,7 +533,7 @@ def configure_esgf_publisher_for_gridftp():
         esg_functions.stream_subprocess_output('''sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}''')
 
 
-def start_gridftp_server(gridftp_chroot_jail="{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])):
+def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):
     global_x509_cert_dir = "/etc/grid-security/certificates"
     print " GridFTP - Starting server... $*"
     write_esgsaml_auth_conf()

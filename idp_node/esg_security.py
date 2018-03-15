@@ -55,7 +55,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version):
         node_db_name = "esgcet"
         node_db_security_schema_name = "esgf_security"
         if node_db_name not in esg_postgres.postgres_list_dbs():
-            esg_postgres.postgres_create_db(node_db_name)
+            esg_postgres.create_database(node_db_name)
 
         if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas():
             print "Detected an existing security schema installation..."

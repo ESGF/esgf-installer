@@ -22,7 +22,7 @@ def setup_globus(installation_type):
             logger.info("Globus Setup for Data-Node... (GridFTP server) ")
             directive = "datanode"
             setup_globus_services(directive)
-            write_globus_env()
+            write_globus_env(globus_location)
             esgbash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
         if installation_type == "IDP":
@@ -30,15 +30,11 @@ def setup_globus(installation_type):
             directive = "gateway"
             setup_mode = "install"
             setup_globus_services(directive, setup_mode)
-            write_globus_env()
+            write_globus_env(globus_location)
             esgbash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
-def write_globus_env():
-    # ((show_summary_latch++))
-    # echo "export GLOBUS_LOCATION=$GLOBUS_LOCATION" >> ${envfile}
-    # dedup ${envfile} && source ${envfile}
-    # return 0
-    pass
+def write_globus_env(globus_location):
+    esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), config_file=config["envfile"], section_name="esgf.env")
 
 
 def start_globus(installation_type):
@@ -72,6 +68,8 @@ def setup_globus_services(config_type):
     print "Setting up Globus... (config type: $config_type)"
     print "*******************************"
     globus_version = "6.0"
+    globus_sys_acct = "globus"
+
     if os.access("/usr/bin/globus-version", os.X_OK):
         print "Detected an existing Globus installation"
         print "Checking for Globus {}".format(globus_version)
@@ -99,7 +97,7 @@ def setup_globus_services(config_type):
         print "Setting up ESGF Globus GridFTP Service(s)"
         print "*******************************"
 
-        create_globus_account()
+        create_globus_account(globus_sys_acct)
         install_globus(config_type)
         setup_gcs_io("firstrun")
         setup_gridftp_metrics_logging()
@@ -236,8 +234,8 @@ def config_gridftp_metrics_logging():
         config_file.write("DBUSER={}\n".format(esg_property_manager.get_property("db.user")))
         config_file.write("DBPASS={}\n".format(esg_functions.get_postgres_password()))
         gridftp_server_usage_log = "{esg_log_dir}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
-        config_file.write("USAGEFILE={}\n".format(gridftp_server_usage_log)
-        config_file.write("TMPFILE={}\n".format(os.path.join(config["esg_log_dir"], "__up_tmpfile"))
+        config_file.write("USAGEFILE={}\n".format(gridftp_server_usage_log))
+        config_file.write("TMPFILE={}\n".format(os.path.join(config["esg_log_dir"], "__up_tmpfile")))
         config_file.write("DEBUG=0\n")
         config_file.write("NODBWRITE=0\n")
 
@@ -727,7 +725,7 @@ def config_myproxy_server(install_mode="install"):
             esg_functions.download_update(postgress_jar, "{}/{}".format(myproxy_dist_url_base, postgress_jar))
 
             #Find all files with a .jar extension and concat file names separated by a colon.
-            java_class_path = [glob.glob("*.jar")
+            java_class_path = glob.glob("*.jar")
             java_class_path_string = ":".join(java_class_path)
 
             esg_functions.stream_subprocess_output("javac -classpath {} ESGOpenIDRetriever.java".format(java_class_path_string))
@@ -750,12 +748,8 @@ def config_myproxy_server(install_mode="install"):
         edit_etc_myproxyd()
         write_db_name_env()
 
-config_myproxy_server() {
+        restart_myproxy_server()
 
-    restart_myproxy_server
-
-    checked_done 0
-}
 
 def write_myproxy_install_log():
     if os.path.exists("/usr/sbin/myproxy-server"):
@@ -777,46 +771,37 @@ def write_db_name_env():
     esgf_db_name = esg_property_manager.get_property("db.database")
     esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), config_file=config["envfile"], section_name="esgf.env")
 
+def start_myproxy_server():
+    if check_myproxy_process():
+        return
 
-start_myproxy_server() {
-    check_myproxy_process && return 0
-    if [ -x /etc/init.d/myproxy-server ]; then
-        /etc/init.d/myproxy-server start && return 0
-    elif [ -x /etc/init.d/myproxy ]; then
-        echo " MyProxy - Starting server..."
-        /etc/init.d/myproxy start && return 0
-    fi
-    return 1
-}
+    #TODO: this checks if a file has execute permissions; break into helper function
+    if os.access("/etc/init.d/myproxy-server", os.X_OK):
+        esg_functions.stream_subprocess_output("/etc/init.d/myproxy-server start")
+    elif os.access("/etc/init.d/myproxy", os.X_OK):
+        print " MyProxy - Starting server..."
+        esg_functions.stream_subprocess_output("/etc/init.d/myproxy start")
 
-stop_myproxy_server() {
-    if [ -x /etc/init.d/myproxy-server ]; then
-        /etc/init.d/myproxy-server stop
-    elif [ -x /etc/init.d/myproxy ]; then
-        /etc/init.d/myproxy stop
-    fi
+def stop_myproxy_server():
+    if os.access("/etc/init.d/myproxy-server", os.X_OK):
+        esg_functions.stream_subprocess_output("/etc/init.d/myproxy-server stop")
+    elif os.access("/etc/init.d/myproxy", os.X_OK):
+        esg_functions.stream_subprocess_output("/etc/init.d/myproxy stop")
 
-    if check_myproxy_process; then
-        echo "Detected Running myproxy-server..."
-    else
-        echo "No MyProxy Process Currently Running..." && return 1
-    fi
+    if not check_myproxy_process():
+        print "MyProxy Process is stopped..."
 
-    killall myproxy-server && echo " [OK] " || echo " [FAIL] "
-    return $?
-}
+def restart_myproxy_server():
+    stop_myproxy_server()
+    start_myproxy_server()
 
-restart_myproxy_server() {
-    stop_myproxy_server
-    start_myproxy_server
-}
+def check_myproxy_process():
+    myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "myproxy-server" in proc.info["name"]]
+    if myproxy_processes:
+        print "myproxy-server process is running..."
+        print myproxy_processes
+        return myproxy_processes
 
-#This function "succeeds" (is true -> returns 0)  if there *are* running processes found
-check_myproxy_process() {
-    val=$(ps -elf | grep myproxy-server* | grep -v grep | awk ' END { print NR }')
-    [ $(($val > 0 )) == 1 ] && echo "myproxy-server process is running..." && return 0
-    return 1
-}
 
 ############################################
 # Configuration File Editing Functions
@@ -917,39 +902,23 @@ def fetch_esg_attribute_callout_app():
 # Utility Functions
 ############################################
 
-create_globus_account() {
-    ########
-    #Create the system account for globus to run as.
-    ########
-    [ -z "${globus_sys_acct}" ] && echo "no globus account specfied, must be specified to continue!" && checked_done
-    echo -n "checking globus account \"${globus_sys_acct}\"... "
+def create_globus_account(globus_sys_acct):
+    '''Create the system account for globus to run as.'''
 
-    id ${globus_sys_acct}
-    if [ $? != 0 ]; then
-        echo
-	echo " Hmmm...: There is no globus system account user \"$globus_sys_acct\" present on system, making one... "
-	#NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-	if [ ! $(getent group ${globus_sys_acct_group}) ]; then
-	    /usr/sbin/groupadd -r ${globus_sys_acct_group}
-	    [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add globus system group: ${globus_sys_acct_group}" && checked_done 1
-	fi
+    try:
+        esg_functions.stream_subprocess_output("groupadd -r {}".format(globus_sys_acct))
+    except SubprocessError, error:
+        logger.debug(error[0]["returncode"])
+        if error[0]["returncode"] == 9:
+            pass
 
-	if [ -z "${globus_sys_acct_passwd}" ]; then
-	    #set the password for the system user...
-	    while [ 1 ]; do
-		local input
-		read -s -p "Create password for globus system account: \"${globus_sys_acct}\" " input
-		[ -n "${input}" ] && globus_sys_acct_passwd=${input}  && unset input && break
-	    done
-	fi
-	echo -n "Creating account... "
-	/usr/sbin/useradd -r -c"Globus System User" -g ${globus_sys_acct_group} -p ${globus_sys_acct_passwd} -s /bin/bash ${globus_sys_acct}
-	[ $? != 0 ] && [ $? != 9 ] && echo "ERROR: Could not add globus system account user" && popd && checked_done 1
-        echo "[OK]"
-    else
-        echo "[OK]"
-    fi
-}
+    globus_sys_acct_passwd = esg_functions.get_security_admin_password()
+    try:
+        esg_functions.stream_subprocess_output('''/usr/sbin/useradd -r -c"Globus System User" -g {globus_sys_acct_group} -p {globus_sys_acct_passwd} -s /bin/bash {globus_sys_acct}'''.format(globus_sys_acct_group="globus", globus_sys_acct_passwd=globus_sys_acct_passwd, globus_sys_acct=globus_sys_acct))
+    except SubprocessError, error:
+        logger.debug(error[0]["returncode"])
+        if error[0]["returncode"] == 9:
+            pass
 
 
 ############################################

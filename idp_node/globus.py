@@ -1,3 +1,25 @@
+import os
+import logging
+import shutil
+import ConfigParser
+import stat
+import glob
+import psutil
+import yaml
+from esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
+from esgf_utilities import esg_version_manager
+from esgf_utilities.esg_exceptions import SubprocessError
+from base import esg_tomcat_manager
+from base import esg_postgres
+
+
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
+current_directory = os.path.join(os.path.dirname(__file__))
+
+with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
+    config = yaml.load(config_file)
 
 def setup_globus(installation_type):
     '''
@@ -12,7 +34,7 @@ def setup_globus(installation_type):
     with esg_bash2py.pushd(config["scripts_dir"]):
         globus_file = "esg-globus"
         globus_file_url = "https://aims1.llnl.gov/esgf/dist/devel/externals/bootstrap/esg-globus"
-        esg_functions.dowload_update(globus_file, globus_file_url)
+        esg_functions.download_update(globus_file, globus_file_url)
         os.chmod(globus_file, 0755)
 
     esg_bash2py.mkdir_p(config["workdir"])
@@ -23,15 +45,15 @@ def setup_globus(installation_type):
             directive = "datanode"
             setup_globus_services(directive)
             write_globus_env(globus_location)
-            esgbash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
+            esg_bash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
         if installation_type == "IDP":
             logger.info("Globus Setup for Index-Node... (MyProxy server)")
             directive = "gateway"
             setup_mode = "install"
-            setup_globus_services(directive, setup_mode)
+            setup_globus_services(directive)
             write_globus_env(globus_location)
-            esgbash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
+            esg_bash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
 def write_globus_env(globus_location):
     esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), config_file=config["envfile"], section_name="esgf.env")
@@ -98,12 +120,12 @@ def setup_globus_services(config_type):
         print "*******************************"
 
         create_globus_account(globus_sys_acct)
-        install_globus(config_type)
+        _install_globus(config_type)
         setup_gcs_io("firstrun")
         setup_gridftp_metrics_logging()
 
-        config_gridftp_server()
-        config_gridftp_metrics_logging("end-user")
+        config_gridftp_server(globus_sys_acct)
+        config_gridftp_metrics_logging()
 
         if os.path.exists("/usr/sbin/globus-gridftp-server"):
             esg_property_manager.set_property("gridftp_app_home", "/usr/sbin/globus-gridftp-server")
@@ -112,9 +134,9 @@ def setup_globus_services(config_type):
         print "Setting up The ESGF Globus MyProxy Services"
         print "*******************************"
 
-        install_globus(config_type)
+        _install_globus(config_type)
         setup_gcs_id("firstrun")
-        config_myproxy_server()
+        config_myproxy_server(globus_location)
     else:
         print "You must provide a configuration type arg [datanode | gateway]"
         return
@@ -160,10 +182,11 @@ def _install_globus(config_type):
         return
 
     globus_workdir= os.path.join(config["workdir"],"extra", "globus")
-    esg_bash2.py.mkdir_p(globus_workdir)
+    esg_bash2py.mkdir_p(globus_workdir)
+    current_mode = os.stat(globus_workdir)
     # chmod a+rw $globus_workdir
     os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
-    with esg_bash2.py.pushd(globus_workdir):
+    with esg_bash2py.pushd(globus_workdir):
         # Setup Globus RPM repo
         globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
         globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
@@ -204,15 +227,20 @@ def setup_gridftp_metrics_logging():
 
     esg_functions.stream_subprocess_output("yum -y install perl-DBD-Pg")
 
+    globus_workdir= os.path.join(config["workdir"],"extra", "globus")
+    esg_bash2py.mkdir_p(globus_workdir)
+
     esg_usage_parser_dist_file = "esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
     esg_usage_parser_dist_url= "https://aims1.llnl.gov/esgf/dist//globus/gridftp/esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
     esg_usage_parser_dist_dir = os.path.join(globus_workdir, "esg_usage_parser-{}".format(usage_parser_version))
     esg_bash2py.mkdir_p(esg_usage_parser_dist_dir)
+
+    current_mode = os.stat(globus_workdir)
     # chmod a+rw $globus_workdir
     os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
     with esg_bash2py.pushd(esg_usage_parser_dist_dir):
         print "Downloading Globus GridFTP Usage Parser from {}".format(esg_usage_parser_dist_url)
-        esg_functions.dowload_update(esg_usage_parser_dist_file, esg_usage_parser_dist_url)
+        esg_functions.download_update(esg_usage_parser_dist_file, esg_usage_parser_dist_url)
 
         esg_functions.extract_tarball(esg_usage_parser_dist_file)
 
@@ -243,7 +271,7 @@ def config_gridftp_metrics_logging():
     with open("/etc/cron.d/esg_usage_parser", "w") as cron_file:
         cron_file.write("5 0,12 * * * root ESG_USAGE_PARSER_CONF={gridftp_server_usage_config} {esg_tools_dir}/esg_usage_parser".format(gridftp_server_usage_config=gridftp_server_usage_config, esg_tools_dir=config["esg_tools_dir"]))
 
-def setup_gridftp_jail(globus_sys_acct):
+def setup_gridftp_jail(globus_sys_acct="globus"):
 
     print "*******************************"
     print "Setting up GridFTP... chroot jail"
@@ -252,7 +280,7 @@ def setup_gridftp_jail(globus_sys_acct):
     gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
     if not os.path.exists(gridftp_chroot_jail):
         print "{} does not exist, making it...".format(gridftp_chroot_jail)
-        esg_bash2.py.mkdir_p(gridftp_chroot_jail)
+        esg_bash2py.mkdir_p(gridftp_chroot_jail)
 
         print "Creating chroot jail @ {}".format(gridftp_chroot_jail)
         esg_functions.stream_subprocess_output("globus-gridftp-server-setup-chroot -r {}".format(gridftp_chroot_jail))
@@ -276,16 +304,16 @@ def setup_gridftp_jail(globus_sys_acct):
         try:
             dataset_list = parser.get("DEFAULT", "thredds_dataset_roots").strip().split("\n")
         except ConfigParser.NoSectionError:
-            logger.debug("could not find property %s", property_name)
+            logger.debug("could not find property %s", "thredds_dataset_roots")
             raise
         except ConfigParser.NoOptionError:
-            logger.debug("could not find property %s", property_name)
+            logger.debug("could not find property %s", "thredds_dataset_roots")
             raise
 
         for dataset in dataset_list:
             mount_name, mount_dir = dataset.split("|")
             print "mounting [{mount_dir}] into chroot jail [{gridftp_chroot_jail}/] as [{mount_name}]".format(mount_dir=mount_dir, mount_name=mount_name, gridftp_chroot_jail=gridftp_chroot_jail)
-            real_mount_dir = esg_functions.readlink_f(mount_dir)
+            real_mount_dir = esg_functions.readlinkf(mount_dir)
             gridftp_mount_dir = os.path.join(gridftp_chroot_jail, mount_name)
             esg_bash2py.mkdir_p(gridftp_mount_dir)
             esg_functions.stream_subprocess_output("mount --bind {} {}".format(real_mount_dir, gridftp_mount_dir))
@@ -308,10 +336,10 @@ def post_gridftp_jail_setup():
     sanitized_passwd = os.path.join(gridftp_chroot_jail, "etc", "passwd")
     if not os.path.exists(sanitized_passwd):
         with open(sanitized_passwd, "w") as sanitized_passwd_file:
-            sanitized_passwd.write("root:x:0:0:root:/root:/bin/bash\n")
-            sanitized_passwd.write("bin:x:1:1:bin:/bin:/dev/null\n")
-            sanitized_passwd.write("ftp:x:14:50:FTP User:/var/ftp:/dev/null\n")
-            sanitized_passwd.write("globus:x:101:156:Globus System User:/home/globus:/bin/bash\n")
+            sanitized_passwd_file.write("root:x:0:0:root:/root:/bin/bash\n")
+            sanitized_passwd_file.write("bin:x:1:1:bin:/bin:/dev/null\n")
+            sanitized_passwd_file.write("ftp:x:14:50:FTP User:/var/ftp:/dev/null\n")
+            sanitized_passwd_file.write("globus:x:101:156:Globus System User:/home/globus:/bin/bash\n")
 
     #Write our trimmed version of /etc/group in the chroot location
     print "writing sanitized group file to [{}/etc/group]".format(gridftp_chroot_jail)
@@ -394,8 +422,8 @@ def setup_gcs_io(first_run=None):
         except ConfigParser.DuplicateSectionError:
             logger.debug("section already exists")
 
-        parser.set('Globus', "User", GLOBUS_USER)
-        parser.set('Globus', "Password", GLOBUS_PASSWORD)
+        parser.set('Globus', "User", globus_user)
+        parser.set('Globus', "Password", globus_password)
 
         try:
             parser.add_section("Endpoint")
@@ -430,7 +458,8 @@ def setup_gcs_io(first_run=None):
         parser.set('GridFTP', "RestrictPaths", "R/,N/etc,N/tmp,N/dev")
         parser.set('GridFTP', "Sharing", "False")
         parser.set('GridFTP', "SharingRestrictPaths", "R/")
-        parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", GLOBUS_USER))
+        gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
+        parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_user))
 
         try:
             parser.add_section("MyProxy")
@@ -460,7 +489,7 @@ def setup_gcs_io(first_run=None):
         globus_connect_file.write("X509_CERT_DIR '/etc/grid-security/certificates'\n")
 
 
-def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail):
+def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])):
     print "GridFTP - Configuration..."
     print "*******************************"
     print "Setting up GridFTP..."
@@ -504,7 +533,7 @@ def configure_esgf_publisher_for_gridftp():
         esg_functions.stream_subprocess_output('''sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}''')
 
 
-def start_gridftp_server():
+def start_gridftp_server(gridftp_chroot_jail="{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])):
     global_x509_cert_dir = "/etc/grid-security/certificates"
     print " GridFTP - Starting server... $*"
     write_esgsaml_auth_conf()
@@ -586,7 +615,7 @@ def setup_gcs_id(first_run=None):
 
     if GLOBUS_SETUP:
         if esg_property_manager.get_property("globus.user"):
-            globus_user= esg_property_manager.get_property("globus.user")
+            globus_user = esg_property_manager.get_property("globus.user")
         else:
             while True:
                 globus_user = raw_input("Please provide a Globus username: ")
@@ -614,7 +643,7 @@ def setup_gcs_id(first_run=None):
 
         myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
         esg_bash2py.mkdir_p(myproxy_config_dir)
-        globus_server_conf_file = os.path.join(myproxy_config_dir, globus-connect-server.conf)
+        globus_server_conf_file = os.path.join(myproxy_config_dir, "globus-connect-server.conf")
 
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
         parser.read(globus_server_conf_file)
@@ -624,8 +653,8 @@ def setup_gcs_id(first_run=None):
         except ConfigParser.DuplicateSectionError:
             logger.debug("section already exists")
 
-        parser.set('Globus', "User", GLOBUS_USER)
-        parser.set('Globus', "Password", GLOBUS_PASSWORD)
+        parser.set('Globus', "User", globus_user)
+        parser.set('Globus', "Password", globus_password)
 
         try:
             parser.add_section("Endpoint")
@@ -704,7 +733,7 @@ def setup_gcs_id(first_run=None):
 
 
 
-def config_myproxy_server(install_mode="install"):
+def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:
         print "The install mode must be either 'install' or 'update'"
         esg_functions.exit_with_error("ERROR: You have entered an invalid argument: [{}]".format(install_mode))
@@ -860,12 +889,12 @@ def edit_pam_pgsql_conf():
         filedata = filedata.replace("@@pg_sys_acct_passwd@@", esg_functions.get_postgres_password())
 
         # Write the file out again
-        with open(file_name, 'w') as file_handle:
+        with open(pgsql_conf_file, 'w') as file_handle:
             file_handle.write(filedata)
 
 def edit_etc_myproxyd():
     with open("/etc/myproxy.d/myproxy-esgf", "w") as myproxy_esgf_file:
-        myproxy_esgf_file.write('''"export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\""'''.format(esg_config_dir))
+        myproxy_esgf_file.write('''"export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\""'''.format(config["esg_config_dir"]))
 
 
 def fetch_myproxy_certificate_mapapp():

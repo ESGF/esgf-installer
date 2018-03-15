@@ -26,7 +26,7 @@ def setup_security(node_type_list, esg_dist_url):
     # In update mode it will always pull down latest after archiving old
     #
     esgf_security_version = "1.2.8"
-    currently_installed_version = esg_property_manager.get_property("esgf-security", config_file="/esg/esgf-install-manifest", section_name="install.manifest")
+    currently_installed_version = esg_functions.get_version_from_manifest("esgf-security")
     if esg_version_manager.compare_versions(currently_installed_version, esgf_security_version):
         print "A sufficient version of esgf-security is installed"
         return

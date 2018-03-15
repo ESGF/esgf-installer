@@ -180,7 +180,7 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         installer_mode_dictionary["install_mode"] = True
         logger.debug("Install Services")
         if args.base:
-            return
+            return ["INSTALL"]
         node_type_list = get_node_type()
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:

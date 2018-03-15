@@ -27,9 +27,10 @@ def setup_security(node_type_list, esg_dist_url):
     #
     esgf_security_version = "1.2.8"
     currently_installed_version = esg_functions.get_version_from_manifest("esgf-security")
-    if esg_version_manager.compare_versions(currently_installed_version, esgf_security_version):
-        print "A sufficient version of esgf-security is installed"
-        return
+    if currently_installed_version:
+        if esg_version_manager.compare_versions(currently_installed_version, esgf_security_version):
+            print "A sufficient version of esgf-security is installed"
+            return
 
     configure_postgress(node_type_list, esg_dist_url, esgf_security_version)
     fetch_user_migration_launcher(node_type_list, esg_dist_url)

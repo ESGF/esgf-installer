@@ -71,7 +71,8 @@ def setup_idp(esg_dist_url):
         idp_dist_url = "{}/esgf-idp/esgf-idp.war".format(esg_dist_url)
         esg_functions.download_update(idp_dist_file, idp_dist_url)
 
-        esg_tomcat_manager.stop_tomcat()
+        if esg_tomcat_manager.check_tomcat_status():
+            esg_tomcat_manager.stop_tomcat()
 
         print "Expanding war {idp_dist_file} in {pwd}".format(idp_dist_file=idp_dist_file, pwd=os.getcwd())
         with zipfile.ZipFile(idp_dist_file, 'r') as zf:

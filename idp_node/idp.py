@@ -102,7 +102,7 @@ def setup_slcs():
     esg_postgres.create_database("slcsdb")
 
     with esg_bash2py.pushd("/usr/local/src"):
-        Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd())
+        Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
 
         apache_user = esg_functions.get_user_id("apache")
         apache_group = esg_functions.get_group_id("apache")
@@ -115,6 +115,7 @@ def setup_slcs():
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 
+            current_mode = os.stat("/var/lib/globus-connect-server/myproxy-ca/")
             #add group read and execute permissions
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/", current_mode.st_mode, stat.S_IRGRP | stat.S_IXGRP)
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", current_mode.st_mode, stat.S_IRGRP | stat.S_IXGRP)

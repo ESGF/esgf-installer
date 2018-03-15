@@ -307,8 +307,10 @@ def system_component_installation(esg_dist_url, node_type_list):
         pip.main(['install', "esgprep"])
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
+        from idp_node import globus
         orp.main()
         thredds.main(node_type_list)
+        globus.setup_globus("DATA")
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
@@ -328,10 +330,11 @@ def system_component_installation(esg_dist_url, node_type_list):
         print "\n*******************************"
         print "Installing IDP Node Components"
         print "******************************* \n"
-        from idp_node import idp
-        from idp_node import esg_security
+        from idp_node import idp, esg_security, globus
         idp.main()
         esg_security.setup_security(node_type_list, esg_dist_url)
+        globus.setup_globus("IDP")
+
 
     esg_functions.update_fileupload_jar()
     esg_functions.setup_whitelist_files(esg_dist_url)

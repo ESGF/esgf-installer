@@ -85,6 +85,8 @@ def setup_idp(esg_dist_url):
     write_idp_install_log(idp_service_app_home)
     write_security_lib_install_log()
 
+    esg_tomcat_manager.start_tomcat()
+
 
 def setup_slcs():
     print "*******************************"

@@ -23,6 +23,7 @@ def init():
     pub_secret_file = os.path.join(esg_config_dir, ".esg_pg_publisher_pass")
     ks_secret_file = os.path.join(esg_config_dir, ".esg_keystore_pass")
     install_manifest = os.path.join(esg_root_dir, "esgf-install-manifest")
+    envfile = "/etc/esg.env"
 
     #--------------------------------
     # Internal esgf node code versions

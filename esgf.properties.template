@@ -4,6 +4,7 @@ esgf.host.ip =
 esgf.host=
 node.short.name=
 node.long.name=
+esg.org.name=
 #set to your reverse fqdn - Ex: gov.llnl
 node.namespace=
 #Choose between esgf-test, esgf-dev, esgf-prod

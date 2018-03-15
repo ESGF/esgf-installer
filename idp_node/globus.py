@@ -489,7 +489,7 @@ def setup_gcs_io(first_run=None):
         globus_connect_file.write("X509_CERT_DIR '/etc/grid-security/certificates'\n")
 
 
-def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])):
+def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):
     print "GridFTP - Configuration..."
     print "*******************************"
     print "Setting up GridFTP..."

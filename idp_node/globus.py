@@ -62,119 +62,6 @@ def stop_globus(installation_type):
     if installation_type == "IDP":
         stop_globus_services(directive)
 
-
-
-#Should have been "INHERITED" from calling esg-node or esg-gway scripts
-install_prefix=${install_prefix:-"/usr/local"}
-DEBUG=${DEBUG:-1}
-force_install=${force_install:-0}
-workdir=${workdir:-~/workbench/esg}
-install_manifest=${install_manifest:-"${esg_root_dir}/esgf-install-manifest"}
-globus_global_certs_dir=${globus_global_certs_dir:-/etc/grid-security/certificates}
-esg_functions_file=${esg_functions_file:-${install_prefix}/bin/esg-functions}
-
-#------------------------------------------------------------
-# We want globus to fully behave as though it's home is /root
-orig_user_home=${HOME}
-HOME=/root
-#------------------------------------------------------------
-
-#--------------
-# ID Setting
-#--------------
-# this should get exported from caller preferably
-if [[ -z "$installer_uid" || -z "$installer_gid" ]]; then
-    installer_user=${ESG_USER:-$(echo "$HOME" | sed 's#.*/\([^/]\+\)/\?$#\1#')}
-    installer_uid=${ESG_USER_UID:-${SUDO_UID:-$(id -u $installer_user)}}
-    installer_gid=${ESG_USER_GID:-${SUDO_GID:-$(id -g $installer_user)}}
-    installer_home=${ESG_USER_HOME:-$(getent passwd ${installer_uid} | awk -F : '{print $6}')}
-
-    #deprecate SUDO_?ID so we only use one variable for all this
-    [[ $SUDO_UID ]] && ESG_USER_UID=${SUDO_UID} && unset SUDO_UID && echo "SUDO_UID is deprecated, use ESG_USER_UID instead"
-    [[ $SUDO_GID ]] && ESG_USER_GID=${SUDO_GID} && unset SUDO_GID && echo "SUDO_GID is deprecated, use ESG_USER_GID instead"
-fi
-
-esg_root_dir=${esg_root_dir:-"/esg"}
-esg_backup_dir=${esg_backup_dir:-"${esg_root_dir}/backups"}
-esg_config_dir=${esg_config_dir:-"${esg_root_dir}/config"}
-esg_log_dir=${esg_log_dir:-"${esg_root_dir}/log"}
-esg_tools_dir=${esg_tools_dir:-"${esg_root_dir}/tools"}
-
-esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")
-
-compress_extensions=${compress_extensions:-".tar.gz|.tar.bz2|.tgz|.bz2"}
-cdat_home=${cdat_home:-${install_prefix}/cdat}
-
-#-----------
-globus_version=${globus_version:-"6.0"}
-usage_parser_version=${usage_parser_version:-"0.1.1"}
-
-distro=$(perl -ple 's/^([^ ]*) .*$/$1/;' < /etc/redhat-release)
-release=$(perl -ple 's/^.* (\d).\d .*$/$1/;' < /etc/redhat-release)
-
-#-----------
-globus_location=${GLOBUS_LOCATION:-${install_prefix}/globus}
-# since script runs as root and simpleCA should be done as root, make it /root/.globus here
-#NOTE-RedHat/CentOS specific...
-globus_install_dir=$globus_location
-globus_workdir=${workdir}/extra/globus
-globus_sys_acct=${globus_sys_acct:-globus}
-globus_sys_acct_group=${globus_sys_acct_group:-globus}
-globus_sys_acct_passwd=${globus_sys_acct_passwd:-$(cat ${esgf_secret_file} 2> /dev/null)}
-#-----------
-gridftp_config=${gridftp_config:-""}
-gridftp_dist_url_base=${esg_dist_url}/globus/gridftp
-gridftp_chroot_jail=${esg_root_dir}/gridftp_root
-#ports end-user configured:
-gridftp_server_port=2811
-gridftp_server_port_range=${gridftp_server_port_range:-50000,51000}
-gridftp_server_source_range=${gridftp_server_source_range:-50000,51000}
-gridftp_server_usage_log=${esg_log_dir}/esg-server-usage-gridftp.log
-gridftp_server_usage_config=${esg_config_dir}/gridftp/esg-server-usage-gridftp.conf
-esg_crontab=${esg_config_dir}/esg_crontab
-#-----------
-myproxy_config_args=${myproxy_config_args:-""}
-myproxy_dist_url_base=${esg_dist_url}/globus/myproxy
-myproxy_dist_url=http://downloads.sourceforge.net/project/cilogon/myproxy/myproxy-${myproxy_version}.tar.gz
-myproxy_endpoint=${myproxy_endpoint}
-myproxy_location=${globus_location}/bin/
-#-----------
-#esg_usage_parser_dist_url=http://www.mcs.anl.gov/~neillm/esg/esg_usage_parser-0.1.0.tar.gz
-esg_usage_parser_dist_url=${esg_dist_url}/globus/gridftp/esg_usage_parser-${usage_parser_version}.tar.bz2
-pam_pgsql_workdir=${workdir}/extra/pam_pgsql
-pam_pgsql_install_dir=${install_prefix}/pam
-postgress_jar=${postgress_jar:-postgresql-8.4-703.jdbc3.jar}
-
-#-----------
-#"PRIVATE" variables that are expected to be set and overridden by calling script!!
-#-----------
-openid_dirname=${openid_dirname:-"https://${esgf_host}/esgf-idp/openid/"}
-esgf_db_name=${ESGF_DB_NAME:-${GATEWAY_DB_NAME:-esgcet}} #(originating instance of this var)
-postgress_install_dir=${postgress_install_dir:-${install_prefix}/pgsql}
-postgress_user=${postgress_user:-dbsuper}
-postgress_host=${postgress_host:-localhost}
-postgress_port=${postgress_port:-5432}
-pg_sys_acct=${pg_sys_acct:-postgres}
-#-----------
-
-date_format=${date_format:-"+%Y_%m_%d_%H%M%S"}
-
-export X509_CERT_DIR=${X509_CERT_DIR:-/etc/grid-security/certificates/}
-export GLOBUS_SYS_ACCT=${globus_sys_acct}  #TODO: why is this an exported var?
-
-#NOTE: This is just here as a note, should be set already by th
-#      calling environment. Maybe refactor this out of esg-node and
-#      pull test_publication into separate test publication script?
-#      Hmmmm.... No harm in doubling up, but come back and make crispy
-#      and clean later
-prefix_to_path LD_LIBRARY_PATH $GLOBUS_LOCATION/lib >> ${envfile}
-prefix_to_path PATH $GLOBUS_LOCATION/bin >> ${envfile}
-dedup ${envfile} && source ${envfile}
-
-
-#NTP is so important to distributed systems that it should be started on G.P.
-/etc/init.d/ntpd start >& /dev/null
-
 #--------------------------------------------------------------
 # PROCEDURE
 #--------------------------------------------------------------
@@ -611,39 +498,6 @@ def write_esgsaml_auth_conf():
         esgsaml_conf_file.write("AUTHSERVICE={}".format(orp_security_authorization_service_endpoint))
 
 
-test_gridftp_server() {
-    local ret=0
-    local tmpdestfile
-    debug_print "test_gridftp_server: [$@]"
-
-    local personal_credential_repo="$HOME/.globus"
-
-    mkdir -p ${personal_credential_repo}
-    chown -R ${installer_uid}:${installer_gid} ${personal_credential_repo}
-
-    rm -rf ${personal_credential_repo}/esgf_credentials >& /dev/null
-    local _X509_CERT_DIR=${personal_credential_repo}/esgf_credentials
-    local _X509_USER_KEY=${personal_credential_repo}/esgf_credentials
-    local _X509_USER_CERT=${personal_credential_repo}/esgf_credentials
-
-    echo "myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T"
-    X509_CERT_DIR=${_X509_CERT_DIR} \
-        X509_USER_KEY=${_X509_USER_KEY} \
-        X509_USER_CERT=${_X509_USER_CERT} \
-        myproxy-logon -s $myproxy_endpoint -l rootAdmin -p $myproxy_port -T
-    [ $? != 0 ] && echo " ERROR: MyProxy not setup properly.  Unable to execute command." && return 1
-
-    echo -n "GridFTP - End-User Test... [$1] "
-    tmpdestfile=$(mktemp)
-    X509_CERT_DIR=${_X509_CERT_DIR} \
-        X509_USER_KEY=${_X509_USER_KEY} \
-        X509_USER_CERT=${_X509_USER_CERT} \
-        globus-url-copy gsiftp://${esgf_host:-localhost}:${gridftp_server_port}/esg_dataroot/test/sftlf.nc ${tmpdestfile} && \
-        diff <(echo $(md5sum ${tmpdestfile} | awk '{print $1}')) <(echo $(md5sum /esg/gridftp_root/esg_dataroot/test/sftlf.nc | awk '{print $1}')) && \
-        rm -f ${tmpdestfile} && [OK] || ( [FAIL] && ((ret++)) )
-    return ${ret}
-}
-
 def configure_esgf_publisher_for_gridftp():
     print " configuring publisher to use this GridFTP server... "
     publisher_path = os.path.join(config["publisher_home"], config["publisher_config"])
@@ -860,147 +714,69 @@ def config_myproxy_server(install_mode="install"):
     print "MyProxy - Configuration... [{}]".format(install_mode)
 
 
-
-
-
-# Note: myproxy servers live on gateway machines
-# see - http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/MyProxyWithAttributeCalloutConfig
-# arg = *"install" ------ run in install mode [install_mode=1]
-#        "update" ------- update the simpleCA [install_mode=0]
-config_myproxy_server() {
-
-    echo "MyProxy - Configuration... [$@]"
-
-    #toggle var install(1)/update(0)
-    local install_mode=1
-
-    for arg in $@
-    do
-        case $arg in
-            "install")
-                install_mode=1
-                ;;
-            "update")
-                install_mode=0
-                ;;
-            *)
-                printf "
-
-    ERROR: You have entered an invalid argument: [$@]\n
-
-    Usage:
-    function - esg-globus:config_myproxy_server [install|update]
-    (* indicates default values if no args are given)
-
-    \n"
-                return 1
-                ;;
-        esac
-    done
-
     #--------------------
     # Compile Java Code Used by "callout" scripts in ${globus_location}/bin
     #--------------------
-    if [ ! -e ESGOpenIDRetriever.class ] || [ ! -e ESGGroupRetriever ]; then
-        pushd ${globus_location}/bin >& /dev/null
-        echo "Download and building ESGOpenIDRetriever and ESGGroupRetriever..."
-        wget -O ESGOpenIDRetriever.java ${myproxy_dist_url_base}/ESGOpenIDRetriever.java
-        wget -O ESGGroupRetriever.java  ${myproxy_dist_url_base}/ESGGroupRetriever.java
+    if not os.path.exists(os.path.join(globus_location, "bin", "ESGOpenIDRetriever.class")) or os.path.exists(os.path.join(globus_location, "bin", "ESGGroupRetriever")):
+        with esg_bash2py.pushd("{}/bin".format(globus_location)):
+            myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+            esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
+            esg_functions.download_update("ESGGroupRetriever.java", "{}/ESGGroupRetriever.java".format(myproxy_dist_url_base))
 
-        #NOTE: "gateway_app_home" is available if this file is sourced from esg-gway
-        if [ -e ${gateway_app_home}/WEB-INF/lib/${postgress_jar} ]; then
-            echo " Found postgres jar in gateway web application's lib"
-            ln -s ${gateway_app_home}/WEB-INF/lib/${postgress_jar}
-        else
-            echo " Could not find postgresql jdbc jar in gateway web application's lib"
-            echo " getting it..."
-            wget -O ${postgress_jar} ${myproxy_dist_url_base}/${postgress_jar}
-        fi
+            postgress_jar = "postgresql-8.4-703.jdbc3.jar"
+            esg_functions.download_update(postgress_jar, "{}/{}".format(myproxy_dist_url_base, postgress_jar))
 
-        local cp=.:`pwd`:$(find `pwd`| grep .jar | xargs | perl -pe 's/ /:/g')
-        echo "javac -classpath ${cp} ESGOpenIDRetriever.java"
-        javac -classpath ${cp} ESGOpenIDRetriever.java
-        echo "javac -classpath ${cp} ESGGroupRetriever.java"
-        javac -classpath ${cp} ESGGroupRetriever.java
-        popd >& /dev/null
-        unset cp
-    fi
-    #--------------------
+            #Find all files with a .jar extension and concat file names separated by a colon.
+            java_class_path = [glob.glob("*.jar")
+            java_class_path_string = ":".join(java_class_path)
 
-    #--------------------
-    # Get myproxy-certificate-mapapp file
-    #--------------------
-    fetch_myproxy_certificate_mapapp
-    #--------------------
+            esg_functions.stream_subprocess_output("javac -classpath {} ESGOpenIDRetriever.java".format(java_class_path_string))
+            esg_functions.stream_subprocess_output("javac -classpath {} ESGGroupRetriever.java".format(java_class_path_string))
 
-    #--------------------
-    # Configure pam_sql.conf
-    #--------------------
-    edit_pam_pgsql_conf
-    #--------------------
+        fetch_myproxy_certificate_mapapp()
+        edit_pam_pgsql_conf()
+        #--------------------
+        # Fetch -> pam resource file used for myproxy
+        #--------------------
+        fetch_etc_pam_d_myproxy()
+        fetch_esg_attribute_callout_app()
+        #--------------------
+        # Create /esg/config/myproxy/myproxy-server.config
+        #--------------------
+        edit_myproxy_server_config()
+        #--------------------
+        # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
+        #--------------------
+        edit_etc_myproxyd()
+        write_db_name_env()
 
-    #--------------------
-    # Fetch -> pam resource file used for myproxy
-    #--------------------
-    fetch_etc_pam_d_myproxy
-    #--------------------
-
-    #--------------------
-    # Get esg_attribute_callout_app file
-    #--------------------
-    fetch_esg_attribute_callout_app
-    #--------------------
-
-    #--------------------
-    # Create /esg/config/myproxy/myproxy-server.config
-    #--------------------
-    edit_myproxy_server_config
-    #--------------------
-
-    #--------------------
-    # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
-    #--------------------
-    edit_etc_myproxyd
-    #--------------------
-
-
-    write_db_name_env
-
-    popd >& /dev/null
-    write_myproxy_install_log
+config_myproxy_server() {
 
     restart_myproxy_server
 
     checked_done 0
 }
 
-write_myproxy_install_log() {
-    [ -e /usr/sbin/myproxy-server ] && \
-        write_as_property myproxy_app_home /usr/sbin/myproxy-server || \
-        echo "WARNING: Cannot find executable /usr/sbin/myproxy-server"
-    ! grep myproxy.endpoint ${esg_config_dir}/esgf.properties && write_as_property myproxy_endpoint "${esgf_host:-$(hostname --fqdn)}"
-    ! grep myproxy.port ${esg_config_dir}/esgf.properties && write_as_property myproxy_port
-    write_as_property myproxy_dn "/$(openssl x509 -text -noout -in /etc/grid-security/hostcert.pem | sed -n 's#.*Subject: \(.*$\)#\1#p' | tr -s " " | sed -n 's#, #/#gp')"
+def write_myproxy_install_log():
+    if os.path.exists("/usr/sbin/myproxy-server"):
+        esg_property_manager.set_property("myproxy_app_home", "/usr/sbin/myproxy-server")
+        if not esg_property_manager.get_property("myproxy_endpoint"):
+            esg_property_manager.set_property("myproxy_endpoint", esg_functions.get_esgf_host())
+        if not esg_property_manager.get_property("myproxy_port"):
+            default_myproxy_port = "7512"
+            esg_property_manager.set_property("myproxy_port", default_myproxy_port)
 
-    echo "$(date ${date_format}) globus:myproxy=${myproxy_version} ${myproxy_app_home}" >> ${install_manifest}
-    dedup ${install_manifest}
-    return 0
+        #TODO: get distinguished name for cert
+        # esg_property_manager.set_property("myproxy_dn", default_myproxy_port)
 
-}
+        myproxy_app_home = "/usr/sbin/myproxy-server"
+        #TODO: Find myproxy_version
+        # esg_functions.write_to_install_manifest("globus:myproxy", thredds_install_dir, thredds_version)
 
-write_db_name_env() {
-    ((show_summary_latch++))
-    echo "export ESGF_DB_NAME=${esgf_db_name}" >> ${envfile}
-    dedup ${envfile} && source ${envfile}
-    return 0
-}
+def write_db_name_env():
+    esgf_db_name = esg_property_manager.get_property("db.database")
+    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), config_file=config["envfile"], section_name="esgf.env")
 
-
-test_myproxy_server() {
-    echo "MyProxy - Test... (faux) [$@]"
-    #TODO: Sanity check code...
-    return 0
-}
 
 start_myproxy_server() {
     check_myproxy_process && return 0
@@ -1046,132 +822,96 @@ check_myproxy_process() {
 # Configuration File Editing Functions
 ############################################
 
-edit_myproxy_server_config() {
-    mkdir -p ${esg_config_dir}/myproxy
-    pushd ${esg_config_dir}/myproxy >& /dev/null
-    local tfile=myproxy-server.config
-    echo "Creating/Modifying myproxy server configuration file: `pwd`/${tfile}"
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
+def edit_myproxy_server_config():
+    myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
+    esg_bash2py.mkdir_p(myproxy_config_dir)
+    with esg_bash2py.pushd(myproxy_config_dir):
+        myproxy_config_file = "myproxy-server.config"
+        "Creating/Modifying myproxy server configuration file: {}".format(myproxy_config_file)
+        if os.path.isfile(myproxy_config_file):
+            esg_functions.create_backup_file(myproxy_config_file)
+        with open("/esg/config/myproxy/myproxy-server.config", "w") as myproxy_server_file:
+            myproxy_server_file.write('authorized_retrievers      "*"')
+            myproxy_server_file.write('default_retrievers         "*"')
+            myproxy_server_file.write('authorized_renewers        "*"')
+            myproxy_server_file.write('authorized_key_retrievers  "*"')
+            myproxy_server_file.write('trusted_retrievers         "*"')
+            myproxy_server_file.write('default_trusted_retrievers "none"')
+            myproxy_server_file.write('max_cert_lifetime          "72"')
+            myproxy_server_file.write('disable_usage_stats        "true"')
+            myproxy_server_file.write('cert_dir                   "/etc/grid-security/certificates"')
 
-    cat > ${tfile} <<EOF
-        authorized_retrievers      "*"
-        default_retrievers         "*"
-        authorized_renewers        "*"
-        authorized_key_retrievers  "*"
-        trusted_retrievers         "*"
-        default_trusted_retrievers "none"
-        max_cert_lifetime          "72"
-        disable_usage_stats        "true"
-        cert_dir                   "/etc/grid-security/certificates"
+            myproxy_server_file.write('pam_id "myproxy"')
+            myproxy_server_file.write('pam "required"')
 
-        pam_id "myproxy"
-        pam "required"
+            myproxy_server_file.write('certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"')
+            myproxy_server_file.write('certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"')
+            myproxy_server_file.write('certificate_issuer_key_passphrase "globus"')
+            myproxy_server_file.write('certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"')
+            myproxy_server_file.write('certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"')
+            myproxy_server_file.write('certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"')
+            myproxy_server_file.write('certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp')
+            myproxy_server_file.write('certificate_extapp /esg/config/myproxy/esg_attribute_callout_app')
 
-        certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
-        certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"
-        certificate_issuer_key_passphrase "globus"
-        certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"
-        certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"
-        certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
-        certificate_mapapp ${esg_config_dir}/myproxy/myproxy-certificate-mapapp
-        certificate_extapp ${esg_config_dir}/myproxy/esg_attribute_callout_app
-EOF
+        os.chmod(myproxy_config_file, 0600)
 
-    chmod 600 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-    return 0
-}
+def edit_pam_pgsql_conf():
+    with esg_bash2py.pushd("/etc"):
+        pgsql_conf_file = "pam_pgsql.conf"
+        "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
 
-edit_pam_pgsql_conf() {
-    local _force_install=$((force_install + ${1:-0}))
-    pushd /etc >& /dev/null
-    local tfile=pam_pgsql.conf
-    echo "Download and Modifying pam pgsql configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/etc_${tfile} $((_force_install))
-    [ -e "${tfile}" ] && mv -v ${tfile}{,.bak}
-    cp -vf ${tfile}{.tmpl,}
-    [ -n "${tfile}" ] && chmod 600 ${tfile}* >& /dev/null
-    [ $? != 0 ] && return 1
-    eval "perl -p -i -e 's/\\@\\@postgress_host\\@\\@/${postgress_host}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_port\\@\\@/${postgress_port}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@postgress_user\\@\\@/${postgress_user}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@pg_sys_acct_passwd\\@\\@/${pg_sys_acct_passwd}/g' ${tfile}"
-    echo -n "*"
-    eval "perl -p -i -e 's/\\@\\@esgf_db_name\\@\\@/${esgf_db_name}/g' ${tfile}"
-    eval "perl -p -i -e 's/\\@\\@esgf_idp_peer\\@\\@/${esgf_idp_peer}/g' ${tfile}"
-    echo -n "*"
-    echo " [OK]"
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-    return 0
-}
+        os.chmod(pgsql_conf_file, 0600)
 
-edit_etc_myproxyd() {
-    echo "export MYPROXY_OPTIONS=\"-c ${esg_config_dir}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\""> /etc/myproxy.d/myproxy-esgf
-    return 0
-}
+        #Replace placeholder values
+        with open(pgsql_conf_file, 'r') as file_handle:
+            filedata = file_handle.read()
+        filedata = filedata.replace("@@esgf_db_name@@", esg_property_manager.get_property("db.database"))
+        filedata = filedata.replace("@@postgress_host@@", esg_property_manager.get_property("db.host"))
+        filedata = filedata.replace("@@postgress_port@@", esg_property_manager.get_property("db.port"))
+        filedata = filedata.replace("@@postgress_user@@", esg_property_manager.get_property("db.user"))
+        filedata = filedata.replace("@@esgf_idp_peer@@", esg_property_manager.get_property("esgf.index.peer"))
+        filedata = filedata.replace("@@pg_sys_acct_passwd@@", esg_functions.get_postgres_password())
 
-fetch_myproxy_certificate_mapapp() {
-    local _force_install=$((force_install + ${1:-0}))
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
-    pushd ${myproxy_config_dir} >& /dev/null
+        # Write the file out again
+        with open(file_name, 'w') as file_handle:
+            file_handle.write(filedata)
 
-    local tfile=myproxy-certificate-mapapp
-    echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile}.tmpl ${myproxy_dist_url_base}/${tfile} $((_force_install))
-    local ret=$?
-#    (( ret >= 1 )) && return 0
-    [ -e "${tfile}.tmpl" ] && chmod 640 ${tfile}.tmpl && cp -v ${tfile}{.tmpl,} && chmod 751 ${tfile} && \
-        sed -i.bak 's#/root/\.globus/simpleCA/cacert\.pem#/var/lib/globus-connect-server/myproxy-ca/cacert\.pem#' ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-    return 0
-}
+def edit_etc_myproxyd():
+    with open("/etc/myproxy.d/myproxy-esgf", "w") as myproxy_esgf_file:
+        myproxy_esgf_file.write('''"export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\""'''.format(esg_config_dir))
 
-fetch_etc_pam_d_myproxy() {
-    local _force_install=$((force_install + ${1:-0}))
-    pushd /etc/pam.d >& /dev/null
-    local tfile=myproxy
-    echo "Fetching pam's myproxy resource file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/etc_pam.d_${tfile} $((_force_install))
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-}
 
-fetch_esg_attribute_callout_app() {
-    local _force_install=$((force_install + ${1:-0}))
-    #Configure External Attribute Callout with MyProxy
-    local myproxy_config_dir=${esg_config_dir}/myproxy
-    mkdir -p ${myproxy_config_dir}
-    pushd ${myproxy_config_dir} >& /dev/null
+def fetch_myproxy_certificate_mapapp():
+    myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
+    esg_bash2py.mkdir_p(myproxy_config_dir)
+    with esg_bash2py.pushd(myproxy_config_dir):
+        mapapp_file = "myproxy-certificate-mapapp"
+        print "Downloading configuration file: {}".format(mapapp_file)
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
 
-    local tfile=esg_attribute_callout_app
-    echo "Downloading configuration file: `pwd`/${tfile}"
-    checked_get ${tfile} ${myproxy_dist_url_base}/${tfile} $((_force_install))
-    [ -e "${tfile}" ] && chmod 751 ${tfile}
-    ((DEBUG)) && cat ${tfile}
-    popd >& /dev/null
-    unset tfile
-}
+        os.chmod(mapapp_file, 0751)
+        esg_functions.replace_string_in_file(mapapp_file, "/root/.globus/simpleCA/cacert.pem", "var/lib/globus-connect-server/myproxy-ca/cacert.pem")
 
-sanity_check_myproxy_configurations() {
-    local _force_install=$((force_install + ${1:-0}))
-    edit_myproxy_server_config $((_force_install))
-    edit_pam_pgsql_conf $((_force_install))
-    fetch_myproxy_certificate_mapapp $((_force_install))
-    fetch_etc_pam_d_myproxy $((_force_install))
-    fetch_esg_attribute_callout_app $((_force_install))
-    edit_etc_myproxyd $((_force_install))
-}
+def fetch_etc_pam_d_myproxy():
+    with esg_bash2py.pushd("/etc/pam.d"):
+        myproxy_file = "myproxy"
+        "Fetching pam's myproxy resource file: {}".format(myproxy_file)
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
+
+def fetch_esg_attribute_callout_app():
+    myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
+    esg_bash2py.mkdir_p(myproxy_config_dir)
+    with esg_bash2py.pushd(myproxy_config_dir):
+        callout_app_file = "esg_attribute_callout_app"
+        print "Downloading configuration file: {}".format(callout_app_file)
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        esg_functions.download_update(callout_app_file, myproxy_dist_url_base+"/{}".format(callout_app_file))
+        os.chmod(callout_app_file, 0751)
+
 
 ############################################
 # Utility Functions
@@ -1215,63 +955,63 @@ create_globus_account() {
 ############################################
 # Globus Online Setup
 ############################################
-setup_globus_online() {
-    printf "
-    Setting up Globus Online / ESGF integration...
-
-    NOTE: You MUST have created a Globus Online account for
-    this node: In order for oAuth to work correctly such that
-    the user does not have to link their ESG credential with their
-    Globus Online account, this node must have its own account.
-
-        https://www.globusonline.org/SignUp
-
-"
-    local local=y
-    read -e -p "Continue? [Y/n] " input
-    [ "n" = "$(echo "${input}" | tr [A-Z] [a-z])" ] && return 1
-    unset input
-
-    (
-        local config_file=${esg_config_dir}/globusonline.properties
-        load_properties ${config_file}
-
-        local input
-        while [ 1 ]; do
-            read -e -p "Please enter your Globus Online ID [${GOesgfPortalID}]: " input
-            [ -n "${input}" ] && GOesgfPortalID=${input} && break
-            [ -n "${GOesgfPortalID}" ] && break
-        done
-        unset input
-        write_as_property GOesgfPortalID
-
-        while [ 1 ]; do
-            read -e -p "Please enter your Globus Online Password [$([ -n "${GOesgfPortalPassword}" ] && echo "*********")]: " input
-            [ -n "${input}" ] && GOesgfPortalPassword=${input} && break
-            [ -n "${GOesgfPortalPassword}" ] && break
-        done
-        unset input
-        write_as_property GOesgfPortalPassword
-
-        chmod 600 ${config_file}
-        chown ${tomcat_user:-tomcat}.${tomcat_group:-tomcat} ${config_file}
-
-        local mkproxy_dist_url="${esg_dist_url}/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
-        local mkproxy_dist_file=${mkproxy_dist_url##*/}
-        pushd /tmp/
-        checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))
-        (( $? > 1 )) && echo " ERROR: Could not download Globus Online install script" && popd >& /dev/null && checked_done 1
-        tar xvzf ${mkproxy_dist_file}
-        [ $? != 0 ] && echo " WARNING: Could not extract Globus Online install script (properly)" && popd >& /dev/null #&& checked_done 1
-        cd /tmp/mkproxy
-        [ $? != 0 ] && echo " ERROR: Could not Chang to mkproxy directory" && popd >& /dev/null && checked_done 1
-        make
-        [ $? != 0 ] && echo " ERROR: Could not build mkproxy program" && popd >& /dev/null && checked_done 1
-        cp -v /tmp/mkproxy/mkproxy /usr/local/bin
-        cd ../
-        [ -e "/tmp/${mkproxy_dist_file}" ] && rm -rf mkproxy /tmp/${mkproxy_dist_file}
-        popd >& /dev/null
-        (config_file=${esg_config_dir}/searchconfig.properties write_as_property enableGlobusOnline true && chmod 600 ${config_file})
-    )
-    echo "<<<<$?>>>>"
-}
+# setup_globus_online() {
+#     printf "
+#     Setting up Globus Online / ESGF integration...
+#
+#     NOTE: You MUST have created a Globus Online account for
+#     this node: In order for oAuth to work correctly such that
+#     the user does not have to link their ESG credential with their
+#     Globus Online account, this node must have its own account.
+#
+#         https://www.globusonline.org/SignUp
+#
+# "
+#     local local=y
+#     read -e -p "Continue? [Y/n] " input
+#     [ "n" = "$(echo "${input}" | tr [A-Z] [a-z])" ] && return 1
+#     unset input
+#
+#     (
+#         local config_file=${esg_config_dir}/globusonline.properties
+#         load_properties ${config_file}
+#
+#         local input
+#         while [ 1 ]; do
+#             read -e -p "Please enter your Globus Online ID [${GOesgfPortalID}]: " input
+#             [ -n "${input}" ] && GOesgfPortalID=${input} && break
+#             [ -n "${GOesgfPortalID}" ] && break
+#         done
+#         unset input
+#         write_as_property GOesgfPortalID
+#
+#         while [ 1 ]; do
+#             read -e -p "Please enter your Globus Online Password [$([ -n "${GOesgfPortalPassword}" ] && echo "*********")]: " input
+#             [ -n "${input}" ] && GOesgfPortalPassword=${input} && break
+#             [ -n "${GOesgfPortalPassword}" ] && break
+#         done
+#         unset input
+#         write_as_property GOesgfPortalPassword
+#
+#         chmod 600 ${config_file}
+#         chown ${tomcat_user:-tomcat}.${tomcat_group:-tomcat} ${config_file}
+#
+#         local mkproxy_dist_url="${esg_dist_url}/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
+#         local mkproxy_dist_file=${mkproxy_dist_url##*/}
+#         pushd /tmp/
+#         checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))
+#         (( $? > 1 )) && echo " ERROR: Could not download Globus Online install script" && popd >& /dev/null && checked_done 1
+#         tar xvzf ${mkproxy_dist_file}
+#         [ $? != 0 ] && echo " WARNING: Could not extract Globus Online install script (properly)" && popd >& /dev/null #&& checked_done 1
+#         cd /tmp/mkproxy
+#         [ $? != 0 ] && echo " ERROR: Could not Chang to mkproxy directory" && popd >& /dev/null && checked_done 1
+#         make
+#         [ $? != 0 ] && echo " ERROR: Could not build mkproxy program" && popd >& /dev/null && checked_done 1
+#         cp -v /tmp/mkproxy/mkproxy /usr/local/bin
+#         cd ../
+#         [ -e "/tmp/${mkproxy_dist_file}" ] && rm -rf mkproxy /tmp/${mkproxy_dist_file}
+#         popd >& /dev/null
+#         (config_file=${esg_config_dir}/searchconfig.properties write_as_property enableGlobusOnline true && chmod 600 ${config_file})
+#     )
+#     echo "<<<<$?>>>>"
+# }

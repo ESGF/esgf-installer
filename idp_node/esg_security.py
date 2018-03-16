@@ -25,14 +25,13 @@ def setup_security(node_type_list, esg_dist_url):
     # In setup mode it is an idempotent install (default)
     # In update mode it will always pull down latest after archiving old
     #
-    esgf_security_version = "1.2.8"
     currently_installed_version = esg_functions.get_version_from_manifest("esgf-security")
     if currently_installed_version:
-        if esg_version_manager.compare_versions(currently_installed_version, esgf_security_version):
+        if esg_version_manager.compare_versions(currently_installed_version, config["esgf_security_version"]):
             print "A sufficient version of esgf-security is installed"
             return
 
-    configure_postgress(node_type_list, esg_dist_url, esgf_security_version)
+    configure_postgress(node_type_list, esg_dist_url, config["esgf_security_version"])
     fetch_user_migration_launcher(node_type_list, esg_dist_url)
     fetch_policy_check_launcher(node_type_list, esg_dist_url)
     clean_security_webapp_subsystem()
@@ -68,10 +67,9 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version):
             #------------------------------------------------------------------------
             #Based on the node type selection we build the appropriate database tables
             #------------------------------------------------------------------------
-            esgf_security_db_version = "0.1.4"
             #TODO: bump this version to 2.7
             python_version = "2.6"
-            esgf_security_egg_file = "esgf_security-{}-py{}.egg".format(esgf_security_db_version, python_version)
+            esgf_security_egg_file = "esgf_security-{}-py{}.egg".format(config["esgf_security_db_version"], python_version)
             esgf_security_egg_url = "{}/esgf-security/{}".format(esg_dist_url, esgf_security_egg_file)
 
             #download the egg file from the distribution server is necessary....

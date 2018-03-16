@@ -334,6 +334,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         idp.main(esg_dist_url)
         esg_security.setup_security(node_type_list, esg_dist_url)
         globus.setup_globus("IDP")
+        idp.setup_slcs()
 
 
     esg_functions.update_fileupload_jar()

@@ -135,7 +135,7 @@ def setup_slcs():
             with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
                 yaml.dump(production_venv_only, yaml_file)
 
-            esg_property_manager.set_property("short.lived.certificate.server", esgf_host)
+            esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
             esg_bash2py.mkdir_p("/usr/local/esgf-slcs-server")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
@@ -146,7 +146,7 @@ def setup_slcs():
 
 def main(esg_dist_url):
     setup_idp(esg_dist_url)
-    setup_slcs()
+    # setup_slcs()
 
 if __name__ == '__main__':
     main()

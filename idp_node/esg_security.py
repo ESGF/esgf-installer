@@ -67,8 +67,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version):
             #------------------------------------------------------------------------
             #Based on the node type selection we build the appropriate database tables
             #------------------------------------------------------------------------
-            #TODO: bump this version to 2.7
-            python_version = "2.6"
+            python_version = "2.7"
             esgf_security_egg_file = "esgf_security-{}-py{}.egg".format(config["esgf_security_db_version"], python_version)
             esgf_security_egg_url = "{}/esgf-security/{}".format(esg_dist_url, esgf_security_egg_file)
 

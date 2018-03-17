@@ -25,6 +25,9 @@ def setup_security(node_type_list, esg_dist_url):
     # In setup mode it is an idempotent install (default)
     # In update mode it will always pull down latest after archiving old
     #
+    print "*******************************"
+    print "Setting up ESGF Security Services"
+    print "*******************************"
     currently_installed_version = esg_functions.get_version_from_manifest("esgf-security")
     if currently_installed_version:
         if esg_version_manager.compare_versions(currently_installed_version, config["esgf_security_version"]):

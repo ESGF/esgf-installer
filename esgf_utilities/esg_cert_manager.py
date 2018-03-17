@@ -635,9 +635,9 @@ def setup_temp_ca():
 
     #Copy CA perl script and openssl conf file that it uses.  The CA perl script
     #is used to create a temporary root CA
-    shutil.copyfile(os.path.join(current_directory, "apache_certs/CA.pl"), "/etc/tempcerts/CA.pl")
-    shutil.copyfile(os.path.join(current_directory, "apache_certs/openssl.cnf"), "/etc/tempcerts/openssl.cnf")
-    shutil.copyfile(os.path.join(current_directory, "apache_certs/myproxy-server.config"), "/etc/tempcerts/myproxy-server.config")
+    shutil.copyfile(os.path.join(current_directory, "CA.pl"), "/etc/tempcerts/CA.pl")
+    shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "/etc/tempcerts/openssl.cnf")
+    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "/etc/tempcerts/myproxy-server.config")
     os.chmod("/etc/tempcerts/CA.pl", 0755)
     os.chmod("/etc/tempcerts/openssl.cnf", 0755)
 

@@ -99,9 +99,11 @@ def setup_globus_services(config_type):
         if esg_version_manager.compare_versions(installed_globus_version, globus_version):
             print "Globus version appears sufficiently current"
 
-    if esg_property_manager.get_property("install.globus"):
+    try:
         setup_postgres_answer = esg_property_manager.get_property("install.globus")
-    else:
+        if not setup_postgres_answer:
+            raise ConfigParser.NoOptionError
+    except ConfigParser.NoOptionError:
         setup_postgres_answer = raw_input(
             "Do you want to continue with the Globus installation and setup? [y/N]: ") or "N"
 

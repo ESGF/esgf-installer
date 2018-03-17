@@ -42,7 +42,7 @@ esgf_node_manager_db_version: 0.1.5
 esgf_node_manager_version: 0.7.16
 esgf_secret_file: /esg/config/.esgf_pass
 esgf_security_db_version: 0.1.5
-esgf_security_version: 2.7.6
+esgf_security_version: 2.7.17
 esgf_web_fe_version: 2.6.5
 extkeytool_download_url: http://aims1.llnl.gov/esgf/dist/etc/idptools.tar.gz
 force_install: false

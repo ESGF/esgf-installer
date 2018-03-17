@@ -87,7 +87,7 @@ def setup_globus_services(config_type):
     '''arg1 - config_type ("datanode" | "gateway"  ["install"|"update"])'''
 
     print "*******************************"
-    print "Setting up Globus... (config type: $config_type)"
+    print "Setting up Globus... (config type: {})".format(config_type)
     print "*******************************"
     globus_version = "6.0"
     globus_sys_acct = "globus"

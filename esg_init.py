@@ -146,13 +146,8 @@ def init():
         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
     os.environ["PATH"] = myPATH + ':' + os.environ["PATH"]
-    os.environ["LD_LIBRARY_PATH"] = ""
-    try:
-        os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
-            ':' + os.environ["LD_LIBRARY_PATH"]
-    except KeyError:
-        logger.exception("LD_LIBRARY_PATH not found initially")
-        os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
+    PATH = myPATH + ':' + os.environ["PATH"]
+    LD_LIBRARY_PATH = myLD_LIBRARY_PATH
 
     #--------------
     # ID Setting

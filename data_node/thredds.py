@@ -239,7 +239,8 @@ def select_idp_peer(node_type_list):
             write_tds_env()
 
 def write_tds_env():
-    pass
+    esg_property_manager.set_property("ESGF_IDP_PEER_NAME", "export ESGF_IDP_PEER_NAME={}".format(esg_property_manager.get_property("esgf_idp_peer_name")), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("ESGF_IDP_PEER", "export ESGF_IDP_PEER={}".format(esg_property_manager.get_property("esgf_idp_peer")), config_file=config["envfile"], section_name="esgf.env")
 
 def update_mail_admin_address():
     mail_admin_address = esg_property_manager.get_property("mail.admin.address")

@@ -327,6 +327,9 @@ def setup_temp_certs():
     temp_ca_name = "{hostname}-CA".format(hostname=esg_functions.get_esgf_host())
     new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca")
 
+def write_tomcat_env():
+    esg_property_manager.set_property("CATALINA_HOME", "export CATALINA_HOME={}".format(config["tomcat_install_dir"]), config_file=config["envfile"], section_name="esgf.env")
+
 def write_tomcat_install_log():
     esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
     esg_property_manager.set_property("tomcat.install.dir", config["tomcat_install_dir"])

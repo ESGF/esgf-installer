@@ -494,9 +494,14 @@ def log_postgres_properties():
     esg_property_manager.set_property("db.port", config["postgress_port"])
     esg_property_manager.set_property("db.database", "esgcet")
 
-#TODO: write out settings to esg.env
 def write_postgress_env():
-    pass
+    esg_property_manager.set_property("PGHOME", "export PGHOME=/usr/bin/postgres", config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGUSER", "export PGUSER={}".format(config["postgress_user"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(config["postgress_port"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(config["postgress_bin_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(config["postgress_lib_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PATH", config["PATH"], config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"], config_file=config["envfile"], section_name="esgf.env")
 
 def write_postgress_install_log(psql_path):
     postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]

@@ -167,6 +167,10 @@ def setup_publisher():
             with esg_bash2py.pushd("src/python/esgcet"):
                 install_publisher()
 
+
+def write_esgcet_env():
+    esg_property_manager.set_property("ESG_ROOT_ID", "export ESG_ROOT_ID={}".format(esg_property_manager.get_property("esg.org.name")), config_file=config["envfile"], section_name="esgf.env")
+
 # env needed by Python client to trust the data node server certicate
 # ENV SSL_CERT_DIR /etc/grid-security/certificates
 # ENV ESGINI /esg/config/esgcet/esg.ini
@@ -190,6 +194,7 @@ def main():
     run_esgsetup()
     run_esginitialize()
     write_esgcet_install_log()
+    write_esgcet_env()
 
 if __name__ == '__main__':
     main()

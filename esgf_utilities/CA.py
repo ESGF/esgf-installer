@@ -39,7 +39,8 @@ def new_ca(ca_dir="/etc/tempcerts"):
         with open(os.path.join(CATOP, "crlnumber"), "w") as crlnumber_file:
             crlnumber_file.write("01\n")
 
-        if not os.path.exists(os.path.exists(CATOP, "private", CAKEY)):
+        generated_private_key = os.path.join(CATOP, "private", CAKEY)
+        if not os.path.exists(generated_private_key):
             CA_cert_filename = raw_input("CA certificate filename (or enter to create)")
 
         if CA_cert_filename and os.path.exists(CA_cert_filename):

@@ -56,3 +56,4 @@ clint
 configobj
 pyjks
 psutil
+cdf2cim>=0.1.9.0

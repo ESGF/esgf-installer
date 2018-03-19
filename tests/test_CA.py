@@ -38,7 +38,7 @@ class test_CA(unittest.TestCase):
         pass
 
     def test_new_ca(self):
-        CA.new_ca("/tmp/tempcerts")
+        CA.new_ca(ca_dir="/tmp/tempcerts")
         self.assertTrue(os.path.exists("/tmp/tempcerts/CA"))
         self.assertTrue(os.path.exists("/tmp/tempcerts/CA/certs"))
         self.assertTrue(os.path.exists("/tmp/tempcerts/CA/crl"))

@@ -36,7 +36,7 @@ def new_ca(ca_dir="/etc/tempcerts"):
         esg_bash2py.mkdir_p(os.path.join(CATOP, "private"))
 
         esg_bash2py.touch(os.path.join(CATOP, "index.txt"))
-        with open(os.path.join(CATOP, "crlnumber")) as crlnumber_file:
+        with open(os.path.join(CATOP, "crlnumber"), "w") as crlnumber_file:
             crlnumber_file.write("01\n")
 
         if not os.path.exists(os.path.exists(CATOP, "private", CAKEY)):

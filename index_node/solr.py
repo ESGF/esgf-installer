@@ -183,7 +183,7 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     print "******************************* \n"
 
     # # Solr/Jetty web application
-    SOLR_VERSION = "5.5.4"
+    SOLR_VERSION = "5.5.5"
     os.environ["SOLR_HOME"] = SOLR_HOME
     SOLR_INCLUDE= "{SOLR_HOME}/solr.in.sh".format(SOLR_HOME=SOLR_HOME)
     solr_config_types = index_config

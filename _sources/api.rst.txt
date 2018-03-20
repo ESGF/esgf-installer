@@ -54,20 +54,15 @@ ESG Functions
   :members:
 
 
-ESG Security
-------------------
-.. automodule:: esg_security
-  :members:
-
 
 ESG Purge
 ------------------
 .. automodule:: esg_purge
   :members:
 
-===============
-IDP Node
-===============
+======================
+Index Node Components
+======================
 
 ESG Search
 ------------------
@@ -84,4 +79,25 @@ Solr
 CoG
 ------------------
 .. automodule:: esg_cog
+  :members:
+
+
+======================
+IDP Node Components
+======================
+
+ESG Security
+------------------
+.. automodule:: esg_security
+  :members:
+
+Globus
+------------------
+.. automodule:: globus
+  :members:
+
+
+IDP
+------------------
+.. automodule:: idp
   :members:

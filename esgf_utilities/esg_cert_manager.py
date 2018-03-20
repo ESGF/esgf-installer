@@ -666,9 +666,9 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         print "ca_answer:", ca_answer
         with open("new_ca_setup.ans", "w") as ca_setup_file:
             #Apparently needs the leading new lines to work for some reason
-            ca_setup_file("\n\n\n")
+            ca_setup_file.write("\n\n\n")
             ca_setup_file.write(ca_answer)
-            ca_setup_file("\n\n\n")
+            ca_setup_file.write("\n\n\n")
         new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca", command_stdin="new_ca_setup.ans")
         print "new_ca_output:", new_ca_output
 

@@ -102,8 +102,13 @@
 <li class="toctree-l1"><a class="reference internal" href="#esg-cert-manager">ESG Cert Manager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#esg-security">ESG Security</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_purge">ESG Purge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_purge">ESG Purge</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#idp-node">IDP Node</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="#esg-search">ESG Search</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-solr">Solr</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_cog">CoG</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Issues</span></p>
 <ul>
@@ -580,9 +585,60 @@ If not password is provided as an argument, a prompt for a password is given.</p
 <dd><p>Removes postgres installation via yum</p>
 </dd></dl>
 
+<div class="section" id="idp-node">
+<h2>IDP Node<a class="headerlink" href="#idp-node" title="Permalink to this headline">¶</a></h2>
+</div>
 </div>
 <div class="section" id="esg-search">
 <h1>ESG Search<a class="headerlink" href="#esg-search" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="module-solr">
+<span id="solr"></span><h1>Solr<a class="headerlink" href="#module-solr" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="solr.download_template_directory">
+<code class="descclassname">solr.</code><code class="descname">download_template_directory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#download_template_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.download_template_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>download template directory structure for shards home</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.extract_solr_tarball">
+<code class="descclassname">solr.</code><code class="descname">extract_solr_tarball</code><span class="sig-paren">(</span><em>solr_tarball_path</em>, <em>SOLR_VERSION</em>, <em>target_path='/usr/local'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#extract_solr_tarball"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.extract_solr_tarball" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the solr tarball to {target_path} and symlink it to /usr/local/solr</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.setup_solr">
+<code class="descclassname">solr.</code><code class="descname">setup_solr</code><span class="sig-paren">(</span><em>index_config</em>, <em>SOLR_INSTALL_DIR='/usr/local/solr'</em>, <em>SOLR_HOME='/usr/local/solr-home'</em>, <em>SOLR_DATA_DIR='/esg/solr-index'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#setup_solr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.setup_solr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup Apache Solr for faceted search</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.solr_status">
+<code class="descclassname">solr.</code><code class="descname">solr_status</code><span class="sig-paren">(</span><em>SOLR_INSTALL_DIR</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#solr_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.solr_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the status of solr</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.stop_solr">
+<code class="descclassname">solr.</code><code class="descname">stop_solr</code><span class="sig-paren">(</span><em>SOLR_INSTALL_DIR='/usr/local/solr'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#stop_solr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.stop_solr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the solr process</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-esg_cog">
+<span id="cog"></span><h1>CoG<a class="headerlink" href="#module-esg_cog" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="esg_cog.checkout_cog_branch">
+<code class="descclassname">esg_cog.</code><code class="descname">checkout_cog_branch</code><span class="sig-paren">(</span><em>cog_path</em>, <em>branch_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cog.html#checkout_cog_branch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cog.checkout_cog_branch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checkout a given branch of the COG repo</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cog.clone_cog_repo">
+<code class="descclassname">esg_cog.</code><code class="descname">clone_cog_repo</code><span class="sig-paren">(</span><em>COG_INSTALL_DIR</em>, <em>COG_TAG='master'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cog.html#clone_cog_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cog.clone_cog_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clone the COG repo from Github</p>
+</dd></dl>
+
 </div>
 
 

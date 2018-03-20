@@ -102,11 +102,13 @@
 <li class="toctree-l1"><a class="reference internal" href="#esg-cert-manager">ESG Cert Manager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#esg-security">ESG Security</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_purge">ESG Purge</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#idp-node">IDP Node</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#esg-search">ESG Search</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-solr">Solr</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-esg_cog">CoG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-esg_purge">ESG Purge</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#idp-node">IDP Node</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#esg-search">ESG Search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-solr">Solr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-esg_cog">CoG</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -585,14 +587,13 @@ If not password is provided as an argument, a prompt for a password is given.</p
 <dd><p>Removes postgres installation via yum</p>
 </dd></dl>
 
-</div>
 <div class="section" id="idp-node">
-<h1>IDP Node<a class="headerlink" href="#idp-node" title="Permalink to this headline">¶</a></h1>
+<h2>IDP Node<a class="headerlink" href="#idp-node" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="esg-search">
-<h2>ESG Search<a class="headerlink" href="#esg-search" title="Permalink to this headline">¶</a></h2>
+<h3>ESG Search<a class="headerlink" href="#esg-search" title="Permalink to this headline">¶</a></h3>
 </div>
 <div class="section" id="module-solr">
-<span id="solr"></span><h2>Solr<a class="headerlink" href="#module-solr" title="Permalink to this headline">¶</a></h2>
+<span id="solr"></span><h3>Solr<a class="headerlink" href="#module-solr" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="solr.download_template_directory">
 <code class="descclassname">solr.</code><code class="descname">download_template_directory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#download_template_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.download_template_directory" title="Permalink to this definition">¶</a></dt>
@@ -625,7 +626,7 @@ If not password is provided as an argument, a prompt for a password is given.</p
 
 </div>
 <div class="section" id="module-esg_cog">
-<span id="cog"></span><h2>CoG<a class="headerlink" href="#module-esg_cog" title="Permalink to this headline">¶</a></h2>
+<span id="cog"></span><h3>CoG<a class="headerlink" href="#module-esg_cog" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="esg_cog.checkout_cog_branch">
 <code class="descclassname">esg_cog.</code><code class="descname">checkout_cog_branch</code><span class="sig-paren">(</span><em>cog_path</em>, <em>branch_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cog.html#checkout_cog_branch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cog.checkout_cog_branch" title="Permalink to this definition">¶</a></dt>
@@ -638,6 +639,7 @@ If not password is provided as an argument, a prompt for a password is given.</p
 <dd><p>Clone the COG repo from Github</p>
 </dd></dl>
 
+</div>
 </div>
 </div>
 

@@ -32,6 +32,7 @@ ESG Purge
 .. automodule:: esg_purge
   :members:
 
+------------------
 IDP Node
 ------------------
 

@@ -664,7 +664,9 @@ def setup_temp_ca():
         esg_bash2py.mkdir_p("CA")
         ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
         print "ca_answer:", ca_answer
-        new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca", command_stdin=ca_answer)
+        with open("new_ca_setup.ans", "w") as ca_setup_file:
+            ca_setup_file.write(ca_answer)
+        new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca", command_stdin="new_ca_setup.ans")
         print "new_ca_output:", new_ca_output
 
 

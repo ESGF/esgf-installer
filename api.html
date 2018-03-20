@@ -98,8 +98,16 @@
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Base Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#esg-apache-manager-module">ESG Apache Manager Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_apache_manager">ESG Apache Manager Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#esg-postgres-module">ESG Postgres Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-esg_setup">ESG Setup Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#esg-tomcat-module">ESG Tomcat Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#data-node-components">Data Node Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#esg-publisher-module">ESG Publisher Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-orp">ESG ORP Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#esg-thredds-module">ESG Thredds Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#esg-cert-manager">ESG Cert Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#esg-security">ESG Security</a></li>
@@ -185,8 +193,24 @@
             
   <div class="section" id="base-components">
 <h1>Base Components<a class="headerlink" href="#base-components" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="esg-apache-manager-module">
-<h2>ESG Apache Manager Module<a class="headerlink" href="#esg-apache-manager-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_apache_manager">
+<span id="esg-apache-manager-module"></span><h2>ESG Apache Manager Module<a class="headerlink" href="#module-esg_apache_manager" title="Permalink to this headline">¶</a></h2>
+<p>Module for installing Apache and mod_wsgi. Also contains Apache process management functions</p>
+<dl class="function">
+<dt id="esg_apache_manager.copy_apache_conf_files">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">copy_apache_conf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#copy_apache_conf_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.copy_apache_conf_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy custom apache conf files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_apache_manager.install_mod_wsgi">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">install_mod_wsgi</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#install_mod_wsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.install_mod_wsgi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Have to ensure python is install properly with the shared library for mod_wsgi installation to work</p>
+</dd></dl>
+
+</div>
+<div class="section" id="esg-postgres-module">
+<h2>ESG Postgres Module<a class="headerlink" href="#esg-postgres-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-esg_setup">
 <span id="esg-setup-module"></span><h2>ESG Setup Module<a class="headerlink" href="#module-esg_setup" title="Permalink to this headline">¶</a></h2>
@@ -233,6 +257,88 @@ returns False Otherwise</p>
 <dd><p>Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.</p>
 </dd></dl>
 
+</div>
+<div class="section" id="esg-tomcat-module">
+<h2>ESG Tomcat Module<a class="headerlink" href="#esg-tomcat-module" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+<div class="section" id="data-node-components">
+<h1>Data Node Components<a class="headerlink" href="#data-node-components" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="esg-publisher-module">
+<h2>ESG Publisher Module<a class="headerlink" href="#esg-publisher-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-esg_publisher"></span><p>ESGCET Package (Publisher) functions</p>
+<dl class="function">
+<dt id="esg_publisher.check_publisher_version">
+<code class="descclassname">esg_publisher.</code><code class="descname">check_publisher_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#check_publisher_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.check_publisher_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if an existing version of the Publisher is found on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.edit_esg_ini">
+<code class="descclassname">esg_publisher.</code><code class="descname">edit_esg_ini</code><span class="sig-paren">(</span><em>node_short_name='test_node'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#edit_esg_ini"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.edit_esg_ini" title="Permalink to this definition">¶</a></dt>
+<dd><p>Edit placeholder values in the generated esg.ini file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.generate_esgsetup_options">
+<code class="descclassname">esg_publisher.</code><code class="descname">generate_esgsetup_options</code><span class="sig-paren">(</span><em>recommended_setup=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#generate_esgsetup_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.generate_esgsetup_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the string that will pass arguments to esgsetup to initialize the database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.run_esginitialize">
+<code class="descclassname">esg_publisher.</code><code class="descname">run_esginitialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#run_esginitialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.run_esginitialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the esginitialize script to initialize the ESG node database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.run_esgsetup">
+<code class="descclassname">esg_publisher.</code><code class="descname">run_esgsetup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#run_esgsetup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.run_esgsetup" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate esg.ini file using esgsetup script; #Makes call to esgsetup - &gt; Setup the ESG publication configuration</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.setup_publisher">
+<code class="descclassname">esg_publisher.</code><code class="descname">setup_publisher</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#setup_publisher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.setup_publisher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install ESGF publisher</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.symlink_pg_binary">
+<code class="descclassname">esg_publisher.</code><code class="descname">symlink_pg_binary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#symlink_pg_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.symlink_pg_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.write_esgcet_install_log">
+<code class="descclassname">esg_publisher.</code><code class="descname">write_esgcet_install_log</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#write_esgcet_install_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.write_esgcet_install_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the Publisher install properties to the install manifest</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-orp">
+<span id="esg-orp-module"></span><h2>ESG ORP Module<a class="headerlink" href="#module-orp" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="orp.setup_orp">
+<code class="descclassname">orp.</code><code class="descname">setup_orp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#setup_orp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.setup_orp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup the ORP subsystem</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="orp.setup_providers_dropdown">
+<code class="descclassname">orp.</code><code class="descname">setup_providers_dropdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#setup_providers_dropdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.setup_providers_dropdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="orp.update_common_loader">
+<code class="descclassname">orp.</code><code class="descname">update_common_loader</code><span class="sig-paren">(</span><em>config_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#update_common_loader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.update_common_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>add /esg/config/ to common.loader in catalina.properties if not already present</p>
+</dd></dl>
+
+</div>
+<div class="section" id="esg-thredds-module">
+<h2>ESG Thredds Module<a class="headerlink" href="#esg-thredds-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="esg-cert-manager">
 <h2>ESG Cert Manager<a class="headerlink" href="#esg-cert-manager" title="Permalink to this headline">¶</a></h2>

@@ -22,9 +22,9 @@ ESG Tomcat Module
 .. automodule:: esg_tomcat_manager
   :members:
 
-================
+======================
 Data Node Components
-================
+======================
 
 ESG Publisher Module
 ------------------

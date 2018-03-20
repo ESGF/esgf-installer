@@ -92,8 +92,8 @@ class test_ESG_cert_manager(unittest.TestCase):
         self.assertTrue(os.path.isfile("/tmp/new-truststore.ts"))
 
     def test_setup_temp_ca(self):
-        esg_cert_manager.setup_temp_ca()
-        self.assertTrue(os.listdir("/etc/tempcerts/CA"))
+        esg_cert_manager.setup_temp_ca(temp_ca_dir="/tmp/tempcerts")
+        self.assertTrue(os.listdir("/tmp/tempcerts/CA"))
 
 
 

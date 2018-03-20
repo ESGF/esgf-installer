@@ -647,19 +647,19 @@ def delete_existing_temp_CA():
             if error.errno == errno.ENOENT:
                 pass
 
-def setup_temp_ca():
+def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
 
-    esg_bash2py.mkdir_p("/etc/tempcerts")
+    esg_bash2py.mkdir_p(temp_ca_dir)
 
     #Copy CA perl script and openssl conf file that it uses.  The CA perl script
     #is used to create a temporary root CA
-    shutil.copyfile(os.path.join(current_directory, "CA.pl"), "/etc/tempcerts/CA.pl")
-    shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "/etc/tempcerts/openssl.cnf")
-    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "/etc/tempcerts/myproxy-server.config")
-    os.chmod("/etc/tempcerts/CA.pl", 0755)
-    os.chmod("/etc/tempcerts/openssl.cnf", 0755)
+    shutil.copyfile(os.path.join(current_directory, "CA.pl"), "{}/CA.pl".format(temp_ca_dir))
+    shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "{}/openssl.cnf".format(temp_ca_dir))
+    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "{}/myproxy-server.config".format(temp_ca_dir))
+    os.chmod("{}/CA.pl".format(temp_ca_dir), 0755)
+    os.chmod("{}/openssl.cnf".format(temp_ca_dir), 0755)
 
-    with esg_bash2py.pushd("/etc/tempcerts"):
+    with esg_bash2py.pushd(temp_ca_dir):
         delete_existing_temp_CA()
         esg_bash2py.mkdir_p("CA")
         ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())

@@ -647,8 +647,6 @@ def delete_existing_temp_CA():
             if error.errno == errno.ENOENT:
                 pass
 
-TYPE_RSA = crypto.TYPE_RSA
-
 
 def createKeyPair(type, bits):
     '''source: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py'''
@@ -658,7 +656,7 @@ def createKeyPair(type, bits):
                bits - Number of bits to use in the key
     Returns:   The public/private key pair in a PKey object
     """
-    pkey = crypto.PKey()
+    pkey = OpenSSL.crypto.PKey()
     pkey.generate_key(type, bits)
     return pkey
 
@@ -680,7 +678,7 @@ def createCertRequest(pkey, digest="sha256", **name):
                           emailAddress - E-mail address
     Returns:   The certificate request in an X509Req object
     """
-    req = crypto.X509Req()
+    req = OpenSSL.crypto.X509Req()
     subj = req.get_subject()
 
     for key, value in name.items():
@@ -708,7 +706,7 @@ def createCertificate(req, issuerCertKey, serial, validityPeriod,
     """
     issuerCert, issuerKey = issuerCertKey
     notBefore, notAfter = validityPeriod
-    cert = crypto.X509()
+    cert = OpenSSL.crypto.X509()
     cert.set_serial_number(serial)
     cert.gmtime_adj_notBefore(notBefore)
     cert.gmtime_adj_notAfter(notAfter)

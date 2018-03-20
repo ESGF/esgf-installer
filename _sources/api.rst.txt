@@ -27,7 +27,13 @@ ESG Security
   :members:
 
 
-  ESG Purge
-  ------------------
-  .. automodule:: esg_purge
-    :members:
+ESG Purge
+------------------
+.. automodule:: esg_purge
+  :members:
+
+
+ESG Search
+------------------
+.. automodule:: esg_search
+  :members:

@@ -32,6 +32,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
         <link rel="up" title="Module code" href="index.html"/> 
 
@@ -95,8 +98,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">ESG Setup Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_apache_manager">ESG Apache Manager Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_cert_manager">ESG Cert Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#esg-cert-manager">ESG Cert Manager</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html#module-esg_functions">ESG Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#esg-security">ESG Security</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Issues</span></p>
 <ul>
@@ -171,40 +175,22 @@
   <h1>Source code for esg_setup</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">shutil</span>
-<span class="kn">from</span> <span class="nn">OpenSSL</span> <span class="k">import</span> <span class="n">crypto</span>
-<span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">platform</span>
 <span class="kn">import</span> <span class="nn">netifaces</span>
-<span class="kn">import</span> <span class="nn">tld</span>
-<span class="kn">import</span> <span class="nn">grp</span>
-<span class="kn">import</span> <span class="nn">shlex</span>
-<span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="kn">import</span> <span class="nn">urlparse</span>
-<span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">import</span> <span class="nn">getpass</span>
-<span class="kn">import</span> <span class="nn">tarfile</span>
-<span class="kn">import</span> <span class="nn">getpass</span>
-<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
-<span class="kn">from</span> <span class="nn">esg_exceptions</span> <span class="k">import</span> <span class="n">UnprivilegedUserError</span><span class="p">,</span> <span class="n">WrongOSError</span><span class="p">,</span> <span class="n">UnverifiedScriptError</span>
-<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
-<span class="kn">from</span> <span class="nn">clint.textui</span> <span class="k">import</span> <span class="n">progress</span>
-<span class="kn">import</span> <span class="nn">esg_bash2py</span>
-<span class="kn">import</span> <span class="nn">esg_functions</span>
-<span class="kn">import</span> <span class="nn">esg_property_manager</span>
-<span class="kn">import</span> <span class="nn">esg_version_manager</span>
-<span class="kn">import</span> <span class="nn">esg_logging_manager</span>
-<span class="kn">import</span> <span class="nn">esg_init</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
-<span class="kn">import</span> <span class="nn">semver</span>
-<span class="kn">import</span> <span class="nn">readline</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">UnprivilegedUserError</span><span class="p">,</span> <span class="n">WrongOSError</span><span class="p">,</span> <span class="n">UnverifiedScriptError</span>
+<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="k">import</span> <span class="n">find_executable</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_version_manager</span>
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
 <span class="n">force_install</span> <span class="o">=</span> <span class="kc">False</span>
@@ -300,7 +286,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">esgf_host_ip</span>
     <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-        <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf_host_ip&quot;</span><span class="p">)</span>
+        <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.host.ip&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">esgf_host_ip</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_install</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using IP: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">esgf_host_ip</span><span class="p">)</span>
@@ -329,15 +315,12 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">my_ip_address</span> <span class="o">=</span> <span class="n">ip_addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">write_as_property</span><span class="p">(</span><span class="s2">&quot;esgf_host_ip&quot;</span><span class="p">,</span> <span class="n">my_ip_address</span><span class="p">)</span>
-    <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf_host_ip&quot;</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_host_ip&quot;</span><span class="p">,</span> <span class="n">my_ip_address</span><span class="p">)</span>
+    <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.host.ip&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">esgf_host_ip</span>
 
 
 <span class="k">def</span> <span class="nf">set_default_java</span><span class="p">():</span>
-    <span class="c1"># default_java_version_info = esg_functions.call_subprocess(&quot;java -version&quot;)[&quot;stderr&quot;]</span>
-    <span class="c1"># default_java_version_number = re.search(&quot;1.8.0_\w+&quot;, default_java_version_info).group()</span>
-    <span class="c1"># if semver.compare(default_java_version_number, config[&quot;java_version&quot;]) != 0:</span>
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;alternatives --install /usr/bin/java java /usr/local/java/bin/java 3&quot;</span><span class="p">)</span>
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;alternatives --set java /usr/local/java/bin/java&quot;</span><span class="p">)</span>
 
@@ -365,7 +348,14 @@
     <span class="nb">print</span> <span class="s2">&quot;Downloading Java from &quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_dist_url&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">java_tarfile</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_dist_url&quot;</span><span class="p">],</span> <span class="n">force_install</span><span class="p">):</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;ERROR: Could not download Java&quot;</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;Java failed to download&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">write_java_env</span><span class="p">():</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;JAVA_HOME&quot;</span><span class="p">,</span> <span class="s2">&quot;export JAVA_HOME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">]),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">write_java_install_log</span><span class="p">(</span><span class="n">java_path</span><span class="p">):</span>
+    <span class="n">java_version</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;1.8.0_\w+&quot;</span><span class="p">,</span> <span class="n">check_java_version</span><span class="p">(</span><span class="n">java_path</span><span class="p">))</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;java&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">java_version</span><span class="p">)</span>
 
 <div class="viewcode-block" id="setup_java"><a class="viewcode-back" href="../api.html#esg_setup.setup_java">[docs]</a><span class="k">def</span> <span class="nf">setup_java</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;</span>
@@ -379,8 +369,8 @@
     <span class="k">if</span> <span class="n">force_install</span><span class="p">:</span>
         <span class="k">pass</span>
     <span class="k">if</span> <span class="n">check_for_existing_java</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_java&quot;</span><span class="p">):</span>
-                <span class="n">setup_java_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_java&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.java&quot;</span><span class="p">):</span>
+                <span class="n">setup_java_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.java&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">setup_java_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with Java installation and setup? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
             <span class="k">if</span> <span class="n">setup_java_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
@@ -408,11 +398,20 @@
 
         <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;installer_uid&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;installer_gid&quot;</span><span class="p">])</span>
         <span class="c1">#recursively change permissions</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_permissions_recursive</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;installer_uid&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;installer_gid&quot;</span><span class="p">])</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;installer_uid&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;installer_gid&quot;</span><span class="p">])</span>
 
     <span class="n">set_default_java</span><span class="p">()</span>
-    <span class="nb">print</span> <span class="n">check_java_version</span><span class="p">(</span><span class="s2">&quot;java&quot;</span><span class="p">)</span></div>
+    <span class="nb">print</span> <span class="n">check_java_version</span><span class="p">(</span><span class="s2">&quot;java&quot;</span><span class="p">)</span>
+    <span class="n">write_java_install_log</span><span class="p">(</span><span class="s2">&quot;java&quot;</span><span class="p">)</span>
+    <span class="n">write_java_env</span><span class="p">()</span></div>
     <span class="c1"># print check_java_version(&quot;{java_install_dir}/bin/java&quot;.format(java_install_dir=config[&quot;java_install_dir&quot;]))</span>
+
+<span class="k">def</span> <span class="nf">write_ant_env</span><span class="p">():</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;ANT_HOME&quot;</span><span class="p">,</span> <span class="s2">&quot;export ANT_HOME=/usr/bin/ant&quot;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">write_ant_install_log</span><span class="p">():</span>
+    <span class="n">ant_version</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;ant -version&quot;</span><span class="p">)[</span><span class="s2">&quot;stderr&quot;</span><span class="p">]</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;ant&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/bin/ant&quot;</span><span class="p">,</span> <span class="n">ant_version</span><span class="p">)</span>
 
 <div class="viewcode-block" id="setup_ant"><a class="viewcode-back" href="../api.html#esg_setup.setup_ant">[docs]</a><span class="k">def</span> <span class="nf">setup_ant</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Install ant via yum&#39;&#39;&#39;</span>
@@ -423,14 +422,16 @@
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/usr&quot;</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ant&quot;</span><span class="p">)):</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;ant -version&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_ant&quot;</span><span class="p">):</span>
-            <span class="n">setup_ant_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_ant&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.ant&quot;</span><span class="p">):</span>
+            <span class="n">setup_ant_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.ant&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">setup_ant_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with the Ant installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install_ant&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
+            <span class="n">setup_ant_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to continue with the Ant installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.ant&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
         <span class="k">if</span> <span class="n">setup_ant_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
             <span class="k">return</span>
 
-    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install ant&quot;</span><span class="p">)</span></div>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install ant&quot;</span><span class="p">)</span>
+    <span class="n">write_ant_install_log</span><span class="p">()</span>
+    <span class="n">write_ant_env</span><span class="p">()</span></div>
 
 <span class="k">def</span> <span class="nf">setup_cdat</span><span class="p">():</span>
     <span class="nb">print</span> <span class="s2">&quot;Checking for *UV* CDAT (Python+CDMS) </span><span class="si">{cdat_version}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cdat_version</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;cdat_version&quot;</span><span class="p">])</span>
@@ -500,7 +501,7 @@
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="../_static/jquery.js"></script>

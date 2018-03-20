@@ -33,21 +33,21 @@ ESG Purge
   :members:
 
 IDP Node
-===============
+------------------
 
 ESG Search
-------------------
+===============
 .. automodule:: esg_search
   :members:
 
 
 Solr
-------------------
+===============
 .. automodule:: solr
   :members:
 
 
 CoG
-------------------
+===============
 .. automodule:: esg_cog
   :members:

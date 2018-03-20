@@ -630,7 +630,25 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         os.remove(der_file)
 
 
+def delete_existing_temp_CA():
+    try:
+        shutil.rmtree("CA")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+    file_extensions = ["*.pem", "*.gz", "*.ans", "*.tmpl"]
+    files_to_delete = []
+    for ext in file_extensions:
+        files_to_delete.extend(glob.glob(ext))
+    for file_name in files_to_delete:
+        try:
+            shutil.rmtree(file_name)
+        except OSError, error:
+            if error.errno == errno.ENOENT:
+                pass
+
 def setup_temp_ca():
+
     esg_bash2py.mkdir_p("/etc/tempcerts")
 
     #Copy CA perl script and openssl conf file that it uses.  The CA perl script
@@ -642,11 +660,60 @@ def setup_temp_ca():
     os.chmod("/etc/tempcerts/openssl.cnf", 0755)
 
     with esg_bash2py.pushd("/etc/tempcerts"):
+        delete_existing_temp_CA()
         esg_bash2py.mkdir_p("CA")
         ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
         print "ca_answer:", ca_answer
         new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca", command_stdin=ca_answer)
         print "new_ca_output:", new_ca_output
+
+
+    # [ -z "${esgf_host}" ] && get_property esgf_host
+	# hostname=$esgf_host;
+	# mkdir -p /etc/tempcerts;
+	# cd /etc/tempcerts && rm -rf CA; rm -f *.pem; rm -f *.gz; rm -f *.ans; rm -f *.tmpl
+	# mkdir CA
+	# write_ca_ans_templ >setupca.ans.tmpl
+	# write_reqhost.ans_templ >reqhost.ans.tmpl
+	# echo -e "y\ny" >setuphost.ans
+	# cat setupca.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >setupca.ans
+	# cat reqhost.ans.tmpl|sed  "s/placeholder.fqdn/$hostname/" >reqhost.ans
+    # curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/CA.pl >CA.pl
+    # curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/openssl.cnf >openssl.cnf
+    # curl -s -L --insecure ${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/esgf-installer/myproxy-server.config >myproxy-server.config
+	# perl CA.pl -newca <setupca.ans
+	# openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
+	# perl CA.pl -newreq-nodes <reqhost.ans
+	# perl CA.pl -sign <setuphost.ans
+	# openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
+	# cp CA/private/cakey.pem cakey.pem
+	# openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem
+	# mv newkey.pem hostkey.pem
+	# chmod 400 cakey.pem
+	# chmod 400 hostkey.pem
+	# rm -f new*.pem
+	# ESGF_OPENSSL=/usr/bin/openssl
+	# cert=cacert.pem
+	# tmpsubj='/O=ESGF/OU=ESGF.ORG/CN=placeholder'
+	# quotedtmpsubj=`echo "$tmpsubj" | sed 's/[./*?|]/\\\\&/g'`;
+	# certsubj=`openssl x509 -in $cert -noout -subject|cut -d ' ' -f2-`;
+	# quotedcertsubj=`echo "$certsubj" | sed 's/[./*?|]/\\\\&/g'`;
+	# echo "quotedcertsubj=~$quotedcertsubj~";
+	# localhash=`$ESGF_OPENSSL x509 -in $cert -noout -hash`;
+	# tgtdir="globus_simple_ca_${localhash}_setup-0";
+	# mkdir $tgtdir;
+	# cp $cert $tgtdir/${localhash}.0;
+	# print_templ >signing_policy_template;
+	# sed "s/\(.*\)$quotedtmpsubj\(.*\)/\1$quotedcertsubj\2/" signing_policy_template >$tgtdir/${localhash}.signing_policy;
+	# cp $tgtdir/${localhash}.signing_policy signing-policy
+	# tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
+	# rm -rf $tgtdir;
+	# rm -f signing_policy_template;
+	# mkdir -p /etc/certs
+	# cp openssl.cnf /etc/certs/
+	# cp host*.pem /etc/certs/
+	# cp cacert.pem /etc/certs/cachain.pem
+	# mkdir -p /etc/esgfcerts
 
 
 def set_commercial_ca_paths():

@@ -1,12 +1,23 @@
-ESG Setup Module
-------------------
-.. automodule:: esg_setup
-   :members:
+================
+Base Components
+================
 
 ESG Apache Manager Module
 ---------------------------
 .. automodule:: esg_apache_manager
    :members:
+
+ ESG Postgres Module
+ ---------------------------
+ .. automodule:: esg_postgres
+    :members:
+
+ESG Setup Module
+------------------
+.. automodule:: esg_setup
+   :members:
+
+
 
 ESG Cert Manager
 ------------------

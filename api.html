@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>ESG Setup Module &mdash; esgf-installer alpha documentation</title>
+  <title>Base Components &mdash; esgf-installer alpha documentation</title>
   
 
   
@@ -97,18 +97,21 @@
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">ESG Setup Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_apache_manager">ESG Apache Manager Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#esg-cert-manager">ESG Cert Manager</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#esg-security">ESG Security</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_purge">ESG Purge</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#idp-node">IDP Node</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Base Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#esg-apache-manager-module">ESG Apache Manager Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_setup">ESG Setup Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#esg-cert-manager">ESG Cert Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#esg-security">ESG Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_purge">ESG Purge</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#esg-search">ESG Search</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-solr">Solr</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-esg_cog">CoG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#idp-node">IDP Node</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#esg-search">ESG Search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-solr">Solr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_cog">CoG</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">Issues</span></p>
 <ul>
@@ -161,7 +164,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>ESG Setup Module</li>
+      <li>Base Components</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -180,8 +183,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-esg_setup">
-<span id="esg-setup-module"></span><h1>ESG Setup Module<a class="headerlink" href="#module-esg_setup" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="base-components">
+<h1>Base Components<a class="headerlink" href="#base-components" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="esg-apache-manager-module">
+<h2>ESG Apache Manager Module<a class="headerlink" href="#esg-apache-manager-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-esg_setup">
+<span id="esg-setup-module"></span><h2>ESG Setup Module<a class="headerlink" href="#module-esg_setup" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="esg_setup.check_for_existing_java">
 <code class="descclassname">esg_setup.</code><code class="descname">check_for_existing_java</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_for_existing_java"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_for_existing_java" title="Permalink to this definition">¶</a></dt>
@@ -226,27 +234,11 @@ returns False Otherwise</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-esg_apache_manager">
-<span id="esg-apache-manager-module"></span><h1>ESG Apache Manager Module<a class="headerlink" href="#module-esg_apache_manager" title="Permalink to this headline">¶</a></h1>
-<p>Module for installing Apache and mod_wsgi. Also contains Apache process management functions</p>
-<dl class="function">
-<dt id="esg_apache_manager.copy_apache_conf_files">
-<code class="descclassname">esg_apache_manager.</code><code class="descname">copy_apache_conf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#copy_apache_conf_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.copy_apache_conf_files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Copy custom apache conf files</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="esg_apache_manager.install_mod_wsgi">
-<code class="descclassname">esg_apache_manager.</code><code class="descname">install_mod_wsgi</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#install_mod_wsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.install_mod_wsgi" title="Permalink to this definition">¶</a></dt>
-<dd><p>Have to ensure python is install properly with the shared library for mod_wsgi installation to work</p>
-</dd></dl>
-
-</div>
 <div class="section" id="esg-cert-manager">
-<h1>ESG Cert Manager<a class="headerlink" href="#esg-cert-manager" title="Permalink to this headline">¶</a></h1>
+<h2>ESG Cert Manager<a class="headerlink" href="#esg-cert-manager" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-esg_functions">
-<span id="esg-functions"></span><h1>ESG Functions<a class="headerlink" href="#module-esg_functions" title="Permalink to this headline">¶</a></h1>
+<span id="esg-functions"></span><h2>ESG Functions<a class="headerlink" href="#module-esg_functions" title="Permalink to this headline">¶</a></h2>
 <p>esg-functions: ESGF Node Application Stack Functions
 description: Installer Functions for the ESGF Node application stack</p>
 <dl class="function">
@@ -575,25 +567,25 @@ If not password is provided as an argument, a prompt for a password is given.</p
 
 </div>
 <div class="section" id="esg-security">
-<h1>ESG Security<a class="headerlink" href="#esg-security" title="Permalink to this headline">¶</a></h1>
+<h2>ESG Security<a class="headerlink" href="#esg-security" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-esg_purge">
-<span id="esg-purge"></span><h1>ESG Purge<a class="headerlink" href="#module-esg_purge" title="Permalink to this headline">¶</a></h1>
+<span id="esg-purge"></span><h2>ESG Purge<a class="headerlink" href="#module-esg_purge" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="esg_purge.purge_postgres">
 <code class="descclassname">esg_purge.</code><code class="descname">purge_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_purge.html#purge_postgres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_purge.purge_postgres" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes postgres installation via yum</p>
 </dd></dl>
 
+</div>
+</div>
 <div class="section" id="idp-node">
-<h2>IDP Node<a class="headerlink" href="#idp-node" title="Permalink to this headline">¶</a></h2>
-</div>
-</div>
+<h1>IDP Node<a class="headerlink" href="#idp-node" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="esg-search">
-<h1>ESG Search<a class="headerlink" href="#esg-search" title="Permalink to this headline">¶</a></h1>
+<h2>ESG Search<a class="headerlink" href="#esg-search" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-solr">
-<span id="solr"></span><h1>Solr<a class="headerlink" href="#module-solr" title="Permalink to this headline">¶</a></h1>
+<span id="solr"></span><h2>Solr<a class="headerlink" href="#module-solr" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="solr.download_template_directory">
 <code class="descclassname">solr.</code><code class="descname">download_template_directory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#download_template_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.download_template_directory" title="Permalink to this definition">¶</a></dt>
@@ -626,7 +618,7 @@ If not password is provided as an argument, a prompt for a password is given.</p
 
 </div>
 <div class="section" id="module-esg_cog">
-<span id="cog"></span><h1>CoG<a class="headerlink" href="#module-esg_cog" title="Permalink to this headline">¶</a></h1>
+<span id="cog"></span><h2>CoG<a class="headerlink" href="#module-esg_cog" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="esg_cog.checkout_cog_branch">
 <code class="descclassname">esg_cog.</code><code class="descname">checkout_cog_branch</code><span class="sig-paren">(</span><em>cog_path</em>, <em>branch_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cog.html#checkout_cog_branch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cog.checkout_cog_branch" title="Permalink to this definition">¶</a></dt>
@@ -639,6 +631,7 @@ If not password is provided as an argument, a prompt for a password is given.</p
 <dd><p>Clone the COG repo from Github</p>
 </dd></dl>
 
+</div>
 </div>
 
 

@@ -779,6 +779,9 @@ def sign_request(ca_req, req_key):
     print "Signed certificate is in newcert.pem\n";
 
 def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
+    print "*******************************"
+    print "Setting up Temp CA"
+    print "******************************* \n"
 
     esg_bash2py.mkdir_p(temp_ca_dir)
 

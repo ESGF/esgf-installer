@@ -842,7 +842,8 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
             logger.exception("Certificate is not correct.")
 
         local_hash = str(cert_obj.subject_name_hash())
-        cert_subject = cert_obj.get_subject()
+        cert_subject_object = cert_obj.get_subject()
+        cert_subject = "/OU={OU}/CN={CN}/O={O}".format(OU=cert_subject_object.OU, CN=cert_subject_object.CN, O=cert_subject_object.O)
         globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)
         esg_bash2py.mkdir_p(globus_cert_dir)
         shutil.copyfile("cacert.pem", os.path.join(globus_cert_dir,local_hash+".0"))

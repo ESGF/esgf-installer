@@ -7,6 +7,7 @@ import glob
 import filecmp
 import logging
 import socket
+import tarfile
 import datetime
 import errno
 import requests
@@ -790,12 +791,86 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         # perl CA.pl -sign <setuphost.ans
         newcert = createCertificate(new_careq, (new_careq, new_req_key), 0, (0, 60*60*24*365*5))
 
-        # print('Creating Certificate Authority certificate in "CA/cacert.pem"')
         with open('newcert.pem', 'w') as ca:
             ca.write(
                 OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, newcert).decode('utf-8')
         )
         print "Signed certificate is in newcert.pem\n";
+
+        # openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        with open('cacert.pem', 'w') as ca:
+            ca.write(
+                OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
+        )
+        # cp CA/private/cakey.pem cakey.pem
+        shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
+
+        # openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("newcert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        with open('hostcert.pem', 'w') as ca:
+            ca.write(
+                OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
+        )
+
+        # mv newkey.pem hostkey.pem
+        shutil.move("newkey.pem", "hostkey.pem")
+
+        # chmod 400 cakey.pem
+        os.chmod("cakey.pem", 0400)
+
+        # chmod 400 hostkey.pem
+        os.chmod("hostkey.pem", 0400)
+
+        # rm -f new*.pem
+        new_pem_files = glob.glob('new*.pem')
+        for pem_file in new_pem_files:
+            os.remove(pem_file)
+
+
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        local_hash = cert_obj.subject_name_hash()
+        cert_subject = cert_obj.get_subject()
+        globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)
+        esg_bash2py.mkdir_p(globus_cert_dir)
+        shutil.copyfile("cacert", os.path.join(globus_cert_dir,local_hash+".0"))
+        shutil.copyfile("signing-policy.template", os.path.join(globus_cert_dir,local_hash+".signing_policy"))
+        esg_functions.replace_string_in_file(os.path.join(globus_cert_dir,local_hash+".signing_policy"), '/O=ESGF/OU=ESGF.ORG/CN=placeholder', cert_subject)
+        shutil.copyfile(os.path.join(globus_cert_dir,local_hash+".signing_policy"), "signing-policy")
+
+        # tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
+        with tarfile.open(globus_cert_dir+".tar.gz", "w:gz") as tar:
+            tar.add(globus_cert_dir)
+
+        # rm -rf $tgtdir;
+        shutil.rmtree(globus_cert_dir)
+
+
+        # mkdir -p /etc/certs
+        esg_bash2py.mkdir_p("/etc/certs")
+    	# cp openssl.cnf /etc/certs/
+        shutil.copyfile("openssl.cnf", "/etc/certs/openssl.cnf")
+    	# cp host*.pem /etc/certs/
+        host_pem_files = glob.glob('new*.pem')
+        for pem_file in host_pem_files:
+            shutil.copyfile(pem_file, "/etc/certs/{}".format(pem_file))
+    	# cp cacert.pem /etc/certs/cachain.pem
+        shutil.copyfile("cacert.pem", "/etc/certs/cachain.pem")
+    	# mkdir -p /etc/esgfcerts
+        esg_bash2py.mkdir_p("/etc/esgfcerts")
+
         # ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
         # print "ca_answer:", ca_answer
         # with open("new_ca_setup.ans", "w") as ca_setup_file:

@@ -728,6 +728,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
     os.chmod("{}/CA.pl".format(temp_ca_dir), 0755)
     os.chmod("{}/openssl.cnf".format(temp_ca_dir), 0755)
 
+    #TODO: break this out to new_ca() function
     with esg_bash2py.pushd(temp_ca_dir):
         delete_existing_temp_CA()
         esg_bash2py.mkdir_p("CA")
@@ -735,6 +736,10 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         esg_bash2py.mkdir_p("CA/crl")
         esg_bash2py.mkdir_p("CA/newcerts")
         esg_bash2py.mkdir_p("CA/private")
+        esg_bash2py.touch("CA/index.txt")
+        with open("CA/crlnumber", "w") as crlnumber_file:
+            crlnumber_file.write("01\n")
+
         cakey = createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
         ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
         careq = createCertRequest(cakey, CN=ca_answer, O="ESGF", OU="ESGF.ORG")
@@ -752,6 +757,45 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
             ca.write(
                 OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cacert).decode('utf-8')
         )
+
+        # openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
+        private_cakey = open("CA/private/cakey.pem", 'rt').read()
+        key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_cakey)
+
+        with open('clearkey.pem', 'w') as clearkey:
+            clearkey.write(
+                OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_cakey).decode('utf-8')
+        )
+
+        shutil.copyfile("clearkey.pem", "CA/private/cakey.pem")
+
+        # perl CA.pl -newreq-nodes <reqhost.ans
+
+        new_req_key = createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
+        new_careq = createCertRequest(cakey, CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+
+        print('Creating Certificate Authority private key in "newkey.pem"')
+        with open('newkey.pem', 'w') as new_key_file:
+            new_key_file.write(
+                OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, new_req_key).decode('utf-8')
+        )
+
+        print('Creating Certificate Authority private key in "newreq.pem"')
+        with open('newreq.pem', 'w') as new_req_file:
+            new_req_file.write(
+                OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, new_careq).decode('utf-8')
+        )
+        print "Request is in newreq.pem, private key is in newkey.pem\n";
+
+        # perl CA.pl -sign <setuphost.ans
+        newcert = createCertificate(new_careq, (new_careq, new_req_key), 0, (0, 60*60*24*365*5))
+
+        # print('Creating Certificate Authority certificate in "CA/cacert.pem"')
+        with open('newcert.pem', 'w') as ca:
+            ca.write(
+                OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, newcert).decode('utf-8')
+        )
+        print "Signed certificate is in newcert.pem\n";
         # ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
         # print "ca_answer:", ca_answer
         # with open("new_ca_setup.ans", "w") as ca_setup_file:

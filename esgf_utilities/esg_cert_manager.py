@@ -841,7 +841,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
 
-        local_hash = cert_obj.subject_name_hash()
+        local_hash = str(cert_obj.subject_name_hash())
         cert_subject = cert_obj.get_subject()
         globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)
         esg_bash2py.mkdir_p(globus_cert_dir)

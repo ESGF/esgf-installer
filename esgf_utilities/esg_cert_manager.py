@@ -760,8 +760,8 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         )
 
         # openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
-        private_cakey = open("CA/private/cakey.pem", 'rt').read()
-        key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_cakey)
+        # private_cakey = open("CA/private/cakey.pem", 'rt').read()
+        private_cakey = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open("CA/private/cakey.pem").read())
 
         with open('clearkey.pem', 'w') as clearkey:
             clearkey.write(

@@ -45,6 +45,6 @@ def set_property(property_name, property_value=None, config_file=config["config_
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
 
-    parser.set('installer.properties', property_name, property_value)
+    parser.set(section_name, property_name, property_value)
     with open(config_file, "w") as config_file_object:
         parser.write(config_file_object)

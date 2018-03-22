@@ -44,7 +44,7 @@ install_miniconda(){
         echo "-----------------------------------"
         echo
         PATH=${CDAT_HOME}/bin:$PATH
-        conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
+        conda create -y -n esgf-pub "python<3" cdutil -c conda-forge -c cdat
 
   popd
 

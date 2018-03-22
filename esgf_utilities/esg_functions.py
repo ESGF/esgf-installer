@@ -882,7 +882,7 @@ def extract_tarball(tarball_name, dest_dir="."):
         exit_with_error(error)
 
 
-def change_ownership_recursive(directory_path, uid=None, gid=None):
+def change_ownership_recursive(directory_path, uid=-1, gid=-1):
     '''Recursively changes ownership on a directory and its subdirectories; Mimics chown -R'''
     for root, dirs, files in os.walk(readlinkf(directory_path)):
         for directory in dirs:

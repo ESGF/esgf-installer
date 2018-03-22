@@ -579,7 +579,7 @@ def setup_gcs_id(first_run=None):
         esg_bash2py.mkdir_p(os.path.join(myproxyca_dir, "newcerts"))
         os.chmod(myproxyca_dir, 0700)
         esg_bash2py.mkdir_p(os.path.join(myproxyca_dir, "private"))
-        os.chmod(os.path.join(myproxyca_dir), "private", 0700)
+        os.chmod(os.path.join(myproxyca_dir, "private"), 0700)
 
         shutil.copyfile("cacert.pem", os.path.join(myproxyca_dir, "cacert.pem"))
         shutil.copyfile("cakey.pem", os.path.join(myproxyca_dir, "private", "cakey.pem"))

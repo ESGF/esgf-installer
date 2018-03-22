@@ -705,7 +705,7 @@ def setup_gcs_id(first_run=None):
 
         parser.set('MyProxy', "Server", esg_functions.get_esgf_host())
 
-        with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
+        with open(globus_server_conf_file, "w") as config_file_object:
             parser.write(config_file_object)
 
         esg_functions.stream_subprocess_output("globus-connect-server-id-setup -c {}/globus-connect-server.conf -v".format(myproxy_config_dir))

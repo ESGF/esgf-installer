@@ -167,7 +167,10 @@ def stop_globus_services(config_type):
         print "You must provide a configuration type arg [datanode | gateway]"
         return
 
-
+def check_for_existing_globus_rpm_packages():
+    rpm_packages = esgf_utilities.esg_functions.call_subprocess("rpm -qa")["stdout"].split("\n")
+    globus_packages = [package for package in foo if "globus" in package]
+    return globus_packages
 
 #--------------------------------------------------------------
 # GLOBUS INSTALL (subset)
@@ -190,11 +193,12 @@ def _install_globus(config_type):
     os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
     with esg_bash2py.pushd(globus_workdir):
         # Setup Globus RPM repo
-        globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
-        globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
-        esg_functions.download_update(globus_connect_server_file, globus_connect_server_url)
-        esg_functions.stream_subprocess_output("rpm --import http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus")
-        esg_functions.stream_subprocess_output("rpm -i globus-connect-server-repo-latest.noarch.rpm")
+        if not check_for_existing_globus_rpm_packages():
+            globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
+            globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
+            esg_functions.download_update(globus_connect_server_file, globus_connect_server_url)
+            esg_functions.stream_subprocess_output("rpm --import http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus")
+            esg_functions.stream_subprocess_output("rpm -i globus-connect-server-repo-latest.noarch.rpm")
 
         # Install Globus and ESGF RPMs
         esg_functions.stream_subprocess_output("yum -y install {}".format(globus_type))
@@ -206,7 +210,6 @@ def _install_globus(config_type):
         else:
             esg_functions.stream_subprocess_output("yum -y install mhash pam-pgsql")
             esg_functions.stream_subprocess_output("yum -y update mhash pam-pgsql")
-
 
 
 #--------------------------------------------------------------
@@ -599,7 +602,7 @@ def setup_gcs_id(first_run=None):
     print 'download data through Globus. This uses the GridFTP server on the data node.'
     print 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
     print 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
-    print 'go to www.globus.org/SignUp.'
+    print 'go to www.globus.org/SignUp.'©
     print 'This step can be skipped, but users will not be able to download datasets'
     print 'from the GridFTP server on the data node through the ESGF web interface.'
 

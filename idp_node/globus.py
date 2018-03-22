@@ -96,7 +96,7 @@ def setup_globus_services(config_type):
         print "Detected an existing Globus installation"
         print "Checking for Globus {}".format(globus_version)
         installed_globus_version = esg_functions.call_subprocess("/usr/bin/globus-version")['stdout']
-        if esg_version_manager.compare_versions(installed_globus_version, globus_version):
+        if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
             print "Globus version appears sufficiently current"
 
     try:

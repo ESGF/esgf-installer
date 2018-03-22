@@ -13,7 +13,7 @@ from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
 from esgf_utilities import esg_bash2py
-from esgf_utilities.esg_exceptions import NoNodeTypeError
+from esgf_utilities.esg_exceptions import NoNodeTypeError, SubprocessError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -48,14 +48,18 @@ def get_node_status():
     '''
     node_running = True
     node_type = get_node_type()
-    postgres_status = esg_postgres.postgres_status()
-    if postgres_status:
-        print "Postgres is running"
-        print postgres_status[1]
-    else:
+    try:
+        postgres_status = esg_postgres.postgres_status()
+        if postgres_status:
+            print "Postgres is running"
+            print postgres_status[1]
+        else:
+            print "Postgres is stopped"
+            print postgres_status[1]
+            node_running = False
+    except SubprocessError, error:
         print "Postgres is stopped"
-        print postgres_status[1]
-        node_running = False
+        logger.info(error)
 
     tomcat_status = esg_tomcat_manager.check_tomcat_status()
     if tomcat_status:

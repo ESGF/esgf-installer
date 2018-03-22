@@ -573,9 +573,9 @@ def setup_gcs_id(first_run=None):
     with esg_bash2py.pushd(cert_dir):
         myproxyca_dir = "/var/lib/globus-connect-server/myproxy-ca"
 
-        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir), "newcerts")
+        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir, "newcerts"))
         os.chmod(myproxyca_dir, 0700)
-        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir), "private")
+        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir, "private"))
         os.chmod(os.path.join(myproxyca_dir), "private", 0700)
 
         shutil.copyfile("cacert.pem", os.path.join(myproxyca_dir, "cacert.pem"))

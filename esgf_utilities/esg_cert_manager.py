@@ -157,7 +157,12 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
-        simpleCA_cert_hash = esg_functions.get_md5sum(simpleCA_cert)
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(simpleCA_cert).read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        simpleCA_cert_hash = str(cert_obj.subject_name_hash())
         print "checking for MY cert: {globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)
         if os.path.isfile("{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)):
             print "Local CA cert file detected...."

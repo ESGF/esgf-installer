@@ -2,6 +2,7 @@ import os
 import logging
 import shutil
 import ConfigParser
+import OpenSSL
 import stat
 import glob
 import psutil
@@ -573,6 +574,8 @@ def setup_gcs_id(first_run=None):
     else:
         cert_dir = "/etc/esgfcerts"
 
+    logger.debug("cert_dir: %s", cert_dir)
+
     with esg_bash2py.pushd(cert_dir):
         myproxyca_dir = "/var/lib/globus-connect-server/myproxy-ca"
 
@@ -588,9 +591,13 @@ def setup_gcs_id(first_run=None):
         shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
         shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
 
-        simpleCA_cert = "cacert.pem"
-        simpleCA_cert_hash = esg_functions.get_md5sum(simpleCA_cert)
-        simpleCA_tar_file = "globus_simple_ca_{}_setup-0.tar.gz".format(simpleCA_cert_hash)
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        cert_hash = str(cert_obj.subject_name_hash())
+        simpleCA_tar_file = "globus_simple_ca_{}_setup-0.tar.gz".format(cert_hash)
         shutil.copyfile(simpleCA_tar_file, os.path.join(myproxyca_dir, simpleCA_tar_file))
         shutil.copyfile(simpleCA_tar_file, os.path.join("/etc/grid-security/certificates", simpleCA_tar_file))
 

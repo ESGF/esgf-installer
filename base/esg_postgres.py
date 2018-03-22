@@ -187,7 +187,7 @@ def load_esgf_schemas(db_user_password):
     # load ESGF schemas
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
+    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_dashboard.sql"), "r").read())
 
     load_esgf_data(cur)
@@ -197,7 +197,7 @@ def load_esgf_schemas(db_user_password):
 def load_esgf_data(cur):
     # # load ESGF data
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
+    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
 
     # # initialize migration table
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"

@@ -415,8 +415,8 @@ def setup_gcs_io(first_run=None):
                     esg_property_manager.set_property("globus.password", globus_password)
                     break
 
-        if esg_property_manager.get_property("myproxy_endpoint"):
-            myproxy_hostname = esg_property_manager.get_property("myproxy_endpoint")
+        if esg_property_manager.get_property("myproxy.endpoint"):
+            myproxy_hostname = esg_property_manager.get_property("myproxy.endpoint")
         else:
             myproxy_hostname = esg_functions.get_esgf_host().upper()
 

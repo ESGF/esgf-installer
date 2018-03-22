@@ -59,7 +59,9 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version):
         if node_db_name not in esg_postgres.postgres_list_dbs():
             esg_postgres.create_database(node_db_name)
 
-        if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas():
+        schema_list = esg_postgres.postgres_list_db_schemas()
+        logger.debug("schema list: %s", schema_list)
+        if node_db_security_schema_name in schema_list:
             print "Detected an existing security schema installation..."
         else:
             esg_postgres.postgres_clean_schema_migration("ESGF Security")

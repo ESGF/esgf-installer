@@ -602,7 +602,7 @@ def setup_gcs_id(first_run=None):
     print 'download data through Globus. This uses the GridFTP server on the data node.'
     print 'The endpoint is named as <globus_username>#<host_name>, e.g. llnl#pcmdi9 where'
     print 'llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,'
-    print 'go to www.globus.org/SignUp.'©
+    print 'go to www.globus.org/SignUp.'
     print 'This step can be skipped, but users will not be able to download datasets'
     print 'from the GridFTP server on the data node through the ESGF web interface.'
 

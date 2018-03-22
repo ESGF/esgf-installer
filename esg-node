@@ -896,7 +896,7 @@ setup_cdat() {
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
     unset LD_LIBRARY_PATH
 
-	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
+	conda create -y -n esgf-pub "python<3" -c conda-forge -c uvcdat cdutil
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
     fi
 

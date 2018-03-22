@@ -758,7 +758,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
     #--------------------
     if not os.path.exists(os.path.join(globus_location, "bin", "ESGOpenIDRetriever.class")) or os.path.exists(os.path.join(globus_location, "bin", "ESGGroupRetriever")):
         with esg_bash2py.pushd("{}/bin".format(globus_location)):
-            myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+            myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
             esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
             esg_functions.download_update("ESGGroupRetriever.java", "{}/ESGGroupRetriever.java".format(myproxy_dist_url_base))
 

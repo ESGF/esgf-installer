@@ -168,8 +168,8 @@ def stop_globus_services(config_type):
         return
 
 def check_for_existing_globus_rpm_packages():
-    rpm_packages = esgf_utilities.esg_functions.call_subprocess("rpm -qa")["stdout"].split("\n")
-    globus_packages = [package for package in foo if "globus" in package]
+    rpm_packages = esg_functions.call_subprocess("rpm -qa")["stdout"].split("\n")
+    globus_packages = [package for package in rpm_packages if "globus" in package]
     return globus_packages
 
 #--------------------------------------------------------------

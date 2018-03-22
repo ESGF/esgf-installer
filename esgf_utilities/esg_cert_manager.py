@@ -7,6 +7,7 @@ import glob
 import filecmp
 import logging
 import socket
+import tarfile
 import datetime
 import errno
 import requests
@@ -156,7 +157,12 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
-        simpleCA_cert_hash = esg_functions.get_md5sum(simpleCA_cert)
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(simpleCA_cert).read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        simpleCA_cert_hash = str(cert_obj.subject_name_hash())
         print "checking for MY cert: {globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)
         if os.path.isfile("{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)):
             print "Local CA cert file detected...."
@@ -630,23 +636,261 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         os.remove(der_file)
 
 
-def setup_temp_ca():
-    esg_bash2py.mkdir_p("/etc/tempcerts")
+def delete_existing_temp_CA():
+    try:
+        shutil.rmtree("CA")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+    file_extensions = ["*.pem", "*.gz", "*.ans", "*.tmpl"]
+    files_to_delete = []
+    for ext in file_extensions:
+        files_to_delete.extend(glob.glob(ext))
+    for file_name in files_to_delete:
+        try:
+            shutil.rmtree(file_name)
+        except OSError, error:
+            if error.errno == errno.ENOENT:
+                pass
+
+
+def createKeyPair(type, bits):
+    '''source: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py'''
+    """
+    Create a public/private key pair.
+    Arguments: type - Key type, must be one of TYPE_RSA and TYPE_DSA
+               bits - Number of bits to use in the key
+    Returns:   The public/private key pair in a PKey object
+    """
+    pkey = OpenSSL.crypto.PKey()
+    pkey.generate_key(type, bits)
+    return pkey
+
+
+def createCertRequest(pkey, digest="sha256", **name):
+    '''source: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py'''
+    """
+    Create a certificate request.
+    Arguments: pkey   - The key to associate with the request
+               digest - Digestion method to use for signing, default is sha256
+               **name - The name of the subject of the request, possible
+                        arguments are:
+                          C     - Country name
+                          ST    - State or province name
+                          L     - Locality name
+                          O     - Organization name
+                          OU    - Organizational unit name
+                          CN    - Common name
+                          emailAddress - E-mail address
+    Returns:   The certificate request in an X509Req object
+    """
+    req = OpenSSL.crypto.X509Req()
+    subj = req.get_subject()
+
+    for key, value in name.items():
+        setattr(subj, key, value)
+
+    req.set_pubkey(pkey)
+    req.sign(pkey, digest)
+    return req
+
+
+def createCertificate(req, issuerCertKey, serial, validityPeriod,
+                      digest="sha256"):
+    """
+    Generate a certificate given a certificate request.
+    Arguments: req        - Certificate request to use
+               issuerCert - The certificate of the issuer
+               issuerKey  - The private key of the issuer
+               serial     - Serial number for the certificate
+               notBefore  - Timestamp (relative to now) when the certificate
+                            starts being valid
+               notAfter   - Timestamp (relative to now) when the certificate
+                            stops being valid
+               digest     - Digest method to use for signing, default is sha256
+    Returns:   The signed certificate in an X509 object
+    """
+    issuerCert, issuerKey = issuerCertKey
+    notBefore, notAfter = validityPeriod
+    cert = OpenSSL.crypto.X509()
+    cert.set_serial_number(serial)
+    cert.gmtime_adj_notBefore(notBefore)
+    cert.gmtime_adj_notAfter(notAfter)
+    cert.set_issuer(issuerCert.get_subject())
+    cert.set_subject(req.get_subject())
+    cert.set_pubkey(req.get_pubkey())
+    cert.sign(issuerKey, digest)
+    return cert
+
+
+def new_ca():
+    '''Mimics perl CA.pl -newca'''
+    esg_bash2py.mkdir_p("CA")
+    esg_bash2py.mkdir_p("CA/certs")
+    esg_bash2py.mkdir_p("CA/crl")
+    esg_bash2py.mkdir_p("CA/newcerts")
+    esg_bash2py.mkdir_p("CA/private")
+    esg_bash2py.touch("CA/index.txt")
+    with open("CA/crlnumber", "w") as crlnumber_file:
+        crlnumber_file.write("01\n")
+
+    cakey = createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
+    ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
+    careq = createCertRequest(cakey, CN=ca_answer, O="ESGF", OU="ESGF.ORG")
+    # CA certificate is valid for five years.
+    cacert = createCertificate(careq, (careq, cakey), 0, (0, 60*60*24*365*5))
+
+    print('Creating Certificate Authority private key in "CA/private/cakey.pem"')
+    with open('CA/private/cakey.pem', 'w') as capkey:
+        capkey.write(
+            OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, cakey).decode('utf-8')
+    )
+
+    print('Creating Certificate Authority certificate in "CA/cacert.pem"')
+    with open('CA/cacert.pem', 'w') as ca:
+        ca.write(
+            OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cacert).decode('utf-8')
+    )
+
+def newreq_nodes():
+    '''Mimics perl CA.pl -newreq-nodes'''
+
+    new_req_key = createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
+    new_careq = createCertRequest(new_req_key, CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+
+    print('Creating Certificate Authority private key in "newkey.pem"')
+    with open('newkey.pem', 'w') as new_key_file:
+        new_key_file.write(
+            OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, new_req_key).decode('utf-8')
+    )
+
+    print('Creating Certificate Authority private key in "newreq.pem"')
+    with open('newreq.pem', 'w') as new_req_file:
+        new_req_file.write(
+            OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, new_careq).decode('utf-8')
+    )
+    print "Request is in newreq.pem, private key is in newkey.pem\n";
+
+    return new_careq, new_req_key
+
+def sign_request(ca_req, req_key):
+    '''Mimics perl CA.pl -sign'''
+    newcert = createCertificate(ca_req, (ca_req, req_key), 0, (0, 60*60*24*365*5))
+
+    with open('newcert.pem', 'w') as ca:
+        ca.write(
+            OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, newcert).decode('utf-8')
+    )
+    print "Signed certificate is in newcert.pem\n";
+
+def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
+    print "*******************************"
+    print "Setting up Temp CA"
+    print "******************************* \n"
+
+    esg_bash2py.mkdir_p(temp_ca_dir)
 
     #Copy CA perl script and openssl conf file that it uses.  The CA perl script
     #is used to create a temporary root CA
-    shutil.copyfile(os.path.join(current_directory, "apache_certs/CA.pl"), "/etc/tempcerts/CA.pl")
-    shutil.copyfile(os.path.join(current_directory, "apache_certs/openssl.cnf"), "/etc/tempcerts/openssl.cnf")
-    shutil.copyfile(os.path.join(current_directory, "apache_certs/myproxy-server.config"), "/etc/tempcerts/myproxy-server.config")
-    os.chmod("/etc/tempcerts/CA.pl", 0755)
-    os.chmod("/etc/tempcerts/openssl.cnf", 0755)
+    shutil.copyfile(os.path.join(current_directory, "CA.pl"), "{}/CA.pl".format(temp_ca_dir))
+    shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "{}/openssl.cnf".format(temp_ca_dir))
+    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "{}/myproxy-server.config".format(temp_ca_dir))
+    os.chmod("{}/CA.pl".format(temp_ca_dir), 0755)
+    os.chmod("{}/openssl.cnf".format(temp_ca_dir), 0755)
 
-    with esg_bash2py.pushd("/etc/tempcerts"):
-        esg_bash2py.mkdir_p("CA")
-        ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
-        print "ca_answer:", ca_answer
-        new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca", command_stdin=ca_answer)
-        print "new_ca_output:", new_ca_output
+    with esg_bash2py.pushd(temp_ca_dir):
+        delete_existing_temp_CA()
+        new_ca()
+
+        # openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass && mv clearkey.pem CA/private/cakey.pem
+        private_cakey = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open("CA/private/cakey.pem").read())
+
+        with open('clearkey.pem', 'w') as clearkey:
+            clearkey.write(
+                OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, private_cakey).decode('utf-8')
+        )
+
+        shutil.copyfile("clearkey.pem", "CA/private/cakey.pem")
+
+        # perl CA.pl -newreq-nodes <reqhost.ans
+        new_careq, new_req_key = newreq_nodes()
+        # perl CA.pl -sign <setuphost.ans
+        sign_request(new_careq, new_req_key)
+
+        # openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        with open('cacert.pem', 'w') as ca:
+            ca.write(
+                OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
+        )
+        # cp CA/private/cakey.pem cakey.pem
+        shutil.copyfile("CA/private/cakey.pem", "cakey.pem")
+
+        # openssl x509 -in newcert.pem -inform pem -outform pem >hostcert.pem
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("newcert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        with open('hostcert.pem', 'w') as ca:
+            ca.write(
+                OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
+        )
+
+        # mv newkey.pem hostkey.pem
+        shutil.move("newkey.pem", "hostkey.pem")
+
+        # chmod 400 cakey.pem
+        os.chmod("cakey.pem", 0400)
+
+        # chmod 400 hostkey.pem
+        os.chmod("hostkey.pem", 0400)
+
+        # rm -f new*.pem
+        new_pem_files = glob.glob('new*.pem')
+        for pem_file in new_pem_files:
+            os.remove(pem_file)
+
+        try:
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())
+        except OpenSSL.crypto.Error:
+            logger.exception("Certificate is not correct.")
+
+        local_hash = str(cert_obj.subject_name_hash())
+        globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)
+        esg_bash2py.mkdir_p(globus_cert_dir)
+
+        shutil.copyfile("cacert.pem", os.path.join(globus_cert_dir,local_hash+".0"))
+        shutil.copyfile(os.path.join(current_directory, "signing-policy.template"), os.path.join(globus_cert_dir,local_hash+".signing_policy"))
+
+        cert_subject_object = cert_obj.get_subject()
+        cert_subject = "/OU={OU}/CN={CN}/O={O}".format(OU=cert_subject_object.OU, CN=cert_subject_object.CN, O=cert_subject_object.O)
+        esg_functions.replace_string_in_file(os.path.join(globus_cert_dir,local_hash+".signing_policy"), '/O=ESGF/OU=ESGF.ORG/CN=placeholder', cert_subject)
+        shutil.copyfile(os.path.join(globus_cert_dir,local_hash+".signing_policy"), "signing-policy")
+
+        # tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;
+        with tarfile.open(globus_cert_dir+".tar.gz", "w:gz") as tar:
+            tar.add(globus_cert_dir)
+
+        # rm -rf $tgtdir;
+        shutil.rmtree(globus_cert_dir)
+
+        # mkdir -p /etc/certs
+        esg_bash2py.mkdir_p("/etc/certs")
+    	# cp openssl.cnf /etc/certs/
+        shutil.copyfile("openssl.cnf", "/etc/certs/openssl.cnf")
+    	# cp host*.pem /etc/certs/
+        host_pem_files = glob.glob('new*.pem')
+        for pem_file in host_pem_files:
+            shutil.copyfile(pem_file, "/etc/certs/{}".format(pem_file))
+    	# cp cacert.pem /etc/certs/cachain.pem
+        shutil.copyfile("cacert.pem", "/etc/certs/cachain.pem")
+    	# mkdir -p /etc/esgfcerts
+        esg_bash2py.mkdir_p("/etc/esgfcerts")
 
 
 def set_commercial_ca_paths():
@@ -725,6 +969,7 @@ def main():
     print "******************************* \n"
 
     create_self_signed_cert("/etc/certs")
+    setup_temp_ca()
     install_tomcat_keypair("/etc/certs/hostkey.pem", "/etc/certs/hostcert.pem")
     check_for_commercial_ca()
 

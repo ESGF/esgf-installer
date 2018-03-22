@@ -187,7 +187,7 @@ def load_esgf_schemas(db_user_password):
     # load ESGF schemas
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
+    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_dashboard.sql"), "r").read())
 
     load_esgf_data(cur)
@@ -197,7 +197,7 @@ def load_esgf_schemas(db_user_password):
 def load_esgf_data(cur):
     # # load ESGF data
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
+    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
 
     # # initialize migration table
     # su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"
@@ -494,9 +494,14 @@ def log_postgres_properties():
     esg_property_manager.set_property("db.port", config["postgress_port"])
     esg_property_manager.set_property("db.database", "esgcet")
 
-#TODO: write out settings to esg.env
 def write_postgress_env():
-    pass
+    esg_property_manager.set_property("PGHOME", "export PGHOME=/usr/bin/postgres", config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGUSER", "export PGUSER={}".format(config["postgress_user"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(config["postgress_port"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(config["postgress_bin_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(config["postgress_lib_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PATH", config["PATH"], config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"], config_file=config["envfile"], section_name="esgf.env")
 
 def write_postgress_install_log(psql_path):
     postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
@@ -606,14 +611,14 @@ def list_tables(conn=None, user_name="postgres", db_name="postgres"):
     print "tables for {current_database}: {tables_list}".format(current_database=current_database, tables_list=tables_list)
 
 
-def postgres_clean_schema_migration(repository_id):
+def postgres_clean_schema_migration(repository_id, db_user_password=esg_functions.get_publisher_password()):
     # Removes entries from the esgf_migrate_version table if any exist
     # where repository_id matches an SQL LIKE to the first argument
     #
     # The SQL LIKE strings are generally defined in
     # "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
     # each relevant repository.
-    conn = connect_to_db(config["postgress_user"], config["node_db_name"])
+    conn = connect_to_db(config["postgress_user"], config["node_db_name"], password=db_user_password)
     cur = conn.cursor()
 
     try:

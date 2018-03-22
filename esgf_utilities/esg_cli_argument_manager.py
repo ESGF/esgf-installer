@@ -139,6 +139,7 @@ def _define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", dest="install", help="Goes through the installation process and automatically starts up node services", action="store_true")
+    parser.add_argument("--base", dest="base", help="Install on base third party components", action="store_true")
     parser.add_argument("--update", help="Updates the node manager", action="store_true")
     parser.add_argument("--upgrade", help="Upgrade the node manager", action="store_true")
     parser.add_argument("--install-local-certs", dest="installlocalcerts", help="Install local certificates", action="store_true")
@@ -178,6 +179,8 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         installer_mode_dictionary["upgrade_mode"] = False
         installer_mode_dictionary["install_mode"] = True
         logger.debug("Install Services")
+        if args.base:
+            return ["INSTALL"]
         node_type_list = get_node_type()
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:

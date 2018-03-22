@@ -96,7 +96,7 @@ def setup_esg_config_permissions():
         os.chmod(file_name, 0644)
     os.chmod("/esg/config/esgcet/esg.ini", 640)
 
-esg_root_id = esg_functions.get_esg_root_id()
+esg_org_name = esg_property_manager.get_property("esg.org.name")
 
 def esgf_node_info():
 
@@ -307,8 +307,10 @@ def system_component_installation(esg_dist_url, node_type_list):
         pip.main(['install', "esgprep"])
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
+        from idp_node import globus
         orp.main()
         thredds.main(node_type_list)
+        globus.setup_globus("DATA")
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
         esg_setup.setup_cdat()
@@ -321,16 +323,19 @@ def system_component_installation(esg_dist_url, node_type_list):
             orp.main()
         from index_node import esg_cog, esg_search, solr
         esg_cog.main()
-        solr.main()
+        index_config = config["index_config"].split()
+        solr.main(index_config)
         esg_search.main()
     if "IDP" in node_type_list:
         print "\n*******************************"
         print "Installing IDP Node Components"
         print "******************************* \n"
-        from idp_node import idp
-        from idp_node import esg_security
-        idp.main()
+        from idp_node import idp, esg_security, globus
+        idp.main(esg_dist_url)
         esg_security.setup_security(node_type_list, esg_dist_url)
+        globus.setup_globus("IDP")
+        idp.setup_slcs()
+
 
     esg_functions.update_fileupload_jar()
     esg_functions.setup_whitelist_files(esg_dist_url)
@@ -365,7 +370,7 @@ def done_remark():
 '''
 
     show_summary()
-    print "(\"Test Project\" -> pcmdi.{esg_root_id}.{node_short_name}.test.mytest)".format(esg_root_id=esg_root_id, node_short_name=esg_property_manager.get_property("node.short.name"))
+    print "(\"Test Project\" -> pcmdi.{esg_org_name}.{node_short_name}.test.mytest)".format(esg_org_name=esg_org_name, node_short_name=esg_property_manager.get_property("node.short.name"))
 
 def setup_esgf_rpm_repo(esg_dist_url):
     '''Creates the esgf repository definition file'''
@@ -423,10 +428,10 @@ def main(node_type_list):
     ESGF Node Installation Program
     -----------------------------------'''
 
-    #If not type not set from CLI argument, look at previous node type setting
-    if not [node_type for node_type in node_type_list if node_type in node_types.keys()]:
-        previous_node_type = esg_cli_argument_manager.get_node_type()
-        print "previous_node_type:", previous_node_type
+    # #If not type not set from CLI argument, look at previous node type setting
+    # if not [node_type for node_type in node_type_list if node_type in node_types.keys()]:
+    #     previous_node_type = esg_cli_argument_manager.get_node_type()
+    #     print "previous_node_type:", previous_node_type
     check_selected_node_type(node_types, node_type_list)
 
     # Display node information to user

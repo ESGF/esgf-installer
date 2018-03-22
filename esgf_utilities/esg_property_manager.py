@@ -25,11 +25,13 @@ def get_property(property_name, config_file=config["config_file"], section_name=
         return parser.get(section_name, property_name)
     except ConfigParser.NoSectionError:
         logger.debug("could not find property %s", property_name)
+        raise
     except ConfigParser.NoOptionError:
         logger.debug("could not find property %s", property_name)
+        raise
 
 
-def set_property(property_name, property_value=None, config_file=config["config_file"]):
+def set_property(property_name, property_value=None, config_file=config["config_file"], section_name="installer.properties"):
     '''
         Writes variable out to property file using ConfigParser
         arg 1 - The string of the variable you wish to write as property to property file
@@ -39,10 +41,10 @@ def set_property(property_name, property_value=None, config_file=config["config_
     parser = ConfigParser.SafeConfigParser()
     parser.read(config_file)
     try:
-        parser.add_section("installer.properties")
+        parser.add_section(section_name)
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
 
-    parser.set('installer.properties', property_name, property_value)
+    parser.set(section_name, property_name, property_value)
     with open(config_file, "w") as config_file_object:
         parser.write(config_file_object)

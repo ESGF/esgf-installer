@@ -175,6 +175,9 @@ def download_java(java_tarfile):
         logger.error("ERROR: Could not download Java")
         esg_functions.exit_with_error("Java failed to download")
 
+def write_java_env():
+    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]), config_file=config["envfile"], section_name="esgf.env")
+
 def write_java_install_log(java_path):
     java_version = re.search("1.8.0_\w+", check_java_version(java_path)).group()
     esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
@@ -225,8 +228,11 @@ def setup_java():
     set_default_java()
     print check_java_version("java")
     write_java_install_log("java")
+    write_java_env()
     # print check_java_version("{java_install_dir}/bin/java".format(java_install_dir=config["java_install_dir"]))
 
+def write_ant_env():
+    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", config_file=config["envfile"], section_name="esgf.env")
 
 def write_ant_install_log():
     ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
@@ -250,6 +256,7 @@ def setup_ant():
 
     esg_functions.stream_subprocess_output("yum -y install ant")
     write_ant_install_log()
+    write_ant_env()
 
 def setup_cdat():
     print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])

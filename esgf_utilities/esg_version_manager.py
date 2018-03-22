@@ -81,7 +81,7 @@ def get_current_webapp_version(webapp_name, version_command=None):
             if version_number != None:
                 name, version = version_number.group(1).split(":")
                 return version.strip()
-    return 1
+    return False
 
 
 def check_webapp_version(webapp_name, min_version, version_command=None):

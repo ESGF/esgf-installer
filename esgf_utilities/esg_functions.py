@@ -503,7 +503,10 @@ def check_shmmax(min_shmmax=48):
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
     '''
-    kernel_shmmax = esg_property_manager.get_property("kernel.shmmax")
+    try:
+        kernel_shmmax = esg_property_manager.get_property("kernel.shmmax")
+    except ConfigParser.NoOptionError:
+        pass
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
     cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
@@ -517,14 +520,6 @@ def check_shmmax(min_shmmax=48):
         call_subprocess(
             "sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
         esg_property_manager.set_property("kernal_shmmax", set_value_mb)
-
-
-def get_esg_root_id():
-    try:
-        esg_root_id = config["esg_root_id"]
-    except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg.root.id")
-    return esg_root_id
 
 
 def get_esgf_host():
@@ -883,10 +878,11 @@ def extract_tarball(tarball_name, dest_dir="."):
         tar.close()
     except tarfile.TarError, error:
         logger.exception("Could not extract the tarfile: %s", tarball_name)
+        raise
         exit_with_error(error)
 
 
-def change_ownership_recursive(directory_path, uid=None, gid=None):
+def change_ownership_recursive(directory_path, uid=-1, gid=-1):
     '''Recursively changes ownership on a directory and its subdirectories; Mimics chown -R'''
     for root, dirs, files in os.walk(readlinkf(directory_path)):
         for directory in dirs:

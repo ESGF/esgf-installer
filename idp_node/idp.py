@@ -71,7 +71,8 @@ def setup_idp(esg_dist_url):
         idp_dist_url = "{}/esgf-idp/esgf-idp.war".format(esg_dist_url)
         esg_functions.download_update(idp_dist_file, idp_dist_url)
 
-        esg_tomcat_manager.stop_tomcat()
+        if esg_tomcat_manager.check_tomcat_status():
+            esg_tomcat_manager.stop_tomcat()
 
         print "Expanding war {idp_dist_file} in {pwd}".format(idp_dist_file=idp_dist_file, pwd=os.getcwd())
         with zipfile.ZipFile(idp_dist_file, 'r') as zf:
@@ -84,6 +85,8 @@ def setup_idp(esg_dist_url):
 
     write_idp_install_log(idp_service_app_home)
     write_security_lib_install_log()
+
+    esg_tomcat_manager.start_tomcat()
 
 
 def setup_slcs():
@@ -102,7 +105,7 @@ def setup_slcs():
     esg_postgres.create_database("slcsdb")
 
     with esg_bash2py.pushd("/usr/local/src"):
-        Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd())
+        Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
 
         apache_user = esg_functions.get_user_id("apache")
         apache_group = esg_functions.get_group_id("apache")
@@ -115,10 +118,11 @@ def setup_slcs():
 
             esg_functions.change_ownership_recursive("/var/lib/globus-connect-server/myproxy-ca/", gid=apache_group)
 
+            current_mode = os.stat("/var/lib/globus-connect-server/myproxy-ca/")
             #add group read and execute permissions
-            os.chmod("/var/lib/globus-connect-server/myproxy-ca/", stat.S_IRGRP | stat.S_IXGRP)
-            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", stat.S_IRGRP | stat.S_IXGRP)
-            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", stat.S_IRGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/", current_mode.st_mode, stat.S_IRGRP | stat.S_IXGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", current_mode.st_mode, stat.S_IRGRP | stat.S_IXGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", current_mode.st_mode, stat.S_IRGRP)
 
             with open("playbook/overrides/production_venv_only.yml", "r+") as yaml_file:
                 production_venv_only = yaml_file.load()
@@ -131,7 +135,7 @@ def setup_slcs():
             with open('playbook/overrides/production_venv_only.yml', 'w') as yaml_file:
                 yaml.dump(production_venv_only, yaml_file)
 
-            esg_property_manager.set_property("short.lived.certificate.server", esgf_host)
+            esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
             esg_bash2py.mkdir_p("/usr/local/esgf-slcs-server")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
@@ -142,7 +146,7 @@ def setup_slcs():
 
 def main(esg_dist_url):
     setup_idp(esg_dist_url)
-    setup_slcs()
+    # setup_slcs()
 
 if __name__ == '__main__':
     main()

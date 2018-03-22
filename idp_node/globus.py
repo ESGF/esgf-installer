@@ -401,6 +401,7 @@ def setup_gcs_io(first_run=None):
                 if not globus_user:
                     print "Globus username cannot be blank."
                 else:
+                    esg_property_manager.set_property("globus.user", globus_user)
                     break
 
         if esg_property_manager.get_property("globus.password"):
@@ -634,6 +635,7 @@ def setup_gcs_id(first_run=None):
                 if not globus_user:
                     print "Globus username cannot be blank."
                 else:
+                    esg_property_manager.set_property("globus.user", globus_user)
                     break
 
         if esg_property_manager.get_property("globus.password"):

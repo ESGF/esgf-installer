@@ -1,0 +1,398 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>esg_cog &mdash; esgf-installer alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0.0-alpha
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Base Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#data-node-components">Data Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#index-node-components">Index Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#idp-node-components">IDP Node Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contributing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute_docs.html">Contributing to Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>esg_cog</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for esg_cog</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">pip</span>
+<span class="kn">from</span> <span class="nn">git</span> <span class="k">import</span> <span class="n">Repo</span><span class="p">,</span> <span class="n">GitCommandError</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+<span class="c1">#TODO: This is duplicating checkout_publisher_branch in esg_publisher; Should be generalized</span>
+<div class="viewcode-block" id="checkout_cog_branch"><a class="viewcode-back" href="../api.html#esg_cog.checkout_cog_branch">[docs]</a><span class="k">def</span> <span class="nf">checkout_cog_branch</span><span class="p">(</span><span class="n">cog_path</span><span class="p">,</span> <span class="n">branch_name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Checkout a given branch of the COG repo&#39;&#39;&#39;</span>
+    <span class="n">publisher_repo_local</span> <span class="o">=</span> <span class="n">Repo</span><span class="p">(</span><span class="n">cog_path</span><span class="p">)</span>
+    <span class="n">publisher_repo_local</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="n">branch_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">publisher_repo_local</span></div>
+
+<div class="viewcode-block" id="clone_cog_repo"><a class="viewcode-back" href="../api.html#esg_cog.clone_cog_repo">[docs]</a><span class="k">def</span> <span class="nf">clone_cog_repo</span><span class="p">(</span><span class="n">COG_INSTALL_DIR</span><span class="p">,</span> <span class="n">COG_TAG</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Clone the COG repo from Github&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Cloning COG repo&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="kn">from</span> <span class="nn">git</span> <span class="k">import</span> <span class="n">RemoteProgress</span>
+    <span class="k">class</span> <span class="nc">Progress</span><span class="p">(</span><span class="n">RemoteProgress</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op_code</span><span class="p">,</span> <span class="n">cur_count</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">message</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Downloading: (==== </span><span class="si">{}</span><span class="s1"> ====)</span><span class="se">\r</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
+                <span class="nb">print</span> <span class="s2">&quot;current line:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_line</span>
+
+    <span class="c1"># Repo.clone_from(&quot;https://github.com/EarthSystemCoG/COG.git&quot;, COG_INSTALL_DIR, progress=Progress())</span>
+    <span class="n">Repo</span><span class="o">.</span><span class="n">clone_from</span><span class="p">(</span><span class="s2">&quot;https://github.com/William-Hill/COG.git&quot;</span><span class="p">,</span> <span class="n">COG_INSTALL_DIR</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="n">Progress</span><span class="p">())</span>
+    <span class="n">checkout_cog_branch</span><span class="p">(</span><span class="n">COG_INSTALL_DIR</span><span class="p">,</span> <span class="n">COG_TAG</span><span class="p">)</span></div>
+
+<span class="c1">#TODO:Probably need to add a force_install param to force an update</span>
+<span class="k">def</span> <span class="nf">setup_django_openid_auth</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up Django OpenID Auth&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;target_directory </span><span class="si">%s</span><span class="s2"> already exists. Skipping cloning from Github&quot;</span><span class="p">,</span> <span class="n">target_directory</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Repo</span><span class="o">.</span><span class="n">clone_from</span><span class="p">(</span><span class="s2">&quot;https://github.com/EarthSystemCoG/django-openid-auth.git&quot;</span><span class="p">,</span> <span class="n">target_directory</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;python setup.py install&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">transfer_api_client_python</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up Transfer API Client&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;target_directory </span><span class="si">%s</span><span class="s2"> already exists. Skipping cloning from Github&quot;</span><span class="p">,</span> <span class="n">target_directory</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Repo</span><span class="o">.</span><span class="n">clone_from</span><span class="p">(</span><span class="s2">&quot;https://github.com/globusonline/transfer-api-client-python.git&quot;</span><span class="p">,</span> <span class="n">target_directory</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
+        <span class="c1"># esg_functions.stream_subprocess_output(&quot;python setup.py install&quot;)</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="n">Repo</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_directory</span><span class="p">))</span>
+        <span class="n">git</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">git</span>
+        <span class="n">git</span><span class="o">.</span><span class="n">pull</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;mkproxy&quot;</span><span class="p">):</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;make&quot;</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;mkproxy&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">change_cog_dir_owner</span><span class="p">(</span><span class="n">COG_DIR</span><span class="p">,</span> <span class="n">COG_CONFIG_DIR</span><span class="p">):</span>
+    <span class="c1"># change ownership of COG_CONFIG_DIR/site_media</span>
+    <span class="n">apache_user</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;apache&quot;</span><span class="p">)</span>
+    <span class="n">apache_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;apache&quot;</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{COG_DIR}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">COG_DIR</span><span class="o">=</span><span class="n">COG_DIR</span><span class="p">),</span> <span class="n">apache_user</span><span class="p">,</span> <span class="n">apache_group</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{COG_CONFIG_DIR}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">COG_CONFIG_DIR</span><span class="o">=</span><span class="n">COG_CONFIG_DIR</span><span class="p">),</span> <span class="n">apache_user</span><span class="p">,</span> <span class="n">apache_group</span><span class="p">)</span>
+
+    <span class="c1"># # create location where Python eggs can be unpacked by user &#39;apache&#39;</span>
+    <span class="n">PYTHON_EGG_CACHE_DIR</span> <span class="o">=</span> <span class="s2">&quot;/var/www/.python-eggs&quot;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{PYTHON_EGG_CACHE_DIR}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PYTHON_EGG_CACHE_DIR</span><span class="o">=</span><span class="n">PYTHON_EGG_CACHE_DIR</span><span class="p">),</span> <span class="n">apache_user</span><span class="p">,</span> <span class="n">apache_group</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">setup_cog</span><span class="p">(</span><span class="n">COG_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/cog&quot;</span><span class="p">):</span>
+    <span class="c1"># choose CoG version</span>
+    <span class="n">COG_TAG</span> <span class="o">=</span> <span class="s2">&quot;v3.9.7&quot;</span>
+    <span class="c1"># setup CoG environment</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">COG_DIR</span><span class="p">)</span>
+
+    <span class="n">COG_CONFIG_DIR</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{COG_DIR}</span><span class="s2">/cog_config&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">COG_DIR</span><span class="o">=</span><span class="n">COG_DIR</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">COG_CONFIG_DIR</span><span class="p">)</span>
+
+    <span class="n">COG_INSTALL_DIR</span><span class="o">=</span> <span class="s2">&quot;</span><span class="si">{COG_DIR}</span><span class="s2">/cog_install&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">COG_DIR</span><span class="o">=</span><span class="n">COG_DIR</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">COG_INSTALL_DIR</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LD_LIBRARY_PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/lib&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">clone_cog_repo</span><span class="p">(</span><span class="n">COG_INSTALL_DIR</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">GitCommandError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed to clone COG repo: </span><span class="se">\n</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+
+    <span class="c1"># install CoG dependencies</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">COG_INSTALL_DIR</span><span class="p">):</span>
+        <span class="c1"># &quot;pip install -r requirements.txt&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;requirements.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">req_file</span><span class="p">:</span>
+            <span class="n">requirements</span> <span class="o">=</span> <span class="n">req_file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">requirements</span><span class="p">:</span>
+            <span class="n">pip</span><span class="o">.</span><span class="n">main</span><span class="p">([</span><span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">req</span><span class="o">.</span><span class="n">strip</span><span class="p">()])</span>
+
+        <span class="c1"># esg_functions.stream_subprocess_output(&quot;pip install -r requirements.txt&quot;)</span>
+        <span class="c1"># setup CoG database and configuration</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;python setup.py install&quot;</span><span class="p">)</span>
+        <span class="c1"># manually install additional dependencies</span>
+        <span class="n">transfer_api_client_python</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">COG_DIR</span><span class="p">,</span> <span class="s2">&quot;transfer-api-client-python&quot;</span><span class="p">))</span>
+
+        <span class="n">setup_django_openid_auth</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">COG_DIR</span><span class="p">,</span> <span class="s2">&quot;django-openid-auth&quot;</span><span class="p">))</span>
+
+        <span class="c1"># create or upgrade CoG installation</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;python setup.py setup_cog --esgf=true&quot;</span><span class="p">)</span>
+
+        <span class="c1"># collect static files to ./static directory</span>
+        <span class="c1"># must use a minimal settings file (configured with sqllite3 database)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;cog_conf/cog_settings.cfg&quot;</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{COG_DIR}</span><span class="s2">/cog_config/cog_settings.cfg&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">COG_DIR</span><span class="o">=</span><span class="n">COG_DIR</span><span class="p">))</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;python manage.py collectstatic --no-input&quot;</span><span class="p">)</span>
+        <span class="c1"># os.remove(&quot;{COG_DIR}/cog_config/cog_settings.cfg&quot;.format(COG_DIR=COG_DIR))</span>
+
+    <span class="c1"># create non-privileged user to run django</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;groupadd -r cogadmin&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;useradd -r -g cogadmin cogadmin&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;~cogadmin&quot;</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;chown cogadmin:cogadmin ~cogadmin&quot;</span><span class="p">)</span>
+
+    <span class="c1"># change user prompt</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;~cogadmin/.bashrc&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cogadmin_bashrc</span><span class="p">:</span>
+        <span class="n">cogadmin_bashrc</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export PS1=&quot;[\u@\h]\$ &quot;&#39;</span><span class="p">)</span>
+
+    <span class="n">change_cog_dir_owner</span><span class="p">(</span><span class="n">COG_DIR</span><span class="p">,</span> <span class="n">COG_CONFIG_DIR</span><span class="p">)</span>
+
+    <span class="c1"># startup</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;cog_scripts/wait_for_postgres.sh&quot;</span><span class="p">),</span> <span class="s2">&quot;/usr/local/bin/wait_for_postgres.sh&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;cog_scripts/process_esgf_config_archive.sh&quot;</span><span class="p">),</span> <span class="s2">&quot;/usr/local/bin/process_esgf_config_archive.sh&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">setup_cog</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'alpha',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

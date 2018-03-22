@@ -885,7 +885,7 @@ def edit_pam_pgsql_conf():
     with esg_bash2py.pushd("/etc"):
         pgsql_conf_file = "pam_pgsql.conf"
         "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
         esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
 
         os.chmod(pgsql_conf_file, 0600)
@@ -915,7 +915,7 @@ def fetch_myproxy_certificate_mapapp():
     with esg_bash2py.pushd(myproxy_config_dir):
         mapapp_file = "myproxy-certificate-mapapp"
         print "Downloading configuration file: {}".format(mapapp_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
         esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
 
         os.chmod(mapapp_file, 0751)
@@ -925,7 +925,7 @@ def fetch_etc_pam_d_myproxy():
     with esg_bash2py.pushd("/etc/pam.d"):
         myproxy_file = "myproxy"
         "Fetching pam's myproxy resource file: {}".format(myproxy_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
         esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
 
 def fetch_esg_attribute_callout_app():
@@ -934,7 +934,7 @@ def fetch_esg_attribute_callout_app():
     with esg_bash2py.pushd(myproxy_config_dir):
         callout_app_file = "esg_attribute_callout_app"
         print "Downloading configuration file: {}".format(callout_app_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
         esg_functions.download_update(callout_app_file, myproxy_dist_url_base+"/{}".format(callout_app_file))
         os.chmod(callout_app_file, 0751)
 
@@ -1006,7 +1006,7 @@ def create_globus_account(globus_sys_acct):
 #         chmod 600 ${config_file}
 #         chown ${tomcat_user:-tomcat}.${tomcat_group:-tomcat} ${config_file}
 #
-#         local mkproxy_dist_url="${esg_dist_url}/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
+#         local mkproxy_dist_url="${esg_dist_url_root}/externals/bootstrap/mkproxy-10-15-2012.tar.gz"
 #         local mkproxy_dist_file=${mkproxy_dist_url##*/}
 #         pushd /tmp/
 #         checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))

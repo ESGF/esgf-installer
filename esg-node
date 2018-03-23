@@ -7099,6 +7099,11 @@ main() {
 		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo
 	elif [[ ${DISTRIB} == "Red Hat" ]] ; then
 		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo
+	else
+	    # this should not be reached; check values set of DISTRIB set in is_supported_system()
+	    echo "unsupported distribution ${DISTRIB}"
+	    rm /etc/yum.repos.d/esgf.repo
+	    exit 1
 	fi
 	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
     	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo

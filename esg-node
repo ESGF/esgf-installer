@@ -198,6 +198,59 @@ write_paths() {
     dedup ${envfile} && source ${envfile}
 }
 
+
+check_rpm_version() {
+    # checks if named RPM is installed
+    # returns success/failure, and on success sets shell variable 'rpm_version'
+    name=$1
+    rpm_version=`rpm -q --queryformat '%{VERSION}' $name`
+    if [ $? -eq 0 ]
+    then	
+	return 0
+    else
+	unset rpm_version
+	return 1
+    fi
+}
+
+
+is_supported_system() {
+    # checks if system is supported, and returns 0 (success) if it is 
+    # or 1 (failure) if it isn't
+    # also sets OS, MACH, DISTRIB and MAJREV on supported systems
+    OS=`uname -s`
+    MACH=`uname -m`
+    
+    if [ $OS != Linux ]; then return 1; fi    
+    if [ $MACH != x86_64 ]; then return 1; fi
+    
+    if check_rpm_version redhat-release-server; then
+	DISTRIB="Red Hat"
+	MAJREV=`echo $rpm_version | sed 's/Server//'`
+    elif check_rpm_version centos-release; then
+	DISTRIB="CentOS"
+	MAJREV=$rpm_version
+    elif check_rpm_version sl-release; then
+	DISTRIB="Scientific Linux"
+	MAJREV=`echo $rpm_version | awk -F. '{print $1}'`
+    else
+	return 1
+    fi
+
+    case $MAJREV in
+	6)
+	    return 0
+	    ;;
+	7)
+	    return 0
+	    ;;
+	*)
+	    return 1
+	    ;;
+    esac	    
+}
+
+
 #checking for what we expect to be on the system a-priori
 #that we are not going to install or be responsible for
 check_prerequisites() {
@@ -231,21 +284,11 @@ printf "
     #----------------------------------------
     echo "Checking requisites... "
 
-    # checking for OS, architecture, distribution and version
-
-    OS=`uname -s`
-    MACH=`uname -m`
-
-    if [ "${OS}" = "Linux" ] && [ "${MACH}" = "x86_64" ] && [ -f /etc/redhat-release ] ; then
-    	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
+    if ! is_supported_system
+    then
+	echo 'ESGF can only be installed on versions 6/7 of Red Hat, CentOS or Scientific Linux x86_64 systems'
+	exit 1
     fi
-
-    if [ "${MAJREV}" = 6 -o "${MAJREV}" = 7 ] ; then
-    	DISTRIB=`cat /etc/redhat-release | sed s/release.*// | awk '{print $1}' `
-    fi
-
-    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6/7 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
-
 
     #----------------------------------------
 
@@ -7054,8 +7097,13 @@ main() {
 	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
 	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
 		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo
-	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
+	elif [[ ${DISTRIB} == "Red Hat" ]] ; then
 		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo
+	else
+	    # this should not be reached; check values set of DISTRIB set in is_supported_system()
+	    echo "unsupported distribution ${DISTRIB}"
+	    rm /etc/yum.repos.d/esgf.repo
+	    exit 1
 	fi
 	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
     	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo

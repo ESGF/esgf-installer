@@ -849,7 +849,8 @@ def restart_myproxy_server():
 
 def myproxy_status():
     '''Checks the status of the myproxy server'''
-    status = esg_functions.call_subprocess("/etc/init.d/myproxy status")
+    if os.access("/etc/init.d/myproxy-server", os.X_OK):
+        status = esg_functions.call_subprocess("/etc/init.d/myproxy-server status")
     print "myproxy server status:", status["stdout"]
     if "running" in status["stdout"]:
         return (True, status)

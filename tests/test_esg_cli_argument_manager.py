@@ -16,7 +16,10 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
     #     os.remove('test_config.txt')
     @classmethod
     def tearDownClass(cls):
-        os.remove('test_config.txt')
+        try:
+            os.remove('test_config.txt')
+        except OSError:
+            pass
 
     def test_set_node_type_config(self):
         esg_cli_argument_manager.set_node_type_config(self.node_type_list, 'test_config.txt')
@@ -34,10 +37,10 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
 
     def test_start(self):
         sys.argv.append("--start")
-        pprint.pprint(sys.argv)
+        pprint.pprint("arguments:", sys.argv)
         status = esg_cli_argument_manager.process_arguments(self.node_type_list, self.devel, self.esg_dist_url)
         self.assertTrue(status)
-        
+
     def test_process_arguments_install(self):
         sys.argv.append("--install")
         pprint.pprint(sys.argv)

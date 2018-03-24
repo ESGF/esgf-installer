@@ -41,6 +41,7 @@ def cert_howto():
 def show_type():
     pass
 def start(node_types):
+    '''Start ESGF Services'''
     #base components
     esg_apache_manager.start_apache()
     esg_tomcat_manager.start_tomcat()
@@ -53,7 +54,9 @@ def start(node_types):
         globus.start_globus("IDP")
 
     if "INDEX" in node_types:
-        solr.start_solr()
+        solr_shards = solr.read_shard_config()
+        for config_type, port_number in solr_shards:
+            solr.start_solr(config_type, port_number)
 
     return get_node_status()
 

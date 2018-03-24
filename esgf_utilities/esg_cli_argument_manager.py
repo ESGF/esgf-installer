@@ -44,7 +44,7 @@ def start(node_types):
     #base components
     esg_apache_manager.start_apache()
     esg_tomcat_manager.start_tomcat()
-    esg_postgres.start_postgress()
+    esg_postgres.start_postgres()
 
     if "DATA" in node_types:
         globus.start_globus("DATA")

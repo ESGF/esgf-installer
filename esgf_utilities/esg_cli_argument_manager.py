@@ -268,7 +268,6 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         # esg_setup.init_structure()
         node_type_list = get_node_type()
         start(node_type_list)
-        sys.exit(0)
     elif args.stop:
         # if check_prerequisites() is not 0:
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")

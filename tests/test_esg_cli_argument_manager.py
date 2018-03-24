@@ -8,7 +8,7 @@ from esgf_utilities import esg_cli_argument_manager
 class test_ESG_CLI_Argument_Manager(unittest.TestCase):
 
     def setUp(self):
-        self.node_type_list = ["data"]
+        self.node_type_list = ["DATA"]
         self.installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
         self.devel = True
         self.esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
@@ -37,7 +37,7 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
 
     def test_start(self):
         sys.argv.append("--start")
-        pprint.pprint("arguments:", sys.argv)
+        pprint.pprint(sys.argv)
         status = esg_cli_argument_manager.process_arguments(self.node_type_list, self.devel, self.esg_dist_url)
         self.assertTrue(status)
 

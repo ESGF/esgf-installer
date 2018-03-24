@@ -162,7 +162,6 @@ def setup_publisher():
     with esg_bash2py.pushd("/tmp"):
         clone_publisher_repo("/tmp/esg-publisher")
         with esg_bash2py.pushd("esg-publisher"):
-            # checkout_publisher_branch("/tmp/esg-publisher", "devel")
             checkout_publisher_branch("/tmp/esg-publisher", ESG_PUBLISHER_VERSION)
             with esg_bash2py.pushd("src/python/esgcet"):
                 install_publisher()

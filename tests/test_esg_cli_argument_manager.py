@@ -11,7 +11,7 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
         self.node_type_list = ["data"]
         self.installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
         self.devel = True
-        self.esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+        self.esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
     # def tearDown(self):
     #     os.remove('test_config.txt')
     @classmethod
@@ -32,30 +32,16 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
         print "node_list_from_file:", node_list_from_file
         self.assertEqual(self.node_type_list, node_list_from_file)
 
-    def test_set_node_type_value(self):
-        print "esg_cli_argument_manager.node_type_dictionary:", esg_cli_argument_manager.node_type_dictionary
-
-        esg_cli_argument_manager.set_node_type_value("install", True)
-        self.assertEqual(esg_cli_argument_manager.node_type_dictionary["INSTALL_BIT"], True)
-
-        esg_cli_argument_manager.set_node_type_value("data", True)
-        self.assertEqual(esg_cli_argument_manager.node_type_dictionary["DATA_BIT"], True)
-
-
+    def test_start(self):
+        sys.argv.append("--start")
+        pprint.pprint(sys.argv)
+        status = esg_cli_argument_manager.process_arguments(self.node_type_list, self.devel, self.esg_dist_url)
+        self.assertTrue(status)
+        
     def test_process_arguments_install(self):
         sys.argv.append("--install")
         pprint.pprint(sys.argv)
 
-        esg_cli_argument_manager.process_arguments(self.installater_mode_dictionary["install_mode"], self.installater_mode_dictionary["upgrade_mode"], self.node_type_list, self.devel, self.esg_dist_url)
-        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["install_mode"], True)
-        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["upgrade_mode"], False)
-
-    def test_process_arguments_upgrade(self):
-        sys.argv.append("--upgrade")
-
-        esg_cli_argument_manager.process_arguments(self.installater_mode_dictionary["install_mode"], self.installater_mode_dictionary["upgrade_mode"], self.node_type_list, self.devel, self.esg_dist_url)
-        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["install_mode"], False)
-        self.assertEqual(esg_cli_argument_manager.installater_mode_dictionary["upgrade_mode"], True)
 
 
 if __name__ == '__main__':

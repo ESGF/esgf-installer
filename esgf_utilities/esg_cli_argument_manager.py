@@ -14,6 +14,8 @@ from base import esg_tomcat_manager
 from base import esg_postgres
 from esgf_utilities import esg_bash2py
 from esgf_utilities.esg_exceptions import NoNodeTypeError, SubprocessError
+from idp_node import globus
+from index_node import solr
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -38,24 +40,34 @@ def cert_howto():
 
 def show_type():
     pass
-def start(node_bit):
-    pass
+def start(node_types):
+    #base components
+    esg_apache_manager.start_apache()
+    esg_tomcat_manager.start_tomcat()
+    esg_postgres.start_postgress()
+
+    if "DATA" in node_types:
+        globus.start_globus("DATA")
+
+    if "IDP" in node_types:
+        globus.start_globus("IDP")
+
+    if "INDEX" in node_types:
+        solr.start_solr()
+
+    return get_node_status()
+
 def stop(node_bit):
     pass
 def get_node_status():
     '''
-        Return a tuple with the node's status
+        Shows which ESGF services are currently running
     '''
     node_running = True
     node_type = get_node_type()
     try:
         postgres_status = esg_postgres.postgres_status()
-        if postgres_status:
-            print "Postgres is running"
-            print postgres_status[1]
-        else:
-            print "Postgres is stopped"
-            print postgres_status[1]
+        if not postgres_status:
             node_running = False
     except SubprocessError, error:
         print "Postgres is stopped"
@@ -79,18 +91,33 @@ def get_node_status():
         print "httpd is stopped"
         node_running = False
 
+    if "DATA" in node_type:
+        if not globus.gridftp_server_status():
+            node_running = False
+
+    if "IDP" in node_type:
+        if not globus.myproxy_status():
+            node_running = False
+
+    if "INDEX" in node_type:
+        if not solr.check_solr_process():
+            node_running = False
+
     print "\n*******************************"
     print "ESGF Node Status"
     print "******************************* \n"
     if node_running:
         print "Node is running"
+        show_esgf_process_list()
+        return True
     else:
         print "Node is stopped"
+        show_esgf_process_list()
+        return False
 
     #TODO conditionally reflect the status of globus (gridftp) process
         #This is here for sanity checking...
-    show_esgf_process_list()
-    pass
+
 
 def show_esgf_process_list():
     print "\n*******************************"
@@ -238,7 +265,8 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
         #     sys.exit(1)
         logger.debug("START SERVICES: %s", node_type_list)
-        esg_setup.init_structure()
+        # esg_setup.init_structure()
+        node_type_list = get_node_type()
         start(node_type_list)
         sys.exit(0)
     elif args.stop:

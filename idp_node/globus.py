@@ -857,7 +857,7 @@ def myproxy_status():
         return False
 
 def check_myproxy_process():
-    myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "myproxy-server" in proc.info["name"]]
+    myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username']) if "myproxy-server" in proc.info["name"]]
     if myproxy_processes:
         print "myproxy-server process is running..."
         print myproxy_processes

@@ -561,6 +561,15 @@ def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["es
 def stop_gridftp_server():
     esg_functions.stream_subprocess_output("service globus-gridftp-server stop")
 
+def gridftp_server_status():
+    '''Checks the status of the gridftp server'''
+    status = esg_functions.call_subprocess("service globus-gridftp-server status")
+    print "Gridftp server status:", status["stdout"]
+    if "running" in status["stdout"]:
+        return (True, status)
+    else:
+        return False
+
 def check_gridftp_process(port_number):
     gridftp_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "globus-gridftp-server" in proc.info["name"]]
     # print " gridftp-server process is running on port [${port}]..."
@@ -837,6 +846,15 @@ def stop_myproxy_server():
 def restart_myproxy_server():
     stop_myproxy_server()
     start_myproxy_server()
+
+def myproxy_status():
+    '''Checks the status of the myproxy server'''
+    status = esg_functions.call_subprocess("/etc/init.d/myproxy status")
+    print "myproxy server status:", status["stdout"]
+    if "running" in status["stdout"]:
+        return (True, status)
+    else:
+        return False
 
 def check_myproxy_process():
     myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "myproxy-server" in proc.info["name"]]

@@ -364,7 +364,7 @@ def done_remark():
     print '''
         -------------------------------------------------------
         Administrators of this node should subscribe to the
-        esgf-node-admins@lists.llnl.gov by sending email to: "majordomo@lists.llnl.gov"
+        esgf-node-admins@lists.llnl.gov by sending email to: "sasha@llnl.gov"
         with the body: "subscribe esgf-node-admins"
         -------------------------------------------------------
 '''

@@ -1096,11 +1096,25 @@ setup_esgcet() {
     )
     [ $? != 0 ] && checked_done 1
 
-
-
-
+    inifile="/esg/config/esgcet/esg.ini"
+    do_esgsetup="no"
 
     if [ "${mode}" = "I" ]; then
+        echo "Install mode - will run esgsetup"
+        do_esgsetup="yes"
+    else
+        test=`grep -c hessian_service_certs_location $inifile` 
+        if [ $test -gt 0 ] ; then
+            do_esgsetup="yes"
+        fi   
+    fi
+
+    if  [ do_esgsetup == "yes" ] ; then
+
+        if [ -f $inifile ] ; then
+            date_str=`date $date_format`
+            mv $infile $inifile.$date_str.bak
+        fi
 
         local choice
         while [ 1 ]; do

@@ -1001,6 +1001,10 @@ def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"
 def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
     '''Setups up whitelist XML files from the distribution mirror'''
 
+    print "*******************************"
+    print "Setting up The ESGF whitelist files"
+    print "*******************************"
+
     conf_file_list = ["esgf_ats.xml.tmpl", "esgf_azs.xml.tmpl", "esgf_idp.xml.tmpl"]
 
     apache_user_id = get_user_id("apache")

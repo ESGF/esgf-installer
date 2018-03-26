@@ -151,7 +151,10 @@ def setup_publisher():
     '''Install ESGF publisher'''
 
     if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):
-        publisher_install = raw_input("Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: ") or "no"
+        if esg_property_manager.get_property("update.publisher"):
+            publisher_install = esg_property_manager.get_property("update.publisher")
+        else:
+            publisher_install = raw_input("Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: ") or "no"
         if publisher_install.lower() in ["no", "n"]:
             return
 

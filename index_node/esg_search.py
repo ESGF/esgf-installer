@@ -83,8 +83,8 @@ def check_for_existing_solr_install():
             logger.info("No existing version of esg-search found.")
 
     if os.path.isdir("/usr/local/tomcat/webapps/esg-search"):
-        if esg_property_manager.get_property("install.esg.search"):
-            esg_search_install = esg_property_manager.get_property("install.esg.search")
+        if esg_property_manager.get_property("update.esg.search"):
+            esg_search_install = esg_property_manager.get_property("update.esg.search")
         else:
             esg_search_install = raw_input("Existing esg-search installation found.  Do you want to continue with the esg-search installation [y/N]: " ) or "no"
         if esg_search_install.lower() in ["no", "n"]:

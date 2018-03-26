@@ -1,5 +1,5 @@
 [installer.properties]
-esgf.host.ip= 
+esgf.host.ip=
 #Usually the fully qualified domain name (fqdn) of your server
 esgf.host=
 node.short.name=
@@ -44,6 +44,7 @@ update.cog=
 
 #IDP node Components
 register.myproxy=
+update.globus=
 globus.user=
 globus.password=
 myproxy.endpoint=

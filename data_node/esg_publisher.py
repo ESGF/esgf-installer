@@ -190,6 +190,7 @@ def main():
         else:
             publisher_install = raw_input("Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: ") or "no"
         if publisher_install.lower() in ["no", "n"]:
+            print "Using existing Publisher installation.  Skipping setup."
             return
     setup_publisher()
     run_esgsetup()

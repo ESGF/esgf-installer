@@ -108,7 +108,7 @@ def run_esgsetup():
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #Create an initial ESG configuration file (esg.ini); TODO: make break into separate function
     esg_org_name = esg_property_manager.get_property("esg.org.name")
-    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_org_name} --db-admin-password password'''.format(esg_org_name=esg_functions.get_esg_org_name())
+    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_org_name} --db-admin-password password'''.format(esg_org_name=esg_property_manager.get_property("esg.org.name"))
 
     try:
         esg_functions.stream_subprocess_output(generate_esg_ini_command)

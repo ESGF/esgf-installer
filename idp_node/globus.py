@@ -31,6 +31,27 @@ def setup_globus(installation_type):
     for idp configuration (MyProxy stuff): [gen-self-cert] <dir> | <regen-simpleca> [fetch-certs|gen-self-cert|keep-certs] | ["install"|"update"]'''
     logger.debug("setup_globus for installation type: %s", installation_type)
 
+    globus_version = "6.0"
+
+    if os.access("/usr/bin/globus-version", os.X_OK):
+        print "Detected an existing Globus installation"
+        print "Checking for Globus {}".format(globus_version)
+        installed_globus_version = esg_functions.call_subprocess("/usr/bin/globus-version")['stdout']
+        if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
+            print "Globus version appears sufficiently current"
+
+    try:
+        setup_globus_answer = esg_property_manager.get_property("update.globus")
+        if not setup_globus_answer:
+            raise ConfigParser.NoOptionError
+    except ConfigParser.NoOptionError:
+        setup_globus_answer = raw_input(
+            "Do you want to continue with the Globus installation and setup? [y/N]: ") or "N"
+
+    if setup_globus_answer.lower().strip() in ["no", 'n']:
+        logger.info("Skipping Globus installation. Using existing Globus version")
+        return
+
     globus_location = "/usr/local/globus"
     with esg_bash2py.pushd(config["scripts_dir"]):
         globus_file = "esg-globus"
@@ -90,27 +111,8 @@ def setup_globus_services(config_type):
     print "*******************************"
     print "Setting up Globus... (config type: {})".format(config_type)
     print "*******************************"
-    globus_version = "6.0"
+
     globus_sys_acct = "globus"
-
-    if os.access("/usr/bin/globus-version", os.X_OK):
-        print "Detected an existing Globus installation"
-        print "Checking for Globus {}".format(globus_version)
-        installed_globus_version = esg_functions.call_subprocess("/usr/bin/globus-version")['stdout']
-        if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
-            print "Globus version appears sufficiently current"
-
-    try:
-        setup_postgres_answer = esg_property_manager.get_property("install.globus")
-        if not setup_postgres_answer:
-            raise ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
-        setup_postgres_answer = raw_input(
-            "Do you want to continue with the Globus installation and setup? [y/N]: ") or "N"
-
-    if setup_postgres_answer.lower().strip() in ["no", 'n']:
-        logger.info("Skipping Globus installation. Using existing Globus version")
-        return
 
     logger.debug("setup_globus_services for %s", config_type)
 
@@ -561,6 +563,15 @@ def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["es
 def stop_gridftp_server():
     esg_functions.stream_subprocess_output("service globus-gridftp-server stop")
 
+def gridftp_server_status():
+    '''Checks the status of the gridftp server'''
+    status = esg_functions.call_subprocess("service globus-gridftp-server status")
+    print "Gridftp server status:", status["stdout"]
+    if "running" in status["stdout"]:
+        return (True, status)
+    else:
+        return False
+
 def check_gridftp_process(port_number):
     gridftp_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "globus-gridftp-server" in proc.info["name"]]
     # print " gridftp-server process is running on port [${port}]..."
@@ -838,8 +849,18 @@ def restart_myproxy_server():
     stop_myproxy_server()
     start_myproxy_server()
 
+def myproxy_status():
+    '''Checks the status of the myproxy server'''
+    if os.access("/etc/init.d/myproxy-server", os.X_OK):
+        status = esg_functions.call_subprocess("/etc/init.d/myproxy-server status")
+    print "myproxy server status:", status["stdout"]
+    if "running" in status["stdout"]:
+        return (True, status)
+    else:
+        return False
+
 def check_myproxy_process():
-    myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username', 'port']) if "myproxy-server" in proc.info["name"]]
+    myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username']) if "myproxy-server" in proc.info["name"]]
     if myproxy_processes:
         print "myproxy-server process is running..."
         print myproxy_processes

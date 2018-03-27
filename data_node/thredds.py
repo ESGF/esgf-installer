@@ -381,14 +381,19 @@ def write_tds_install_log():
 
 def setup_thredds(node_type_list):
 
-    if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
-        thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " ) or "no"
-        if thredds_install.lower() in ["no", "n"]:
-            return
-
     print "\n*******************************"
     print "Setting up Thredds"
     print "******************************* \n"
+
+    if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
+        if esg_property_manager.get_property("update.thredds"):
+            thredds_install = esg_property_manager.get_property("update.thredds")
+        else:
+            thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " ) or "no"
+        if thredds_install.lower() in ["no", "n"]:
+            print "Using existing Thredds installation.  Skipping setup."
+            return
+
     esg_tomcat_manager.stop_tomcat()
 
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")

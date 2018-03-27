@@ -99,9 +99,9 @@ def main():
     if check_for_apache_installation():
         print "Found existing Apache installation."
         esg_functions.call_subprocess("httpd -version")
-        if esg_property_manager.get_property("install.apache"):
+        if esg_property_manager.get_property("update.apache"):
             setup_apache_answer = esg_property_manager.get_property(
-                "install.apache")
+                "update.apache")
         else:
             setup_apache_answer = raw_input(
                 "Would you like to continue the Apache installation anyway? [y/N]: ") or "N"

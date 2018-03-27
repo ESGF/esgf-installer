@@ -72,8 +72,8 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     psql_path = find_executable("psql")
 
     if check_existing_pg_version(psql_path):
-        if esg_property_manager.get_property("install.postgres"):
-            setup_postgres_answer = esg_property_manager.get_property("install.postgres")
+        if esg_property_manager.get_property("update.postgres"):
+            setup_postgres_answer = esg_property_manager.get_property("update.postgres")
         else:
             setup_postgres_answer = raw_input(
                 "Valid existing Postgres installation found. Do you want to continue with the setup [y/N]: ") or default_continue_install

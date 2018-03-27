@@ -94,8 +94,10 @@ def check_solr_process(solr_config_type="master"):
     try:
         solr_pid = [proc for proc in psutil.net_connections() if proc.laddr.port == 8984][0].pid
         print " Solr process for {solr_config_type} running on port [{solr_server_port}] with pid {solr_pid}".format(solr_config_type, "8984", solr_pid)
+        return True
     except:
         print "Solr not running"
+        return False
 
 def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr"):
     '''Stop the solr process'''

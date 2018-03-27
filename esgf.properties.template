@@ -1,10 +1,9 @@
 [installer.properties]
-esgf.host.ip =
+esgf.host.ip=
 #Usually the fully qualified domain name (fqdn) of your server
 esgf.host=
 node.short.name=
 node.long.name=
-esg.org.name=
 #set to your reverse fqdn - Ex: gov.llnl
 node.namespace=
 #Choose between esgf-test, esgf-dev, esgf-prod
@@ -13,17 +12,19 @@ node.peer.group=
 esgf.index.peer=
 mail.admin.address=
 publisher.db.user=
+esg.org.name=
 
 #Base install third party components
-install.java=
-install.ant=
+update.java=
+update.ant=
 backup.database=
-install.postgres=
-install.apache=
-install.tomcat=
+update.postgres=
+update.apache=
+update.tomcat=
 
 #File paths for signed cert and public key
 certfile.entry=
+install.signed.certs=
 commercial.key.path=
 commercial.cert.path=
 cachain.path=
@@ -31,12 +32,19 @@ tomcat.user=
 add.another.user=
 
 #Data Node components
-install.orp=
-install.node.manager=
-install.thredds=
-install.dashboard=
-install.publisher=
+update.orp=
+update.node.manager=
+update.thredds=
+update.dashboard=
+update.publisher=
 
 #Index node components
-install.esg.search=
-install.cog=
+update.esg.search=
+update.cog=
+
+#IDP node Components
+register.myproxy=
+update.globus=
+globus.user=
+globus.password=
+myproxy.endpoint=

@@ -108,7 +108,7 @@ def run_esgsetup():
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #Create an initial ESG configuration file (esg.ini); TODO: make break into separate function
     esg_org_name = esg_property_manager.get_property("esg.org.name")
-    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_org_name} --db-admin-password password'''.format(esg_org_name=esg_functions.get_esg_org_name())
+    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_org_name} --db-admin-password password'''.format(esg_org_name=esg_property_manager.get_property("esg.org.name"))
 
     try:
         esg_functions.stream_subprocess_output(generate_esg_ini_command)
@@ -150,11 +150,6 @@ def run_esginitialize():
 def setup_publisher():
     '''Install ESGF publisher'''
 
-    if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):
-        publisher_install = raw_input("Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: ") or "no"
-        if publisher_install.lower() in ["no", "n"]:
-            return
-
     print "\n*******************************"
     print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
     print "******************************* \n"
@@ -162,7 +157,6 @@ def setup_publisher():
     with esg_bash2py.pushd("/tmp"):
         clone_publisher_repo("/tmp/esg-publisher")
         with esg_bash2py.pushd("esg-publisher"):
-            # checkout_publisher_branch("/tmp/esg-publisher", "devel")
             checkout_publisher_branch("/tmp/esg-publisher", ESG_PUBLISHER_VERSION)
             with esg_bash2py.pushd("src/python/esgcet"):
                 install_publisher()
@@ -190,6 +184,14 @@ def write_esgcet_install_log():
     return 0
 
 def main():
+    if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):
+        if esg_property_manager.get_property("update.publisher"):
+            publisher_install = esg_property_manager.get_property("update.publisher")
+        else:
+            publisher_install = raw_input("Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: ") or "no"
+        if publisher_install.lower() in ["no", "n"]:
+            print "Using existing Publisher installation.  Skipping setup."
+            return
     setup_publisher()
     run_esgsetup()
     run_esginitialize()

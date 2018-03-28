@@ -933,8 +933,8 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     print "Checking for Commercial CA"
     print "******************************* \n"
 
-    if esg_property_manager.get_property("update.signed.certs"):
-        commercial_ca_setup = esg_property_manager.get_property("update.signed.certs")
+    if esg_property_manager.get_property("install.signed.certs"):
+        commercial_ca_setup = esg_property_manager.get_property("install.signed.certs")
     else:
         commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
 

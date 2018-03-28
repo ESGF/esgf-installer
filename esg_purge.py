@@ -90,7 +90,7 @@ def purge_java():
         pass
 
     try:
-        shutil.unlink("/usr/local/java")
+        os.unlink("/usr/local/java")
     except OSError:
         pass
 

@@ -90,7 +90,7 @@ def purge_java():
         pass
 
     try:
-        shutil.rmtree("/usr/local/java")
+        shutil.unlink("/usr/local/java")
     except OSError:
         pass
 
@@ -228,6 +228,13 @@ def purge_solr():
         except OSError:
             pass
 
+    try:
+        os.unlink("/usr/local/solr")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+        else:
+            logger.exception("Could not delete symlink /usr/local/tomcat")
     # Solr may leave stuck java processes.  Kill them with extreme prejudice
     try:
         esg_functions.stream_subprocess_output("pkill -9 -f 'java.*/usr/local/tomcat'")

@@ -158,7 +158,11 @@ def start_tomcat():
 
 
 def stop_tomcat():
-    tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
+    try:
+        tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
+    except IOError:
+        print "PID file not found.  Tomcat not running"
+        return
     if psutil.pid_exists(int(tomcat_pid)):
         try:
             esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")

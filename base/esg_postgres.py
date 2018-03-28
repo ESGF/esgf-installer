@@ -611,13 +611,14 @@ def list_tables(conn=None, user_name="postgres", db_name="postgres"):
     print "tables for {current_database}: {tables_list}".format(current_database=current_database, tables_list=tables_list)
 
 
-def postgres_clean_schema_migration(repository_id, db_user_password=esg_functions.get_publisher_password()):
+def postgres_clean_schema_migration(repository_id):
     # Removes entries from the esgf_migrate_version table if any exist
     # where repository_id matches an SQL LIKE to the first argument
     #
     # The SQL LIKE strings are generally defined in
     # "src/python/esgf/<reponame>/schema_migration/migrate.cfg" in
     # each relevant repository.
+    db_user_password=esg_functions.get_publisher_password()
     conn = connect_to_db(config["postgress_user"], config["node_db_name"], password=db_user_password)
     cur = conn.cursor()
 

@@ -85,7 +85,7 @@ def purge_java():
     print "******************************* \n"
 
     try:
-        shutil.rmtree("/usr/local/{}".format(config["java_version"]))
+        shutil.rmtree("/usr/local/jdk{}".format(config["java_version"]))
     except OSError:
         pass
 

@@ -5,6 +5,7 @@ import datetime
 import errno
 import logging
 import psutil
+import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
@@ -260,7 +261,7 @@ def main():
     purge_cdat()
     purge_apache()
     purge_cog()
-    purge_conda()
+    # purge_conda()
     confirm_purge()
 
 if __name__ == '__main__':

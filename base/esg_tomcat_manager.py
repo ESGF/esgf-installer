@@ -158,17 +158,18 @@ def start_tomcat():
 
 
 def stop_tomcat():
-    try:
-        esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
-    except SubprocessError, error:
-        logger.exception(error)
-        logger.info("Stopping Tomcat with catalina.sh script failed. Attempting to kill process...")
-        tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
+    tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
+    if psutil.pid_exists(int(tomcat_pid)):
         try:
-            os.kill(int(tomcat_pid))
-        except OSError, error:
-            print "Could not kill process"
-            esg_functions.exit_with_error(error)
+            esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh stop")
+        except SubprocessError, error:
+            logger.exception(error)
+            logger.info("Stopping Tomcat with catalina.sh script failed. Attempting to kill process...")
+            try:
+                os.kill(int(tomcat_pid))
+            except OSError, error:
+                print "Could not kill process"
+                esg_functions.exit_with_error(error)
 
     check_tomcat_status()
 

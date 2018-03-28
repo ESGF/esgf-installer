@@ -268,6 +268,7 @@ def main():
     purge_cdat()
     purge_apache()
     purge_cog()
+    purge_solr()
     # purge_conda()
     confirm_purge()
 

@@ -12,6 +12,8 @@ from index_node import solr
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
+with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
+    config = yaml.load(config_file)
 
 def purge_postgres():
     '''Removes postgres installation via yum'''
@@ -80,6 +82,11 @@ def purge_java():
     print "\n*******************************"
     print "Purging Java"
     print "******************************* \n"
+
+    try:
+        shutil.rmtree("/usr/local/{}".format(config["java_version"]))
+    except OSError:
+        pass
 
     try:
         shutil.rmtree("/usr/local/java")
@@ -208,13 +215,13 @@ def purge_solr():
 
     solr.stop_solr()
 
-    for directory in  glob.glob("/usr/local/esgf-solr-*"):
+    for directory in glob.glob("/usr/local/esgf-solr-*"):
         try:
             shutil.rmtree(directory)
         except OSError:
             pass
 
-    for directory in  glob.glob("/usr/local/solr*"):
+    for directory in glob.glob("/usr/local/solr-*"):
         try:
             shutil.rmtree(directory)
         except OSError:

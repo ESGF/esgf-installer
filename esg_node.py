@@ -470,14 +470,43 @@ def sanity_check_web_xmls():
             webapp web.xml files have been modified - you must restart node stack for changes to be in effect
             (esg-node restart)
             -------------------------------------------------------------------------------------------------'''
+def setup_root_app():
+    try:
+        if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
+            print "ROOT app in place.."
+            return
+    except IOError:
+        print "Don't see ESGF ROOT web application"
+
+    esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
+
+
+    print "*******************************"
+    print "Setting up Apache Tomcat...(v{}) ROOT webapp".format(config["tomcat_version"])
+    print "*******************************"
+
+    esg_bash2py.mkdir_p(config["workdir"])
+    with esg_bash2py.pushd(config["workdir"]):
+        root_app_dist_url = "{}/ROOT.tgz".format(esg_dist_url_root)
+        esg_functions.download_update("ROOT.tgz", root_app_dist_url)
+
+        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/webapps")
+
+        if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.nm")
+        if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.fe")
+
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
+        print "ROOT application \"installed\""
 
 
 def system_launch():
     #---------------------------------------
     #System Launch...
     #---------------------------------------
-    #     sanity_check_web_xmls
-    #     setup_root_app
+    sanity_check_web_xmls()
+    setup_root_app()
     #     [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
     # # Hard coded to remove node manager, desktop and dashboard
     # rm -rf /usr/local/tomcat/webapps/esgf-node-manager

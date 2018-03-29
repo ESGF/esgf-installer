@@ -90,7 +90,10 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
 
 def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''
-    esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+    try:
+        esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
+    except OSError:
+        pass
 
 def check_solr_process(solr_config_type="master"):
     try:

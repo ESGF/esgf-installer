@@ -4,6 +4,7 @@ import pwd
 import grp
 import psutil
 import logging
+import glob
 import ConfigParser
 import requests
 import yaml
@@ -110,7 +111,7 @@ def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr"):
             solr_pid = open(pid, "r").read()
             if psutil.pid_exists(int(solr_pid)):
                 try:
-                    os.kill(int(tomcat_pid))
+                    os.kill(int(solr_pid))
                 except OSError, error:
                     print "Could not kill process"
                     esg_functions.exit_with_error(error)

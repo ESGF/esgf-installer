@@ -250,7 +250,7 @@ def purge_dashboard():
 
 def confirm_purge():
     purged_directories = ["/var/lib/pgsql", "/usr/local/java", "/usr/bin/java", "/usr/local/tomcat", "/esg", "/etc/certs", "/etc/esgfcerts",
-    "/etc/tempcerts", "/opt/esgf", "/tmp/inputpipe", "/tmp/outputpipe", "/usr/local/cog", "/var/www/.python-eggs", "/usr/local/solr", "/usr/local/cog", "/usr/local/conda"]
+    "/etc/tempcerts", "/opt/esgf", "/tmp/inputpipe", "/tmp/outputpipe", "/usr/local/cog", "/var/www/.python-eggs", "/usr/local/solr"]
 
     for directory in purged_directories:
         if os.path.exists(directory):

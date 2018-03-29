@@ -173,10 +173,10 @@
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <ol class="arabic simple">
 <li>Clone this repo using <code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/ESGF/esgf-installer.git</span></code></li>
-<li>If Miniconda has not been installed, install Miniconda and other ESGF dependencies from yum and pip by running the <code class="docutils literal"><span class="pre">esg_bootstrap.sh</span></code> script</li>
-<li>Activate the esgf-pub conda environment using <code class="docutils literal"><span class="pre">source</span> <span class="pre">/usr/local/conda/bin/activate</span> <span class="pre">esgf-pub</span></code></li>
 <li>Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: <code class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">tags/v3.0.0-alpha-release</span> <span class="pre">-b</span> <span class="pre">3.0_alpha</span></code>.
 This will checkout out the alpha release tag and create a new branch called 3.0_alpha</li>
+<li>If Miniconda has not been installed, install Miniconda and other ESGF dependencies from yum and pip by running the <code class="docutils literal"><span class="pre">esg_bootstrap.sh</span></code> script</li>
+<li>Activate the esgf-pub conda environment using <code class="docutils literal"><span class="pre">source</span> <span class="pre">/usr/local/conda/bin/activate</span> <span class="pre">esgf-pub</span></code></li>
 <li>Run an installation by invoking the <code class="docutils literal"><span class="pre">esg_node.py</span></code> script.
 Example: <code class="docutils literal"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
 </ol>

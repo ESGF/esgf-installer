@@ -6,6 +6,7 @@ import socket
 import platform
 import glob
 import shutil
+import filecmp
 import ConfigParser
 import stat
 import yaml
@@ -434,6 +435,42 @@ def main(node_type_list):
     # install dependencies
     system_component_installation(esg_dist_url, node_type_list)
     done_remark()
+
+def sanity_check_web_xmls():
+    '''Editing web.xml files for projects who use the authorizationService'''
+    print "sanity checking webapps' web.xml files accordingly... "
+
+    with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
+        webapps = os.listdir("/usr/local/tomcat/webapps")
+        if not webapps:
+            return
+
+        instruct_to_reboot = False
+        tomcat_user = esg_functions.get_user_id("tomcat")
+        tomcat_group = esg_functions.get_group_id("tomcat")
+
+        for app in webapps:
+            with esg_bash2py.pushd(os.path.join(app,"WEB-INF")):
+                print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
+                os.chown("web.xml", tomcat_user, tomcat_group)
+
+                print " |--inspecting web.xml files for proper authorization service assignment... "
+                esg_functions.stream_subprocess_output("sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'{}'\2@g' web.xml".format(esg_functions.get_esgf_host()))
+                esg_functions.stream_subprocess_output("sed -i.bak '/<param-name>[ ]*'trustoreFile'[ ]*/,/<\/param-value>/ s#\(<param-value>\)[ ]*[^<]*[ ]*\(</param-value>\)#\1'{}'\2#' web.xml".format(config["truststore_file"]))
+
+                try:
+                    if not filecmp.cmp("web.xml", "web.xml.bak", shallow=False):
+                        logger.debug("%s/web.xml file was edited. Reboot needed", os.getcwd())
+                        instruct_to_reboot = True
+                except OSError, error:
+                    logger.exception(error)
+
+        if instruct_to_reboot:
+            print '''-------------------------------------------------------------------------------------------------
+            webapp web.xml files have been modified - you must restart node stack for changes to be in effect
+            (esg-node restart)
+            -------------------------------------------------------------------------------------------------'''
+
 
 def system_launch():
     #---------------------------------------

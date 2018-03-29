@@ -116,6 +116,8 @@ def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr"):
                 except OSError, error:
                     print "Could not kill process"
                     esg_functions.exit_with_error(error)
+    except OSError:
+        pass
 
     solr_status(SOLR_INSTALL_DIR)
 

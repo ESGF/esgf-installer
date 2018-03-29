@@ -213,6 +213,9 @@ def purge_conda():
             pass
 
 def purge_solr():
+    print "\n*******************************"
+    print "Purging Solr"
+    print "******************************* \n"
 
     try:
         solr.stop_solr()

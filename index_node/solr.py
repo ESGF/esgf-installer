@@ -101,13 +101,21 @@ def check_solr_process(solr_config_type="master"):
 
 def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr"):
     '''Stop the solr process'''
-    solr_process = esg_functions.call_subprocess("{SOLR_INSTALL_DIR}/bin/solr stop")
-    if solr_process["returncode"] != 1:
-        print "Could not stop solr"
-        solr_status(SOLR_INSTALL_DIR)
-        esg_functions.exit_with_error(solr_process["stderr"])
-    else:
-        solr_status(SOLR_INSTALL_DIR)
+    try:
+        esg_functions.stream_subprocess_output("{}/bin/solr stop".format(SOLR_INSTALL_DIR))
+    except SubprocessError:
+        print "Could not stop solr with control script. Killing with PID"
+        solr_pid_files = glob.glob("/usr/local/solr/bin/*.pid")
+        for pid in solr_pid_files:
+            solr_pid = open(pid, "r").read()
+            if psutil.pid_exists(int(solr_pid)):
+                try:
+                    os.kill(int(tomcat_pid))
+                except OSError, error:
+                    print "Could not kill process"
+                    esg_functions.exit_with_error(error)
+
+    solr_status(SOLR_INSTALL_DIR)
 
 
 def commit_shard_config(config_type, port_number, config_file="/esg/config/esgf_shards.config"):

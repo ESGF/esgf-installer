@@ -214,7 +214,10 @@ def purge_conda():
 
 def purge_solr():
 
-    solr.stop_solr()
+    try:
+        solr.stop_solr()
+    except SubprocessError:
+        pass
 
     for directory in glob.glob("/usr/local/esgf-solr-*"):
         try:

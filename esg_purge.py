@@ -263,12 +263,12 @@ def main():
     purge_tomcat()
     purge_thredds()
     purge_ant()
+    purge_solr()
     purge_java()
     purge_base()
     purge_cdat()
     purge_apache()
     purge_cog()
-    purge_solr()
     # purge_conda()
     confirm_purge()
 

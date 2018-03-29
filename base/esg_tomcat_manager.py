@@ -8,6 +8,7 @@ import pwd
 import errno
 import logging
 import sys
+import signal
 from time import sleep
 import yaml
 import requests
@@ -170,7 +171,7 @@ def stop_tomcat():
             logger.exception(error)
             logger.info("Stopping Tomcat with catalina.sh script failed. Attempting to kill process...")
             try:
-                os.kill(int(tomcat_pid))
+                os.kill(int(tomcat_pid), signal.SIGKILL)
             except OSError, error:
                 print "Could not kill process"
                 esg_functions.exit_with_error(error)

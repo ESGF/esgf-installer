@@ -394,7 +394,7 @@ def start_postgres():
         return True
 
 
-def stop_postgress():
+def stop_postgres():
     '''Stops the postgres server'''
     esg_functions.stream_subprocess_output("service postgresql stop")
 

@@ -22,9 +22,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-installer_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
-
-
 def install_local_certs():
     pass
 
@@ -273,25 +270,25 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         sys.exit(0)
     elif args.start:
         logger.debug("args: %s", args)
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         logger.debug("START SERVICES: %s", node_type_list)
         # esg_setup.init_structure()
         node_type_list = get_node_type()
         return start(node_type_list)
     elif args.stop:
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         logger.debug("STOP SERVICES")
         esg_setup.init_structure()
         stop(node_type_list)
         sys.exit(0)
     elif args.restart:
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         logger.debug("RESTARTING SERVICES")
         esg_setup.init_structure()
         stop(node_type_list)
@@ -303,9 +300,9 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         sys.exit(0)
     elif args.updatesubinstaller:
         esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         esg_setup.init_structure()
         update_script(args[1], args[2])
         sys.exit(0)

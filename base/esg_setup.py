@@ -28,6 +28,7 @@ def check_if_root():
         if root_check != 0:
             raise UnprivilegedUserError
         logger.debug("Root user found.")
+        return True
     except UnprivilegedUserError:
         logger.exception("\nMust run this program with root's effective UID\n\n")
         esg_functions.exit_with_error(1)
@@ -47,6 +48,7 @@ def check_os():
         esg_functions.exit_with_error(1)
     else:
         print "Operating System = {OS} {version}".format(OS=release_version[0], version=release_version[1])
+        return True
 
 
 def check_prerequisites():
@@ -54,13 +56,14 @@ def check_prerequisites():
         Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for
     '''
 
-    check_if_root()
+    if not check_if_root():
+        return False
 
     #----------------------------------------
     print "Checking requisites... "
 
     # checking for OS, architecture, distribution and version
-    check_os()
+    return check_os()
 
 def create_esg_directories():
     '''Create directories to hold ESGF scripts, config files, and logs'''

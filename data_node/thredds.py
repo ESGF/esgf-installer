@@ -456,6 +456,10 @@ def setup_thredds(node_type_list):
     # cleanup
     # shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
 
+def tds_startup_hook():
+    print "TDS (THREDDS) Startup Hook: Setting perms... "
+    esg_functions.change_ownership_recursive(config["thredds_content_dir"], uid=esg_functions.get_user_id("tomcat"))
+    
 
 def main(node_type_list):
     setup_thredds(node_type_list)

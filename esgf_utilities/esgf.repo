@@ -1,0 +1,8 @@
+[esgf]
+name=ESGF
+baseurl=
+failovermethod=priority
+enabled=1
+priority=90
+gpgcheck=1
+proxy=_none_

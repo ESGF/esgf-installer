@@ -19,6 +19,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from base import esg_setup
 from base import esg_postgres
+from base import esg_java
 from data_node import esg_publisher
 from esgf_utilities import esg_cli_argument_manager
 from base import esg_tomcat_manager
@@ -237,8 +238,8 @@ def system_component_installation(esg_dist_url, node_type_list):
     '''
     if "INSTALL" in node_type_list:
         #TODO: check status of base components; if all running, skip setup
-        esg_setup.setup_java()
-        esg_setup.setup_ant()
+        esg_java.setup_java()
+        esg_java.setup_ant()
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
@@ -421,7 +422,7 @@ def sanity_check_web_xmls():
             webapp web.xml files have been modified - you must restart node stack for changes to be in effect
             (esg-node restart)
             -------------------------------------------------------------------------------------------------'''
-def setup_root_app():
+def setup_root_app(esg_dist_url_root):
     try:
         if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
             print "ROOT app in place.."
@@ -452,12 +453,12 @@ def setup_root_app():
         print "ROOT application \"installed\""
 
 
-def system_launch():
+def system_launch(esg_dist_url_root):
     #---------------------------------------
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
-    setup_root_app()
+    setup_root_app(esg_dist_url_root)
     #     [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
     # # Hard coded to remove node manager, desktop and dashboard
     # rm -rf /usr/local/tomcat/webapps/esgf-node-manager

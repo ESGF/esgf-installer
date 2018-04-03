@@ -84,7 +84,7 @@ def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
 
 def setup_cog(COG_DIR="/usr/local/cog"):
     # choose CoG version
-    COG_TAG = "v3.9.7"
+    COG_TAG = "v3.10.1"
     # setup CoG environment
     esg_bash2py.mkdir_p(COG_DIR)
 
@@ -96,7 +96,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
 
     os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
     try:
-        clone_cog_repo(COG_INSTALL_DIR)
+        clone_cog_repo(COG_INSTALL_DIR, COG_TAG)
     except GitCommandError, error:
         logger.exception("Failed to clone COG repo: \n %s", error)
 

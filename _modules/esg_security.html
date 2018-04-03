@@ -1,0 +1,478 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>esg_security &mdash; esgf-installer alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0.0-alpha
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Base Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#data-node-components">Data Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#index-node-components">Index Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#idp-node-components">IDP Node Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contributing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute_docs.html">Contributing to Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>esg_security</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for esg_security</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_version_manager</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_postgres</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="n">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">setup_security</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">):</span>
+    <span class="c1">#####</span>
+    <span class="c1"># Install The ESGF Security Services</span>
+    <span class="c1">#####</span>
+    <span class="c1"># - Takes boolean arg: 0 = setup / install mode (default)</span>
+    <span class="c1">#                      1 = updated mode</span>
+    <span class="c1">#</span>
+    <span class="c1"># In setup mode it is an idempotent install (default)</span>
+    <span class="c1"># In update mode it will always pull down latest after archiving old</span>
+    <span class="c1">#</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up ESGF Security Services&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="n">currently_installed_version</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_version_from_manifest</span><span class="p">(</span><span class="s2">&quot;esgf-security&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">currently_installed_version</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">esg_version_manager</span><span class="o">.</span><span class="n">compare_versions</span><span class="p">(</span><span class="n">currently_installed_version</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_security_version&quot;</span><span class="p">]):</span>
+            <span class="nb">print</span> <span class="s2">&quot;A sufficient version of esgf-security is installed&quot;</span>
+            <span class="k">return</span>
+
+    <span class="n">configure_postgress</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_security_version&quot;</span><span class="p">])</span>
+    <span class="n">fetch_user_migration_launcher</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">)</span>
+    <span class="n">fetch_policy_check_launcher</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">)</span>
+    <span class="n">clean_security_webapp_subsystem</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">write_security_db_install_log</span><span class="p">(</span><span class="n">db_dir</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">):</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;python:esgf_security&quot;</span><span class="p">,</span> <span class="n">db_dir</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">configure_postgress</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">):</span>
+    <span class="c1">#--------------------------------------------------</span>
+    <span class="c1">#NOTE: This must be run AFTER the esg node web app</span>
+    <span class="c1">#      installation/configuration (setup_node_manager)</span>
+    <span class="c1">#--------------------------------------------------</span>
+    <span class="k">if</span> <span class="s2">&quot;IDP&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;Configuring Postgres... for ESGF Security&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+        <span class="n">node_db_name</span> <span class="o">=</span> <span class="s2">&quot;esgcet&quot;</span>
+        <span class="n">node_db_security_schema_name</span> <span class="o">=</span> <span class="s2">&quot;esgf_security&quot;</span>
+        <span class="k">if</span> <span class="n">node_db_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">esg_postgres</span><span class="o">.</span><span class="n">postgres_list_dbs</span><span class="p">():</span>
+            <span class="n">esg_postgres</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">node_db_name</span><span class="p">)</span>
+
+        <span class="n">schema_list</span> <span class="o">=</span> <span class="n">esg_postgres</span><span class="o">.</span><span class="n">postgres_list_db_schemas</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;schema list: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">schema_list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">node_db_security_schema_name</span> <span class="ow">in</span> <span class="n">schema_list</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Detected an existing security schema installation...&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">esg_postgres</span><span class="o">.</span><span class="n">postgres_clean_schema_migration</span><span class="p">(</span><span class="s2">&quot;ESGF Security&quot;</span><span class="p">)</span>
+
+        <span class="n">db_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esgf-security-</span><span class="si">{}</span><span class="s2">/db&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">],</span> <span class="n">esgf_security_version</span><span class="p">))</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">db_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">db_dir</span><span class="p">):</span>
+            <span class="c1">#------------------------------------------------------------------------</span>
+            <span class="c1">#Based on the node type selection we build the appropriate database tables</span>
+            <span class="c1">#------------------------------------------------------------------------</span>
+            <span class="n">python_version</span> <span class="o">=</span> <span class="s2">&quot;2.7&quot;</span>
+            <span class="n">esgf_security_egg_file</span> <span class="o">=</span> <span class="s2">&quot;esgf_security-</span><span class="si">{}</span><span class="s2">-py</span><span class="si">{}</span><span class="s2">.egg&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_security_db_version&quot;</span><span class="p">],</span> <span class="n">python_version</span><span class="p">)</span>
+            <span class="n">esgf_security_egg_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esgf-security/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">esgf_security_egg_file</span><span class="p">)</span>
+
+            <span class="c1">#download the egg file from the distribution server is necessary....</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">esgf_security_egg_file</span><span class="p">,</span> <span class="n">esgf_security_egg_url</span><span class="p">)</span>
+
+            <span class="c1">#install the egg....</span>
+            <span class="c1"># esg_functions.stream_subprocess_output(&quot;conda install -y postgresql&quot;)</span>
+            <span class="c1">#TODO: update this to use setuptools</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;easy_install </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_security_egg_file</span><span class="p">))</span>
+
+            <span class="n">node_db_name</span><span class="o">=</span> <span class="s2">&quot;esgcet&quot;</span>
+            <span class="n">node_db_security_schema_name</span><span class="o">=</span><span class="s2">&quot;esgf_security&quot;</span>
+            <span class="k">if</span> <span class="n">node_db_security_schema_name</span> <span class="ow">in</span> <span class="n">esg_postgres</span><span class="o">.</span><span class="n">postgres_list_db_schemas</span><span class="p">():</span>
+                <span class="n">schema_backup</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you want to make a back up of the existing database schema [</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">]? [Y/n]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_db_name</span><span class="p">,</span> <span class="n">node_db_security_schema_name</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span>
+                <span class="k">if</span> <span class="n">schema_backup</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;Creating a backup archive of the database schema [</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_db_name</span><span class="p">,</span> <span class="n">node_db_security_schema_name</span><span class="p">)</span>
+                    <span class="n">esg_postgres</span><span class="o">.</span><span class="n">backup_db</span><span class="p">(</span><span class="n">node_db_name</span><span class="p">,</span> <span class="s2">&quot;dbsuper&quot;</span><span class="p">)</span>
+
+            <span class="c1">#run the code to build the database and install sql migration...</span>
+            <span class="n">pg_sys_acct_passwd</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_postgres_password</span><span class="p">()</span>
+            <span class="n">esgf_security_initialize_command</span> <span class="o">=</span> <span class="s2">&quot;esgf_security_initialize --dburl </span><span class="si">{postgress_user}</span><span class="s2">:</span><span class="si">{pg_sys_acct_passwd}</span><span class="s2">@</span><span class="si">{postgress_host}</span><span class="s2">:</span><span class="si">{postgress_port}</span><span class="s2">/</span><span class="si">{node_db_name}</span><span class="s2"> -c&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">postgress_user</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">],</span> <span class="n">pg_sys_acct_passwd</span><span class="o">=</span><span class="n">pg_sys_acct_passwd</span><span class="p">,</span> <span class="n">postgress_host</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_host&quot;</span><span class="p">],</span> <span class="n">postgress_port</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_port&quot;</span><span class="p">],</span> <span class="n">node_db_name</span><span class="o">=</span><span class="n">node_db_name</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="n">esgf_security_initialize_command</span><span class="p">)</span>
+
+            <span class="n">write_security_db_install_log</span><span class="p">(</span><span class="n">db_dir</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;This function, configure_postgress(), is not applicable to current node type (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">)))</span>
+
+
+<span class="c1">#******************************************************************</span>
+<span class="c1"># SECURITY SETUP</span>
+<span class="c1">#******************************************************************</span>
+
+<span class="k">def</span> <span class="nf">security_startup_hook</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">):</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Security Startup Hook: Setup policy and whitelists... &quot;</span><span class="p">)</span>
+    <span class="n">_setup_policy_files</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">)</span>
+    <span class="n">_setup_static_whitelists</span><span class="p">(</span><span class="s2">&quot;ats&quot;</span><span class="p">,</span> <span class="s2">&quot;idp&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_policy_files</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;setup_policy_files()... &quot;</span><span class="p">)</span>
+
+        <span class="n">tmp_extract_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;esg&quot;</span><span class="p">,</span> <span class="s2">&quot;tmp&quot;</span><span class="p">)</span>
+        <span class="n">policy_file_name</span> <span class="o">=</span> <span class="s2">&quot;esgf_policies&quot;</span>
+        <span class="n">internal_jar_path</span> <span class="o">=</span> <span class="s2">&quot;esg/security/config&quot;</span>
+        <span class="n">full_extracted_jar_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_extract_dir</span><span class="p">,</span> <span class="n">internal_jar_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+            <span class="n">app_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;orp_security_authorization_service_app_home&quot;</span><span class="p">)</span>
+            <span class="n">security_jar_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app_path</span><span class="p">,</span> <span class="s2">&quot;WEB-INF&quot;</span><span class="p">,</span> <span class="s2">&quot;lib&quot;</span><span class="p">,</span> <span class="s2">&quot;esgf-security-</span><span class="si">{}</span><span class="s2">.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_security_version</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+            <span class="n">app_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;index_service_app_home&quot;</span><span class="p">)</span>
+            <span class="n">security_jar_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app_path</span><span class="p">,</span> <span class="s2">&quot;WEB-INF&quot;</span><span class="p">,</span> <span class="s2">&quot;lib&quot;</span><span class="p">,</span> <span class="s2">&quot;esgf-security-</span><span class="si">{}</span><span class="s2">.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_security_version</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">security_jar_file</span><span class="p">):</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;Could not determine location of security jar, exiting...&quot;</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Using security jar file: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">security_jar_file</span><span class="p">)</span>
+
+        <span class="c1">#If old named file exists rename</span>
+        <span class="c1"># esgf_polcies.xml -&gt; esgf_policies_local.xml</span>
+        <span class="n">esgf_policy_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_policies.xml&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">esgf_policy_file</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">esgf_policy_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_policies_local.xml&quot;</span><span class="p">))</span>
+
+        <span class="n">esgf_policy_static_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_policies_static.xml&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">esgf_policy_static_file</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">esgf_policy_static_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_policies_common.xml&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_policies_local.xml&quot;</span><span class="p">)):</span>
+            <span class="n">tmp_extract_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;tmp&quot;</span><span class="p">)</span>
+            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">tmp_extract_dir</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">tmp_extract_dir</span><span class="p">):</span>
+                <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/usr/local/java/bin/jar xvf </span><span class="si">{security_jar_file}</span><span class="s2"> </span><span class="si">{internal_jar_path}</span><span class="s2">/</span><span class="si">{policy_file_name}</span><span class="s2">_local.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">security_jar_file</span><span class="o">=</span><span class="n">security_jar_file</span><span class="p">,</span> <span class="n">internal_jar_path</span><span class="o">=</span><span class="n">internal_jar_path</span><span class="p">,</span> <span class="n">policy_file_name</span><span class="o">=</span><span class="n">policy_file_name</span><span class="p">))</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_extracted_jar_dir</span><span class="p">,</span> <span class="n">policy_file_name</span><span class="o">+</span><span class="s2">&quot;_common.xml&quot;</span><span class="p">),</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">])</span>
+
+            <span class="n">tomcat_user_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+            <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+            <span class="n">policy_file_common</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="n">policy_file_name</span><span class="o">+</span><span class="s2">&quot;_common.xml&quot;</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">policy_file_common</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">policy_file_common</span><span class="p">,</span> <span class="mi">0640</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_static_whitelists</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="s2">&quot;IDP&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">service_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DATA&quot;</span><span class="p">,</span> <span class="s2">&quot;INDEX&quot;</span><span class="p">,</span> <span class="s2">&quot;IDP&quot;</span><span class="p">]</span>
+        <span class="n">app_config_dir</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg/orp/orp/config&quot;</span>
+
+        <span class="n">tmp_extract_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;esg&quot;</span><span class="p">,</span> <span class="s2">&quot;tmp&quot;</span><span class="p">)</span>
+        <span class="n">internal_jar_path</span> <span class="o">=</span> <span class="s2">&quot;esg/security/config&quot;</span>
+        <span class="n">full_extracted_jar_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_extract_dir</span><span class="p">,</span> <span class="n">internal_jar_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+            <span class="n">app_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;orp_security_authorization_service_app_home&quot;</span><span class="p">)</span>
+            <span class="n">security_jar_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/WEB-INF/lib/esgf-security-</span><span class="si">{}</span><span class="s2">.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app_path</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+            <span class="n">app_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;index_service_app_home&quot;</span><span class="p">)</span>
+            <span class="n">security_jar_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/WEB-INF/lib/esgf-security-</span><span class="si">{}</span><span class="s2">.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app_path</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;IDP&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+            <span class="n">app_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;idp_service_app_home&quot;</span><span class="p">)</span>
+            <span class="n">security_jar_file</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/WEB-INF/lib/esgf-security-</span><span class="si">{}</span><span class="s2">.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app_path</span><span class="p">,</span> <span class="n">esgf_security_version</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;Could not find security jar file: esgf-security-</span><span class="si">{}</span><span class="s2">.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_security_version</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Using security jar file: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">security_jar_file</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">service_type</span> <span class="ow">in</span> <span class="n">service_types</span><span class="p">:</span>
+            <span class="n">esg_config_xml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_</span><span class="si">{}</span><span class="s2">_static.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">service_type</span><span class="p">))</span>
+            <span class="n">app_config_xml</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app_config_dir</span><span class="p">,</span> <span class="s2">&quot;esgf_</span><span class="si">{}</span><span class="s2">_static.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">service_type</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">esg_config_xml</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">app_config_xml</span><span class="p">):</span>
+                <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">tmp_extract_dir</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">tmp_extract_dir</span><span class="p">):</span>
+                    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/usr/local/java/bin/jar xvf </span><span class="si">{security_jar_file}</span><span class="s2"> </span><span class="si">{internal_jar_path}</span><span class="s2">/esgf_</span><span class="si">{service_type}</span><span class="s2">_static.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">security_jar_file</span><span class="o">=</span><span class="n">security_jar_file</span><span class="p">,</span> <span class="n">internal_jar_path</span><span class="o">=</span><span class="n">internal_jar_path</span><span class="p">,</span> <span class="n">service_type</span><span class="o">=</span><span class="n">service_type</span><span class="p">))</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_extracted_jar_dir</span><span class="p">,</span> <span class="s2">&quot;esgf_</span><span class="si">{}</span><span class="s2">_static.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">service_type</span><span class="p">)),</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">])</span>
+
+                    <span class="n">tomcat_user_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+                    <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+                    <span class="n">service_type_static</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esgf_</span><span class="si">{}</span><span class="s2">_static.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">service_type</span><span class="p">))</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">service_type_static</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">service_type_static</span><span class="p">,</span> <span class="mi">0640</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;This function, _setup_static_whitelists(), is not applicable to current node type (</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">node_type_list</span><span class="p">)</span>
+
+<span class="c1">#******************************************************************</span>
+<span class="c1">#******************************************************************</span>
+
+
+<span class="c1">#--------------------------------------</span>
+<span class="c1"># Clean / Uninstall this module...</span>
+<span class="c1">#--------------------------------------</span>
+<div class="viewcode-block" id="clean_security_webapp_subsystem"><a class="viewcode-back" href="../api.html#esg_security.clean_security_webapp_subsystem">[docs]</a><span class="k">def</span> <span class="nf">clean_security_webapp_subsystem</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Removes the deprecated esgf-security webapp if found on system&#39;&#39;&#39;</span>
+    <span class="c1">#TODO: Look up removing property from esgf.properties and install_manifest</span>
+    <span class="c1"># remove_property security_app_home</span>
+
+    <span class="n">security_webapp_path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/webapps/esgf-security&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_install_dir&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">security_webapp_path</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing deprecated esgf-security webapp&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">backup</span><span class="p">(</span><span class="n">security_webapp_path</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">security_webapp_path</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">fetch_user_migration_launcher</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;IDP&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
+            <span class="n">security_web_service_name</span> <span class="o">=</span> <span class="s2">&quot;esgf-security&quot;</span>
+            <span class="n">esgf_user_migration_launcher</span> <span class="o">=</span> <span class="s2">&quot;esgf-user-migrate&quot;</span>
+            <span class="n">esgf_user_migration_launcher_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">security_web_service_name</span><span class="p">,</span> <span class="n">esgf_user_migration_launcher</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">esgf_user_migration_launcher</span><span class="p">,</span> <span class="n">esgf_user_migration_launcher_url</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">esgf_user_migration_launcher</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;This function, fetch_user_migration_launcher(), is not applicable to current node type (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">)))</span>
+
+<span class="k">def</span> <span class="nf">fetch_policy_check_launcher</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">,</span> <span class="n">esg_dist_url</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;IDP&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span> <span class="ow">and</span> <span class="s2">&quot;DATA&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
+            <span class="n">security_web_service_name</span> <span class="o">=</span> <span class="s2">&quot;esgf-security&quot;</span>
+            <span class="n">esgf_policy_check_launcher</span> <span class="o">=</span> <span class="s2">&quot;esgf-policy-check&quot;</span>
+            <span class="n">esgf_user_migration_launcher</span> <span class="o">=</span> <span class="s2">&quot;esgf-user-migrate&quot;</span>
+            <span class="n">esgf_policy_check_launcher_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_dist_url</span><span class="p">,</span> <span class="n">security_web_service_name</span><span class="p">,</span> <span class="n">esgf_policy_check_launcher</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">esgf_policy_check_launcher</span><span class="p">,</span> <span class="n">esgf_policy_check_launcher_url</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">esgf_user_migration_launcher</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;This function, fetch_policy_check_launcher(), is not applicable to current node type (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">)))</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'alpha',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,1286 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>globus &mdash; esgf-installer alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0.0-alpha
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Base Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#data-node-components">Data Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#index-node-components">Index Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#idp-node-components">IDP Node Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contributing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute_docs.html">Contributing to Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>globus</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for globus</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">OpenSSL</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_version_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_tomcat_manager</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_postgres</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="n">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+<div class="viewcode-block" id="setup_globus"><a class="viewcode-back" href="../api.html#globus.setup_globus">[docs]</a><span class="k">def</span> <span class="nf">setup_globus</span><span class="p">(</span><span class="n">installation_type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Globus Toolkit -&gt;  MyProxy (client) &amp; GridFTP (server)</span>
+<span class="sd">    Takes arg &lt;selection bit vector&gt;</span>
+<span class="sd">    The rest of the args are the following...</span>
+<span class="sd">    for data-node configuration (GridFTP stuff): [&quot;bdm&quot;|&quot;end-user&quot;] see esg-globus script</span>
+<span class="sd">    for idp configuration (MyProxy stuff): [gen-self-cert] &lt;dir&gt; | &lt;regen-simpleca&gt; [fetch-certs|gen-self-cert|keep-certs] | [&quot;install&quot;|&quot;update&quot;]&#39;&#39;&#39;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;setup_globus for installation type: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">installation_type</span><span class="p">)</span>
+
+    <span class="n">globus_version</span> <span class="o">=</span> <span class="s2">&quot;6.0&quot;</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s2">&quot;/usr/bin/globus-version&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Detected an existing Globus installation&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;Checking for Globus </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_version</span><span class="p">)</span>
+        <span class="n">installed_globus_version</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;/usr/bin/globus-version&quot;</span><span class="p">)[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">esg_version_manager</span><span class="o">.</span><span class="n">compare_versions</span><span class="p">(</span><span class="n">installed_globus_version</span><span class="p">,</span> <span class="n">globus_version</span><span class="o">+</span><span class="s2">&quot;.0&quot;</span><span class="p">):</span>
+            <span class="nb">print</span> <span class="s2">&quot;Globus version appears sufficiently current&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">setup_globus_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.globus&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">setup_globus_answer</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span>
+    <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+        <span class="n">setup_globus_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
+            <span class="s2">&quot;Do you want to continue with the Globus installation and setup? [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;N&quot;</span>
+
+    <span class="k">if</span> <span class="n">setup_globus_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipping Globus installation. Using existing Globus version&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">globus_location</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/globus&quot;</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;scripts_dir&quot;</span><span class="p">]):</span>
+        <span class="n">globus_file</span> <span class="o">=</span> <span class="s2">&quot;esg-globus&quot;</span>
+        <span class="n">globus_file_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/devel/externals/bootstrap/esg-globus&quot;</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">globus_file</span><span class="p">,</span> <span class="n">globus_file_url</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">globus_file</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
+
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">]):</span>
+        <span class="n">directive</span> <span class="o">=</span> <span class="s2">&quot;notype&quot;</span>
+        <span class="k">if</span> <span class="n">installation_type</span> <span class="o">==</span> <span class="s2">&quot;DATA&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Globus Setup for Data-Node... (GridFTP server) &quot;</span><span class="p">)</span>
+            <span class="n">directive</span> <span class="o">=</span> <span class="s2">&quot;datanode&quot;</span>
+            <span class="n">setup_globus_services</span><span class="p">(</span><span class="n">directive</span><span class="p">)</span>
+            <span class="n">write_globus_env</span><span class="p">(</span><span class="n">globus_location</span><span class="p">)</span>
+            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span><span class="s2">&quot;esg_esg-node_installed&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">installation_type</span> <span class="o">==</span> <span class="s2">&quot;IDP&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Globus Setup for Index-Node... (MyProxy server)&quot;</span><span class="p">)</span>
+            <span class="n">directive</span> <span class="o">=</span> <span class="s2">&quot;gateway&quot;</span>
+            <span class="n">setup_mode</span> <span class="o">=</span> <span class="s2">&quot;install&quot;</span>
+            <span class="n">setup_globus_services</span><span class="p">(</span><span class="n">directive</span><span class="p">)</span>
+            <span class="n">write_globus_env</span><span class="p">(</span><span class="n">globus_location</span><span class="p">)</span>
+            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span><span class="s2">&quot;esg_esg-node_installed&quot;</span><span class="p">))</span></div>
+
+<span class="k">def</span> <span class="nf">write_globus_env</span><span class="p">(</span><span class="n">globus_location</span><span class="p">):</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;GLOBUS_LOCATION&quot;</span><span class="p">,</span> <span class="s2">&quot;export GLOBUS_LOCATION=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_location</span><span class="p">),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="start_globus"><a class="viewcode-back" href="../api.html#globus.start_globus">[docs]</a><span class="k">def</span> <span class="nf">start_globus</span><span class="p">(</span><span class="n">installation_type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Starts the globus services by delegating out to esg-globus script</span>
+<span class="sd">    arg1 selection bit vector ($sel)</span>
+<span class="sd">    args* (in the context of &quot;data&quot; node -&gt;  [&quot;bdm&quot;|&quot;end-user&quot;])&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">installation_type</span> <span class="o">==</span> <span class="s2">&quot;DATA&quot;</span><span class="p">:</span>
+        <span class="n">directive</span> <span class="o">=</span> <span class="s2">&quot;datanode&quot;</span>
+        <span class="n">start_globus_services</span><span class="p">(</span><span class="n">directive</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">installation_type</span> <span class="o">==</span> <span class="s2">&quot;IDP&quot;</span><span class="p">:</span>
+        <span class="n">directive</span> <span class="o">=</span> <span class="s2">&quot;gateway&quot;</span>
+        <span class="n">start_globus_services</span><span class="p">(</span><span class="n">directive</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="stop_globus"><a class="viewcode-back" href="../api.html#globus.stop_globus">[docs]</a><span class="k">def</span> <span class="nf">stop_globus</span><span class="p">(</span><span class="n">installation_type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Stops the globus services by delegating out to esg-globus script</span>
+<span class="sd">    arg1 selection bit vector ($sel)&#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">installation_type</span> <span class="o">==</span> <span class="s2">&quot;DATA&quot;</span><span class="p">:</span>
+        <span class="n">directive</span> <span class="o">=</span> <span class="s2">&quot;datanode&quot;</span>
+        <span class="n">stop_globus_services</span><span class="p">(</span><span class="n">directive</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">installation_type</span> <span class="o">==</span> <span class="s2">&quot;IDP&quot;</span><span class="p">:</span>
+        <span class="n">stop_globus_services</span><span class="p">(</span><span class="n">directive</span><span class="p">)</span></div>
+
+<span class="c1">#--------------------------------------------------------------</span>
+<span class="c1"># PROCEDURE</span>
+<span class="c1">#--------------------------------------------------------------</span>
+<div class="viewcode-block" id="setup_globus_services"><a class="viewcode-back" href="../api.html#globus.setup_globus_services">[docs]</a><span class="k">def</span> <span class="nf">setup_globus_services</span><span class="p">(</span><span class="n">config_type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;arg1 - config_type (&quot;datanode&quot; | &quot;gateway&quot;  [&quot;install&quot;|&quot;update&quot;])&#39;&#39;&#39;</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up Globus... (config type: </span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config_type</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+    <span class="n">globus_sys_acct</span> <span class="o">=</span> <span class="s2">&quot;globus&quot;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;setup_globus_services for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">config_type</span><span class="p">)</span>
+
+    <span class="n">globus_location</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/globus&quot;</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;datanode&quot;</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;Setting up ESGF Globus GridFTP Service(s)&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+        <span class="n">create_globus_account</span><span class="p">(</span><span class="n">globus_sys_acct</span><span class="p">)</span>
+        <span class="n">_install_globus</span><span class="p">(</span><span class="n">config_type</span><span class="p">)</span>
+        <span class="n">setup_gcs_io</span><span class="p">(</span><span class="s2">&quot;firstrun&quot;</span><span class="p">)</span>
+        <span class="n">setup_gridftp_metrics_logging</span><span class="p">()</span>
+
+        <span class="n">config_gridftp_server</span><span class="p">(</span><span class="n">globus_sys_acct</span><span class="p">)</span>
+        <span class="n">config_gridftp_metrics_logging</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/usr/sbin/globus-gridftp-server&quot;</span><span class="p">):</span>
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;gridftp_app_home&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/sbin/globus-gridftp-server&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;gateway&quot;</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;Setting up The ESGF Globus MyProxy Services&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+        <span class="n">_install_globus</span><span class="p">(</span><span class="n">config_type</span><span class="p">)</span>
+        <span class="n">setup_gcs_id</span><span class="p">(</span><span class="s2">&quot;firstrun&quot;</span><span class="p">)</span>
+        <span class="n">config_myproxy_server</span><span class="p">(</span><span class="n">globus_location</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;You must provide a configuration type arg [datanode | gateway]&quot;</span>
+        <span class="k">return</span></div>
+
+
+<span class="k">def</span> <span class="nf">start_globus_services</span><span class="p">(</span><span class="n">config_type</span><span class="p">):</span>
+    <span class="nb">print</span> <span class="s2">&quot;Starting Globus services for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config_type</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;datanode&quot;</span><span class="p">:</span>
+        <span class="n">start_gridftp_server</span><span class="p">()</span>
+        <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;gridftp_endpoint&quot;</span><span class="p">,</span> <span class="s2">&quot;gsiftp://</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()))</span>
+    <span class="k">elif</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;gateway&quot;</span><span class="p">:</span>
+        <span class="n">start_myproxy_server</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;You must provide a configuration type arg [datanode | gateway]&quot;</span>
+        <span class="k">return</span>
+
+<span class="k">def</span> <span class="nf">stop_globus_services</span><span class="p">(</span><span class="n">config_type</span><span class="p">):</span>
+    <span class="nb">print</span> <span class="s2">&quot;stop_globus_services for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config_type</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;datanode&quot;</span><span class="p">:</span>
+        <span class="n">stop_gridftp_server</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;gateway&quot;</span><span class="p">:</span>
+        <span class="n">stop_myproxy_server</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;You must provide a configuration type arg [datanode | gateway]&quot;</span>
+        <span class="k">return</span>
+
+<span class="k">def</span> <span class="nf">check_for_existing_globus_rpm_packages</span><span class="p">():</span>
+    <span class="n">rpm_packages</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;rpm -qa&quot;</span><span class="p">)[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">globus_packages</span> <span class="o">=</span> <span class="p">[</span><span class="n">package</span> <span class="k">for</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">rpm_packages</span> <span class="k">if</span> <span class="s2">&quot;globus&quot;</span> <span class="ow">in</span> <span class="n">package</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">globus_packages</span>
+
+<span class="c1">#--------------------------------------------------------------</span>
+<span class="c1"># GLOBUS INSTALL (subset)</span>
+<span class="c1">#--------------------------------------------------------------</span>
+<span class="c1"># All methods below this point should be considered &quot;private&quot; functions</span>
+
+<span class="k">def</span> <span class="nf">_install_globus</span><span class="p">(</span><span class="n">config_type</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;datanode&quot;</span><span class="p">:</span>
+        <span class="n">globus_type</span> <span class="o">=</span> <span class="s2">&quot;globus-connect-server-io&quot;</span>
+    <span class="k">elif</span> <span class="n">config_type</span> <span class="o">==</span> <span class="s2">&quot;gateway&quot;</span><span class="p">:</span>
+        <span class="n">globus_type</span> <span class="o">=</span> <span class="s2">&quot;globus-connect-server-id&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;You must provide a configuration type arg [datanode | gateway]&quot;</span>
+        <span class="k">return</span>
+
+    <span class="n">globus_workdir</span><span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">],</span><span class="s2">&quot;extra&quot;</span><span class="p">,</span> <span class="s2">&quot;globus&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">)</span>
+    <span class="n">current_mode</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">)</span>
+    <span class="c1"># chmod a+rw $globus_workdir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">,</span> <span class="n">current_mode</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IROTH</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWOTH</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">):</span>
+        <span class="c1"># Setup Globus RPM repo</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">check_for_existing_globus_rpm_packages</span><span class="p">():</span>
+            <span class="n">globus_connect_server_file</span> <span class="o">=</span> <span class="s2">&quot;globus-connect-server-repo-latest.noarch.rpm&quot;</span>
+            <span class="n">globus_connect_server_url</span> <span class="o">=</span> <span class="s2">&quot;http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm&quot;</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">globus_connect_server_file</span><span class="p">,</span> <span class="n">globus_connect_server_url</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;rpm --import http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus&quot;</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;rpm -i globus-connect-server-repo-latest.noarch.rpm&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Install Globus and ESGF RPMs</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_type</span><span class="p">))</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y update </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_type</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">globus_type</span> <span class="o">==</span> <span class="s2">&quot;globus-connect-server-io&quot;</span><span class="p">:</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface&quot;</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y update globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install mhash pam-pgsql&quot;</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y update mhash pam-pgsql&quot;</span><span class="p">)</span>
+
+
+<span class="c1">#--------------------------------------------------------------</span>
+<span class="c1"># GRID FTP</span>
+<span class="c1">#--------------------------------------------------------------</span>
+<span class="c1">#http://www.ci.uchicago.edu/wiki/bin/view/ESGProject/ESGUsageParser</span>
+<span class="k">def</span> <span class="nf">setup_gridftp_metrics_logging</span><span class="p">():</span>
+    <span class="n">usage_parser_version</span> <span class="o">=</span> <span class="s2">&quot;0.1.1&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Checking for esg_usage_parser &gt;= </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">usage_parser_version</span><span class="p">)</span>
+    <span class="c1"># TODO: check version at os.path.join(config[&quot;esg_tools_dir&quot;], &quot;esg_usage_parser&quot;)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;GridFTP Usage - Configuration...&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up GridFTP Usage...&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+    <span class="n">directory_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_backup_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_tools_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_log_dir&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">directory</span> <span class="ow">in</span> <span class="n">directory_list</span><span class="p">:</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;yum -y install perl-DBD-Pg&quot;</span><span class="p">)</span>
+
+    <span class="n">globus_workdir</span><span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">],</span><span class="s2">&quot;extra&quot;</span><span class="p">,</span> <span class="s2">&quot;globus&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">)</span>
+
+    <span class="n">esg_usage_parser_dist_file</span> <span class="o">=</span> <span class="s2">&quot;esg_usage_parser-</span><span class="si">{}</span><span class="s2">.tar.bz2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">usage_parser_version</span><span class="p">)</span>
+    <span class="n">esg_usage_parser_dist_url</span><span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist//globus/gridftp/esg_usage_parser-</span><span class="si">{}</span><span class="s2">.tar.bz2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">usage_parser_version</span><span class="p">)</span>
+    <span class="n">esg_usage_parser_dist_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">,</span> <span class="s2">&quot;esg_usage_parser-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">usage_parser_version</span><span class="p">))</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">esg_usage_parser_dist_dir</span><span class="p">)</span>
+
+    <span class="n">current_mode</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">)</span>
+    <span class="c1"># chmod a+rw $globus_workdir</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">globus_workdir</span><span class="p">,</span> <span class="n">current_mode</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IROTH</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWOTH</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">esg_usage_parser_dist_dir</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;Downloading Globus GridFTP Usage Parser from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_usage_parser_dist_url</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">esg_usage_parser_dist_file</span><span class="p">,</span> <span class="n">esg_usage_parser_dist_url</span><span class="p">)</span>
+
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">extract_tarball</span><span class="p">(</span><span class="n">esg_usage_parser_dist_file</span><span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;esg_usage_parser&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_tools_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esg_usage_parser&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_tools_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;esg_usage_parser&quot;</span><span class="p">),</span> <span class="mi">0755</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="config_gridftp_metrics_logging"><a class="viewcode-back" href="../api.html#globus.config_gridftp_metrics_logging">[docs]</a><span class="k">def</span> <span class="nf">config_gridftp_metrics_logging</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;generate config file for gridftp server&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;Configuring gridftp metrics collection ...&#39;</span>
+    <span class="n">gridftp_server_usage_config</span><span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_config_dir}</span><span class="s2">/gridftp/esg-server-usage-gridftp.conf&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">])</span>
+    <span class="n">gridftp_server_usage_config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;gridftp&quot;</span><span class="p">,</span> <span class="s2">&quot;esg-server-usage-gridftp&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">gridftp_server_usage_config_dir</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">gridftp_server_usage_config</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DBNAME=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.database&quot;</span><span class="p">)))</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DBHOST=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.host&quot;</span><span class="p">)))</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DBPORT=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.port&quot;</span><span class="p">)))</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DBUSER=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.user&quot;</span><span class="p">)))</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DBPASS=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_postgres_password</span><span class="p">()))</span>
+        <span class="n">gridftp_server_usage_log</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_log_dir}</span><span class="s2">/esg-server-usage-gridftp.log&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_log_dir&quot;</span><span class="p">])</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;USAGEFILE=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_server_usage_log</span><span class="p">))</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;TMPFILE=</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_log_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;__up_tmpfile&quot;</span><span class="p">)))</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DEBUG=0</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">config_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;NODBWRITE=0</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;Setting up a cron job, /etc/cron.d/esg_usage_parser ...&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/cron.d/esg_usage_parser&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cron_file</span><span class="p">:</span>
+        <span class="n">cron_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;5 0,12 * * * root ESG_USAGE_PARSER_CONF=</span><span class="si">{gridftp_server_usage_config}</span><span class="s2"> </span><span class="si">{esg_tools_dir}</span><span class="s2">/esg_usage_parser&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_server_usage_config</span><span class="o">=</span><span class="n">gridftp_server_usage_config</span><span class="p">,</span> <span class="n">esg_tools_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_tools_dir&quot;</span><span class="p">]))</span></div>
+
+<span class="k">def</span> <span class="nf">setup_gridftp_jail</span><span class="p">(</span><span class="n">globus_sys_acct</span><span class="o">=</span><span class="s2">&quot;globus&quot;</span><span class="p">):</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up GridFTP... chroot jail&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+    <span class="n">gridftp_chroot_jail</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_root_dir}</span><span class="s2">/gridftp_root&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_dir&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> does not exist, making it...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;Creating chroot jail @ </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;globus-gridftp-server-setup-chroot -r </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">))</span>
+
+        <span class="n">globus_jail_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;grid-security&quot;</span><span class="p">,</span> <span class="s2">&quot;sharing&quot;</span><span class="p">,</span> <span class="n">globus_sys_acct</span><span class="p">)</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">globus_jail_path</span><span class="p">)</span>
+        <span class="n">globus_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;globus&quot;</span><span class="p">)</span>
+        <span class="n">globus_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;globus&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">globus_jail_path</span><span class="p">,</span> <span class="n">globus_id</span><span class="p">,</span> <span class="n">globus_group</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_permissions_recursive</span><span class="p">(</span><span class="n">globus_jail_path</span><span class="p">,</span> <span class="mi">0700</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/esg/config/esgcet/esg.ini&quot;</span><span class="p">):</span>
+            <span class="nb">print</span> <span class="s2">&quot;Cannot find ESGINI=[</span><span class="si">{}</span><span class="s2">] file that describes data dir location&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;/esg/config/esgcet/esg.ini&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;Reading ESGINI=[$</span><span class="si">{}</span><span class="s2">] for thredds_dataset_roots to mount....&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;/esg/config/esgcet/esg.ini&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">(</span><span class="n">allow_no_value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/esg/config/esgcet/esg.ini&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dataset_list</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DEFAULT&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds_dataset_roots&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;could not find property </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds_dataset_roots&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">NoOptionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;could not find property </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds_dataset_roots&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+        <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">dataset_list</span><span class="p">:</span>
+            <span class="n">mount_name</span><span class="p">,</span> <span class="n">mount_dir</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+            <span class="nb">print</span> <span class="s2">&quot;mounting [</span><span class="si">{mount_dir}</span><span class="s2">] into chroot jail [</span><span class="si">{gridftp_chroot_jail}</span><span class="s2">/] as [</span><span class="si">{mount_name}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mount_dir</span><span class="o">=</span><span class="n">mount_dir</span><span class="p">,</span> <span class="n">mount_name</span><span class="o">=</span><span class="n">mount_name</span><span class="p">,</span> <span class="n">gridftp_chroot_jail</span><span class="o">=</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+            <span class="n">real_mount_dir</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">readlinkf</span><span class="p">(</span><span class="n">mount_dir</span><span class="p">)</span>
+            <span class="n">gridftp_mount_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="n">mount_name</span><span class="p">)</span>
+            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">gridftp_mount_dir</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;mount --bind </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">real_mount_dir</span><span class="p">,</span> <span class="n">gridftp_mount_dir</span><span class="p">))</span>
+
+<div class="viewcode-block" id="post_gridftp_jail_setup"><a class="viewcode-back" href="../api.html#globus.post_gridftp_jail_setup">[docs]</a><span class="k">def</span> <span class="nf">post_gridftp_jail_setup</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Write our trimmed version of /etc/password in the chroot location&#39;&#39;&#39;</span>
+    <span class="n">gridftp_chroot_jail</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_root_dir}</span><span class="s2">/gridftp_root&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_dir&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> does not exist. Exiting.&quot;</span><span class="p">,</span> <span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Add a test data file if already not added</span>
+    <span class="n">test_data_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;esg_dataroot&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;sftlf.nc&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">test_data_file</span><span class="p">):</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;esg_dataroot&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">test_data_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">test_file</span><span class="p">:</span>
+            <span class="n">test_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;writing sanitized passwd file to [</span><span class="si">{}</span><span class="s2">/etc/passwd]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+    <span class="n">sanitized_passwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;passwd&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sanitized_passwd</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">sanitized_passwd</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sanitized_passwd_file</span><span class="p">:</span>
+            <span class="n">sanitized_passwd_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;root:x:0:0:root:/root:/bin/bash</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sanitized_passwd_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;bin:x:1:1:bin:/bin:/dev/null</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sanitized_passwd_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ftp:x:14:50:FTP User:/var/ftp:/dev/null</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sanitized_passwd_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;globus:x:101:156:Globus System User:/home/globus:/bin/bash</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1">#Write our trimmed version of /etc/group in the chroot location</span>
+    <span class="nb">print</span> <span class="s2">&quot;writing sanitized group file to [</span><span class="si">{}</span><span class="s2">/etc/group]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span>
+    <span class="n">sanitized_group</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;group&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sanitized_group</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">sanitized_group</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">santized_group_file</span><span class="p">:</span>
+            <span class="n">santized_group_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;root:x:0:root</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">santized_group_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;bin:x:1:root,bin,daemon</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">santized_group_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ftp:x:50:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">santized_group_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;globus:x:156:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">setup_gcs_io</span><span class="p">(</span><span class="n">first_run</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">first_run</span> <span class="o">==</span> <span class="s2">&quot;firstrun&quot;</span><span class="p">:</span>
+        <span class="n">cert_dir</span> <span class="o">=</span> <span class="s2">&quot;/etc/tempcerts&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cert_dir</span> <span class="o">=</span> <span class="s2">&quot;/etc/esgfcerts&quot;</span>
+
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">cert_dir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;hostkey.pem&quot;</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostkey.pem&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;hostcert.pem&quot;</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;hostcert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostcert.pem&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;*******************************&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39; Registering the Data node with Globus Platform&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;*******************************&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;The installer will create a Globus (www.globus.org) endpoint to allow users to&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;download data through Globus. This uses the GridFTP server on the data node.&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;The endpoint is named as &lt;globus_username&gt;#&lt;host_name&gt;, e.g. llnl#pcmdi9 where&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;go to www.globus.org/SignUp.&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;This step can be skipped, but users will not be able to download datasets&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;from the GridFTP server on the data node through the ESGF web interface.&#39;</span>
+
+    <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;register.gridftp&quot;</span><span class="p">):</span>
+        <span class="n">register_gridftp_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;register.gridftp&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">register_gridftp_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
+        <span class="s2">&quot;Do you want to register the GridFTP server with Globus?: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;Y&quot;</span>
+
+    <span class="k">if</span> <span class="n">register_gridftp_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
+        <span class="n">GLOBUS_SETUP</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">GLOBUS_SETUP</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">GLOBUS_SETUP</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.user&quot;</span><span class="p">):</span>
+            <span class="n">globus_user</span><span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.user&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">globus_user</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please provide a Globus username: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">globus_user</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;Globus username cannot be blank.&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;globus.user&quot;</span><span class="p">,</span> <span class="n">globus_user</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.password&quot;</span><span class="p">):</span>
+            <span class="n">globus_password</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.password&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">globus_password</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please enter your Globus password: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">globus_password</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;The Globus password can not be blank&quot;</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;globus.password&quot;</span><span class="p">,</span> <span class="n">globus_password</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;myproxy.endpoint&quot;</span><span class="p">):</span>
+            <span class="n">myproxy_hostname</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;myproxy.endpoint&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">myproxy_hostname</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">(</span><span class="n">allow_no_value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/etc/globus-connect-server-esgf.conf&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Globus&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Globus&#39;</span><span class="p">,</span> <span class="s2">&quot;User&quot;</span><span class="p">,</span> <span class="n">globus_user</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Globus&#39;</span><span class="p">,</span> <span class="s2">&quot;Password&quot;</span><span class="p">,</span> <span class="n">globus_password</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Endpoint&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Endpoint&#39;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;node.short.name&quot;</span><span class="p">))</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Endpoint&#39;</span><span class="p">,</span> <span class="s2">&quot;Public&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Security&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;FetchCredentialFromRelay&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;CertificateFile&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostcert.pem&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;KeyFile&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostkey.pem&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;TrustedCertificateDirectory&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/certificates/&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;IdentityMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;MyProxy&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;AuthorizationMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;Gridmap&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;GridFTP&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;Server&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
+        <span class="n">gridftp_server_port_range</span> <span class="o">=</span> <span class="s2">&quot;50000,51000&quot;</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;IncomingPortRange&quot;</span><span class="p">,</span> <span class="n">gridftp_server_port_range</span><span class="p">)</span>
+        <span class="n">gridftp_server_source_range</span> <span class="o">=</span> <span class="s2">&quot;50000,51000&quot;</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;OutgoingPortRange&quot;</span><span class="p">,</span> <span class="n">gridftp_server_source_range</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;RestrictPaths&quot;</span><span class="p">,</span> <span class="s2">&quot;R/,N/etc,N/tmp,N/dev&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;Sharing&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;SharingRestrictPaths&quot;</span><span class="p">,</span> <span class="s2">&quot;R/&quot;</span><span class="p">)</span>
+        <span class="n">gridftp_chroot_jail</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esg_root_dir}</span><span class="s2">/gridftp_root&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_dir&quot;</span><span class="p">])</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;SharingStateDir&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;grid-security&quot;</span><span class="p">,</span> <span class="s2">&quot;sharing&quot;</span><span class="p">,</span> <span class="n">globus_user</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;MyProxy&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;MyProxy&#39;</span><span class="p">,</span> <span class="s2">&quot;Server&quot;</span><span class="p">,</span> <span class="n">myproxy_hostname</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/globus-connect-server-esgf.conf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file_object</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">config_file_object</span><span class="p">)</span>
+
+
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create a substitution of GCS configuration files for GridFTP server</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/gridftp.d&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/gridftp.d/globus-connect-esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">globus_connect_file</span><span class="p">:</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;port_range 50000,51000</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;GLOBUS_TCP_SOURCE_RANGE 50000,51000</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;restrict_paths R/,N/etc,N/tmp,N/dev</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;GRIDMAP &#39;/etc/grid-security/grid-mapfile&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;X509_USER_CERT &#39;/etc/grid-security/hostcert.pem&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;X509_USER_KEY &#39;/etc/grid-security/hostkey.pem&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;log_single /var/log/gridftp.log</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;log_level ALL</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;X509_CERT_DIR &#39;/etc/grid-security/certificates&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">config_gridftp_server</span><span class="p">(</span><span class="n">globus_sys_acct</span><span class="p">,</span> <span class="n">gridftp_chroot_jail</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/gridftp_root&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_dir&quot;</span><span class="p">])):</span>
+    <span class="nb">print</span> <span class="s2">&quot;GridFTP - Configuration...&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up GridFTP...&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+
+    <span class="n">gridftp_server_port</span> <span class="o">=</span> <span class="s2">&quot;2811&quot;</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;gridftp_server_port&quot;</span><span class="p">,</span> <span class="n">gridftp_server_port</span><span class="p">)</span>
+
+    <span class="c1"># generate ESG SAML Auth config file</span>
+    <span class="n">write_esgsaml_auth_conf</span><span class="p">()</span>
+
+    <span class="n">dnode_root_dn_wildcard</span> <span class="o">=</span> <span class="s1">&#39;^.*$&#39;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;grid-mapfile-add-entry -dn </span><span class="si">{}</span><span class="s2"> -ln </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dnode_root_dn_wildcard</span><span class="p">,</span> <span class="n">globus_sys_acct</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/gridftp.d/globus-esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">globus_esgf_file</span><span class="p">:</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;chroot_path </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">))</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;usage_stats_id 2811</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;usage_stats_target localhost:0\!all</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;acl customgsiauthzinterface</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">gridftp_server_usage_log</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/esg-server-usage-gridftp.log&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_log_dir&quot;</span><span class="p">])</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;GLOBUS_USAGE_DEBUG </span><span class="se">\&quot;</span><span class="s2">MESSAGES,</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gridftp_server_usage_log</span><span class="p">))</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;GSI_AUTHZ_CONF &#39;/etc/grid-security/authz_callouts_esgsaml.conf&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;GLOBUS_GSI_AUTHZ_DEBUG_FILE &#39;/var/log/gridftp-debug.log&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="write_esgsaml_auth_conf"><a class="viewcode-back" href="../api.html#globus.write_esgsaml_auth_conf">[docs]</a><span class="k">def</span> <span class="nf">write_esgsaml_auth_conf</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;By making this a separate function it may be called directly in the</span>
+<span class="sd">    event that the gateway_service_root needs to be repointed. (another Estani gem :-))&#39;&#39;&#39;</span>
+    <span class="n">orp_security_authorization_service_endpoint</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;orp_security_authorization_service_endpoint&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/grid-security/esgsaml_auth.conf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">esgsaml_conf_file</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;---------esgsaml_auth.conf---------&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;AUTHSERVICE=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">orp_security_authorization_service_endpoint</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+        <span class="n">esgsaml_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;AUTHSERVICE=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">orp_security_authorization_service_endpoint</span><span class="p">))</span></div>
+
+
+<span class="k">def</span> <span class="nf">configure_esgf_publisher_for_gridftp</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="s2">&quot; configuring publisher to use this GridFTP server... &quot;</span>
+    <span class="n">publisher_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">publisher_path</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">publisher_path</span><span class="p">,</span> <span class="n">publisher_path</span><span class="o">+</span><span class="s2">&quot;.bak&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;sed -i &#39;s#\(gsiftp://\)\([^:]*\):\([^/].*\)/#</span><span class="se">\1</span><span class="s1">&#39;${esgf_gridftp_host:-$</span><span class="si">{esgf_host}</span><span class="s1">}&#39;:&#39;$</span><span class="si">{gridftp_server_port}</span><span class="s1">&#39;/#&#39; $</span><span class="si">{publisher_home}</span><span class="s1">/$</span><span class="si">{publisher_config}</span><span class="s1">&#39;&#39;&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">start_gridftp_server</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/gridftp_root&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_root_dir&quot;</span><span class="p">])):</span>
+    <span class="n">global_x509_cert_dir</span> <span class="o">=</span> <span class="s2">&quot;/etc/grid-security/certificates&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot; GridFTP - Starting server... $*&quot;</span>
+    <span class="n">write_esgsaml_auth_conf</span><span class="p">()</span>
+    <span class="n">setup_gridftp_jail</span><span class="p">()</span>
+    <span class="n">post_gridftp_jail_setup</span><span class="p">()</span>
+
+    <span class="nb">print</span> <span class="s2">&quot; syncing local certificates into chroot jail... &quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gridftp_chroot_jail</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;grid-security&quot;</span><span class="p">,</span> <span class="s2">&quot;certificates&quot;</span><span class="p">)):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;grid-security&quot;</span><span class="p">,</span> <span class="s2">&quot;certificates&quot;</span><span class="p">))</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;grid-security&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="s2">&quot;/etc/grid-security/certificates&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gridftp_chroot_jail</span><span class="p">,</span> <span class="s2">&quot;etc&quot;</span><span class="p">,</span> <span class="s2">&quot;grid-security&quot;</span><span class="p">,</span> <span class="s2">&quot;certificates&quot;</span><span class="p">))</span>
+
+    <span class="n">configure_esgf_publisher_for_gridftp</span><span class="p">()</span>
+
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service globus-gridftp-server start&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">stop_gridftp_server</span><span class="p">():</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;service globus-gridftp-server stop&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="gridftp_server_status"><a class="viewcode-back" href="../api.html#globus.gridftp_server_status">[docs]</a><span class="k">def</span> <span class="nf">gridftp_server_status</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Checks the status of the gridftp server&#39;&#39;&#39;</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;service globus-gridftp-server status&quot;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;Gridftp server status:&quot;</span><span class="p">,</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">&quot;running&quot;</span> <span class="ow">in</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<span class="k">def</span> <span class="nf">check_gridftp_process</span><span class="p">(</span><span class="n">port_number</span><span class="p">):</span>
+    <span class="n">gridftp_processes</span> <span class="o">=</span> <span class="p">[</span><span class="n">proc</span> <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s2">&quot;globus-gridftp-server&quot;</span> <span class="ow">in</span> <span class="n">proc</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span>
+    <span class="c1"># print &quot; gridftp-server process is running on port [${port}]...&quot;</span>
+
+
+<span class="c1">#--------------------</span>
+<span class="c1"># Register with Globus Web Service and get a host certificate</span>
+<span class="c1">#--------------------</span>
+<span class="k">def</span> <span class="nf">setup_gcs_id</span><span class="p">(</span><span class="n">first_run</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">first_run</span> <span class="o">==</span> <span class="s2">&quot;firstrun&quot;</span><span class="p">:</span>
+        <span class="n">cert_dir</span> <span class="o">=</span> <span class="s2">&quot;/etc/tempcerts&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cert_dir</span> <span class="o">=</span> <span class="s2">&quot;/etc/esgfcerts&quot;</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;cert_dir: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cert_dir</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">cert_dir</span><span class="p">):</span>
+        <span class="n">myproxyca_dir</span> <span class="o">=</span> <span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca&quot;</span>
+
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="s2">&quot;newcerts&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="mi">0700</span><span class="p">)</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="s2">&quot;private&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="s2">&quot;private&quot;</span><span class="p">),</span> <span class="mi">0700</span><span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;cacert.pem&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="s2">&quot;cacert.pem&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;cakey.pem&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="s2">&quot;private&quot;</span><span class="p">,</span> <span class="s2">&quot;cakey.pem&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;signing-policy&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="s2">&quot;signing-policy&quot;</span><span class="p">))</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;hostcert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostcert.pem&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostkey.pem&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;cacert.pem&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Certificate is not correct.&quot;</span><span class="p">)</span>
+
+        <span class="n">cert_hash</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cert_obj</span><span class="o">.</span><span class="n">subject_name_hash</span><span class="p">())</span>
+        <span class="n">simpleCA_tar_file</span> <span class="o">=</span> <span class="s2">&quot;globus_simple_ca_</span><span class="si">{}</span><span class="s2">_setup-0.tar.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cert_hash</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">simpleCA_tar_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxyca_dir</span><span class="p">,</span> <span class="n">simpleCA_tar_file</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">simpleCA_tar_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;/etc/grid-security/certificates&quot;</span><span class="p">,</span> <span class="n">simpleCA_tar_file</span><span class="p">))</span>
+
+
+    <span class="nb">print</span> <span class="s1">&#39;*******************************&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39; Registering the IdP node with Globus Platform&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;*******************************&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;The installer will create a Globus (www.globus.org) endpoint to allow users to&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;download data through Globus. This uses the GridFTP server on the data node.&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;The endpoint is named as &lt;globus_username&gt;#&lt;host_name&gt;, e.g. llnl#pcmdi9 where&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;llnl is Globus username and pcmdi9 is endpoint name. To create a Globus account,&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;go to www.globus.org/SignUp.&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;This step can be skipped, but users will not be able to download datasets&#39;</span>
+    <span class="nb">print</span> <span class="s1">&#39;from the GridFTP server on the data node through the ESGF web interface.&#39;</span>
+
+
+    <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;register.myproxy&quot;</span><span class="p">):</span>
+        <span class="n">register_myproxy_answer</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;register.myproxy&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">register_myproxy_answer</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span>
+        <span class="s2">&quot;Do you want to register the MyProxy server with Globus?: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;Y&quot;</span>
+
+    <span class="k">if</span> <span class="n">register_myproxy_answer</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
+        <span class="n">GLOBUS_SETUP</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">GLOBUS_SETUP</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">GLOBUS_SETUP</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.user&quot;</span><span class="p">):</span>
+            <span class="n">globus_user</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.user&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">globus_user</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please provide a Globus username: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">globus_user</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;Globus username cannot be blank.&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;globus.user&quot;</span><span class="p">,</span> <span class="n">globus_user</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.password&quot;</span><span class="p">):</span>
+            <span class="n">globus_password</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;globus.password&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">globus_password</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please enter your Globus password: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">globus_password</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;The Globus password can not be blank&quot;</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;globus.password&quot;</span><span class="p">,</span> <span class="n">globus_password</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;myproxy_endpoint&quot;</span><span class="p">):</span>
+            <span class="n">myproxy_hostname</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;myproxy_endpoint&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">myproxy_hostname</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="n">myproxy_config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;myproxy&quot;</span><span class="p">)</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">)</span>
+        <span class="n">globus_server_conf_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">,</span> <span class="s2">&quot;globus-connect-server.conf&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">(</span><span class="n">allow_no_value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">globus_server_conf_file</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Globus&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Globus&#39;</span><span class="p">,</span> <span class="s2">&quot;User&quot;</span><span class="p">,</span> <span class="n">globus_user</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Globus&#39;</span><span class="p">,</span> <span class="s2">&quot;Password&quot;</span><span class="p">,</span> <span class="n">globus_password</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Endpoint&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Endpoint&#39;</span><span class="p">,</span> <span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;node.short.name&quot;</span><span class="p">))</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Endpoint&#39;</span><span class="p">,</span> <span class="s2">&quot;Public&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;Security&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;FetchCredentialFromRelay&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;CertificateFile&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostcert.pem&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;KeyFile&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/hostkey.pem&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;TrustedCertificateDirectory&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/grid-security/certificates/&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;IdentityMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;MyProxy&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;Security&#39;</span><span class="p">,</span> <span class="s2">&quot;AuthorizationMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;Gridmap&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;GridFTP&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;Server&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;RestrictPaths&quot;</span><span class="p">,</span> <span class="s2">&quot;R/,N/etc,N/tmp,N/dev&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;Sharing&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;GridFTP&#39;</span><span class="p">,</span> <span class="s2">&quot;SharingRestrictPaths&quot;</span><span class="p">,</span> <span class="s2">&quot;R/&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s2">&quot;MyProxy&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">DuplicateSectionError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;section already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;MyProxy&#39;</span><span class="p">,</span> <span class="s2">&quot;Server&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">globus_server_conf_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file_object</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">config_file_object</span><span class="p">)</span>
+
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;globus-connect-server-id-setup -c </span><span class="si">{}</span><span class="s2">/globus-connect-server.conf -v&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">))</span>
+
+    <span class="c1"># Create a substitution of Globus generated confguration files for MyProxy server</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/myproxy.d&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/myproxy.d/globus-connect-esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">globus_connect_conf_file</span><span class="p">:</span>
+        <span class="n">globus_connect_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;export MYPROXY_USER=root</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">globus_connect_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export X509_CERT_DIR=&quot;/etc/grid-security/certificates&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">globus_connect_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export X509_USER_CERT=&quot;/etc/grid-security/hostcert.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">globus_connect_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export X509_USER_KEY=&quot;/etc/grid-security/hostkey.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">globus_connect_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export X509_USER_PROXY=&quot;&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">globus_connect_conf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;export MYPROXY_OPTIONS=&quot;-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store&quot;&#39;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/esg/config/myproxy/myproxy-server.config&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myproxy_server_file</span><span class="p">:</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;authorized_retrievers      &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;default_retrievers         &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;authorized_renewers        &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;authorized_key_retrievers  &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;trusted_retrievers         &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;default_trusted_retrievers &quot;none&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;max_cert_lifetime          &quot;72&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;disable_usage_stats        &quot;true&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;cert_dir                   &quot;/etc/grid-security/certificates&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;pam_id &quot;myproxy&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;pam &quot;required&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_cert &quot;/var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_key &quot;/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_key_passphrase &quot;globus&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_serialfile &quot;/var/lib/globus-connect-server/myproxy-ca/serial&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_out_dir &quot;/var/lib/globus-connect-server/myproxy-ca/newcerts&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_subca_certfile &quot;/var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_extapp /esg/config/myproxy/esg_attribute_callout_app</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+
+<span class="k">def</span> <span class="nf">config_myproxy_server</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span> <span class="n">install_mode</span><span class="o">=</span><span class="s2">&quot;install&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">install_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">]:</span>
+        <span class="nb">print</span> <span class="s2">&quot;The install mode must be either &#39;install&#39; or &#39;update&#39;&quot;</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;ERROR: You have entered an invalid argument: [</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">install_mode</span><span class="p">))</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;MyProxy - Configuration... [</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">install_mode</span><span class="p">)</span>
+
+
+    <span class="c1">#--------------------</span>
+    <span class="c1"># Compile Java Code Used by &quot;callout&quot; scripts in ${globus_location}/bin</span>
+    <span class="c1">#--------------------</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ESGOpenIDRetriever.class&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ESGGroupRetriever&quot;</span><span class="p">)):</span>
+        <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/bin&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_location</span><span class="p">)):</span>
+            <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;ESGOpenIDRetriever.java&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/ESGOpenIDRetriever.java&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_dist_url_base</span><span class="p">))</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;ESGGroupRetriever.java&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/ESGGroupRetriever.java&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_dist_url_base</span><span class="p">))</span>
+
+            <span class="n">postgress_jar</span> <span class="o">=</span> <span class="s2">&quot;postgresql-8.4-703.jdbc3.jar&quot;</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">postgress_jar</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_dist_url_base</span><span class="p">,</span> <span class="n">postgress_jar</span><span class="p">))</span>
+
+            <span class="c1">#Find all files with a .jar extension and concat file names separated by a colon.</span>
+            <span class="n">java_class_path</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.jar&quot;</span><span class="p">)</span>
+            <span class="n">java_class_path_string</span> <span class="o">=</span> <span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">java_class_path</span><span class="p">)</span>
+
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;javac -classpath </span><span class="si">{}</span><span class="s2"> ESGOpenIDRetriever.java&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_class_path_string</span><span class="p">))</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;javac -classpath </span><span class="si">{}</span><span class="s2"> ESGGroupRetriever.java&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_class_path_string</span><span class="p">))</span>
+
+        <span class="n">fetch_myproxy_certificate_mapapp</span><span class="p">()</span>
+        <span class="n">edit_pam_pgsql_conf</span><span class="p">()</span>
+        <span class="c1">#--------------------</span>
+        <span class="c1"># Fetch -&gt; pam resource file used for myproxy</span>
+        <span class="c1">#--------------------</span>
+        <span class="n">fetch_etc_pam_d_myproxy</span><span class="p">()</span>
+        <span class="n">fetch_esg_attribute_callout_app</span><span class="p">()</span>
+        <span class="c1">#--------------------</span>
+        <span class="c1"># Create /esg/config/myproxy/myproxy-server.config</span>
+        <span class="c1">#--------------------</span>
+        <span class="n">edit_myproxy_server_config</span><span class="p">()</span>
+        <span class="c1">#--------------------</span>
+        <span class="c1"># Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config</span>
+        <span class="c1">#--------------------</span>
+        <span class="n">edit_etc_myproxyd</span><span class="p">()</span>
+        <span class="n">write_db_name_env</span><span class="p">()</span>
+
+        <span class="n">restart_myproxy_server</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">write_myproxy_install_log</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;/usr/sbin/myproxy-server&quot;</span><span class="p">):</span>
+        <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;myproxy_app_home&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/sbin/myproxy-server&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;myproxy_endpoint&quot;</span><span class="p">):</span>
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;myproxy_endpoint&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;myproxy_port&quot;</span><span class="p">):</span>
+            <span class="n">default_myproxy_port</span> <span class="o">=</span> <span class="s2">&quot;7512&quot;</span>
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;myproxy_port&quot;</span><span class="p">,</span> <span class="n">default_myproxy_port</span><span class="p">)</span>
+
+        <span class="c1">#TODO: get distinguished name for cert</span>
+        <span class="c1"># esg_property_manager.set_property(&quot;myproxy_dn&quot;, default_myproxy_port)</span>
+
+        <span class="n">myproxy_app_home</span> <span class="o">=</span> <span class="s2">&quot;/usr/sbin/myproxy-server&quot;</span>
+        <span class="c1">#TODO: Find myproxy_version</span>
+        <span class="c1"># esg_functions.write_to_install_manifest(&quot;globus:myproxy&quot;, thredds_install_dir, thredds_version)</span>
+
+<span class="k">def</span> <span class="nf">write_db_name_env</span><span class="p">():</span>
+    <span class="n">esgf_db_name</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.database&quot;</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;ESGF_DB_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;export ESGF_DB_NAME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_db_name</span><span class="p">),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">start_myproxy_server</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">check_myproxy_process</span><span class="p">():</span>
+        <span class="k">return</span>
+
+    <span class="c1">#TODO: this checks if a file has execute permissions; break into helper function</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy-server&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy-server start&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot; MyProxy - Starting server...&quot;</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy start&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">stop_myproxy_server</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy-server&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy-server stop&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy stop&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_myproxy_process</span><span class="p">():</span>
+        <span class="nb">print</span> <span class="s2">&quot;MyProxy Process is stopped...&quot;</span>
+
+<span class="k">def</span> <span class="nf">restart_myproxy_server</span><span class="p">():</span>
+    <span class="n">stop_myproxy_server</span><span class="p">()</span>
+    <span class="n">start_myproxy_server</span><span class="p">()</span>
+
+<div class="viewcode-block" id="myproxy_status"><a class="viewcode-back" href="../api.html#globus.myproxy_status">[docs]</a><span class="k">def</span> <span class="nf">myproxy_status</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Checks the status of the myproxy server&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy-server&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">):</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;/etc/init.d/myproxy-server status&quot;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;myproxy server status:&quot;</span><span class="p">,</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">&quot;running&quot;</span> <span class="ow">in</span> <span class="n">status</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<span class="k">def</span> <span class="nf">check_myproxy_process</span><span class="p">():</span>
+    <span class="n">myproxy_processes</span> <span class="o">=</span> <span class="p">[</span><span class="n">proc</span> <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s2">&quot;myproxy-server&quot;</span> <span class="ow">in</span> <span class="n">proc</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">myproxy_processes</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;myproxy-server process is running...&quot;</span>
+        <span class="nb">print</span> <span class="n">myproxy_processes</span>
+        <span class="k">return</span> <span class="n">myproxy_processes</span>
+
+
+<span class="c1">############################################</span>
+<span class="c1"># Configuration File Editing Functions</span>
+<span class="c1">############################################</span>
+
+<span class="k">def</span> <span class="nf">edit_myproxy_server_config</span><span class="p">():</span>
+    <span class="n">myproxy_config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;myproxy&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">):</span>
+        <span class="n">myproxy_config_file</span> <span class="o">=</span> <span class="s2">&quot;myproxy-server.config&quot;</span>
+        <span class="s2">&quot;Creating/Modifying myproxy server configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_config_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">myproxy_config_file</span><span class="p">):</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">create_backup_file</span><span class="p">(</span><span class="n">myproxy_config_file</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/esg/config/myproxy/myproxy-server.config&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myproxy_server_file</span><span class="p">:</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;authorized_retrievers      &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;default_retrievers         &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;authorized_renewers        &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;authorized_key_retrievers  &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;trusted_retrievers         &quot;*&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;default_trusted_retrievers &quot;none&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;max_cert_lifetime          &quot;72&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;disable_usage_stats        &quot;true&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;cert_dir                   &quot;/etc/grid-security/certificates&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;pam_id &quot;myproxy&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;pam &quot;required&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_cert &quot;/var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_key &quot;/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_key_passphrase &quot;globus&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_serialfile &quot;/var/lib/globus-connect-server/myproxy-ca/serial&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_out_dir &quot;/var/lib/globus-connect-server/myproxy-ca/newcerts&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_issuer_subca_certfile &quot;/var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">myproxy_server_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;certificate_extapp /esg/config/myproxy/esg_attribute_callout_app</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">myproxy_config_file</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">edit_pam_pgsql_conf</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc&quot;</span><span class="p">):</span>
+        <span class="n">pgsql_conf_file</span> <span class="o">=</span> <span class="s2">&quot;pam_pgsql.conf&quot;</span>
+        <span class="s2">&quot;Download and Modifying pam pgsql configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">)</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/etc_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">))</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span>
+
+        <span class="c1">#Replace placeholder values</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+            <span class="n">filedata</span> <span class="o">=</span> <span class="n">file_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@@esgf_db_name@@&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.database&quot;</span><span class="p">))</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@@postgress_host@@&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.host&quot;</span><span class="p">))</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@@postgress_port@@&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.port&quot;</span><span class="p">))</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@@postgress_user@@&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;db.user&quot;</span><span class="p">))</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@@esgf_idp_peer@@&quot;</span><span class="p">,</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.index.peer&quot;</span><span class="p">))</span>
+        <span class="n">filedata</span> <span class="o">=</span> <span class="n">filedata</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@@pg_sys_acct_passwd@@&quot;</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_postgres_password</span><span class="p">())</span>
+
+        <span class="c1"># Write the file out again</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_handle</span><span class="p">:</span>
+            <span class="n">file_handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filedata</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">edit_etc_myproxyd</span><span class="p">():</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/etc/myproxy.d/myproxy-esgf&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myproxy_esgf_file</span><span class="p">:</span>
+        <span class="n">myproxy_esgf_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;&quot;export MYPROXY_OPTIONS=</span><span class="se">\&quot;</span><span class="s1">-c </span><span class="si">{}</span><span class="s1">/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store</span><span class="se">\&quot;</span><span class="s1">&quot;&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">]))</span>
+
+
+<span class="k">def</span> <span class="nf">fetch_myproxy_certificate_mapapp</span><span class="p">():</span>
+    <span class="n">myproxy_config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;myproxy&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">):</span>
+        <span class="n">mapapp_file</span> <span class="o">=</span> <span class="s2">&quot;myproxy-certificate-mapapp&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;Downloading configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">)</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">))</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">,</span> <span class="mi">0751</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">replace_string_in_file</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">,</span> <span class="s2">&quot;/root/.globus/simpleCA/cacert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">fetch_etc_pam_d_myproxy</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc/pam.d&quot;</span><span class="p">):</span>
+        <span class="n">myproxy_file</span> <span class="o">=</span> <span class="s2">&quot;myproxy&quot;</span>
+        <span class="s2">&quot;Fetching pam&#39;s myproxy resource file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_file</span><span class="p">)</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">myproxy_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/etc_pam.d_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_file</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">fetch_esg_attribute_callout_app</span><span class="p">():</span>
+    <span class="n">myproxy_config_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_config_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;myproxy&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">):</span>
+        <span class="n">callout_app_file</span> <span class="o">=</span> <span class="s2">&quot;esg_attribute_callout_app&quot;</span>
+        <span class="nb">print</span> <span class="s2">&quot;Downloading configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">)</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">,</span> <span class="mi">0751</span><span class="p">)</span>
+
+
+<span class="c1">############################################</span>
+<span class="c1"># Utility Functions</span>
+<span class="c1">############################################</span>
+
+<div class="viewcode-block" id="create_globus_account"><a class="viewcode-back" href="../api.html#globus.create_globus_account">[docs]</a><span class="k">def</span> <span class="nf">create_globus_account</span><span class="p">(</span><span class="n">globus_sys_acct</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create the system account for globus to run as.&#39;&#39;&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;groupadd -r </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_sys_acct</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">globus_sys_acct_passwd</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_security_admin_password</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;/usr/sbin/useradd -r -c&quot;Globus System User&quot; -g </span><span class="si">{globus_sys_acct_group}</span><span class="s1"> -p </span><span class="si">{globus_sys_acct_passwd}</span><span class="s1"> -s /bin/bash </span><span class="si">{globus_sys_acct}</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_sys_acct_group</span><span class="o">=</span><span class="s2">&quot;globus&quot;</span><span class="p">,</span> <span class="n">globus_sys_acct_passwd</span><span class="o">=</span><span class="n">globus_sys_acct_passwd</span><span class="p">,</span> <span class="n">globus_sys_acct</span><span class="o">=</span><span class="n">globus_sys_acct</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">error</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+
+<span class="c1">############################################</span>
+<span class="c1"># Globus Online Setup</span>
+<span class="c1">############################################</span>
+<span class="c1"># setup_globus_online() {</span>
+<span class="c1">#     printf &quot;</span>
+<span class="c1">#     Setting up Globus Online / ESGF integration...</span>
+<span class="c1">#</span>
+<span class="c1">#     NOTE: You MUST have created a Globus Online account for</span>
+<span class="c1">#     this node: In order for oAuth to work correctly such that</span>
+<span class="c1">#     the user does not have to link their ESG credential with their</span>
+<span class="c1">#     Globus Online account, this node must have its own account.</span>
+<span class="c1">#</span>
+<span class="c1">#         https://www.globusonline.org/SignUp</span>
+<span class="c1">#</span>
+<span class="c1"># &quot;</span>
+<span class="c1">#     local local=y</span>
+<span class="c1">#     read -e -p &quot;Continue? [Y/n] &quot; input</span>
+<span class="c1">#     [ &quot;n&quot; = &quot;$(echo &quot;${input}&quot; | tr [A-Z] [a-z])&quot; ] &amp;&amp; return 1</span>
+<span class="c1">#     unset input</span>
+<span class="c1">#</span>
+<span class="c1">#     (</span>
+<span class="c1">#         local config_file=${esg_config_dir}/globusonline.properties</span>
+<span class="c1">#         load_properties ${config_file}</span>
+<span class="c1">#</span>
+<span class="c1">#         local input</span>
+<span class="c1">#         while [ 1 ]; do</span>
+<span class="c1">#             read -e -p &quot;Please enter your Globus Online ID [${GOesgfPortalID}]: &quot; input</span>
+<span class="c1">#             [ -n &quot;${input}&quot; ] &amp;&amp; GOesgfPortalID=${input} &amp;&amp; break</span>
+<span class="c1">#             [ -n &quot;${GOesgfPortalID}&quot; ] &amp;&amp; break</span>
+<span class="c1">#         done</span>
+<span class="c1">#         unset input</span>
+<span class="c1">#         write_as_property GOesgfPortalID</span>
+<span class="c1">#</span>
+<span class="c1">#         while [ 1 ]; do</span>
+<span class="c1">#             read -e -p &quot;Please enter your Globus Online Password [$([ -n &quot;${GOesgfPortalPassword}&quot; ] &amp;&amp; echo &quot;*********&quot;)]: &quot; input</span>
+<span class="c1">#             [ -n &quot;${input}&quot; ] &amp;&amp; GOesgfPortalPassword=${input} &amp;&amp; break</span>
+<span class="c1">#             [ -n &quot;${GOesgfPortalPassword}&quot; ] &amp;&amp; break</span>
+<span class="c1">#         done</span>
+<span class="c1">#         unset input</span>
+<span class="c1">#         write_as_property GOesgfPortalPassword</span>
+<span class="c1">#</span>
+<span class="c1">#         chmod 600 ${config_file}</span>
+<span class="c1">#         chown ${tomcat_user:-tomcat}.${tomcat_group:-tomcat} ${config_file}</span>
+<span class="c1">#</span>
+<span class="c1">#         local mkproxy_dist_url=&quot;${esg_dist_url_root}/externals/bootstrap/mkproxy-10-15-2012.tar.gz&quot;</span>
+<span class="c1">#         local mkproxy_dist_file=${mkproxy_dist_url##*/}</span>
+<span class="c1">#         pushd /tmp/</span>
+<span class="c1">#         checked_get ${mkproxy_dist_file} ${mkproxy_dist_url} $((force_install))</span>
+<span class="c1">#         (( $? &gt; 1 )) &amp;&amp; echo &quot; ERROR: Could not download Globus Online install script&quot; &amp;&amp; popd &gt;&amp; /dev/null &amp;&amp; checked_done 1</span>
+<span class="c1">#         tar xvzf ${mkproxy_dist_file}</span>
+<span class="c1">#         [ $? != 0 ] &amp;&amp; echo &quot; WARNING: Could not extract Globus Online install script (properly)&quot; &amp;&amp; popd &gt;&amp; /dev/null #&amp;&amp; checked_done 1</span>
+<span class="c1">#         cd /tmp/mkproxy</span>
+<span class="c1">#         [ $? != 0 ] &amp;&amp; echo &quot; ERROR: Could not Chang to mkproxy directory&quot; &amp;&amp; popd &gt;&amp; /dev/null &amp;&amp; checked_done 1</span>
+<span class="c1">#         make</span>
+<span class="c1">#         [ $? != 0 ] &amp;&amp; echo &quot; ERROR: Could not build mkproxy program&quot; &amp;&amp; popd &gt;&amp; /dev/null &amp;&amp; checked_done 1</span>
+<span class="c1">#         cp -v /tmp/mkproxy/mkproxy /usr/local/bin</span>
+<span class="c1">#         cd ../</span>
+<span class="c1">#         [ -e &quot;/tmp/${mkproxy_dist_file}&quot; ] &amp;&amp; rm -rf mkproxy /tmp/${mkproxy_dist_file}</span>
+<span class="c1">#         popd &gt;&amp; /dev/null</span>
+<span class="c1">#         (config_file=${esg_config_dir}/searchconfig.properties write_as_property enableGlobusOnline true &amp;&amp; chmod 600 ${config_file})</span>
+<span class="c1">#     )</span>
+<span class="c1">#     echo &quot;&lt;&lt;&lt;&lt;$?&gt;&gt;&gt;&gt;&quot;</span>
+<span class="c1"># }</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'alpha',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

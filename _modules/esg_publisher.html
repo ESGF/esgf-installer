@@ -32,9 +32,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
         <link rel="up" title="Module code" href="index.html"/> 
 
@@ -187,9 +184,9 @@
 <span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
 
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="n">__name__</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
 <div class="viewcode-block" id="check_publisher_version"><a class="viewcode-back" href="../api.html#esg_publisher.check_publisher_version">[docs]</a><span class="k">def</span> <span class="nf">check_publisher_version</span><span class="p">():</span>
@@ -282,7 +279,7 @@
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;UVCDAT_ANONYMOUS_LOG&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span>
     <span class="c1">#Create an initial ESG configuration file (esg.ini); TODO: make break into separate function</span>
     <span class="n">esg_org_name</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.org.name&quot;</span><span class="p">)</span>
-    <span class="n">generate_esg_ini_command</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;esgsetup --config --minimal-setup --rootid </span><span class="si">{esg_org_name}</span><span class="s1"> --db-admin-password password&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_org_name</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esg_org_name</span><span class="p">())</span>
+    <span class="n">generate_esg_ini_command</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;esgsetup --config --minimal-setup --rootid </span><span class="si">{esg_org_name}</span><span class="s1"> --db-admin-password password&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_org_name</span><span class="o">=</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.org.name&quot;</span><span class="p">))</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="n">generate_esg_ini_command</span><span class="p">)</span>
@@ -324,11 +321,6 @@
 <div class="viewcode-block" id="setup_publisher"><a class="viewcode-back" href="../api.html#esg_publisher.setup_publisher">[docs]</a><span class="k">def</span> <span class="nf">setup_publisher</span><span class="p">():</span>
     <span class="sd">&#39;&#39;&#39;Install ESGF publisher&#39;&#39;&#39;</span>
 
-    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">])):</span>
-        <span class="n">publisher_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
-        <span class="k">if</span> <span class="n">publisher_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
-            <span class="k">return</span>
-
     <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;Setting up ESGCET Package...(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgcet_egg_file&quot;</span><span class="p">])</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
@@ -336,7 +328,6 @@
     <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">):</span>
         <span class="n">clone_publisher_repo</span><span class="p">(</span><span class="s2">&quot;/tmp/esg-publisher&quot;</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;esg-publisher&quot;</span><span class="p">):</span>
-            <span class="c1"># checkout_publisher_branch(&quot;/tmp/esg-publisher&quot;, &quot;devel&quot;)</span>
             <span class="n">checkout_publisher_branch</span><span class="p">(</span><span class="s2">&quot;/tmp/esg-publisher&quot;</span><span class="p">,</span> <span class="n">ESG_PUBLISHER_VERSION</span><span class="p">)</span>
             <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;src/python/esgcet&quot;</span><span class="p">):</span>
                 <span class="n">install_publisher</span><span class="p">()</span></div>
@@ -363,14 +354,31 @@
                                     <span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">]))</span>
     <span class="k">return</span> <span class="mi">0</span></div>
 
+<span class="k">def</span> <span class="nf">esgcet_startup_hook</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="s2">&quot;ESGCET (Publisher) Startup Hook: Setting perms... &quot;</span>
+    <span class="n">esg_ini_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">esg_ini_path</span><span class="p">):</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;Could not find publisher configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_ini_path</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">esg_ini_path</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">esg_ini_path</span><span class="p">,</span> <span class="mi">0644</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_home&quot;</span><span class="p">],</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;publisher_config&quot;</span><span class="p">])):</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.publisher&quot;</span><span class="p">):</span>
+            <span class="n">publisher_install</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.publisher&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">publisher_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
+        <span class="k">if</span> <span class="n">publisher_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Using existing Publisher installation.  Skipping setup.&quot;</span>
+            <span class="k">return</span>
     <span class="n">setup_publisher</span><span class="p">()</span>
     <span class="n">run_esgsetup</span><span class="p">()</span>
     <span class="n">run_esginitialize</span><span class="p">()</span>
     <span class="n">write_esgcet_install_log</span><span class="p">()</span>
     <span class="n">write_esgcet_env</span><span class="p">()</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 
@@ -412,7 +420,7 @@
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
+            SOURCELINK_SUFFIX: ''
         };
     </script>
       <script type="text/javascript" src="../_static/jquery.js"></script>

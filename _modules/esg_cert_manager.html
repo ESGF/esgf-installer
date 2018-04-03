@@ -178,24 +178,27 @@
 <span class="kn">import</span> <span class="nn">filecmp</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">socket</span>
-<span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">jks</span>
 <span class="kn">import</span> <span class="nn">OpenSSL</span>
 <span class="kn">import</span> <span class="nn">esg_bash2py</span>
-<span class="kn">import</span> <span class="nn">esg_logging_manager</span>
 <span class="kn">import</span> <span class="nn">esg_functions</span>
 <span class="kn">import</span> <span class="nn">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
 
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">esg_logging_manager</span><span class="o">.</span><span class="n">create_rotating_log</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="n">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
 
-<span class="n">consoleHandler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
-<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">consoleHandler</span><span class="p">)</span>
+<span class="n">NO_LIST</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;No&quot;</span><span class="p">,</span> <span class="s2">&quot;NO&quot;</span><span class="p">]</span>
+<span class="n">YES_LIST</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;Yes&quot;</span><span class="p">,</span> <span class="s2">&quot;YES&quot;</span> <span class="p">]</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
 
 
@@ -248,10 +251,13 @@
     <span class="n">default_cachain</span> <span class="o">=</span> <span class="s2">&quot;/etc/esgfcerts/cachain.pem&quot;</span>
     <span class="n">cert_files</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1">#Enter ca_chain file into list</span>
-    <span class="nb">print</span> <span class="s2">&quot;Please enter your Certificate Authority&#39;s certificate chain file(s)&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;[enter each cert file/url press return, press return with blank entry when done]&quot;</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">certfile_entry</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter certificate chain file name: &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;certfile.entry&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">NO_LIST</span><span class="p">:</span>
+            <span class="n">certfile_entry</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Please enter your Certificate Authority&#39;s certificate chain file(s)&quot;</span>
+            <span class="nb">print</span> <span class="s2">&quot;[enter each cert file/url press return, press return with blank entry when done]&quot;</span>
+            <span class="n">certfile_entry</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter certificate chain file name: &quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">certfile_entry</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">cert_files</span><span class="p">:</span>
                 <span class="nb">print</span> <span class="s2">&quot;Adding default certificate chain file </span><span class="si">{default_cachain}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_cachain</span><span class="o">=</span><span class="n">default_cachain</span><span class="p">)</span>
@@ -288,7 +294,7 @@
         <span class="k">for</span> <span class="n">cert</span> <span class="ow">in</span> <span class="n">cert_files</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">cert</span><span class="p">):</span>
                 <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{cert}</span><span class="s2"> not found. Exiting.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cert</span><span class="o">=</span><span class="n">cert</span><span class="p">)</span>
-                <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">()</span>
 
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cert_file_handle</span><span class="p">:</span>
                 <span class="n">cert_file_contents</span> <span class="o">=</span> <span class="n">cert_file_handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
@@ -322,7 +328,12 @@
     <span class="c1">#certificate_issuer_cert &quot;/var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span>
     <span class="n">simpleCA_cert</span> <span class="o">=</span> <span class="s2">&quot;/var/lib/globus-connect-server/myproxy-ca/cacert.pem&quot;</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">simpleCA_cert</span><span class="p">):</span>
-        <span class="n">simpleCA_cert_hash</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_md5sum</span><span class="p">(</span><span class="n">simpleCA_cert</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">simpleCA_cert</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Certificate is not correct.&quot;</span><span class="p">)</span>
+
+        <span class="n">simpleCA_cert_hash</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cert_obj</span><span class="o">.</span><span class="n">subject_name_hash</span><span class="p">())</span>
         <span class="nb">print</span> <span class="s2">&quot;checking for MY cert: </span><span class="si">{globus_global_certs_dir}</span><span class="s2">/</span><span class="si">{simpleCA_cert_hash}</span><span class="s2">.0&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_global_certs_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;globus_global_certs_dir&quot;</span><span class="p">],</span> <span class="n">simpleCA_cert_hash</span><span class="o">=</span><span class="n">simpleCA_cert_hash</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{globus_global_certs_dir}</span><span class="s2">/</span><span class="si">{simpleCA_cert_hash}</span><span class="s2">.0&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_global_certs_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;globus_global_certs_dir&quot;</span><span class="p">],</span> <span class="n">simpleCA_cert_hash</span><span class="o">=</span><span class="n">simpleCA_cert_hash</span><span class="p">)):</span>
             <span class="nb">print</span> <span class="s2">&quot;Local CA cert file detected....&quot;</span>
@@ -367,18 +378,21 @@
     <span class="n">convert_to_der</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;openssl pkcs8 -topk8 -nocrypt -inform PEM -in </span><span class="si">{private_key}</span><span class="s2"> -outform DER -out </span><span class="si">{derkey}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">private_key</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span> <span class="n">derkey</span><span class="o">=</span><span class="n">derkey</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">convert_to_der</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Problem with preparing initial keystore...Exiting.&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">convert_to_der</span><span class="p">[</span><span class="s2">&quot;stderr&quot;</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">derkey</span></div>
 
 <div class="viewcode-block" id="check_cachain_validity"><a class="viewcode-back" href="../api.html#esg_cert_manager.check_cachain_validity">[docs]</a><span class="k">def</span> <span class="nf">check_cachain_validity</span><span class="p">(</span><span class="n">ca_chain_bundle</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Verify that the CA chain is valid&#39;&#39;&#39;</span>
     <span class="nb">print</span> <span class="s2">&quot;checking that chain is valid... &quot;</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">ca_chain_bundle</span><span class="p">):</span>
-        <span class="n">valid_chain</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;openssl verify -CAfile </span><span class="si">{ca_chain_bundle}</span><span class="s2"> </span><span class="si">{ca_chain_bundle}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ca_chain_bundle</span><span class="o">=</span><span class="n">ca_chain_bundle</span><span class="p">))</span>
-        <span class="k">if</span> <span class="s2">&quot;error&quot;</span> <span class="ow">in</span> <span class="n">valid_chain</span><span class="p">[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;error&quot;</span> <span class="ow">in</span> <span class="n">valid_chain</span><span class="p">[</span><span class="s1">&#39;stderr&#39;</span><span class="p">]:</span>
-            <span class="nb">print</span> <span class="s2">&quot;The chain is not valid.  (hint: did you include the root cert for the chain?)&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{ca_chain_bundle}</span><span class="s2"> is valid.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ca_chain_bundle</span><span class="o">=</span><span class="n">ca_chain_bundle</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">valid_chain</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;openssl verify -CAfile </span><span class="si">{ca_chain_bundle}</span><span class="s2"> </span><span class="si">{ca_chain_bundle}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ca_chain_bundle</span><span class="o">=</span><span class="n">ca_chain_bundle</span><span class="p">))</span>
+            <span class="k">if</span> <span class="s2">&quot;error&quot;</span> <span class="ow">in</span> <span class="n">valid_chain</span><span class="p">[</span><span class="s1">&#39;stdout&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;error&quot;</span> <span class="ow">in</span> <span class="n">valid_chain</span><span class="p">[</span><span class="s1">&#39;stderr&#39;</span><span class="p">]:</span>
+                <span class="nb">print</span> <span class="s2">&quot;The chain is not valid.  (hint: did you include the root cert for the chain?)&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{ca_chain_bundle}</span><span class="s2"> is valid.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ca_chain_bundle</span><span class="o">=</span><span class="n">ca_chain_bundle</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Error verifying cachain:&quot;</span><span class="p">,</span> <span class="n">error</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Hmmm... no chain provided [</span><span class="si">{ca_chain_bundle}</span><span class="s2">], skipping this check...&quot;</span></div>
 
@@ -454,8 +468,8 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getctime</span><span class="p">(</span><span class="n">public_cert</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getctime</span><span class="p">(</span><span class="n">esgf_cert_name</span><span class="p">):</span>
-            <span class="c1">#TODO: Maybe put a timestamp on backed up cert</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">esgf_cert_name</span><span class="p">,</span> <span class="n">esgf_cert_name</span><span class="o">+</span><span class="s2">&quot;.old&quot;</span><span class="p">)</span>
+            <span class="n">backed_up_cert_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{esgf_cert_name}</span><span class="s2">_</span><span class="si">{date}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_cert_name</span><span class="o">=</span><span class="n">esgf_cert_name</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()))</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">esgf_cert_name</span><span class="p">,</span> <span class="n">backed_up_cert_name</span><span class="p">)</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">public_cert</span><span class="p">,</span> <span class="n">esgf_cert_name</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error while copying public cert&quot;</span><span class="p">)</span>
@@ -477,7 +491,7 @@
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">intermediate_certs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;No intermediate_certs files given&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">private_key</span><span class="p">):</span>
         <span class="nb">print</span> <span class="s2">&quot;Private key file </span><span class="si">{private_key}</span><span class="s2"> does not exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">private_key</span><span class="o">=</span><span class="n">private_key</span><span class="p">)</span>
@@ -506,7 +520,7 @@
         <span class="nb">print</span> <span class="s2">&quot;The keypair was congruent&quot;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;The keypair was not congruent&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">()</span>
 
 
     <span class="nb">print</span> <span class="s2">&quot;creating keystore... &quot;</span>
@@ -536,7 +550,9 @@
 
     <span class="c1">#Check keystore output</span>
     <span class="n">java_keytool_executable</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{java_install_dir}</span><span class="s2">/bin/keytool&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">])</span>
-    <span class="n">check_keystore_command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{java_keytool_executable}</span><span class="s2"> -v -list -keystore </span><span class="si">{keystore_name}</span><span class="s2"> -storepass </span><span class="si">{store_password}</span><span class="s2"> | egrep &#39;(Owner|Issuer|MD5|SHA1|Serial number):&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_keytool_executable</span><span class="o">=</span><span class="n">java_keytool_executable</span><span class="p">,</span> <span class="n">keystore_name</span><span class="o">=</span><span class="n">keystore_name</span><span class="p">,</span> <span class="n">store_password</span><span class="o">=</span><span class="n">keystore_password</span><span class="p">)</span>
+    <span class="c1">#TODO: Look at using pyjks to list Owner, Issuer, MD5, SHA1, and Serial Number</span>
+    <span class="n">check_keystore_command</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{java_keytool_executable}</span><span class="s2"> -v -list -keystore </span><span class="si">{keystore_name}</span><span class="s2"> -storepass </span><span class="si">{store_password}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_keytool_executable</span><span class="o">=</span><span class="n">java_keytool_executable</span><span class="p">,</span> <span class="n">keystore_name</span><span class="o">=</span><span class="n">keystore_name</span><span class="p">,</span> <span class="n">store_password</span><span class="o">=</span><span class="n">keystore_password</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;check_keystore_command:&quot;</span><span class="p">,</span> <span class="n">check_keystore_command</span>
     <span class="n">keystore_output</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="n">check_keystore_command</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">keystore_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Mmmm, freshly baked keystore!&quot;</span>
@@ -545,7 +561,7 @@
         <span class="nb">print</span> <span class="s2">&quot;Remember: Keep your private key </span><span class="si">{private_key}</span><span class="s2"> and signed cert </span><span class="si">{public_cert}</span><span class="s2"> in a safe place!!!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">private_key</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span> <span class="n">public_cert</span><span class="o">=</span><span class="n">public_cert</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Failed to check keystore&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">keystore_output</span><span class="p">[</span><span class="s2">&quot;stderr&quot;</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="check_associate_cert_with_private_key"><a class="viewcode-back" href="../api.html#esg_cert_manager.check_associate_cert_with_private_key">[docs]</a><span class="k">def</span> <span class="nf">check_associate_cert_with_private_key</span><span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">private_key</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -589,7 +605,7 @@
     <span class="n">keystore_output</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="n">generate_keystore_string</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">keystore_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;Problem with generating initial keystore...Exiting.&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">keystore_output</span><span class="p">[</span><span class="s2">&quot;stderr&quot;</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="backup_previous_keystore"><a class="viewcode-back" href="../api.html#esg_cert_manager.backup_previous_keystore">[docs]</a><span class="k">def</span> <span class="nf">backup_previous_keystore</span><span class="p">(</span><span class="n">keystore_name</span><span class="p">):</span>
@@ -619,11 +635,11 @@
     <span class="c1">#Exit if public_cert(signed CSR isn&#39;t found)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">public_cert</span><span class="p">):</span>
         <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{public_cert}</span><span class="s2"> not found. Exiting.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">public_cert</span><span class="o">=</span><span class="n">public_cert</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">private_key</span><span class="p">):</span>
         <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{private_key}</span><span class="s2"> not found. Exiting.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">private_key</span><span class="o">=</span><span class="n">private_key</span><span class="p">)</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">()</span>
 
     <span class="nb">print</span> <span class="s2">&quot;private key = &quot;</span><span class="p">,</span> <span class="n">private_key</span>
     <span class="nb">print</span> <span class="s2">&quot;public cert = &quot;</span><span class="p">,</span> <span class="n">public_cert</span>
@@ -634,9 +650,18 @@
     <span class="c1">#Copy and rename private_key and cert</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">private_key</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">shutil</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">samefile</span><span class="p">(</span><span class="n">private_key</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> and /etc/certs/hostkey.pem are the same file&quot;</span><span class="p">,</span> <span class="n">private_key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error copying private key.&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">public_cert</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">shutil</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error copying cert files.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">samefile</span><span class="p">(</span><span class="n">public_cert</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> and /etc/certs/hostcert.pem are the same file&quot;</span><span class="p">,</span> <span class="n">public_cert</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error copying host cert.&quot;</span><span class="p">)</span>
 
     <span class="n">cert_files</span> <span class="o">=</span> <span class="n">create_certificate_chain_list</span><span class="p">()</span>
     <span class="n">create_certificate_chain</span><span class="p">(</span><span class="n">cert_files</span><span class="p">)</span>
@@ -696,7 +721,7 @@
     <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">truststore_file</span><span class="p">,</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">),</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">))</span></div>
 
 
-<span class="k">def</span> <span class="nf">add_my_cert_to_truststore</span><span class="p">(</span><span class="n">truststore_file</span><span class="p">,</span> <span class="n">keystore_file</span><span class="p">,</span> <span class="n">keystore_alias</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">add_my_cert_to_truststore</span><span class="p">(</span><span class="n">truststore_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="n">keystore_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;keystore_file&quot;</span><span class="p">],</span> <span class="n">keystore_alias</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;keystore_alias&quot;</span><span class="p">]):</span>
     <span class="c1">#----------------------------------------------------------------</span>
     <span class="c1">#Re-integrate my public key (I mean, my &quot;certificate&quot;) from my keystore into the truststore (the place housing all public keys I allow to talk to me)</span>
     <span class="c1">#----------------------------------------------------------------</span>
@@ -711,13 +736,13 @@
         <span class="n">extract_cert_output</span><span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{java_install_dir}</span><span class="s2">/bin/keytool -export -alias </span><span class="si">{keystore_alias}</span><span class="s2"> -file </span><span class="si">{keystore_file}</span><span class="s2">.cer -keystore </span><span class="si">{keystore_file}</span><span class="s2"> -storepass </span><span class="si">{keystore_password}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">keystore_alias</span><span class="o">=</span><span class="n">keystore_alias</span><span class="p">,</span> <span class="n">keystore_file</span><span class="o">=</span><span class="n">keystore_file</span><span class="p">,</span> <span class="n">keystore_password</span><span class="o">=</span><span class="n">keystore_password</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">extract_cert_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s2">&quot;Could not extract certificate from keystore&quot;</span>
-            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">extract_cert_output</span><span class="p">[</span><span class="s2">&quot;stderr&quot;</span><span class="p">])</span>
 
         <span class="nb">print</span> <span class="s2">&quot;Importing keystore&#39;s certificate into truststore... &quot;</span>
         <span class="n">import_to_truststore_output</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{java_install_dir}</span><span class="s2">/bin/keytool -import -v -trustcacerts -alias </span><span class="si">{keystore_alias}</span><span class="s2"> -keypass </span><span class="si">{keystore_password}</span><span class="s2"> -file </span><span class="si">{keystore_file}</span><span class="s2">.cer -keystore </span><span class="si">{truststore_file}</span><span class="s2"> -storepass </span><span class="si">{truststore_password}</span><span class="s2"> -noprompt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">java_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;java_install_dir&quot;</span><span class="p">],</span> <span class="n">keystore_alias</span><span class="o">=</span><span class="n">keystore_alias</span><span class="p">,</span> <span class="n">keystore_file</span><span class="o">=</span><span class="n">keystore_file</span><span class="p">,</span> <span class="n">keystore_password</span><span class="o">=</span><span class="n">keystore_password</span><span class="p">,</span> <span class="n">truststore_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="n">truststore_password</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_password&quot;</span><span class="p">]))</span>
         <span class="k">if</span> <span class="n">import_to_truststore_output</span><span class="p">[</span><span class="s2">&quot;returncode&quot;</span><span class="p">]</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s2">&quot;Could not import the certificate into the truststore&quot;</span>
-            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">import_to_truststore_output</span><span class="p">[</span><span class="s2">&quot;stderr&quot;</span><span class="p">])</span>
 
         <span class="n">sync_with_java_truststore</span><span class="p">(</span><span class="n">truststore_file</span><span class="p">)</span>
 
@@ -737,7 +762,7 @@
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">truststore_file</span><span class="p">):</span>
         <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{truststore_file}</span><span class="s2"> does not exist. Exiting.&quot;</span>
-        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">()</span>
 
     <span class="nb">print</span> <span class="s2">&quot;Syncing </span><span class="si">{truststore_file}</span><span class="s2"> with </span><span class="si">{java_truststore}</span><span class="s2"> ... &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">truststore_file</span><span class="o">=</span><span class="n">truststore_file</span><span class="p">,</span> <span class="n">java_truststore</span><span class="o">=</span><span class="n">jssecacerts_path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">filecmp</span><span class="o">.</span><span class="n">cmp</span><span class="p">(</span><span class="n">truststore_file</span><span class="p">,</span> <span class="n">jssecacerts_path</span><span class="p">):</span>
@@ -782,23 +807,293 @@
         <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">der_file</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">setup_temp_ca</span><span class="p">():</span>
-    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/tempcerts&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delete_existing_temp_CA</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="n">file_extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;*.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;*.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;*.ans&quot;</span><span class="p">,</span> <span class="s2">&quot;*.tmpl&quot;</span><span class="p">]</span>
+    <span class="n">files_to_delete</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">file_extensions</span><span class="p">:</span>
+        <span class="n">files_to_delete</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">ext</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="n">files_to_delete</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="createKeyPair"><a class="viewcode-back" href="../api.html#esg_cert_manager.createKeyPair">[docs]</a><span class="k">def</span> <span class="nf">createKeyPair</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">bits</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;source: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a public/private key pair.</span>
+<span class="sd">    Arguments: type - Key type, must be one of TYPE_RSA and TYPE_DSA</span>
+<span class="sd">               bits - Number of bits to use in the key</span>
+<span class="sd">    Returns:   The public/private key pair in a PKey object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pkey</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">PKey</span><span class="p">()</span>
+    <span class="n">pkey</span><span class="o">.</span><span class="n">generate_key</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">bits</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pkey</span></div>
+
+
+<div class="viewcode-block" id="createCertRequest"><a class="viewcode-back" href="../api.html#esg_cert_manager.createCertRequest">[docs]</a><span class="k">def</span> <span class="nf">createCertRequest</span><span class="p">(</span><span class="n">pkey</span><span class="p">,</span> <span class="n">digest</span><span class="o">=</span><span class="s2">&quot;sha256&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;source: https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a certificate request.</span>
+<span class="sd">    Arguments: pkey   - The key to associate with the request</span>
+<span class="sd">               digest - Digestion method to use for signing, default is sha256</span>
+<span class="sd">               **name - The name of the subject of the request, possible</span>
+<span class="sd">                        arguments are:</span>
+<span class="sd">                          C     - Country name</span>
+<span class="sd">                          ST    - State or province name</span>
+<span class="sd">                          L     - Locality name</span>
+<span class="sd">                          O     - Organization name</span>
+<span class="sd">                          OU    - Organizational unit name</span>
+<span class="sd">                          CN    - Common name</span>
+<span class="sd">                          emailAddress - E-mail address</span>
+<span class="sd">    Returns:   The certificate request in an X509Req object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">req</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">X509Req</span><span class="p">()</span>
+    <span class="n">subj</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_subject</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">subj</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="n">req</span><span class="o">.</span><span class="n">set_pubkey</span><span class="p">(</span><span class="n">pkey</span><span class="p">)</span>
+    <span class="n">req</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">pkey</span><span class="p">,</span> <span class="n">digest</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">req</span></div>
+
+
+<div class="viewcode-block" id="createCertificate"><a class="viewcode-back" href="../api.html#esg_cert_manager.createCertificate">[docs]</a><span class="k">def</span> <span class="nf">createCertificate</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">issuerCertKey</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">validityPeriod</span><span class="p">,</span>
+                      <span class="n">digest</span><span class="o">=</span><span class="s2">&quot;sha256&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a certificate given a certificate request.</span>
+<span class="sd">    Arguments: req        - Certificate request to use</span>
+<span class="sd">               issuerCert - The certificate of the issuer</span>
+<span class="sd">               issuerKey  - The private key of the issuer</span>
+<span class="sd">               serial     - Serial number for the certificate</span>
+<span class="sd">               notBefore  - Timestamp (relative to now) when the certificate</span>
+<span class="sd">                            starts being valid</span>
+<span class="sd">               notAfter   - Timestamp (relative to now) when the certificate</span>
+<span class="sd">                            stops being valid</span>
+<span class="sd">               digest     - Digest method to use for signing, default is sha256</span>
+<span class="sd">    Returns:   The signed certificate in an X509 object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">issuerCert</span><span class="p">,</span> <span class="n">issuerKey</span> <span class="o">=</span> <span class="n">issuerCertKey</span>
+    <span class="n">notBefore</span><span class="p">,</span> <span class="n">notAfter</span> <span class="o">=</span> <span class="n">validityPeriod</span>
+    <span class="n">cert</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">X509</span><span class="p">()</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">set_serial_number</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">gmtime_adj_notBefore</span><span class="p">(</span><span class="n">notBefore</span><span class="p">)</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">gmtime_adj_notAfter</span><span class="p">(</span><span class="n">notAfter</span><span class="p">)</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">set_issuer</span><span class="p">(</span><span class="n">issuerCert</span><span class="o">.</span><span class="n">get_subject</span><span class="p">())</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">set_subject</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">get_subject</span><span class="p">())</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">set_pubkey</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">get_pubkey</span><span class="p">())</span>
+    <span class="n">cert</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">issuerKey</span><span class="p">,</span> <span class="n">digest</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cert</span></div>
+
+
+<div class="viewcode-block" id="new_ca"><a class="viewcode-back" href="../api.html#esg_cert_manager.new_ca">[docs]</a><span class="k">def</span> <span class="nf">new_ca</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Mimics perl CA.pl -newca&#39;&#39;&#39;</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;CA/certs&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;CA/crl&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;CA/newcerts&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;CA/private&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="s2">&quot;CA/index.txt&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;CA/crlnumber&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">crlnumber_file</span><span class="p">:</span>
+        <span class="n">crlnumber_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;01</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">cakey</span> <span class="o">=</span> <span class="n">createKeyPair</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">TYPE_RSA</span><span class="p">,</span> <span class="mi">4096</span><span class="p">)</span>
+    <span class="n">ca_answer</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{fqdn}</span><span class="s2">-CA&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fqdn</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
+    <span class="n">careq</span> <span class="o">=</span> <span class="n">createCertRequest</span><span class="p">(</span><span class="n">cakey</span><span class="p">,</span> <span class="n">CN</span><span class="o">=</span><span class="n">ca_answer</span><span class="p">,</span> <span class="n">O</span><span class="o">=</span><span class="s2">&quot;ESGF&quot;</span><span class="p">,</span> <span class="n">OU</span><span class="o">=</span><span class="s2">&quot;ESGF.ORG&quot;</span><span class="p">)</span>
+    <span class="c1"># CA certificate is valid for five years.</span>
+    <span class="n">cacert</span> <span class="o">=</span> <span class="n">createCertificate</span><span class="p">(</span><span class="n">careq</span><span class="p">,</span> <span class="p">(</span><span class="n">careq</span><span class="p">,</span> <span class="n">cakey</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">365</span><span class="o">*</span><span class="mi">5</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Creating Certificate Authority private key in &quot;CA/private/cakey.pem&quot;&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;CA/private/cakey.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">capkey</span><span class="p">:</span>
+        <span class="n">capkey</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_privatekey</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">cakey</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Creating Certificate Authority certificate in &quot;CA/cacert.pem&quot;&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;CA/cacert.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ca</span><span class="p">:</span>
+        <span class="n">ca</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">cacert</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="newreq_nodes"><a class="viewcode-back" href="../api.html#esg_cert_manager.newreq_nodes">[docs]</a><span class="k">def</span> <span class="nf">newreq_nodes</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Mimics perl CA.pl -newreq-nodes&#39;&#39;&#39;</span>
+
+    <span class="n">new_req_key</span> <span class="o">=</span> <span class="n">createKeyPair</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">TYPE_RSA</span><span class="p">,</span> <span class="mi">4096</span><span class="p">)</span>
+    <span class="n">new_careq</span> <span class="o">=</span> <span class="n">createCertRequest</span><span class="p">(</span><span class="n">new_req_key</span><span class="p">,</span> <span class="n">CN</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">(),</span> <span class="n">O</span><span class="o">=</span><span class="s2">&quot;ESGF&quot;</span><span class="p">,</span> <span class="n">OU</span><span class="o">=</span><span class="s2">&quot;ESGF.ORG&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Creating Certificate Authority private key in &quot;newkey.pem&quot;&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;newkey.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">new_key_file</span><span class="p">:</span>
+        <span class="n">new_key_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_privatekey</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">new_req_key</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Creating Certificate Authority private key in &quot;newreq.pem&quot;&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;newreq.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">new_req_file</span><span class="p">:</span>
+        <span class="n">new_req_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_certificate_request</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">new_careq</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;Request is in newreq.pem, private key is in newkey.pem</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="n">new_careq</span><span class="p">,</span> <span class="n">new_req_key</span></div>
+
+<div class="viewcode-block" id="sign_request"><a class="viewcode-back" href="../api.html#esg_cert_manager.sign_request">[docs]</a><span class="k">def</span> <span class="nf">sign_request</span><span class="p">(</span><span class="n">ca_req</span><span class="p">,</span> <span class="n">req_key</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Mimics perl CA.pl -sign&#39;&#39;&#39;</span>
+    <span class="n">newcert</span> <span class="o">=</span> <span class="n">createCertificate</span><span class="p">(</span><span class="n">ca_req</span><span class="p">,</span> <span class="p">(</span><span class="n">ca_req</span><span class="p">,</span> <span class="n">req_key</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">365</span><span class="o">*</span><span class="mi">5</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;newcert.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ca</span><span class="p">:</span>
+        <span class="n">ca</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+            <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">newcert</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;Signed certificate is in newcert.pem</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span></div>
+
+<span class="k">def</span> <span class="nf">setup_temp_ca</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="o">=</span><span class="s2">&quot;/etc/tempcerts&quot;</span><span class="p">):</span>
+    <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up Temp CA&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">)</span>
 
     <span class="c1">#Copy CA perl script and openssl conf file that it uses.  The CA perl script</span>
     <span class="c1">#is used to create a temporary root CA</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;apache_certs/CA.pl&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/tempcerts/CA.pl&quot;</span><span class="p">)</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;apache_certs/openssl.cnf&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/tempcerts/openssl.cnf&quot;</span><span class="p">)</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;apache_certs/myproxy-server.config&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/tempcerts/myproxy-server.config&quot;</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;/etc/tempcerts/CA.pl&quot;</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;/etc/tempcerts/openssl.cnf&quot;</span><span class="p">,</span> <span class="mi">0755</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;CA.pl&quot;</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/CA.pl&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">))</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;openssl.cnf&quot;</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/openssl.cnf&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">))</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;myproxy-server.config&quot;</span><span class="p">),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/myproxy-server.config&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/CA.pl&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">),</span> <span class="mi">0755</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/openssl.cnf&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">),</span> <span class="mi">0755</span><span class="p">)</span>
 
-    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc/tempcerts&quot;</span><span class="p">):</span>
-        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">)</span>
-        <span class="n">ca_answer</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{fqdn}</span><span class="s2">-CA&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fqdn</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">())</span>
-        <span class="nb">print</span> <span class="s2">&quot;ca_answer:&quot;</span><span class="p">,</span> <span class="n">ca_answer</span>
-        <span class="n">new_ca_output</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;perl CA.pl -newca&quot;</span><span class="p">,</span> <span class="n">command_stdin</span><span class="o">=</span><span class="n">ca_answer</span><span class="p">)</span>
-        <span class="nb">print</span> <span class="s2">&quot;new_ca_output:&quot;</span><span class="p">,</span> <span class="n">new_ca_output</span>
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">temp_ca_dir</span><span class="p">):</span>
+        <span class="n">delete_existing_temp_CA</span><span class="p">()</span>
+        <span class="n">new_ca</span><span class="p">()</span>
+
+        <span class="c1"># openssl rsa -in CA/private/cakey.pem -out clearkey.pem -passin pass:placeholderpass &amp;&amp; mv clearkey.pem CA/private/cakey.pem</span>
+        <span class="n">private_cakey</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">load_privatekey</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;CA/private/cakey.pem&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;clearkey.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">clearkey</span><span class="p">:</span>
+            <span class="n">clearkey</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_privatekey</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">private_cakey</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;clearkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;CA/private/cakey.pem&quot;</span><span class="p">)</span>
+
+        <span class="c1"># perl CA.pl -newreq-nodes &lt;reqhost.ans</span>
+        <span class="n">new_careq</span><span class="p">,</span> <span class="n">new_req_key</span> <span class="o">=</span> <span class="n">newreq_nodes</span><span class="p">()</span>
+        <span class="c1"># perl CA.pl -sign &lt;setuphost.ans</span>
+        <span class="n">sign_request</span><span class="p">(</span><span class="n">new_careq</span><span class="p">,</span> <span class="n">new_req_key</span><span class="p">)</span>
+
+        <span class="c1"># openssl x509 -in CA/cacert.pem -inform pem -outform pem &gt;cacert.pem</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;CA/cacert.pem&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Certificate is not correct.&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;cacert.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ca</span><span class="p">:</span>
+            <span class="n">ca</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">cert_obj</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># cp CA/private/cakey.pem cakey.pem</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;CA/private/cakey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;cakey.pem&quot;</span><span class="p">)</span>
+
+        <span class="c1"># openssl x509 -in newcert.pem -inform pem -outform pem &gt;hostcert.pem</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;newcert.pem&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Certificate is not correct.&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;hostcert.pem&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ca</span><span class="p">:</span>
+            <span class="n">ca</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">dump_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">cert_obj</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># mv newkey.pem hostkey.pem</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;newkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;hostkey.pem&quot;</span><span class="p">)</span>
+
+        <span class="c1"># chmod 400 cakey.pem</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;cakey.pem&quot;</span><span class="p">,</span> <span class="mi">0400</span><span class="p">)</span>
+
+        <span class="c1"># chmod 400 hostkey.pem</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="s2">&quot;hostkey.pem&quot;</span><span class="p">,</span> <span class="mi">0400</span><span class="p">)</span>
+
+        <span class="c1"># rm -f new*.pem</span>
+        <span class="n">new_pem_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;new*.pem&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pem_file</span> <span class="ow">in</span> <span class="n">new_pem_files</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">pem_file</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cert_obj</span> <span class="o">=</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;cacert.pem&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">OpenSSL</span><span class="o">.</span><span class="n">crypto</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Certificate is not correct.&quot;</span><span class="p">)</span>
+
+        <span class="n">local_hash</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cert_obj</span><span class="o">.</span><span class="n">subject_name_hash</span><span class="p">())</span>
+        <span class="n">globus_cert_dir</span> <span class="o">=</span> <span class="s2">&quot;globus_simple_ca_</span><span class="si">{}</span><span class="s2">_setup-0&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">local_hash</span><span class="p">)</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;cacert.pem&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">,</span><span class="n">local_hash</span><span class="o">+</span><span class="s2">&quot;.0&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;signing-policy.template&quot;</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">,</span><span class="n">local_hash</span><span class="o">+</span><span class="s2">&quot;.signing_policy&quot;</span><span class="p">))</span>
+
+        <span class="n">cert_subject_object</span> <span class="o">=</span> <span class="n">cert_obj</span><span class="o">.</span><span class="n">get_subject</span><span class="p">()</span>
+        <span class="n">cert_subject</span> <span class="o">=</span> <span class="s2">&quot;/OU=</span><span class="si">{OU}</span><span class="s2">/CN=</span><span class="si">{CN}</span><span class="s2">/O=</span><span class="si">{O}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">OU</span><span class="o">=</span><span class="n">cert_subject_object</span><span class="o">.</span><span class="n">OU</span><span class="p">,</span> <span class="n">CN</span><span class="o">=</span><span class="n">cert_subject_object</span><span class="o">.</span><span class="n">CN</span><span class="p">,</span> <span class="n">O</span><span class="o">=</span><span class="n">cert_subject_object</span><span class="o">.</span><span class="n">O</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">replace_string_in_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">,</span><span class="n">local_hash</span><span class="o">+</span><span class="s2">&quot;.signing_policy&quot;</span><span class="p">),</span> <span class="s1">&#39;/O=ESGF/OU=ESGF.ORG/CN=placeholder&#39;</span><span class="p">,</span> <span class="n">cert_subject</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">,</span><span class="n">local_hash</span><span class="o">+</span><span class="s2">&quot;.signing_policy&quot;</span><span class="p">),</span> <span class="s2">&quot;signing-policy&quot;</span><span class="p">)</span>
+
+        <span class="c1"># tar -cvzf globus_simple_ca_${localhash}_setup-0.tar.gz $tgtdir;</span>
+        <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="o">+</span><span class="s2">&quot;.tar.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;w:gz&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+            <span class="n">tar</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">)</span>
+
+        <span class="c1"># rm -rf $tgtdir;</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">globus_cert_dir</span><span class="p">)</span>
+
+        <span class="c1"># mkdir -p /etc/certs</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/certs&quot;</span><span class="p">)</span>
+    	<span class="c1"># cp openssl.cnf /etc/certs/</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;openssl.cnf&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/openssl.cnf&quot;</span><span class="p">)</span>
+    	<span class="c1"># cp host*.pem /etc/certs/</span>
+        <span class="n">host_pem_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;new*.pem&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pem_file</span> <span class="ow">in</span> <span class="n">host_pem_files</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">pem_file</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pem_file</span><span class="p">))</span>
+    	<span class="c1"># cp cacert.pem /etc/certs/cachain.pem</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;cacert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/cachain.pem&quot;</span><span class="p">)</span>
+    	<span class="c1"># mkdir -p /etc/esgfcerts</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/etc/esgfcerts&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">set_commercial_ca_paths</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial.key.path&quot;</span><span class="p">):</span>
+        <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial.key.path&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial key: &quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial.cert.path&quot;</span><span class="p">):</span>
+        <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial.cert.path&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial cert: &quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;cachain.path&quot;</span><span class="p">):</span>
+        <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;cachain.path&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the ca chain: &quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="n">commercial_cert_path</span><span class="p">,</span> <span class="n">ca_chain_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="backup_existing_certs"><a class="viewcode-back" href="../api.html#esg_cert_manager.backup_existing_certs">[docs]</a><span class="k">def</span> <span class="nf">backup_existing_certs</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Backup existing SSL certs on system&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span></div>
+
+<div class="viewcode-block" id="install_commerical_certs"><a class="viewcode-back" href="../api.html#esg_cert_manager.install_commerical_certs">[docs]</a><span class="k">def</span> <span class="nf">install_commerical_certs</span><span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="n">commercial_cert_path</span><span class="p">,</span> <span class="n">ca_chain_path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Install the signed, commericial SSL credentials to /etc/certs&#39;&#39;&#39;</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_cert_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">ca_chain_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/cachain.pem&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="check_for_commercial_ca"><a class="viewcode-back" href="../api.html#esg_cert_manager.check_for_commercial_ca">[docs]</a><span class="k">def</span> <span class="nf">check_for_commercial_ca</span><span class="p">(</span><span class="n">commercial_ca_directory</span><span class="o">=</span><span class="s2">&quot;/etc/esgfcerts&quot;</span><span class="p">):</span>
@@ -806,38 +1101,23 @@
 <span class="sd">    Commercial CA installation if directory is found&#39;&#39;&#39;</span>
 
     <span class="nb">print</span> <span class="s2">&quot;*******************************&quot;</span>
-    <span class="nb">print</span> <span class="s2">&quot;Checking for Commerical CA&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Checking for Commercial CA&quot;</span>
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
-    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">commercial_ca_directory</span><span class="p">):</span>
-        <span class="nb">print</span> <span class="s2">&quot;Found commercial CA directory.&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_key_path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_cert_path&quot;</span><span class="p">):</span>
-            <span class="n">commercial_ca_setup</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you have a commercial CA that you want to install [Y/n]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;yes&quot;</span>
-            <span class="k">if</span> <span class="n">commercial_ca_setup</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_key_path&quot;</span><span class="p">):</span>
-                    <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_key_path&quot;</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">commercial_key_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial key: &quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_cert_path&quot;</span><span class="p">):</span>
-                    <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;commercial_cert_path&quot;</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">commercial_cert_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the commercial cert: &quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;cachain_path&quot;</span><span class="p">):</span>
-                    <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;cachain_path&quot;</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Enter the file path of the ca chain: &quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.signed.certs&quot;</span><span class="p">):</span>
+        <span class="n">commercial_ca_setup</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;install.signed.certs&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">commercial_ca_setup</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you have a commercial CA that you want to install [Y/n]: &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;yes&quot;</span>
 
-                <span class="c1">#Backup existing certs</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">):</span>
-                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">):</span>
-                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem.</span><span class="si">{date}</span><span class="s2">.bak&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">())))</span>
+    <span class="k">if</span> <span class="n">commercial_ca_setup</span> <span class="ow">in</span> <span class="n">YES_LIST</span><span class="p">:</span>
+        <span class="n">commercial_key_path</span><span class="p">,</span> <span class="n">commercial_cert_path</span><span class="p">,</span> <span class="n">ca_chain_path</span> <span class="o">=</span> <span class="n">set_commercial_ca_paths</span><span class="p">()</span>
 
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">)</span>
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">commercial_cert_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">)</span>
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">ca_chain_path</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/cachain.pem&quot;</span><span class="p">)</span>
+        <span class="c1">#Backup existing certs</span>
+        <span class="n">backup_existing_certs</span><span class="p">()</span>
 
-                <span class="nb">print</span> <span class="s2">&quot;Local installation of certs complete.&quot;</span>
+        <span class="n">install_commerical_certs</span><span class="p">(</span><span class="n">commercial_key_path</span><span class="p">,</span> <span class="n">commercial_cert_path</span><span class="p">,</span> <span class="n">ca_chain_path</span><span class="p">)</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;Local installation of certs complete.&quot;</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span></div>
@@ -860,6 +1140,7 @@
     <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
 
     <span class="n">create_self_signed_cert</span><span class="p">(</span><span class="s2">&quot;/etc/certs&quot;</span><span class="p">)</span>
+    <span class="n">setup_temp_ca</span><span class="p">()</span>
     <span class="n">install_tomcat_keypair</span><span class="p">(</span><span class="s2">&quot;/etc/certs/hostkey.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/certs/hostcert.pem&quot;</span><span class="p">)</span>
     <span class="n">check_for_commercial_ca</span><span class="p">()</span>
 

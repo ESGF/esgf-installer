@@ -1,0 +1,704 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>thredds &mdash; esgf-installer alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0.0-alpha
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#autoinstaller">Autoinstaller</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Base Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#data-node-components">Data Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#index-node-components">Index Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html#idp-node-components">IDP Node Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contributing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contribute_docs.html">Contributing to Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>thredds</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for thredds</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">from</span> <span class="nn">urlparse</span> <span class="k">import</span> <span class="n">urlparse</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">distutils.dir_util</span> <span class="k">import</span> <span class="n">copy_tree</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="k">import</span> <span class="n">etree</span>
+<span class="kn">import</span> <span class="nn">zipfile</span>
+<span class="kn">from</span> <span class="nn">clint.textui</span> <span class="k">import</span> <span class="n">progress</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_functions</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_bash2py</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_property_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities</span> <span class="k">import</span> <span class="n">esg_cert_manager</span>
+<span class="kn">from</span> <span class="nn">esgf_utilities.esg_exceptions</span> <span class="k">import</span> <span class="n">SubprocessError</span>
+<span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_tomcat_manager</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="n">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
+
+<div class="viewcode-block" id="check_thredds_version"><a class="viewcode-back" href="../api.html#thredds.check_thredds_version">[docs]</a><span class="k">def</span> <span class="nf">check_thredds_version</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Check the MANIFEST.MF file for the Thredds version&#39;&#39;&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/META-INF/MANIFEST.MF&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">manifest_file</span><span class="p">:</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">manifest_file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">matcher</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;Implementation-Version.*&quot;</span><span class="p">)</span>
+        <span class="n">results_list</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">matcher</span><span class="o">.</span><span class="n">match</span><span class="p">,</span> <span class="n">contents</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">results_list</span><span class="p">:</span>
+            <span class="n">version_number</span> <span class="o">=</span> <span class="n">results_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="nb">print</span> <span class="s2">&quot;Found existing Thredds installation (Thredds version </span><span class="si">{version}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="n">version_number</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">version_number</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Thredds not found on system.&quot;</span></div>
+
+<span class="k">def</span> <span class="nf">download_thredds_war</span><span class="p">(</span><span class="n">thredds_url</span><span class="p">):</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Downloading Thredds war file&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">thredds_url</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/usr/local/tomcat/webapps/thredds/thredds.war&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">total_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content-length&#39;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">progress</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">),</span> <span class="n">expected_size</span><span class="o">=</span><span class="p">(</span><span class="n">total_length</span><span class="o">/</span><span class="mi">1024</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+<div class="viewcode-block" id="create_password_hash"><a class="viewcode-back" href="../api.html#thredds.create_password_hash">[docs]</a><span class="k">def</span> <span class="nf">create_password_hash</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Creates a hash for a Tomcat user&#39;s password using Tomcat&#39;s digest.sh script&#39;&#39;&#39;</span>
+    <span class="n">password_hash</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_subprocess</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/bin/digest.sh -a SHA </span><span class="si">{tomcat_user_password}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="o">=</span><span class="n">tomcat_user_password</span><span class="p">))</span>
+    <span class="nb">print</span> <span class="s2">&quot;password hash:&quot;</span><span class="p">,</span>  <span class="n">password_hash</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;password hash: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">password_hash</span><span class="p">[</span><span class="s2">&quot;stdout&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="update_tomcat_users_file"><a class="viewcode-back" href="../api.html#thredds.update_tomcat_users_file">[docs]</a><span class="k">def</span> <span class="nf">update_tomcat_users_file</span><span class="p">(</span><span class="n">tomcat_username</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">,</span> <span class="n">tomcat_users_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_users_file&quot;</span><span class="p">]):</span>
+    <span class="sd">&#39;&#39;&#39;Adds a new user to the tomcat-users.xml file&#39;&#39;&#39;</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tomcat_users_file</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+    <span class="n">updated_dnode_user</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iter</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">param</span> <span class="o">==</span> <span class="s2">&quot;user&quot;</span> <span class="ow">and</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;dnode_user&quot;</span><span class="p">:</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;roles&quot;</span><span class="p">,</span> <span class="s2">&quot;tdrAdmin,tdsConfig&quot;</span><span class="p">)</span>
+            <span class="n">updated_dnode_user</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">updated_dnode_user</span><span class="p">:</span>
+        <span class="n">new_user</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">)</span>
+        <span class="n">new_user</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">,</span> <span class="n">tomcat_username</span><span class="p">)</span>
+        <span class="n">new_user</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span>
+        <span class="n">new_user</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;roles&quot;</span><span class="p">,</span> <span class="s2">&quot;tdrAdmin,tdsConfig&quot;</span><span class="p">)</span>
+
+    <span class="n">tree</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">tomcat_users_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">),</span> <span class="n">pretty_print</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">xml_declaration</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="add_another_user"><a class="viewcode-back" href="../api.html#thredds.add_another_user">[docs]</a><span class="k">def</span> <span class="nf">add_another_user</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Helper function for deciding to add more Tomcat users or not&#39;&#39;&#39;</span>
+    <span class="n">valid_selection</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">valid_selection</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;add.another.user&quot;</span><span class="p">):</span>
+            <span class="n">another_user</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;add.another.user&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">another_user</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Would you like to add another user? [y/N]:&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;n&quot;</span>
+
+        <span class="k">if</span> <span class="n">another_user</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span><span class="p">]:</span>
+            <span class="n">valid_selection</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">another_user</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">]:</span>
+            <span class="n">valid_selection</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Invalid selection&quot;</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">done_adding_users</span></div>
+
+<div class="viewcode-block" id="add_tomcat_user"><a class="viewcode-back" href="../api.html#thredds.add_tomcat_user">[docs]</a><span class="k">def</span> <span class="nf">add_tomcat_user</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Add a user to the default Tomcat user database (tomcat-users.xml) for container-managed authentication&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Create user credentials</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">done_adding_users</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">done_adding_users</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;tomcat.user&quot;</span><span class="p">):</span>
+            <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;tomcat.user&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">default_user</span> <span class="o">=</span> <span class="s2">&quot;dnode_user&quot;</span>
+            <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please enter username for tomcat [</span><span class="si">{default_user}</span><span class="s2">]:  &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">default_user</span><span class="o">=</span> <span class="n">default_user</span><span class="p">))</span> <span class="ow">or</span> <span class="n">default_user</span>
+
+        <span class="n">valid_password</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">valid_password</span><span class="p">:</span>
+            <span class="n">tomcat_user_password</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_security_admin_password</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tomcat_user_password</span><span class="p">:</span>
+                <span class="n">tomcat_user_password</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span><span class="s2">&quot;Please enter password for user, </span><span class="se">\&quot;</span><span class="si">{tomcat_username}</span><span class="se">\&quot;</span><span class="s2"> [********]:   &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_username</span><span class="o">=</span><span class="n">tomcat_username</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">is_valid_password</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">):</span>
+                <span class="n">valid_password</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">password_hash</span> <span class="o">=</span> <span class="n">create_password_hash</span><span class="p">(</span><span class="n">tomcat_user_password</span><span class="p">)</span>
+
+        <span class="n">update_tomcat_users_file</span><span class="p">(</span><span class="n">tomcat_username</span><span class="p">,</span> <span class="n">password_hash</span><span class="p">)</span>
+
+        <span class="n">done_adding_users</span> <span class="o">=</span> <span class="n">add_another_user</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="get_webxml_file"><a class="viewcode-back" href="../api.html#thredds.get_webxml_file">[docs]</a><span class="k">def</span> <span class="nf">get_webxml_file</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)&#39;&#39;&#39;</span>
+    <span class="n">web_xml_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{tomcat_install_dir}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_install_dir&quot;</span><span class="p">]),</span> <span class="s2">&quot;webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds&quot;</span><span class="p">,</span> <span class="s2">&quot;WEB-INF&quot;</span><span class="p">,</span><span class="s2">&quot;web.xml&quot;</span><span class="p">)</span>
+    <span class="n">web_xml_download_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/devel/thredds/thredds.web.xml&quot;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">web_xml_path</span><span class="p">,</span> <span class="n">web_xml_download_url</span><span class="p">)</span>
+
+    <span class="n">TOMCAT_USER_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_user_id</span><span class="p">()</span>
+    <span class="n">TOMCAT_GROUP_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_group_id</span><span class="p">()</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/web.xml&quot;</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span></div>
+
+<span class="c1">#TODO: terrible, undescriptive name; come up with something better</span>
+<div class="viewcode-block" id="register"><a class="viewcode-back" href="../api.html#thredds.register">[docs]</a><span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">remote_host</span><span class="p">,</span> <span class="n">truststore_password</span><span class="p">,</span> <span class="n">keystore_password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+     <span class="sd">&#39;&#39;&#39;This function is for pulling in keys from hosts we wish to</span>
+<span class="sd">     communicate with over an encrypted ssl connection.  This function</span>
+<span class="sd">     must be run after tomcat is set up since it references server.xml.</span>
+
+<span class="sd">     (called by setup_idp_peer)</span>
+<span class="sd">     arg1 - hostname of the machine with the cert you want to get</span>
+<span class="sd">     (arg2 - password to truststore where cert will be inserted)</span>
+<span class="sd">     (arg3 - password to keystore - only applicable in &quot;local&quot; registration scenario)&#39;&#39;&#39;</span>
+
+     <span class="nb">print</span> <span class="s2">&quot;Installing Public Certificate of Target Peer Node...[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remote_host</span><span class="p">)</span>
+
+     <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]):</span>
+        <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+        <span class="n">ssl_endpoint</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">remote_host</span><span class="p">)</span><span class="o">.</span><span class="n">hostname</span>
+        <span class="n">ssl_port</span> <span class="o">=</span> <span class="s2">&quot;443&quot;</span>
+
+        <span class="k">if</span> <span class="n">ssl_endpoint</span> <span class="o">==</span> <span class="n">esgf_host</span><span class="p">:</span>
+            <span class="c1">#For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition</span>
+            <span class="n">esg_cert_manager</span><span class="o">.</span><span class="n">add_my_cert_to_truststore</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
+            <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s1">&#39;./InstallCert.class&#39;</span><span class="p">,</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/utils/InstallCert.class&quot;</span><span class="p">):</span>
+                    <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;Could not download utility class(1) for installing certificates&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s1">&#39;./InstallCert$SavingTrustManager.class&#39;</span><span class="p">,</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/utils/InstallCert$SavingTrustManager.class&quot;</span><span class="p">):</span>
+                    <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="s2">&quot;Could not download utility class(2) for installing certificates&quot;</span><span class="p">)</span>
+
+            <span class="n">class_path</span> <span class="o">=</span> <span class="s2">&quot;.:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;workdir&quot;</span><span class="p">])</span>
+
+            <span class="c1">#NOTE: The InstallCert code fetches Java&#39;s jssecacerts file (if</span>
+            <span class="c1">#not there then uses the cacerts file) from java&#39;s jre and then adds the target&#39;s cert to it.</span>
+            <span class="c1">#The output of the program is a new file named jssecacerts!      So here we get the output and rename it.</span>
+
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s2">&quot;/usr/local/java/bin/java -classpath </span><span class="si">{CP}</span><span class="s2"> InstallCert </span><span class="si">{ssl_endpoint}</span><span class="s2">:</span><span class="si">{ssl_port}</span><span class="s2"> </span><span class="si">{my_truststore_password}</span><span class="s2"> </span><span class="si">{truststore_file}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">CP</span><span class="o">=</span><span class="n">CP</span><span class="p">,</span> <span class="n">ssl_endpoint</span><span class="o">=</span><span class="n">ssl_endpoint</span><span class="p">,</span> <span class="n">ssl_port</span><span class="o">=</span><span class="n">ssl_port</span><span class="p">,</span> <span class="n">my_truststore_password</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_password&quot;</span><span class="p">],</span> <span class="n">truststore_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">]))</span>
+
+            <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="mi">0644</span><span class="p">)</span>
+
+                <span class="n">tomcat_user</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+                <span class="n">tomcat_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+
+                <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">],</span> <span class="n">tomcat_user</span><span class="p">,</span> <span class="n">tomcat_group</span><span class="p">)</span>
+
+                <span class="n">esg_cert_manager</span><span class="o">.</span><span class="n">sync_with_java_truststore</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;truststore_file&quot;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="select_idp_peer"><a class="viewcode-back" href="../api.html#thredds.select_idp_peer">[docs]</a><span class="k">def</span> <span class="nf">select_idp_peer</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags&#39;&#39;&#39;</span>
+    <span class="n">esgf_host_ip</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf.host.ip&quot;</span><span class="p">)</span>
+
+    <span class="n">public_ip</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please Enter the public (i.e. routable) IP address of this host [</span><span class="si">{}</span><span class="s2">]: &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_host_ip</span><span class="p">))</span> <span class="ow">or</span> <span class="n">esgf_host_ip</span>
+    <span class="k">if</span> <span class="n">public_ip</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Using IP: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_host_ip</span><span class="p">)</span>
+
+    <span class="n">default_myproxy_port</span><span class="o">=</span><span class="mi">7512</span>
+    <span class="n">custom_myproxy_port</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="s2">&quot;INDEX&quot;</span> <span class="ow">in</span> <span class="n">node_type_list</span><span class="p">:</span>
+        <span class="n">external_idp</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Do you wish to use an external IDP peer?(N/y): &quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;n&#39;</span>
+        <span class="k">if</span> <span class="n">external_idp</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">]:</span>
+            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+            <span class="n">esgf_idp_peer_name</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">idp_fqdn</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Please specify your IDP peer node&#39;s FQDN: &quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">idp_fqdn</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;IDP peer node&#39;s FQDN can&#39;t be blank.&quot;</span>
+                    <span class="k">continue</span>
+
+            <span class="n">esgf_idp_peer</span> <span class="o">=</span> <span class="n">idp_fqdn</span>
+            <span class="n">esgf_idp_peer_name</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+            <span class="n">myproxy_endpoint</span> <span class="o">=</span> <span class="n">esgf_idp_peer</span>
+            <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+
+            <span class="c1"># print &quot;Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}&quot;</span>
+            <span class="k">if</span> <span class="n">esgf_host</span> <span class="o">!=</span> <span class="n">esgf_idp_peer</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">                  ----------------------------------------------------------------------</span>
+<span class="s1">                  The IDP selected must share at least one of the peer group(s)</span>
+<span class="s1">                  [$</span><span class="si">{node_peer_group}</span><span class="s1">] that this node is a member of!</span>
+
+<span class="s1">                  run: esg-node --federation-sanity-check $</span><span class="si">{esgf_idp_peer}</span><span class="s1"></span>
+
+<span class="s1">                  for confirmation.</span>
+<span class="s1">                  ----------------------------------------------------------------------&#39;&#39;&#39;</span>
+
+            <span class="k">if</span> <span class="n">esgf_host</span> <span class="o">!=</span> <span class="n">myproxy_endpoint</span><span class="p">:</span>
+                <span class="n">register</span><span class="p">(</span><span class="n">myproxy_endpoint</span><span class="p">)</span>
+
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer_name&quot;</span><span class="p">,</span> <span class="n">esgf_idp_peer_name</span><span class="p">)</span>
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer&quot;</span><span class="p">,</span> <span class="n">esgf_idp_peer</span><span class="p">)</span>
+
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;myproxy_endpoint&quot;</span><span class="p">,</span> <span class="n">myproxy_endpoint</span><span class="p">)</span>
+            <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;myproxy_port&quot;</span><span class="p">,</span> <span class="n">default_myproxy_port</span><span class="p">)</span>
+
+            <span class="n">write_tds_env</span><span class="p">()</span></div>
+
+<span class="k">def</span> <span class="nf">write_tds_env</span><span class="p">():</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;ESGF_IDP_PEER_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;export ESGF_IDP_PEER_NAME=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer_name&quot;</span><span class="p">)),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;ESGF_IDP_PEER&quot;</span><span class="p">,</span> <span class="s2">&quot;export ESGF_IDP_PEER=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esgf_idp_peer&quot;</span><span class="p">)),</span> <span class="n">config_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;envfile&quot;</span><span class="p">],</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;esgf.env&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">update_mail_admin_address</span><span class="p">():</span>
+    <span class="n">mail_admin_address</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;mail.admin.address&quot;</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="s1">&#39;sed -i &quot;s/support@my.group/</span><span class="si">{mail_admin_address}</span><span class="s1">/g&quot; /esg/content/thredds/threddsConfig.xml&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mail_admin_address</span><span class="o">=</span><span class="n">mail_admin_address</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">esgsetup_thredds</span><span class="p">():</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;UVCDAT_ANONYMOUS_LOG&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span>
+    <span class="n">esgsetup_command</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password </span><span class="si">{security_admin_password}</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">security_admin_password</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_security_admin_password</span><span class="p">())</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">stream_subprocess_output</span><span class="p">(</span><span class="n">esgsetup_command</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">SubprocessError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not finish esgsetup: </span><span class="se">\n</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="c1"># esg_functions.exit_with_error(1)</span>
+
+<div class="viewcode-block" id="copy_public_directory"><a class="viewcode-back" href="../api.html#thredds.copy_public_directory">[docs]</a><span class="k">def</span> <span class="nf">copy_public_directory</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;HACK ALERT!! For some reason the public directory does not respect thredds&#39; tds.context.root.path property...</span>
+<span class="sd">    So have to manually move over this directory to avert server not starting! -gavin&#39;&#39;&#39;</span>
+    <span class="n">content_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{thredds_content_dir}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">thredds_content_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;thredds_content_dir&quot;</span><span class="p">]),</span> <span class="s2">&quot;thredds&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">content_dir</span><span class="p">):</span>
+        <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">content_dir</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">public_dir</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{tomcat_install_dir}</span><span class="s2">/webapps/thredds/WEB-INF/altContent/startup/public&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_install_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_install_dir&quot;</span><span class="p">])</span>
+            <span class="n">copy_tree</span><span class="p">(</span><span class="n">public_dir</span><span class="p">,</span> <span class="n">content_dir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">esg_functions</span><span class="o">.</span><span class="n">exit_with_error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+        <span class="n">tomcat_user</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+        <span class="n">tomcat_group</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;thredds_content_dir&quot;</span><span class="p">],</span> <span class="n">tomcat_user</span><span class="p">,</span> <span class="n">tomcat_group</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">verify_thredds_credentials</span><span class="p">(</span><span class="n">thredds_ini_file</span><span class="o">=</span><span class="s2">&quot;/esg/config/esgcet/esg.ini&quot;</span><span class="p">,</span> <span class="n">tomcat_users_file</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_users_file&quot;</span><span class="p">]):</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Inspecting tomcat... &quot;</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tomcat_users_file</span><span class="p">)</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+    <span class="n">user_element</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">)</span>
+    <span class="n">tomcat_username</span> <span class="o">=</span> <span class="n">user_element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span>
+    <span class="n">tomcat_password_hash</span> <span class="o">=</span> <span class="n">user_element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Inspecting publisher... &quot;</span>
+    <span class="n">thredds_username</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;thredds.username&quot;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="n">thredds_ini_file</span><span class="p">,</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;DEFAULT&quot;</span><span class="p">)</span>
+    <span class="n">thredds_password</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;thredds.password&quot;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="n">thredds_ini_file</span><span class="p">,</span> <span class="n">section_name</span><span class="o">=</span><span class="s2">&quot;DEFAULT&quot;</span><span class="p">)</span>
+    <span class="n">thredds_password_hash</span> <span class="o">=</span> <span class="n">create_password_hash</span><span class="p">(</span><span class="n">thredds_password</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Checking username... &quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;tomcat_username: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tomcat_username</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;thredds_username: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">thredds_username</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tomcat_username</span> <span class="o">!=</span> <span class="n">thredds_username</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;The user_name property in </span><span class="si">{tomcat_users_file}</span><span class="s2"> doesn&#39;t match the user_name in </span><span class="si">{thredds_ini_file}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_users_file</span><span class="o">=</span><span class="n">tomcat_users_file</span><span class="p">,</span> <span class="n">thredds_ini_file</span><span class="o">=</span><span class="n">thredds_ini_file</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Checking password... &quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;tomcat_password_hash: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tomcat_password_hash</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;thredds_password_hash: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">thredds_password_hash</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tomcat_password_hash</span> <span class="o">!=</span> <span class="n">thredds_password_hash</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;The password property in </span><span class="si">{tomcat_users_file}</span><span class="s2"> doesn&#39;t match the password in </span><span class="si">{thredds_ini_file}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_users_file</span><span class="o">=</span><span class="n">tomcat_users_file</span><span class="p">,</span> <span class="n">thredds_ini_file</span><span class="o">=</span><span class="n">thredds_ini_file</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Verified Thredds crendentials&quot;</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+<span class="k">def</span> <span class="nf">copy_jar_files</span><span class="p">():</span>
+    <span class="c1"># TDS jars necessary to support ESGF security filters</span>
+    <span class="c1"># some jars are retrieved from the ESGF repository</span>
+    <span class="c1"># other jars are copied from the unpacked ORP or NM distributions</span>
+    <span class="n">esgf_devel_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_dist_mirror&quot;</span><span class="p">],</span> <span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="s2">&quot;devel&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/XSGroupRole-1.0.0.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/commons-httpclient-3.1.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/commons-lang-2.6.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/esg-orp/esg-orp-2.9.3.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esg-orp-2.9.3.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/esgf-node-manager/esgf-node-manager-common-1.0.0.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-common-1.0.0.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/esgf-node-manager/esgf-node-manager-filters-1.0.0.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-filters-1.0.0.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/esgf-security/esgf-security-2.7.10.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-security-2.7.10.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/jdom-legacy-1.1.3.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/jdom-legacy-1.1.3.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/opensaml-2.3.2.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/opensaml-2.3.2.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/openws-1.3.1.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/openws-1.3.1.jar&quot;</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/xmltooling-1.2.2.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmltooling-1.2.2.jar&quot;</span><span class="p">)</span>
+
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar&quot;</span><span class="p">)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/commons-dbcp-1.4.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/commons-dbutils-1.3.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/commons-pool-1.5.4.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar&quot;</span><span class="p">,</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{esgf_devel_url}</span><span class="s2">/filters/postgresql-8.4-703.jdbc3.jar&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_devel_url</span><span class="o">=</span><span class="n">esgf_devel_url</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="download_thredds_xml"><a class="viewcode-back" href="../api.html#thredds.download_thredds_xml">[docs]</a><span class="k">def</span> <span class="nf">download_thredds_xml</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Download the thredds.xml file from the distribution mirror&#39;&#39;&#39;</span>
+    <span class="n">thredds_xml_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-thredds.xml&quot;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{tomcat_conf_dir}</span><span class="s2">/Catalina/localhost/thredds.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_conf_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]),</span> <span class="n">thredds_xml_url</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="download_thredds_config_xml"><a class="viewcode-back" href="../api.html#thredds.download_thredds_config_xml">[docs]</a><span class="k">def</span> <span class="nf">download_thredds_config_xml</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Download the threddsConfig.xml file from the distribution mirror&#39;&#39;&#39;</span>
+    <span class="n">thredds_config_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/thredds/threddsConfig.xml.tmpl&quot;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;/esg/content/thredds/threddsConfig.xml&quot;</span><span class="p">,</span> <span class="n">thredds_config_url</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="download_application_context"><a class="viewcode-back" href="../api.html#thredds.download_application_context">[docs]</a><span class="k">def</span> <span class="nf">download_application_context</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Download the applicationContext.xml file from the distribution mirror&#39;&#39;&#39;</span>
+    <span class="n">application_context_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/thredds/applicationContext.xml&quot;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml&quot;</span><span class="p">,</span> <span class="n">application_context_url</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="download_tomcat_users_xml"><a class="viewcode-back" href="../api.html#thredds.download_tomcat_users_xml">[docs]</a><span class="k">def</span> <span class="nf">download_tomcat_users_xml</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Download the tomcat-users.xml template from the distribution mirror&#39;&#39;&#39;</span>
+    <span class="n">tomcat_users_xml_url</span> <span class="o">=</span> <span class="s2">&quot;https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-users.xml&quot;</span>
+    <span class="n">tomcat_users_xml_local_path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{tomcat_conf_dir}</span><span class="s2">/tomcat-users.xml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_conf_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">])</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">tomcat_users_xml_local_path</span><span class="p">,</span> <span class="n">tomcat_users_xml_url</span><span class="p">)</span>
+    <span class="n">tomcat_user_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+    <span class="n">tomcat_group_id</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_group_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">tomcat_users_xml_local_path</span><span class="p">,</span> <span class="n">tomcat_user_id</span><span class="p">,</span> <span class="n">tomcat_group_id</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">write_tds_install_log</span><span class="p">():</span>
+    <span class="n">thredds_version</span> <span class="o">=</span> <span class="n">check_thredds_version</span><span class="p">()</span>
+    <span class="n">thredds_install_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_install_dir&quot;</span><span class="p">]),</span> <span class="s2">&quot;webapps&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds&quot;</span><span class="p">)</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">write_to_install_manifest</span><span class="p">(</span><span class="s2">&quot;webapp:thredds&quot;</span><span class="p">,</span> <span class="n">thredds_install_dir</span><span class="p">,</span> <span class="n">thredds_version</span><span class="p">)</span>
+
+    <span class="n">esgf_host</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_esgf_host</span><span class="p">()</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;thredds_service_endpoint&quot;</span><span class="p">,</span> <span class="s2">&quot;http://</span><span class="si">{}</span><span class="s2">/thredds&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esgf_host</span><span class="p">))</span>
+    <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">set_property</span><span class="p">(</span><span class="s2">&quot;thredds_service_app_home&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/webapps/thredds&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_install_dir&quot;</span><span class="p">]))</span>
+
+<span class="k">def</span> <span class="nf">setup_thredds</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">):</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*******************************&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Setting up Thredds&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;******************************* </span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.thredds&quot;</span><span class="p">):</span>
+            <span class="n">thredds_install</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;update.thredds&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">thredds_install</span> <span class="o">=</span> <span class="n">raw_input</span><span class="p">(</span><span class="s2">&quot;Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: &quot;</span> <span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;no&quot;</span>
+        <span class="k">if</span> <span class="n">thredds_install</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">]:</span>
+            <span class="nb">print</span> <span class="s2">&quot;Using existing Thredds installation.  Skipping setup.&quot;</span>
+            <span class="k">return</span>
+
+    <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">stop_tomcat</span><span class="p">()</span>
+
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds&quot;</span><span class="p">)</span>
+    <span class="n">thredds_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esgf_dist_mirror&quot;</span><span class="p">],</span> <span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="s2">&quot;devel&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds&quot;</span><span class="p">,</span> <span class="s2">&quot;5.0&quot;</span><span class="p">,</span> <span class="s2">&quot;5.0.2&quot;</span><span class="p">,</span> <span class="s2">&quot;thredds.war&quot;</span><span class="p">)</span>
+    <span class="n">download_thredds_war</span><span class="p">(</span><span class="n">thredds_url</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/thredds.war&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+            <span class="n">zf</span><span class="o">.</span><span class="n">extractall</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;thredds.war&quot;</span><span class="p">)</span>
+        <span class="n">TOMCAT_USER_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_user_id</span><span class="p">()</span>
+        <span class="n">TOMCAT_GROUP_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_group_id</span><span class="p">()</span>
+        <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds&quot;</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span>
+
+    <span class="n">download_tomcat_users_xml</span><span class="p">()</span>
+    <span class="n">add_tomcat_user</span><span class="p">()</span>
+
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{tomcat_conf_dir}</span><span class="s2">/Catalina/localhost&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tomcat_conf_dir</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;tomcat_conf_dir&quot;</span><span class="p">]))</span>
+    <span class="n">download_thredds_xml</span><span class="p">()</span>
+    <span class="c1"># get_webxml_file()</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;thredds_conf/web.xml&quot;</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/web.xml&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="s2">&quot;/usr/local/tomcat/webapps/thredds/web.xml&quot;</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span>
+    <span class="n">copy_public_directory</span><span class="p">()</span>
+    <span class="c1"># TDS configuration root</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;thredds_content_dir&quot;</span><span class="p">],</span> <span class="s2">&quot;thredds&quot;</span><span class="p">))</span>
+    <span class="c1"># TDS memory configuration</span>
+    <span class="n">download_thredds_config_xml</span><span class="p">()</span>
+    <span class="n">update_mail_admin_address</span><span class="p">()</span>
+
+    <span class="c1"># ESGF root catalog</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;thredds_conf/catalog.xml&quot;</span><span class="p">),</span> <span class="s2">&quot;/esg/content/thredds/catalog.xml-esgcet&quot;</span><span class="p">)</span>
+    <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="s2">&quot;/esg/content/thredds/esgcet&quot;</span><span class="p">)</span>
+    <span class="c1"># TDS customized applicationContext.xml file with ESGF authorizer</span>
+    <span class="n">download_application_context</span><span class="p">()</span>
+    <span class="n">copy_jar_files</span><span class="p">()</span>
+
+    <span class="c1"># TDS customized logging (uses DEBUG)</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="s2">&quot;thredds_conf/log4j2.xml&quot;</span><span class="p">),</span> <span class="s2">&quot;/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml&quot;</span><span class="p">)</span>
+
+    <span class="c1"># data node scripts</span>
+    <span class="c1">#TODO: Convert data node scripts to Python</span>
+
+    <span class="c1"># change ownership of content directory</span>
+    <span class="n">TOMCAT_USER_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_user_id</span><span class="p">()</span>
+    <span class="n">TOMCAT_GROUP_ID</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_tomcat_group_id</span><span class="p">()</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/esg/content/thredds/&quot;</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span>
+
+    <span class="c1"># change ownership of source directory</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="s2">&quot;/usr/local/webapps/thredds&quot;</span><span class="p">,</span> <span class="n">TOMCAT_USER_ID</span><span class="p">,</span> <span class="n">TOMCAT_GROUP_ID</span><span class="p">)</span>
+
+    <span class="c1">#restart tomcat to put modifications in effect.</span>
+    <span class="n">esg_tomcat_manager</span><span class="o">.</span><span class="n">start_tomcat</span><span class="p">()</span>
+
+    <span class="n">esgsetup_thredds</span><span class="p">()</span>
+
+    <span class="n">write_tds_install_log</span><span class="p">()</span>
+
+    <span class="c1"># verify_thredds_credentials()</span>
+
+    <span class="c1"># cleanup</span>
+    <span class="c1"># shutil.rmtree(&quot;/usr/local/tomcat/webapps/esgf-node-manager/&quot;)</span>
+
+<span class="k">def</span> <span class="nf">tds_startup_hook</span><span class="p">():</span>
+    <span class="nb">print</span> <span class="s2">&quot;TDS (THREDDS) Startup Hook: Setting perms... &quot;</span>
+    <span class="n">esg_functions</span><span class="o">.</span><span class="n">change_ownership_recursive</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;thredds_content_dir&quot;</span><span class="p">],</span> <span class="n">uid</span><span class="o">=</span><span class="n">esg_functions</span><span class="o">.</span><span class="n">get_user_id</span><span class="p">(</span><span class="s2">&quot;tomcat&quot;</span><span class="p">))</span>
+    
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">):</span>
+    <span class="n">setup_thredds</span><span class="p">(</span><span class="n">node_type_list</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'alpha',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: ''
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

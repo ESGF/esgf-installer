@@ -95,31 +95,31 @@
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Base Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#esg-apache-manager-module">ESG Apache Manager Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-postgres-module">ESG Postgres Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-setup-module">ESG Setup Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-tomcat-module">ESG Tomcat Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_apache_manager">ESG Apache Manager Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_postgres">ESG Postgres Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_setup">ESG Setup Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_tomcat_manager">ESG Tomcat Module</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#data-node-components">Data Node Components</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#esg-publisher-module">ESG Publisher Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-orp-module">ESG ORP Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-thredds-module">ESG Thredds Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-cert-manager">ESG Cert Manager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-functions">ESG Functions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esg-purge">ESG Purge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-orp">ESG ORP Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-thredds">ESG Thredds Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_cert_manager">ESG Cert Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_functions">ESG Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_purge">ESG Purge</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#index-node-components">Index Node Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#esg-search">ESG Search</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#solr">Solr</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cog">CoG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_search">ESG Search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-solr">Solr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_cog">CoG</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#idp-node-components">IDP Node Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#esg-security">ESG Security</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#globus">Globus</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#idp">IDP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-esg_security">ESG Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-globus">Globus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-idp">IDP</a></li>
 </ul>
 </li>
 </ul>
@@ -195,62 +195,1104 @@
             
   <div class="section" id="base-components">
 <h1>Base Components<a class="headerlink" href="#base-components" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="esg-apache-manager-module">
-<h2>ESG Apache Manager Module<a class="headerlink" href="#esg-apache-manager-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_apache_manager">
+<span id="esg-apache-manager-module"></span><h2>ESG Apache Manager Module<a class="headerlink" href="#module-esg_apache_manager" title="Permalink to this headline">¶</a></h2>
+<p>Module for installing Apache and mod_wsgi. Also contains Apache process management functions</p>
+<dl class="function">
+<dt id="esg_apache_manager.copy_apache_conf_files">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">copy_apache_conf_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#copy_apache_conf_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.copy_apache_conf_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy custom apache conf files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_apache_manager.install_mod_wsgi">
+<code class="descclassname">esg_apache_manager.</code><code class="descname">install_mod_wsgi</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_apache_manager.html#install_mod_wsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_apache_manager.install_mod_wsgi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Have to ensure python is install properly with the shared library for mod_wsgi installation to work</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-postgres-module">
-<h2>ESG Postgres Module<a class="headerlink" href="#esg-postgres-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_postgres">
+<span id="esg-postgres-module"></span><h2>ESG Postgres Module<a class="headerlink" href="#module-esg_postgres" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="esg_postgres.build_connection_string">
+<code class="descclassname">esg_postgres.</code><code class="descname">build_connection_string</code><span class="sig-paren">(</span><em>user</em>, <em>db_name=None</em>, <em>host=None</em>, <em>password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#build_connection_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.build_connection_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the db connection string using the params as options</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.check_existing_pg_version">
+<code class="descclassname">esg_postgres.</code><code class="descname">check_existing_pg_version</code><span class="sig-paren">(</span><em>psql_path</em>, <em>force_install=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#check_existing_pg_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.check_existing_pg_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the version number if a previous Postgres installation is detected</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.connect_to_db">
+<code class="descclassname">esg_postgres.</code><code class="descname">connect_to_db</code><span class="sig-paren">(</span><em>user</em>, <em>db_name=None</em>, <em>host='/tmp'</em>, <em>password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#connect_to_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.connect_to_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.create_pg_pass_file">
+<code class="descclassname">esg_postgres.</code><code class="descname">create_pg_pass_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#create_pg_pass_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.create_pg_pass_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the file to store login passwords for psql</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.create_postgres_group">
+<code class="descclassname">esg_postgres.</code><code class="descname">create_postgres_group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#create_postgres_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.create_postgres_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates postgres Unix group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.create_postgres_system_user">
+<code class="descclassname">esg_postgres.</code><code class="descname">create_postgres_system_user</code><span class="sig-paren">(</span><em>pg_sys_acct_homedir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#create_postgres_system_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.create_postgres_system_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create Postgres Unix user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.download_config_files">
+<code class="descclassname">esg_postgres.</code><code class="descname">download_config_files</code><span class="sig-paren">(</span><em>force_install</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#download_config_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.download_config_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download config files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.list_roles">
+<code class="descclassname">esg_postgres.</code><code class="descname">list_roles</code><span class="sig-paren">(</span><em>conn=None</em>, <em>user_name='postgres'</em>, <em>db_name='postgres'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#list_roles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.list_roles" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all roles</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.list_tables">
+<code class="descclassname">esg_postgres.</code><code class="descname">list_tables</code><span class="sig-paren">(</span><em>conn=None</em>, <em>user_name='postgres'</em>, <em>db_name='postgres'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#list_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.list_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all tables in current database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.list_users">
+<code class="descclassname">esg_postgres.</code><code class="descname">list_users</code><span class="sig-paren">(</span><em>conn=None</em>, <em>user_name='postgres'</em>, <em>db_name='postgres'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#list_users"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.list_users" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all users in database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.postgres_list_db_schemas">
+<code class="descclassname">esg_postgres.</code><code class="descname">postgres_list_db_schemas</code><span class="sig-paren">(</span><em>conn=None</em>, <em>user_name='postgres'</em>, <em>db_name='postgres'</em>, <em>password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#postgres_list_db_schemas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.postgres_list_db_schemas" title="Permalink to this definition">¶</a></dt>
+<dd><p>This prints a list of all schemas known to postgres.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.postgres_list_dbs">
+<code class="descclassname">esg_postgres.</code><code class="descname">postgres_list_dbs</code><span class="sig-paren">(</span><em>conn=None</em>, <em>user_name='postgres'</em>, <em>db_name='postgres'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#postgres_list_dbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.postgres_list_dbs" title="Permalink to this definition">¶</a></dt>
+<dd><p>This prints a list of all databases known to postgres.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.postgres_list_schemas_tables">
+<code class="descclassname">esg_postgres.</code><code class="descname">postgres_list_schemas_tables</code><span class="sig-paren">(</span><em>conn=None</em>, <em>user_name='postgres'</em>, <em>db_name='postgres'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#postgres_list_schemas_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.postgres_list_schemas_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all Postgres tables in all schemas, in the schemaname.tablename format, in the ESGF database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.postgres_status">
+<code class="descclassname">esg_postgres.</code><code class="descname">postgres_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#postgres_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.postgres_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the status of the postgres server</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.restart_postgres">
+<code class="descclassname">esg_postgres.</code><code class="descname">restart_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#restart_postgres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.restart_postgres" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restarts the postgres server</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.setup_db_schemas">
+<code class="descclassname">esg_postgres.</code><code class="descname">setup_db_schemas</code><span class="sig-paren">(</span><em>force_install</em>, <em>publisher_password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#setup_db_schemas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.setup_db_schemas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load ESGF schemas</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.setup_hba_conf_file">
+<code class="descclassname">esg_postgres.</code><code class="descname">setup_hba_conf_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#setup_hba_conf_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.setup_hba_conf_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modify the pg_hba.conf file for md5 authencation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.start_postgres">
+<code class="descclassname">esg_postgres.</code><code class="descname">start_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#start_postgres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.start_postgres" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start db</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.stop_postgres">
+<code class="descclassname">esg_postgres.</code><code class="descname">stop_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#stop_postgres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.stop_postgres" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops the postgres server</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_postgres.update_log_dir_in_config_file">
+<code class="descclassname">esg_postgres.</code><code class="descname">update_log_dir_in_config_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_postgres.html#update_log_dir_in_config_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_postgres.update_log_dir_in_config_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Edit postgres config file</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-setup-module">
-<h2>ESG Setup Module<a class="headerlink" href="#esg-setup-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_setup">
+<span id="esg-setup-module"></span><h2>ESG Setup Module<a class="headerlink" href="#module-esg_setup" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="esg_setup.check_for_existing_java">
+<code class="descclassname">esg_setup.</code><code class="descname">check_for_existing_java</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_for_existing_java"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_for_existing_java" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a valid java installation is currently on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.check_if_root">
+<code class="descclassname">esg_setup.</code><code class="descname">check_if_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_if_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_if_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check to see if the user is root</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.check_os">
+<code class="descclassname">esg_setup.</code><code class="descname">check_os</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_os"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_os" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the operating system on server is Redhat or CentOS;
+returns False Otherwise</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.check_prerequisites">
+<code class="descclassname">esg_setup.</code><code class="descname">check_prerequisites</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#check_prerequisites"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.check_prerequisites" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checking for what we expect to be on the system a-priori that we are not going to install or be responsible for</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.create_esg_directories">
+<code class="descclassname">esg_setup.</code><code class="descname">create_esg_directories</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#create_esg_directories"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.create_esg_directories" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create directories to hold ESGF scripts, config files, and logs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.setup_ant">
+<code class="descclassname">esg_setup.</code><code class="descname">setup_ant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#setup_ant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.setup_ant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install ant via yum</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_setup.setup_java">
+<code class="descclassname">esg_setup.</code><code class="descname">setup_java</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_setup.html#setup_java"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_setup.setup_java" title="Permalink to this definition">¶</a></dt>
+<dd><p>Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-tomcat-module">
-<h2>ESG Tomcat Module<a class="headerlink" href="#esg-tomcat-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_tomcat_manager">
+<span id="esg-tomcat-module"></span><h2>ESG Tomcat Module<a class="headerlink" href="#module-esg_tomcat_manager" title="Permalink to this headline">¶</a></h2>
+<p>Tomcat Management Functions</p>
+<dl class="function">
+<dt id="esg_tomcat_manager.check_server_xml">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">check_server_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#check_server_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.check_server_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the Tomcat server.xml file for the explicit Realm specification needed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.copy_config_files">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">copy_config_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#copy_config_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.copy_config_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>copy custom configuration</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.copy_credential_files">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">copy_credential_files</code><span class="sig-paren">(</span><em>tomcat_install_config_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#copy_credential_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.copy_credential_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy Tomcat config files</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.create_tomcat_user">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">create_tomcat_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#create_tomcat_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.create_tomcat_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the Tomcat system user and user group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.edit_server_xml">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">edit_server_xml</code><span class="sig-paren">(</span><em>keystore_password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#edit_server_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.edit_server_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Edit the placeholder values in the Tomcat server.xml configuration file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.migrate_tomcat_credentials_to_esgf">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">migrate_tomcat_credentials_to_esgf</code><span class="sig-paren">(</span><em>esg_dist_url</em>, <em>tomcat_config_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#migrate_tomcat_credentials_to_esgf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.migrate_tomcat_credentials_to_esgf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move selected config files into esgf tomcat&#8217;s config dir (certificate et al)
+Ex: /esg/config/tomcat
+-rw-r&#8211;r&#8211; 1 tomcat tomcat 181779 Apr 22 19:44 esg-truststore.ts
+-r&#8212;&#8212;&#8211; 1 tomcat tomcat    887 Apr 22 19:32 hostkey.pem
+-rw-r&#8211;r&#8211; 1 tomcat tomcat   1276 Apr 22 19:32 keystore-tomcat
+-rw-r&#8211;r&#8211; 1 tomcat tomcat    590 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.csr
+-rw-r&#8211;r&#8211; 1 tomcat tomcat    733 Apr 22 19:32 pcmdi11.llnl.gov-esg-node.pem
+-rw-r&#8211;r&#8211; 1 tomcat tomcat    295 Apr 22 19:42 tomcat-users.xml
+Only called when migration conditions are present.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.remove_example_webapps">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">remove_example_webapps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#remove_example_webapps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.remove_example_webapps" title="Permalink to this definition">¶</a></dt>
+<dd><p>remove Tomcat example applications</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_tomcat_manager.setup_temp_certs">
+<code class="descclassname">esg_tomcat_manager.</code><code class="descname">setup_temp_certs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_tomcat_manager.html#setup_temp_certs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_tomcat_manager.setup_temp_certs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup temporary certs for testing a standalone node installation</p>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="data-node-components">
 <h1>Data Node Components<a class="headerlink" href="#data-node-components" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="esg-publisher-module">
 <h2>ESG Publisher Module<a class="headerlink" href="#esg-publisher-module" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-esg_publisher"></span><p>ESGCET Package (Publisher) functions</p>
+<dl class="function">
+<dt id="esg_publisher.check_publisher_version">
+<code class="descclassname">esg_publisher.</code><code class="descname">check_publisher_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#check_publisher_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.check_publisher_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if an existing version of the Publisher is found on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.edit_esg_ini">
+<code class="descclassname">esg_publisher.</code><code class="descname">edit_esg_ini</code><span class="sig-paren">(</span><em>node_short_name='test_node'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#edit_esg_ini"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.edit_esg_ini" title="Permalink to this definition">¶</a></dt>
+<dd><p>Edit placeholder values in the generated esg.ini file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.generate_esgsetup_options">
+<code class="descclassname">esg_publisher.</code><code class="descname">generate_esgsetup_options</code><span class="sig-paren">(</span><em>recommended_setup=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#generate_esgsetup_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.generate_esgsetup_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the string that will pass arguments to esgsetup to initialize the database</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.run_esginitialize">
+<code class="descclassname">esg_publisher.</code><code class="descname">run_esginitialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#run_esginitialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.run_esginitialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the esginitialize script to initialize the ESG node database.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.run_esgsetup">
+<code class="descclassname">esg_publisher.</code><code class="descname">run_esgsetup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#run_esgsetup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.run_esgsetup" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate esg.ini file using esgsetup script; #Makes call to esgsetup - &gt; Setup the ESG publication configuration</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.setup_publisher">
+<code class="descclassname">esg_publisher.</code><code class="descname">setup_publisher</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#setup_publisher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.setup_publisher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install ESGF publisher</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.symlink_pg_binary">
+<code class="descclassname">esg_publisher.</code><code class="descname">symlink_pg_binary</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#symlink_pg_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.symlink_pg_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_publisher.write_esgcet_install_log">
+<code class="descclassname">esg_publisher.</code><code class="descname">write_esgcet_install_log</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_publisher.html#write_esgcet_install_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_publisher.write_esgcet_install_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the Publisher install properties to the install manifest</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-orp-module">
-<h2>ESG ORP Module<a class="headerlink" href="#esg-orp-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-orp">
+<span id="esg-orp-module"></span><h2>ESG ORP Module<a class="headerlink" href="#module-orp" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="orp.setup_orp">
+<code class="descclassname">orp.</code><code class="descname">setup_orp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#setup_orp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.setup_orp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup the ORP subsystem</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="orp.setup_providers_dropdown">
+<code class="descclassname">orp.</code><code class="descname">setup_providers_dropdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#setup_providers_dropdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.setup_providers_dropdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="orp.update_common_loader">
+<code class="descclassname">orp.</code><code class="descname">update_common_loader</code><span class="sig-paren">(</span><em>config_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/orp.html#update_common_loader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#orp.update_common_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>add /esg/config/ to common.loader in catalina.properties if not already present</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-thredds-module">
-<h2>ESG Thredds Module<a class="headerlink" href="#esg-thredds-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-thredds">
+<span id="esg-thredds-module"></span><h2>ESG Thredds Module<a class="headerlink" href="#module-thredds" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="thredds.add_another_user">
+<code class="descclassname">thredds.</code><code class="descname">add_another_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#add_another_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.add_another_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for deciding to add more Tomcat users or not</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.add_tomcat_user">
+<code class="descclassname">thredds.</code><code class="descname">add_tomcat_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#add_tomcat_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.add_tomcat_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a user to the default Tomcat user database (tomcat-users.xml) for container-managed authentication</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.check_thredds_version">
+<code class="descclassname">thredds.</code><code class="descname">check_thredds_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#check_thredds_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.check_thredds_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the MANIFEST.MF file for the Thredds version</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.copy_public_directory">
+<code class="descclassname">thredds.</code><code class="descname">copy_public_directory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#copy_public_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.copy_public_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>HACK ALERT!! For some reason the public directory does not respect thredds&#8217; tds.context.root.path property...
+So have to manually move over this directory to avert server not starting! -gavin</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.create_password_hash">
+<code class="descclassname">thredds.</code><code class="descname">create_password_hash</code><span class="sig-paren">(</span><em>tomcat_user_password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#create_password_hash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.create_password_hash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a hash for a Tomcat user&#8217;s password using Tomcat&#8217;s digest.sh script</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.download_application_context">
+<code class="descclassname">thredds.</code><code class="descname">download_application_context</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#download_application_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.download_application_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the applicationContext.xml file from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.download_thredds_config_xml">
+<code class="descclassname">thredds.</code><code class="descname">download_thredds_config_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#download_thredds_config_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.download_thredds_config_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the threddsConfig.xml file from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.download_thredds_xml">
+<code class="descclassname">thredds.</code><code class="descname">download_thredds_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#download_thredds_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.download_thredds_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the thredds.xml file from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.download_tomcat_users_xml">
+<code class="descclassname">thredds.</code><code class="descname">download_tomcat_users_xml</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#download_tomcat_users_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.download_tomcat_users_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the tomcat-users.xml template from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.get_webxml_file">
+<code class="descclassname">thredds.</code><code class="descname">get_webxml_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#get_webxml_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.get_webxml_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.register">
+<code class="descclassname">thredds.</code><code class="descname">register</code><span class="sig-paren">(</span><em>remote_host</em>, <em>truststore_password</em>, <em>keystore_password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is for pulling in keys from hosts we wish to
+communicate with over an encrypted ssl connection.  This function
+must be run after tomcat is set up since it references server.xml.</p>
+<p>(called by setup_idp_peer)
+arg1 - hostname of the machine with the cert you want to get
+(arg2 - password to truststore where cert will be inserted)
+(arg3 - password to keystore - only applicable in &#8220;local&#8221; registration scenario)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.select_idp_peer">
+<code class="descclassname">thredds.</code><code class="descname">select_idp_peer</code><span class="sig-paren">(</span><em>node_type_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#select_idp_peer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.select_idp_peer" title="Permalink to this definition">¶</a></dt>
+<dd><p>called during setup_tds or directly by &#8211;set-idp-peer | &#8211;set-admin-peer flags</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thredds.update_tomcat_users_file">
+<code class="descclassname">thredds.</code><code class="descname">update_tomcat_users_file</code><span class="sig-paren">(</span><em>tomcat_username</em>, <em>password_hash</em>, <em>tomcat_users_file='/esg/config/tomcat/tomcat-users.xml'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thredds.html#update_tomcat_users_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thredds.update_tomcat_users_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new user to the tomcat-users.xml file</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-cert-manager">
-<h2>ESG Cert Manager<a class="headerlink" href="#esg-cert-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_cert_manager">
+<span id="esg-cert-manager"></span><h2>ESG Cert Manager<a class="headerlink" href="#module-esg_cert_manager" title="Permalink to this headline">¶</a></h2>
+<p>Certificate Management Functions</p>
+<dl class="function">
+<dt id="esg_cert_manager.backup_existing_certs">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">backup_existing_certs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#backup_existing_certs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.backup_existing_certs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backup existing SSL certs on system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.backup_previous_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">backup_previous_keystore</code><span class="sig-paren">(</span><em>keystore_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#backup_previous_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.backup_previous_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a previous keystore exists, back it up</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.bundle_certificates">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">bundle_certificates</code><span class="sig-paren">(</span><em>public_cert</em>, <em>ca_chain</em>, <em>idptools_install_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#bundle_certificates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.bundle_certificates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create certificate bundle from public cert and cachain</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_associate_cert_with_private_key">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_associate_cert_with_private_key</code><span class="sig-paren">(</span><em>cert</em>, <em>private_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_associate_cert_with_private_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_associate_cert_with_private_key" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_cachain_validity">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_cachain_validity</code><span class="sig-paren">(</span><em>ca_chain_bundle</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_cachain_validity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_cachain_validity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that the CA chain is valid</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_for_commercial_ca">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_for_commercial_ca</code><span class="sig-paren">(</span><em>commercial_ca_directory='/etc/esgfcerts'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_for_commercial_ca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_for_commercial_ca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if Commerical CA directory has been created; asks user if they would like proceed with
+Commercial CA installation if directory is found</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.check_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">check_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#check_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.check_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the contents of a given keystore or truststore</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.convert_per_to_dem">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">convert_per_to_dem</code><span class="sig-paren">(</span><em>private_key</em>, <em>key_output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#convert_per_to_dem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.convert_per_to_dem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert your private key into from PEM to DER format that java likes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.copy_cert_to_tomcat_conf">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">copy_cert_to_tomcat_conf</code><span class="sig-paren">(</span><em>public_cert</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#copy_cert_to_tomcat_conf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.copy_cert_to_tomcat_conf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy the signed cert to the ESGF Tomcat config directory (i.e. /esg/config/tomcat)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.createCertRequest">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">createCertRequest</code><span class="sig-paren">(</span><em>pkey</em>, <em>digest='sha256'</em>, <em>**name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#createCertRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.createCertRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>source: <a class="reference external" href="https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py">https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.createCertificate">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">createCertificate</code><span class="sig-paren">(</span><em>req</em>, <em>issuerCertKey</em>, <em>serial</em>, <em>validityPeriod</em>, <em>digest='sha256'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#createCertificate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.createCertificate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a certificate given a certificate request.
+Arguments: req        - Certificate request to use</p>
+<blockquote>
+<div><p>issuerCert - The certificate of the issuer
+issuerKey  - The private key of the issuer
+serial     - Serial number for the certificate
+notBefore  - Timestamp (relative to now) when the certificate</p>
+<blockquote>
+<div>starts being valid</div></blockquote>
+<dl class="docutils">
+<dt>notAfter   - Timestamp (relative to now) when the certificate</dt>
+<dd>stops being valid</dd>
+</dl>
+<p>digest     - Digest method to use for signing, default is sha256</p>
+</div></blockquote>
+<p>Returns:   The signed certificate in an X509 object</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.createKeyPair">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">createKeyPair</code><span class="sig-paren">(</span><em>type</em>, <em>bits</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#createKeyPair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.createKeyPair" title="Permalink to this definition">¶</a></dt>
+<dd><p>source: <a class="reference external" href="https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py">https://github.com/pyca/pyopenssl/blob/master/examples/certgen.py</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_certificate_chain">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_certificate_chain</code><span class="sig-paren">(</span><em>cert_files</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_certificate_chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_certificate_chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate the certificates in the chain and copy them to /etc/certs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_certificate_chain_list">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_certificate_chain_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_certificate_chain_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_certificate_chain_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a list of the certificates that will be a part of the certificate
+chain file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_empty_java_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_empty_java_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_alias</em>, <em>keystore_password</em>, <em>distinguished_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_empty_java_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_empty_java_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new empty Java Keystore using the JDK&#8217;s keytool</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_new_truststore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_new_truststore</code><span class="sig-paren">(</span><em>truststore_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_new_truststore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_new_truststore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Java Truststore file by copying the JRE&#8217;s cacerts file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.create_self_signed_cert">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">create_self_signed_cert</code><span class="sig-paren">(</span><em>cert_dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#create_self_signed_cert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.create_self_signed_cert" title="Permalink to this definition">¶</a></dt>
+<dd><p>If datacard.crt and datacard.key don&#8217;t exist in cert_dir, create a new
+self-signed cert and keypair and write them into that directory.</p>
+<p>Source: <a class="reference external" href="https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/">https://skippylovesmalorie.wordpress.com/2010/02/12/how-to-generate-a-self-signed-certificate-using-pyopenssl/</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.fetch_esgf_certificates">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">fetch_esgf_certificates</code><span class="sig-paren">(</span><em>globus_certs_dir='/etc/grid-security/certificates'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#fetch_esgf_certificates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.fetch_esgf_certificates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Goes to ESG distribution server and pulls down all certificates for the federation.
+(suitable for crontabbing)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.generate_tomcat_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">generate_tomcat_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_alias</em>, <em>private_key</em>, <em>public_cert</em>, <em>intermediate_certs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#generate_tomcat_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.generate_tomcat_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>The following helper function creates a new keystore for your tomcat installation</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.import_cert_into_keystore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">import_cert_into_keystore</code><span class="sig-paren">(</span><em>keystore_name</em>, <em>keystore_alias</em>, <em>keystore_password</em>, <em>derkey</em>, <em>cert_bundle</em>, <em>provider</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#import_cert_into_keystore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.import_cert_into_keystore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Imports a signed Certificate into the keystore</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.install_commerical_certs">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">install_commerical_certs</code><span class="sig-paren">(</span><em>commercial_key_path</em>, <em>commercial_cert_path</em>, <em>ca_chain_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#install_commerical_certs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.install_commerical_certs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install the signed, commericial SSL credentials to /etc/certs</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.install_extkeytool">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">install_extkeytool</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#install_extkeytool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.install_extkeytool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install the Extkeytool from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.install_tomcat_keypair">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">install_tomcat_keypair</code><span class="sig-paren">(</span><em>private_key='/etc/esgfcerts/hostkey.pem'</em>, <em>public_cert='/etc/esgfcerts/hostcert.pem'</em>, <em>keystore_name='/esg/config/tomcat/keystore-tomcat'</em>, <em>keystore_alias='my_esgf_node'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#install_tomcat_keypair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.install_tomcat_keypair" title="Permalink to this definition">¶</a></dt>
+<dd><p>If you want to install a commercial CA issued certificate:
+esg-node &#8211;install-keypair &lt;certificate file&gt; &lt;key file&gt;
+When prompted for the cachain file, specify the chain file provided by your CA</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.new_ca">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">new_ca</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#new_ca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.new_ca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mimics perl CA.pl -newca</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.newreq_nodes">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">newreq_nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#newreq_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.newreq_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mimics perl CA.pl -newreq-nodes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.rebuild_truststore">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">rebuild_truststore</code><span class="sig-paren">(</span><em>truststore_file</em>, <em>certs_dir='/etc/grid-security/certificates'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#rebuild_truststore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.rebuild_truststore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts ESG certificates (that can be fetch by above function) into a truststore</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cert_manager.sign_request">
+<code class="descclassname">esg_cert_manager.</code><code class="descname">sign_request</code><span class="sig-paren">(</span><em>ca_req</em>, <em>req_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cert_manager.html#sign_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cert_manager.sign_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mimics perl CA.pl -sign</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-functions">
-<h2>ESG Functions<a class="headerlink" href="#esg-functions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_functions">
+<span id="esg-functions"></span><h2>ESG Functions<a class="headerlink" href="#module-esg_functions" title="Permalink to this headline">¶</a></h2>
+<p>esg-functions: ESGF Node Application Stack Functions
+description: Installer Functions for the ESGF Node application stack</p>
+<dl class="function">
+<dt id="esg_functions.add_group">
+<code class="descclassname">esg_functions.</code><code class="descname">add_group</code><span class="sig-paren">(</span><em>group_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#add_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.add_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a Unix user group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.add_user">
+<code class="descclassname">esg_functions.</code><code class="descname">add_user</code><span class="sig-paren">(</span><em>name</em>, <em>password=''</em>, <em>group=''</em>, <em>full_name=''</em>, <em>home_dir=''</em>, <em>shell=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#add_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.add_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Unix user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.backup">
+<code class="descclassname">esg_functions.</code><code class="descname">backup</code><span class="sig-paren">(</span><em>path</em>, <em>backup_dir='/esg/backups'</em>, <em>num_of_backups='7'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#backup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.backup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a directory the contents of the directory is backed up as a tar.gz file in
+path - a filesystem path
+backup_dir - destination directory for putting backup archive (default esg_backup_dir:-/esg/backups)
+num_of_backups - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.call_subprocess">
+<code class="descclassname">esg_functions.</code><code class="descname">call_subprocess</code><span class="sig-paren">(</span><em>command_string</em>, <em>command_stdin=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#call_subprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.call_subprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn&#8217;t have subprocess.call()</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.change_ownership_recursive">
+<code class="descclassname">esg_functions.</code><code class="descname">change_ownership_recursive</code><span class="sig-paren">(</span><em>directory_path</em>, <em>uid=-1</em>, <em>gid=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#change_ownership_recursive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.change_ownership_recursive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively changes ownership on a directory and its subdirectories; Mimics chown -R</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.change_permissions_recursive">
+<code class="descclassname">esg_functions.</code><code class="descname">change_permissions_recursive</code><span class="sig-paren">(</span><em>path</em>, <em>mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#change_permissions_recursive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.change_permissions_recursive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively changes permissions on a directory and its subdirectories; Mimics chmod -R</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.check_for_update">
+<code class="descclassname">esg_functions.</code><code class="descname">check_for_update</code><span class="sig-paren">(</span><em>filename_1</em>, <em>filename_2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#check_for_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.check_for_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does an md5 check between local and remote resource
+returns 0 (success) iff there is no match and thus indicating that
+an update is available.
+USAGE: checked_for_update [file] <a class="reference external" href="http://www.foo.com/file">http://www.foo.com/file</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.check_shmmax">
+<code class="descclassname">esg_functions.</code><code class="descname">check_shmmax</code><span class="sig-paren">(</span><em>min_shmmax=48</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#check_shmmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.check_shmmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>NOTE: This is another <strong>RedHat/CentOS</strong> specialty thing (sort of)
+arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.confirm_password">
+<code class="descclassname">esg_functions.</code><code class="descname">confirm_password</code><span class="sig-paren">(</span><em>password_input</em>, <em>password_confirmation</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#confirm_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.confirm_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to confirm that passwords match.
+Returns true if passwords match</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.create_backup_file">
+<code class="descclassname">esg_functions.</code><code class="descname">create_backup_file</code><span class="sig-paren">(</span><em>file_name</em>, <em>backup_extension='.bak'</em>, <em>date='2018-04-03'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#create_backup_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.create_backup_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a backup of a file using the given backup extension</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.download_update">
+<code class="descclassname">esg_functions.</code><code class="descname">download_update</code><span class="sig-paren">(</span><em>local_file</em>, <em>remote_file=None</em>, <em>force_download=False</em>, <em>make_backup_file=False</em>, <em>use_local_files=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#download_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.download_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an update is available then pull it down... then check the md5 sums again!</p>
+<p>Yes, this results in 3 network calls to pull down a file, but it
+saves total bandwidth and it also allows the updating from the
+network process to be cronttab-able while parsimonious with
+resources.  It is also very good practice to make sure that code
+being executed is the RIGHT code!</p>
+<p>The 3rd token is the &#8220;force&#8221; flag value 1|0.
+1 = do not check for update, directly go and fetch the file regardless
+0 = first check for update availability. (default)</p>
+<p>The 4th token is for indicated whether a backup file should be made flag value 1|0.
+1 = yes, create a .bak file if the file is already there before fetching new
+0 = no, do NOT make a .bak file even if the file is already there, overwrite it</p>
+<p>(When using the force flag you MUST specify the first two args!!)</p>
+<dl class="docutils">
+<dt>NOTE: Has multiple return values test for (( $? &gt; 1 )) when looking or errors</dt>
+<dd>A return value of 1 only means that the file is up-to-date and there
+Is no reason to fetch it.</dd>
+</dl>
+<p>USAGE: checked_get [file] <a class="reference external" href="http://www.foo.com/file">http://www.foo.com/file</a> [&lt;1|0&gt;] [&lt;1|0&gt;]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.fetch_remote_file">
+<code class="descclassname">esg_functions.</code><code class="descname">fetch_remote_file</code><span class="sig-paren">(</span><em>local_file</em>, <em>remote_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#fetch_remote_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.fetch_remote_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download a remote file from a distribution mirror and write its contents to the local_file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_dir_owner_and_group">
+<code class="descclassname">esg_functions.</code><code class="descname">get_dir_owner_and_group</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_dir_owner_and_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_dir_owner_and_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tuple containing the owner and group of the given directory path</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_esgf_host">
+<code class="descclassname">esg_functions.</code><code class="descname">get_esgf_host</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_esgf_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_esgf_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the esgf host name from the file; if not in file, return the fully qualified domain name (FQDN)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_group_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_group_id</code><span class="sig-paren">(</span><em>group_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_group_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_group_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Unix group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_group_list">
+<code class="descclassname">esg_functions.</code><code class="descname">get_group_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_group_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_group_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of the Unix groups on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_java_keystore_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_java_keystore_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_java_keystore_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_java_keystore_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the keystore_password from the saved ks_secret_file at /esg/config/.esg_keystore_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_md5sum">
+<code class="descclassname">esg_functions.</code><code class="descname">get_md5sum</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_md5sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_md5sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>#Utility function, wraps md5sum so it may be used on either mac or
+#linux machines</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_md5sum_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_md5sum_password</code><span class="sig-paren">(</span><em>password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_md5sum_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_md5sum_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hash a password to get it&#8217;s md5 value</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_postgres_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_postgres_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_postgres_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_postgres_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the Postgres superuser account password from /esg/config/.esg_pg_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_publisher_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_publisher_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_publisher_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_publisher_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the publisher database user&#8217;s password</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_security_admin_password">
+<code class="descclassname">esg_functions.</code><code class="descname">get_security_admin_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_security_admin_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_security_admin_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the security_admin_password from the esgf_secret_file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_tomcat_group_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_tomcat_group_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_tomcat_group_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_tomcat_group_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Tomcat group</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_tomcat_user_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_tomcat_user_id</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_tomcat_user_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_tomcat_user_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Tomcat user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_user_id">
+<code class="descclassname">esg_functions.</code><code class="descname">get_user_id</code><span class="sig-paren">(</span><em>user_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_user_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_user_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the id of the Unix user</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.get_user_list">
+<code class="descclassname">esg_functions.</code><code class="descname">get_user_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#get_user_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.get_user_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of the Unix users on the system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.git_tagrelease">
+<code class="descclassname">esg_functions.</code><code class="descname">git_tagrelease</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#git_tagrelease"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.git_tagrelease" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes a commit to the current git repository updating the
+release version string and codename, tags that commit with the
+version string, and then immediately makes another commit
+appending &#8220;-devel&#8221; to the version string.</p>
+<p>This is to prepare for a release merge.  Note that the tag will
+not be against the correct revision after a merge to the release
+branch if it was not a fast-forward merge, so ensure that there
+are no unmerged changes from the release branch before using.</p>
+<p>If that happens, delete the tag, issue a git reset &#8211;hard
+against the last commit before the tag, merge the release
+branch, and try again.</p>
+<p>Arguments:
+$1: the release version string (mandatory)
+$2: the release codename (optional)</p>
+<dl class="docutils">
+<dt>Examples:</dt>
+<dd>git-tagrelease v4.5.6 AuthenticGreekPizzaEdition</dd>
+<dt>or just</dt>
+<dd>git-tagrelease v4.5.6</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.is_in_git_repo">
+<code class="descclassname">esg_functions.</code><code class="descname">is_in_git_repo</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#is_in_git_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.is_in_git_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>This determines if a specified file is in a git repository.
+This function will resolve symlinks and check for a .git
+directory in the directory of the actual file as well as its
+parent to avoid attempting to call git unless absolutely needed,
+so as to be able to detect some common cases on a system without
+git actually installed and in the path.</p>
+<p>Accepts as an argument the file to be checked</p>
+<p>Returns True if the specified file is in a git repository</p>
+<p>Returns False otherwise</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.path_unique">
+<code class="descclassname">esg_functions.</code><code class="descname">path_unique</code><span class="sig-paren">(</span><em>path_string='//anaconda/envs/esgf-pub/bin://anaconda/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/ant/bin'</em>, <em>path_separator=':'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#path_unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.path_unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints a unique path string</p>
+<p>The first (leftmost) instance of a path entry will be the one that
+is preserved.</p>
+<p>If $1 is specified, it will be taken as the string to deduplicate,
+otherwise $PATH is used.</p>
+<p>If $2 is specified, it will be taken as the path separator, which
+otherwise defaults to &#8216;:&#8217;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.prefix_to_path">
+<code class="descclassname">esg_functions.</code><code class="descname">prefix_to_path</code><span class="sig-paren">(</span><em>path</em>, <em>prepend_value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#prefix_to_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.prefix_to_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepends path components to a variable, deduplicates the list,
+then prints to stdout the export command required to prepend
+that list to that variable.</p>
+<p>Takes as arguments first a variable containing a colon-separated
+path to prepend to, then a space-separated collection of paths to
+prepend &#8211; these path components MUST NOT contain spaces.</p>
+<p>If insufficient arguments are present, a warning message is
+printed to stderr and nothing is printed to stdout.</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd><p class="first">prefix_to_path LD_LIBRARY_PATH /foo/lib /bar/lib</p>
+<dl class="last docutils">
+<dt>Would result in the entry:</dt>
+<dd>export LD_LIBRARY_PATH=/foo/lib:/bar/lib:$LD_LIBRARY_PATH</dd>
+</dl>
+</dd>
+<dt>NOTE: In the context of system setup this is usually</dt>
+<dd>WHAT YOU WANT; that your libs are found before any user libs are</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.readlinkf">
+<code class="descclassname">esg_functions.</code><code class="descname">readlinkf</code><span class="sig-paren">(</span><em>file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#readlinkf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.readlinkf" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a portable implementation of GNU&#8217;s &#8220;readlink -f&#8221; in
+bash/zsh, following symlinks recursively until they end in a
+file, and will print the full dereferenced path of the specified
+file even if the file isn&#8217;t a symlink.</p>
+<p>Loop detection exists, but only as an abort after passing a
+maximum length.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.replace_string_in_file">
+<code class="descclassname">esg_functions.</code><code class="descname">replace_string_in_file</code><span class="sig-paren">(</span><em>file_name</em>, <em>original_string</em>, <em>new_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#replace_string_in_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.replace_string_in_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Goes into a file and replaces string</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_java_keystore_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_java_keystore_password</code><span class="sig-paren">(</span><em>keystore_password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_java_keystore_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_java_keystore_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the password for a Java keystore to /esg/config/.esg_keystore_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_postgres_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_postgres_password</code><span class="sig-paren">(</span><em>password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_postgres_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_postgres_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the Postgres superuser account password; gets saved to /esg/config/.esg_pg_pass</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_publisher_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_publisher_password</code><span class="sig-paren">(</span><em>password=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_publisher_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_publisher_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the publisher database user&#8217;s password; saves it to pub_secret_file
+If not password is provided as an argument, a prompt for a password is given.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.set_security_admin_password">
+<code class="descclassname">esg_functions.</code><code class="descname">set_security_admin_password</code><span class="sig-paren">(</span><em>updated_password</em>, <em>password_file='/esg/config/.esgf_pass'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#set_security_admin_password"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.set_security_admin_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the esgf_secret_file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.setup_whitelist_files">
+<code class="descclassname">esg_functions.</code><code class="descname">setup_whitelist_files</code><span class="sig-paren">(</span><em>esg_dist_url_root</em>, <em>whitelist_file_dir='/esg/config'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#setup_whitelist_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.setup_whitelist_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setups up whitelist XML files from the distribution mirror</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.stream_subprocess_output">
+<code class="descclassname">esg_functions.</code><code class="descname">stream_subprocess_output</code><span class="sig-paren">(</span><em>command_string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#stream_subprocess_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.stream_subprocess_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print out the stdout of the subprocess in real time</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.track_extraction_progress">
+<code class="descclassname">esg_functions.</code><code class="descname">track_extraction_progress</code><span class="sig-paren">(</span><em>members</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#track_extraction_progress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.track_extraction_progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output of the files being extracted from a tarball</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_functions.verify_esg_node_script">
+<code class="descclassname">esg_functions.</code><code class="descname">verify_esg_node_script</code><span class="sig-paren">(</span><em>esg_node_filename</em>, <em>esg_dist_url_root</em>, <em>script_version</em>, <em>script_maj_version</em>, <em>devel</em>, <em>update_action=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_functions.html#verify_esg_node_script"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_functions.verify_esg_node_script" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify the esg_node script is the most current version</p>
+</dd></dl>
+
 </div>
-<div class="section" id="esg-purge">
-<h2>ESG Purge<a class="headerlink" href="#esg-purge" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_purge">
+<span id="esg-purge"></span><h2>ESG Purge<a class="headerlink" href="#module-esg_purge" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="esg_purge.purge_postgres">
+<code class="descclassname">esg_purge.</code><code class="descname">purge_postgres</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#esg_purge.purge_postgres" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes postgres installation via yum</p>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="index-node-components">
 <h1>Index Node Components<a class="headerlink" href="#index-node-components" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="esg-search">
-<h2>ESG Search<a class="headerlink" href="#esg-search" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_search">
+<span id="esg-search"></span><h2>ESG Search<a class="headerlink" href="#module-esg_search" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="esg_search.setup_esg_search">
+<code class="descclassname">esg_search.</code><code class="descname">setup_esg_search</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_search.html#setup_esg_search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_search.setup_esg_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setting up the ESG Search application</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_search.setup_search_service">
+<code class="descclassname">esg_search.</code><code class="descname">setup_search_service</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_search.html#setup_search_service"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_search.setup_search_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install The Search Service...
+- Takes boolean arg: 0 = setup / install mode (default)</p>
+<blockquote>
+<div>1 = updated mode</div></blockquote>
+<p>In setup mode it is an idempotent install (default)
+In update mode it will always pull down latest after archiving old</p>
+</dd></dl>
+
 </div>
-<div class="section" id="solr">
-<h2>Solr<a class="headerlink" href="#solr" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-solr">
+<span id="solr"></span><h2>Solr<a class="headerlink" href="#module-solr" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="solr.download_template_directory">
+<code class="descclassname">solr.</code><code class="descname">download_template_directory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#download_template_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.download_template_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>download template directory structure for shards home</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.extract_solr_tarball">
+<code class="descclassname">solr.</code><code class="descname">extract_solr_tarball</code><span class="sig-paren">(</span><em>solr_tarball_path</em>, <em>SOLR_VERSION</em>, <em>target_path='/usr/local'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#extract_solr_tarball"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.extract_solr_tarball" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the solr tarball to {target_path} and symlink it to /usr/local/solr</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.setup_solr">
+<code class="descclassname">solr.</code><code class="descname">setup_solr</code><span class="sig-paren">(</span><em>index_config</em>, <em>SOLR_INSTALL_DIR='/usr/local/solr'</em>, <em>SOLR_HOME='/usr/local/solr-home'</em>, <em>SOLR_DATA_DIR='/esg/solr-index'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#setup_solr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.setup_solr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup Apache Solr for faceted search</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.solr_status">
+<code class="descclassname">solr.</code><code class="descname">solr_status</code><span class="sig-paren">(</span><em>SOLR_INSTALL_DIR</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#solr_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.solr_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the status of solr</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solr.stop_solr">
+<code class="descclassname">solr.</code><code class="descname">stop_solr</code><span class="sig-paren">(</span><em>SOLR_INSTALL_DIR='/usr/local/solr'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solr.html#stop_solr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solr.stop_solr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the solr process</p>
+</dd></dl>
+
 </div>
-<div class="section" id="cog">
-<h2>CoG<a class="headerlink" href="#cog" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_cog">
+<span id="cog"></span><h2>CoG<a class="headerlink" href="#module-esg_cog" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="esg_cog.checkout_cog_branch">
+<code class="descclassname">esg_cog.</code><code class="descname">checkout_cog_branch</code><span class="sig-paren">(</span><em>cog_path</em>, <em>branch_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cog.html#checkout_cog_branch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cog.checkout_cog_branch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checkout a given branch of the COG repo</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="esg_cog.clone_cog_repo">
+<code class="descclassname">esg_cog.</code><code class="descname">clone_cog_repo</code><span class="sig-paren">(</span><em>COG_INSTALL_DIR</em>, <em>COG_TAG='master'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_cog.html#clone_cog_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_cog.clone_cog_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clone the COG repo from Github</p>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="idp-node-components">
 <h1>IDP Node Components<a class="headerlink" href="#idp-node-components" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="esg-security">
-<h2>ESG Security<a class="headerlink" href="#esg-security" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-esg_security">
+<span id="esg-security"></span><h2>ESG Security<a class="headerlink" href="#module-esg_security" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="esg_security.clean_security_webapp_subsystem">
+<code class="descclassname">esg_security.</code><code class="descname">clean_security_webapp_subsystem</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/esg_security.html#clean_security_webapp_subsystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esg_security.clean_security_webapp_subsystem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the deprecated esgf-security webapp if found on system</p>
+</dd></dl>
+
 </div>
-<div class="section" id="globus">
-<h2>Globus<a class="headerlink" href="#globus" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-globus">
+<span id="globus"></span><h2>Globus<a class="headerlink" href="#module-globus" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="globus.config_gridftp_metrics_logging">
+<code class="descclassname">globus.</code><code class="descname">config_gridftp_metrics_logging</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#config_gridftp_metrics_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.config_gridftp_metrics_logging" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate config file for gridftp server</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.create_globus_account">
+<code class="descclassname">globus.</code><code class="descname">create_globus_account</code><span class="sig-paren">(</span><em>globus_sys_acct</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#create_globus_account"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.create_globus_account" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the system account for globus to run as.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.gridftp_server_status">
+<code class="descclassname">globus.</code><code class="descname">gridftp_server_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#gridftp_server_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.gridftp_server_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the status of the gridftp server</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.myproxy_status">
+<code class="descclassname">globus.</code><code class="descname">myproxy_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#myproxy_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.myproxy_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the status of the myproxy server</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.post_gridftp_jail_setup">
+<code class="descclassname">globus.</code><code class="descname">post_gridftp_jail_setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#post_gridftp_jail_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.post_gridftp_jail_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write our trimmed version of /etc/password in the chroot location</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.setup_globus">
+<code class="descclassname">globus.</code><code class="descname">setup_globus</code><span class="sig-paren">(</span><em>installation_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#setup_globus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.setup_globus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Globus Toolkit -&gt;  MyProxy (client) &amp; GridFTP (server)
+Takes arg &lt;selection bit vector&gt;
+The rest of the args are the following...
+for data-node configuration (GridFTP stuff): [&#8220;bdm&#8221;|&#8221;end-user&#8221;] see esg-globus script
+for idp configuration (MyProxy stuff): [gen-self-cert] &lt;dir&gt; | &lt;regen-simpleca&gt; [fetch-certs|gen-self-cert|keep-certs] | [&#8220;install&#8221;|&#8221;update&#8221;]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.setup_globus_services">
+<code class="descclassname">globus.</code><code class="descname">setup_globus_services</code><span class="sig-paren">(</span><em>config_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#setup_globus_services"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.setup_globus_services" title="Permalink to this definition">¶</a></dt>
+<dd><p>arg1 - config_type (&#8220;datanode&#8221; | &#8220;gateway&#8221;  [&#8220;install&#8221;|&#8221;update&#8221;])</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.start_globus">
+<code class="descclassname">globus.</code><code class="descname">start_globus</code><span class="sig-paren">(</span><em>installation_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#start_globus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.start_globus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the globus services by delegating out to esg-globus script
+arg1 selection bit vector ($sel)
+args* (in the context of &#8220;data&#8221; node -&gt;  [&#8220;bdm&#8221;|&#8221;end-user&#8221;])</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.stop_globus">
+<code class="descclassname">globus.</code><code class="descname">stop_globus</code><span class="sig-paren">(</span><em>installation_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#stop_globus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.stop_globus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops the globus services by delegating out to esg-globus script
+arg1 selection bit vector ($sel)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="globus.write_esgsaml_auth_conf">
+<code class="descclassname">globus.</code><code class="descname">write_esgsaml_auth_conf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/globus.html#write_esgsaml_auth_conf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#globus.write_esgsaml_auth_conf" title="Permalink to this definition">¶</a></dt>
+<dd><p>By making this a separate function it may be called directly in the
+event that the gateway_service_root needs to be repointed. (another Estani gem :-))</p>
+</dd></dl>
+
 </div>
-<div class="section" id="idp">
-<h2>IDP<a class="headerlink" href="#idp" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-idp">
+<span id="idp"></span><h2>IDP<a class="headerlink" href="#module-idp" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 

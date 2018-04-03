@@ -91,58 +91,9 @@ def setup_esg_config_permissions():
 esg_org_name = esg_property_manager.get_property("esg.org.name")
 
 def esgf_node_info():
-
-    print '''
-        The goal of this script is to automate as many tasks as possible
-     regarding the installation, maintenance and use of the ESGF
-     software stack that is know as the \"ESGF Node\".  A software
-     stack is a collection of tools that work in concert to perform a
-     particular task or set of tasks that are semantically united. The
-     software stack is comprised of: Tomcat, Thredds, CDAT & CDMS,
-     PostgreSQL, MyProxy, and several ESGF.org custom software
-     applications running on a LINUX (RedHat/CentOS) operating system.
-     Through the installation process there are different accounts
-     that are created that facilitate the communication between the
-     software stack entities.  These credentials are internal to the
-     stack.  It is recommended that you use the defaults provided
-     throughout this installation.  The security impact with regards
-     to the visibility and accessibility of the constituent components
-     of the stack depends on other factors to be addressed by your
-     organization.
-
-     Please be sure that you have gotten your created an account on
-     your ESGF IDP Peer.
-
-     The primary IDP Peer for ESGF is esgf-node.llnl.gov
-     You may register for an account at LLNL at the following URL:
-     https://esgf-node.llnl.gov/user/add/
-
-     Note: Account creation is prerequisite for publication!
-
-     ESGF P2P Node:                                             ESGF P2P Node:
-      ---------                                                   ---------
-     |Tomcat   |                                                 |Tomcat   |
-     |-Node Mgr|   <================= P2P =================>     |-Node Mgr|
-     |-Thredds |                                                 |-Thredds |
-     |-ORP     |                                                 |-ORP     |
-     |---------|                                                 |---------|
-     |CDAT/CDMS|                                                 |CDAT/CDMS|
-     |---------|                                                 |---------|
-     |Postgres |                                                 |Postgres |
-     |---------|                                                 |---------|
-     | MyProxy |  <===(HTTPS)===> [ESGF Peer Node(s)]*           | MyProxy |
-     |---------|                                                 |---------|
-     | GridFTP |  <=============> [End User(s)]*                 | GridFTP |
-     >---------<                                                 >---------<
-     | CentOS  |                                                 | CentOS  |
-     |(Virtual)|                                                 |(Virtual)|
-     | Machine |                                                 | Machine |
-     |---------|                                                 |---------|
-      ---------                                                   ---------
-
-     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
-
-    '''
+    '''Print basic info about ESGF installation'''
+    with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
+        print info_file.read()
 
 
 def select_distribution_mirror(install_type):

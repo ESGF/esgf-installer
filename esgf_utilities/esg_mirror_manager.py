@@ -16,21 +16,22 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 # List of mirror location
-esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
+esgf_dist_mirrors_list = ("distrib-coffee.ipsl.jussieu.fr/pub/esgf", "dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf", "esg-dn2.nsc.liu.se/esgf")
+
 def check_mirror_connection(install_type):
     """ Check if mirrors are accessible."""
     response_array = {}
     for mirror in esgf_dist_mirrors_list:
         if install_type == "devel":
             try:
-                mirror_response = requests.get('{}/devel/lastpush.md5'.format(mirror), timeout=4.0)
-                response_array[mirror] = mirror_response.text.split()[0]
+                mirror_response = requests.get('http://{}/dist/devel/lastpush.md5'.format(mirror), timeout=4.0)
+                response_array[mirror] = mirror_response.text
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
         else:
             try:
-                mirror_response = requests.get('{}/dist/lastpush.md5'.format(mirror), timeout=4.0)
-                response_array[mirror] = mirror_response.text.split()[0]
+                mirror_response = requests.get('http://{}/dist/lastpush.md5'.format(mirror), timeout=4.0)
+                response_array[mirror] = mirror_response.text
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
 
@@ -63,8 +64,8 @@ def order_response_time(response_times):
     """ Sort the response time of mirrors and return a list of them."""
     return OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
-# def get_lastpush_md5(mirror_list):
-#     for mirror in mirror_list:
+def get_lastpush_md5(mirror_list):
+    for mirror in mirror_list:
 
 
 def get_esgf_dist_mirror(mirror_selection_mode, install_type=None):

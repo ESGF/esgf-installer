@@ -64,8 +64,8 @@ def order_response_time(response_times):
     """ Sort the response time of mirrors and return a list of them."""
     return OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
-def get_lastpush_md5(mirror_list):
-    for mirror in mirror_list:
+# def get_lastpush_md5(mirror_list):
+#     for mirror in mirror_list:
 
 
 def get_esgf_dist_mirror(mirror_selection_mode, install_type=None):

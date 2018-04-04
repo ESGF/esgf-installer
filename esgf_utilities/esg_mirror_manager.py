@@ -16,25 +16,23 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 # List of mirror location
-esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
-
+esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
 def check_mirror_connection(install_type):
     """ Check if mirrors are accessible."""
     response_array = {}
     for mirror in esgf_dist_mirrors_list:
         if install_type == "devel":
             try:
-                response_array[mirror] = requests.get('http://'+mirror+'/dist/devel/lastpush.md5', timeout=4.0)
+                mirror_response = requests.get('{}/devel/lastpush.md5'.format(mirror), timeout=4.0)
+                response_array[mirror] = mirror_response.text.split()[0]
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
-
-            #response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/devel/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         else:
             try:
-                response_array[mirror] = requests.get('http://'+mirror+'/dist/lastpush.md5', timeout=4.0)
+                mirror_response = requests.get('{}/dist/lastpush.md5'.format(mirror), timeout=4.0)
+                response_array[mirror] = mirror_response.text.split()[0]
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
-            #response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     return response_array
 
@@ -65,11 +63,16 @@ def order_response_time(response_times):
     """ Sort the response time of mirrors and return a list of them."""
     return OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
+# def get_lastpush_md5(mirror_list):
+#     for mirror in mirror_list:
+
+
 def get_esgf_dist_mirror(mirror_selection_mode, install_type=None):
     """ Return the nearest mirror available. """
 
     # Capture mirror connection
     response_array = check_mirror_connection(install_type)
+    logger.debug("response_array: %s", response_array)
 
     # Get success and failed response
     response_times, failed_requests = get_success_or_fail_responses()

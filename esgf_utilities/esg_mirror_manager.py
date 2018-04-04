@@ -38,9 +38,9 @@ def check_mirror_connection(install_type):
 
     return response_array
 
-def get_success_or_fail__reponses():
-    """ Return a dictionary tuple with seccessful and
-    unseccessful response times from mirrors.
+def get_success_or_fail_responses():
+    """ Return a dictionary tuple with successful and
+    unsuccessful response times from mirrors.
     """
     response_times = {} # Successful connections
     failed_requests = {} # Unsuccessful connection
@@ -61,21 +61,21 @@ def get_success_or_fail__reponses():
 
     return (response_times,failed_requests)
 
-def order_response_time():
+def order_response_time(response_times):
     """ Sort the response time of mirrors and return a list of them."""
     return OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
-def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
+def get_esgf_dist_mirror(mirror_selection_mode, install_type=None):
     """ Return the nearest mirror available. """
 
     # Capture mirror connection
     response_array = check_mirror_connection(install_type)
 
     # Get success and failed response
-    response_times, failed_requests = get_success_or_fail_reponses()
+    response_times, failed_requests = get_success_or_fail_responses()
 
     # Order the response time of the mirrors
-    ranked_response_times = order_response_time()
+    ranked_response_times = order_response_time(response_times)
     logger.debug("ranked_response_times: %s", ranked_response_times)
 
     master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf'] # get value of hard coded mirror

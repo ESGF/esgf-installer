@@ -443,7 +443,7 @@ def setup_hba_conf_file():
 def download_config_files(force_install):
     ''' Download config files '''
     # #Get files
-    esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     hba_conf_file = "pg_hba.conf"
     if esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install) > 1:
         esg_functions.exit_with_error(1)

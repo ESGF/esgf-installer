@@ -83,7 +83,6 @@ def check_mirror_congruency(mirror_md5, master_mirror_md5):
 
 def find_fastest_mirror(install_type):
     '''Find the mirror with the fastest response time'''
-    # Get success and failed response
     response_times, _ = get_mirror_response_times()
     ranked_response_times = rank_response_times(response_times)
 
@@ -106,21 +105,13 @@ def find_fastest_mirror(install_type):
 
     return master_mirror
 
-def select_dist_mirror(mirror_selection_mode, install_type=None):
+def select_dist_mirror():
     """ Return the nearest mirror available. """
-
-    # Capture mirror connection
-    # response_array = check_mirror_connection(install_type)
-    # logger.debug("response_array: %s", response_array)
-
-    # Get success and failed response
     response_times, _ = get_mirror_response_times()
 
     # Order the response time of the mirrors
     ranked_response_times = rank_response_times(response_times)
     logger.debug("ranked_response_times: %s", ranked_response_times)
-
-    # master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf'] # get value of hard coded mirror
 
     while True:
         try:

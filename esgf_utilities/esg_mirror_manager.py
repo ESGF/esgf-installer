@@ -64,13 +64,22 @@ def rank_response_times(response_times):
     """ Sort the response time of mirrors and return a list of them."""
     return OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
-# def get_lastpush_md5(mirror_list):
-#     for mirror in mirror_list:
+def get_lastpush_md5(mirror, install_type):
+    '''Gets the lastpush.md5 file from the specified mirror.  Can be used to check if mirror is in sync with the master mirror'''
+    if install_type == "devel":
+        mirror_md5_url = 'http://{}/dist/devel/lastpush.md5'.format(mirror)
+    else:
+        mirror_md5_url = 'http://{}/dist/lastpush.md5'.format(mirror)
 
-def check_mirror_congruency(mirror, master_mirror_md5):
+    mirror_response = requests.get(mirror_md5_url, timeout=4.0).text
+    mirror_md5 = mirror_response.split()[0]
+
+    return mirror_md5
+
+def check_mirror_congruency(mirror_md5, master_mirror_md5):
     '''Check if mirrors are synced'''
-
-    pass
+    if mirror_md5 == master_mirror_md5:
+        return True
 
 def find_fastest_mirror(install_type):
     '''Find the mirror with the fastest response time'''
@@ -83,17 +92,14 @@ def find_fastest_mirror(install_type):
         logger.debug("Master mirror is fastest")
         return master_mirror
 
-    if install_type == "devel":
-        master_mirror_md5_url = 'http://{}/dist/devel/lastpush.md5'.format(master_mirror)
-    else:
-        master_mirror_md5_url = 'http://{}/dist/lastpush.md5'.format(master_mirror)
-
-    master_mirror_response = requests.get(master_mirror_md5_url, timeout=4.0).text
-    master_mirror_md5 = master_mirror_response.split()[0]
+    master_mirror_md5 = get_lastpush_md5(master_mirror, install_type)
 
     for mirror in ranked_response_times:
+        if mirror == master_mirror:
+            continue
         logger.debug("mirror: %s", mirror)
-        if check_mirror_congruency(mirror, master_mirror_md5):
+        mirror_md5 = get_lastpush_md5(mirror, install_type)
+        if check_mirror_congruency(mirror_md5, master_mirror_md5):
             return mirror
         else:
             logger.info("%s is out of sync with the master mirror", mirror)

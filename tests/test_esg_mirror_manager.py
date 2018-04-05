@@ -15,8 +15,10 @@ class Test_ESG_MIRROR_MANAGER(unittest.TestCase):
         output = esg_mirror_manager.find_fastest_mirror("devel")
         print "output:", output
         self.assertTrue(output)
-    def test_get_success_or_fail_reponses(self):
-        pass
+    def test_get_mirror_response_times(self):
+        output = esg_mirror_manager.get_mirror_response_times()
+        print "response times:", output
+        self.assertTrue(output)
 
     def test_get_esgf_dist_mirror(self):
         pass

@@ -96,25 +96,20 @@ def esgf_node_info():
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
 
-
-def select_distribution_mirror():
-    '''Determining ESGF distribution mirror'''
-    return esg_mirror_manager.select_dist_mirror()
-
-def set_esg_dist_url():
+def set_esg_dist_url(install_type):
     esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
 
     try:
         if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:
             return
         elif esg_property_manager.get_property("esg.dist.url") == "fastest":
-            esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror())
+            esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror(install_type))
         else:
-            selected_mirror = select_distribution_mirror()
-            esg_property_manager.set_property("esg.dist.url", selected_mirror)
+            selected_mirror = esg_mirror_manager.select_dist_mirror()
+            esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
     except ConfigParser.NoOptionError:
-        selected_mirror = select_distribution_mirror()
-        esg_property_manager.set_property("esg.dist.url", selected_mirror)
+        selected_mirror = esg_mirror_manager.select_dist_mirror()
+        esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
@@ -338,7 +333,7 @@ def main(node_type_list):
     print "install_type:", install_type
 
     # select_distribution_mirror(install_type)
-    set_esg_dist_url()
+    set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)
 

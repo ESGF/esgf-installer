@@ -771,7 +771,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
     #--------------------
     if not os.path.exists(os.path.join(globus_location, "bin", "ESGOpenIDRetriever.class")) or os.path.exists(os.path.join(globus_location, "bin", "ESGGroupRetriever")):
         with esg_bash2py.pushd("{}/bin".format(globus_location)):
-            myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
+            myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
             esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
             esg_functions.download_update("ESGGroupRetriever.java", "{}/ESGGroupRetriever.java".format(myproxy_dist_url_base))
 
@@ -908,7 +908,7 @@ def edit_pam_pgsql_conf():
     with esg_bash2py.pushd("/etc"):
         pgsql_conf_file = "pam_pgsql.conf"
         "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
         esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
 
         os.chmod(pgsql_conf_file, 0600)
@@ -938,7 +938,7 @@ def fetch_myproxy_certificate_mapapp():
     with esg_bash2py.pushd(myproxy_config_dir):
         mapapp_file = "myproxy-certificate-mapapp"
         print "Downloading configuration file: {}".format(mapapp_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
         esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
 
         os.chmod(mapapp_file, 0751)
@@ -948,7 +948,7 @@ def fetch_etc_pam_d_myproxy():
     with esg_bash2py.pushd("/etc/pam.d"):
         myproxy_file = "myproxy"
         "Fetching pam's myproxy resource file: {}".format(myproxy_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
         esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
 
 def fetch_esg_attribute_callout_app():
@@ -957,7 +957,7 @@ def fetch_esg_attribute_callout_app():
     with esg_bash2py.pushd(myproxy_config_dir):
         callout_app_file = "esg_attribute_callout_app"
         print "Downloading configuration file: {}".format(callout_app_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(config["esg_dist_url_root"])
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
         esg_functions.download_update(callout_app_file, myproxy_dist_url_base+"/{}".format(callout_app_file))
         os.chmod(callout_app_file, 0751)
 

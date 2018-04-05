@@ -31,11 +31,11 @@ init() {
 
 
 
-    esgcet_version=${esgcet_version:-"3.4.2"}
-    publisher_tag=${publisher_tag:-"v3.4.2"}
+    esgcet_version=${esgcet_version:-"3.4.3"}
+    publisher_tag=${publisher_tag:-"v3.4.3"}
 
     esgprep_version="2.7.38"
-    cmor_version="3.3.1" 
+    cmor_version="3.3.2" 
 
 
     #see esgf-node-manager project:

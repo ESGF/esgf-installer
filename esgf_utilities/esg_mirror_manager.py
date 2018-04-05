@@ -37,7 +37,7 @@ def check_mirror_connection(install_type):
 
     return response_array
 
-def get_success_or_fail_responses():
+def get_mirror_response_times():
     """ Return a dictionary tuple with successful and
     unsuccessful response times from mirrors.
     """
@@ -75,7 +75,7 @@ def check_mirror_congruency(mirror, master_mirror_md5):
 def find_fastest_mirror(install_type):
     '''Find the mirror with the fastest response time'''
     # Get success and failed response
-    response_times, _ = get_success_or_fail_responses()
+    response_times, _ = get_mirror_response_times()
     ranked_response_times = rank_response_times(response_times)
 
     master_mirror = 'distrib-coffee.ipsl.jussieu.fr/pub/esgf'
@@ -108,7 +108,7 @@ def select_dist_mirror(mirror_selection_mode, install_type=None):
     # logger.debug("response_array: %s", response_array)
 
     # Get success and failed response
-    response_times, _ = get_success_or_fail_responses()
+    response_times, _ = get_mirror_response_times()
 
     # Order the response time of the mirrors
     ranked_response_times = rank_response_times(response_times)
@@ -116,20 +116,16 @@ def select_dist_mirror(mirror_selection_mode, install_type=None):
 
     # master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf'] # get value of hard coded mirror
 
-    logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
-    if mirror_selection_mode == "interactive":
-        while True:
-            try:
-                _render_distribution_mirror_menu(ranked_response_times)
-                choice = _select_distribution_mirror()
-                logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
-                return ranked_response_times.items()[choice][0]
-            except IndexError, error:
-                logger.error("Invalid selection", exc_info=True)
-                continue
-            break
-    else:
-        return ranked_response_times.items()[0][0]
+    while True:
+        try:
+            _render_distribution_mirror_menu(ranked_response_times)
+            choice = _select_distribution_mirror()
+            logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
+            return ranked_response_times.items()[choice][0]
+        except IndexError, error:
+            logger.error("Invalid selection", exc_info=True)
+            continue
+        break
 
 
 def _render_distribution_mirror_menu(distribution_mirror_choices):

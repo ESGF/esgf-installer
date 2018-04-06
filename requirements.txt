@@ -11,7 +11,7 @@ coloredlogs == 7.1
 
 # esg_node.py: 7
 # esg_tomcat_manager.py: 25
-lxml == 3.7.3
+lxml
 
 # esg_node_manager.py: 10
 # esg_setup.py: 10

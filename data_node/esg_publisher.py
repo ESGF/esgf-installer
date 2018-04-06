@@ -183,6 +183,15 @@ def write_esgcet_install_log():
                                     "publisher_home"], config["publisher_config"]))
     return 0
 
+def esgcet_startup_hook():
+    print "ESGCET (Publisher) Startup Hook: Setting perms... "
+    esg_ini_path = os.path.join(config["publisher_home"], config["publisher_config"])
+    if not os.path.exists(esg_ini_path):
+        esg_functions.exit_with_error("Could not find publisher configuration file: {}".format(esg_ini_path))
+    os.chown(esg_ini_path, -1, esg_functions.get_group_id("tomcat"))
+    os.chmod(esg_ini_path, 0644)
+
+
 def main():
     if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):
         if esg_property_manager.get_property("update.publisher"):

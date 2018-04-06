@@ -34,6 +34,11 @@ if [ ! -d ../../esgf-installer-docs/html ]; then
   create_docs_directory
 fi
 
+echo "activating conda env"
+source activate esgf-pub
+pip install -r ../requirements.txt
+
+
 #Generate the new html pages for the documentation
 make html
 
@@ -69,3 +74,5 @@ if [ -z "$comment" ]
 fi
 #Push to Github Pages
 git push -u origin gh-pages
+
+source deactivate

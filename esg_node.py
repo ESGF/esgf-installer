@@ -19,6 +19,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from base import esg_setup
 from base import esg_postgres
+from base import esg_java
 from data_node import esg_publisher
 from esgf_utilities import esg_cli_argument_manager
 from base import esg_tomcat_manager
@@ -91,58 +92,9 @@ def setup_esg_config_permissions():
 esg_org_name = esg_property_manager.get_property("esg.org.name")
 
 def esgf_node_info():
-
-    print '''
-        The goal of this script is to automate as many tasks as possible
-     regarding the installation, maintenance and use of the ESGF
-     software stack that is know as the \"ESGF Node\".  A software
-     stack is a collection of tools that work in concert to perform a
-     particular task or set of tasks that are semantically united. The
-     software stack is comprised of: Tomcat, Thredds, CDAT & CDMS,
-     PostgreSQL, MyProxy, and several ESGF.org custom software
-     applications running on a LINUX (RedHat/CentOS) operating system.
-     Through the installation process there are different accounts
-     that are created that facilitate the communication between the
-     software stack entities.  These credentials are internal to the
-     stack.  It is recommended that you use the defaults provided
-     throughout this installation.  The security impact with regards
-     to the visibility and accessibility of the constituent components
-     of the stack depends on other factors to be addressed by your
-     organization.
-
-     Please be sure that you have gotten your created an account on
-     your ESGF IDP Peer.
-
-     The primary IDP Peer for ESGF is esgf-node.llnl.gov
-     You may register for an account at LLNL at the following URL:
-     https://esgf-node.llnl.gov/user/add/
-
-     Note: Account creation is prerequisite for publication!
-
-     ESGF P2P Node:                                             ESGF P2P Node:
-      ---------                                                   ---------
-     |Tomcat   |                                                 |Tomcat   |
-     |-Node Mgr|   <================= P2P =================>     |-Node Mgr|
-     |-Thredds |                                                 |-Thredds |
-     |-ORP     |                                                 |-ORP     |
-     |---------|                                                 |---------|
-     |CDAT/CDMS|                                                 |CDAT/CDMS|
-     |---------|                                                 |---------|
-     |Postgres |                                                 |Postgres |
-     |---------|                                                 |---------|
-     | MyProxy |  <===(HTTPS)===> [ESGF Peer Node(s)]*           | MyProxy |
-     |---------|                                                 |---------|
-     | GridFTP |  <=============> [End User(s)]*                 | GridFTP |
-     >---------<                                                 >---------<
-     | CentOS  |                                                 | CentOS  |
-     |(Virtual)|                                                 |(Virtual)|
-     | Machine |                                                 | Machine |
-     |---------|                                                 |---------|
-      ---------                                                   ---------
-
-     (Visit http://esgf.llnl.gov , http://github.com/ESGF/esgf.github.io/wiki for more information)
-
-    '''
+    '''Print basic info about ESGF installation'''
+    with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
+        print info_file.read()
 
 
 def select_distribution_mirror(install_type):
@@ -286,8 +238,8 @@ def system_component_installation(esg_dist_url, node_type_list):
     '''
     if "INSTALL" in node_type_list:
         #TODO: check status of base components; if all running, skip setup
-        esg_setup.setup_java()
-        esg_setup.setup_ant()
+        esg_java.setup_java()
+        esg_java.setup_ant()
         esg_postgres.setup_postgres()
         esg_tomcat_manager.main()
         esg_apache_manager.main()
@@ -469,7 +421,7 @@ def sanity_check_web_xmls():
             webapp web.xml files have been modified - you must restart node stack for changes to be in effect
             (esg-node restart)
             -------------------------------------------------------------------------------------------------'''
-def setup_root_app():
+def setup_root_app(esg_dist_url_root):
     try:
         if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
             print "ROOT app in place.."
@@ -508,6 +460,7 @@ def clear_tomcat_cache():
     except OSError, error:
         logger.exception(error)
 
+<<<<<<< HEAD
 def remove_unused_esgf_webapps():
     '''Hard coded to remove node manager, desktop and dashboard'''
     try:
@@ -537,10 +490,14 @@ def write_script_version_file(script_version):
         version_file.write(script_version)
 
 def system_launch(esg_dist_url, node_type_list):
+=======
+def system_launch(esg_dist_url_root):
+>>>>>>> da622e41e296898e00682db957d8ded69877bc47
     #---------------------------------------
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
+<<<<<<< HEAD
     setup_root_app()
     clear_tomcat_cache()
     remove_unused_esgf_webapps()
@@ -557,6 +514,22 @@ def system_launch(esg_dist_url, node_type_list):
     esg_property_manager.set_property("version", script_version)
     esg_property_manager.set_property("release", script_release)
 
+=======
+    setup_root_app(esg_dist_url_root)
+    #     [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
+    # # Hard coded to remove node manager, desktop and dashboard
+    # rm -rf /usr/local/tomcat/webapps/esgf-node-manager
+    # rm -rf /usr/local/tomcat/webapps/esgf-desktop
+    # rm -rf /usr/local/tomcat/webapps/esgf-dashboard
+    # #fix for sensible values for conf files post node-manager removal
+    # setup_sensible_confs
+    #     start ${sel}
+    #     install_bash_completion_file
+    #     done_remark
+    #     echo "${script_version}" > ${esg_root_dir}/version
+    #     echo "${script_version}"
+    #     echo
+>>>>>>> da622e41e296898e00682db957d8ded69877bc47
     #     write_as_property version ${script_version}
     #     write_as_property release ${script_release}
     #     write_as_property gridftp_config

@@ -22,11 +22,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-installer_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
-
-def setup_sensible_confs():
-    pass
-
 def install_local_certs():
     pass
 
@@ -35,11 +30,11 @@ def generate_esgf_csrs():
 
 def generate_esgf_csrs_ext():
     pass
-def cert_howto():
-    pass
 
-def show_type():
-    pass
+def cert_howto():
+    with open(os.path.join(os.path.dirname(__file__), os.pardir, 'docs', 'cert_howto.txt'), 'r') as howto_file:
+        print howto_file.read()
+
 def start(node_types):
     '''Start ESGF Services'''
     #base components
@@ -60,8 +55,25 @@ def start(node_types):
 
     return get_node_status()
 
-def stop(node_bit):
-    pass
+def stop(node_types):
+    '''Stop ESGF Services'''
+    #base components
+    esg_apache_manager.stop_apache()
+    esg_tomcat_manager.stop_tomcat()
+    esg_postgres.stop_postgres()
+
+
+    if "DATA" in node_types:
+        globus.stop_globus("DATA")
+
+    if "IDP" in node_types:
+        globus.stop_globus("IDP")
+
+    if "INDEX" in node_types:
+        solr_shards = solr.read_shard_config()
+        for config_type, port_number in solr_shards:
+            solr.stop_solr()
+
 def get_node_status():
     '''
         Shows which ESGF services are currently running
@@ -210,22 +222,23 @@ def process_arguments(node_type_list, devel, esg_dist_url):
     if args.install:
         if args.type:
             set_node_type_value(args.type)
-        installer_mode_dictionary["upgrade_mode"] = False
-        installer_mode_dictionary["install_mode"] = True
         logger.debug("Install Services")
         if args.base:
             return ["INSTALL"]
         node_type_list = get_node_type()
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:
-        installer_mode_dictionary["upgrade_mode"] = True
-        installer_mode_dictionary["install_mode"] = False
-        set_node_type_value("install", node_type_list, True)
+        if args.type:
+            set_node_type_value(args.type)
         logger.debug("Update Services")
         esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
+        if args.base:
+            return ["INSTALL"]
+        node_type_list = get_node_type()
+        return node_type_list + ["INSTALL"]
     if args.fixperms:
         logger.debug("fixing permissions")
-        setup_sensible_confs()
+        esg_functions.setup_whitelist_files()
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
@@ -243,7 +256,6 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
-        logger.debug("cert howto")
         cert_howto()
         sys.exit(0)
     elif args.type:
@@ -251,38 +263,32 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
-        for arg in args.settype:
-            logger.debug("arg: %s", arg)
-            node_type_list = []
-            node_type_list = set_node_type_value(arg, node_type_list, True)
-        esg_bash2py.mkdir_p(config["esg_config_dir"])
-        set_node_type_config(node_type_list, config["esg_config_type_file"])
+        set_node_type_value(args.type)
         sys.exit(0)
     elif args.gettype:
-        get_node_type(config["esg_config_type_file"])
-        show_type()
+        print get_node_type(config["esg_config_type_file"])
         sys.exit(0)
     elif args.start:
         logger.debug("args: %s", args)
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         logger.debug("START SERVICES: %s", node_type_list)
         # esg_setup.init_structure()
         node_type_list = get_node_type()
         return start(node_type_list)
     elif args.stop:
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         logger.debug("STOP SERVICES")
         esg_setup.init_structure()
         stop(node_type_list)
         sys.exit(0)
     elif args.restart:
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         logger.debug("RESTARTING SERVICES")
         esg_setup.init_structure()
         stop(node_type_list)
@@ -294,9 +300,9 @@ def process_arguments(node_type_list, devel, esg_dist_url):
         sys.exit(0)
     elif args.updatesubinstaller:
         esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
-        # if check_prerequisites() is not 0:
-        #     logger.error("Prerequisites for startup not satisfied.  Exiting.")
-        #     sys.exit(1)
+        if not esg_setup.check_prerequisites():
+            logger.error("Prerequisites for startup not satisfied.  Exiting.")
+            sys.exit(1)
         esg_setup.init_structure()
         update_script(args[1], args[2])
         sys.exit(0)

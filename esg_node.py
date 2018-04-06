@@ -328,8 +328,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         idp.setup_slcs()
 
 
-    esg_functions.update_fileupload_jar()
-    esg_functions.setup_whitelist_files(esg_dist_url)
+    system_launch(esg_dist_url, node_type_list)
 
 
 def done_remark():
@@ -434,7 +433,7 @@ def main(node_type_list):
 
     # install dependencies
     system_component_installation(esg_dist_url, node_type_list)
-    done_remark()
+
 
 def sanity_check_web_xmls():
     '''Editing web.xml files for projects who use the authorizationService'''
@@ -500,26 +499,64 @@ def setup_root_app():
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
         print "ROOT application \"installed\""
 
+def clear_tomcat_cache():
+    try:
+        cache_directories = glob.glob("/usr/local/tomcat/work/Catalina/localhost/*")
+        for directory in cache_directories:
+            shutil.rmtree(directory)
+        print "Cleared tomcat cache... "
+    except OSError, error:
+        logger.exception(error)
 
-def system_launch():
+def remove_unused_esgf_webapps():
+    '''Hard coded to remove node manager, desktop and dashboard'''
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-desktop")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-dashboard")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
+def install_bash_completion_file(esg_dist_url):
+    if os.path.exists("/etc/bash_completion") and not os.path.exists("/etc/bash_completion.d/esg-node"):
+        esg_functions.download_update("/etc/bash_completion.d/esg-node", "{}/esgf-installer/esg-node.completion".format(esg_dist_url))
+
+def write_script_version_file(script_version):
+    with open(os.path.join(config["esg_root_dir"], "version"), "w") as version_file:
+        version_file.write(script_version)
+
+def system_launch(esg_dist_url, node_type_list):
     #---------------------------------------
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
     setup_root_app()
-    #     [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
-    # # Hard coded to remove node manager, desktop and dashboard
-    # rm -rf /usr/local/tomcat/webapps/esgf-node-manager
-    # rm -rf /usr/local/tomcat/webapps/esgf-desktop
-    # rm -rf /usr/local/tomcat/webapps/esgf-dashboard
-    # #fix for sensible values for conf files post node-manager removal
-    # setup_sensible_confs
-    #     start ${sel}
-    #     install_bash_completion_file
-    #     done_remark
-    #     echo "${script_version}" > ${esg_root_dir}/version
-    #     echo "${script_version}"
-    #     echo
+    clear_tomcat_cache()
+    remove_unused_esgf_webapps()
+
+    esg_functions.update_fileupload_jar()
+    esg_functions.setup_whitelist_files(esg_dist_url)
+
+    esg_cli_argument_manager.start(node_type_list)
+    install_bash_completion_file(esg_dist_url)
+    done_remark()
+    write_script_version_file(script_version)
+    print script_version
+
+    esg_property_manager.set_property("version", script_version)
+    esg_property_manager.set_property("release", script_release)
+
     #     write_as_property version ${script_version}
     #     write_as_property release ${script_release}
     #     write_as_property gridftp_config

@@ -212,7 +212,7 @@ def _define_acceptable_arguments():
     args = parser.parse_args()
     return (args, parser)
 
-def process_arguments(node_type_list, devel, esg_dist_url):
+def process_arguments(devel, esg_dist_url):
     args, parser = _define_acceptable_arguments()
 
     if len(sys.argv) == 1:

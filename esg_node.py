@@ -6,6 +6,7 @@ import socket
 import platform
 import glob
 import shutil
+import errno
 import filecmp
 import ConfigParser
 import stat
@@ -267,7 +268,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         idp.setup_slcs()
 
 
-    system_launch(esg_dist_url, node_type_list)
+    system_launch(esg_dist_url, node_type_list, script_version, script_release)
 
 
 def done_remark(node_type_list):
@@ -498,37 +499,19 @@ def system_launch(esg_dist_url, node_type_list):
     esg_property_manager.set_property("version", script_version)
     esg_property_manager.set_property("release", script_release)
 
-    #     write_as_property version ${script_version}
-    #     write_as_property release ${script_release}
+    esg_property_manager.set_property("activate_conda", "source /usr/local/conda/bin/activate esgf-pub", config_file=config["envfile"], section_name="esgf.env")
     #     write_as_property gridftp_config
-    #     echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
-    #
-    #     esg_node_finally
-    # }
-    #
-    # esg_node_finally() {
-    #     debug_print "(esg_datanode: cleaning up etc...)"
-    #     chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
-    #
-    # if [ $((sel & IDP_BIT)) != 0 ]; then
-    # export PGPASSWORD=${pg_sys_acct_passwd}
-    #
-    # echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.
-    # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
-    #     echo "Node installation is complete."
-    # fi
-    # if [ -p /tmp/outputpipe ]; then
-    #     echo "Installer ran to completion. Now cleaning up. There will be a 'Killed' message in your setup-autoinstall terminal, which is not a cause for concern." >/tmp/outputpipe;
-    # fi
-    #
-    # #exec 1>&3 3>&- 2>&4 4>&-
-    # #wait $tpid
-    # #rm $OUTPUT_PIPE
-    #
-    #
-    #     exit 0
-    # }
-    pass
+    esg_node_finally(node_type_list)
+
+def esg_node_finally(node_type_list):
+    global_x509_cert_dir = "/etc/grid-security/certificates"
+    esg_functions.change_ownership_recursive(global_x509_cert_dir, config["installer_uid"], config["installer_gid"])
+
+    if "IDP" in node_type_list:
+        os.environ["PGPASSWORD"] = esg_functions.get_postgres_password()
+        print "Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard."
+        # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
+        #     echo "Node installation is complete."
 
 
 if __name__ == '__main__':

@@ -89,6 +89,15 @@ def set_esg_dist_url(install_type):
     esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
 
     try:
+        if esg_property_manager.get_property("use_local_mirror").lower() in ["y", "yes"]:
+            local_mirror = esg_property_manager.get_property("local_mirror")
+            logger.debug("Using local mirror %s", local_mirror)
+            esg_property_manager.set_property("esg.dist.url", local_mirror)
+            return
+    except ConfigParser.NoOptionError:
+        pass
+
+    try:
         if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:
             return
         elif esg_property_manager.get_property("esg.dist.url") == "fastest":
@@ -322,7 +331,6 @@ def main():
     install_type = get_installation_type(script_version)
     print "install_type:", install_type
 
-    # select_distribution_mirror(install_type)
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)

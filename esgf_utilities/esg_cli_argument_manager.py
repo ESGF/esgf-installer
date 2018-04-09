@@ -8,11 +8,12 @@ import pprint
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
 from base import esg_setup
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
-from esgf_utilities import esg_bash2py
 from esgf_utilities.esg_exceptions import NoNodeTypeError, SubprocessError
 from idp_node import globus
 from index_node import solr
@@ -152,6 +153,14 @@ def update_script(script_name, script_directory):
     '''
     pass
 
+def set_local_mirror(mirror_url):
+    try:
+        os.path.exists(mirror_url)
+        esg_property_manager.set_property("use_local_mirror", True)
+        esg_property_manager.set_property("local_mirror", mirror_url)
+    except OSError, error:
+        esg_functions.exit_with_error(error)
+
 #Formerly get_bit_value
 def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
 
@@ -205,6 +214,7 @@ def _define_acceptable_arguments():
     parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
     parser.add_argument("--custom_setup", dest="customsetup", help="Sets esgsetup to use a custom, user-defined setup", action="store_true")
     parser.add_argument("--use-local-files", dest="uselocalfiles", help="Sets a flag for using local files instead of attempting to fetch a remote file", action="store_true")
+    parser.add_argument("--use-local-mirror", dest="uselocalmirror", help="Sets the installer to fetch files from a mirror directory that is on the same server in which the installation is being run", action="store_true")
     parser.add_argument("--devel", help="Sets the installation type to the devel build", action="store_true")
     parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
 
@@ -230,7 +240,7 @@ def process_arguments(devel, esg_dist_url):
         if args.type:
             set_node_type_value(args.type)
         logger.debug("Update Services")
-        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
+        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel, "update")
         if args.base:
             return ["INSTALL"]
         node_type_list = get_node_type()
@@ -315,6 +325,8 @@ def process_arguments(devel, esg_dist_url):
         custom_setup = True
     elif args.uselocalfiles:
         use_local_files = True
+    elif args.uselocalmirror:
+        set_local_mirror(args.uselocalmirror)
     elif args.devel:
         devel = True
     elif args.prod:

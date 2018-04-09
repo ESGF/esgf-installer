@@ -5,6 +5,7 @@ import os
 import yaml
 import logging
 import ConfigParser
+from configobj import ConfigObj
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -38,13 +39,18 @@ def set_property(property_name, property_value=None, config_file=config["config_
         arg 2 - The value to set the variable to (default: None)
     '''
     property_name = property_name.replace("_", ".")
-    parser = ConfigParser.SafeConfigParser()
-    parser.read(config_file)
-    try:
-        parser.add_section(section_name)
-    except ConfigParser.DuplicateSectionError:
-        logger.debug("section already exists")
-
-    parser.set(section_name, property_name, property_value)
-    with open(config_file, "w") as config_file_object:
-        parser.write(config_file_object)
+    parser = ConfigObj(config_file)
+    if section_name not in parser:
+        parser[section_name] = {}
+    parser[section_name][property_name] = property_value
+    parser.write()
+    # parser = ConfigParser.SafeConfigParser()
+    # parser.read(config_file)
+    # try:
+    #     parser.add_section(section_name)
+    # except ConfigParser.DuplicateSectionError:
+    #     logger.debug("section already exists")
+    #
+    # parser.set(section_name, property_name, property_value)
+    # with open(config_file, "w") as config_file_object:
+    #     parser.write(config_file_object)

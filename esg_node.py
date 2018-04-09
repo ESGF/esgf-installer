@@ -85,34 +85,20 @@ def esgf_node_info():
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
 
+def set_esg_dist_url(install_type):
+    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
 
-def select_distribution_mirror(install_type):
-     # Determining ESGF distribution mirror
-    logger.info("before selecting distribution mirror: %s",
-                config.esgf_dist_mirror)
-    if any(argument in sys.argv for argument in ["install", "update", "upgrade"]):
-        logger.debug("interactive")
-        config.esgf_dist_mirror = esg_mirror_manager.get_esgf_dist_mirror(
-            "interactive", install_type)
-    else:
-        logger.debug("fastest")
-        config.esgf_dist_mirror = esg_mirror_manager.get_esgf_dist_mirror(
-            "fastest", install_type)
-
-    logger.info("selected distribution mirror: %s",
-                config.esgf_dist_mirror)
-
-def set_esg_dist_url():
-    '''Setting esg_dist_url with previously gathered information'''
-    esg_dist_url_root = os.path.join(
-        "http://", config.esgf_dist_mirror, "dist")
-    logger.debug("esg_dist_url_root: %s", esg_dist_url_root)
-    if devel is True:
-        esg_dist_url = os.path.join("http://", esg_dist_url_root, "/devel")
-    else:
-        esg_dist_url = esg_dist_url_root
-
-    logger.debug("esg_dist_url: %s", esg_dist_url)
+    try:
+        if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:
+            return
+        elif esg_property_manager.get_property("esg.dist.url") == "fastest":
+            esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror(install_type))
+        else:
+            selected_mirror = esg_mirror_manager.select_dist_mirror()
+            esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
+    except ConfigParser.NoOptionError:
+        selected_mirror = esg_mirror_manager.select_dist_mirror()
+        esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
@@ -324,7 +310,7 @@ def setup_esgf_rpm_repo(esg_dist_url):
 
 def main():
     # default distribution_url
-    esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
+    # esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
 
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
     script_version, script_maj_version, script_release = set_version_info()
@@ -337,7 +323,8 @@ def main():
     print "install_type:", install_type
 
     # select_distribution_mirror(install_type)
-    # set_esg_dist_url()
+    set_esg_dist_url(install_type)
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)
 
     cli_info = esg_cli_argument_manager.process_arguments(devel, esg_dist_url)

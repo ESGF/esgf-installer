@@ -16,7 +16,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 # List of mirror location
-esgf_dist_mirrors_list=("distrib-coffee.ipsl.jussieu.fr/pub/esgf","dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf","esg-dn2.nsc.liu.se/esgf")
+esgf_dist_mirrors_list = ("distrib-coffee.ipsl.jussieu.fr/pub/esgf", "dist.ceda.ac.uk/esgf", "aims1.llnl.gov/esgf", "esg-dn2.nsc.liu.se/esgf")
 
 def check_mirror_connection(install_type):
     """ Check if mirrors are accessible."""
@@ -24,23 +24,22 @@ def check_mirror_connection(install_type):
     for mirror in esgf_dist_mirrors_list:
         if install_type == "devel":
             try:
-                response_array[mirror] = requests.get('http://'+mirror+'/dist/devel/lastpush.md5', timeout=4.0)
+                mirror_response = requests.get('http://{}/dist/devel/lastpush.md5'.format(mirror), timeout=4.0).text
+                response_array[mirror] = mirror_response.split()[0]
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
-
-            #response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/devel/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         else:
             try:
-                response_array[mirror] = requests.get('http://'+mirror+'/dist/lastpush.md5', timeout=4.0)
+                mirror_response = requests.get('http://{}/dist/lastpush.md5'.format(mirror), timeout=4.0).text
+                response_array[mirror] = mirror_response.split()[0]
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
-            #response_array[mirror] = subprocess.Popen("curl -s -L --insecure %s/dist/lastpush.md5|tr -s " "|cut -d " " -f1" % (mirror), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     return response_array
 
-def get_success_or_fail__reponses():
-    """ Return a dictionary tuple with seccessful and
-    unseccessful response times from mirrors.
+def get_mirror_response_times():
+    """ Return a dictionary tuple with successful and
+    unsuccessful response times from mirrors.
     """
     response_times = {} # Successful connections
     failed_requests = {} # Unsuccessful connection
@@ -61,62 +60,69 @@ def get_success_or_fail__reponses():
 
     return (response_times,failed_requests)
 
-def order_response_time():
+def rank_response_times(response_times):
     """ Sort the response time of mirrors and return a list of them."""
     return OrderedDict(sorted(response_times.items(), key=lambda x: x[1]))
 
-def get_esgf_dist_mirror(mirror_selection_mode, install_type = None):
+def get_lastpush_md5(mirror, install_type):
+    '''Gets the lastpush.md5 file from the specified mirror.  Can be used to check if mirror is in sync with the master mirror'''
+    if install_type == "devel":
+        mirror_md5_url = 'http://{}/dist/devel/lastpush.md5'.format(mirror)
+    else:
+        mirror_md5_url = 'http://{}/dist/lastpush.md5'.format(mirror)
+
+    mirror_response = requests.get(mirror_md5_url, timeout=4.0).text
+    mirror_md5 = mirror_response.split()[0]
+
+    return mirror_md5
+
+def check_mirror_congruency(mirror_md5, master_mirror_md5):
+    '''Check if mirrors are synced'''
+    if mirror_md5 == master_mirror_md5:
+        return True
+
+def find_fastest_mirror(install_type):
+    '''Find the mirror with the fastest response time'''
+    response_times, _ = get_mirror_response_times()
+    ranked_response_times = rank_response_times(response_times)
+
+    master_mirror = 'distrib-coffee.ipsl.jussieu.fr/pub/esgf'
+    if ranked_response_times.items()[0][0] == master_mirror:
+        logger.debug("Master mirror is fastest")
+        return master_mirror
+
+    master_mirror_md5 = get_lastpush_md5(master_mirror, install_type)
+
+    for mirror in ranked_response_times:
+        if mirror == master_mirror:
+            continue
+        logger.debug("mirror: %s", mirror)
+        mirror_md5 = get_lastpush_md5(mirror, install_type)
+        if check_mirror_congruency(mirror_md5, master_mirror_md5):
+            return mirror
+        else:
+            logger.info("%s is out of sync with the master mirror", mirror)
+
+    return master_mirror
+
+def select_dist_mirror():
     """ Return the nearest mirror available. """
-
-    # Capture mirror connection
-    response_array = check_mirror_connection(install_type)
-
-    # Get success and failed response
-    response_times, failed_requests = get_success_or_fail_reponses()
+    response_times, _ = get_mirror_response_times()
 
     # Order the response time of the mirrors
-    ranked_response_times = order_response_time()
+    ranked_response_times = rank_response_times(response_times)
     logger.debug("ranked_response_times: %s", ranked_response_times)
 
-    master = response_array['distrib-coffee.ipsl.jussieu.fr/pub/esgf'] # get value of hard coded mirror
-    fastest = ranked_response_times.items()[0][0] # get the first element of the list
-    logger.debug("fastest: %s", fastest)
-
-    # Debate on weather this should be its own function...
-    outofsync = False
-    if response_array[fastest] != master:
-        print "%s is the fastest mirror, but is out-of-sync, hence overlooked" % fastest
-        outofsync = True
-
-    if outofsync == True:
-        # config["esgf_dist_mirror"] = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
-        return "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
-
-    try:
-        if stat.S_ISFIFO(os.stat("/tmp/inputpipe").st_mode) != 0:
-            print "using the fastest mirror %s" % ranked_response_times.items()[0][0]
-            # config["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
-            return ranked_response_times.items()[0][0]
-    except OSError, error:
-        logger.warning(error)
-
-
-    logger.debug("mirror_selection_mode: %s", mirror_selection_mode)
-    if mirror_selection_mode == "interactive":
-        while True:
-            try:
-                _render_distribution_mirror_menu(ranked_response_times)
-                choice = _select_distribution_mirror()
-                logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
-                # config["esgf_dist_mirror"] = ranked_response_times.items()[choice][0]
-                return ranked_response_times.items()[choice][0]
-            except IndexError, error:
-                logger.error("Invalid selection", exc_info=True)
-                continue
-            break
-    else:
-        # config["esgf_dist_mirror"] = ranked_response_times.items()[0][0]
-        return ranked_response_times.items()[0][0]
+    while True:
+        try:
+            _render_distribution_mirror_menu(ranked_response_times)
+            choice = _select_distribution_mirror()
+            logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
+            return ranked_response_times.items()[choice][0]
+        except IndexError, error:
+            logger.error("Invalid selection", exc_info=True)
+            continue
+        break
 
 
 def _render_distribution_mirror_menu(distribution_mirror_choices):

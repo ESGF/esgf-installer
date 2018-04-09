@@ -66,7 +66,7 @@ def setup_node_manager_old():
 
 force_install = False
 
-esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+esg_dist_url = esg_property_manager.get_property("esg.dist.url")
 esgf_host = esg_functions.get_esgf_host()
 
 node_manager_app_context_root = "esgf-node-manager"

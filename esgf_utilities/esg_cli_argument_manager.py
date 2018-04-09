@@ -200,7 +200,6 @@ def _define_acceptable_arguments():
     parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")
     parser.add_argument("--restart", help="Restarts the node's services (calls stop then start :-/)", action="store_true")
     parser.add_argument("--status", help="Status on node's services", action="store_true")
-    parser.add_argument("--update-sub-installer", dest="updatesubinstaller", help="Update a specified installation script", nargs=2, metavar=('script_name', 'script_directory'))
     parser.add_argument("--update-apache-conf", dest="updateapacheconf", help="Update Apache configuration", action="store_true")
     parser.add_argument("-v","--version", dest="version", help="Displays the version of this script", action="store_true")
     parser.add_argument("--recommended_setup", dest="recommendedsetup", help="Sets esgsetup to use the recommended, minimal setup", action="store_true")
@@ -297,14 +296,6 @@ def process_arguments(devel, esg_dist_url):
         sys.exit(0)
     elif args.status:
         get_node_status()
-        sys.exit(0)
-    elif args.updatesubinstaller:
-        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel,"update")
-        if not esg_setup.check_prerequisites():
-            logger.error("Prerequisites for startup not satisfied.  Exiting.")
-            sys.exit(1)
-        esg_setup.init_structure()
-        update_script(args[1], args[2])
         sys.exit(0)
     # elif args.updateapacheconf:
     #     logger.debug("checking for updated apache frontend configuration")

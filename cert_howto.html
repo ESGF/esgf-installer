@@ -195,13 +195,18 @@ When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem</p>
 a. Certificate and key files</p>
 <blockquote>
 <div><p>b. CA chain file.
-Ensure that your CA chain file is complete with this command:
-<code class="docutils literal"><span class="pre">`openssl</span> <span class="pre">verify</span> <span class="pre">-verbose</span> <span class="pre">-purpose</span> <span class="pre">sslserver</span> <span class="pre">-CAfile</span> <span class="pre">&lt;cachainfile&gt;</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;`</span></code>
-You should simply get a one line response that looks like this:
-&lt;certificate file: OK&gt;
-If you have errors, your chain file is not complete. Contact your certificate provider for assistance, or email <a class="reference external" href="mailto:esgf_iwt&#37;&#52;&#48;llnl&#46;gov">esgf_iwt<span>&#64;</span>llnl<span>&#46;</span>gov</a> with &#8216;Help needed with CA chainfile construction&#8217;
-in the subject line, attaching your public certificate (NOT KEY!!!) and the CA&#8217;s certificate or the chain file that you have.</p>
+Ensure that your CA chain file is complete with this command:</p>
 </div></blockquote>
+<p><code class="docutils literal"><span class="pre">`openssl</span> <span class="pre">verify</span> <span class="pre">-verbose</span> <span class="pre">-purpose</span> <span class="pre">sslserver</span> <span class="pre">-CAfile</span> <span class="pre">&lt;cachainfile&gt;</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;`</span></code></p>
+<blockquote>
+<div><p>You should simply get a one line response that looks like this:
+&lt;certificate file: OK&gt;</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>If you have errors, your chain file is not complete. Contact your certificate provider for assistance, or email <a class="reference external" href="mailto:esgf_iwt&#37;&#52;&#48;llnl&#46;gov">esgf_iwt<span>&#64;</span>llnl<span>&#46;</span>gov</a> with &#8216;Help needed with CA chainfile construction&#8217;</dt>
+<dd><p class="first last">in the subject line, attaching your public certificate (NOT KEY!!!) and the CA&#8217;s certificate or the chain file that you have.</p>
+</dd>
+</dl>
 </li>
 </ol>
 </div>

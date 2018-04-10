@@ -33,7 +33,7 @@ def main():
 
     info_handler = RotatingFileHandler(info_log_path, maxBytes=10*1024*1024,
                                   backupCount=5)
-    # fh = logging.FileHandler(PATH)
+
     error_handler.setLevel(logging.ERROR)
     info_handler.setLevel(logging.INFO)
 
@@ -47,7 +47,6 @@ def main():
 
     error_handler.setFormatter(formatter)
     info_handler.setFormatter(formatter)
-    # ch.setFormatter(formatter)
     ch.setFormatter(color_formatter)
 
     logger.addHandler(error_handler)

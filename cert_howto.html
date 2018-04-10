@@ -195,13 +195,15 @@
 <ol class="loweralpha">
 <li><dl class="first docutils">
 <dt>Certificate and key files</dt>
-<dd><p class="first last">b. CA chain file.
-Ensure that your CA chain file is complete with this command:</p>
+<dd><ol class="first last loweralpha simple" start="2">
+<li>CA chain file.</li>
+</ol>
 </dd>
 </dl>
 </li>
 </ol>
-<p><code class="docutils literal"><span class="pre">`openssl</span> <span class="pre">verify</span> <span class="pre">-verbose</span> <span class="pre">-purpose</span> <span class="pre">sslserver</span> <span class="pre">-CAfile</span> <span class="pre">&lt;cachainfile&gt;</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;`</span></code></p>
+<p>Ensure that your CA chain file is complete with this command:
+<code class="docutils literal"><span class="pre">`openssl</span> <span class="pre">verify</span> <span class="pre">-verbose</span> <span class="pre">-purpose</span> <span class="pre">sslserver</span> <span class="pre">-CAfile</span> <span class="pre">&lt;cachainfile&gt;</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;`</span></code></p>
 <blockquote>
 <div><p>You should simply get a one line response that looks like this:
 &lt;certificate file: OK&gt;</p>

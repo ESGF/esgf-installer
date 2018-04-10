@@ -31,7 +31,8 @@ If you wish to install ESGF certificates:
 
    a. Certificate and key files
 	 b. CA chain file.
-	 Ensure that your CA chain file is complete with this command:
+
+   Ensure that your CA chain file is complete with this command:
    ```openssl verify -verbose -purpose sslserver -CAfile <cachainfile> <certificate file>```
 
 	 You should simply get a one line response that looks like this:

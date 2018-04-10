@@ -1,5 +1,5 @@
 import logging
-import coloredlogs
+from colorlog import ColoredFormatter
 from logging.handlers import RotatingFileHandler
 import os
 import errno
@@ -26,8 +26,6 @@ def main():
     logger = logging.getLogger('esgf_logger')
     logger.setLevel(logging.DEBUG)
 
-    print logger.handlers
-
     # create file handler which logs even debug messages
     # add a rotating handler
     error_handler = RotatingFileHandler(error_log_path, maxBytes=10*1024*1024,
@@ -45,18 +43,17 @@ def main():
 
     # create formatter
     formatter = logging.Formatter("%(levelname)s - %(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
+    color_formatter = ColoredFormatter("  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s%(reset)s")
 
     error_handler.setFormatter(formatter)
     info_handler.setFormatter(formatter)
-    ch.setFormatter(formatter)
+    # ch.setFormatter(formatter)
+    ch.setFormatter(color_formatter)
 
     logger.addHandler(error_handler)
     logger.addHandler(info_handler)
     logger.addHandler(ch)
 
-    #added coloredlogs
-    colored_log_file = open(os.path.join(logs_dir, "esgf_colored_log.out"), "w")
-    coloredlogs.install(level='DEBUG', logger=logger, stream=colored_log_file)
 
 if __name__ == '__main__':
     main()

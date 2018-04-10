@@ -192,9 +192,9 @@ When prompted for the cachain file, specify the chain file provided by your CA</
 When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem</p>
 </li>
 <li><p class="first">If you have certificates for your webcontainer, issued by a commercial CA, ensure you have the following:
-a) Certificate and key files.</p>
+a. Certificate and key files.</p>
 <blockquote>
-<div><p>b) CA chain file.
+<div><p>b. CA chain file.
 Ensure that your CA chain file is complete with this command:
 <code class="docutils literal"><span class="pre">`openssl</span> <span class="pre">verify</span> <span class="pre">-verbose</span> <span class="pre">-purpose</span> <span class="pre">sslserver</span> <span class="pre">-CAfile</span> <span class="pre">&lt;cachainfile&gt;</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;`</span></code>
 You should simply get a one line response that looks like this:

@@ -13,6 +13,7 @@ Welcome to esgf-installer's documentation!
    :maxdepth: 2
 
    installation
+   cert_howto
 
 
 .. toctree::

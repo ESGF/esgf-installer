@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Python Module Index &mdash; esgf-installer alpha documentation</title>
+  <title>ESGF Certificate Management &mdash; esgf-installer alpha documentation</title>
   
 
   
@@ -33,13 +33,8 @@
 
   
     <link rel="top" title="esgf-installer alpha documentation" href="index.html"/>
- 
-
-    <script type="text/javascript">
-      DOCUMENTATION_OPTIONS.COLLAPSE_INDEX = true;
-    </script>
-
-
+        <link rel="next" title="Base Components" href="api.html"/>
+        <link rel="prev" title="Installation" href="installation.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -93,10 +88,10 @@
             
             
               <p class="caption"><span class="caption-text">Installation</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ESGF Certificate Management</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -156,12 +151,14 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li></li>
+      <li>ESGF Certificate Management</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
+            <a href="_sources/cert_howto.txt" rel="nofollow"> View page source</a>
+          
         
       </li>
     
@@ -173,33 +170,42 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-
-   <h1>Python Module Index</h1>
-
-   <div class="modindex-jumpbox">
-   <a href="#cap-e"><strong>e</strong></a>
-   </div>
-
-   <table class="indextable modindextable" cellspacing="0" cellpadding="2">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-e"><td></td><td>
-       <strong>e</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="api.html#module-esg_cert_manager"><code class="xref">esg_cert_manager</code></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="api.html#module-esg_functions"><code class="xref">esg_functions</code></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="api.html#module-esg_purge"><code class="xref">esg_purge</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+  <div class="section" id="esgf-certificate-management">
+<h1>ESGF Certificate Management<a class="headerlink" href="#esgf-certificate-management" title="Permalink to this headline">¶</a></h1>
+<p>If you wish to extend your temporary CA certificate (for standalone testing only):
+<code class="docutils literal"><span class="pre">`esg_node.py</span> <span class="pre">--update-temp-ca`</span></code>
+If you want to install a commercial CA issued certificate:
+<code class="docutils literal"><span class="pre">`esg_node.py</span> <span class="pre">--install-keypair</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;</span> <span class="pre">&lt;key</span> <span class="pre">file&gt;`</span></code>
+When prompted for the cachain file, specify the chain file provided by your CA</p>
+<p>If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
+<code class="docutils literal"><span class="pre">`esg_node.py</span> <span class="pre">--generate-esgf-csrs`</span></code></p>
+<p>If you wish to generate CSRs for a node other than the one you are running, you could use
+<code class="docutils literal"><span class="pre">`esg_node.py</span> <span class="pre">--generate-esgf-csrs-ext`</span></code></p>
+<p>If you wish to install ESGF certificates:</p>
+<ol class="arabic simple">
+<li>untar the entire contents of the tarball you received from Prashanth into /etc/esgfcerts</li>
+<li><code class="docutils literal"><span class="pre">`esg_node.py</span> <span class="pre">--install-local-certs`</span></code></li>
+</ol>
+<p>3. If you also have locally issued certificates for the webcontainer:
+<code class="docutils literal"><span class="pre">`esg_node.py</span> <span class="pre">--install-keypair</span> <span class="pre">/etc/esgfcerts/hostcert.pem</span> <span class="pre">/etc/esgfcerts/hostkey.pem`</span></code>
+When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem
+4. If you have certificates for your webcontainer, issued by a commercial CA, ensure you have the following:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li>Certificate and key files.</li>
+</ol>
+<p>b) CA chain file.
+Ensure that your CA chain file is complete with this command:</p>
+<blockquote>
+<div><code class="docutils literal"><span class="pre">`openssl</span> <span class="pre">verify</span> <span class="pre">-verbose</span> <span class="pre">-purpose</span> <span class="pre">sslserver</span> <span class="pre">-CAfile</span> <span class="pre">&lt;cachainfile&gt;</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;`</span></code></div></blockquote>
+<dl class="docutils">
+<dt>You should simply get a one line response that looks like this:</dt>
+<dd>&lt;certificate file: OK&gt;</dd>
+</dl>
+<p>If you have errors, your chain file is not complete. Contact your certificate provider for assistance, or email <a class="reference external" href="mailto:esgf_iwt&#37;&#52;&#48;llnl&#46;gov">esgf_iwt<span>&#64;</span>llnl<span>&#46;</span>gov</a> with &#8216;Help needed with CA chainfile construction&#8217;
+in the subject line, attaching your public certificate (NOT KEY!!!) and the CA&#8217;s certificate or the chain file that you have.</p>
+</div></blockquote>
+</div>
 
 
            </div>
@@ -208,6 +214,15 @@
            </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="Base Components" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

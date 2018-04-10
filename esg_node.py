@@ -6,6 +6,7 @@ import socket
 import platform
 import glob
 import shutil
+import errno
 import filecmp
 import ConfigParser
 import stat
@@ -36,18 +37,7 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-node_types = {"INSTALL": False, "DATA": False, "INDEX": False,
-                          "IDP": False, "COMPUTE": False, "MIN": 4, "MAX": 64}
-node_types["ALL"] = node_types["DATA"] and node_types[
-    "INDEX"] and node_types["IDP"] and node_types["COMPUTE"]
-
-node_type_list = []
 devel = False
-
-def get_node_type():
-    for key, value in node_types.items():
-        if value:
-            node_type_list.append(key)
 
 def set_version_info():
     '''Gathers the version info from the latest git tag'''
@@ -60,7 +50,6 @@ def set_version_info():
 
     return version, maj_version, release
 
-script_version, script_maj_version, script_release = set_version_info()
 force_install = False
 
 #--------------
@@ -100,6 +89,15 @@ def set_esg_dist_url(install_type):
     esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
 
     try:
+        if esg_property_manager.get_property("use_local_mirror").lower() in ["y", "yes"]:
+            local_mirror = esg_property_manager.get_property("local_mirror")
+            logger.debug("Using local mirror %s", local_mirror)
+            esg_property_manager.set_property("esg.dist.url", local_mirror)
+            return
+    except ConfigParser.NoOptionError:
+        pass
+
+    try:
         if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:
             return
         elif esg_property_manager.get_property("esg.dist.url") == "fastest":
@@ -130,7 +128,7 @@ def check_selected_node_type(node_types, node_type_list):
     ''' Make sure a valid node_type has been selected before performing and install '''
     for option in node_type_list:
         logger.debug("option: %s", option)
-        if option.upper() in node_types.keys():
+        if option.upper() in node_types:
             continue
         else:
             print '''
@@ -138,18 +136,18 @@ def check_selected_node_type(node_types, node_type_list):
                 Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
                 (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
 
-                Ex:  esg-node --set-type data
-                esg-node install
+                Ex:  esg_node.py --set-type data
+                esg_node.py install
 
                 or do so as a single command line:
 
-                Ex:  esg-node --type data install
+                Ex:  esg_node.py --type data install
 
                 Use the --help | -h option for more information
 
                 Note: The type value is recorded upon successfully starting the node.
                 the value is used for subsequent launches so the type value does not have to be
-                always specified.  A simple \"esg-node start\" will launch with the last type used
+                always specified.  A simple \"esg_node.py start\" will launch with the last type used
                 that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
                 (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
                   '''
@@ -178,16 +176,16 @@ def get_installation_type(script_version):
         return "master"
 
 
-def install_log_info():
+def install_log_info(node_type_list):
     if force_install:
         logger.info("(force install is ON)")
-    if node_types["DATA"]:
+    if "DATA" in node_type_list:
         logger.info("(data node type selected)")
-    if node_types["INDEX"]:
+    if "INDEX" in node_type_list:
         logger.info("(index node type selected)")
-    if node_types["IDP"]:
+    if "IDP" in node_type_list:
         logger.info("(idp node type selected)")
-    if node_types["COMPUTE"]:
+    if "COMPUTE" in node_type_list:
         logger.info("(compute node type selected)")
 
 def show_summary():
@@ -223,7 +221,6 @@ def system_component_installation(esg_dist_url, node_type_list):
     (Only when one setup in the sequence is okay can we move to the next)
     '''
     if "INSTALL" in node_type_list:
-        #TODO: check status of base components; if all running, skip setup
         esg_java.setup_java()
         esg_java.setup_ant()
         esg_postgres.setup_postgres()
@@ -266,11 +263,10 @@ def system_component_installation(esg_dist_url, node_type_list):
         idp.setup_slcs()
 
 
-    esg_functions.update_fileupload_jar()
-    esg_functions.setup_whitelist_files(esg_dist_url)
+    system_launch(esg_dist_url, node_type_list, script_version, script_release)
 
 
-def done_remark():
+def done_remark(node_type_list):
     '''Prints info to denote that the installation has completed'''
     print "\nFinished!..."
     print "In order to see if this node has been installed properly you may direct your browser to:"
@@ -321,9 +317,12 @@ def setup_esgf_rpm_repo(esg_dist_url):
         parser.write(repo_file_object)
 
 
-def main(node_type_list):
+def main():
     # default distribution_url
     # esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
+
+    node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
+    script_version, script_maj_version, script_release = set_version_info()
 
     # initialize connection
     init_connection()
@@ -332,12 +331,11 @@ def main(node_type_list):
     install_type = get_installation_type(script_version)
     print "install_type:", install_type
 
-    # select_distribution_mirror(install_type)
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)
 
-    cli_info = esg_cli_argument_manager.process_arguments(node_type_list, devel, esg_dist_url)
+    cli_info = esg_cli_argument_manager.process_arguments(devel, esg_dist_url)
     print "cli_info:", cli_info
     if cli_info:
         node_type_list = cli_info
@@ -348,7 +346,6 @@ def main(node_type_list):
         __file__), esg_dist_url, script_version, script_maj_version, devel)
 
     logger.debug("node_type_list: %s", node_type_list)
-    logger.info("node_type_list: %s", node_type_list)
 
     print '''
     -----------------------------------
@@ -365,7 +362,7 @@ def main(node_type_list):
     esg_setup.init_structure()
 
     # log info
-    install_log_info()
+    install_log_info(node_type_list)
 
     esg_questionnaire.initial_setup_questionnaire()
 
@@ -373,7 +370,7 @@ def main(node_type_list):
 
     # install dependencies
     system_component_installation(esg_dist_url, node_type_list)
-    done_remark()
+
 
 def sanity_check_web_xmls():
     '''Editing web.xml files for projects who use the authorizationService'''
@@ -439,58 +436,78 @@ def setup_root_app(esg_dist_url_root):
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
         print "ROOT application \"installed\""
 
+def clear_tomcat_cache():
+    try:
+        cache_directories = glob.glob("/usr/local/tomcat/work/Catalina/localhost/*")
+        for directory in cache_directories:
+            shutil.rmtree(directory)
+        print "Cleared tomcat cache... "
+    except OSError, error:
+        logger.exception(error)
 
-def system_launch(esg_dist_url_root):
+def remove_unused_esgf_webapps():
+    '''Hard coded to remove node manager, desktop and dashboard'''
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-desktop")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
+    try:
+        shutil.rmtree("/usr/local/tomcat/webapps/esgf-dashboard")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+
+def install_bash_completion_file(esg_dist_url):
+    if os.path.exists("/etc/bash_completion") and not os.path.exists("/etc/bash_completion.d/esg-node"):
+        esg_functions.download_update("/etc/bash_completion.d/esg-node", "{}/esgf-installer/esg-node.completion".format(esg_dist_url))
+
+def write_script_version_file(script_version):
+    with open(os.path.join(config["esg_root_dir"], "version"), "w") as version_file:
+        version_file.write(script_version)
+
+def system_launch(esg_dist_url, node_type_list):
     #---------------------------------------
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
-    setup_root_app(esg_dist_url_root)
-    #     [ -e "${tomcat_install_dir}/work/Catalina/localhost" ] && rm -rf ${tomcat_install_dir}/work/Catalina/localhost/* && echo "Cleared tomcat cache... "
-    # # Hard coded to remove node manager, desktop and dashboard
-    # rm -rf /usr/local/tomcat/webapps/esgf-node-manager
-    # rm -rf /usr/local/tomcat/webapps/esgf-desktop
-    # rm -rf /usr/local/tomcat/webapps/esgf-dashboard
-    # #fix for sensible values for conf files post node-manager removal
-    # setup_sensible_confs
-    #     start ${sel}
-    #     install_bash_completion_file
-    #     done_remark
-    #     echo "${script_version}" > ${esg_root_dir}/version
-    #     echo "${script_version}"
-    #     echo
-    #     write_as_property version ${script_version}
-    #     write_as_property release ${script_release}
+    setup_root_app()
+    clear_tomcat_cache()
+    remove_unused_esgf_webapps()
+
+    esg_functions.update_fileupload_jar()
+    esg_functions.setup_whitelist_files(esg_dist_url)
+
+    esg_cli_argument_manager.start(node_type_list)
+    install_bash_completion_file(esg_dist_url)
+    done_remark(node_type_list)
+    write_script_version_file(script_version)
+    print script_version
+
+    esg_property_manager.set_property("version", script_version)
+    esg_property_manager.set_property("release", script_release)
+
+    esg_property_manager.set_property("activate_conda", "source /usr/local/conda/bin/activate esgf-pub", config_file=config["envfile"], section_name="esgf.env")
     #     write_as_property gridftp_config
-    #     echo 'source /usr/local/conda/bin/activate esgf-pub' >> ${envfile}
-    #
-    #     esg_node_finally
-    # }
-    #
-    # esg_node_finally() {
-    #     debug_print "(esg_datanode: cleaning up etc...)"
-    #     chown -R ${installer_uid}:${installer_gid} ${X509_CERT_DIR} >& /dev/null
-    #
-    # if [ $((sel & IDP_BIT)) != 0 ]; then
-    # export PGPASSWORD=${pg_sys_acct_passwd}
-    #
-    # echo Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard.
-    # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
-    #     echo "Node installation is complete."
-    # fi
-    # if [ -p /tmp/outputpipe ]; then
-    #     echo "Installer ran to completion. Now cleaning up. There will be a 'Killed' message in your setup-autoinstall terminal, which is not a cause for concern." >/tmp/outputpipe;
-    # fi
-    #
-    # #exec 1>&3 3>&- 2>&4 4>&-
-    # #wait $tpid
-    # #rm $OUTPUT_PIPE
-    #
-    #
-    #     exit 0
-    # }
-    pass
+    esg_node_finally(node_type_list)
+
+def esg_node_finally(node_type_list):
+    global_x509_cert_dir = "/etc/grid-security/certificates"
+    esg_functions.change_ownership_recursive(global_x509_cert_dir, config["installer_uid"], config["installer_gid"])
+
+    if "IDP" in node_type_list:
+        os.environ["PGPASSWORD"] = esg_functions.get_postgres_password()
+        print "Writing additional settings to db.  If these settings already exist, psql will report an error, but ok to disregard."
+        # psql -U dbsuper -c "insert into esgf_security.permission values (1, 1, 1, 't'); insert into esgf_security.role values (6, 'user', 'User Data Access');" esgcet
+        #     echo "Node installation is complete."
 
 
 if __name__ == '__main__':
-    main(node_type_list)
+    main()

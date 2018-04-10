@@ -1,0 +1,41 @@
+ESGF Certificate Management
+******************************************
+
+
+If you wish to extend your temporary CA certificate (for standalone testing only):
+``esg_node.py --update-temp-ca``
+
+If you want to install a commercial CA issued certificate:
+``esg_node.py --install-keypair <certificate file> <key file>``
+
+When prompted for the cachain file, specify the chain file provided by your CA
+
+If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
+``esg_node.py --generate-esgf-csrs``
+
+If you wish to generate CSRs for a node other than the one you are running, you could use
+``esg_node.py --generate-esgf-csrs-ext``
+
+If you wish to install ESGF certificates:
+
+1. untar the entire contents of the tarball you received from Prashanth into /etc/esgfcerts
+
+2. ``esg_node.py --install-local-certs``
+
+3. If you also have locally issued certificates for the webcontainer:
+   ``esg_node.py --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem``
+
+   When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem
+
+4. If you have certificates for your webcontainer, issued by a commercial CA, ensure you have the following:
+
+   a. Certificate and key files
+   b. CA chain file.
+
+   Ensure that your CA chain file is complete with this command:
+   ``openssl verify -verbose -purpose sslserver -CAfile <cachainfile> <certificate file>``
+
+   You should simply get a one line response that looks like this:
+   <certificate file: OK>
+
+   If you have errors, your chain file is not complete. Contact your certificate provider for assistance, or email esgf_iwt@llnl.gov with 'Help needed with CA chainfile construction' in the subject line, attaching your public certificate (NOT KEY!!!) and the CA's certificate or the chain file that you have.

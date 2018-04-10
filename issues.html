@@ -25,23 +25,19 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="esgf-installer alpha documentation" href="index.html"/>
-        <link rel="next" title="Contributing to Documentation" href="contribute_docs.html"/>
-        <link rel="prev" title="Base Components" href="api.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing to Documentation" href="contribute_docs.html" />
+    <link rel="prev" title="Base Components" href="api.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -91,6 +87,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -121,7 +119,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">esgf-installer</a>
@@ -129,9 +127,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -160,7 +159,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/issues.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/issues.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -188,7 +187,7 @@ It is possible than an issue affects more than one component, so please add labe
 <p>Once an issue has been resolved in the codebase, the issue should be closed to avoid duplicated work.
 It is a best practice to add the issue number to the commit message when committing the solution code to the repository.
 For example, when committing code to solve issue #3 the commit message can look similar to this:</p>
-<p><code class="docutils literal"><span class="pre">Added</span> <span class="pre">new</span> <span class="pre">awesome</span> <span class="pre">feature;</span> <span class="pre">fixes</span> <span class="pre">#3</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">Added</span> <span class="pre">new</span> <span class="pre">awesome</span> <span class="pre">feature;</span> <span class="pre">fixes</span> <span class="pre">#3</span></code></p>
 <p>That will cause the commit to be linked to the issue.</p>
 <p>Alternatively, the short hash of the commit that fixed the issue can be added as a comment in order to link the solution with the problem statement.</p>
 </div>
@@ -196,9 +195,7 @@ For example, when committing code to solve issue #3 the commit message can look 
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -220,7 +217,7 @@ For example, when committing code to solve issue #3 the commit message can look 
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -239,10 +236,11 @@ For example, when committing code to solve issue #3 the commit message can look 
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'alpha',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
@@ -256,14 +254,13 @@ For example, when committing code to solve issue #3 the commit message can look 
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

@@ -1,0 +1,234 @@
+ESGF Command Line Interface
+******************************************
+
+
+* This program must be run as root or a root equiv shell: (sudo -s)
+* Deprecated flags are in $(echo_fail red), and followed by an \"*\".
+
+esg_node.py ([--<directive>] | [start] | [stop] | [status] | [restart]
+
+--install     - goes through the installation process
+                will automatically start up node services
+--verify      - runs the test code to verify installation
+--write-env   - writes the necessary env vars to /etc/esg.env
+--version     - indicates the version of this script
+--check       - checks if this script is the most up-to-date posted <u|c|X> (Update|Continue|eXit)
+--clear       - removes the file holding the environment state of last install
+--test-pub    - performs the publication test directly (same publication called in last step of install)
+--info        - provides a brief explanation of the DataNode
+--update      - updates the node manager
+--force       - will allow execution of installation|update code to be executed beyond the up2date checks.
+                Basically allowing an installation|update as if starting from scratch.
+
+-------------------------------
+Configuration Type Selection
+-------------------------------
+--type, -t <data &| index &| idp &| compute> - Select type of node:
+    \"data\" node,
+    \"index\" node,
+    \"idp\" (identity provider) node and/or
+    \"compute\" node
+    (note: there is no default one must be selected at least initially...
+        when in doubt use \"data\")
+--set-type  <data &| index &| idp &| compute> - Sets the type value to be used at next start up
+--get-type - returns the last stored type code value of the last run node configuration
+             (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
+
+-------------------------------
+Federation / Node Relationship Flags:
+-------------------------------
+--set-default-peer <hostname of peer to be default>
+--get-default-peer - tells you this node's currently configured default peer
+--set-peer-group <name of group(s), comma delim, you wish to participate>
+--get-peer-group - tells you this node's currenly configured peer group(s)
+--federation-sanity-check - tells you if your node's configured peer groups intersect with default peer
+--spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
+
+-------------------------------
+Security Policy...
+-------------------------------
+--policy-check <resource string> - returns the list of policies that are triggered by the provided resource
+
+-------------------------------
+Index (search) Utils...
+-------------------------------
+--optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
+--crawl - ingest remote catalogs and their descendants into local index for searching.
+--add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
+--remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
+--list-shards  - shows list of registered local replica indexes
+--init-shards  - adds all shards listed in the replica shard configuration file
+--check-shards - checks the configuration for local replica indexes
+--time-shards  - cycles through all known index shards providing query times for each
+                 [-show-local] will show timing information for locally replicated shards
+                 [-timeout <seconds>] will set the connection timeout value (in seconds)
+--update-publisher-resources - update local repository of publication schemas et al.
+
+-------------------------------
+Publication Endpoint Setting (Index Peer)
+-------------------------------
+--set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi.llnl.gov
+--get-index-peer - tells you where this node is indexing it's data
+
+-------------------------------
+IDP Endpoint Setting (IDP Peer)
+-------------------------------
+--set-idp-peer | --set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
+--get-idp-peer - tells you where this node is authenticating against.
+
+-------------------------------
+Globus Tool Management
+-------------------------------
+--no-globus   - will not perform any operations affecting globus tools (for those with existing globus setups)
+--gridftp-config - [ bdm &| end-user ] (defaults to both)
+--myproxy - [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
+
+-------------------------------
+Key Management Flags:
+-------------------------------
+--register    - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
+--migrate-tomcat-credentials-to-esgf - moves credentials and supporting security files under {esg_config_dir}
+--generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
+                             (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN={esgf_host}')
+
+   command> $(echo_c -fg magenta "esg_node.py --generate-ssl-key-and-csr {tomcat_conf_dir}/{esgf_host}-esg-node.csr {tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN={esgf_host}")
+
+--install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
+--fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
+--rebuild-truststore - converts globus' (public) ca certificates into a truststore.
+--add-my-cert-to-truststore - adds public cert from keystore to truststore:
+                     (secondary flags for this option)
+                     --keystore | -ks <keystore file>
+                     --keystore-pass | -kpass <keystore password>
+                     --alias | -a <keystore alias>
+                     --truststore | -ts <truststore file>
+                     --truststore-pass | tpass <truststore password>
+--clear-certs - removes the user-level public certificates' directory (used by myproxy)
+--check-certs - checks both SSL private certificate and Globus private cert for expiration
+--set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup
+
+
+--dname - specify the certificate distinguished name to be used when creating certificates
+          (the DN value is of the form: \"CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
+--keystore-password - sets the password to use for the java keystore - default is the node password.
+--keystore-alias - the alias that is associated with the public cert in the keystore
+--keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat
+
+(misc. globus related)
+--simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.
+
+-------------------------------
+Database Management
+-------------------------------
+--config-db    - provides database only configuration to support based on note type (see --get-type)
+--backup-db    - creates a backup of node database to file
+                 the prefix for all schemas provided is \"esgf_\" Ex: -s foo will reference schema esgf_foo
+                 [-s|--schema] <schema suffix>
+                 [-db|--database] <database name>
+--restore-db   - restores from (nth) backup of database
+                 [-n] <the nth backup> (default is n=1 or the last / most recent backup, 1 <= n <= 7)
+                 [-s|--schema] <schema suffix>
+                 [-db|--database] <database name>
+
+-------------------------------
+Trouble Shooting
+-------------------------------
+--verify-thredds-credentials - if there is a thredds/publisher \"re-init\" issue this will fix it
+
+-------------------------------
+Other
+-------------------------------
+--shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node
+
+-------------------------------
+Node Life Cycle Flags:
+-------------------------------
+start   - start the node's services
+stop    - stops the node's services
+status  - status on node's services
+restart - restarts the node's services (calls stop then start :-/)
+update  - update's the node's software stack to prescribed versions
+(notice, no \"--\" flag prefix to make rc friendly also chkconfig-able ;-)
+
+-------------------------------
+To add this script to the linux boot sequence: (as root)
+> cd /etc/init.d
+> cp ${install_prefix}/bin/esg_node.py .
+> chkconfig --add esg_node.py
+> chkconfig --list esg_node.py
+-------------------------------
+
+
+\"stop\" | \"start\" | \"status\" are meant to be run independent of other flags (and put LAST if other flags are used)
+\"--install\" may be used with \"--verify\" but neither are not intended for use
+with stop or start or status
+Ex:
+esg_node.py --install OR
+esg_node.py --verify OR
+esg_node.py --install --verify  OR
+esg_node.py --write-env OR
+esg_node.py --version OR
+esg_node.py --clear OR
+esg_node.py --test-pub OR
+esg_node.py --info OR
+esg_node.py --register [hostname of node] ([truststore passwd])
+esg_node.py --gridftp-config [ bdm &| end-user ]
+esg_node.py start OR
+esg_node.py --gridftp-config [ bdm &| end-user ] start OR
+esg_node.py stop  OR
+esg_node.py status OR
+
+NOTE:
+
+*You must be root or effectively root to run this program,
+*prefixing the command with sudo will not allow the use of
+*needed environment variables!!!! If you must use sudo, do so
+*only to become root proper then source your user's .[bash]rc
+*file so that root has it's environment set accordingly!  Or you
+*can more simply become root using sudo's \"-s\" flag.  After a
+*full install there will be a file created (/etc/esg.env) that has
+*the basic environment vars that were used and set during the
+*installation - this should be sourced by users of this
+*application stack.
+
+--------------
+Key Environment Vars:
+--------------
+
+The following variables are written to the $(echo_ok /etc/esg.env) file
+which sets up the installation environment.  The 'OFFICIAL'
+names (not the [common_names]) should be used in that file.
+
+(Nomenclature: OFFICIAL_ENV_VARIABLE_NAME [common_name] : either can be set; common name overrules)
+
+$(echo_ok ESGF_HOME) [esg_root_dir]
+            The location where configuration files are kept (the node's state)
+            (default - /esg  currently:$esg_root_dir)
+$(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]
+            Top level directory where core node artifacts are installed
+            (default - /usr/local - currently:$install_prefix)
+$(echo_ok ESGF_INSTALL_WORKDIR) [workdir]
+            Top level directory where core node artifacts are downloaded and built
+            (default - \$ESGF_USER_HOME/workbench/esg  - currently:$workdir)
+
+$(echo_strong ESGF_USER_HOME) [installer_home]
+            Directory where the installation user's home directory is.
+            Here for historical reasons when this user's home was used to download and build artifacts.
+            It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
+            (default - /usr/local/src/esgf  - currently:$installer_home)
+
+--------------
+Typical usage:
+--------------
+
+Installation : esg_node.py --install --verify
+    (submit csr and get back returned cert)
+Credentials  : esg_node.py --install-ssl-keypair <pub_cert> <priv_key>
+Test Publish : esg_node.py --test-pub
+Update Certs : esg_node.py [--force] --rebuild-truststore
+Life Cycle   : esg_node.py [start|stop|status|restart|update]
+
+ ___ ___  ___ ___
+| __/ __|/ __| __|
+| _|\__ \ (_ | _|
+|___|___/\___|_|

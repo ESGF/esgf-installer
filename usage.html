@@ -25,23 +25,19 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="esgf-installer alpha documentation" href="index.html"/>
-        <link rel="next" title="Base Components" href="api.html"/>
-        <link rel="prev" title="ESGF Certificate Management" href="cert_howto.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Base Components" href="api.html" />
+    <link rel="prev" title="ESGF Certificate Management" href="cert_howto.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -95,8 +91,8 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">ESGF Command Line Interface</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-type-selection">Configuration Type Selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#federation-node-relationship-flags">Federation / Node Relationship Flags:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#security-policy">Security Policy...</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#index-search-utils">Index (search) Utils...</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#security-policy">Security Policy…</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#index-search-utils">Index (search) Utils…</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#publication-endpoint-setting-index-peer">Publication Endpoint Setting (Index Peer)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#idp-endpoint-setting-idp-peer">IDP Endpoint Setting (IDP Peer)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#globus-tool-management">Globus Tool Management</a></li>
@@ -135,7 +131,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">esgf-installer</a>
@@ -143,9 +139,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -174,7 +171,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/usage.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -191,9 +188,9 @@
 <h1>ESGF Command Line Interface<a class="headerlink" href="#esgf-command-line-interface" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li>This program must be run as root or a root equiv shell: (sudo -s)</li>
-<li>Deprecated flags are in $(echo_fail red), and followed by an &#8220;<a href="#id1"><span class="problematic" id="id2">*</span></a>&#8221;.</li>
+<li>Deprecated flags are in $(echo_fail red), and followed by an “<a href="#id1"><span class="problematic" id="id2">*</span></a>”.</li>
 </ul>
-<p>esg_node.py ([&#8211;&lt;directive&gt;] | [start] | [stop] | [status] | [restart]</p>
+<p>esg_node.py ([–&lt;directive&gt;] | [start] | [stop] | [status] | [restart]</p>
 <table class="docutils option-list" frame="void" rules="none">
 <col class="option" />
 <col class="description" />
@@ -265,14 +262,14 @@
 <div class="section" id="configuration-type-selection">
 <h2>Configuration Type Selection<a class="headerlink" href="#configuration-type-selection" title="Permalink to this headline">¶</a></h2>
 <dl class="docutils">
-<dt>&#8211;type | -t &lt;data &amp;| index &amp;| idp &amp;| compute&gt; - Select type of node:</dt>
-<dd><p class="first">&#8220;data&#8221; node,
-&#8220;index&#8221; node,
-&#8220;idp&#8221; (identity provider) node and/or
-&#8220;compute&#8221; node
-(note: there is no default one must be selected at least initially...</p>
+<dt>–type, -t &lt;data &amp;| index &amp;| idp &amp;| compute&gt; - Select type of node:</dt>
+<dd><p class="first">“data” node,
+“index” node,
+“idp” (identity provider) node and/or
+“compute” node
+(note: there is no default one must be selected at least initially…</p>
 <blockquote class="last">
-<div>when in doubt use &#8220;data&#8221;)</div></blockquote>
+<div>when in doubt use “data”)</div></blockquote>
 </dd>
 </dl>
 <table class="docutils option-list" frame="void" rules="none">
@@ -284,46 +281,48 @@
 <td>&lt;data &amp;| index &amp;| idp &amp;| compute&gt; - Sets the type value to be used at next start up</td></tr>
 </tbody>
 </table>
-<p>&#8211;get-type - returns the last stored type code value of the last run node configuration
-(note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)</p>
+<dl class="docutils">
+<dt>–get-type - returns the last stored type code value of the last run node configuration</dt>
+<dd>(note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)</dd>
+</dl>
 </div>
 <div class="section" id="federation-node-relationship-flags">
 <h2>Federation / Node Relationship Flags:<a class="headerlink" href="#federation-node-relationship-flags" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;set-default-peer &lt;hostname of peer to be default&gt;
-&#8211;get-default-peer - tells you this node&#8217;s currently configured default peer
-&#8211;set-peer-group &lt;name of group(s), comma delim, you wish to participate&gt;
-&#8211;get-peer-group - tells you this node&#8217;s currenly configured peer group(s)
-&#8211;federation-sanity-check - tells you if your node&#8217;s configured peer groups intersect with default peer
-&#8211;spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)</p>
+<p>–set-default-peer &lt;hostname of peer to be default&gt;
+–get-default-peer - tells you this node’s currently configured default peer
+–set-peer-group &lt;name of group(s), comma delim, you wish to participate&gt;
+–get-peer-group - tells you this node’s currenly configured peer group(s)
+–federation-sanity-check - tells you if your node’s configured peer groups intersect with default peer
+–spotcheck - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)</p>
 </div>
 <div class="section" id="security-policy">
-<h2>Security Policy...<a class="headerlink" href="#security-policy" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;policy-check &lt;resource string&gt; - returns the list of policies that are triggered by the provided resource</p>
+<h2>Security Policy…<a class="headerlink" href="#security-policy" title="Permalink to this headline">¶</a></h2>
+<p>–policy-check &lt;resource string&gt; - returns the list of policies that are triggered by the provided resource</p>
 </div>
 <div class="section" id="index-search-utils">
-<h2>Index (search) Utils...<a class="headerlink" href="#index-search-utils" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;optimize-index [&#8211;force] - optimizes search index for &#8220;index&#8221; nodes (must be called local to index node)
-&#8211;crawl - ingest remote catalogs and their descendants into local index for searching.
-&#8211;add-replica-shard  &lt;host&gt;[:&lt;port&gt;] - creates a local replica index of the index at the given &lt;host&gt; mapping to local &lt;port&gt;
-&#8211;remove-replica-shard &lt;host&gt;[:&lt;port&gt;] - removes the local replica index bound to &lt;port&gt; named by &lt;host&gt;
-&#8211;list-shards  - shows list of registered local replica indexes
-&#8211;init-shards  - adds all shards listed in the replica shard configuration file
-&#8211;check-shards - checks the configuration for local replica indexes
-&#8211;time-shards  - cycles through all known index shards providing query times for each</p>
+<h2>Index (search) Utils…<a class="headerlink" href="#index-search-utils" title="Permalink to this headline">¶</a></h2>
+<p>–optimize-index [–force] - optimizes search index for “index” nodes (must be called local to index node)
+–crawl - ingest remote catalogs and their descendants into local index for searching.
+–add-replica-shard  &lt;host&gt;[:&lt;port&gt;] - creates a local replica index of the index at the given &lt;host&gt; mapping to local &lt;port&gt;
+–remove-replica-shard &lt;host&gt;[:&lt;port&gt;] - removes the local replica index bound to &lt;port&gt; named by &lt;host&gt;
+–list-shards  - shows list of registered local replica indexes
+–init-shards  - adds all shards listed in the replica shard configuration file
+–check-shards - checks the configuration for local replica indexes
+–time-shards  - cycles through all known index shards providing query times for each</p>
 <blockquote>
 <div>[-show-local] will show timing information for locally replicated shards
 [-timeout &lt;seconds&gt;] will set the connection timeout value (in seconds)</div></blockquote>
-<p>&#8211;update-publisher-resources - update local repository of publication schemas et al.</p>
+<p>–update-publisher-resources - update local repository of publication schemas et al.</p>
 </div>
 <div class="section" id="publication-endpoint-setting-index-peer">
 <h2>Publication Endpoint Setting (Index Peer)<a class="headerlink" href="#publication-endpoint-setting-index-peer" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;set-index-peer &lt;hostname of the index peer you wish to publish to&gt; Ex: pcmdi.llnl.gov
-&#8211;get-index-peer - tells you where this node is indexing it&#8217;s data</p>
+<p>–set-index-peer &lt;hostname of the index peer you wish to publish to&gt; Ex: pcmdi.llnl.gov
+–get-index-peer - tells you where this node is indexing it’s data</p>
 </div>
 <div class="section" id="idp-endpoint-setting-idp-peer">
 <h2>IDP Endpoint Setting (IDP Peer)<a class="headerlink" href="#idp-endpoint-setting-idp-peer" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;set-idp-peer | &#8211;set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
-&#8211;get-idp-peer - tells you where this node is authenticating against.</p>
+<p>–set-idp-peer | –set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
+–get-idp-peer - tells you where this node is authenticating against.</p>
 </div>
 <div class="section" id="globus-tool-management">
 <h2>Globus Tool Management<a class="headerlink" href="#globus-tool-management" title="Permalink to this headline">¶</a></h2>
@@ -339,8 +338,8 @@
 </td></tr>
 </tbody>
 </table>
-<p>&#8211;gridftp-config - [ bdm &amp;| end-user ] (defaults to both)
-&#8211;myproxy - [gen-self-cert] &lt;dir&gt; | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]</p>
+<p>–gridftp-config - [ bdm &amp;| end-user ] (defaults to both)
+–myproxy - [gen-self-cert] &lt;dir&gt; | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]</p>
 </div>
 <div class="section" id="key-management-flags">
 <h2>Key Management Flags:<a class="headerlink" href="#key-management-flags" title="Permalink to this headline">¶</a></h2>
@@ -356,36 +355,36 @@
 </td></tr>
 </tbody>
 </table>
-<p>&#8211;migrate-tomcat-credentials-to-esgf - moves credentials and supporting security files under {esg_config_dir}
-&#8211;generate-ssl-key-and-csr - generate new key and cert request files &lt;pub_cert file&gt; &lt;priv_key file&gt; [&lt;dn&gt;]</p>
+<p>–migrate-tomcat-credentials-to-esgf - moves credentials and supporting security files under {esg_config_dir}
+–generate-ssl-key-and-csr - generate new key and cert request files &lt;pub_cert file&gt; &lt;priv_key file&gt; [&lt;dn&gt;]</p>
 <blockquote>
 <div><blockquote>
-<div>(The &#8216;dn&#8217; value is of the form - Ex:&#8217;/O=ESG/OU=ESGF.ORG/CN={esgf_host}&#8217;)</div></blockquote>
-<p>command&gt; $(echo_c -fg magenta &#8220;esg_node.py &#8211;generate-ssl-key-and-csr {tomcat_conf_dir}/{esgf_host}-esg-node.csr {tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN={esgf_host}&#8221;)</p>
+<div>(The ‘dn’ value is of the form - Ex:’/O=ESG/OU=ESGF.ORG/CN={esgf_host}’)</div></blockquote>
+<p>command&gt; $(echo_c -fg magenta “esg_node.py –generate-ssl-key-and-csr {tomcat_conf_dir}/{esgf_host}-esg-node.csr {tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN={esgf_host}”)</p>
 </div></blockquote>
-<p>&#8211;install-ssl-keypair - takes as input private key and public cert files and installs them. [&lt;pub_cert&gt; [&lt;priv_key&gt; [&lt;keystore&gt; &lt;alias&gt; &lt;password&gt;]]]
-&#8211;fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
-&#8211;rebuild-truststore - converts globus&#8217; (public) ca certificates into a truststore.
-&#8211;add-my-cert-to-truststore - adds public cert from keystore to truststore:</p>
+<p>–install-ssl-keypair - takes as input private key and public cert files and installs them. [&lt;pub_cert&gt; [&lt;priv_key&gt; [&lt;keystore&gt; &lt;alias&gt; &lt;password&gt;]]]
+–fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
+–rebuild-truststore - converts globus’ (public) ca certificates into a truststore.
+–add-my-cert-to-truststore - adds public cert from keystore to truststore:</p>
 <blockquote>
 <div>(secondary flags for this option)
-&#8211;keystore | -ks &lt;keystore file&gt;
-&#8211;keystore-pass | -kpass &lt;keystore password&gt;
-&#8211;alias | -a &lt;keystore alias&gt;
-&#8211;truststore | -ts &lt;truststore file&gt;
-&#8211;truststore-pass | tpass &lt;truststore password&gt;</div></blockquote>
-<p>&#8211;clear-certs - removes the user-level public certificates&#8217; directory (used by myproxy)
-&#8211;check-certs - checks both SSL private certificate and Globus private cert for expiration
-&#8211;set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup</p>
+–keystore | -ks &lt;keystore file&gt;
+–keystore-pass | -kpass &lt;keystore password&gt;
+–alias | -a &lt;keystore alias&gt;
+–truststore | -ts &lt;truststore file&gt;
+–truststore-pass | tpass &lt;truststore password&gt;</div></blockquote>
+<p>–clear-certs - removes the user-level public certificates’ directory (used by myproxy)
+–check-certs - checks both SSL private certificate and Globus private cert for expiration
+–set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup</p>
 <dl class="docutils">
-<dt>&#8211;dname - specify the certificate distinguished name to be used when creating certificates</dt>
-<dd>(the DN value is of the form: &#8220;CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid&#8221;)</dd>
+<dt>–dname - specify the certificate distinguished name to be used when creating certificates</dt>
+<dd>(the DN value is of the form: “CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid”)</dd>
 </dl>
-<p>&#8211;keystore-password - sets the password to use for the java keystore - default is the node password.
-&#8211;keystore-alias - the alias that is associated with the public cert in the keystore
-&#8211;keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat</p>
+<p>–keystore-password - sets the password to use for the java keystore - default is the node password.
+–keystore-alias - the alias that is associated with the public cert in the keystore
+–keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat</p>
 <p>(misc. globus related)
-&#8211;simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.</p>
+–simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.</p>
 </div>
 <div class="section" id="database-management">
 <h2>Database Management<a class="headerlink" href="#database-management" title="Permalink to this headline">¶</a></h2>
@@ -396,7 +395,7 @@
 <tr><td class="option-group">
 <kbd><span class="option">--config-db</span></kbd></td>
 <td><ul class="first last simple">
-<li>provides database only configuration to support based on note type (see &#8211;get-type)</li>
+<li>provides database only configuration to support based on note type (see –get-type)</li>
 </ul>
 </td></tr>
 <tr><td class="option-group">
@@ -404,9 +403,9 @@
 <td><ul class="first simple">
 <li>creates a backup of node database to file</li>
 </ul>
-<p class="last">the prefix for all schemas provided is &#8220;<a href="#id25"><span class="problematic" id="id26">esgf_</span></a>&#8221; Ex: -s foo will reference schema esgf_foo
-[-s|&#8211;schema] &lt;schema suffix&gt;
-[-db|&#8211;database] &lt;database name&gt;</p>
+<p class="last">the prefix for all schemas provided is “<a href="#id25"><span class="problematic" id="id26">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo
+[-s|–schema] &lt;schema suffix&gt;
+[-db|–database] &lt;database name&gt;</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--restore-db</span></kbd></td>
@@ -414,57 +413,57 @@
 <li>restores from (nth) backup of database</li>
 </ul>
 <p class="last">[-n] &lt;the nth backup&gt; (default is n=1 or the last / most recent backup, 1 &lt;= n &lt;= 7)
-[-s|&#8211;schema] &lt;schema suffix&gt;
-[-db|&#8211;database] &lt;database name&gt;</p>
+[-s|–schema] &lt;schema suffix&gt;
+[-db|–database] &lt;database name&gt;</p>
 </td></tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="trouble-shooting">
 <h2>Trouble Shooting<a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;verify-thredds-credentials - if there is a thredds/publisher &#8220;re-init&#8221; issue this will fix it</p>
+<p>–verify-thredds-credentials - if there is a thredds/publisher “re-init” issue this will fix it</p>
 </div>
 <div class="section" id="other">
 <h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
-<p>&#8211;shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node</p>
+<p>–shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node</p>
 </div>
 <div class="section" id="node-life-cycle-flags">
 <h2>Node Life Cycle Flags:<a class="headerlink" href="#node-life-cycle-flags" title="Permalink to this headline">¶</a></h2>
-<p>start   - start the node&#8217;s services
-stop    - stops the node&#8217;s services
-status  - status on node&#8217;s services
-restart - restarts the node&#8217;s services (calls stop then start :-/)
-update  - update&#8217;s the node&#8217;s software stack to prescribed versions
-(notice, no &#8220;&#8211;&#8221; flag prefix to make rc friendly also chkconfig-able ;-)</p>
+<p>start   - start the node’s services
+stop    - stops the node’s services
+status  - status on node’s services
+restart - restarts the node’s services (calls stop then start :-/)
+update  - update’s the node’s software stack to prescribed versions
+(notice, no “–” flag prefix to make rc friendly also chkconfig-able ;-)</p>
 <p>&gt; cp ${install_prefix}/bin/esg_node.py .
-&gt; chkconfig &#8211;add esg_node.py
-&gt; chkconfig &#8211;list esg_node.py
-&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;-</p>
-<p>&#8220;stop&#8221; | &#8220;start&#8221; | &#8220;status&#8221; are meant to be run independent of other flags (and put LAST if other flags are used)
-&#8220;&#8211;install&#8221; may be used with &#8220;&#8211;verify&#8221; but neither are not intended for use
+&gt; chkconfig –add esg_node.py
+&gt; chkconfig –list esg_node.py
+——————————-</p>
+<p>“stop” | “start” | “status” are meant to be run independent of other flags (and put LAST if other flags are used)
+“–install” may be used with “–verify” but neither are not intended for use
 with stop or start or status
 Ex:
-esg_node.py &#8211;install OR
-esg_node.py &#8211;verify OR
-esg_node.py &#8211;install &#8211;verify  OR
-esg_node.py &#8211;write-env OR
-esg_node.py &#8211;version OR
-esg_node.py &#8211;clear OR
-esg_node.py &#8211;test-pub OR
-esg_node.py &#8211;info OR
-esg_node.py &#8211;register [hostname of node] ([truststore passwd])
-esg_node.py &#8211;gridftp-config [ bdm &amp;| end-user ]
+esg_node.py –install OR
+esg_node.py –verify OR
+esg_node.py –install –verify  OR
+esg_node.py –write-env OR
+esg_node.py –version OR
+esg_node.py –clear OR
+esg_node.py –test-pub OR
+esg_node.py –info OR
+esg_node.py –register [hostname of node] ([truststore passwd])
+esg_node.py –gridftp-config [ bdm &amp;| end-user ]
 esg_node.py start OR
-esg_node.py &#8211;gridftp-config [ bdm &amp;| end-user ] start OR
+esg_node.py –gridftp-config [ bdm &amp;| end-user ] start OR
 esg_node.py stop  OR
 esg_node.py status OR</p>
 <p>NOTE:</p>
 <p><a href="#id3"><span class="problematic" id="id4">*</span></a>You must be root or effectively root to run this program,
 <a href="#id5"><span class="problematic" id="id6">*</span></a>prefixing the command with sudo will not allow the use of
 <a href="#id7"><span class="problematic" id="id8">*</span></a>needed environment variables!!!! If you must use sudo, do so
-<a href="#id9"><span class="problematic" id="id10">*</span></a>only to become root proper then source your user&#8217;s .[bash]rc
-<a href="#id11"><span class="problematic" id="id12">*</span></a>file so that root has it&#8217;s environment set accordingly!  Or you
-<a href="#id13"><span class="problematic" id="id14">*</span></a>can more simply become root using sudo&#8217;s &#8220;-s&#8221; flag.  After a
+<a href="#id9"><span class="problematic" id="id10">*</span></a>only to become root proper then source your user’s .[bash]rc
+<a href="#id11"><span class="problematic" id="id12">*</span></a>file so that root has it’s environment set accordingly!  Or you
+<a href="#id13"><span class="problematic" id="id14">*</span></a>can more simply become root using sudo’s “-s” flag.  After a
 <a href="#id15"><span class="problematic" id="id16">*</span></a>full install there will be a file created (/etc/esg.env) that has
 <a href="#id17"><span class="problematic" id="id18">*</span></a>the basic environment vars that were used and set during the
 <a href="#id19"><span class="problematic" id="id20">*</span></a>installation - this should be sourced by users of this
@@ -473,12 +472,12 @@ esg_node.py status OR</p>
 <div class="section" id="key-environment-vars">
 <h2>Key Environment Vars:<a class="headerlink" href="#key-environment-vars" title="Permalink to this headline">¶</a></h2>
 <p>The following variables are written to the $(echo_ok /etc/esg.env) file
-which sets up the installation environment.  The &#8216;OFFICIAL&#8217;
+which sets up the installation environment.  The ‘OFFICIAL’
 names (not the [common_names]) should be used in that file.</p>
 <p>(Nomenclature: OFFICIAL_ENV_VARIABLE_NAME [common_name] : either can be set; common name overrules)</p>
 <dl class="docutils">
 <dt>$(echo_ok ESGF_HOME) [esg_root_dir]</dt>
-<dd>The location where configuration files are kept (the node&#8217;s state)
+<dd>The location where configuration files are kept (the node’s state)
 (default - /esg  currently:$esg_root_dir)</dd>
 <dt>$(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]</dt>
 <dd>Top level directory where core node artifacts are installed
@@ -487,8 +486,8 @@ names (not the [common_names]) should be used in that file.</p>
 <dd>Top level directory where core node artifacts are downloaded and built
 (default - $ESGF_USER_HOME/workbench/esg  - currently:$workdir)</dd>
 <dt>$(echo_strong ESGF_USER_HOME) [installer_home]</dt>
-<dd>Directory where the installation user&#8217;s home directory is.
-Here for historical reasons when this user&#8217;s home was used to download and build artifacts.
+<dd>Directory where the installation user’s home directory is.
+Here for historical reasons when this user’s home was used to download and build artifacts.
 It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
 (default - /usr/local/src/esgf  - currently:$installer_home)</dd>
 </dl>
@@ -496,12 +495,12 @@ It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
 <div class="section" id="typical-usage">
 <h2>Typical usage:<a class="headerlink" href="#typical-usage" title="Permalink to this headline">¶</a></h2>
 <dl class="docutils">
-<dt>Installation</dt>
- <span class="classifier-delimiter">:</span> <span class="classifier">esg_node.py &#8211;install &#8211;verify</span><dd>(submit csr and get back returned cert)</dd>
+<dt>Installation <span class="classifier-delimiter">:</span> <span class="classifier">esg_node.py –install –verify</span></dt>
+<dd>(submit csr and get back returned cert)</dd>
 </dl>
-<p>Credentials  : esg_node.py &#8211;install-ssl-keypair &lt;pub_cert&gt; &lt;priv_key&gt;
-Test Publish : esg_node.py &#8211;test-pub
-Update Certs : esg_node.py [&#8211;force] &#8211;rebuild-truststore
+<p>Credentials  : esg_node.py –install-ssl-keypair &lt;pub_cert&gt; &lt;priv_key&gt;
+Test Publish : esg_node.py –test-pub
+Update Certs : esg_node.py [–force] –rebuild-truststore
 Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
 <blockquote>
 <div>___ ___  ___ ___</div></blockquote>
@@ -515,9 +514,7 @@ Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -539,7 +536,7 @@ Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -558,10 +555,11 @@ Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'alpha',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
@@ -575,14 +573,13 @@ Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

@@ -25,23 +25,19 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="esgf-installer alpha documentation" href="index.html"/>
-        <link rel="next" title="Base Components" href="api.html"/>
-        <link rel="prev" title="Welcome to esgf-installer’s documentation!" href="index.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ESGF Certificate Management" href="cert_howto.html" />
+    <link rel="prev" title="Welcome to esgf-installer’s documentation!" href="index.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -91,6 +87,8 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#autoinstaller">Autoinstaller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -117,7 +115,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">esgf-installer</a>
@@ -125,9 +123,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -156,7 +155,7 @@
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/installation.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -172,13 +171,13 @@
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <ol class="arabic simple">
-<li>Clone this repo using <code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/ESGF/esgf-installer.git</span></code></li>
-<li>Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: <code class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">tags/v3.0.0-alpha-release</span> <span class="pre">-b</span> <span class="pre">3.0_alpha</span></code>.
+<li>Clone this repo using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/ESGF/esgf-installer.git</span></code></li>
+<li>Checkout the appropriate branch/tag. For example, the 3.0 alpha version can be accessed with the following command: <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">tags/v3.0.0-alpha-release</span> <span class="pre">-b</span> <span class="pre">3.0_alpha</span></code>.
 This will checkout out the alpha release tag and create a new branch called 3.0_alpha</li>
-<li>If Miniconda has not been installed, install Miniconda and other ESGF dependencies from yum and pip by running the <code class="docutils literal"><span class="pre">esg_bootstrap.sh</span></code> script</li>
-<li>Activate the esgf-pub conda environment using <code class="docutils literal"><span class="pre">source</span> <span class="pre">/usr/local/conda/bin/activate</span> <span class="pre">esgf-pub</span></code></li>
-<li>Run an installation by invoking the <code class="docutils literal"><span class="pre">esg_node.py</span></code> script.
-Example: <code class="docutils literal"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
+<li>If Miniconda has not been installed, install Miniconda and other ESGF dependencies from yum and pip by running the <code class="docutils literal notranslate"><span class="pre">esg_bootstrap.sh</span></code> script</li>
+<li>Activate the esgf-pub conda environment using <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/usr/local/conda/bin/activate</span> <span class="pre">esgf-pub</span></code></li>
+<li>Run an installation by invoking the <code class="docutils literal notranslate"><span class="pre">esg_node.py</span></code> script.
+Example: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
 </ol>
 </div>
 <div class="section" id="autoinstaller">
@@ -186,22 +185,20 @@ Example: <code class="docutils literal"><span class="pre">python</span> <span cl
 <p>Instead of answering prompts interactively on the command line, there is an option for configuring a node using a configuration file.</p>
 <ol class="arabic simple">
 <li>Complete steps 1-4 listed above</li>
-<li>Edit the <code class="docutils literal"><span class="pre">`/esg/config/esgf.properties`</span></code> file with your node configuration.</li>
-<li>Run an installation by invoking the <code class="docutils literal"><span class="pre">esg_node.py</span></code> script. Example: <code class="docutils literal"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
+<li>Edit the <code class="docutils literal notranslate"><span class="pre">`/esg/config/esgf.properties`</span></code> file with your node configuration.</li>
+<li>Run an installation by invoking the <code class="docutils literal notranslate"><span class="pre">esg_node.py</span></code> script. Example: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">esg_node.py</span> <span class="pre">--install</span> <span class="pre">--type</span> <span class="pre">data</span></code></li>
 </ol>
 </div>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="Base Components" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="cert_howto.html" class="btn btn-neutral float-right" title="ESGF Certificate Management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral" title="Welcome to esgf-installer’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -217,7 +214,7 @@ Example: <code class="docutils literal"><span class="pre">python</span> <span cl
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -236,10 +233,11 @@ Example: <code class="docutils literal"><span class="pre">python</span> <span cl
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'alpha',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
@@ -253,14 +251,13 @@ Example: <code class="docutils literal"><span class="pre">python</span> <span cl
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

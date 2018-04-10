@@ -25,22 +25,17 @@
   
 
   
-  
     <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-    <link rel="top" title="esgf-installer alpha documentation" href="../index.html"/>
-        <link rel="up" title="Module code" href="index.html"/> 
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -118,7 +113,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">esgf-installer</a>
@@ -126,9 +121,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -157,8 +153,6 @@
     
     
       <li class="wy-breadcrumbs-aside">
-        
-            
         
       </li>
     
@@ -189,8 +183,8 @@
 <span class="kn">from</span> <span class="nn">base</span> <span class="k">import</span> <span class="n">esg_postgres</span>
 
 
-<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="n">__name__</span><span class="p">)</span>
-<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;esgf_logger&quot;</span> <span class="o">+</span><span class="s2">&quot;.&quot;</span><span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
+<span class="n">current_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
 
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_directory</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s1">&#39;esg_config.yaml&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">config_file</span><span class="p">:</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">config_file</span><span class="p">)</span>
@@ -944,7 +938,7 @@
     <span class="c1">#--------------------</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ESGOpenIDRetriever.class&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">globus_location</span><span class="p">,</span> <span class="s2">&quot;bin&quot;</span><span class="p">,</span> <span class="s2">&quot;ESGGroupRetriever&quot;</span><span class="p">)):</span>
         <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/bin&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">globus_location</span><span class="p">)):</span>
-            <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+            <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">))</span>
             <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;ESGOpenIDRetriever.java&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/ESGOpenIDRetriever.java&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_dist_url_base</span><span class="p">))</span>
             <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="s2">&quot;ESGGroupRetriever.java&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/ESGGroupRetriever.java&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_dist_url_base</span><span class="p">))</span>
 
@@ -1081,7 +1075,7 @@
     <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc&quot;</span><span class="p">):</span>
         <span class="n">pgsql_conf_file</span> <span class="o">=</span> <span class="s2">&quot;pam_pgsql.conf&quot;</span>
         <span class="s2">&quot;Download and Modifying pam pgsql configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">)</span>
-        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">))</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/etc_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">))</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">pgsql_conf_file</span><span class="p">,</span> <span class="mi">0600</span><span class="p">)</span>
@@ -1111,7 +1105,7 @@
     <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">):</span>
         <span class="n">mapapp_file</span> <span class="o">=</span> <span class="s2">&quot;myproxy-certificate-mapapp&quot;</span>
         <span class="nb">print</span> <span class="s2">&quot;Downloading configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">)</span>
-        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">))</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">))</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">mapapp_file</span><span class="p">,</span> <span class="mi">0751</span><span class="p">)</span>
@@ -1121,7 +1115,7 @@
     <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/etc/pam.d&quot;</span><span class="p">):</span>
         <span class="n">myproxy_file</span> <span class="o">=</span> <span class="s2">&quot;myproxy&quot;</span>
         <span class="s2">&quot;Fetching pam&#39;s myproxy resource file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_file</span><span class="p">)</span>
-        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">))</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">myproxy_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/etc_pam.d_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">myproxy_file</span><span class="p">))</span>
 
 <span class="k">def</span> <span class="nf">fetch_esg_attribute_callout_app</span><span class="p">():</span>
@@ -1130,7 +1124,7 @@
     <span class="k">with</span> <span class="n">esg_bash2py</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="n">myproxy_config_dir</span><span class="p">):</span>
         <span class="n">callout_app_file</span> <span class="o">=</span> <span class="s2">&quot;esg_attribute_callout_app&quot;</span>
         <span class="nb">print</span> <span class="s2">&quot;Downloading configuration file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">)</span>
-        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;esg_dist_url_root&quot;</span><span class="p">])</span>
+        <span class="n">myproxy_dist_url_base</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/globus/myproxy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;esg.dist.url&quot;</span><span class="p">))</span>
         <span class="n">esg_functions</span><span class="o">.</span><span class="n">download_update</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">,</span> <span class="n">myproxy_dist_url_base</span><span class="o">+</span><span class="s2">&quot;/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">))</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">callout_app_file</span><span class="p">,</span> <span class="mi">0751</span><span class="p">)</span>
 
@@ -1224,9 +1218,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -1239,7 +1231,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1258,10 +1250,11 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
             VERSION:'alpha',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: ''
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="../_static/jquery.js"></script>
@@ -1275,14 +1268,13 @@
     <script type="text/javascript" src="../_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

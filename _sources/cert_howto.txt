@@ -4,8 +4,10 @@ ESGF Certificate Management
 
 If you wish to extend your temporary CA certificate (for standalone testing only):
 ```esg_node.py --update-temp-ca```
+
 If you want to install a commercial CA issued certificate:
 ```esg_node.py --install-keypair <certificate file> <key file>```
+
 When prompted for the cachain file, specify the chain file provided by your CA
 
 If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:

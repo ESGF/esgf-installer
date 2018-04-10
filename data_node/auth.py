@@ -108,7 +108,7 @@ def setup_auth_webapp(auth_dir='/usr/local/esgf-auth'):
             os.unlink('esgf-auth')
         os.symlink('esgf-auth-v{}'.format(version), 'esgf-auth')
 
-    with esg_bash2py.pushd(os.path.join(auth_install_dir), 'esgf-auth'):
+    with esg_bash2py.pushd(os.path.join(auth_install_dir, 'esgf-auth')):
         with open("requirements.txt", "r") as req_file:
             requirements = req_file.readlines()
         for req in requirements:

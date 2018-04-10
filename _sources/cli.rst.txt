@@ -6,5 +6,5 @@ ESGF CLI
    :func: define_acceptable_arguments
    :prog: CLI_doc
 
-   type
+   --install
         Configuration Type Selection

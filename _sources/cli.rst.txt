@@ -1,4 +1,7 @@
 ESGF CLI
 ******************************************
 
-.. program-output:: python ../esg_node.py --help
+.. argparse::
+   :module: esgf_utilities.esg_cli_argument_manager
+   :func: define_acceptable_arguments
+   :prog: CLI_doc

@@ -6,6 +6,7 @@ ESGF Command Line Interface
 * Deprecated flags are in $(echo_fail red), and followed by an \"*\".
 
 esg_node.py ([--<directive>] | [start] | [stop] | [status] | [restart]
+
 --install     - goes through the installation process
                 will automatically start up node services
 --verify      - runs the test code to verify installation
@@ -15,7 +16,7 @@ esg_node.py ([--<directive>] | [start] | [stop] | [status] | [restart]
 --clear       - removes the file holding the environment state of last install
 --test-pub    - performs the publication test directly (same publication called in last step of install)
 --info        - provides a brief explanation of the DataNode
---upgrade|--update|update - upgrades/updates the node manager
+--update      - updates the node manager
 --force       - will allow execution of installation|update code to be executed beyond the up2date checks.
                 Basically allowing an installation|update as if starting from scratch.
 

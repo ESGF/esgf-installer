@@ -193,14 +193,18 @@
 <li>This program must be run as root or a root equiv shell: (sudo -s)</li>
 <li>Deprecated flags are in $(echo_fail red), and followed by an &#8220;<a href="#id1"><span class="problematic" id="id2">*</span></a>&#8221;.</li>
 </ul>
-<p>esg_node.py ([&#8211;&lt;directive&gt;] | [start] | [stop] | [status] | [restart]
-&#8211;install     - goes through the installation process</p>
-<blockquote>
-<div>will automatically start up node services</div></blockquote>
+<p>esg_node.py ([&#8211;&lt;directive&gt;] | [start] | [stop] | [status] | [restart]</p>
 <table class="docutils option-list" frame="void" rules="none">
 <col class="option" />
 <col class="description" />
 <tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--install</span></kbd></td>
+<td><ul class="first simple">
+<li>goes through the installation process</li>
+</ul>
+<p class="last">will automatically start up node services</p>
+</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--verify</span></kbd></td>
 <td><ul class="first last simple">
@@ -243,12 +247,21 @@
 <li>provides a brief explanation of the DataNode</li>
 </ul>
 </td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--update</span></kbd></td>
+<td><ul class="first last simple">
+<li>updates the node manager</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--force</span></kbd></td>
+<td><ul class="first simple">
+<li>will allow execution of installation|update code to be executed beyond the up2date checks.</li>
+</ul>
+<p class="last">Basically allowing an installation|update as if starting from scratch.</p>
+</td></tr>
 </tbody>
 </table>
-<p>&#8211;upgrade|&#8211;update|update - upgrades/updates the node manager
-&#8211;force       - will allow execution of installation|update code to be executed beyond the up2date checks.</p>
-<blockquote>
-<div>Basically allowing an installation|update as if starting from scratch.</div></blockquote>
 <div class="section" id="configuration-type-selection">
 <h2>Configuration Type Selection<a class="headerlink" href="#configuration-type-selection" title="Permalink to this headline">¶</a></h2>
 <dl class="docutils">

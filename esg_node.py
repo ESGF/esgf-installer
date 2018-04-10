@@ -37,8 +37,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-devel = False
-
 def set_version_info():
     '''Gathers the version info from the latest git tag'''
     repo = Repo(os.path.dirname(__file__))
@@ -78,7 +76,6 @@ def setup_esg_config_permissions():
         os.chmod(file_name, 0644)
     os.chmod("/esg/config/esgcet/esg.ini", 640)
 
-esg_org_name = esg_property_manager.get_property("esg.org.name")
 
 def esgf_node_info():
     '''Print basic info about ESGF installation'''
@@ -318,9 +315,6 @@ def setup_esgf_rpm_repo(esg_dist_url):
 
 
 def main():
-    # default distribution_url
-    # esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
-
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
     script_version, script_maj_version, script_release = set_version_info()
 
@@ -329,16 +323,26 @@ def main():
 
     # determine installation type
     install_type = get_installation_type(script_version)
-    print "install_type:", install_type
+
+    cli_info = esg_cli_argument_manager.process_arguments()
+    logger.debug("cli_info: %s", cli_info)
+    if cli_info:
+        node_type_list = cli_info
+
+    try:
+        devel = bool(esg_property_manager.get_property("devel"))
+    except ConfigParser.NoOptionError:
+        devel = False
+
 
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)
 
-    cli_info = esg_cli_argument_manager.process_arguments(devel, esg_dist_url)
-    print "cli_info:", cli_info
-    if cli_info:
-        node_type_list = cli_info
+    try:
+        esg_org_name = esg_property_manager.get_property("esg.org.name")
+    except Exception:
+        logger.exception("esg.org.name could not be found in config file")
 
     esg_setup.check_prerequisites()
 
@@ -356,7 +360,7 @@ def main():
     # Display node information to user
     esgf_node_info()
 
-    if devel is True:
+    if devel:
         print "(Installing DEVELOPMENT tree...)"
 
     esg_setup.init_structure()

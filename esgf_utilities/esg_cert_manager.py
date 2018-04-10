@@ -710,6 +710,37 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
             #                 logger.exception("Could not copy %s", file_name)
 
 
+def generate_esgf_csrs(fqdn,node_type):
+    
+    pass
+
+def generate_esgf_csrs_ext(fqdn,node_type):
+
+    if node_type == 'index':
+        ik = OpenSSL.crypto.PKey()
+        ik.generate_key(OpenSSL.crypto.TYPE_RSA, 4096)
+
+    # create a self-signed cert
+    cert = OpenSSL.crypto.X509()
+    cert.get_subject().C = "US"
+    cert.get_subject().ST = "California"
+    cert.get_subject().L = "Livermore"
+    cert.get_subject().O = "LLNL"
+    cert.get_subject().OU = "ESGF"
+    cert.get_subject().CN = socket.gethostname()
+    cert.set_serial_number(1000)
+    cert.gmtime_adj_notBefore(0)
+    cert.gmtime_adj_notAfter(10*365*24*60*60)
+    cert.set_issuer(cert.get_subject())
+    cert.set_pubkey(k)
+    cert.sign(k, 'sha1')
+    esg_bash2py.mkdir_p(cert_dir)
+
+    with open(os.path.join(cert_dir, CERT_FILE), "wt") as cert_file_handle:
+        cert_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
+    with open(os.path.join(cert_dir, KEY_FILE), "wt") as key_file_handle:
+        key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k))
+
 def main():
     print "*******************************"
     print "Setting up SSL Certificates"

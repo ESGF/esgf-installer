@@ -56,7 +56,6 @@ def download_thredds_war(thredds_url):
 def create_password_hash(tomcat_user_password):
     '''Creates a hash for a Tomcat user's password using Tomcat's digest.sh script'''
     password_hash = esg_functions.call_subprocess("/usr/local/tomcat/bin/digest.sh -a SHA {tomcat_user_password}".format(tomcat_user_password=tomcat_user_password))
-    print "password hash:",  password_hash["stdout"]
     logger.info("password hash: %s", password_hash["stdout"].split(":")[1])
     return password_hash["stdout"].split(":")[1].strip()
 
@@ -459,7 +458,7 @@ def setup_thredds(node_type_list):
 def tds_startup_hook():
     print "TDS (THREDDS) Startup Hook: Setting perms... "
     esg_functions.change_ownership_recursive(config["thredds_content_dir"], uid=esg_functions.get_user_id("tomcat"))
-    
+
 
 def main(node_type_list):
     setup_thredds(node_type_list)

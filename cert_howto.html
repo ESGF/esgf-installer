@@ -173,22 +173,22 @@
   <div class="section" id="esgf-certificate-management">
 <h1>ESGF Certificate Management<a class="headerlink" href="#esgf-certificate-management" title="Permalink to this headline">¶</a></h1>
 <p>If you wish to extend your temporary CA certificate (for standalone testing only):
-<cite>esg_node.py &#8211;update-temp-ca`</cite></p>
+<code class="docutils literal"><span class="pre">esg_node.py</span> <span class="pre">--update-temp-ca</span></code></p>
 <p>If you want to install a commercial CA issued certificate:
-<cite>esg_node.py &#8211;install-keypair &lt;certificate file&gt; &lt;key file&gt;`</cite></p>
+<code class="docutils literal"><span class="pre">esg_node.py</span> <span class="pre">--install-keypair</span> <span class="pre">&lt;certificate</span> <span class="pre">file&gt;</span> <span class="pre">&lt;key</span> <span class="pre">file&gt;</span></code></p>
 <p>When prompted for the cachain file, specify the chain file provided by your CA</p>
 <p>If you wish to generate CSRs for a simpleCA CA certificate and/or web container certificate:
 <code class="docutils literal"><span class="pre">esg_node.py</span> <span class="pre">--generate-esgf-csrs</span></code></p>
 <p>If you wish to generate CSRs for a node other than the one you are running, you could use
-<cite>esg_node.py &#8211;generate-esgf-csrs-ext`</cite></p>
+<code class="docutils literal"><span class="pre">esg_node.py</span> <span class="pre">--generate-esgf-csrs-ext</span></code></p>
 <p>If you wish to install ESGF certificates:</p>
 <ol class="arabic">
 <li><p class="first">untar the entire contents of the tarball you received from Prashanth into /etc/esgfcerts</p>
 </li>
-<li><p class="first"><cite>esg_node.py &#8211;install-local-certs`</cite></p>
+<li><p class="first"><code class="docutils literal"><span class="pre">esg_node.py</span> <span class="pre">--install-local-certs</span></code></p>
 </li>
 <li><p class="first">If you also have locally issued certificates for the webcontainer:
-<cite>esg_node.py &#8211;install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem`</cite></p>
+<code class="docutils literal"><span class="pre">esg_node.py</span> <span class="pre">--install-keypair</span> <span class="pre">/etc/esgfcerts/hostcert.pem</span> <span class="pre">/etc/esgfcerts/hostkey.pem</span></code></p>
 <p>When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem</p>
 </li>
 <li><p class="first">If you have certificates for your webcontainer, issued by a commercial CA, ensure you have the following:</p>

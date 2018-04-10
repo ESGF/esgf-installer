@@ -262,30 +262,36 @@
 </table>
 <div class="section" id="configuration-type-selection">
 <h2>Configuration Type Selection<a class="headerlink" href="#configuration-type-selection" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt>–type, -t &lt;data &amp;| index &amp;| idp &amp;| compute&gt; - Select type of node:</dt>
-<dd><p class="first">“data” node,
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--type</span>, <span class="option">-t <var>&lt;data &amp;| index &amp;| idp &amp;| compute&gt;</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first simple">
+<li>Select type of node:</li>
+</ul>
+<p>“data” node,
 “index” node,
 “idp” (identity provider) node and/or
 “compute” node
 (note: there is no default one must be selected at least initially…</p>
 <blockquote class="last">
 <div>when in doubt use “data”)</div></blockquote>
-</dd>
-</dl>
-<table class="docutils option-list" frame="void" rules="none">
-<col class="option" />
-<col class="description" />
-<tbody valign="top">
+</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--set-type</span></kbd></td>
 <td>&lt;data &amp;| index &amp;| idp &amp;| compute&gt; - Sets the type value to be used at next start up</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--get-type</span></kbd></td>
+<td><ul class="first simple">
+<li>returns the last stored type code value of the last run node configuration</li>
+</ul>
+<p class="last">(note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)</p>
+</td></tr>
 </tbody>
 </table>
-<dl class="docutils">
-<dt>–get-type - returns the last stored type code value of the last run node configuration</dt>
-<dd>(note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)</dd>
-</dl>
 </div>
 <div class="section" id="federation-node-relationship-flags">
 <h2>Federation / Node Relationship Flags:<a class="headerlink" href="#federation-node-relationship-flags" title="Permalink to this headline">¶</a></h2>

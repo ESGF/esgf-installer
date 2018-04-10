@@ -226,7 +226,7 @@ def _define_acceptable_arguments():
     args = parser.parse_args()
     return (args, parser)
 
-def process_arguments(devel, esg_dist_url):
+def process_arguments():
     args, parser = _define_acceptable_arguments()
 
     if len(sys.argv) == 1:
@@ -245,7 +245,6 @@ def process_arguments(devel, esg_dist_url):
         if args.type:
             set_node_type_value(args.type)
         logger.debug("Update Services")
-        esg_functions.verify_esg_node_script("esg_node.py", esg_dist_url, script_version, script_maj_version, devel, "update")
         if args.base:
             return ["INSTALL"]
         node_type_list = get_node_type()
@@ -333,9 +332,9 @@ def process_arguments(devel, esg_dist_url):
     elif args.uselocalmirror:
         set_local_mirror(args.uselocalmirror)
     elif args.devel:
-        devel = True
+        esg_property_manager.set_property("devel", True)
     elif args.prod:
-        devel = False
+        esg_property_manager.set_property("devel", False)
     elif args.usage:
         usage()
         sys.exit(0)

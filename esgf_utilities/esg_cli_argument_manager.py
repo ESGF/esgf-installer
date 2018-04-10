@@ -32,6 +32,10 @@ def generate_esgf_csrs():
 def generate_esgf_csrs_ext():
     pass
 
+def usage():
+    with open(os.path.join(os.path.dirname(__file__), os.pardir, 'docs', 'usage.txt'), 'r') as usage_file:
+        print usage_file.read()
+
 def cert_howto():
     with open(os.path.join(os.path.dirname(__file__), os.pardir, 'docs', 'cert_howto.txt'), 'r') as howto_file:
         print howto_file.read()
@@ -217,6 +221,7 @@ def _define_acceptable_arguments():
     parser.add_argument("--use-local-mirror", dest="uselocalmirror", help="Sets the installer to fetch files from a mirror directory that is on the same server in which the installation is being run", action="store_true")
     parser.add_argument("--devel", help="Sets the installation type to the devel build", action="store_true")
     parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
+    parser.add_argument("--usage", dest="usage", help="Displays the options of the ESGF command line interface", action="store_true")
 
     args = parser.parse_args()
     return (args, parser)
@@ -331,3 +336,6 @@ def process_arguments(devel, esg_dist_url):
         devel = True
     elif args.prod:
         devel = False
+    elif args.usage:
+        usage()
+        sys.exit(0)

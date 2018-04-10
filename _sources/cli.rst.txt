@@ -5,3 +5,6 @@ ESGF CLI
    :module: esgf_utilities.esg_cli_argument_manager
    :func: define_acceptable_arguments
    :prog: CLI_doc
+
+   type
+        Configuration Type Selection

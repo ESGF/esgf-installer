@@ -43,7 +43,7 @@ def main():
 
     # create formatter
     formatter = logging.Formatter("%(levelname)s - %(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s", datefmt='%m/%d/%Y %I:%M:%S %p')
-    color_formatter = ColoredFormatter("  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s%(reset)s")
+    color_formatter = ColoredFormatter("  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(filename)s - %(lineno)s - %(funcName)s - %(asctime)s - %(message)s%(reset)s", datefmt='%m/%d/%Y %I:%M:%S %p')
 
     error_handler.setFormatter(formatter)
     info_handler.setFormatter(formatter)

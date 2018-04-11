@@ -138,13 +138,13 @@ update     update's the node's software stack to prescribed versions
 
 (notice, no \"--\" flag prefix to make rc friendly also chkconfig-able ;-)
 
--------------------------------
+
 To add this script to the linux boot sequence: (as root)
-> cd /etc/init.d
-> cp ${install_prefix}/bin/esg_node.py .
-> chkconfig --add esg_node.py
-> chkconfig --list esg_node.py
--------------------------------
+1. cd /etc/init.d
+2. cp ${install_prefix}/bin/esg_node.py .
+3. chkconfig --add esg_node.py
+4. chkconfig --list esg_node.py
+
 
 
 \"stop\" | \"start\" | \"status\" are meant to be run independent of other flags (and put LAST if other flags are used)

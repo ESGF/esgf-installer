@@ -692,10 +692,11 @@
 </tbody>
 </table>
 <p>(notice, no “–” flag prefix to make rc friendly also chkconfig-able ;-)</p>
-<p>&gt; cp ${install_prefix}/bin/esg_node.py .
-&gt; chkconfig –add esg_node.py
-&gt; chkconfig –list esg_node.py
-——————————-</p>
+<p>To add this script to the linux boot sequence: (as root)
+1. cd /etc/init.d
+2. cp ${install_prefix}/bin/esg_node.py .
+3. chkconfig –add esg_node.py
+4. chkconfig –list esg_node.py</p>
 <p>“stop” | “start” | “status” are meant to be run independent of other flags (and put LAST if other flags are used)
 “–install” may be used with “–verify” but neither are not intended for use with stop or start or status</p>
 <p>Ex:</p>

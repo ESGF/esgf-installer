@@ -127,13 +127,14 @@ Other
 -------------------------------
 Node Life Cycle Flags:
 -------------------------------
-=====
-start     - start the node's services
-stop      - stops the node's services
-status    - status on node's services
-restart   - restarts the node's services (calls stop then start :-/)
-update    - update's the node's software stack to prescribed versions
-=======
+=====      ============================================================= 
+=====      =============================================================
+start      start the node's services
+stop       stops the node's services
+status     status on node's services
+restart    restarts the node's services (calls stop then start :-/)
+update     update's the node's software stack to prescribed versions
+=======    ==============================================================
 (notice, no \"--\" flag prefix to make rc friendly also chkconfig-able ;-)
 
 -------------------------------

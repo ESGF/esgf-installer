@@ -3,7 +3,6 @@ ESGF Command Line Interface
 
 
 * This program must be run as root or a root equiv shell: (sudo -s)
-* Deprecated flags are in $(echo_fail red), and followed by an \"*\".
 
 esg_node.py ([--<directive>] | [start] | [stop] | [status] | [restart]
 
@@ -25,9 +24,9 @@ Configuration Type Selection
 --set-type  <data &| index &| idp &| compute>   - Sets the type value to be used at next start up
 --get-type                                      - returns the last stored type code value of the last run node configuration (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
 
--------------------------------
+--------------------------------------
 Federation / Node Relationship Flags:
--------------------------------
+--------------------------------------
 --set-default-peer <hostname of peer to be default>                         - configures the default peer
 --get-default-peer                                                          - tells you this node's currently configured default peer
 --set-peer-group <name of group(s), comma delim, you wish to participate>   - configures the peer group
@@ -55,9 +54,9 @@ Index (search) Utils...
                                           [-timeout <seconds>] will set the connection timeout value (in seconds)
 --update-publisher-resources            - update local repository of publication schemas et al.
 
--------------------------------
+------------------------------------------
 Publication Endpoint Setting (Index Peer)
--------------------------------
+------------------------------------------
 --set-index-peer <hostname of the index peer you wish to publish to>  - set index peer Ex: pcmdi.llnl.gov
 --get-index-peer                                                      - tells you where this node is indexing it's data
 

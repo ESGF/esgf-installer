@@ -23,96 +23,96 @@ esg_node.py ([--<directive>] | [start] | [stop] | [status] | [restart]
 -------------------------------
 Configuration Type Selection
 -------------------------------
---type, -t <data &| index &| idp &| compute>  - Select type of node:
-                                                \"data\" node,
-                                                \"index\" node,
-                                                \"idp\" (identity provider) node and/or
-                                                \"compute\" node
-                                                (note: there is no default one must be selected at least initially...
-                                                    when in doubt use \"data\")
---set-type  <data &| index &| idp &| compute> - Sets the type value to be used at next start up
---get-type                                    - returns the last stored type code value of the last run node configuration
-                                                (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
+--type, -t <data &| index &| idp &| compute>    - Select type of node:
+                                                  \"data\" node,
+                                                  \"index\" node,
+                                                  \"idp\" (identity provider) node and/or
+                                                  \"compute\" node
+                                                  (note: there is no default one must be selected at least initially...
+                                                      when in doubt use \"data\")
+--set-type  <data &| index &| idp &| compute>   - Sets the type value to be used at next start up
+--get-type                                      - returns the last stored type code value of the last run node configuration
+                                                  (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)
 
 -------------------------------
 Federation / Node Relationship Flags:
 -------------------------------
---set-default-peer <hostname of peer to be default>                        - configures the default peer
---get-default-peer                                                         - tells you this node's currently configured default peer
---set-peer-group <name of group(s), comma delim, you wish to participate>  - configures the peer group
---get-peer-group                                                           - tells you this node's currenly configured peer group(s)
---federation-sanity-check                                                  - tells you if your node's configured peer groups intersect with default peer
---spotcheck                                                                - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
+--set-default-peer <hostname of peer to be default>                         - configures the default peer
+--get-default-peer                                                          - tells you this node's currently configured default peer
+--set-peer-group <name of group(s), comma delim, you wish to participate>   - configures the peer group
+--get-peer-group                                                            - tells you this node's currenly configured peer group(s)
+--federation-sanity-check                                                   - tells you if your node's configured peer groups intersect with default peer
+--spotcheck                                                                 - provides basic federation mesh (inter-connectivity) information. (see esgf-spotcheck script directly)
 
 -------------------------------
 Security Policy...
 -------------------------------
---policy-check <resource string> - returns the list of policies that are triggered by the provided resource
+--policy-check <resource string>        - returns the list of policies that are triggered by the provided resource
 
 -------------------------------
 Index (search) Utils...
 -------------------------------
---optimize-index [--force] - optimizes search index for \"index\" nodes (must be called local to index node)
---crawl - ingest remote catalogs and their descendants into local index for searching.
---add-replica-shard  <host>[:<port>] - creates a local replica index of the index at the given <host> mapping to local <port>
---remove-replica-shard <host>[:<port>] - removes the local replica index bound to <port> named by <host>
---list-shards  - shows list of registered local replica indexes
---init-shards  - adds all shards listed in the replica shard configuration file
---check-shards - checks the configuration for local replica indexes
---time-shards  - cycles through all known index shards providing query times for each
-                 [-show-local] will show timing information for locally replicated shards
-                 [-timeout <seconds>] will set the connection timeout value (in seconds)
---update-publisher-resources - update local repository of publication schemas et al.
+--optimize-index [--force]              - optimizes search index for \"index\" nodes (must be called local to index node)
+--crawl                                 - ingest remote catalogs and their descendants into local index for searching.
+--add-replica-shard  <host>[:<port>]    - creates a local replica index of the index at the given <host> mapping to local <port>
+--remove-replica-shard <host>[:<port>]  - removes the local replica index bound to <port> named by <host>
+--list-shards                           - shows list of registered local replica indexes
+--init-shards                           - adds all shards listed in the replica shard configuration file
+--check-shards                          - checks the configuration for local replica indexes
+--time-shards                           - cycles through all known index shards providing query times for each
+                                          [-show-local] will show timing information for locally replicated shards
+                                          [-timeout <seconds>] will set the connection timeout value (in seconds)
+--update-publisher-resources            - update local repository of publication schemas et al.
 
 -------------------------------
 Publication Endpoint Setting (Index Peer)
 -------------------------------
---set-index-peer <hostname of the index peer you wish to publish to> Ex: pcmdi.llnl.gov
---get-index-peer - tells you where this node is indexing it's data
+--set-index-peer <hostname of the index peer you wish to publish to>  - set index peer Ex: pcmdi.llnl.gov
+--get-index-peer                                                      - tells you where this node is indexing it's data
 
 -------------------------------
 IDP Endpoint Setting (IDP Peer)
 -------------------------------
---set-idp-peer | --set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
---get-idp-peer - tells you where this node is authenticating against.
+--set-idp-peer | --set-admin-peer       - make selection from menu or input information for idp peer you wish to present credentials to]
+--get-idp-peer                          - tells you where this node is authenticating against.
 
 -------------------------------
 Globus Tool Management
 -------------------------------
---no-globus   - will not perform any operations affecting globus tools (for those with existing globus setups)
---gridftp-config - [ bdm &| end-user ] (defaults to both)
+--no-globus                 - will not perform any operations affecting globus tools (for those with existing globus setups)
+--gridftp-config            - [ bdm &| end-user ] (defaults to both)
 --myproxy - [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
 
 -------------------------------
 Key Management Flags:
 -------------------------------
---register    - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
---migrate-tomcat-credentials-to-esgf - moves credentials and supporting security files under {esg_config_dir}
---generate-ssl-key-and-csr - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
-                             (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN={esgf_host}')
+--register                            - connects to desired node, fetches and stores their certificate to enable ingress SSL connections
+--migrate-tomcat-credentials-to-esgf  - moves credentials and supporting security files under {esg_config_dir}
+--generate-ssl-key-and-csr            - generate new key and cert request files <pub_cert file> <priv_key file> [<dn>]
+                                        (The 'dn' value is of the form - Ex:'/O=ESG/OU=ESGF.ORG/CN={esgf_host}')
 
    command> $(echo_c -fg magenta "esg_node.py --generate-ssl-key-and-csr {tomcat_conf_dir}/{esgf_host}-esg-node.csr {tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN={esgf_host}")
 
---install-ssl-keypair - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
---fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
---rebuild-truststore - converts globus' (public) ca certificates into a truststore.
---add-my-cert-to-truststore - adds public cert from keystore to truststore:
-                     (secondary flags for this option)
-                     --keystore | -ks <keystore file>
-                     --keystore-pass | -kpass <keystore password>
-                     --alias | -a <keystore alias>
-                     --truststore | -ts <truststore file>
-                     --truststore-pass | tpass <truststore password>
---clear-certs - removes the user-level public certificates' directory (used by myproxy)
---check-certs - checks both SSL private certificate and Globus private cert for expiration
---set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup
+--install-ssl-keypair                 - takes as input private key and public cert files and installs them. [<pub_cert> [<priv_key> [<keystore> <alias> <password>]]]
+--fetch-esgf-certs                    - fetches and installs all current public esgf certificates (used by app server and by globus)
+--rebuild-truststore                  - converts globus' (public) ca certificates into a truststore.
+--add-my-cert-to-truststore           - adds public cert from keystore to truststore:
+                                       (secondary flags for this option)
+                                       --keystore | -ks <keystore file>
+                                       --keystore-pass | -kpass <keystore password>
+                                       --alias | -a <keystore alias>
+                                       --truststore | -ts <truststore file>
+                                       --truststore-pass | tpass <truststore password>
+--clear-certs                         - removes the user-level public certificates' directory (used by myproxy)
+--check-certs                         - checks both SSL private certificate and Globus private cert for expiration
+--set-auto-fetch-certs [true|false]   - sets if federation certificates are loaded automatically upon startup
 
 
---dname - specify the certificate distinguished name to be used when creating certificates
-          (the DN value is of the form: \"CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
---keystore-password - sets the password to use for the java keystore - default is the node password.
---keystore-alias - the alias that is associated with the public cert in the keystore
---keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat
+--dname                               - specify the certificate distinguished name to be used when creating certificates
+                                        (the DN value is of the form: \"CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid\")
+--keystore-password                   - sets the password to use for the java keystore - default is the node password.
+--keystore-alias                      - the alias that is associated with the public cert in the keystore
+--keystore-file                       - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat
 
 (misc. globus related)
 --simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.

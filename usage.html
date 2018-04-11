@@ -282,7 +282,7 @@
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--set-type</span></kbd></td>
-<td>&lt;data &amp;| index &amp;| idp &amp;| compute&gt; - Sets the type value to be used at next start up</td></tr>
+<td>&lt;data &amp;| index &amp;| idp &amp;| compute&gt;   - Sets the type value to be used at next start up</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--get-type</span></kbd></td>
 <td><ul class="first simple">
@@ -349,32 +349,74 @@
 </div>
 <div class="section" id="security-policy">
 <h2>Security Policy…<a class="headerlink" href="#security-policy" title="Permalink to this headline">¶</a></h2>
-<p>–policy-check &lt;resource string&gt; - returns the list of policies that are triggered by the provided resource</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--policy-check <var>&lt;resource string&gt;</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>returns the list of policies that are triggered by the provided resource</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="index-search-utils">
 <h2>Index (search) Utils…<a class="headerlink" href="#index-search-utils" title="Permalink to this headline">¶</a></h2>
-<p>–optimize-index [–force] - optimizes search index for “index” nodes (must be called local to index node)
-–crawl - ingest remote catalogs and their descendants into local index for searching.
-–add-replica-shard  &lt;host&gt;[:&lt;port&gt;] - creates a local replica index of the index at the given &lt;host&gt; mapping to local &lt;port&gt;
-–remove-replica-shard &lt;host&gt;[:&lt;port&gt;] - removes the local replica index bound to &lt;port&gt; named by &lt;host&gt;
-–list-shards  - shows list of registered local replica indexes
-–init-shards  - adds all shards listed in the replica shard configuration file
-–check-shards - checks the configuration for local replica indexes
-–time-shards  - cycles through all known index shards providing query times for each</p>
+<p>–optimize-index [–force]              - optimizes search index for “index” nodes (must be called local to index node)
+–crawl                                 - ingest remote catalogs and their descendants into local index for searching.
+–add-replica-shard  &lt;host&gt;[:&lt;port&gt;]    - creates a local replica index of the index at the given &lt;host&gt; mapping to local &lt;port&gt;
+–remove-replica-shard &lt;host&gt;[:&lt;port&gt;]  - removes the local replica index bound to &lt;port&gt; named by &lt;host&gt;
+–list-shards                           - shows list of registered local replica indexes
+–init-shards                           - adds all shards listed in the replica shard configuration file
+–check-shards                          - checks the configuration for local replica indexes
+–time-shards                           - cycles through all known index shards providing query times for each</p>
 <blockquote>
 <div>[-show-local] will show timing information for locally replicated shards
 [-timeout &lt;seconds&gt;] will set the connection timeout value (in seconds)</div></blockquote>
-<p>–update-publisher-resources - update local repository of publication schemas et al.</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--update-publisher-resources</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>update local repository of publication schemas et al.</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="publication-endpoint-setting-index-peer">
 <h2>Publication Endpoint Setting (Index Peer)<a class="headerlink" href="#publication-endpoint-setting-index-peer" title="Permalink to this headline">¶</a></h2>
-<p>–set-index-peer &lt;hostname of the index peer you wish to publish to&gt; Ex: pcmdi.llnl.gov
-–get-index-peer - tells you where this node is indexing it’s data</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--set-index-peer <var>&lt;hostname of the index peer you wish to publish to&gt;</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>set index peer Ex: pcmdi.llnl.gov</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--get-index-peer</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>tells you where this node is indexing it’s data</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="idp-endpoint-setting-idp-peer">
 <h2>IDP Endpoint Setting (IDP Peer)<a class="headerlink" href="#idp-endpoint-setting-idp-peer" title="Permalink to this headline">¶</a></h2>
-<p>–set-idp-peer | –set-admin-peer [make selection from menu or input information for idp peer you wish to present credentials to]
-–get-idp-peer - tells you where this node is authenticating against.</p>
+<p>–set-idp-peer | –set-admin-peer       - make selection from menu or input information for idp peer you wish to present credentials to]
+–get-idp-peer                          - tells you where this node is authenticating against.</p>
 </div>
 <div class="section" id="globus-tool-management">
 <h2>Globus Tool Management<a class="headerlink" href="#globus-tool-management" title="Permalink to this headline">¶</a></h2>
@@ -388,10 +430,16 @@
 <li>will not perform any operations affecting globus tools (for those with existing globus setups)</li>
 </ul>
 </td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--gridftp-config</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>[ bdm &amp;| end-user ] (defaults to both)</li>
+</ul>
+</td></tr>
 </tbody>
 </table>
-<p>–gridftp-config - [ bdm &amp;| end-user ] (defaults to both)
-–myproxy - [gen-self-cert] &lt;dir&gt; | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]</p>
+<p>–myproxy - [gen-self-cert] &lt;dir&gt; | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]</p>
 </div>
 <div class="section" id="key-management-flags">
 <h2>Key Management Flags:<a class="headerlink" href="#key-management-flags" title="Permalink to this headline">¶</a></h2>
@@ -405,36 +453,108 @@
 <li>connects to desired node, fetches and stores their certificate to enable ingress SSL connections</li>
 </ul>
 </td></tr>
-</tbody>
-</table>
-<p>–migrate-tomcat-credentials-to-esgf - moves credentials and supporting security files under {esg_config_dir}
-–generate-ssl-key-and-csr - generate new key and cert request files &lt;pub_cert file&gt; &lt;priv_key file&gt; [&lt;dn&gt;]</p>
-<blockquote>
-<div><blockquote>
-<div>(The ‘dn’ value is of the form - Ex:’/O=ESG/OU=ESGF.ORG/CN={esgf_host}’)</div></blockquote>
-<p>command&gt; $(echo_c -fg magenta “esg_node.py –generate-ssl-key-and-csr {tomcat_conf_dir}/{esgf_host}-esg-node.csr {tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN={esgf_host}”)</p>
-</div></blockquote>
-<p>–install-ssl-keypair - takes as input private key and public cert files and installs them. [&lt;pub_cert&gt; [&lt;priv_key&gt; [&lt;keystore&gt; &lt;alias&gt; &lt;password&gt;]]]
-–fetch-esgf-certs - fetches and installs all current public esgf certificates (used by app server and by globus)
-–rebuild-truststore - converts globus’ (public) ca certificates into a truststore.
-–add-my-cert-to-truststore - adds public cert from keystore to truststore:</p>
-<blockquote>
-<div>(secondary flags for this option)
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--migrate-tomcat-credentials-to-esgf</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>moves credentials and supporting security files under {esg_config_dir}</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--generate-ssl-key-and-csr</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first simple">
+<li><dl class="first docutils">
+<dt>generate new key and cert request files &lt;pub_cert file&gt; &lt;priv_key file&gt; [&lt;dn&gt;]</dt>
+<dd>(The ‘dn’ value is of the form - Ex:’/O=ESG/OU=ESGF.ORG/CN={esgf_host}’)</dd>
+</dl>
+</li>
+</ul>
+<p class="last">command&gt; $(echo_c -fg magenta “esg_node.py –generate-ssl-key-and-csr {tomcat_conf_dir}/{esgf_host}-esg-node.csr {tomcat_conf_dir}/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN={esgf_host}”)</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--install-ssl-keypair</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>takes as input private key and public cert files and installs them. [&lt;pub_cert&gt; [&lt;priv_key&gt; [&lt;keystore&gt; &lt;alias&gt; &lt;password&gt;]]]</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--fetch-esgf-certs</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>fetches and installs all current public esgf certificates (used by app server and by globus)</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--rebuild-truststore</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>converts globus’ (public) ca certificates into a truststore.</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--add-my-cert-to-truststore</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first simple">
+<li>adds public cert from keystore to truststore:</li>
+</ul>
+<p class="last">(secondary flags for this option)
 –keystore | -ks &lt;keystore file&gt;
 –keystore-pass | -kpass &lt;keystore password&gt;
 –alias | -a &lt;keystore alias&gt;
 –truststore | -ts &lt;truststore file&gt;
-–truststore-pass | tpass &lt;truststore password&gt;</div></blockquote>
-<p>–clear-certs - removes the user-level public certificates’ directory (used by myproxy)
-–check-certs - checks both SSL private certificate and Globus private cert for expiration
-–set-auto-fetch-certs [true|false] - sets if federation certificates are loaded automatically upon startup</p>
-<dl class="docutils">
-<dt>–dname - specify the certificate distinguished name to be used when creating certificates</dt>
-<dd>(the DN value is of the form: “CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid”)</dd>
-</dl>
-<p>–keystore-password - sets the password to use for the java keystore - default is the node password.
-–keystore-alias - the alias that is associated with the public cert in the keystore
-–keystore-file  - specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat</p>
+–truststore-pass | tpass &lt;truststore password&gt;</p>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--clear-certs</span></kbd></td>
+<td><ul class="first last simple">
+<li>removes the user-level public certificates’ directory (used by myproxy)</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--check-certs</span></kbd></td>
+<td><ul class="first last simple">
+<li>checks both SSL private certificate and Globus private cert for expiration</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
+<p>–set-auto-fetch-certs [true|false]   - sets if federation certificates are loaded automatically upon startup</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--dname</span></kbd></td>
+<td><ul class="first simple">
+<li>specify the certificate distinguished name to be used when creating certificates</li>
+</ul>
+<p class="last">(the DN value is of the form: “CN=node.lab.gov, OU=simpleCA-pcmdi3.llnl.gov, OU=GlobusTest, O=Grid”)</p>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--keystore-password</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>sets the password to use for the java keystore - default is the node password.</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--keystore-alias</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>the alias that is associated with the public cert in the keystore</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--keystore-file</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>specify what the keystore file should be - default $CATALINA_HOME/tomcat/conf/keystore-tomcat</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 <p>(misc. globus related)
 –simpleCA-relink - relink orphaned simpleCA configuration symbolic file links.</p>
 </div>

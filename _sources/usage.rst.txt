@@ -42,10 +42,10 @@ Security Policy...
 -------------------------------
 Index (search) Utils...
 -------------------------------
---optimize-index                        - optimizes search index for \"index\" nodes (must be called local to index node) [--force]
+--optimize-index                        - [--force] optimizes search index for \"index\" nodes (must be called local to index node)
 --crawl                                 - ingest remote catalogs and their descendants into local index for searching.
---add-replica-shard  <host>[:<port>]    - creates a local replica index of the index at the given <host> mapping to local <port>
---remove-replica-shard <host>[:<port>]  - removes the local replica index bound to <port> named by <host>
+--add-replica-shard  <host>             - [:<port>] creates a local replica index of the index at the given <host> mapping to local <port>
+--remove-replica-shard <host>           - [:<port>] removes the local replica index bound to <port> named by <host>
 --list-shards                           - shows list of registered local replica indexes
 --init-shards                           - adds all shards listed in the replica shard configuration file
 --check-shards                          - checks the configuration for local replica indexes
@@ -62,7 +62,7 @@ Publication Endpoint Setting (Index Peer)
 -------------------------------
 IDP Endpoint Setting (IDP Peer)
 -------------------------------
---set-idp-peer | --set-admin-peer       - make selection from menu or input information for idp peer you wish to present credentials to]
+--set-idp-peer, --set-admin-peer       - make selection from menu or input information for idp peer you wish to present credentials to
 --get-idp-peer                          - tells you where this node is authenticating against.
 
 -------------------------------
@@ -179,19 +179,19 @@ NOTE:
 Key Environment Vars:
 --------------
 
-The following variables are written to the $(echo_ok /etc/esg.env) file
+The following variables are written to the /etc/esg.env file
 which sets up the installation environment.  The 'OFFICIAL'
 names (not the [common_names]) should be used in that file.
 
 (Nomenclature: OFFICIAL_ENV_VARIABLE_NAME [common_name] : either can be set; common name overrules)
 
-$(echo_ok ESGF_HOME) [esg_root_dir]
+ESGF_HOME [esg_root_dir]
             The location where configuration files are kept (the node's state)
             (default - /esg  currently:$esg_root_dir)
-$(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]
+ESGF_INSTALL_PREFIX [install_prefix]
             Top level directory where core node artifacts are installed
             (default - /usr/local - currently:$install_prefix)
-$(echo_ok ESGF_INSTALL_WORKDIR) [workdir]
+ESGF_INSTALL_WORKDIR [workdir]
             Top level directory where core node artifacts are downloaded and built
             (default - \$ESGF_USER_HOME/workbench/esg  - currently:$workdir)
 

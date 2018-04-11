@@ -358,7 +358,7 @@
 <kbd><span class="option">--optimize-index</span></kbd></td>
 </tr>
 <tr><td>&#160;</td><td><ul class="first last simple">
-<li>optimizes search index for “index” nodes (must be called local to index node) [–force]</li>
+<li>[–force] optimizes search index for “index” nodes (must be called local to index node)</li>
 </ul>
 </td></tr>
 <tr><td class="option-group">
@@ -370,15 +370,47 @@
 <tr><td class="option-group" colspan="2">
 <kbd><span class="option">--add-replica-shard</span></kbd></td>
 </tr>
-<tr><td>&#160;</td><td>&lt;host&gt;[:&lt;port&gt;]    - creates a local replica index of the index at the given &lt;host&gt; mapping to local &lt;port&gt;</td></tr>
+<tr><td>&#160;</td><td>&lt;host&gt;             - [:&lt;port&gt;] creates a local replica index of the index at the given &lt;host&gt; mapping to local &lt;port&gt;</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--remove-replica-shard <var>&lt;host&gt;</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>[:&lt;port&gt;] removes the local replica index bound to &lt;port&gt; named by &lt;host&gt;</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--list-shards</span></kbd></td>
+<td><ul class="first last simple">
+<li>shows list of registered local replica indexes</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--init-shards</span></kbd></td>
+<td><ul class="first last simple">
+<li>adds all shards listed in the replica shard configuration file</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--check-shards</span></kbd></td>
+<td><ul class="first last simple">
+<li>checks the configuration for local replica indexes</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--time-shards</span></kbd></td>
+<td><ul class="first last simple">
+<li>cycles through all known index shards providing query times for each [-show-local] will show timing information for locally replicated shards [-timeout &lt;seconds&gt;] will set the connection timeout value (in seconds)</li>
+</ul>
+</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--update-publisher-resources</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>update local repository of publication schemas et al.</li>
+</ul>
+</td></tr>
 </tbody>
 </table>
-<p>–remove-replica-shard &lt;host&gt;[:&lt;port&gt;]  - removes the local replica index bound to &lt;port&gt; named by &lt;host&gt;
-–list-shards                           - shows list of registered local replica indexes
-–init-shards                           - adds all shards listed in the replica shard configuration file
-–check-shards                          - checks the configuration for local replica indexes
-–time-shards                           - cycles through all known index shards providing query times for each [-show-local] will show timing information for locally replicated shards [-timeout &lt;seconds&gt;] will set the connection timeout value (in seconds)
-–update-publisher-resources            - update local repository of publication schemas et al.</p>
 </div>
 <div class="section" id="publication-endpoint-setting-index-peer">
 <h2>Publication Endpoint Setting (Index Peer)<a class="headerlink" href="#publication-endpoint-setting-index-peer" title="Permalink to this headline">¶</a></h2>
@@ -405,8 +437,25 @@
 </div>
 <div class="section" id="idp-endpoint-setting-idp-peer">
 <h2>IDP Endpoint Setting (IDP Peer)<a class="headerlink" href="#idp-endpoint-setting-idp-peer" title="Permalink to this headline">¶</a></h2>
-<p>–set-idp-peer | –set-admin-peer       - make selection from menu or input information for idp peer you wish to present credentials to]
-–get-idp-peer                          - tells you where this node is authenticating against.</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--set-idp-peer</span>, <span class="option">--set-admin-peer</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>make selection from menu or input information for idp peer you wish to present credentials to</li>
+</ul>
+</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--get-idp-peer</span></kbd></td>
+<td><ul class="first last simple">
+<li>tells you where this node is authenticating against.</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="globus-tool-management">
 <h2>Globus Tool Management<a class="headerlink" href="#globus-tool-management" title="Permalink to this headline">¶</a></h2>
@@ -633,18 +682,18 @@ esg_node.py status OR</p>
 </div>
 <div class="section" id="key-environment-vars">
 <h2>Key Environment Vars:<a class="headerlink" href="#key-environment-vars" title="Permalink to this headline">¶</a></h2>
-<p>The following variables are written to the $(echo_ok /etc/esg.env) file
+<p>The following variables are written to the /etc/esg.env file
 which sets up the installation environment.  The ‘OFFICIAL’
 names (not the [common_names]) should be used in that file.</p>
 <p>(Nomenclature: OFFICIAL_ENV_VARIABLE_NAME [common_name] : either can be set; common name overrules)</p>
 <dl class="docutils">
-<dt>$(echo_ok ESGF_HOME) [esg_root_dir]</dt>
+<dt>ESGF_HOME [esg_root_dir]</dt>
 <dd>The location where configuration files are kept (the node’s state)
 (default - /esg  currently:$esg_root_dir)</dd>
-<dt>$(echo_ok ESGF_INSTALL_PREFIX) [install_prefix]</dt>
+<dt>ESGF_INSTALL_PREFIX [install_prefix]</dt>
 <dd>Top level directory where core node artifacts are installed
 (default - /usr/local - currently:$install_prefix)</dd>
-<dt>$(echo_ok ESGF_INSTALL_WORKDIR) [workdir]</dt>
+<dt>ESGF_INSTALL_WORKDIR [workdir]</dt>
 <dd>Top level directory where core node artifacts are downloaded and built
 (default - $ESGF_USER_HOME/workbench/esg  - currently:$workdir)</dd>
 <dt>$(echo_strong ESGF_USER_HOME) [installer_home]</dt>

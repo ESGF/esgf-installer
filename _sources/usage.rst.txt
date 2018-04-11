@@ -144,12 +144,14 @@ To add this script to the linux boot sequence: (as root)
 
 
 \"stop\" | \"start\" | \"status\" are meant to be run independent of other flags (and put LAST if other flags are used)
-\"--install\" may be used with \"--verify\" but neither are not intended for use
-with stop or start or status
-Ex:
-esg_node.py --install OR
-esg_node.py --verify OR
-esg_node.py --install --verify  OR
+\"--install\" may be used with \"--verify\" but neither are not intended for use with stop or start or status
+
+Ex: 
+esg_node.py --install
+
+esg_node.py --verify
+
+esg_node.py --install --verify
 esg_node.py --write-env OR
 esg_node.py --version OR
 esg_node.py --clear OR
@@ -195,7 +197,7 @@ ESGF_INSTALL_WORKDIR [workdir]
             Top level directory where core node artifacts are downloaded and built
             (default - \$ESGF_USER_HOME/workbench/esg  - currently:$workdir)
 
-$(echo_strong ESGF_USER_HOME) [installer_home]
+ESGF_USER_HOME [installer_home]
             Directory where the installation user's home directory is.
             Here for historical reasons when this user's home was used to download and build artifacts.
             It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
@@ -206,13 +208,8 @@ Typical usage:
 --------------
 
 Installation : esg_node.py --install --verify
-    (submit csr and get back returned cert)
+               (submit csr and get back returned cert)
 Credentials  : esg_node.py --install-ssl-keypair <pub_cert> <priv_key>
 Test Publish : esg_node.py --test-pub
 Update Certs : esg_node.py [--force] --rebuild-truststore
 Life Cycle   : esg_node.py [start|stop|status|restart|update]
-
- ___ ___  ___ ___
-| __/ __|/ __| __|
-| _|\__ \ (_ | _|
-|___|___/\___|_|

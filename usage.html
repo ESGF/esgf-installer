@@ -619,7 +619,7 @@
 <td><ul class="first simple">
 <li>creates a backup of node database to file</li>
 </ul>
-<p class="last">the prefix for all schemas provided is “<a href="#id23"><span class="problematic" id="id24">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo [-s|–schema] &lt;schema suffix&gt; [-db|–database] &lt;database name&gt;</p>
+<p class="last">the prefix for all schemas provided is “<a href="#id21"><span class="problematic" id="id22">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo [-s|–schema] &lt;schema suffix&gt; [-db|–database] &lt;database name&gt;</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--restore-db</span></kbd></td>
@@ -651,12 +651,11 @@ update    - update’s the node’s software stack to prescribed versions
 &gt; chkconfig –list esg_node.py
 ——————————-</p>
 <p>“stop” | “start” | “status” are meant to be run independent of other flags (and put LAST if other flags are used)
-“–install” may be used with “–verify” but neither are not intended for use
-with stop or start or status
-Ex:
-esg_node.py –install OR
-esg_node.py –verify OR
-esg_node.py –install –verify  OR
+“–install” may be used with “–verify” but neither are not intended for use with stop or start or status</p>
+<p>Ex:
+esg_node.py –install</p>
+<p>esg_node.py –verify</p>
+<p>esg_node.py –install –verify
 esg_node.py –write-env OR
 esg_node.py –version OR
 esg_node.py –clear OR
@@ -696,7 +695,7 @@ names (not the [common_names]) should be used in that file.</p>
 <dt>ESGF_INSTALL_WORKDIR [workdir]</dt>
 <dd>Top level directory where core node artifacts are downloaded and built
 (default - $ESGF_USER_HOME/workbench/esg  - currently:$workdir)</dd>
-<dt>$(echo_strong ESGF_USER_HOME) [installer_home]</dt>
+<dt>ESGF_USER_HOME [installer_home]</dt>
 <dd>Directory where the installation user’s home directory is.
 Here for historical reasons when this user’s home was used to download and build artifacts.
 It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
@@ -713,13 +712,6 @@ It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
 Test Publish : esg_node.py –test-pub
 Update Certs : esg_node.py [–force] –rebuild-truststore
 Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
-<blockquote>
-<div>___ ___  ___ ___</div></blockquote>
-<div class="line-block">
-<div class="line">__/ __|/ __| __|</div>
-<div class="line">_|__ (_ | _|</div>
-</div>
-<p><a href="#id21"><span class="problematic" id="id22">|___|___/\___|_|</span></a></p>
 </div>
 </div>
 

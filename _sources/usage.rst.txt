@@ -43,14 +43,7 @@ Security Policy...
 Index (search) Utils...
 -------------------------------
 --optimize-index [--force]              - optimizes search index for \"index\" nodes (must be called local to index node)
---crawl                                 - ingest remote catalogs and their descendants into local index for searching.
---add-replica-shard  <host>[:<port>]    - creates a local replica index of the index at the given <host> mapping to local <port>
---remove-replica-shard <host>[:<port>]  - removes the local replica index bound to <port> named by <host>
---list-shards                           - shows list of registered local replica indexes
---init-shards                           - adds all shards listed in the replica shard configuration file
---check-shards                          - checks the configuration for local replica indexes
---time-shards                           - cycles through all known index shards providing query times for each [-show-local] will show timing information for locally replicated shards [-timeout <seconds>] will set the connection timeout value (in seconds)
---update-publisher-resources            - update local repository of publication schemas et al.
+
 
 ------------------------------------------
 Publication Endpoint Setting (Index Peer)

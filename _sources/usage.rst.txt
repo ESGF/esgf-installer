@@ -49,9 +49,7 @@ Index (search) Utils...
 --list-shards                           - shows list of registered local replica indexes
 --init-shards                           - adds all shards listed in the replica shard configuration file
 --check-shards                          - checks the configuration for local replica indexes
---time-shards                           - cycles through all known index shards providing query times for each
-                                          [-show-local] will show timing information for locally replicated shards
-                                          [-timeout <seconds>] will set the connection timeout value (in seconds)
+--time-shards                           - cycles through all known index shards providing query times for each [-show-local] will show timing information for locally replicated shards [-timeout <seconds>] will set the connection timeout value (in seconds)
 --update-publisher-resources            - update local repository of publication schemas et al.
 
 ------------------------------------------

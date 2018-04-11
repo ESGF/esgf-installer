@@ -327,13 +327,11 @@ def process_arguments():
         logger.info("ESGF Node Installation Script")
         sys.exit(0)
     elif args.recommendedsetup:
-        recommended_setup = True
-        custom_setup = False
+        esg_property_manager.set_property("recommended_setup", True)
     elif args.customsetup:
-        recommended_setup = False
-        custom_setup = True
+        esg_property_manager.set_property("recommended_setup", False)
     elif args.uselocalfiles:
-        use_local_files = True
+        esg_property_manager.set_property("use_local_files", True)
     elif args.uselocalmirror:
         set_local_mirror(args.uselocalmirror)
     elif args.devel:

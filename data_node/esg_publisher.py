@@ -55,7 +55,7 @@ def install_publisher():
     esg_functions.stream_subprocess_output("python setup.py install")
 
 
-def generate_esgsetup_options(recommended_setup = 1):
+def generate_esgsetup_options():
     '''Generate the string that will pass arguments to esgsetup to initialize the database'''
     publisher_db_user = None
     try:
@@ -65,8 +65,13 @@ def generate_esgsetup_options(recommended_setup = 1):
 
     security_admin_password = esg_functions.get_security_admin_password()
 
+    try:
+        recommended_setup = esg_property_manager.get_property("recommended_setup")
+    except ConfigParser.NoOptionError:
+        recommended_setup = True
+
     generate_esg_ini_command = "esgsetup --db"
-    if recommended_setup == 1:
+    if recommended_setup:
         generate_esg_ini_command += " --minimal-setup"
     if config["db_database"]:
         generate_esg_ini_command += " --db-name %s" % (config["db_database"])

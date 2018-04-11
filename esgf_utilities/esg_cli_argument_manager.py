@@ -194,7 +194,7 @@ def get_node_type(config_file=config["esg_config_type_file"]):
         sys.exit(1)
 
 
-def _define_acceptable_arguments():
+def define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", dest="install", help="Goes through the installation process and automatically starts up node services", action="store_true")
@@ -223,15 +223,20 @@ def _define_acceptable_arguments():
     parser.add_argument("--prod", help="Sets the installation type to the production build", action="store_true")
     parser.add_argument("--usage", dest="usage", help="Displays the options of the ESGF command line interface", action="store_true")
 
-    args = parser.parse_args()
-    return (args, parser)
+    # args = parser.parse_args()
+    # return (args, parser)
+    return parser
 
 def process_arguments():
-    args, parser = _define_acceptable_arguments()
+    # args, parser = _define_acceptable_arguments()
+
+    parser = define_acceptable_arguments()
 
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)
+
+    args = parser.parse_args()
 
     if args.install:
         if args.type:

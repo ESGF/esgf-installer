@@ -103,13 +103,8 @@ Database Management
 -------------------------------
 --config-db    - provides database only configuration to support based on note type (see --get-type)
 --backup-db    - creates a backup of node database to file
-                 the prefix for all schemas provided is \"esgf_\" Ex: -s foo will reference schema esgf_foo
-                 [-s|--schema] <schema suffix>
-                 [-db|--database] <database name>
---restore-db   - restores from (nth) backup of database
-                 [-n] <the nth backup> (default is n=1 or the last / most recent backup, 1 <= n <= 7)
-                 [-s|--schema] <schema suffix>
-                 [-db|--database] <database name>
+                 the prefix for all schemas provided is \"esgf_\" Ex: -s foo will reference schema esgf_foo [-s|--schema] <schema suffix> [-db|--database] <database name>
+--restore-db   - restores from (nth) backup of database [-n] <the nth backup> (default is n=1 or the last / most recent backup, 1 <= n <= 7) [-s|--schema] <schema suffix> [-db|--database] <database name>
 
 -------------------------------
 Trouble Shooting

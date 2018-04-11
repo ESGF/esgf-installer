@@ -542,18 +542,13 @@
 <td><ul class="first simple">
 <li>creates a backup of node database to file</li>
 </ul>
-<p class="last">the prefix for all schemas provided is “<a href="#id23"><span class="problematic" id="id24">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo
-[-s|–schema] &lt;schema suffix&gt;
-[-db|–database] &lt;database name&gt;</p>
+<p class="last">the prefix for all schemas provided is “<a href="#id23"><span class="problematic" id="id24">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo [-s|–schema] &lt;schema suffix&gt; [-db|–database] &lt;database name&gt;</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--restore-db</span></kbd></td>
-<td><ul class="first simple">
-<li>restores from (nth) backup of database</li>
+<td><ul class="first last simple">
+<li>restores from (nth) backup of database [-n] &lt;the nth backup&gt; (default is n=1 or the last / most recent backup, 1 &lt;= n &lt;= 7) [-s|–schema] &lt;schema suffix&gt; [-db|–database] &lt;database name&gt;</li>
 </ul>
-<p class="last">[-n] &lt;the nth backup&gt; (default is n=1 or the last / most recent backup, 1 &lt;= n &lt;= 7)
-[-s|–schema] &lt;schema suffix&gt;
-[-db|–database] &lt;database name&gt;</p>
 </td></tr>
 </tbody>
 </table>

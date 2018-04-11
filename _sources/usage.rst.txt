@@ -117,12 +117,12 @@ Database Management
 -------------------------------
 Trouble Shooting
 -------------------------------
---verify-thredds-credentials - if there is a thredds/publisher \"re-init\" issue this will fix it
+--verify-thredds-credentials    - if there is a thredds/publisher \"re-init\" issue this will fix it
 
 -------------------------------
 Other
 -------------------------------
---shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node
+--shell                         - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node
 
 -------------------------------
 Node Life Cycle Flags:
@@ -151,6 +151,7 @@ To add this script to the linux boot sequence: (as root)
 \"--install\" may be used with \"--verify\" but neither are not intended for use with stop or start or status
 
 Ex:
+
 * esg_node.py --install
 
 * esg_node.py --verify
@@ -170,20 +171,20 @@ Ex:
 
 NOTE:
 
-*You must be root or effectively root to run this program,
-*prefixing the command with sudo will not allow the use of
-*needed environment variables!!!! If you must use sudo, do so
-*only to become root proper then source your user's .[bash]rc
-*file so that root has it's environment set accordingly!  Or you
-*can more simply become root using sudo's \"-s\" flag.  After a
-*full install there will be a file created (/etc/esg.env) that has
-*the basic environment vars that were used and set during the
-*installation - this should be sourced by users of this
-*application stack.
+You must be root or effectively root to run this program,
+prefixing the command with sudo will not allow the use of
+needed environment variables!!!! If you must use sudo, do so
+only to become root proper then source your user's .[bash]rc
+file so that root has it's environment set accordingly!  Or you
+can more simply become root using sudo's \"-s\" flag.  After a
+full install there will be a file created (/etc/esg.env) that has
+the basic environment vars that were used and set during the
+installation - this should be sourced by users of this
+application stack.
 
---------------
+----------------------
 Key Environment Vars:
---------------
+----------------------
 
 The following variables are written to the /etc/esg.env file
 which sets up the installation environment.  The 'OFFICIAL'

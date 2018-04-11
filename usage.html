@@ -619,7 +619,7 @@
 <td><ul class="first simple">
 <li>creates a backup of node database to file</li>
 </ul>
-<p class="last">the prefix for all schemas provided is “<a href="#id21"><span class="problematic" id="id22">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo [-s|–schema] &lt;schema suffix&gt; [-db|–database] &lt;database name&gt;</p>
+<p class="last">the prefix for all schemas provided is “<a href="#id1"><span class="problematic" id="id2">esgf_</span></a>” Ex: -s foo will reference schema esgf_foo [-s|–schema] &lt;schema suffix&gt; [-db|–database] &lt;database name&gt;</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--restore-db</span></kbd></td>
@@ -632,11 +632,34 @@
 </div>
 <div class="section" id="trouble-shooting">
 <h2>Trouble Shooting<a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">¶</a></h2>
-<p>–verify-thredds-credentials - if there is a thredds/publisher “re-init” issue this will fix it</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--verify-thredds-credentials</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>if there is a thredds/publisher “re-init” issue this will fix it</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="other">
 <h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
-<p>–shell - invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--shell</span></kbd></td>
+<td><ul class="first last simple">
+<li>invokes the esgf shell (esgf-sh) to provide a command line REPL inteface to the node</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="node-life-cycle-flags">
 <h2>Node Life Cycle Flags:<a class="headerlink" href="#node-life-cycle-flags" title="Permalink to this headline">¶</a></h2>
@@ -675,9 +698,9 @@
 ——————————-</p>
 <p>“stop” | “start” | “status” are meant to be run independent of other flags (and put LAST if other flags are used)
 “–install” may be used with “–verify” but neither are not intended for use with stop or start or status</p>
-<p>Ex:
-* esg_node.py –install</p>
+<p>Ex:</p>
 <ul class="simple">
+<li>esg_node.py –install</li>
 <li>esg_node.py –verify</li>
 <li>esg_node.py –install –verify</li>
 <li>esg_node.py –write-env OR</li>
@@ -693,16 +716,16 @@
 <li>esg_node.py status OR</li>
 </ul>
 <p>NOTE:</p>
-<p><a href="#id1"><span class="problematic" id="id2">*</span></a>You must be root or effectively root to run this program,
-<a href="#id3"><span class="problematic" id="id4">*</span></a>prefixing the command with sudo will not allow the use of
-<a href="#id5"><span class="problematic" id="id6">*</span></a>needed environment variables!!!! If you must use sudo, do so
-<a href="#id7"><span class="problematic" id="id8">*</span></a>only to become root proper then source your user’s .[bash]rc
-<a href="#id9"><span class="problematic" id="id10">*</span></a>file so that root has it’s environment set accordingly!  Or you
-<a href="#id11"><span class="problematic" id="id12">*</span></a>can more simply become root using sudo’s “-s” flag.  After a
-<a href="#id13"><span class="problematic" id="id14">*</span></a>full install there will be a file created (/etc/esg.env) that has
-<a href="#id15"><span class="problematic" id="id16">*</span></a>the basic environment vars that were used and set during the
-<a href="#id17"><span class="problematic" id="id18">*</span></a>installation - this should be sourced by users of this
-<a href="#id19"><span class="problematic" id="id20">*</span></a>application stack.</p>
+<p>You must be root or effectively root to run this program,
+prefixing the command with sudo will not allow the use of
+needed environment variables!!!! If you must use sudo, do so
+only to become root proper then source your user’s .[bash]rc
+file so that root has it’s environment set accordingly!  Or you
+can more simply become root using sudo’s “-s” flag.  After a
+full install there will be a file created (/etc/esg.env) that has
+the basic environment vars that were used and set during the
+installation - this should be sourced by users of this
+application stack.</p>
 </div>
 <div class="section" id="key-environment-vars">
 <h2>Key Environment Vars:<a class="headerlink" href="#key-environment-vars" title="Permalink to this headline">¶</a></h2>

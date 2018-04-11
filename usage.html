@@ -198,10 +198,9 @@
 <tbody valign="top">
 <tr><td class="option-group">
 <kbd><span class="option">--install</span></kbd></td>
-<td><ul class="first simple">
-<li>goes through the installation process</li>
+<td><ul class="first last simple">
+<li>goes through the installation process; will automatically start up node services</li>
 </ul>
-<p class="last">will automatically start up node services</p>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--verify</span></kbd></td>
@@ -253,10 +252,9 @@
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--force</span></kbd></td>
-<td><ul class="first simple">
-<li>will allow execution of installation|update code to be executed beyond the up2date checks.</li>
+<td><ul class="first last simple">
+<li>will allow execution of installation|update code to be executed beyond the up2date checks. Basically allowing an installation|update as if starting from scratch.</li>
 </ul>
-<p class="last">Basically allowing an installation|update as if starting from scratch.</p>
 </td></tr>
 </tbody>
 </table>
@@ -269,26 +267,18 @@
 <tr><td class="option-group" colspan="2">
 <kbd><span class="option">--type</span>, <span class="option">-t <var>&lt;data &amp;| index &amp;| idp &amp;| compute&gt;</var></span></kbd></td>
 </tr>
-<tr><td>&#160;</td><td><ul class="first simple">
-<li>Select type of node:</li>
+<tr><td>&#160;</td><td><ul class="first last simple">
+<li>Select type of node: “data” node, “index” node, “idp” (identity provider) node and/or “compute” node(note: there is no default one must be selected at least initially…when in doubt use “data”)</li>
 </ul>
-<p>“data” node,
-“index” node,
-“idp” (identity provider) node and/or
-“compute” node
-(note: there is no default one must be selected at least initially…</p>
-<blockquote class="last">
-<div>when in doubt use “data”)</div></blockquote>
 </td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--set-type</span></kbd></td>
 <td>&lt;data &amp;| index &amp;| idp &amp;| compute&gt;   - Sets the type value to be used at next start up</td></tr>
 <tr><td class="option-group">
 <kbd><span class="option">--get-type</span></kbd></td>
-<td><ul class="first simple">
-<li>returns the last stored type code value of the last run node configuration</li>
+<td><ul class="first last simple">
+<li>returns the last stored type code value of the last run node configuration (note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)</li>
 </ul>
-<p class="last">(note: (s|g)et-type flags are singular command flags, meaning they are NOT meant to work with other flags on the same command line!)</p>
 </td></tr>
 </tbody>
 </table>

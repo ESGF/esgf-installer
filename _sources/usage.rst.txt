@@ -140,6 +140,7 @@ update     update's the node's software stack to prescribed versions
 
 
 To add this script to the linux boot sequence: (as root)
+
 1. cd /etc/init.d
 2. cp ${install_prefix}/bin/esg_node.py .
 3. chkconfig --add esg_node.py
@@ -212,8 +213,8 @@ ESGF_USER_HOME [installer_home]
 Typical usage:
 --------------
 
-Installation : esg_node.py --install --verify (submit csr and get back returned cert)
-Credentials  : esg_node.py --install-ssl-keypair <pub_cert> <priv_key>
-Test Publish : esg_node.py --test-pub
-Update Certs : esg_node.py [--force] --rebuild-truststore
-Life Cycle   : esg_node.py [start|stop|status|restart|update]
+* Installation : esg_node.py --install --verify (submit csr and get back returned cert)
+* Credentials  : esg_node.py --install-ssl-keypair <pub_cert> <priv_key>
+* Test Publish : esg_node.py --test-pub
+* Update Certs : esg_node.py [--force] --rebuild-truststore
+* Life Cycle   : esg_node.py [start|stop|status|restart|update]

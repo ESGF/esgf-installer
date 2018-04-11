@@ -692,11 +692,13 @@
 </tbody>
 </table>
 <p>(notice, no “–” flag prefix to make rc friendly also chkconfig-able ;-)</p>
-<p>To add this script to the linux boot sequence: (as root)
-1. cd /etc/init.d
-2. cp ${install_prefix}/bin/esg_node.py .
-3. chkconfig –add esg_node.py
-4. chkconfig –list esg_node.py</p>
+<p>To add this script to the linux boot sequence: (as root)</p>
+<ol class="arabic simple">
+<li>cd /etc/init.d</li>
+<li>cp ${install_prefix}/bin/esg_node.py .</li>
+<li>chkconfig –add esg_node.py</li>
+<li>chkconfig –list esg_node.py</li>
+</ol>
 <p>“stop” | “start” | “status” are meant to be run independent of other flags (and put LAST if other flags are used)
 “–install” may be used with “–verify” but neither are not intended for use with stop or start or status</p>
 <p>Ex:</p>
@@ -753,11 +755,13 @@ It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
 </div>
 <div class="section" id="typical-usage">
 <h2>Typical usage:<a class="headerlink" href="#typical-usage" title="Permalink to this headline">¶</a></h2>
-<p>Installation : esg_node.py –install –verify (submit csr and get back returned cert)
-Credentials  : esg_node.py –install-ssl-keypair &lt;pub_cert&gt; &lt;priv_key&gt;
-Test Publish : esg_node.py –test-pub
-Update Certs : esg_node.py [–force] –rebuild-truststore
-Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>
+<ul class="simple">
+<li>Installation : esg_node.py –install –verify (submit csr and get back returned cert)</li>
+<li>Credentials  : esg_node.py –install-ssl-keypair &lt;pub_cert&gt; &lt;priv_key&gt;</li>
+<li>Test Publish : esg_node.py –test-pub</li>
+<li>Update Certs : esg_node.py [–force] –rebuild-truststore</li>
+<li>Life Cycle   : esg_node.py [start|stop|status|restart|update]</li>
+</ul>
 </div>
 </div>
 

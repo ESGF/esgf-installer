@@ -69,7 +69,7 @@ Globus Tool Management
 -------------------------------
 --no-globus                 - will not perform any operations affecting globus tools (for those with existing globus setups)
 --gridftp-config            - [ bdm &| end-user ] (defaults to both)
---myproxy - [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
+--myproxy                   - [gen-self-cert] <dir> | [regen-simpleca] [fetch-certs|gen-self-cert|keep-certs] | [install|update]
 
 -------------------------------
 Key Management Flags:

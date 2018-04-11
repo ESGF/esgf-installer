@@ -640,6 +640,34 @@
 </div>
 <div class="section" id="node-life-cycle-flags">
 <h2>Node Life Cycle Flags:<a class="headerlink" href="#node-life-cycle-flags" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>start</td>
+<td>start the node’s services</td>
+</tr>
+<tr class="row-odd"><td>stop</td>
+<td>stops the node’s services</td>
+</tr>
+<tr class="row-even"><td>status</td>
+<td>status on node’s services</td>
+</tr>
+<tr class="row-odd"><td>restart</td>
+<td>restarts the node’s services (calls stop then start :-/)</td>
+</tr>
+<tr class="row-even"><td>update</td>
+<td>update’s the node’s software stack to prescribed versions</td>
+</tr>
+</tbody>
+</table>
 <p>(notice, no “–” flag prefix to make rc friendly also chkconfig-able ;-)</p>
 <p>&gt; cp ${install_prefix}/bin/esg_node.py .
 &gt; chkconfig –add esg_node.py

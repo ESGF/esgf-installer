@@ -146,23 +146,23 @@ To add this script to the linux boot sequence: (as root)
 \"stop\" | \"start\" | \"status\" are meant to be run independent of other flags (and put LAST if other flags are used)
 \"--install\" may be used with \"--verify\" but neither are not intended for use with stop or start or status
 
-Ex: 
-esg_node.py --install
+Ex:
+* esg_node.py --install
 
-esg_node.py --verify
+* esg_node.py --verify
 
-esg_node.py --install --verify
-esg_node.py --write-env OR
-esg_node.py --version OR
-esg_node.py --clear OR
-esg_node.py --test-pub OR
-esg_node.py --info OR
-esg_node.py --register [hostname of node] ([truststore passwd])
-esg_node.py --gridftp-config [ bdm &| end-user ]
-esg_node.py start OR
-esg_node.py --gridftp-config [ bdm &| end-user ] start OR
-esg_node.py stop  OR
-esg_node.py status OR
+* esg_node.py --install --verify
+* esg_node.py --write-env OR
+* esg_node.py --version OR
+* esg_node.py --clear OR
+* esg_node.py --test-pub OR
+* esg_node.py --info OR
+* esg_node.py --register [hostname of node] ([truststore passwd])
+* esg_node.py --gridftp-config [ bdm &| end-user ]
+* esg_node.py start OR
+* esg_node.py --gridftp-config [ bdm &| end-user ] start OR
+* esg_node.py stop  OR
+* esg_node.py status OR
 
 NOTE:
 
@@ -207,8 +207,7 @@ ESGF_USER_HOME [installer_home]
 Typical usage:
 --------------
 
-Installation : esg_node.py --install --verify
-               (submit csr and get back returned cert)
+Installation : esg_node.py --install --verify (submit csr and get back returned cert)
 Credentials  : esg_node.py --install-ssl-keypair <pub_cert> <priv_key>
 Test Publish : esg_node.py --test-pub
 Update Certs : esg_node.py [--force] --rebuild-truststore

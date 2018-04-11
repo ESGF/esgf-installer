@@ -653,20 +653,22 @@ update    - update’s the node’s software stack to prescribed versions
 <p>“stop” | “start” | “status” are meant to be run independent of other flags (and put LAST if other flags are used)
 “–install” may be used with “–verify” but neither are not intended for use with stop or start or status</p>
 <p>Ex:
-esg_node.py –install</p>
-<p>esg_node.py –verify</p>
-<p>esg_node.py –install –verify
-esg_node.py –write-env OR
-esg_node.py –version OR
-esg_node.py –clear OR
-esg_node.py –test-pub OR
-esg_node.py –info OR
-esg_node.py –register [hostname of node] ([truststore passwd])
-esg_node.py –gridftp-config [ bdm &amp;| end-user ]
-esg_node.py start OR
-esg_node.py –gridftp-config [ bdm &amp;| end-user ] start OR
-esg_node.py stop  OR
-esg_node.py status OR</p>
+* esg_node.py –install</p>
+<ul class="simple">
+<li>esg_node.py –verify</li>
+<li>esg_node.py –install –verify</li>
+<li>esg_node.py –write-env OR</li>
+<li>esg_node.py –version OR</li>
+<li>esg_node.py –clear OR</li>
+<li>esg_node.py –test-pub OR</li>
+<li>esg_node.py –info OR</li>
+<li>esg_node.py –register [hostname of node] ([truststore passwd])</li>
+<li>esg_node.py –gridftp-config [ bdm &amp;| end-user ]</li>
+<li>esg_node.py start OR</li>
+<li>esg_node.py –gridftp-config [ bdm &amp;| end-user ] start OR</li>
+<li>esg_node.py stop  OR</li>
+<li>esg_node.py status OR</li>
+</ul>
 <p>NOTE:</p>
 <p><a href="#id1"><span class="problematic" id="id2">*</span></a>You must be root or effectively root to run this program,
 <a href="#id3"><span class="problematic" id="id4">*</span></a>prefixing the command with sudo will not allow the use of
@@ -704,11 +706,8 @@ It prefixes the ESGF_INSTALL_DIR [workdir] if it is not explicitly set
 </div>
 <div class="section" id="typical-usage">
 <h2>Typical usage:<a class="headerlink" href="#typical-usage" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt>Installation <span class="classifier-delimiter">:</span> <span class="classifier">esg_node.py –install –verify</span></dt>
-<dd>(submit csr and get back returned cert)</dd>
-</dl>
-<p>Credentials  : esg_node.py –install-ssl-keypair &lt;pub_cert&gt; &lt;priv_key&gt;
+<p>Installation : esg_node.py –install –verify (submit csr and get back returned cert)
+Credentials  : esg_node.py –install-ssl-keypair &lt;pub_cert&gt; &lt;priv_key&gt;
 Test Publish : esg_node.py –test-pub
 Update Certs : esg_node.py [–force] –rebuild-truststore
 Life Cycle   : esg_node.py [start|stop|status|restart|update]</p>

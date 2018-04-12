@@ -1099,7 +1099,7 @@ setup_esgcet() {
     if [ "$mode" = "I" ]; then
         $pipcmd esgprep==${esgprep_version}
     else
-        $pipcmd esgprep>=${esgprep_version}
+        $pipcmd "esgprep>=${esgprep_version}"
     fi
 
     $pipcmd sqlalchemy_migrate

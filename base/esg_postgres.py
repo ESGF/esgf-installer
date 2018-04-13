@@ -262,7 +262,6 @@ def connect_to_db(user, db_name=None,  host="/tmp", password=None):
 
         os.seteuid(postgres_id)
     db_connection_string = build_connection_string(user, db_name, host, password)
-    logger.debug("db_connection_string: %s", db_connection_string)
     try:
         conn = psycopg2.connect(db_connection_string)
         logger.debug("Connected to %s database as user '%s'", db_name, user)

@@ -378,7 +378,7 @@ def write_tds_install_log():
     esg_property_manager.set_property("thredds_service_endpoint", "http://{}/thredds".format(esgf_host))
     esg_property_manager.set_property("thredds_service_app_home", "{}/webapps/thredds".format(config["tomcat_install_dir"]))
 
-def setup_thredds(node_type_list):
+def setup_thredds():
 
     print "\n*******************************"
     print "Setting up Thredds"
@@ -460,8 +460,8 @@ def tds_startup_hook():
     esg_functions.change_ownership_recursive(config["thredds_content_dir"], uid=esg_functions.get_user_id("tomcat"))
 
 
-def main(node_type_list):
-    setup_thredds(node_type_list)
+def main():
+    setup_thredds()
 
 if __name__ == '__main__':
     main()

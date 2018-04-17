@@ -3876,35 +3876,45 @@ install_keypair() {
     fi
 
     echo "truststore_name = ${truststore_name}"
-
-    local certfiles=()
-    local certfile_entry
-    echo "Please enter your Certificate Athority's certificate chain file(s)"
-    echo " [enter each cert file/url press return, press return with blank entry when done]"
-    echo
     while [ 1 ]; do
-        read -e -p "certfile> " certfile_entry
-        [ -z ${certfile_entry} ] && break
-        certfiles=("${certfiles[@]} ${certfile_entry}")
+
+        local certfiles=()
+        local certfile_entry
+        echo "Please enter your Certificate Athority's certificate chain file(s)"
+        echo " [enter each cert file/url press return, press return with blank entry when done]"
+        echo
+        while [ 1 ]; do
+            read -e -p "certfile> " certfile_entry
+            [ -z ${certfile_entry} ] && break
+            certfiles=("${certfiles[@]} ${certfile_entry}")
+        done
+	    cp ${private_key} /etc/certs/hostkey.pem
+	    cp ${public_cert} /etc/certs/hostcert.pem
+	    echo -n >/etc/certs/tmpchain
+	    for cert in ${certfiles[@]}; do
+	        if [ ! -f $cert ] ; then
+		    echo ${cert} not found or not readable.
+
+		    exit -1
+	        fi
+
+	        cat $cert >>/etc/certs/tmpchain
+	        echo >> /etc/certs/tmpchain
+	    done
+	    cp /etc/certs/tmpchain /etc/certs/cachain.pem
+
+	    chmod 400 /etc/certs/hostkey.pem
+	    chmod 644 /etc/certs/hostcert.pem
+	    chmod 644 /etc/certs/cachain.pem
+        
+        if ! $ESGF_OPENSSL verify -verbose -purpose sslserver -CAfile /etc/certs/cachain.pem /etc/certs/hostcert.pem >/dev/null 2>&1; then 
+            echo "Incomplete or incorrect chain. Try again";
+            continue;
+        else
+            break;
+        fi
+        
     done
-	cp ${private_key} /etc/certs/hostkey.pem
-	cp ${public_cert} /etc/certs/hostcert.pem
-	echo -n >/etc/certs/tmpchain
-	for cert in ${certfiles[@]}; do
-	    if [ ! -f $cert ] ; then
-		echo ${cert} not found or not readable.
-
-		exit -1
-	    fi
-
-	    cat $cert >>/etc/certs/tmpchain
-	    echo >> /etc/certs/tmpchain
-	done
-	cp /etc/certs/tmpchain /etc/certs/cachain.pem
-
-	chmod 400 /etc/certs/hostkey.pem
-	chmod 644 /etc/certs/hostcert.pem
-	chmod 644 /etc/certs/cachain.pem
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
     if [ $? != 0 ]; then

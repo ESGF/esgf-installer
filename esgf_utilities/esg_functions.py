@@ -655,6 +655,7 @@ def confirm_password(password_input, password_confirmation):
 
 
 def is_valid_password(password_input):
+    #TODO: raise exception on invalid password
     if not password_input or not str.isalnum(password_input):
         print "Invalid password... "
         return False
@@ -1034,6 +1035,12 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
     # update_idp_static_xml_permissions(whitelist_file_dir)
+
+
+def esgf_node_info():
+    '''Print basic info about ESGF installation'''
+    with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
+        print info_file.read()
 
 def main():
     import esg_logging_manager

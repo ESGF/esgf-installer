@@ -655,14 +655,17 @@ def confirm_password(password_input, password_confirmation):
 
 
 def is_valid_password(password_input):
-    if not password_input or not str.isalnum(password_input):
-        print "Invalid password... "
+    if not password_input:
+        print "Password cannot be blank"
         return False
-    if not password_input or len(password_input) < 6:
+    if not str.isalnum(password_input):
+        print "The password can only contain alphanumeric characters"
+        return False
+    if len(password_input) < 6:
         print "Sorry password must be at least six characters :-( "
         return False
-    else:
-        return True
+
+    return True
 
 
 def set_java_keystore_password(keystore_password=None):

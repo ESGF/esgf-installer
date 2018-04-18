@@ -198,6 +198,59 @@ write_paths() {
     dedup ${envfile} && source ${envfile}
 }
 
+
+check_rpm_version() {
+    # checks if named RPM is installed
+    # returns success/failure, and on success sets shell variable 'rpm_version'
+    name=$1
+    rpm_version=`rpm -q --queryformat '%{VERSION}' $name`
+    if [ $? -eq 0 ]
+    then	
+	return 0
+    else
+	unset rpm_version
+	return 1
+    fi
+}
+
+
+is_supported_system() {
+    # checks if system is supported, and returns 0 (success) if it is 
+    # or 1 (failure) if it isn't
+    # also sets OS, MACH, DISTRIB and MAJREV on supported systems
+    OS=`uname -s`
+    MACH=`uname -m`
+    
+    if [ $OS != Linux ]; then return 1; fi    
+    if [ $MACH != x86_64 ]; then return 1; fi
+    
+    if check_rpm_version redhat-release-server; then
+	DISTRIB="Red Hat"
+	MAJREV=`echo $rpm_version | sed 's/Server//'`
+    elif check_rpm_version centos-release; then
+	DISTRIB="CentOS"
+	MAJREV=$rpm_version
+    elif check_rpm_version sl-release; then
+	DISTRIB="Scientific Linux"
+	MAJREV=`echo $rpm_version | awk -F. '{print $1}'`
+    else
+	return 1
+    fi
+
+    case $MAJREV in
+	6)
+	    return 0
+	    ;;
+	7)
+	    return 0
+	    ;;
+	*)
+	    return 1
+	    ;;
+    esac	    
+}
+
+
 #checking for what we expect to be on the system a-priori
 #that we are not going to install or be responsible for
 check_prerequisites() {
@@ -231,21 +284,11 @@ printf "
     #----------------------------------------
     echo "Checking requisites... "
 
-    # checking for OS, architecture, distribution and version
-
-    OS=`uname -s`
-    MACH=`uname -m`
-
-    if [ "${OS}" = "Linux" ] && [ "${MACH}" = "x86_64" ] && [ -f /etc/redhat-release ] ; then
-    	MAJREV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*// | sed s/[.].*//`
+    if ! is_supported_system
+    then
+	echo 'ESGF can only be installed on versions 6/7 of Red Hat, CentOS or Scientific Linux x86_64 systems'
+	exit 1
     fi
-
-    if [ "${MAJREV}" = 6 -o "${MAJREV}" = 7 ] ; then
-    	DISTRIB=`cat /etc/redhat-release | sed s/release.*// | awk '{print $1}' `
-    fi
-
-    if [[ -z $DISTRIB ]] ; then echo "ESGF can only be installed on versions 6/7 of Red Hat, CentOS or Scientific Linux x86_64 systems" && exit 1 ; fi
-
 
     #----------------------------------------
 
@@ -896,7 +939,7 @@ setup_cdat() {
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
     unset LD_LIBRARY_PATH
 
-	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil
+	conda create -y -n esgf-pub "python<3" -c conda-forge -c uvcdat cdutil
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
     fi
 
@@ -1056,7 +1099,7 @@ setup_esgcet() {
     if [ "$mode" = "I" ]; then
         $pipcmd esgprep==${esgprep_version}
     else
-        $pipcmd esgprep>=${esgprep_version}
+        $pipcmd "esgprep>=${esgprep_version}"
     fi
 
     $pipcmd sqlalchemy_migrate
@@ -1096,11 +1139,25 @@ setup_esgcet() {
     )
     [ $? != 0 ] && checked_done 1
 
-
-
-
+    inifile="/esg/config/esgcet/esg.ini"
+    do_esgsetup="no"
 
     if [ "${mode}" = "I" ]; then
+        echo "Install mode - will run esgsetup"
+        do_esgsetup="yes"
+    else
+        test=`grep -c hessian_service_certs_location $inifile` 
+        if [ $test -gt 0 ] ; then
+            do_esgsetup="yes"
+        fi   
+    fi
+
+    if  [ do_esgsetup == "yes" ] ; then
+
+        if [ -f $inifile ] ; then
+            date_str=`date $date_format`
+            mv $infile $inifile.$date_str.bak
+        fi
 
         local choice
         while [ 1 ]; do
@@ -2176,7 +2233,7 @@ generate_esgf_csrs_ext(){
 	tar -czf $req_node_hostname.tgz $to_tar;
 	popd;
 	echo "A copy of the generated keys and CSRs has been saved as /etc/extcsrs/$req_node_hostname.tgz";
-	echo "Please mail the csr files for signing to Prashanth Dwarakanath <pchengi@nsc.liu.se> or Nicolas Carenton <ncarenton@ipsl.jussieu.fr>";
+    echo "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>";
 	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
 	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
 	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
@@ -2196,7 +2253,7 @@ If you wish to generate CSRs for a node other than the one you are running, you 
 esg-node --generate-esgf-csrs-ext
 
 If you wish to install ESGF certificates:
-1. untar the entire contents of the tarball you received from Nicolas/Prashanth into /etc/esgfcerts
+1. untar the entire contents of the tarball you received from the ESGF CA manager (Prashanth, Lukasz, or Sébastien) into /etc/esgfcerts
 2. esg-node --install-local-certs
 3. If you also have locally issued certificates for the webcontainer:
 esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem
@@ -3819,35 +3876,45 @@ install_keypair() {
     fi
 
     echo "truststore_name = ${truststore_name}"
-
-    local certfiles=()
-    local certfile_entry
-    echo "Please enter your Certificate Athority's certificate chain file(s)"
-    echo " [enter each cert file/url press return, press return with blank entry when done]"
-    echo
     while [ 1 ]; do
-        read -e -p "certfile> " certfile_entry
-        [ -z ${certfile_entry} ] && break
-        certfiles=("${certfiles[@]} ${certfile_entry}")
+
+        local certfiles=()
+        local certfile_entry
+        echo "Please enter your Certificate Athority's certificate chain file(s)"
+        echo " [enter each cert file/url press return, press return with blank entry when done]"
+        echo
+        while [ 1 ]; do
+            read -e -p "certfile> " certfile_entry
+            [ -z ${certfile_entry} ] && break
+            certfiles=("${certfiles[@]} ${certfile_entry}")
+        done
+	    cp ${private_key} /etc/certs/hostkey.pem
+	    cp ${public_cert} /etc/certs/hostcert.pem
+	    echo -n >/etc/certs/tmpchain
+	    for cert in ${certfiles[@]}; do
+	        if [ ! -f $cert ] ; then
+		    echo ${cert} not found or not readable.
+
+		    exit -1
+	        fi
+
+	        cat $cert >>/etc/certs/tmpchain
+	        echo >> /etc/certs/tmpchain
+	    done
+	    cp /etc/certs/tmpchain /etc/certs/cachain.pem
+
+	    chmod 400 /etc/certs/hostkey.pem
+	    chmod 644 /etc/certs/hostcert.pem
+	    chmod 644 /etc/certs/cachain.pem
+        
+        if ! $ESGF_OPENSSL verify -verbose -purpose sslserver -CAfile /etc/certs/cachain.pem /etc/certs/hostcert.pem >/dev/null 2>&1; then 
+            echo "Incomplete or incorrect chain. Try again";
+            continue;
+        else
+            break;
+        fi
+        
     done
-	cp ${private_key} /etc/certs/hostkey.pem
-	cp ${public_cert} /etc/certs/hostcert.pem
-	echo -n >/etc/certs/tmpchain
-	for cert in ${certfiles[@]}; do
-	    if [ ! -f $cert ] ; then
-		echo ${cert} not found or not readable.
-
-		exit -1
-	    fi
-
-	    cat $cert >>/etc/certs/tmpchain
-	    echo >> /etc/certs/tmpchain
-	done
-	cp /etc/certs/tmpchain /etc/certs/cachain.pem
-
-	chmod 400 /etc/certs/hostkey.pem
-	chmod 644 /etc/certs/hostcert.pem
-	chmod 644 /etc/certs/cachain.pem
     debug_print "make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}"
     make_fresh_keystore ${keystore_name} ${keystore_alias} ${store_password} ${private_key} -- ${public_cert} ${certfiles[@]}
     if [ $? != 0 ]; then
@@ -7054,8 +7121,13 @@ main() {
 	echo 'name=ESGF' >> /etc/yum.repos.d/esgf.repo
 	if [[ ${DISTRIB} == "CentOS" ]] || [[ ${DISTRIB} = "Scientific Linux" ]] ; then
 		echo "baseurl=${esgf_dist_mirror}/RPM/centos/6/x86_64" >> /etc/yum.repos.d/esgf.repo
-	elif [[ ${DISTRIB} == "Red Hat"* ]] ; then
+	elif [[ ${DISTRIB} == "Red Hat" ]] ; then
 		echo "baseurl=${esgf_dist_mirror}/RPM/redhat/6/x86_64" >> /etc/yum.repos.d/esgf.repo
+	else
+	    # this should not be reached; check values set of DISTRIB set in is_supported_system()
+	    echo "unsupported distribution ${DISTRIB}"
+	    rm /etc/yum.repos.d/esgf.repo
+	    exit 1
 	fi
 	echo 'failovermethod=priority' >> /etc/yum.repos.d/esgf.repo
     	echo 'enabled=1' >> /etc/yum.repos.d/esgf.repo

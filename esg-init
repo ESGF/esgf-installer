@@ -54,12 +54,12 @@ init() {
     esgf_idp_version=${esgf_idp_version:-"2.7.13"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"4.15.5"}
+    esg_search_version=${esg_search_version:-"4.15.6"}
 
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.12"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.16"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:

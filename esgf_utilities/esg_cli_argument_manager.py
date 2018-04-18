@@ -241,8 +241,6 @@ def define_acceptable_arguments():
     parser.add_argument("--set-default-peer", dest="setdefaultpeer", help="Sets the default peer", action="store_true")
     parser.add_argument("--get-peer-group", "--get-peer-groups",  dest="getpeergroup", help="Displays the peer groups", action="store_true")
     parser.add_argument("--set-peer-group", "--set-peer-groups",  dest="setpeergroup", help="Sets the peer groups", action="store_true")
-    parser.add_argument("--federation-sanity-check", dest="federationsanitycheck", help="", action="store_true")
-    parser.add_argument("--register", dest="register", help="", action="store_true")
     parser.add_argument("--no-auto-fetch-certs", dest="noautofetchcerts", help="", action="store_true")
     parser.add_argument("--set-auto-fetch-certs", dest="setautofetchcerts", help="", action="store_true")
     parser.add_argument("--fetch-esgf-certs", dest="fetchesgfcerts", help="", action="store_true")
@@ -448,13 +446,6 @@ def process_arguments():
         check_for_group_intersection_with(esg_property_manager.get_property("node_peer_group"))
         print "  Peer Group is set to: [{}]".format(args.setpeergroup)
         print "  (restart node to enable group value)"
-    elif args.federationsanitycheck:
-        check_for_group_intersection_with(args.federationsanitycheck)
-    elif args.register:
-        from data_node import thredds
-        #First arg is the server #Second arg is the password (not required)
-        thredds.register(args.register)
-        set_no_auto_fetch_file()
     elif args.noautofetchcerts:
         set_no_auto_fetch_file()
         esg_property_manager.set_property("node_auto_fetch_certs", False)

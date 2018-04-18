@@ -246,6 +246,13 @@ def define_acceptable_arguments():
     parser.add_argument("--no-auto-fetch-certs", dest="noautofetchcerts", help="", action="store_true")
     parser.add_argument("--set-auto-fetch-certs", dest="setautofetchcerts", help="", action="store_true")
     parser.add_argument("--fetch-esgf-certs", dest="fetchesgfcerts", help="", action="store_true")
+    parser.add_argument("--rebuild-truststore", dest="rebuildtrustore", help="", action="store_true")
+    parser.add_argument("--add-my-cert-to-truststore", dest="addmycerttotruststore", help="", action="store_true")
+    parser.add_argument("--generate-ssl-key-and-csr", dest="generatesslkeyandcsr", help="", action="store_true")
+    parser.add_argument("--migrate-tomcat-credentials-to-esgf", dest="migratetomcatcredentialstoesgf", help="", action="store_true")
+    parser.add_argument("--update-temp-ca", dest="updatetempca", help="", action="store_true")
+    parser.add_argument("--check-certs", dest="checkcerts", help="", action="store_true")
+    parser.add_argument("--install-ssl-keypair", "--install-keypair", dest="installsslkeypair", help="", action="store_true")
 
     # args = parser.parse_args()
     # return (args, parser)
@@ -460,3 +467,30 @@ def process_arguments():
         esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         from esgf_utilities import esg_cert_manager
         esg_cert_manager.fetch_esgf_certificates()
+    elif args.rebuildtrustore:
+        from esgf_utilities import esg_cert_manager
+        esg_cert_manager.rebuild_truststore()
+    elif args.addmycerttotruststore:
+        from esgf_utilities import esg_cert_manager
+        esg_cert_manager.add_my_cert_to_truststore()
+    elif args.generatesslkeyandcsr:
+        #arg 1      -> what we want to name the public cert request (csr)
+        #arg 2      -> what we want to name the private key
+        #arg 3      -> what we want to DN to be for the public cert
+        #arg 4      -> (keystore password)
+        #(no args necessary, all args have defaults)
+        #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/<yourhost>-esg-node.csr /usr/local/tomcat/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
+        generate_ssl_key_and_csr()
+    elif args.migratetomcatcredentialstoesgf:
+        from base import esg_tomcat_manager
+        esg_tomcat_manager.migrate_tomcat_credentials_to_esgf()
+        esg_tomcat_manager.sanity_check_web_xmls()
+    elif args.updatetempca:
+        from esgf_utilities import esg_cert_manager
+        logger.debug("updating temporary CA")
+        esg_cert_manager.setup_temp_ca()
+        esg_cert_manager.install_local_certs("firstrun")
+    elif args.checkcerts:
+        check_certificates()
+    elif args.installsslkeypair:
+        install_keypair()

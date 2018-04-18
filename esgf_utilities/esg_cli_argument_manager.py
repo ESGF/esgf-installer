@@ -251,6 +251,16 @@ def define_acceptable_arguments():
     parser.add_argument("--update-temp-ca", dest="updatetempca", help="", action="store_true")
     parser.add_argument("--check-certs", dest="checkcerts", help="", action="store_true")
     parser.add_argument("--install-ssl-keypair", "--install-keypair", dest="installsslkeypair", help="", action="store_true")
+    parser.add_argument("--optimize-index", dest="optimizeindex", help="", action="store_true")
+    parser.add_argument("--myproxy-sanity-check", dest="myproxysanitycheck", help="", action="store_true")
+    parser.add_argument("--noglobus", dest="noglobus", help="", action="store_true")
+    parser.add_argument("--force-install", dest="forceinstall", help="", action="store_true")
+    parser.add_argument("--index-config", dest="indexconfig", help="", action="store_true")
+    parser.add_argument("--check-shards", dest="checkshards", help="", action="store_true")
+    parser.add_argument("--add-replica-shard", dest="addreplicashard", help="", action="store_true")
+    parser.add_argument("--remove-replica-shard", dest="removereplicashard", help="", action="store_true")
+    parser.add_argument("--time-shards", dest="timeshards", help="", action="store_true")
+    parser.add_argument("--update-publisher-resources", dest="updatepublisherresources", help="", action="store_true")
 
     # args = parser.parse_args()
     # return (args, parser)
@@ -448,9 +458,9 @@ def process_arguments():
         print "  (restart node to enable group value)"
     elif args.noautofetchcerts:
         set_no_auto_fetch_file()
-        esg_property_manager.set_property("node_auto_fetch_certs", False)
+        esg_property_manager.set_property("node.auto.fetch.certs", False)
     elif args.setautofetchcerts:
-        if args.setautofetchcerts in == "off" or args.setautofetchcerts == False:
+        if args.setautofetchcerts == "off" or args.setautofetchcerts == False:
             esg_property_manager.set_property("node_auto_fetch_certs", False)
         else:
             esg_property_manager.set_property("node_auto_fetch_certs", True)
@@ -485,3 +495,40 @@ def process_arguments():
         check_certificates()
     elif args.installsslkeypair:
         install_keypair()
+    elif args.optimizeindex:
+        if not os.path.exists(os.path.join(config["scripts_dir"], "esgf-optimize-index"):
+            print "The flag --optimize-index is not enabled..."
+        pass
+    elif args.myproxysanitycheck:
+        from idp_node import globus
+        globus.sanity_check_myproxy_configurations()
+    elif args.noglobus:
+        esg_property_manager.set_property("no.globus", True)
+    elif args.forceinstall:
+        esg_property_manager.set_property("force.install", True)
+    elif args.indexconfig:
+        node_type_list = get_node_type()
+        if "INDEX" not in node_type_list:
+            print "Sorry, the --index-config flag may only be used for \"index\" installation type"
+            sys.exit()
+
+        if args.indexconfig not in ["master", "slave"]:
+            print "Invalid arguments. Valid arguments are 'master' and/or 'slave'"
+
+        esg_property_manager.set_property("index.config", args.indexconfig)
+    elif args.checkshards:
+        from index_node import esg_search
+        esg_search.check_shards()
+    elif args.addreplicashard:
+        from index_node import esg_search
+        #expecting <hostname>:<solr port> | master | slave
+        esg_search.add_shard()
+    elif args.removereplicashard:
+        from index_node import esg_search
+        esg_search.remove_shard()
+    elif args.timeshard:
+        from index_node import esg_search
+        esg_search.time_shards()
+    elif args.updatepublisherresources:
+        from index_node import esg_search
+        esg_search.setup_publisher_resources()

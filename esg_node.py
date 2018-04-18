@@ -37,17 +37,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def set_version_info():
-    '''Gathers the version info from the latest git tag'''
-    repo = Repo(os.path.dirname(__file__))
-    repo_tag = repo.git.describe().lstrip("v")
-    split_repo_tag = repo_tag.split("-")
-    version = split_repo_tag[0]
-    maj_version = str(semver.parse_version_info(version).major) +".0"
-    release = split_repo_tag[1]
-
-    return version, maj_version, release
-
 force_install = False
 
 #--------------
@@ -326,7 +315,7 @@ def setup_esgf_rpm_repo():
 
 def main():
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
-    script_version, script_maj_version, script_release = set_version_info()
+    script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 
     # initialize connection
     init_connection()

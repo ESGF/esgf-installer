@@ -1038,6 +1038,12 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
 
     # update_idp_static_xml_permissions(whitelist_file_dir)
 
+
+def esgf_node_info():
+    '''Print basic info about ESGF installation'''
+    with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
+        print info_file.read()
+
 def main():
     import esg_logging_manager
 

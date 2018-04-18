@@ -456,7 +456,9 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
         print "Could not import cert %s into keystore %s" % (cert_bundle, keystore_name)
 
 def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
-    '''If you want to install a commercial CA issued certificate:
+    '''
+    Once you have submitted the CSR and have gotten it back *signed*; now install the keypair
+    If you want to install a commercial CA issued certificate:
     esg-node --install-keypair <certificate file> <key file>
     When prompted for the cachain file, specify the chain file provided by your CA'''
 
@@ -551,6 +553,13 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
 
 
 def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystore_file=config["keystore_file"], keystore_alias=config["keystore_alias"]):
+    '''
+        #This takes our certificate from the keystore and adds it to the
+        #truststore.  This is done for other services that use originating
+        #from this server talking to another service on this same host.  This
+        #is the interaction scenario with part of the ORP security mechanism.
+        #The param here is the password of the *keystore*
+    '''
     #----------------------------------------------------------------
     #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
     #----------------------------------------------------------------

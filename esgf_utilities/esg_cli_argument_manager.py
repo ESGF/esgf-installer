@@ -435,7 +435,8 @@ def process_arguments():
         except ConfigParser.NoOptionError:
             logger.error("Could not find Index peer")
     elif args.setindexpeer:
-        pass
+        from data_node import esg_publisher
+        esg_publisher.set_index_peer()
     elif args.setpublicationtarget:
         pass
     elif args.getdefaultpeer:

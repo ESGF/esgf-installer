@@ -537,9 +537,9 @@ def write_esgsaml_auth_conf():
 
 def configure_esgf_publisher_for_gridftp():
     print " configuring publisher to use this GridFTP server... "
-    publisher_path = os.path.join(config["publisher_home"], config["publisher_config"])
-    if os.path.exists(publisher_path):
-        shutil.copyfile(publisher_path, publisher_path+".bak")
+    publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
+    if os.path.exists(publisher_config_path):
+        shutil.copyfile(publisher_config_path, publisher_config_path+".bak")
         esg_functions.stream_subprocess_output('''sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}''')
 
 

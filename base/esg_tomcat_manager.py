@@ -9,7 +9,6 @@ import errno
 import logging
 import sys
 import signal
-import filecmp
 from time import sleep
 import yaml
 import requests
@@ -336,6 +335,7 @@ def setup_temp_certs():
 
 def write_tomcat_env():
     esg_property_manager.set_property("CATALINA_HOME", "export CATALINA_HOME={}".format(config["tomcat_install_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
 def write_tomcat_install_log():
     esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
@@ -343,41 +343,45 @@ def write_tomcat_install_log():
     esg_property_manager.set_property("esgf.http.port", "80")
     esg_property_manager.set_property("esgf.https.port", "443")
 
-def sanity_check_web_xmls():
-    '''Editing web.xml files for projects who use the authorizationService'''
-    print "sanity checking webapps' web.xml files accordingly... "
+def get_tomcat_ports():
+    parser = etree.XMLParser(remove_comments=False)
+    tree = etree.parse(base/tomcat_conf/server.xml, parser)
+    root = tree.getroot()
+    ports = []
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
-        webapps = os.listdir("/usr/local/tomcat/webapps")
-        if not webapps:
-            return
+    for param in root.iter():
+        if param.tag == "Connector":
+            ports.append(param.get("port"))
+    return ports
 
-        instruct_to_reboot = False
-        tomcat_user = esg_functions.get_user_id("tomcat")
-        tomcat_group = esg_functions.get_group_id("tomcat")
 
-        for app in webapps:
-            with esg_bash2py.pushd(os.path.join(app,"WEB-INF")):
-                print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
-                os.chown("web.xml", tomcat_user, tomcat_group)
+def tomcat_port_check():
+    '''Test accessibility of tomcat ports listed in the server.xml config file'''
+    tomcat_ports = get_tomcat_ports()
 
-                print " |--inspecting web.xml files for proper authorization service assignment... "
-                esg_functions.stream_subprocess_output("sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'{}'\2@g' web.xml".format(esg_functions.get_esgf_host()))
-                esg_functions.stream_subprocess_output("sed -i.bak '/<param-name>[ ]*'trustoreFile'[ ]*/,/<\/param-value>/ s#\(<param-value>\)[ ]*[^<]*[ ]*\(</param-value>\)#\1'{}'\2#' web.xml".format(config["truststore_file"]))
+    failed_connections = []
+    for port in tomcat_ports:
+        if port == "8223":
+            continue
 
-                try:
-                    if not filecmp.cmp("web.xml", "web.xml.bak", shallow=False):
-                        logger.debug("%s/web.xml file was edited. Reboot needed", os.getcwd())
-                        instruct_to_reboot = True
-                except OSError, error:
-                    logger.exception(error)
+        if port == "8443":
+            protocol = "https"
+        else:
+            protocol = "http"
 
-        if instruct_to_reboot:
-            print '''-------------------------------------------------------------------------------------------------
-            webapp web.xml files have been modified - you must restart node stack for changes to be in effect
-            (esg-node restart)
-            -------------------------------------------------------------------------------------------------'''
+        status_code = requests.get("{}://localhost:{}".format(protocol, port)).status_code
+        if status_code != "200":
+            #We only care about reporting a failure for ports below 1024
+            #specifically 80 (http) and 443 (https)
+            if int(port) < 1024:
+                failed_connections.append(port)
 
+    if failed_connections:
+        print "Connections failed on the following ports: {}".format(", ".join(failed_connections))
+        return False
+
+    print "Passed Tomcat port check"
+    return True
 
 def main():
     print "\n*******************************"
@@ -390,6 +394,7 @@ def main():
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         start_tomcat()
+        tomcat_port_check()
         write_tomcat_install_log()
 
 

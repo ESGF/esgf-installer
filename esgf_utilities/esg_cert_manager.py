@@ -971,6 +971,28 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
             #             except OSError:
             #                 logger.exception("Could not copy %s", file_name)
 
+def check_cert_expiry(file_name):
+    if not os.path.exists(file_name):
+        print "Certficate file {} does not exists".format(file_name)
+        return
+
+    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, file_name)
+    expire_date = x509.get_notAfter()
+    present = datetime.datetime.now()
+
+    if expire_date < present:
+        print "{} is expired".format(file_name)
+
+    print "{} will expire {}".format(file_name, str(expire_date))
+
+def check_certificates():
+    print "check_certificates..."
+    tomcat_cert_file = "{}/{}-esg-node.pem".format(config["tomcat_conf_dir"], esg_functions.get_esgf_host())
+    check_cert_expiry(tomcat_cert_file)
+
+    from idp_node import globus
+    globus.globus_check_certificates()
+
 
 def main():
     print "*******************************"

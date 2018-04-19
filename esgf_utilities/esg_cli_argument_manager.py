@@ -5,12 +5,14 @@ import logging
 import argparse
 import psutil
 import pprint
+import ConfigParser
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
+from esgf_utilities import esg_cert_manager
 from base import esg_setup
 from base import esg_apache_manager
 from base import esg_tomcat_manager
@@ -460,9 +462,9 @@ def process_arguments():
         esg_property_manager.set_property("node.auto.fetch.certs", False)
     elif args.setautofetchcerts:
         if args.setautofetchcerts == "off" or args.setautofetchcerts == False:
-            esg_property_manager.set_property("node_auto_fetch_certs", False)
+            esg_property_manager.set_property("node.auto.fetch.certs", False)
         else:
-            esg_property_manager.set_property("node_auto_fetch_certs", True)
+            esg_property_manager.set_property("node.auto.fetch.certs", True)
     elif args.fetchesgfcerts:
         esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         from esgf_utilities import esg_cert_manager
@@ -491,11 +493,11 @@ def process_arguments():
         esg_cert_manager.setup_temp_ca()
         esg_cert_manager.install_local_certs("firstrun")
     elif args.checkcerts:
-        check_certificates()
+        esg_cert_manager.check_certificates()
     elif args.installsslkeypair:
         install_keypair()
     elif args.optimizeindex:
-        if not os.path.exists(os.path.join(config["scripts_dir"], "esgf-optimize-index"):
+        if not os.path.exists(os.path.join(config["scripts_dir"], "esgf-optimize-index")):
             print "The flag --optimize-index is not enabled..."
         pass
     elif args.myproxysanitycheck:

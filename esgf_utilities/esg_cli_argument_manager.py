@@ -457,7 +457,6 @@ def process_arguments():
         print "  Peer Group is set to: [{}]".format(args.setpeergroup)
         print "  (restart node to enable group value)"
     elif args.noautofetchcerts:
-        set_no_auto_fetch_file()
         esg_property_manager.set_property("node.auto.fetch.certs", False)
     elif args.setautofetchcerts:
         if args.setautofetchcerts == "off" or args.setautofetchcerts == False:

@@ -976,11 +976,11 @@ def check_cert_expiry(file_name):
         print "Certficate file {} does not exists".format(file_name)
         return
 
-    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, file_name)
+    file_data = open(file_name).read()
+    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, file_data)
     expire_date = x509.get_notAfter()
-    present = datetime.datetime.now()
 
-    if expire_date < present:
+    if x509.has_expired():
         print "{} is expired".format(file_name)
 
     print "{} will expire {}".format(file_name, str(expire_date))
@@ -992,6 +992,23 @@ def check_certificates():
 
     from idp_node import globus
     globus.globus_check_certificates()
+
+def extract_openssl_dn(public_cert="/etc/grid-security/hostcert.pem"):
+    '''Regex's the output from openssl's x509 output in "openssl" format:
+    Subject: O=Grid, OU=GlobusTest, OU=simpleCA-pcmdi3.llnl.gov, CN=pcmdi7.llnl.gov
+    and transforms it to our "standard" format
+    /O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=pcmdi7.llnl.gov
+    arg 1 -> the location of the x509 pem file'''
+
+    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(public_cert).read())
+    subject_components = x509.get_subject().get_components()
+    subject_string = ""
+
+    for component in subject_components:
+        subject_string = subject_string + "/" +  component[0] + "=" + component[1]
+
+
+    return subject_string
 
 
 def main():

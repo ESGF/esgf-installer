@@ -9,6 +9,7 @@ import logging
 import socket
 import tarfile
 import datetime
+import ConfigParser
 import errno
 import requests
 import yaml
@@ -1011,7 +1012,7 @@ def install_local_certs(node_type_list, firstrun=None):
             shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
 
         print "Local installation of certs complete."
-        
+
 def check_cert_expiry(file_name):
     if not os.path.exists(file_name):
         print "Certficate file {} does not exists".format(file_name)
@@ -1050,6 +1051,60 @@ def extract_openssl_dn(public_cert="/etc/grid-security/hostcert.pem"):
 
 
     return subject_string
+
+def get_certificate_subject_hash(cert_path):
+    try:
+        cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_path).read())
+    except OpenSSL.crypto.Error:
+        logger.exception("Certificate is not correct.")
+    except IOError:
+        logger.exception("Could not open %s", cert_path)
+
+    return str(cert_obj.subject_name_hash())
+
+def find_certificate_issuer_cert():
+    myproxy_config_file = "{}/config/myproxy/myproxy-server.config".format(config["esg_root_dir"])
+    if os.path.exists(myproxy_config_file):
+        try:
+            with open(myproxy_config_file) as config_file:
+                for line in config_file.readlines():
+                    if "certificate_issuer_cert" in line:
+                        #.strip('\"') is for removing quotes
+                        simpleCA_cert = line.split()[1].strip('\"')
+                        return simpleCA_cert
+        except IOError:
+            raise
+
+def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
+    if not os.path.exists(truststore_file):
+        try:
+            node_peer_group = esg_property_manager.get_property("node_peer_group")
+            if node_peer_group == "esgf-test":
+                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore-test-federation.ts"), truststore_file)
+            else:
+                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore.ts"), truststore_file)
+        except ConfigParser.NoOptionError:
+            print "Could not find node peer group property"
+
+        apache_truststore = '/etc/certs/esgf-ca-bundle.crt'
+        if not os.path.exists(apache_truststore):
+            if node_peer_group == "esgf-test":
+                shutil.copyfile(os.path.join(os.path.dirname(__file__), "apace_certs/esgf-ca-bundle-test-federation.crt"), apache_truststore)
+            else:
+                shutil.copyfile(os.path.join(os.path.dirname(__file__), "apace_certs/esgf-ca-bundle.crt"), apache_truststore)
+
+        with open(apache_truststore, "a") as apache_truststore_file:
+            ca_cert = open("/etc/tempcerts/cacert.pem").read()
+            apache_truststore_file.write(ca_cert)
+
+        simpleCA_cert = find_certificate_issuer_cert()
+
+        simpleCA_cert_hash = get_certificate_subject_hash(simpleCA_cert)
+
+        simpleCA_cert_hash_file = os.path.join(config["globus_global_certs_dir"], simpleCA_cert_hash+".0")
+        _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file, "/tmp/esg_scratch")
+
+        add_my_cert_to_truststore()
 
 
 def main():

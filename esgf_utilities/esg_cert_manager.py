@@ -456,7 +456,9 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
         print "Could not import cert %s into keystore %s" % (cert_bundle, keystore_name)
 
 def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
-    '''If you want to install a commercial CA issued certificate:
+    '''
+    Once you have submitted the CSR and have gotten it back *signed*; now install the keypair
+    If you want to install a commercial CA issued certificate:
     esg-node --install-keypair <certificate file> <key file>
     When prompted for the cachain file, specify the chain file provided by your CA'''
 
@@ -551,6 +553,13 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
 
 
 def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystore_file=config["keystore_file"], keystore_alias=config["keystore_alias"]):
+    '''
+        #This takes our certificate from the keystore and adds it to the
+        #truststore.  This is done for other services that use originating
+        #from this server talking to another service on this same host.  This
+        #is the interaction scenario with part of the ORP security mechanism.
+        #The param here is the password of the *keystore*
+    '''
     #----------------------------------------------------------------
     #Re-integrate my public key (I mean, my "certificate") from my keystore into the truststore (the place housing all public keys I allow to talk to me)
     #----------------------------------------------------------------
@@ -1002,6 +1011,45 @@ def install_local_certs(node_type_list, firstrun=None):
             shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
 
         print "Local installation of certs complete."
+        
+def check_cert_expiry(file_name):
+    if not os.path.exists(file_name):
+        print "Certficate file {} does not exists".format(file_name)
+        return
+
+    file_data = open(file_name).read()
+    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, file_data)
+    expire_date = x509.get_notAfter()
+
+    if x509.has_expired():
+        print "{} is expired".format(file_name)
+
+    print "{} will expire {}".format(file_name, str(expire_date))
+
+def check_certificates():
+    print "check_certificates..."
+    tomcat_cert_file = "{}/{}-esg-node.pem".format(config["tomcat_conf_dir"], esg_functions.get_esgf_host())
+    check_cert_expiry(tomcat_cert_file)
+
+    from idp_node import globus
+    globus.globus_check_certificates()
+
+def extract_openssl_dn(public_cert="/etc/grid-security/hostcert.pem"):
+    '''Regex's the output from openssl's x509 output in "openssl" format:
+    Subject: O=Grid, OU=GlobusTest, OU=simpleCA-pcmdi3.llnl.gov, CN=pcmdi7.llnl.gov
+    and transforms it to our "standard" format
+    /O=Grid/OU=GlobusTest/OU=simpleCA-pcmdi3.llnl.gov/CN=pcmdi7.llnl.gov
+    arg 1 -> the location of the x509 pem file'''
+
+    x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(public_cert).read())
+    subject_components = x509.get_subject().get_components()
+    subject_string = ""
+
+    for component in subject_components:
+        subject_string = subject_string + "/" +  component[0] + "=" + component[1]
+
+
+    return subject_string
 
 
 def main():

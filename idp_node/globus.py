@@ -11,6 +11,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
+from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from base import esg_postgres
@@ -536,9 +537,9 @@ def write_esgsaml_auth_conf():
 
 def configure_esgf_publisher_for_gridftp():
     print " configuring publisher to use this GridFTP server... "
-    publisher_path = os.path.join(config["publisher_home"], config["publisher_config"])
-    if os.path.exists(publisher_path):
-        shutil.copyfile(publisher_path, publisher_path+".bak")
+    publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
+    if os.path.exists(publisher_config_path):
+        shutil.copyfile(publisher_config_path, publisher_config_path+".bak")
         esg_functions.stream_subprocess_output('''sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}''')
 
 
@@ -984,6 +985,10 @@ def create_globus_account(globus_sys_acct):
         if error[0]["returncode"] == 9:
             pass
 
+def globus_check_certificates():
+    print "globus_check_certificates..."
+    my_cert = "/etc/grid-security/hostcert.pem"
+    esg_cert_manager.check_cert_expiry(my_cert)
 
 ############################################
 # Globus Online Setup

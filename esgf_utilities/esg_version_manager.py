@@ -6,6 +6,7 @@ import re
 import logging
 import yaml
 import semver
+from git import Repo
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_functions
 
@@ -14,6 +15,17 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+
+def set_version_info():
+    '''Gathers the version info from the latest git tag'''
+    repo = Repo(os.path.dirname(__file__))
+    repo_tag = repo.git.describe().lstrip("v")
+    split_repo_tag = repo_tag.split("-")
+    version = split_repo_tag[0]
+    maj_version = str(semver.parse_version_info(version).major) +".0"
+    release = split_repo_tag[1]
+
+    return version, maj_version, release
 
 def compare_versions(version_1, version_2):
     '''Check to see if version_1 is greater than or equal to version_2'''

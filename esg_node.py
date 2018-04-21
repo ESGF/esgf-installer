@@ -37,17 +37,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def set_version_info():
-    '''Gathers the version info from the latest git tag'''
-    repo = Repo(os.path.dirname(__file__))
-    repo_tag = repo.git.describe().lstrip("v")
-    split_repo_tag = repo_tag.split("-")
-    version = split_repo_tag[0]
-    maj_version = str(semver.parse_version_info(version).major) +".0"
-    release = split_repo_tag[1]
-
-    return version, maj_version, release
-
 force_install = False
 
 #--------------
@@ -83,7 +72,7 @@ def esgf_node_info():
         print info_file.read()
 
 def set_esg_dist_url(install_type):
-    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist/", "http://dist.ceda.ac.uk/esgf/dist/", "https://aims1.llnl.gov/esgf/dist/", "http://esg-dn2.nsc.liu.se/esgf/dist/")
+    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist")
 
     try:
         if esg_property_manager.get_property("use_local_mirror").lower() in ["y", "yes"]:
@@ -96,15 +85,19 @@ def set_esg_dist_url(install_type):
 
     try:
         if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:
+            esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
             return
         elif esg_property_manager.get_property("esg.dist.url") == "fastest":
             esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror(install_type))
+            esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
         else:
             selected_mirror = esg_mirror_manager.select_dist_mirror()
             esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
+            esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
     except ConfigParser.NoOptionError:
         selected_mirror = esg_mirror_manager.select_dist_mirror()
         esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
+        esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
@@ -232,7 +225,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         from data_node import esg_dashboard, orp, thredds
         from idp_node import globus
         orp.main()
-        thredds.main(node_type_list)
+        thredds.main()
         globus.setup_globus("DATA")
     if "DATA" in node_type_list and "COMPUTE" in node_type_list:
         #CDAT only used on with Publisher; move
@@ -259,8 +252,6 @@ def system_component_installation(esg_dist_url, node_type_list):
         globus.setup_globus("IDP")
         idp.setup_slcs()
 
-
-    system_launch(esg_dist_url, node_type_list, script_version, script_release)
 
 
 def done_remark(node_type_list):
@@ -293,22 +284,30 @@ def done_remark(node_type_list):
 '''
 
     show_summary()
+    
+    try:
+        esg_org_name = esg_property_manager.get_property("esg.org.name")
+    except Exception:
+        logger.exception("esg.org.name could not be found in config file")
     print "(\"Test Project\" -> pcmdi.{esg_org_name}.{node_short_name}.test.mytest)".format(esg_org_name=esg_org_name, node_short_name=esg_property_manager.get_property("node.short.name"))
 
-def setup_esgf_rpm_repo(esg_dist_url):
+def setup_esgf_rpm_repo():
     '''Creates the esgf repository definition file'''
 
     print "*******************************"
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
 
+    esg_mirror_url = esg_property_manager.get_property("esg.mirror.url")
+
     parser = ConfigParser.SafeConfigParser()
     parser.read("esgf_utilities/esgf.repo")
     os_version = platform.platform()
+
     if "centos" in os_version:
-        parser.set("esgf", "baseurl", "{esg_dist_url}/RPM/centos/6/x86_64\n".format(esg_dist_url=esg_dist_url))
+        parser.set("esgf", "baseurl", "{}/RPM/centos/6/x86_64\n".format(esg_mirror_url))
     elif "redhat" in os_version:
-        parser.set("esgf", "baseurl", "{esg_dist_url}/RPM/redhat/6/x86_64\n".format(esg_dist_url=esg_dist_url))
+        parser.set("esgf", "baseurl", "{}/RPM/redhat/6/x86_64\n".format(esg_mirror_url))
 
     with open("/etc/yum.repos.d/esgf.repo", "w") as repo_file_object:
         parser.write(repo_file_object)
@@ -316,7 +315,7 @@ def setup_esgf_rpm_repo(esg_dist_url):
 
 def main():
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
-    script_version, script_maj_version, script_release = set_version_info()
+    script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 
     # initialize connection
     init_connection()
@@ -338,11 +337,6 @@ def main():
     set_esg_dist_url(install_type)
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)
-
-    try:
-        esg_org_name = esg_property_manager.get_property("esg.org.name")
-    except Exception:
-        logger.exception("esg.org.name could not be found in config file")
 
     esg_setup.check_prerequisites()
 
@@ -370,10 +364,11 @@ def main():
 
     esg_questionnaire.initial_setup_questionnaire()
 
-    setup_esgf_rpm_repo(esg_dist_url)
+    setup_esgf_rpm_repo()
 
     # install dependencies
     system_component_installation(esg_dist_url, node_type_list)
+    system_launch(esg_dist_url, node_type_list, script_version, script_release)
 
 
 def sanity_check_web_xmls():
@@ -410,7 +405,7 @@ def sanity_check_web_xmls():
             webapp web.xml files have been modified - you must restart node stack for changes to be in effect
             (esg-node restart)
             -------------------------------------------------------------------------------------------------'''
-def setup_root_app(esg_dist_url_root):
+def setup_root_app(esg_dist_url):
     try:
         if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
             print "ROOT app in place.."
@@ -427,7 +422,7 @@ def setup_root_app(esg_dist_url_root):
 
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
-        root_app_dist_url = "{}/ROOT.tgz".format(esg_dist_url_root)
+        root_app_dist_url = "{}/ROOT.tgz".format(esg_dist_url)
         esg_functions.download_update("ROOT.tgz", root_app_dist_url)
 
         esg_functions.extract_tarball("ROOT.tgz", "/usr/local/webapps")
@@ -477,12 +472,12 @@ def write_script_version_file(script_version):
     with open(os.path.join(config["esg_root_dir"], "version"), "w") as version_file:
         version_file.write(script_version)
 
-def system_launch(esg_dist_url, node_type_list):
+def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     #---------------------------------------
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
-    setup_root_app()
+    setup_root_app(esg_dist_url)
     clear_tomcat_cache()
     remove_unused_esgf_webapps()
 

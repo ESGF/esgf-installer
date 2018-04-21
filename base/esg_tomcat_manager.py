@@ -335,6 +335,7 @@ def setup_temp_certs():
 
 def write_tomcat_env():
     esg_property_manager.set_property("CATALINA_HOME", "export CATALINA_HOME={}".format(config["tomcat_install_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
 def write_tomcat_install_log():
     esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
@@ -342,6 +343,45 @@ def write_tomcat_install_log():
     esg_property_manager.set_property("esgf.http.port", "80")
     esg_property_manager.set_property("esgf.https.port", "443")
 
+def get_tomcat_ports():
+    parser = etree.XMLParser(remove_comments=False)
+    tree = etree.parse(base/tomcat_conf/server.xml, parser)
+    root = tree.getroot()
+    ports = []
+
+    for param in root.iter():
+        if param.tag == "Connector":
+            ports.append(param.get("port"))
+    return ports
+
+
+def tomcat_port_check():
+    '''Test accessibility of tomcat ports listed in the server.xml config file'''
+    tomcat_ports = get_tomcat_ports()
+
+    failed_connections = []
+    for port in tomcat_ports:
+        if port == "8223":
+            continue
+
+        if port == "8443":
+            protocol = "https"
+        else:
+            protocol = "http"
+
+        status_code = requests.get("{}://localhost:{}".format(protocol, port)).status_code
+        if status_code != "200":
+            #We only care about reporting a failure for ports below 1024
+            #specifically 80 (http) and 443 (https)
+            if int(port) < 1024:
+                failed_connections.append(port)
+
+    if failed_connections:
+        print "Connections failed on the following ports: {}".format(", ".join(failed_connections))
+        return False
+
+    print "Passed Tomcat port check"
+    return True
 
 def main():
     print "\n*******************************"
@@ -354,6 +394,7 @@ def main():
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         start_tomcat()
+        tomcat_port_check()
         write_tomcat_install_log()
 
 

@@ -90,8 +90,8 @@
                maxThreads="150" minSpareThreads="25" maxSpareThreads="75"
                enableLookups="false" disableUploadTimeout="true"
                acceptCount="100" scheme="https" secure="true"
-               clientAuth="want" sslEnabledProtocols="TLSv1,TLSv1.1,TLSv1.2"
-               proxyPort="8443"
+               clientAuth="want" sslEnabledProtocols="TLSv1.2"
+               proxyPort="443"
                proxyName="esgf-dev2.llnl.gov"
                server='X'
                ciphers="TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_128_CBC_SHA"

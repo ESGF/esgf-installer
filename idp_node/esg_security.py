@@ -43,7 +43,7 @@ def setup_security(node_type_list, esg_dist_url):
 def write_security_db_install_log(db_dir, esgf_security_version):
     esg_functions.write_to_install_manifest("python:esgf_security", db_dir, esgf_security_version)
 
-def configure_postgress(node_type_list, esg_dist_url, esgf_security_version):
+def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=config["esgf_security_version"]):
     #--------------------------------------------------
     #NOTE: This must be run AFTER the esg node web app
     #      installation/configuration (setup_node_manager)

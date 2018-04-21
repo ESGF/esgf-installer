@@ -23,9 +23,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def install_local_certs():
-    pass
-
 def generate_esgf_csrs():
     pass
 
@@ -261,7 +258,8 @@ def process_arguments():
     if args.installlocalcerts:
         logger.debug("installing local certs")
         get_node_type(config["esg_config_type_file"])
-        install_local_certs()
+        node_type_list = get_node_type()
+        esg_cert_manager.install_local_certs(node_type_list)
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")

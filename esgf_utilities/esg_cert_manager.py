@@ -962,6 +962,47 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
             #             except OSError:
             #                 logger.exception("Could not copy %s", file_name)
 
+def install_local_certs(node_type_list, firstrun=None):
+    if firstrun:
+        file_list = ("cakey.pem", "cacert.pem", "hostcert.pem", "hostkey.pem", "myproxy-server.config")
+        certdir = "/etc/tempcerts"
+    else:
+        if "IDP" in node_type_list:
+            file_list = ("cakey.pem", "cacert.pem", "hostcert.pem", "hostkey.pem")
+        else:
+            file_list = ("hostcert.pem", "hostkey.pem")
+
+        certdir= "/etc/esgfcerts"
+
+    with esg_bash2py.pushd(certdir):
+        for file_name in file_list:
+            if not os.path.exists(file_name):
+                esg_functions.exit_with_error("File {} is not found in {}; Please place it there and reexecute esg_node.py --install-local-certs".format(file_name, certdir))
+
+        if "IDP" in node_type_list:
+            try:
+                cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())
+            except OpenSSL.crypto.Error:
+                logger.exception("Certificate is not correct.")
+
+            local_hash = str(cert_obj.subject_name_hash())
+            globus_pack = "globus_simple_ca_{}_setup-0.tar.gz".format(local_hash)
+            if not os.path.exists(globus_pack):
+                esg_functions.exit_with_error("File {} is not found in {}; Please place it there and reexecute esg_node.py --install-local-certs".format(globus_pack, certdir))
+
+        if "IDP" in node_type_list:
+            shutil.copyfile("cacert.pem", "/var/lib/globus-connect-server/myproxy-ca/cacert.pem")
+            shutil.copyfile("cakey.pem", "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem")
+            shutil.copyfile(globus_pack, "/var/lib/globus-connect-server/myproxy-ca/{}".format(globus_pack))
+            shutil.copyfile(globus_pack, "/etc/grid-security/certificates/{}".format(globus_pack))
+
+        if os.path.exists("hostkey.pem"):
+            shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
+        if os.path.exists("hostcert.pem"):
+            shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
+
+        print "Local installation of certs complete."
+
 
 def main():
     print "*******************************"

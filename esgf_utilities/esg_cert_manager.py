@@ -9,6 +9,7 @@ import logging
 import socket
 import tarfile
 import datetime
+import re
 import ConfigParser
 import errno
 import requests
@@ -1106,6 +1107,51 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
 
         add_my_cert_to_truststore()
 
+def extract_keystore_dn():
+    '''Returns the distinguished name from the Java keystore'''
+    try:
+        keystore_info = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -v -keystore /esg/config/tomcat/keystore-tomcat")
+    except SubprocessError:
+        logger.exception("Could not extract distinguished name from keystore")
+    keystore_owner = re.search("Owner:.*", keystore_info["stdout"]).group()
+    distinguished_name = keystore_owner.split()[1]
+    return distinguished_name
+
+
+def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public_cert_req=None):
+    print "Generating private host key... "
+    key_pair = createKeyPair(OpenSSL.crypto.TYPE_RSA, 1024)
+    with open(private_key, "wt") as key_file_handle:
+        key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
+
+    os.chmod(private_key, 0400)
+
+    print "Generating Certificate Signing Request (csr)... "
+    if not public_cert_req:
+        public_cert_req = "/usr/local/tomcat/{}-esg-node.csr".format(esg_functions.get_esgf_host())
+
+    public_cert_dn = extract_keystore_dn()
+    if public_cert_dn:
+        careq = createCertRequest(private_key, public_cert_dn)
+    else:
+        careq = createCertRequest(private_key, CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+
+    print "Generating 30 day temporary self-signed certificate... "
+
+    newcert = createCertificate(careq, (careq, private_key), 0, (0, 30*60*24*365*5))
+
+    with open('/usr/local/tomcat/{}-esg-node.pem'.format(esg_functions.get_esgf_host()), 'w') as ca:
+        ca.write(
+            OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, newcert).decode('utf-8')
+    )
+
+        print "--------------------------------------------------------"
+        print "In Directory: /usr/local/tomcat"
+        print "Generated private key: {}".format(private_key)
+        print "Generated certificate: /usr/local/tomcat/{}-esg-node.pem".format(esg_functions.get_esgf_host())
+        print "Please obtain and install appropriate certificates at the earliest. Execute esg_node.py --cert-howto for details.";
+        #print "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
+        print "--------------------------------------------------------"
 
 def main():
     print "*******************************"

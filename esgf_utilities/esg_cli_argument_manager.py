@@ -475,13 +475,7 @@ def process_arguments():
         from esgf_utilities import esg_cert_manager
         esg_cert_manager.add_my_cert_to_truststore()
     elif args.generatesslkeyandcsr:
-        #arg 1      -> what we want to name the public cert request (csr)
-        #arg 2      -> what we want to name the private key
-        #arg 3      -> what we want to DN to be for the public cert
-        #arg 4      -> (keystore password)
-        #(no args necessary, all args have defaults)
-        #Ex: esg-node --generate-ssl-key-and-csr /usr/local/tomcat/conf/<yourhost>-esg-node.csr /usr/local/tomcat/conf/hostkey.pem /O=ESGF/OU=ESGF.ORG/CN=<yourhost>
-        generate_ssl_key_and_csr()
+        esg_cert_manager.generate_ssl_key_and_csr(args.generatesslkeyandcsr)
     elif args.migratetomcatcredentialstoesgf:
         from base import esg_tomcat_manager
         esg_tomcat_manager.migrate_tomcat_credentials_to_esgf()

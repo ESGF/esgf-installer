@@ -106,7 +106,7 @@ def copy_config_files():
     print "Copying custom Tomcat config files"
     print "******************************* \n"
     try:
-        shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
+        # shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile(os.path.join(current_directory, "tomcat_conf/context.xml"), "/usr/local/tomcat/conf/context.xml")
         esg_bash2py.mkdir_p("/esg/config/tomcat")
 
@@ -121,7 +121,7 @@ def copy_config_files():
         logger.exception()
         sys.exit()
 
-    esg_cert_manager.main()
+    # esg_cert_manager.main()
 
 
 def create_tomcat_user():
@@ -281,13 +281,15 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
             download_server_config_file(esg_dist_url)
 
         # SET the server.xml variables to contain proper values
-        logger.debug("Editing %s/conf/server.xml accordingly...", config["tomcat_install_dir"])
-        keystore_password = esg_functions.get_java_keystore_password()
-        edit_server_xml(keystore_password)
+        edit_server_xml()
 
 
-def edit_server_xml(keystore_password):
+def edit_server_xml():
     '''Edit the placeholder values in the Tomcat server.xml configuration file'''
+
+    logger.debug("Editing %s/conf/server.xml accordingly...", config["tomcat_install_dir"])
+    keystore_password = esg_functions.get_java_keystore_password()
+
     xml_file = os.path.join(config["tomcat_install_dir"], "conf", "server.xml")
     xml_file_output = '{}_out.xml'.format(os.path.splitext(xml_file)[0])
 
@@ -383,6 +385,105 @@ def tomcat_port_check():
     print "Passed Tomcat port check"
     return True
 
+
+
+def setup_tomcat_logrotate():
+    '''If there is no logrotate file ${tomcat_logrotate_file} then create one
+    default is to cut files after 512M up to 20 times (10G of logs)
+    No file older than year should be kept.'''
+    if not os.path.exists("/usr/sbin/logrotate"):
+        print "Not able to find logrotate here [/usr/local/logrotate]"
+        return False
+
+    log_rot_size = "512M"
+    log_rot_num_files = "20"
+    tomcat_logrotate_file = "/etc/logrotate.d/esgf_tomcat"
+
+    if not os.path.exists("/usr/local/tomcat/logs"):
+        print "Sorry, could not find tomcat log dir"
+        return False
+
+    if not os.path.exists(tomcat_logrotate_file):
+        print "Installing tomcat log rotation... [{}]".format(tomcat_logrotate_file)
+        with open(tomcat_logrotate_file, "w") as logrotate_file:
+            logrotate_file.write('''"/usr/local/tomcat/logs/catalina.out" /usr/local/tomcat/logs/catalina.err {
+                copytruncate
+                size {log_rot_size}
+                rotate {log_rot_num_files}
+                maxage 365
+                compress
+                missingok
+                create 0644 tomcat tomcat
+            }'''.format(log_rot_size=log_rot_size, log_rot_num_files=log_rot_num_files))
+        os.chmod(tomcat_logrotate_file, 0644)
+
+    if not os.path.exists("/usr/local/tomcat/logs/catalina.out"):
+        print "Creating /usr/local/tomcat/logs/catalina.out"
+        esg_bash2py.touch("/usr/local/tomcat/logs/catalina.out")
+        os.chmod("/usr/local/tomcat/logs/catalina.out", 0644)
+        os.chown("/usr/local/tomcat/logs/catalina.out", "tomcat", "tomcat")
+
+
+    if not os.path.exists("/usr/local/tomcat/logs/catalina.err"):
+        print "Creating /usr/local/tomcat/logs/catalina.err"
+        esg_bash2py.touch("/usr/local/tomcat/logs/catalina.err")
+        os.chmod("/usr/local/tomcat/logs/catalina.err", 0644)
+        os.chown("/usr/local/tomcat/logs/catalina.err", "tomcat", "tomcat")
+
+    if not os.path.exists("/etc/cron.daily/logrotate"):
+        print "WARNING: Not able to find script [/etc/cron.daily/logrotate]"
+        return False
+
+
+
+def configure_tomcat():
+    print "*******************************"
+    print "Configuring Tomcat... (for Node Manager)"
+    print "*******************************"
+
+    setup_tomcat_logrotate()
+
+    with esg_bash2py.pushd("/usr/local/tomcat/conf"):
+        # Get server.xml
+        if not os.path.exists("server.xml"):
+            shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
+            os.chmod("/usr/local/tomcat/conf/server.xml", 0600)
+            os.chown("/usr/local/tomcat/conf/server.xml", "tomcat", "tomcat")
+
+        #Find or create keystore file
+        if os.path.exists(config["keystore_file"]):
+            print "Found existing keystore file {}".format(config["keystore_file"])
+        else:
+            print "creating keystore... "
+            #create a keystore with a self-signed cert
+            distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
+
+            #if previous keystore is found; backup
+            esg_cert_manager.backup_previous_keystore(config["keystore_file"])
+
+            #-------------
+            #Make empty keystore...
+            #-------------
+            keystore_password = esg_functions.get_java_keystore_password()
+            esg_cert_manager.create_empty_java_keystore(config["keystore_file"], config["keystore_alias"], keystore_password, distinguished_name)
+
+
+            #Setup temp CA
+            esg_cert_manager.setup_temp_ca()
+
+            #Fetch/Copy truststore to $tomcat_conf_dir
+            if not os.path.exists(config["truststore_file"]):
+                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore.ts"), config["truststore_file"])
+
+            edit_server_xml()
+
+            esg_cert_manager.add_my_cert_to_truststore()
+
+            esg_functions.change_ownership_recursive(config["tomcat_install_dir"], "tomcat", "tomcat")
+            esg_functions.change_ownership_recursive(config["tomcat_conf_dir"], "tomcat", "tomcat")
+
+
+
 def main():
     print "\n*******************************"
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
@@ -393,6 +494,7 @@ def main():
         create_tomcat_user()
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
+        configure_tomcat()
         start_tomcat()
         tomcat_port_check()
         write_tomcat_install_log()

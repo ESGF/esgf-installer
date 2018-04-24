@@ -1385,7 +1385,7 @@ get_esgf_dist_mirror() {
 	master=${resarray['distrib-coffee.ipsl.jussieu.fr/pub/esgf']}
 	fastest=`echo ${flist[1]}|cut -d '/' -f3-`;
 	outofsync=0
-	if [ "${resarray[$fastest]}" != "$master" ]; then #if the fastest mirror is not in sync with coffee
+	if [ -n "$master" ] && [ "${resarray[$fastest]}" != "$master" ]; then #if the fastest mirror is not in sync with coffee
 		echo "$fastest is the fastest mirror, but is out-of-sync, hence overlooked";
 		outofsync=1;
 	fi

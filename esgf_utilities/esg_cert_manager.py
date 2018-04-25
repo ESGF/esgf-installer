@@ -558,7 +558,7 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
 def check_for_existing_alias():
     '''Checks if an existing keystore alias is present in the trustore file'''
     try:
-        keystore_info = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -v -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(esg_functions.get_java_keystore_password()))
+        keystore_info = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(esg_functions.get_java_keystore_password()))
     except SubprocessError:
         logger.exception("Could not extract distinguished name from keystore")
     alias = re.search("Alias name: {}.*".format(config["keystore_alias"]), keystore_info["stdout"]).group()

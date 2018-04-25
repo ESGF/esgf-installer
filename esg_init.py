@@ -147,7 +147,8 @@ def init():
 
     os.environ["PATH"] = myPATH + ':' + os.environ["PATH"]
     PATH = myPATH + ':' + os.environ["PATH"]
-    LD_LIBRARY_PATH = myLD_LIBRARY_PATH
+
+    LD_LIBRARY_PATH = "/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server"
 
     #--------------
     # ID Setting

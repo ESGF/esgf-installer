@@ -24,13 +24,13 @@ def check_mirror_connection(install_type):
     for mirror in esgf_dist_mirrors_list:
         if install_type == "devel":
             try:
-                mirror_response = requests.get('http://{}/dist/devel/lastpush.md5'.format(mirror), timeout=4.0).text
+                mirror_response = requests.get('{}/devel/lastpush.md5'.format(mirror), timeout=4.0).text
                 response_array[mirror] = mirror_response.split()[0]
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
         else:
             try:
-                mirror_response = requests.get('http://{}/dist/lastpush.md5'.format(mirror), timeout=4.0).text
+                mirror_response = requests.get('{}/lastpush.md5'.format(mirror), timeout=4.0).text
                 response_array[mirror] = mirror_response.split()[0]
             except requests.exceptions.Timeout:
                 logger.warn("%s requests timed out", mirror)
@@ -46,16 +46,13 @@ def get_mirror_response_times():
 
     for mirror in esgf_dist_mirrors_list:
         logger.debug("mirror: %s", mirror)
-        host, page = mirror.rsplit("/", 1)
-        logger.debug("host: %s", host)
-        logger.debug("page: %s", page)
 
         try:
-            response = requests.get("http://"+host, timeout=4.0)
-            logger.debug("%s response time %s", host, response.elapsed)
+            response = requests.get(mirror, timeout=4.0)
+            logger.debug("%s response time %s", mirror, response.elapsed)
             response_times[mirror] = response.elapsed
         except requests.exceptions.Timeout:
-            logger.warn("%s request timed out", host)
+            logger.warn("%s request timed out", mirror)
             failed_requests[mirror] = "Request timed out"
 
     return (response_times,failed_requests)

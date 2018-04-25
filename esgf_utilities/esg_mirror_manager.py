@@ -16,7 +16,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 # List of mirror location
-esgf_dist_mirrors_list = ("distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "dist.ceda.ac.uk/esgf/dist", "aims1.llnl.gov/esgf/dist", "esg-dn2.nsc.liu.se/esgf/dist")
+esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist")
 
 def check_mirror_connection(install_type):
     """ Check if mirrors are accessible."""

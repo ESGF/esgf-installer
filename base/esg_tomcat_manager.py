@@ -441,7 +441,7 @@ def setup_tomcat_logrotate():
             logrotate_file.write('compress\n')
             logrotate_file.write('missingok\n')
             logrotate_file.write('create 0644 tomcat tomcat\n')
-            
+
         os.chmod(tomcat_logrotate_file, 0644)
 
     if not os.path.exists("/usr/local/tomcat/logs/catalina.out"):
@@ -455,7 +455,9 @@ def setup_tomcat_logrotate():
         print "Creating /usr/local/tomcat/logs/catalina.err"
         esg_bash2py.touch("/usr/local/tomcat/logs/catalina.err")
         os.chmod("/usr/local/tomcat/logs/catalina.err", 0644)
-        os.chown("/usr/local/tomcat/logs/catalina.err", "tomcat", "tomcat")
+        tomcat_user = esg_functions.get_user_id("tomcat")
+        tomcat_group = esg_functions.get_group_id("tomcat")
+        os.chown("/usr/local/tomcat/logs/catalina.err", tomcat_user, tomcat_group)
 
     if not os.path.exists("/etc/cron.daily/logrotate"):
         print "WARNING: Not able to find script [/etc/cron.daily/logrotate]"

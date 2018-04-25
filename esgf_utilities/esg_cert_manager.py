@@ -561,9 +561,9 @@ def check_for_existing_alias():
         keystore_info = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -v -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(esg_functions.get_java_keystore_password()))
     except SubprocessError:
         logger.exception("Could not extract distinguished name from keystore")
-    alias = re.search("Alias name:.*", keystore_info["stdout"]).group()
+    alias = re.search("Alias name: {}.*".format(config["keystore_alias"]), keystore_info["stdout"]).group()
     logger.debug("alias: %s", alias)
-    alias_name = alias.split()[1]
+    alias_name = alias.split(":")[1]
     logger.debug("alias_name: %s", alias_name)
     if alias_name:
         # $java_install_dir/bin/keytool -delete -alias ${keystore_alias_} -keystore ${truststore_file_}  -storepass ${truststore_password_} 2>&1 > /dev/null #for ORP

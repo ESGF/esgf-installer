@@ -433,15 +433,15 @@ def setup_tomcat_logrotate():
     if not os.path.exists(tomcat_logrotate_file):
         print "Installing tomcat log rotation... [{}]".format(tomcat_logrotate_file)
         with open(tomcat_logrotate_file, "w") as logrotate_file:
-            logrotate_file.write('''"/usr/local/tomcat/logs/catalina.out" /usr/local/tomcat/logs/catalina.err {
-                copytruncate
-                size {log_rot_size}
-                rotate {log_rot_num_files}
-                maxage 365
-                compress
-                missingok
-                create 0644 tomcat tomcat
-            }'''.format(log_rot_size=log_rot_size, log_rot_num_files=log_rot_num_files))
+            logrotate_file.write('"/usr/local/tomcat/logs/catalina.out" /usr/local/tomcat/logs/catalina.err {\n')
+            logrotate_file.write('copytruncate\n')
+            logrotate_file.write('size {log_rot_size}\n'.format(log_rot_size=log_rot_size))
+            logrotate_file.write('rotate {log_rot_num_files}\n'.format(log_rot_num_files=log_rot_num_files))
+            logrotate_file.write('maxage 365\n')
+            logrotate_file.write('compress\n')
+            logrotate_file.write('missingok\n')
+            logrotate_file.write('create 0644 tomcat tomcat\n')
+            
         os.chmod(tomcat_logrotate_file, 0644)
 
     if not os.path.exists("/usr/local/tomcat/logs/catalina.out"):

@@ -4,6 +4,7 @@ Certificate Management Functions
 import os
 import shutil
 import glob
+import sys
 import filecmp
 import logging
 import socket
@@ -554,6 +555,20 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
     os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
 
 
+def check_for_existing_alias():
+    '''Checks if an existing keystore alias is present in the trustore file'''
+    try:
+        keystore_info = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -v -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(esg_functions.get_java_keystore_password()))
+    except SubprocessError:
+        logger.exception("Could not extract distinguished name from keystore")
+    alias = re.search("Alias name:.*", keystore_info["stdout"]).group()
+    logger.debug("alias: %s", alias)
+    alias_name = alias.split()[1]
+    logger.debug("alias_name: %s", alias_name)
+    if alias_name:
+        # $java_install_dir/bin/keytool -delete -alias ${keystore_alias_} -keystore ${truststore_file_}  -storepass ${truststore_password_} 2>&1 > /dev/null #for ORP
+        esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {} -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(alias_name, esg_functions.get_java_keystore_password()))
+
 def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystore_file=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''
         #This takes our certificate from the keystore and adds it to the
@@ -577,14 +592,20 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         try:
             esg_functions.stream_subprocess_output("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
         except SubprocessError, error:
-            esg_functions.exit_with_error(error)
+            # esg_functions.exit_with_error(error)
+            logger.exception()
+            sys.exit()
+
+        check_for_existing_alias()
 
         print "Importing keystore's certificate into truststore... "
         #TODO: extract into separate function
         try:
             esg_functions.stream_subprocess_output("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
         except SubprocessError, error:
-            esg_functions.exit_with_error(error)
+            # esg_functions.exit_with_error(error)
+            logger.exception()
+            sys.exit()
 
         sync_with_java_truststore(truststore_file)
 

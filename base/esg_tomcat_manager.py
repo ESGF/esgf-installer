@@ -444,19 +444,20 @@ def setup_tomcat_logrotate():
 
         os.chmod(tomcat_logrotate_file, 0644)
 
+    tomcat_user = esg_functions.get_user_id("tomcat")
+    tomcat_group = esg_functions.get_group_id("tomcat")
+
     if not os.path.exists("/usr/local/tomcat/logs/catalina.out"):
         print "Creating /usr/local/tomcat/logs/catalina.out"
         esg_bash2py.touch("/usr/local/tomcat/logs/catalina.out")
         os.chmod("/usr/local/tomcat/logs/catalina.out", 0644)
-        os.chown("/usr/local/tomcat/logs/catalina.out", "tomcat", "tomcat")
+        os.chown("/usr/local/tomcat/logs/catalina.out", tomcat_user, tomcat_group)
 
 
     if not os.path.exists("/usr/local/tomcat/logs/catalina.err"):
         print "Creating /usr/local/tomcat/logs/catalina.err"
         esg_bash2py.touch("/usr/local/tomcat/logs/catalina.err")
         os.chmod("/usr/local/tomcat/logs/catalina.err", 0644)
-        tomcat_user = esg_functions.get_user_id("tomcat")
-        tomcat_group = esg_functions.get_group_id("tomcat")
         os.chown("/usr/local/tomcat/logs/catalina.err", tomcat_user, tomcat_group)
 
     if not os.path.exists("/etc/cron.daily/logrotate"):

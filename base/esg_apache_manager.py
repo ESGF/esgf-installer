@@ -2,6 +2,7 @@
 import os
 import shutil
 import logging
+import datetime
 from distutils.spawn import find_executable
 import yaml
 import pip
@@ -23,23 +24,23 @@ def check_for_apache_installation():
 
 
 def start_apache():
-    return esg_functions.call_subprocess("service esgf-httpd start")
+    return esg_functions.call_subprocess("service httpd start")
 
 
 def stop_apache():
-    esg_functions.stream_subprocess_output("service esgf-httpd stop")
+    esg_functions.stream_subprocess_output("service httpd stop")
 
 
 def restart_apache():
-    esg_functions.stream_subprocess_output("service esgf-httpd restart")
+    esg_functions.stream_subprocess_output("service httpd restart")
 
 
 def check_apache_status():
-    return esg_functions.call_subprocess("service esgf-httpd status")
+    return esg_functions.call_subprocess("service httpd status")
 
 
 def run_apache_config_test():
-    esg_functions.stream_subprocess_output("service esgf-httpd configtest")
+    esg_functions.stream_subprocess_output("service httpd configtest")
 
 
 def install_apache_httpd():
@@ -49,8 +50,8 @@ def install_apache_httpd():
     esg_functions.stream_subprocess_output("yum clean all")
 
     # Custom ESGF Apache files that setup proxying
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
-    os.chmod("/etc/init.d/esgf-httpd", 0755)
+    # shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
+    # os.chmod("/etc/init.d/esgf-httpd", 0755)
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd.conf"),
                     "/etc/httpd/conf/esgf-httpd.conf")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-local.conf"),
@@ -89,6 +90,26 @@ def copy_apache_conf_files():
                     "/etc/certs/esgf-ca-bundle.crt")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/ssl.conf"), "/etc/httpd/conf.d/ssl.conf")
+    shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
+
+    #add LD_LIBRARY_PATH to /etc/sysconfig/httpd
+    with open("/etc/sysconfig/httpd", "a") as httpd_file:
+        httpd_file.write(open(os.path.join(os.path.dirname(__file__), "apache_conf/ldval.tmpl")).read())
+
+    #append tempcert to cert_bundle
+    try:
+        with open("/etc/certs/esgf-ca-bundle.crt", "a") as cert_bundle_file:
+            cert_bundle_file.write(open("/etc/tempcerts/cacert.pem").read())
+    except OSError:
+        logger.exception()
+
+# def copy_files():
+#     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
+#
+#     #add LD_LIBRARY_PATH to /etc/sysconfig/httpd
+#     with open("/etc/sysconfig/httpd", "a") as httpd_file:
+#         httpd_file.write(open(os.path.join(os.path.dirname(__file__), "apache_conf/ldval.tmpl")).read())
+
 
 
 def main():
@@ -108,6 +129,8 @@ def main():
         if setup_apache_answer.lower() in ["no", "n"]:
             return
     install_apache_httpd()
+    stop_apache()
+    esg_functions.stream_subprocess_output("chkconfig --levels 2345 httpd off")
     install_mod_wsgi()
     make_python_eggs_dir()
     copy_apache_conf_files()

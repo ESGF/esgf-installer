@@ -573,7 +573,7 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
-        extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+        extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
         if extract_cert_output["returncode"] !=0:
             print "Could not extract certificate from keystore"
             esg_functions.exit_with_error(extract_cert_output["stderr"])
@@ -929,16 +929,16 @@ def backup_existing_certs():
     if os.path.isfile("/etc/certs/hostkey.pem"):
         shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
 
-def install_commerical_certs(commercial_key_path, commercial_cert_path, ca_chain_path):
-    '''Install the signed, commericial SSL credentials to /etc/certs'''
+def install_commercial_certs(commercial_key_path, commercial_cert_path, ca_chain_path):
+    '''Install the signed, commercial SSL credentials to /etc/certs'''
     shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
     shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
     shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
 
 
-def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
+def check_for_commercial_ca():
     '''Checks if Commerical CA directory has been created; asks user if they would like proceed with
-    Commercial CA installation if directory is found'''
+    Commercial CA installation'''
 
     print "*******************************"
     print "Checking for Commercial CA"
@@ -955,23 +955,12 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
         #Backup existing certs
         backup_existing_certs()
 
-        install_commerical_certs(commercial_key_path, commercial_cert_path, ca_chain_path)
+        install_commercial_certs(commercial_key_path, commercial_cert_path, ca_chain_path)
 
         print "Local installation of certs complete."
 
     else:
         return
-            # file_list = ["hostcert.pem", "hostkey.pem"]
-            # with esg_bash2py.pushd(commercial_ca_directory):
-            #     for file_name in file_list:
-            #         if not os.path.isfile(file_name):
-            #             print "{file_name} not found in /etc/esgfcerts. Exiting."
-            #             esg_functions.exit_with_error(1)
-            #         else:
-            #             try:
-            #                 shutil.copyfile(file_name, "/etc/grid-security/{file_name}".format(file_name=file_name))
-            #             except OSError:
-            #                 logger.exception("Could not copy %s", file_name)
 
 def install_local_certs(node_type_list, firstrun=None):
     if firstrun:

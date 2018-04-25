@@ -72,7 +72,7 @@ def esgf_node_info():
         print info_file.read()
 
 def set_esg_dist_url(install_type):
-    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist")
+    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist")
 
     try:
         if esg_property_manager.get_property("use_local_mirror").lower() in ["y", "yes"]:
@@ -284,7 +284,7 @@ def done_remark(node_type_list):
 '''
 
     show_summary()
-    
+
     try:
         esg_org_name = esg_property_manager.get_property("esg.org.name")
     except Exception:
@@ -405,35 +405,6 @@ def sanity_check_web_xmls():
             webapp web.xml files have been modified - you must restart node stack for changes to be in effect
             (esg-node restart)
             -------------------------------------------------------------------------------------------------'''
-def setup_root_app(esg_dist_url):
-    try:
-        if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
-            print "ROOT app in place.."
-            return
-    except IOError:
-        print "Don't see ESGF ROOT web application"
-
-    esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
-
-
-    print "*******************************"
-    print "Setting up Apache Tomcat...(v{}) ROOT webapp".format(config["tomcat_version"])
-    print "*******************************"
-
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
-        root_app_dist_url = "{}/ROOT.tgz".format(esg_dist_url)
-        esg_functions.download_update("ROOT.tgz", root_app_dist_url)
-
-        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/webapps")
-
-        if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.nm")
-        if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.fe")
-
-        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
-        print "ROOT application \"installed\""
 
 def clear_tomcat_cache():
     try:
@@ -477,7 +448,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     #System Launch...
     #---------------------------------------
     sanity_check_web_xmls()
-    setup_root_app(esg_dist_url)
+    esg_tomcat_manager.setup_root_app()
     clear_tomcat_cache()
     remove_unused_esgf_webapps()
 

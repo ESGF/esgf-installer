@@ -573,16 +573,16 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
-        extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
-        if extract_cert_output["returncode"] !=0:
-            print "Could not extract certificate from keystore"
-            esg_functions.exit_with_error(extract_cert_output["stderr"])
+        try:
+            extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+        except SubprocessError, error:
+            esg_functions.exit_with_error(error)
 
         print "Importing keystore's certificate into truststore... "
-        import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
-        if import_to_truststore_output["returncode"] !=0:
-            print "Could not import the certificate into the truststore"
-            esg_functions.exit_with_error(import_to_truststore_output["stderr"])
+        try:
+            import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
+        except SubprocessError, error:
+            esg_functions.exit_with_error(error)
 
         sync_with_java_truststore(truststore_file)
 

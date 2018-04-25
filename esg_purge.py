@@ -47,7 +47,7 @@ def purge_tomcat():
     esg_tomcat_manager.stop_tomcat()
 
     try:
-        shutil.rmtree("/etc/logrotate.d/esgf_tomcat")
+        os.remove("/etc/logrotate.d/esgf_tomcat")
     except OSError, error:
         pass
 
@@ -57,15 +57,17 @@ def purge_tomcat():
         try:
             shutil.rmtree(directory)
         except OSError:
+            if os.path.islink(directory):
+                os.unlink(directory)
             pass
 
-    try:
-        os.unlink("/usr/local/tomcat")
-    except OSError, error:
-        if error.errno == errno.ENOENT:
-            pass
-        else:
-            logger.exception("Could not delete symlink /usr/local/tomcat")
+    # try:
+    #     os.unlink("/usr/local/tomcat")
+    # except OSError, error:
+    #     if error.errno == errno.ENOENT:
+    #         pass
+    #     else:
+    #         logger.exception("Could not delete symlink /usr/local/tomcat")
 
     try:
         os.remove("/tmp/catalina.pid")

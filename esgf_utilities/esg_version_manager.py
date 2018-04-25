@@ -18,7 +18,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 def set_version_info():
     '''Gathers the version info from the latest git tag'''
-    repo = Repo(os.path.dirname(__file__))
+    repo = Repo(os.path.join(os.path.dirname(__file__), os.pardir))
     repo_tag = repo.git.describe().lstrip("v")
     split_repo_tag = repo_tag.split("-")
     version = split_repo_tag[0]

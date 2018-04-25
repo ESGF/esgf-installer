@@ -475,8 +475,10 @@ def configure_tomcat():
         # Get server.xml
         if not os.path.exists("server.xml"):
             shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
+            tomcat_user = esg_functions.get_user_id("tomcat")
+            tomcat_group = esg_functions.get_group_id("tomcat")
             os.chmod("/usr/local/tomcat/conf/server.xml", 0600)
-            os.chown("/usr/local/tomcat/conf/server.xml", "tomcat", "tomcat")
+            os.chown("/usr/local/tomcat/conf/server.xml", tomcat_user, tomcat_group)
 
         #Find or create keystore file
         if os.path.exists(config["keystore_file"]):

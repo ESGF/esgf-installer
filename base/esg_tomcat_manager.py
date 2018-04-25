@@ -96,6 +96,37 @@ def remove_example_webapps():
             else:
                 logger.exception()
 
+def setup_root_app():
+    try:
+        if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
+            print "ROOT app in place.."
+            return
+    except IOError:
+        print "Don't see ESGF ROOT web application"
+
+    esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
+
+
+    print "*******************************"
+    print "Setting up Apache Tomcat...(v{}) ROOT webapp".format(config["tomcat_version"])
+    print "*******************************"
+
+    esg_bash2py.mkdir_p(config["workdir"])
+    with esg_bash2py.pushd(config["workdir"]):
+        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+        root_app_dist_url = "{}/ROOT.tgz".format(esg_dist_url)
+        esg_functions.download_update("ROOT.tgz", root_app_dist_url)
+
+        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/webapps")
+
+        if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.nm")
+        if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.fe")
+
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
+        print "ROOT application \"installed\""
+
 
 def copy_config_files():
     '''copy custom configuration'''
@@ -252,7 +283,7 @@ def download_server_config_file(esg_dist_url):
         config["tomcat_install_dir"], "conf", "server.xml"), server_xml_url)
 
 
-def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
+def migrate_tomcat_credentials_to_esgf():
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
     Ex: /esg/config/tomcat
@@ -278,6 +309,7 @@ def migrate_tomcat_credentials_to_esgf(esg_dist_url, tomcat_config_dir):
             "tomcat"), esg_functions.get_group_id("tomcat"))
 
         if not check_server_xml():
+            esg_dist_url = esg_property_manager.get_property("esg.dist.url")
             download_server_config_file(esg_dist_url)
 
         # SET the server.xml variables to contain proper values
@@ -329,11 +361,6 @@ def edit_server_xml():
 
     tree.write(xml_file_output)
 
-
-def setup_temp_certs():
-    '''Setup temporary certs for testing a standalone node installation'''
-    temp_ca_name = "{hostname}-CA".format(hostname=esg_functions.get_esgf_host())
-    new_ca_output = esg_functions.call_subprocess("perl CA.pl -newca")
 
 def write_tomcat_env():
     esg_property_manager.set_property("CATALINA_HOME", "export CATALINA_HOME={}".format(config["tomcat_install_dir"]), config_file=config["envfile"], section_name="esgf.env")
@@ -435,7 +462,6 @@ def setup_tomcat_logrotate():
         return False
 
 
-
 def configure_tomcat():
     print "*******************************"
     print "Configuring Tomcat... (for Node Manager)"
@@ -490,14 +516,17 @@ def main():
     print "******************************* \n"
     if download_tomcat():
         extract_tomcat_tarball()
-        remove_example_webapps()
         create_tomcat_user()
         os.environ["CATALINA_PID"] = "/tmp/catalina.pid"
         copy_config_files()
         configure_tomcat()
+        remove_example_webapps()
+        setup_root_app()
+        migrate_tomcat_credentials_to_esgf()
         start_tomcat()
         tomcat_port_check()
         write_tomcat_install_log()
+        esg_cert_manager.check_for_commercial_ca()
 
 
 if __name__ == '__main__':

@@ -375,7 +375,7 @@ def write_tomcat_install_log():
 
 def get_tomcat_ports():
     parser = etree.XMLParser(remove_comments=False)
-    tree = etree.parse(base/tomcat_conf/server.xml, parser)
+    tree = etree.parse("/usr/local/tomcat/conf/server.xml", parser)
     root = tree.getroot()
     ports = []
 

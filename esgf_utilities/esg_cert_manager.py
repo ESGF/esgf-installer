@@ -573,14 +573,16 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
+        #TODO: extract into separate function
         try:
-            extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+            esg_functions.stream_subprocess_output("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
         except SubprocessError, error:
             esg_functions.exit_with_error(error)
 
         print "Importing keystore's certificate into truststore... "
+        #TODO: extract into separate function
         try:
-            import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
+            esg_functions.stream_subprocess_output("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
         except SubprocessError, error:
             esg_functions.exit_with_error(error)
 

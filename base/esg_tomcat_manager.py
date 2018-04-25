@@ -334,7 +334,8 @@ def edit_server_xml():
             replaced_pathname = param.get("pathname").replace(
                 "@@tomcat_users_file@@", config["tomcat_users_file"])
             param.set("pathname", replaced_pathname)
-        if param.tag == "Connector":
+        if param.tag == "Connector" and param.get("port") == "8443":
+            logger.debug("Port number %s", param.get("port"))
             replaced_fqdn = param.get("proxyName").replace(
                 "placeholder.fqdn", esg_functions.get_esgf_host())
             param.set("proxyName", replaced_fqdn)

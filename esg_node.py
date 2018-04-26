@@ -92,11 +92,11 @@ def set_esg_dist_url(install_type):
             esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
         else:
             selected_mirror = esg_mirror_manager.select_dist_mirror()
-            esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
+            esg_property_manager.set_property("esg.dist.url", selected_mirror)
             esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
     except ConfigParser.NoOptionError:
         selected_mirror = esg_mirror_manager.select_dist_mirror()
-        esg_property_manager.set_property("esg.dist.url", "http://{}".format(selected_mirror))
+        esg_property_manager.set_property("esg.dist.url", selected_mirror)
         esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
 
 def download_esg_installarg(esg_dist_url):

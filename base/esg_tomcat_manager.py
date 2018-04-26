@@ -388,6 +388,7 @@ def get_tomcat_ports():
 def tomcat_port_check():
     '''Test accessibility of tomcat ports listed in the server.xml config file'''
     tomcat_ports = get_tomcat_ports()
+    logger.debug("ports: %s", ports)
 
     failed_connections = []
     for port in tomcat_ports:
@@ -530,7 +531,7 @@ def main():
         setup_root_app()
         migrate_tomcat_credentials_to_esgf()
         start_tomcat()
-        tomcat_port_check()
+        # tomcat_port_check()
         write_tomcat_install_log()
         esg_cert_manager.check_for_commercial_ca()
 

@@ -499,7 +499,7 @@ def write_postgress_env():
     esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(config["postgress_port"]), config_file=config["envfile"], section_name="esgf.env")
     esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(config["postgress_bin_dir"]), config_file=config["envfile"], section_name="esgf.env")
     esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(config["postgress_lib_dir"]), config_file=config["envfile"], section_name="esgf.env")
-    esg_property_manager.set_property("PATH", config["PATH"], config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("PATH", config["myPATH"], config_file=config["envfile"], section_name="esgf.env")
     esg_property_manager.set_property("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"], config_file=config["envfile"], section_name="esgf.env")
 
 def write_postgress_install_log(psql_path):

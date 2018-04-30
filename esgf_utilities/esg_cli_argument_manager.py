@@ -17,7 +17,7 @@ from base import esg_setup
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
-from esgf_utilities.esg_exceptions import NoNodeTypeError, SubprocessError
+from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError, SubprocessError
 from idp_node import globus
 from index_node import solr
 
@@ -84,7 +84,7 @@ def get_node_status():
         Shows which ESGF services are currently running
     '''
     node_running = True
-    node_type = get_node_type()
+    node_type = esg_functions.get_node_type()
     try:
         postgres_status = esg_postgres.postgres_status()
         if not postgres_status:
@@ -173,26 +173,15 @@ def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
         esg_config_file.write(" ".join(node_type))
 
 
-def get_node_type(config_file=config["esg_config_type_file"]):
-    '''
-        Helper method for reading the last state of node type config from config dir file "config_type"
-        Every successful, explicit call to --type|-t gets recorded in the "config_type" file
-        If the configuration type is not explicity set the value is read from this file.
-    '''
-    try:
-        last_config_type = open(config_file, "r")
-        node_type_list = last_config_type.read().split()
-        if node_type_list:
-            return node_type_list
-        else:
-            raise NoNodeTypeError
-    except IOError:
-        raise NoNodeTypeError
-    except NoNodeTypeError:
-        logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
-        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
-        sys.exit(1)
+def check_for_valid_node_combo(node_types):
+    '''The observed valid combinations appear to be as follows: "all" "index idp" and "data";
+    raise error and exit if an invalid node combination is given'''
+    valid_node_types = ["all", "index idp", "data"]
+    for node_type in node_types:
+        if node_type not in valid_node_types:
+            raise InvalidNodeTypeError("%s is not a valid node type", node_type)
 
+    return True
 
 def define_acceptable_arguments():
     #TODO: Add mutually exclusive groups to prevent long, incompatible argument lists
@@ -206,8 +195,8 @@ def define_acceptable_arguments():
     parser.add_argument("--generate-esgf-csrs-ext", dest="generateesgfcsrsext", help="Generate CSRs for a node other than the one you are running", action="store_true")
     parser.add_argument("--cert-howto", dest="certhowto", help="Provides information about certificate management", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
-    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="+", choices=["data", "index idp", "compute", "all"])
-    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+", choices=["data", "index idp", "compute", "all"])
+    parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="+", choices=["data", "index", "idp", "compute", "all"])
+    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up")
     parser.add_argument("--get-type", "--show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)", action="store_true")
     parser.add_argument("--start", help="Start the node's services", action="store_true")
     parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")
@@ -279,7 +268,7 @@ def process_arguments():
         logger.debug("Install Services")
         if args.base:
             return ["INSTALL"]
-        node_type_list = get_node_type()
+        node_type_list = esg_functions.get_node_type()
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:
         if args.type:
@@ -287,7 +276,7 @@ def process_arguments():
         logger.debug("Update Services")
         if args.base:
             return ["INSTALL"]
-        node_type_list = get_node_type()
+        node_type_list = esg_functions.get_node_type()
         return node_type_list + ["INSTALL"]
     if args.fixperms:
         logger.debug("fixing permissions")
@@ -295,18 +284,18 @@ def process_arguments():
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        get_node_type(config["esg_config_type_file"])
-        node_type_list = get_node_type()
+        esg_functions.get_node_type(config["esg_config_type_file"])
+        node_type_list = esg_functions.get_node_type()
         esg_cert_manager.install_local_certs(node_type_list)
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        get_node_type(config["esg_config_type_file"])
+        esg_functions.get_node_type(config["esg_config_type_file"])
         generate_esgf_csrs()
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        get_node_type(config["esg_config_type_file"])
+        esg_functions.get_node_type(config["esg_config_type_file"])
         generate_esgf_csrs_ext()
         sys.exit(0)
     if args.certhowto:
@@ -317,10 +306,11 @@ def process_arguments():
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
+        logger.debug("args.settype %s", args.settype)
         set_node_type_value(args.type)
         sys.exit(0)
     elif args.gettype:
-        print get_node_type(config["esg_config_type_file"])
+        print esg_functions.get_node_type(config["esg_config_type_file"])
         sys.exit(0)
     elif args.start:
         logger.debug("args: %s", args)
@@ -329,7 +319,7 @@ def process_arguments():
             sys.exit(1)
         logger.debug("START SERVICES: %s", node_type_list)
         # esg_setup.init_structure()
-        node_type_list = get_node_type()
+        node_type_list = esg_functions.get_node_type()
         return start(node_type_list)
     elif args.stop:
         if not esg_setup.check_prerequisites():
@@ -396,7 +386,7 @@ def process_arguments():
     elif args.info:
         esg_functions.esgf_node_info()
     elif args.configdb:
-        node_type_list = get_node_type()
+        node_type_list = esg_functions.get_node_type()
         if "DATA" in node_type_list:
             logger.info("Node Manager not currently implemented. Skipping config_db")
         if "IDP" in node_type_list:
@@ -421,7 +411,7 @@ def process_arguments():
         except ConfigParser.NoOptionError:
             logger.error("Could not find IDP peer")
     elif args.setidppeer:
-        node_type_list = get_node_type()
+        node_type_list = esg_functions.get_node_type()
         from data_node import thredds
         thredds.select_idp_peer(node_type_list)
     elif args.getindexpeer:
@@ -498,7 +488,7 @@ def process_arguments():
     elif args.forceinstall:
         esg_property_manager.set_property("force.install", True)
     elif args.indexconfig:
-        node_type_list = get_node_type()
+        node_type_list = esg_functions.get_node_type()
         if "INDEX" not in node_type_list:
             print "Sorry, the --index-config flag may only be used for \"index\" installation type"
             sys.exit()

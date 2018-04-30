@@ -1038,6 +1038,28 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
     # update_idp_static_xml_permissions(whitelist_file_dir)
 
 
+
+def get_node_type(config_file=config["esg_config_type_file"]):
+    '''
+        Helper method for reading the last state of node type config from config dir file "config_type"
+        Every successful, explicit call to --type|-t gets recorded in the "config_type" file
+        If the configuration type is not explicity set the value is read from this file.
+    '''
+    try:
+        last_config_type = open(config_file, "r")
+        node_type_list = last_config_type.read().split()
+        if node_type_list:
+            return node_type_list
+        else:
+            raise NoNodeTypeError
+    except IOError:
+        raise NoNodeTypeError
+    except NoNodeTypeError:
+        logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
+        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
+        sys.exit(1)
+
+
 def esgf_node_info():
     '''Print basic info about ESGF installation'''
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:

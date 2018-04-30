@@ -182,6 +182,9 @@ def start_tomcat():
     print "\n*******************************"
     print "Attempting to start Tomcat"
     print "******************************* \n"
+    if check_tomcat_status:
+        print "Tomcat already running"
+        return
     start_process = esg_functions.call_subprocess("/usr/local/tomcat/bin/catalina.sh start")
     if start_process["returncode"] != 0:
         esg_functions.exit_with_error(start_process["stderr"])

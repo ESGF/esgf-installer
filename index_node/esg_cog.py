@@ -6,6 +6,7 @@ import pip
 from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
 
@@ -93,7 +94,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         if setup_cog_answer.lower() in ["no", "n"]:
             print "Using existing CoG setup. Skipping installation"
             return False
-            
+
     # choose CoG version
     COG_TAG = "v3.10.1"
     # setup CoG environment

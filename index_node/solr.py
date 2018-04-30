@@ -104,10 +104,10 @@ def check_solr_process(solr_config_type="master"):
         print "Solr not running"
         return False
 
-def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr"):
+def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr", port="-all"):
     '''Stop the solr process'''
     try:
-        esg_functions.stream_subprocess_output("{}/bin/solr stop".format(SOLR_INSTALL_DIR))
+        esg_functions.stream_subprocess_output("{}/bin/solr stop {}".format(SOLR_INSTALL_DIR, port))
     except SubprocessError:
         print "Could not stop solr with control script. Killing with PID"
         solr_pid_files = glob.glob("/usr/local/solr/bin/*.pid")

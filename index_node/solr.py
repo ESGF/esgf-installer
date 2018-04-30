@@ -12,6 +12,7 @@ import yaml
 from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -194,6 +195,16 @@ def write_solr_install_log(solr_config_type, solr_version, solr_install_dir):
 
 def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home", SOLR_DATA_DIR = "/esg/solr-index"):
     '''Setup Apache Solr for faceted search'''
+    if os.path.isdir("/usr/local/solr"):
+        print "Solr directory found."
+        if esg_property_manager.get_property("update.solr"):
+            setup_solr_answer = esg_property_manager.get_property("update.solr")
+        else:
+            setup_solr_answer = raw_input(
+                "Do you want to contine the Solr installation [y/N]: ") or "no"
+        if setup_solr_answer.lower() in ["no", "n"]:
+            print "Using existing Solr setup. Skipping installation"
+            return False
 
     print "\n*******************************"
     print "Setting up Solr"

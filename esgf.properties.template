@@ -37,10 +37,12 @@ update.node.manager=
 update.thredds=
 update.dashboard=
 update.publisher=
+gridftp-config=bdm end-user
 
 #Index node components
 update.esg.search=
 update.cog=
+update.solr=
 
 #IDP node Components
 register.myproxy=

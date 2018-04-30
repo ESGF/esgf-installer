@@ -10,5 +10,8 @@ class UnverifiedScriptError(Exception):
 class NoNodeTypeError(Exception):
     pass
 
+class InvalidNodeTypeError(Exception):
+    pass
+
 class SubprocessError(Exception):
     pass

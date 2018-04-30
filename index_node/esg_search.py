@@ -37,11 +37,13 @@ def write_search_service_install_log(search_web_service_dir, esg_search_version)
     esg_property_manager.set_property("publishing_service_app_home", search_web_service_dir)
 
     esg_property_manager.set_property("esgf_publisher_resources_home", config["esg_config_dir"])
-    esg_property_manager.set_property("esgf_publisher_resources_home", "https://github.com/ESGF/esgf-publisher-resources.git")
+    esg_property_manager.set_property("esgf_publisher_resources_repo", "https://github.com/ESGF/esgf-publisher-resources.git")
 
 def setup_publisher_resources():
-     esgf_publisher_resources_repo = "https://github.com/ESGF/esgf-publisher-resources.git"
-     Repo.clone_from(esgf_publisher_resources_repo, os.path.join(config["esg_config_dir"],"esgf-publisher-resources"))
+    esgf_publisher_resources_repo = "https://github.com/ESGF/esgf-publisher-resources.git"
+    esgf_publisher_resources_dir = os.path.join(config["esg_config_dir"],"esgf-publisher-resources")
+    if not os.path.exists(esgf_publisher_resources_dir):
+        Repo.clone_from(esgf_publisher_resources_repo, esgf_publisher_resources_dir)
 
 
 def search_startup_hook():

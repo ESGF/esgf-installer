@@ -83,6 +83,17 @@ def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     esg_functions.change_ownership_recursive("{PYTHON_EGG_CACHE_DIR}".format(PYTHON_EGG_CACHE_DIR=PYTHON_EGG_CACHE_DIR), apache_user, apache_group)
 
 def setup_cog(COG_DIR="/usr/local/cog"):
+    if os.path.isdir("/usr/local/cog"):
+        print "Cog directory found."
+        if esg_property_manager.get_property("update.cog"):
+            setup_cog_answer = esg_property_manager.get_property("update.cog")
+        else:
+            setup_cog_answer = raw_input(
+                "Do you want to contine the CoG installation [y/N]: ") or "no"
+        if setup_cog_answer.lower() in ["no", "n"]:
+            print "Using existing CoG setup. Skipping installation"
+            return False
+            
     # choose CoG version
     COG_TAG = "v3.10.1"
     # setup CoG environment

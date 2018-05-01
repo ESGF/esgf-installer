@@ -549,7 +549,7 @@ def configure_esgf_publisher_for_gridftp():
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
         parser.read(publisher_config_path)
         thredds_file_services = parser.get("DEFAULT", "thredds_file_services")
-        thredds_file_services = thredds_file_services.replace("host.sample.gov:2811", "{}:{}".format(esg_functions.get_esgf_host(), esg_property_manager.get_property("gridftp_server_port")))
+        thredds_file_services = thredds_file_services.replace("host.sample.gov:2811", "{}".format(esg_functions.get_esgf_host()))
 
 
 def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):

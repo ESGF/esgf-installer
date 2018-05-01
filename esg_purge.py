@@ -249,6 +249,100 @@ def purge_solr():
     except SubprocessError:
         pass
 
+
+def purge_globus():
+    esg_functions.stream_subprocess_output("yum remove -y globus\* myproxy\*")
+
+    try:
+        shutil.rmtree("/etc/esgfcerts")
+    except OSError:
+        pass
+
+    try:
+        os.remove("/etc/globus-host-ssl.conf")
+    except OSError:
+        pass
+    try:
+        os.remove("/etc/globus-user-ssl.conf")
+    except OSError:
+        pass
+    try:
+        os.remove("/etc/grid-security.conf")
+    except OSError:
+        pass
+
+        globus_directories = glob.glob("/etc/globus*")
+        for directory in globus_directories:
+            shutil.rmtree(directory)
+    try:
+        shutil.rmtree("/etc/grid-security")
+    except OSError:
+        pass
+
+        gridftp_directories = glob.glob("/etc/gridftp*")
+        for directory in gridftp_directories:
+            shutil.rmtree(directory)
+
+    try:
+        os.remove("/etc/logrotate.d/globus-connect-server")
+    except OSError:
+        pass
+
+        myproxy_directories = glob.glob("/etc/myproxy*")
+        for directory in myproxy_directories:
+            shutil.rmtree(directory)
+    try:
+        shutil.rmtree("/etc/pam.d/myproxy")
+    except OSError:
+        pass
+    try:
+        os.remove("/etc/pam_pgsql.conf")
+    except OSError:
+        pass
+    try:
+        os.remove("/etc/pam_pgsql.conf.tmpl.bak")
+    except OSError:
+        pass
+
+        globus_gridftp_directories = glob.glob("/etc/rc.d/init.d/globus-gridftp-*")
+        for directory in globus_gridftp_directories:
+            shutil.rmtree(directory)
+
+    try:
+        shutil.rmtree(os.path.join(os.environ["HOME"], ".globus"))
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/root/.globus")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/usr/local/globus")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/usr/local/gsoap")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/usr/share/myproxy")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/var/lib/globus")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/var/lib/globus-connect-server")
+    except OSError:
+        pass
+    try:
+        shutil.rmtree("/var/lib/myproxy")
+    except OSError:
+        pass
+
+
+
 #TODO: define purge_dashboard()
 def purge_dashboard():
     pass
@@ -277,6 +371,7 @@ def main():
     purge_cdat()
     purge_apache()
     purge_cog()
+    purge_globus()
     # purge_conda()
     confirm_purge()
 

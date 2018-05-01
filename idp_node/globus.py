@@ -342,6 +342,7 @@ def post_gridftp_jail_setup():
             test_file.write("test")
 
     print "writing sanitized passwd file to [{}/etc/passwd]".format(gridftp_chroot_jail)
+    esg_bash2py.mkdir_p(os.path.join(gridftp_chroot_jail, "etc"))
     sanitized_passwd = os.path.join(gridftp_chroot_jail, "etc", "passwd")
     if not os.path.exists(sanitized_passwd):
         with open(sanitized_passwd, "w") as sanitized_passwd_file:

@@ -527,7 +527,11 @@ def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root"
 def write_esgsaml_auth_conf():
     '''By making this a separate function it may be called directly in the
     event that the gateway_service_root needs to be repointed. (another Estani gem :-))'''
-    orp_security_authorization_service_endpoint = esg_property_manager.get_property("orp_security_authorization_service_endpoint")
+    try:
+        orp_security_authorization_service_endpoint = esg_property_manager.get_property("orp_security_authorization_service_endpoint")
+    except ConfigParser.NoOptionError:
+        print "orp_security_authorization_service_endpoint property not found"
+        return
     with open("/etc/grid-security/esgsaml_auth.conf", "w") as esgsaml_conf_file:
         logger.info("---------esgsaml_auth.conf---------")
         logger.info("AUTHSERVICE=%s", orp_security_authorization_service_endpoint)

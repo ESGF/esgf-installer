@@ -159,7 +159,7 @@ def setup_publisher():
     print "\n*******************************"
     print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
     print "******************************* \n"
-    ESG_PUBLISHER_VERSION= "3.4.4"
+    ESG_PUBLISHER_VERSION= "v3.4.4"
     with esg_bash2py.pushd("/tmp"):
         clone_publisher_repo("/tmp/esg-publisher")
         with esg_bash2py.pushd("esg-publisher"):

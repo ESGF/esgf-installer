@@ -329,7 +329,7 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
 
 def post_gridftp_jail_setup():
     '''Write our trimmed version of /etc/password in the chroot location'''
-    gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
+    gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
     if not os.path.exists(gridftp_chroot_jail):
         logger.error("%s does not exist. Exiting.", gridftp_chroot_jail)
         return

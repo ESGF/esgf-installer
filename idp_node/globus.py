@@ -286,7 +286,7 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
     print "Setting up GridFTP... chroot jail"
     print "*******************************"
 
-    gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
+    gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
     if not os.path.exists(gridftp_chroot_jail):
         print "{} does not exist, making it...".format(gridftp_chroot_jail)
         esg_bash2py.mkdir_p(gridftp_chroot_jail)

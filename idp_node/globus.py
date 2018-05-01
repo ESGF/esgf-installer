@@ -545,7 +545,11 @@ def configure_esgf_publisher_for_gridftp():
     publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
     if os.path.exists(publisher_config_path):
         shutil.copyfile(publisher_config_path, publisher_config_path+".bak")
-        esg_functions.stream_subprocess_output('''sed -i 's#\(gsiftp://\)\([^:]*\):\([^/].*\)/#\1'${esgf_gridftp_host:-${esgf_host}}':'${gridftp_server_port}'/#' ${publisher_home}/${publisher_config}''')
+        #replace gsiftp://host.sample.gov:2811/ with esgf_host and gridftp_server_port in esg.ini
+        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+        parser.read(publisher_config_path)
+        thredds_file_services = parser.get("DEFAULT", "thredds_file_services")
+        thredds_file_services = thredds_file_services.replace("host.sample.gov:2811", "{}:{}".format(esg_functions.get_esgf_host(), esg_property_manager.get_property("gridftp_server_port")))
 
 
 def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):

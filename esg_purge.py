@@ -273,7 +273,12 @@ def purge_globus():
 
         globus_directories = glob.glob("/etc/globus*")
         for directory in globus_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                #if not a directory; use file delete method
+                if error.errno == errno.ENOTDIR:
+                    os.remove(directory)
     try:
         shutil.rmtree("/etc/grid-security")
     except OSError:

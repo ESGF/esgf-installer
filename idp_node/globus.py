@@ -390,9 +390,9 @@ def setup_gcs_io(first_run=None):
     print 'This step can be skipped, but users will not be able to download datasets'
     print 'from the GridFTP server on the data node through the ESGF web interface.'
 
-    if esg_property_manager.get_property("register.gridftp"):
+    try:
         register_gridftp_answer = esg_property_manager.get_property("register.gridftp")
-    else:
+    except ConfigParser.NoOptionError:
         register_gridftp_answer = raw_input(
         "Do you want to register the GridFTP server with Globus?: ") or "Y"
 

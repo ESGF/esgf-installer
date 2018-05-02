@@ -265,7 +265,7 @@ def setup_gridftp_metrics_logging():
 def config_gridftp_metrics_logging():
     '''generate config file for gridftp server'''
     print 'Configuring gridftp metrics collection ...'
-    gridftp_server_usage_config= "{esg_config_dir}/gridftp/esg-server-usage-gridftp.conf".format(config["esg_config_dir"])
+    gridftp_server_usage_config= "{}/gridftp/esg-server-usage-gridftp.conf".format(config["esg_config_dir"])
     gridftp_server_usage_config_dir = os.path.join(config["esg_config_dir"], "gridftp", "esg-server-usage-gridftp")
     esg_bash2py.mkdir_p(gridftp_server_usage_config_dir)
 
@@ -275,7 +275,7 @@ def config_gridftp_metrics_logging():
         config_file.write("DBPORT={}\n".format(esg_property_manager.get_property("db.port")))
         config_file.write("DBUSER={}\n".format(esg_property_manager.get_property("db.user")))
         config_file.write("DBPASS={}\n".format(esg_functions.get_postgres_password()))
-        gridftp_server_usage_log = "{esg_log_dir}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
+        gridftp_server_usage_log = "{}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
         config_file.write("USAGEFILE={}\n".format(gridftp_server_usage_log))
         config_file.write("TMPFILE={}\n".format(os.path.join(config["esg_log_dir"], "__up_tmpfile")))
         config_file.write("DEBUG=0\n")

@@ -210,8 +210,12 @@ def _install_globus(config_type):
         esg_functions.stream_subprocess_output("yum -y update {}".format(globus_type))
 
         if globus_type == "globus-connect-server-io":
-            esg_functions.stream_subprocess_output("yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
-            esg_functions.stream_subprocess_output("yum -y update globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
+            try:
+                esg_functions.stream_subprocess_output("yum -y install globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
+                esg_functions.stream_subprocess_output("yum -y update globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
+            except SubprocessError, error:
+                logger.error(error)
+                pass
         else:
             esg_functions.stream_subprocess_output("yum -y install mhash pam-pgsql")
             esg_functions.stream_subprocess_output("yum -y update mhash pam-pgsql")

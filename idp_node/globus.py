@@ -41,17 +41,17 @@ def setup_globus(installation_type):
         if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
             print "Globus version appears sufficiently current"
 
-    try:
-        setup_globus_answer = esg_property_manager.get_property("update.globus")
-        if not setup_globus_answer:
-            raise ConfigParser.NoOptionError
-    except ConfigParser.NoOptionError:
-        setup_globus_answer = raw_input(
-            "Do you want to continue with the Globus installation and setup? [y/N]: ") or "N"
+        try:
+            setup_globus_answer = esg_property_manager.get_property("update.globus")
+            if not setup_globus_answer:
+                raise ConfigParser.NoOptionError
+        except ConfigParser.NoOptionError:
+            setup_globus_answer = raw_input(
+                "Do you want to continue with the Globus installation and setup? [y/N]: ") or "N"
 
-    if setup_globus_answer.lower().strip() in ["no", 'n']:
-        logger.info("Skipping Globus installation. Using existing Globus version")
-        return
+        if setup_globus_answer.lower().strip() in ["no", 'n']:
+            logger.info("Skipping Globus installation. Using existing Globus version")
+            return
 
     globus_location = "/usr/local/globus"
     with esg_bash2py.pushd(config["scripts_dir"]):
@@ -135,6 +135,7 @@ def setup_globus_services(config_type):
 
         if os.path.exists("/usr/sbin/globus-gridftp-server"):
             esg_property_manager.set_property("gridftp_app_home", "/usr/sbin/globus-gridftp-server")
+
     elif config_type == "gateway":
         print "*******************************"
         print "Setting up The ESGF Globus MyProxy Services"

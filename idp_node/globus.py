@@ -310,7 +310,7 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
             print "Cannot find ESGINI=[{}] file that describes data dir location".format("/esg/config/esgcet/esg.ini")
             return
 
-        print "Reading ESGINI=[${}] for thredds_dataset_roots to mount....".format("/esg/config/esgcet/esg.ini")
+        print "Reading ESGINI=[{}] for thredds_dataset_roots to mount....".format("/esg/config/esgcet/esg.ini")
 
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
         parser.read("/esg/config/esgcet/esg.ini")
@@ -474,7 +474,7 @@ def setup_gcs_io(first_run=None):
         parser.set('GridFTP', "RestrictPaths", "R/,N/etc,N/tmp,N/dev")
         parser.set('GridFTP', "Sharing", "False")
         parser.set('GridFTP', "SharingRestrictPaths", "R/")
-        gridftp_chroot_jail = "{esg_root_dir}/gridftp_root".format(config["esg_root_dir"])
+        gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
         parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_user))
 
         try:

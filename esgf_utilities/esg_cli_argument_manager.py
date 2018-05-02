@@ -48,10 +48,16 @@ def start(node_types):
     esg_postgres.start_postgres()
 
     if "DATA" in node_types:
-        globus.start_globus("DATA")
+        try:
+            globus.start_globus("DATA")
+        except SubprocessError, error:
+            logger.error("Could not start globus: %s", error)
 
     if "IDP" in node_types:
-        globus.start_globus("IDP")
+        try:
+            globus.start_globus("IDP")
+        except SubprocessError, error:
+            logger.error("Could not start globus: %s", error)
 
     if "INDEX" in node_types:
         solr_shards = solr.read_shard_config()

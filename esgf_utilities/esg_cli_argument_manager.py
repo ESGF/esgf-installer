@@ -184,8 +184,8 @@ def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
 def check_for_valid_node_type(node_type_args):
     '''The observed valid combinations appear to be as follows: "all" "index idp" and "data";
     raise error and exit if an invalid node combination is given'''
-    valid_node_types = ["all", "index idp", "data"]
-    node_type = " ".join(node_type_args)
+    valid_node_types = ["all", "idp index", "data", "compute data idp index"]
+    node_type = " ".join(node_type_args.sort())
 
     logger.debug("node_type: %s", node_type)
 

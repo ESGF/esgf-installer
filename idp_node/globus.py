@@ -217,8 +217,9 @@ def _install_globus(config_type):
                 logger.error(error)
                 pass
         else:
-            esg_functions.stream_subprocess_output("yum -y install mhash pam-pgsql")
-            esg_functions.stream_subprocess_output("yum -y update mhash pam-pgsql")
+            #TODO: remove --nogpgcheck check when packages are properly signed
+            esg_functions.stream_subprocess_output("yum -y install --nogpgcheck mhash pam-pgsql")
+            esg_functions.stream_subprocess_output("yum -y update --nogpgcheck mhash pam-pgsql")
 
 
 #--------------------------------------------------------------

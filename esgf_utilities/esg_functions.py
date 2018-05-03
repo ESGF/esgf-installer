@@ -387,7 +387,7 @@ def fetch_remote_file(local_file, remote_file):
 
 def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
-    backup_file_name = os.path.join(file_name, backup_extension)
+    backup_file_name = file_name + date + "."+ backup_extension
     try:
         shutil.copyfile(file_name, backup_file_name)
         os.chmod(backup_file_name, 600)

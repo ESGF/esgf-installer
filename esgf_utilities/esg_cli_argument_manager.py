@@ -185,7 +185,7 @@ def check_for_valid_node_type(node_type_args):
     '''The observed valid combinations appear to be as follows: "all" "index idp" and "data";
     raise error and exit if an invalid node combination is given'''
     valid_node_types = ["all", "idp index", "data", "compute data idp index"]
-    node_type = " ".join(node_type_args.sort())
+    node_type = " ".join(sorted(node_type_args))
 
     logger.debug("node_type: %s", node_type)
 

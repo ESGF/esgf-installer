@@ -190,7 +190,7 @@ def check_for_valid_node_type(node_type_args):
     logger.debug("node_type: %s", node_type)
 
     if node_type not in valid_node_types:
-        raise InvalidNodeTypeError("%s is not a valid node type", node_type)
+        raise InvalidNodeTypeError("%s is not a valid node type.\n The valid node types are: 'all', 'idp index', 'data', 'compute data idp index'", node_type)
 
     return True
 

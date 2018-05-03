@@ -120,9 +120,9 @@ def setup_slcs():
 
             current_mode = os.stat("/var/lib/globus-connect-server/myproxy-ca/")
             #add group read and execute permissions
-            os.chmod("/var/lib/globus-connect-server/myproxy-ca/", current_mode.st_mode, stat.S_IRGRP | stat.S_IXGRP)
-            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", current_mode.st_mode, stat.S_IRGRP | stat.S_IXGRP)
-            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", current_mode.st_mode, stat.S_IRGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/", current_mode.st_mode | stat.S_IRGRP | stat.S_IXGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private", current_mode.st_mode | stat.S_IRGRP | stat.S_IXGRP)
+            os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", current_mode.st_mode | stat.S_IRGRP)
 
             with open("playbook/overrides/production_venv_only.yml", "r+") as yaml_file:
                 production_venv_only = yaml_file.load()

@@ -173,6 +173,8 @@ def set_local_mirror(mirror_url):
 
 #Formerly get_bit_value
 def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
+    if "all" in node_type:
+        node_type = ["data", "index", "idp", "compute"]
 
     node_type = [node.upper() for node in node_type]
     with open(config_file, "w") as esg_config_file:
@@ -273,7 +275,8 @@ def process_arguments():
 
     if args.install:
         if args.type:
-            set_node_type_value(args.type)
+            if check_for_valid_node_type(args.type):
+                set_node_type_value(args.type)
         logger.debug("Install Services")
         if args.base:
             return ["INSTALL"]
@@ -281,7 +284,8 @@ def process_arguments():
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:
         if args.type:
-            set_node_type_value(args.type)
+            if check_for_valid_node_type(args.type):
+                set_node_type_value(args.type)
         logger.debug("Update Services")
         if args.base:
             return ["INSTALL"]
@@ -311,7 +315,8 @@ def process_arguments():
         cert_howto()
         sys.exit(0)
     elif args.type:
-        set_node_type_value(args.type)
+        if check_for_valid_node_type(args.type):
+            set_node_type_value(args.type)
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")

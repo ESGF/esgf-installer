@@ -202,7 +202,7 @@ def define_acceptable_arguments():
     parser.add_argument("--cert-howto", dest="certhowto", help="Provides information about certificate management", action="store_true")
     parser.add_argument("--fix-perms","--fixperms", dest="fixperms", help="Fix permissions", action="store_true")
     parser.add_argument("--type", "-t", "--flavor", dest="type", help="Set type", nargs="+", choices=["data", "index", "idp", "compute", "all"])
-    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up")
+    parser.add_argument("--set-type",  dest="settype", help="Sets the type value to be used at next start up", nargs="+")
     parser.add_argument("--get-type", "--show-type", dest="gettype", help="Returns the last stored type code value of the last run node configuration (data=4 +| index=8 +| idp=16)", action="store_true")
     parser.add_argument("--start", help="Start the node's services", action="store_true")
     parser.add_argument("--stop", "--shutdown", dest="stop", help="Stops the node's services", action="store_true")

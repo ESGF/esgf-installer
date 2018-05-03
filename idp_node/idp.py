@@ -88,6 +88,11 @@ def setup_idp(esg_dist_url):
 
     esg_tomcat_manager.start_tomcat()
 
+def clone_slcs():
+    if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):
+        print "SLCS repo already exists.  Skipping cloning from Github."
+        return
+    Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
 
 def setup_slcs():
     print "*******************************"
@@ -105,7 +110,7 @@ def setup_slcs():
     esg_postgres.create_database("slcsdb")
 
     with esg_bash2py.pushd("/usr/local/src"):
-        Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
+        clone_slcs()
 
         apache_user = esg_functions.get_user_id("apache")
         apache_group = esg_functions.get_group_id("apache")

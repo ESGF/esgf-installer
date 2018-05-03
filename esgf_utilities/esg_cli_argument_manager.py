@@ -183,6 +183,13 @@ def check_for_valid_node_combo(node_types):
     '''The observed valid combinations appear to be as follows: "all" "index idp" and "data";
     raise error and exit if an invalid node combination is given'''
     valid_node_types = ["all", "index idp", "data"]
+    #A bit of a hack; argparse takes space separated arguments and adds them to a list. so this combines the individual elements into one element
+    if "index" in node_types and "idp" in node_types:
+        node_types.remove("index")
+        node_types.remove("idp")
+        node_types.append("index idp")
+
+    logger.debug("node_types: %s", node_types)
     for node_type in node_types:
         if node_type not in valid_node_types:
             raise InvalidNodeTypeError("%s is not a valid node type", node_type)
@@ -313,7 +320,8 @@ def process_arguments():
     elif args.settype:
         logger.debug("Selecting type for next start up")
         logger.debug("args.settype %s", args.settype)
-        set_node_type_value(args.type)
+        if check_for_valid_node_combo(args.settype):
+            set_node_type_value(args.type)
         sys.exit(0)
     elif args.gettype:
         print esg_functions.get_node_type(config["esg_config_type_file"])

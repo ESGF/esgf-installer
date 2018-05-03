@@ -321,7 +321,7 @@ def process_arguments():
         logger.debug("Selecting type for next start up")
         logger.debug("args.settype %s", args.settype)
         if check_for_valid_node_combo(args.settype):
-            set_node_type_value(args.type)
+            set_node_type_value(args.settype)
         sys.exit(0)
     elif args.gettype:
         print esg_functions.get_node_type(config["esg_config_type_file"])

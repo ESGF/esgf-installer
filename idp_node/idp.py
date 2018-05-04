@@ -105,9 +105,10 @@ def setup_slcs():
         install_slcs = esg_property_manager.get_property("update.slcs")
     except ConfigParser.NoOptionError:
         install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "y"
-        if install_slcs.lower() in ["n", "no"]:
-            print "Skipping installation of SLCS server"
-            return
+
+    if install_slcs.lower() in ["n", "no"]:
+        print "Skipping installation of SLCS server"
+        return
 
     esg_functions.stream_subprocess_output("yum  -y install ansible")
 
@@ -135,7 +136,7 @@ def setup_slcs():
             os.chmod("/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem", current_mode.st_mode | stat.S_IRGRP)
 
             with open("playbook/overrides/production_venv_only.yml", "r+") as yaml_file:
-                production_venv_only = yaml_file.load()
+                production_venv_only = yaml.load(yaml_file)
             production_venv_only["server_name"] = esg_functions.get_esgf_host()
             production_venv_only["server_email"] = esg_property_manager.get_property("mail_admin_address")
             db_password = esg_functions.get_postgres_password()

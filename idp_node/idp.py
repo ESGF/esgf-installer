@@ -1,6 +1,7 @@
 import os
 import zipfile
 import logging
+import ConfigParser
 import stat
 import yaml
 from git import Repo
@@ -47,7 +48,7 @@ def write_idp_install_log(idp_service_app_home):
 def write_security_lib_install_log():
     pass
 
-def setup_idp(esg_dist_url):
+def setup_idp():
     print "*******************************"
     print "Setting up The ESGF Idp Services"
     print "*******************************"
@@ -68,6 +69,7 @@ def setup_idp(esg_dist_url):
     esg_bash2py.mkdir_p(idp_service_app_home)
     with esg_bash2py.pushd(idp_service_app_home):
         idp_dist_file = os.path.join(os.getcwd(), "esgf-idp.war")
+        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         idp_dist_url = "{}/esgf-idp/esgf-idp.war".format(esg_dist_url)
         esg_functions.download_update(idp_dist_file, idp_dist_url)
 
@@ -99,10 +101,13 @@ def setup_slcs():
     print "Setting up SLCS Oauth Server"
     print "*******************************"
 
-    continue_install = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "y"
-    if continue_install.lower() in ["n", "no"]:
-        print "Skipping installation of SLCS server"
-        return
+    try:
+        install_slcs = esg_property_manager.get_property("update.slcs")
+    except ConfigParser.NoOptionError:
+        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "y"
+        if install_slcs.lower() in ["n", "no"]:
+            print "Skipping installation of SLCS server"
+            return
 
     esg_functions.stream_subprocess_output("yum  -y install ansible")
 
@@ -149,8 +154,8 @@ def setup_slcs():
             esg_functions.stream_subprocess_output('ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml')
 
 
-def main(esg_dist_url):
-    setup_idp(esg_dist_url)
+def main():
+    setup_idp()
     # setup_slcs()
 
 if __name__ == '__main__':

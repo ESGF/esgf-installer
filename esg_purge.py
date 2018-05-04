@@ -363,7 +363,17 @@ def confirm_purge():
 
     print "All ESGF components have been successfully deleted."
 
-
+def purge_slcs():
+    try:
+        shutil.rmtree("/usr/local/src/esgf-slcs-server-playbook")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
+    try:
+        shutil.rmtree("/usr/local/esgf-slcs-server")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
 
 def main():
     purge_postgres()
@@ -377,6 +387,7 @@ def main():
     purge_apache()
     purge_cog()
     purge_globus()
+    purge_slcs()
     # purge_conda()
     confirm_purge()
 

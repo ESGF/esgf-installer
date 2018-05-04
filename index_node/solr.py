@@ -268,9 +268,9 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     esg_bash2py.mkdir_p("/esg/solr-logs")
 
     #start solr
-    solr_shards = read_shard_config()
-    for config_type, port_number in solr_shards:
-        start_solr(config_type, port_number, SOLR_INSTALL_DIR, SOLR_HOME)
+    # solr_shards = read_shard_config()
+    # for config_type, port_number in solr_shards:
+    #     start_solr(config_type, port_number, SOLR_INSTALL_DIR, SOLR_HOME)
 
 def main(index_config):
     setup_solr(index_config)

@@ -1153,30 +1153,90 @@ def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public
         #print "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
         print "--------------------------------------------------------"
 
-def generate_esgf_csrs():
+def generate_esgf_csrs(node_type_list):
     esgf_host = esg_functions.get_esgf_host()
     if "IDP" in node_type_list:
         key_pair = createKeyPair(OpenSSL.crypto.TYPE_RSA, 1024)
         with open("/etc/esgfcerts/cakey.pem", "wt") as key_file_handle:
             key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
-        careq = createCertRequest("/etc/esgfcerts/cakey.pem")
+        careq = createCertRequest("/etc/esgfcerts/cakey.pem", CN=esg_functions.get_esgf_host()+"-CA", O="ESGF", OU="ESGF.ORG")
+        with open('/etc/esgfcerts/cacert_req.csr', 'w') as csr:
+            csr.write(
+                OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
+        )
+        print "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
 
-generate_esgf_csrs(){
-    [ -z "${esgf_host}" ] && get_property esgf_host
-    if [ $((sel & IDP_BIT)) != 0 ]; then
-	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
--subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
-	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
-    fi
-	echo "You are strongly advised to obtain and install commercial CA issued certificates for the web container.";
-	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
--subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
-	echo "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>";
-	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
-	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
-	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
-}
+    print "You are strongly advised to obtain and install commercial CA issued certificates for the web container."
+
+    key_pair = createKeyPair(OpenSSL.crypto.TYPE_RSA, 1024)
+    with open("/etc/esgfcerts/hostkey.pem", "wt") as key_file_handle:
+        key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
+
+    careq = createCertRequest("/etc/esgfcerts/hostkey.pem", CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+    with open('/etc/esgfcerts/hostcert_req.csr', 'w') as csr:
+        csr.write(
+            OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
+    )
+    print "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/hostcert_req.csr"
+
+    print "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>"
+    print "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg_node.py --install-local-certs"
+    print "If you also want to install the local certs for the tomcat web-container, execute esg_node.py --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem"
+    print "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem"
+
+def generate_esgf_csrs_ext(node_type):
+    print "Are you requesting certs for an index-node or a datanode? (index/data)?"
+    if node_type.lower() != "index" or node_type != "data":
+        print "Please specify index or data as node type"
+        return
+
+    req_node_hostname = raw_input("Enter FQDN of node you are requesting certificates for")
+
+    esg_bash2py.mkdir_p("/etc/extcsrs")
+
+    cert_files = ['hostkey.pem', 'hostcert_req.csr']
+    if node_type == "index":
+        cert_files.append('cacert_req.csr')
+        cert_files.append('cakey.pem')
+
+        key_pair = createKeyPair(OpenSSL.crypto.TYPE_RSA, 1024)
+        with open("/etc/extcsrs/cakey.pem", "wt") as key_file_handle:
+            key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
+
+        careq = createCertRequest("/etc/extcsrs/cakey.pem", CN=esg_functions.get_esgf_host()+"-CA", O="ESGF", OU="ESGF.ORG")
+        with open('/etc/extcsrs/cacert_req.csr', 'w') as csr:
+            csr.write(
+                OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
+        )
+        print "Successfully generated request for a simpleCA CA certificate: /etc/extcsrs/cacert_req.csr"
+
+    print "You are strongly advised to obtain and install commercial CA issued certificates for the web container."
+
+    key_pair = createKeyPair(OpenSSL.crypto.TYPE_RSA, 1024)
+    with open("/etc/extcsrs/hostkey.pem", "wt") as key_file_handle:
+        key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
+
+    careq = createCertRequest("/etc/extcsrs/hostkey.pem", CN=req_node_hostname, O="ESGF", OU="ESGF.ORG")
+    with open('/etc/extcsrs/hostcert_req.csr', 'w') as csr:
+        csr.write(
+            OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
+    )
+    print "Successfully generated request for a simpleCA CA certificate: /etc/extcsrs/hostcert_req.csr"
+
+    with esg_bash2py.pushd("/etc/extcsrs"):
+        try:
+            with tarfile.open(req_node_hostname, "w:tgz") as tar:
+                for file_name in cert_files:
+                    tar.add(file_name)
+            print "A copy of the generated keys and CSRs has been saved as /etc/extcsrs/{}.tgz".format(req_node_hostname)
+        except:
+            print "ERROR: Problem with creating backup archive: {}".format(req_node_hostname)
+
+    print "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>"
+    print "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg_node.py --install-local-certs"
+    print "If you also want to install the local certs for the tomcat web-container, execute esg_node.py --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem"
+    print "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem"
 
 
 def main():

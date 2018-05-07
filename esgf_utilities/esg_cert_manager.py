@@ -4,7 +4,6 @@ Certificate Management Functions
 import os
 import shutil
 import glob
-import sys
 import filecmp
 import logging
 import socket
@@ -555,24 +554,6 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
     os.chown(truststore_file, esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
 
 
-def check_for_existing_alias():
-    '''Checks if an existing keystore alias is present in the trustore file'''
-    try:
-        keystore_info = esg_functions.call_subprocess("/usr/local/java/bin/keytool -list -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(esg_functions.get_java_keystore_password()))
-    except SubprocessError:
-        logger.exception("Could not extract distinguished name from keystore")
-    try:
-        alias = re.search("Alias name: {}.*".format(config["keystore_alias"]), keystore_info["stdout"]).group()
-        logger.debug("alias: %s", alias)
-        alias_name = alias.split(":")[1]
-        logger.debug("alias_name: %s", alias_name)
-    except AttributeError:
-        logger.debug("No previous alias found.")
-        return
-    if alias_name:
-        # $java_install_dir/bin/keytool -delete -alias ${keystore_alias_} -keystore ${truststore_file_}  -storepass ${truststore_password_} 2>&1 > /dev/null #for ORP
-        esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {} -keystore /esg/config/tomcat/esg-truststore.ts -storepass {}".format(alias_name, esg_functions.get_java_keystore_password()))
-
 def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystore_file=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''
         #This takes our certificate from the keystore and adds it to the
@@ -592,24 +573,16 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
-        #TODO: extract into separate function
-        try:
-            esg_functions.stream_subprocess_output("{java_install_dir}/bin/keytool -exportcert -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
-        except SubprocessError, error:
-            # esg_functions.exit_with_error(error)
-            logger.exception()
-            sys.exit()
-
-        check_for_existing_alias()
+        extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+        if extract_cert_output["returncode"] !=0:
+            print "Could not extract certificate from keystore"
+            esg_functions.exit_with_error(extract_cert_output["stderr"])
 
         print "Importing keystore's certificate into truststore... "
-        #TODO: extract into separate function
-        try:
-            esg_functions.stream_subprocess_output("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
-        except SubprocessError, error:
-            # esg_functions.exit_with_error(error)
-            logger.exception()
-            sys.exit()
+        import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
+        if import_to_truststore_output["returncode"] !=0:
+            print "Could not import the certificate into the truststore"
+            esg_functions.exit_with_error(import_to_truststore_output["stderr"])
 
         sync_with_java_truststore(truststore_file)
 
@@ -932,19 +905,19 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
 
 
 def set_commercial_ca_paths():
-    if esg_property_manager.get_property("commercial.key.path"):
+    try:
         commercial_key_path = esg_property_manager.get_property("commercial.key.path")
-    else:
+    except ConfigParser.NoOptionError:
         commercial_key_path = raw_input("Enter the file path of the commercial key: ")
 
-    if esg_property_manager.get_property("commercial.cert.path"):
+    try:
         commercial_cert_path = esg_property_manager.get_property("commercial.cert.path")
-    else:
+    except ConfigParser.NoOptionError:
         commercial_cert_path = raw_input("Enter the file path of the commercial cert: ")
 
-    if esg_property_manager.get_property("cachain.path"):
+    try:
         ca_chain_path = esg_property_manager.get_property("cachain.path")
-    else:
+    except ConfigParser.NoOptionError:
         ca_chain_path = raw_input("Enter the file path of the ca chain: ")
 
     return (commercial_key_path, commercial_cert_path, ca_chain_path)
@@ -956,24 +929,24 @@ def backup_existing_certs():
     if os.path.isfile("/etc/certs/hostkey.pem"):
         shutil.copyfile("/etc/certs/hostkey.pem", "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
 
-def install_commercial_certs(commercial_key_path, commercial_cert_path, ca_chain_path):
-    '''Install the signed, commercial SSL credentials to /etc/certs'''
+def install_commerical_certs(commercial_key_path, commercial_cert_path, ca_chain_path):
+    '''Install the signed, commericial SSL credentials to /etc/certs'''
     shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
     shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
     shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
 
 
-def check_for_commercial_ca():
+def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     '''Checks if Commerical CA directory has been created; asks user if they would like proceed with
-    Commercial CA installation'''
+    Commercial CA installation if directory is found'''
 
     print "*******************************"
     print "Checking for Commercial CA"
     print "******************************* \n"
 
-    if esg_property_manager.get_property("install.signed.certs"):
+    try:
         commercial_ca_setup = esg_property_manager.get_property("install.signed.certs")
-    else:
+    except ConfigParser.NoOptionError:
         commercial_ca_setup = raw_input("Do you have a commercial CA that you want to install [Y/n]: ") or "yes"
 
     if commercial_ca_setup in YES_LIST:
@@ -982,12 +955,23 @@ def check_for_commercial_ca():
         #Backup existing certs
         backup_existing_certs()
 
-        install_commercial_certs(commercial_key_path, commercial_cert_path, ca_chain_path)
+        install_commerical_certs(commercial_key_path, commercial_cert_path, ca_chain_path)
 
         print "Local installation of certs complete."
 
     else:
         return
+            # file_list = ["hostcert.pem", "hostkey.pem"]
+            # with esg_bash2py.pushd(commercial_ca_directory):
+            #     for file_name in file_list:
+            #         if not os.path.isfile(file_name):
+            #             print "{file_name} not found in /etc/esgfcerts. Exiting."
+            #             esg_functions.exit_with_error(1)
+            #         else:
+            #             try:
+            #                 shutil.copyfile(file_name, "/etc/grid-security/{file_name}".format(file_name=file_name))
+            #             except OSError:
+            #                 logger.exception("Could not copy %s", file_name)
 
 def install_local_certs(node_type_list, firstrun=None):
     if firstrun:
@@ -1168,6 +1152,32 @@ def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public
         print "Please obtain and install appropriate certificates at the earliest. Execute esg_node.py --cert-howto for details.";
         #print "Then run %> esg-node --install-ssl-keypair <signed cert> <private key> (use --help for details)"
         print "--------------------------------------------------------"
+
+def generate_esgf_csrs():
+    esgf_host = esg_functions.get_esgf_host()
+    if "IDP" in node_type_list:
+        key_pair = createKeyPair(OpenSSL.crypto.TYPE_RSA, 1024)
+        with open("/etc/esgfcerts/cakey.pem", "wt") as key_file_handle:
+            key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
+
+        careq = createCertRequest("/etc/esgfcerts/cakey.pem")
+
+generate_esgf_csrs(){
+    [ -z "${esgf_host}" ] && get_property esgf_host
+    if [ $((sel & IDP_BIT)) != 0 ]; then
+	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/cakey.pem -out /etc/esgfcerts/cacert_req.csr \
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host-CA"
+	echo "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/cacert_req.csr"
+    fi
+	echo "You are strongly advised to obtain and install commercial CA issued certificates for the web container.";
+	openssl req -new -nodes -config /etc/certs/openssl.cnf -keyout /etc/esgfcerts/hostkey.pem -out /etc/esgfcerts/hostcert_req.csr \
+-subj "/O=ESGF/OU=ESGF.ORG/CN=$esgf_host"
+	echo "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>";
+	echo "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg-node --install-local-certs";
+	echo "If you also want to install the local certs for the tomcat web-container, execute esg-node --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem";
+	echo "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem";
+}
+
 
 def main():
     print "*******************************"

@@ -403,9 +403,9 @@ def setup_gcs_io(first_run=None):
         GLOBUS_SETUP = False
 
     if GLOBUS_SETUP:
-        if esg_property_manager.get_property("globus.user"):
+        try:
             globus_user= esg_property_manager.get_property("globus.user")
-        else:
+        except ConfigParser.NoOptionError:
             while True:
                 globus_user = raw_input("Please provide a Globus username: ")
                 if not globus_user:
@@ -414,9 +414,9 @@ def setup_gcs_io(first_run=None):
                     esg_property_manager.set_property("globus.user", globus_user)
                     break
 
-        if esg_property_manager.get_property("globus.password"):
+        try:
             globus_password = esg_property_manager.get_property("globus.password")
-        else:
+        except ConfigParser.NoOptionError:
             while True:
                 globus_password = raw_input("Please enter your Globus password: ")
                 if not globus_password:
@@ -426,9 +426,9 @@ def setup_gcs_io(first_run=None):
                     esg_property_manager.set_property("globus.password", globus_password)
                     break
 
-        if esg_property_manager.get_property("myproxy.endpoint"):
+        try:
             myproxy_hostname = esg_property_manager.get_property("myproxy.endpoint")
-        else:
+        except ConfigParser.NoOptionError:
             myproxy_hostname = esg_functions.get_esgf_host().upper()
 
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
@@ -642,9 +642,9 @@ def setup_gcs_id(first_run=None):
     print 'from the GridFTP server on the data node through the ESGF web interface.'
 
 
-    if esg_property_manager.get_property("register.myproxy"):
+    try:
         register_myproxy_answer = esg_property_manager.get_property("register.myproxy")
-    else:
+    except ConfigParser.NoOptionError:
         register_myproxy_answer = raw_input(
         "Do you want to register the MyProxy server with Globus?: ") or "Y"
 
@@ -654,9 +654,9 @@ def setup_gcs_id(first_run=None):
         GLOBUS_SETUP = False
 
     if GLOBUS_SETUP:
-        if esg_property_manager.get_property("globus.user"):
+        try:
             globus_user = esg_property_manager.get_property("globus.user")
-        else:
+        except ConfigParser.NoOptionError:
             while True:
                 globus_user = raw_input("Please provide a Globus username: ")
                 if not globus_user:
@@ -665,9 +665,9 @@ def setup_gcs_id(first_run=None):
                     esg_property_manager.set_property("globus.user", globus_user)
                     break
 
-        if esg_property_manager.get_property("globus.password"):
+        try:
             globus_password = esg_property_manager.get_property("globus.password")
-        else:
+        except ConfigParser.NoOptionError:
             while True:
                 globus_password = raw_input("Please enter your Globus password: ")
                 if not globus_password:
@@ -677,9 +677,9 @@ def setup_gcs_id(first_run=None):
                     esg_property_manager.set_property("globus.password", globus_password)
                     break
 
-        if esg_property_manager.get_property("myproxy_endpoint"):
+        try:
             myproxy_hostname = esg_property_manager.get_property("myproxy_endpoint")
-        else:
+        except ConfigParser.NoOptionError:
             myproxy_hostname = esg_functions.get_esgf_host().upper()
 
         myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")

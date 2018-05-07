@@ -2,6 +2,7 @@ import os
 import re
 import socket
 import logging
+import ConfigParser
 import getpass
 import tld
 import yaml
@@ -15,10 +16,10 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 def _choose_fqdn(force_install=False):
-    if esg_property_manager.get_property("esgf.host") and not force_install:
+    try:
         logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf.host"))
         return
-    else:
+    except ConfigParser.NoOptionError:
         default_host_name = socket.getfqdn()
         defaultdomain_regex = r"^\w+-*\w*\W*(.+)"
         defaultdomain = re.search(
@@ -55,11 +56,11 @@ def _choose_admin_password(password_file=config["esgf_secret_file"]):
 
 def _choose_organization_name(force_install=False):
     '''Choose the organization name for the installation'''
-    if esg_property_manager.get_property("esg.org.name") and not force_install:
+    try:
         logger.info("esg_org_name = [%s]", esg_property_manager.get_property("esg.org.name"))
         return
 
-    elif force_install:
+    except ConfigParser.NoOptionError:
         try:
             default_org_name = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True).domain
@@ -74,10 +75,10 @@ def _choose_organization_name(force_install=False):
 
 def _choose_node_short_name(force_install=False):
     '''Choose the short name for the node installation'''
-    if esg_property_manager.get_property("node.short.name") and not force_install:
+    try:
         logger.info("node_short_name = [%s]", esg_property_manager.get_property("node.short.name"))
         return
-    else:
+    except ConfigParser.NoOptionError:
         node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=None)) or None
         node_short_name_input.replace("", "_")
         esg_property_manager.set_property(
@@ -85,21 +86,21 @@ def _choose_node_short_name(force_install=False):
 
 
 def _choose_node_long_name(force_install=False):
-    if esg_property_manager.get_property("node.long.name") and not force_install:
+    try:
         logger.info("node_long_name = [%s]", esg_property_manager.get_property("node.long.name"))
         return
 
-    else:
+    except ConfigParser.NoOptionError:
         node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
             node_long_name=None)) or None
         esg_property_manager.set_property(
             "node_long_name", node_long_name_input)
 
 def _choose_node_namespace(force_install=False):
-    if esg_property_manager.get_property("node.namespace") and not force_install:
+    try:
         logger.info("node_namespace = [%s]", esg_property_manager.get_property("node.namespace"))
         return
-    else:
+    except ConfigParser.NoOptionError:
         try:
             top_level_domain = tld.get_tld(
                 "http://" + socket.gethostname(), as_object=True)
@@ -122,10 +123,10 @@ def _choose_node_namespace(force_install=False):
                 break
 
 def _choose_node_peer_group(force_install=False):
-    if esg_property_manager.get_property("node.peer.group") and not force_install:
+    try:
         logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node.peer.group"))
         return
-    else:
+    except ConfigParser.NoOptionError:
         while True:
             node_peer_group_input = raw_input(
                 "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev)[{node_peer_group}]: \nOnly choose esgf-test for test federation install or esgf-prod for production installation.  Otherwise choose esgf-dev.".format(node_peer_group="esgf-dev"))\
@@ -140,10 +141,10 @@ def _choose_node_peer_group(force_install=False):
                 break
 
 def _choose_esgf_index_peer(force_install=False):
-    if esg_property_manager.get_property("esgf.index.peer") and not force_install:
+    try:
         logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf.index.peer"))
         return
-    else:
+    except ConfigParser.NoOptionError:
         default_esgf_index_peer = socket.getfqdn()
         esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
             default_esgf_index_peer=default_esgf_index_peer)) or default_esgf_index_peer
@@ -152,10 +153,10 @@ def _choose_esgf_index_peer(force_install=False):
 
 
 def _choose_mail_admin_address(force_install=False):
-    if esg_property_manager.get_property("mail.admin.address") and not force_install:
+    try:
         logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail.admin.address"))
         return
-    else:
+    except ConfigParser.NoOptionError:
         mail_admin_address_input = raw_input(
             "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail.admin.address")))
         if mail_admin_address_input:

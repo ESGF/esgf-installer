@@ -2,6 +2,7 @@ import os
 import shutil
 import logging
 import getpass
+import ConfigParser
 import re
 import urllib
 from urlparse import urlparse
@@ -83,9 +84,9 @@ def add_another_user():
     valid_selection = False
     done_adding_users = None
     while not valid_selection:
-        if esg_property_manager.get_property("add.another.user"):
+        try:
             another_user = esg_property_manager.get_property("add.another.user")
-        else:
+        except ConfigParser.NoOptionError:
             another_user = raw_input("Would you like to add another user? [y/N]:") or "n"
 
         if another_user.lower().strip() in ["n", "no"]:
@@ -104,9 +105,9 @@ def add_tomcat_user():
     print "Create user credentials\n"
     done_adding_users = False
     while not done_adding_users:
-        if esg_property_manager.get_property("tomcat.user"):
+        try:
             tomcat_username = esg_property_manager.get_property("tomcat.user")
-        else:
+        except ConfigParser.NoOptionError:
             default_user = "dnode_user"
             tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user= default_user)) or default_user
 
@@ -385,10 +386,11 @@ def setup_thredds():
     print "******************************* \n"
 
     if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
-        if esg_property_manager.get_property("update.thredds"):
+        try:
             thredds_install = esg_property_manager.get_property("update.thredds")
-        else:
+        except ConfigParser.NoOptionError:
             thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " ) or "no"
+
         if thredds_install.lower() in ["no", "n"]:
             print "Using existing Thredds installation.  Skipping setup."
             return

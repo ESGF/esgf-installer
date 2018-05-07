@@ -75,13 +75,14 @@ def set_esg_dist_url(install_type):
     esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist")
 
     try:
-        if esg_property_manager.get_property("use_local_mirror").lower() in ["y", "yes"]:
-            local_mirror = esg_property_manager.get_property("local_mirror")
+        local_mirror = esg_property_manager.get_property("local_mirror")
+    except ConfigParser.NoOptionError:
+        pass
+    else:
+        if local_mirror.lower() in ["y", "yes"]:
             logger.debug("Using local mirror %s", local_mirror)
             esg_property_manager.set_property("esg.dist.url", local_mirror)
             return
-    except ConfigParser.NoOptionError:
-        pass
 
     try:
         if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:

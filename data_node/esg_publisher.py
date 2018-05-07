@@ -237,10 +237,11 @@ def set_index_peer(host=None, index_type="p2p"):
 
 def main():
     if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):
-        if esg_property_manager.get_property("update.publisher"):
+        try:
             publisher_install = esg_property_manager.get_property("update.publisher")
-        else:
+        except ConfigParser.NoOptionError:
             publisher_install = raw_input("Detected an existing esgcet installation. Do you want to continue with the Publisher installation [y/N]: ") or "no"
+
         if publisher_install.lower() in ["no", "n"]:
             print "Using existing Publisher installation.  Skipping setup."
             return

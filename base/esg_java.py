@@ -2,6 +2,7 @@ import sys
 import os
 import re
 import logging
+import ConfigParser
 import yaml
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
@@ -62,14 +63,15 @@ def setup_java():
     print "******************************* \n"
 
     if check_for_existing_java():
-            if esg_property_manager.get_property("update.java"):
-                setup_java_answer = esg_property_manager.get_property("update.java")
-            else:
-                setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
-            if setup_java_answer.lower().strip() not in ["y", "yes"]:
-                print "Skipping Java installation"
-                return
-            last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
+        try:
+            setup_java_answer = esg_property_manager.get_property("update.java")
+        except ConfigParser.NoOptionError:
+            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
+
+        if setup_java_answer.lower().strip() not in ["y", "yes"]:
+            print "Skipping Java installation"
+            return
+        last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
@@ -114,10 +116,12 @@ def setup_ant():
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
         esg_functions.stream_subprocess_output("ant -version")
-        if esg_property_manager.get_property("update.ant"):
+
+        try:
             setup_ant_answer = esg_property_manager.get_property("update.ant")
-        else:
+        except ConfigParser.NoOptionError:
             setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
+
         if setup_ant_answer.lower() in ["n", "no"]:
             return
 

@@ -197,9 +197,9 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     '''Setup Apache Solr for faceted search'''
     if os.path.isdir("/usr/local/solr"):
         print "Solr directory found."
-        if esg_property_manager.get_property("update.solr"):
+        try:
             setup_solr_answer = esg_property_manager.get_property("update.solr")
-        else:
+        except ConfigParser.NoOptionError:
             setup_solr_answer = raw_input(
                 "Do you want to contine the Solr installation [y/N]: ") or "no"
         if setup_solr_answer.lower() in ["no", "n"]:

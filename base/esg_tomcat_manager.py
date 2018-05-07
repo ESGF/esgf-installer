@@ -7,6 +7,7 @@ import grp
 import pwd
 import errno
 import logging
+import ConfigParser
 import sys
 import signal
 from time import sleep
@@ -39,11 +40,12 @@ def download_tomcat():
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
-        if esg_property_manager.get_property("update.tomcat"):
+        try:
             setup_tomcat_answer = esg_property_manager.get_property("update.tomcat")
-        else:
+        except ConfigParser.NoOptionError:
             setup_tomcat_answer = raw_input(
                 "Do you want to contine the Tomcat installation [y/N]: ") or "no"
+
         if setup_tomcat_answer.lower() in ["no", "n"]:
             return False
 

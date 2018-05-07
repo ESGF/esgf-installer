@@ -1,6 +1,7 @@
 import os
 import shutil
 import logging
+import ConfigParser
 import yaml
 import pip
 from git import Repo, GitCommandError
@@ -86,9 +87,9 @@ def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
 def setup_cog(COG_DIR="/usr/local/cog"):
     if os.path.isdir("/usr/local/cog"):
         print "Cog directory found."
-        if esg_property_manager.get_property("update.cog"):
+        try:
             setup_cog_answer = esg_property_manager.get_property("update.cog")
-        else:
+        except ConfigParser.NoOptionError:
             setup_cog_answer = raw_input(
                 "Do you want to contine the CoG installation [y/N]: ") or "no"
         if setup_cog_answer.lower() in ["no", "n"]:

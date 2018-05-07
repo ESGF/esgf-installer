@@ -1,6 +1,7 @@
 import os
 import shutil
 import logging
+import ConfigParser
 import zipfile
 import requests
 import yaml
@@ -73,10 +74,11 @@ def setup_orp():
     print "******************************* \n"
 
     if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
-        if esg_property_manager.get_property("update.orp"):
+        try:
             orp_install = esg_property_manager.get_property("update.orp")
-        else:
+        except ConfigParser.NoOptionError:
             orp_install = raw_input("Existing ORP installation found.  Do you want to continue with the ORP installation [y/N]: ") or "no"
+
         if orp_install.lower() in ["no", "n"]:
             return
     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")

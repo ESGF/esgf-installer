@@ -79,7 +79,7 @@ def setup_globus(installation_type):
             esg_bash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
 def write_globus_env(globus_location):
-    esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), config_file=config["envfile"], section_name="esgf.env", separator="_")
 
 
 def start_globus(installation_type):
@@ -839,7 +839,7 @@ def write_myproxy_install_log():
 
 def write_db_name_env():
     esgf_db_name = esg_property_manager.get_property("db.database")
-    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), config_file=config["envfile"], section_name="esgf.env", separator="_")
 
 def start_myproxy_server():
     if check_myproxy_process():

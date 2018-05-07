@@ -465,7 +465,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     esg_property_manager.set_property("version", script_version)
     esg_property_manager.set_property("release", script_release)
 
-    esg_property_manager.set_property("activate_conda", "source /usr/local/conda/bin/activate esgf-pub", config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("activate_conda", "source /usr/local/conda/bin/activate esgf-pub", config_file=config["envfile"], section_name="esgf.env", separator="_")
     #     write_as_property gridftp_config
     esg_node_finally(node_type_list)
 

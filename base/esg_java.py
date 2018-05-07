@@ -47,7 +47,7 @@ def download_java(java_tarfile):
         esg_functions.exit_with_error("Java failed to download")
 
 def write_java_env():
-    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]), config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
 
 def write_java_install_log(java_path):
     java_version = re.search("1.8.0_\w+", check_java_version(java_path)).group()
@@ -101,7 +101,7 @@ def setup_java():
     write_java_env()
 
 def write_ant_env():
-    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", config_file=config["envfile"], section_name="esgf.env")
+    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", config_file=config["envfile"], section_name="esgf.env", separator="_")
 
 def write_ant_install_log():
     ant_version = esg_functions.call_subprocess("ant -version")["stderr"]

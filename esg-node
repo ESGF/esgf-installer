@@ -1152,11 +1152,11 @@ setup_esgcet() {
         fi   
     fi
 
-    if  [ do_esgsetup == "yes" ] ; then
+    if  [ $do_esgsetup == "yes" ] ; then
 
         if [ -f $inifile ] ; then
             date_str=`date $date_format`
-            mv $infile $inifile.$date_str.bak
+            mv $inifile $inifile.$date_str.bak
         fi
 
         local choice
@@ -3907,7 +3907,7 @@ install_keypair() {
 	    chmod 644 /etc/certs/hostcert.pem
 	    chmod 644 /etc/certs/cachain.pem
         
-        if ! $ESGF_OPENSSL verify -verbose -purpose sslserver -CAfile /etc/certs/cachain.pem /etc/certs/hostcert.pem >/dev/null 2>&1; then 
+        if [ ! $ESGF_OPENSSL verify -verbose -purpose sslserver -CAfile /etc/certs/cachain.pem /etc/certs/hostcert.pem >/dev/null 2>&1 ] ; then 
             echo "Incomplete or incorrect chain. Try again";
             continue;
         else

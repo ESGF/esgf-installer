@@ -1147,7 +1147,7 @@ setup_esgcet() {
         do_esgsetup="yes"
     else
         test=`grep -c hessian_service_certs_location $inifile` 
-        if [ $test -gt 0 ] ; then
+        if [ $test == "0" ] ; then
             do_esgsetup="yes"
         fi   
     fi

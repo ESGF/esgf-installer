@@ -42,6 +42,10 @@ def cert_howto():
 
 def start(node_types):
     '''Start ESGF Services'''
+    print "\n*******************************"
+    print "Starting ESGF Node"
+    print "******************************* \n"
+
     #base components
     esg_apache_manager.start_apache()
     esg_tomcat_manager.start_tomcat()

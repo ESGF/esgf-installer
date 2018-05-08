@@ -536,7 +536,7 @@ def main():
         remove_example_webapps()
         setup_root_app()
         migrate_tomcat_credentials_to_esgf()
-        start_tomcat()
+        # start_tomcat()
         # tomcat_port_check()
         write_tomcat_install_log()
         esg_cert_manager.check_for_commercial_ca()

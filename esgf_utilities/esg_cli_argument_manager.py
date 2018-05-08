@@ -26,12 +26,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def generate_esgf_csrs():
-    pass
-
-def generate_esgf_csrs_ext():
-    pass
-
 def usage():
     with open(os.path.join(os.path.dirname(__file__), os.pardir, 'docs', 'usage.txt'), 'r') as usage_file:
         print usage_file.read()

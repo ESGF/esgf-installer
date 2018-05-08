@@ -184,7 +184,7 @@ def setup_search_service():
     fetch_index_optimization_launcher()
 
     #restart tomcat to put modifications in effect.
-    esg_tomcat_manager.start_tomcat()
+    # esg_tomcat_manager.start_tomcat()
 
 def write_search_rss_properties():
     node_short_name = esg_property_manager.get_property("node.short.name")

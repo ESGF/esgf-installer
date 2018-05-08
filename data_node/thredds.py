@@ -446,7 +446,7 @@ def setup_thredds():
     esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     #restart tomcat to put modifications in effect.
-    esg_tomcat_manager.start_tomcat()
+    # esg_tomcat_manager.start_tomcat()
 
     esgsetup_thredds()
 

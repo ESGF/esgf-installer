@@ -88,7 +88,7 @@ def setup_idp():
     write_idp_install_log(idp_service_app_home)
     write_security_lib_install_log()
 
-    esg_tomcat_manager.start_tomcat()
+    # esg_tomcat_manager.start_tomcat()
 
 def clone_slcs():
     if os.path.exists("/usr/local/src/esgf-slcs-server-playbook"):

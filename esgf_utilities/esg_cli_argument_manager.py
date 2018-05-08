@@ -92,6 +92,10 @@ def get_node_status():
     print "******************************* \n"
     node_running = True
     node_type = esg_functions.get_node_type()
+
+    print "\n*******************************"
+    print "Postgres status"
+    print "******************************* \n"
     try:
         postgres_status = esg_postgres.postgres_status()
         if not postgres_status:
@@ -100,6 +104,10 @@ def get_node_status():
         print "Postgres is stopped"
         logger.info(error)
 
+
+    print "\n*******************************"
+    print "Tomcat status"
+    print "******************************* \n"
     tomcat_status = esg_tomcat_manager.check_tomcat_status()
     logger.debug("tomcat_status: %s", tomcat_status)
     if tomcat_status:
@@ -112,6 +120,9 @@ def get_node_status():
         print "Tomcat is stopped."
         node_running = False
 
+    print "\n*******************************"
+    print "Apache status"
+    print "******************************* \n"
     apache_status = esg_apache_manager.check_apache_status()
     if apache_status:
         print "Httpd is running"
@@ -120,14 +131,23 @@ def get_node_status():
         node_running = False
 
     if "DATA" in node_type:
+        print "\n*******************************"
+        print "GridFTP status"
+        print "******************************* \n"
         if not globus.gridftp_server_status():
             node_running = False
 
     if "IDP" in node_type:
+        print "\n*******************************"
+        print "MyProxy status"
+        print "******************************* \n"
         if not globus.myproxy_status():
             node_running = False
 
     if "INDEX" in node_type:
+        print "\n*******************************"
+        print "Solr status"
+        print "******************************* \n"
         if not solr.check_solr_process():
             node_running = False
 

@@ -45,11 +45,11 @@ def start(node_types):
     esg_tomcat_manager.start_tomcat()
     esg_postgres.start_postgres()
 
-    if "DATA" in node_types:
-        try:
-            globus.start_globus("DATA")
-        except SubprocessError, error:
-            logger.error("Could not start globus: %s", error)
+    # if "DATA" in node_types:
+    #     try:
+    #         globus.start_globus("DATA")
+    #     except SubprocessError, error:
+    #         logger.error("Could not start globus: %s", error)
 
     if "IDP" in node_types:
         try:
@@ -87,6 +87,9 @@ def get_node_status():
     '''
         Shows which ESGF services are currently running
     '''
+    print "\n*******************************"
+    print "Checking ESGF Node component's status"
+    print "******************************* \n"
     node_running = True
     node_type = esg_functions.get_node_type()
     try:
@@ -98,6 +101,7 @@ def get_node_status():
         logger.info(error)
 
     tomcat_status = esg_tomcat_manager.check_tomcat_status()
+    logger.debug("tomcat_status: %s", tomcat_status)
     if tomcat_status:
         print "Tomcat is running"
         tomcat_pid = int(tomcat_status.strip())

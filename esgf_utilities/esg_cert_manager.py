@@ -1180,7 +1180,7 @@ def generate_esgf_csrs(node_type_list):
     )
     print "Successfully generated request for a simpleCA CA certificate: /etc/esgfcerts/hostcert_req.csr"
 
-    print "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>"
+    print "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sebastien Denvil <sebastien.denvil@ipsl.jussieu.fr>"
     print "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg_node.py --install-local-certs"
     print "If you also want to install the local certs for the tomcat web-container, execute esg_node.py --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem"
     print "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem"
@@ -1233,7 +1233,7 @@ def generate_esgf_csrs_ext(node_type):
         except:
             print "ERROR: Problem with creating backup archive: {}".format(req_node_hostname)
 
-    print "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sébastien Denvil <sebastien.denvil@ipsl.jussieu.fr>"
+    print "Please mail the csr files for signing to Lukasz Lacinski <lukasz@uchicago.edu>, Prashanth Dwarakanath <pchengi@nsc.liu.se>, or Sebastien Denvil <sebastien.denvil@ipsl.jussieu.fr>"
     print "When you receive the signed certificate pack, untar all files into /etc/esgfcerts and execute esg_node.py --install-local-certs"
     print "If you also want to install the local certs for the tomcat web-container, execute esg_node.py --install-keypair /etc/esgfcerts/hostcert.pem /etc/esgfcerts/hostkey.pem"
     print "When prompted for the cachain file, specify /etc/esgfcerts/cachain.pem"

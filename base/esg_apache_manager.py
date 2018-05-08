@@ -51,8 +51,8 @@ def install_apache_httpd():
     esg_functions.stream_subprocess_output("yum clean all")
 
     # Custom ESGF Apache files that setup proxying
-    # shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
-    # os.chmod("/etc/init.d/esgf-httpd", 0755)
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
+    os.chmod("/etc/init.d/esgf-httpd", 0755)
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd.conf"),
                     "/etc/httpd/conf/esgf-httpd.conf")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd-local.conf"),

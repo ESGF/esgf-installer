@@ -1139,25 +1139,13 @@ setup_esgcet() {
     )
     [ $? != 0 ] && checked_done 1
 
-    inifile="/esg/config/esgcet/esg.ini"
-    do_esgsetup="no"
 
     if [ "${mode}" = "I" ]; then
         echo "Install mode - will run esgsetup"
         do_esgsetup="yes"
-    else
-        test=`grep -c hessian_service_certs_location $inifile` 
-        if [ $test == "0" ] ; then
-            do_esgsetup="yes"
-        fi   
     fi
 
     if  [ $do_esgsetup == "yes" ] ; then
-
-        if [ -f $inifile ] ; then
-            date_str=`date $date_format`
-            mv $inifile $inifile.$date_str.bak
-        fi
 
         local choice
         while [ 1 ]; do
@@ -1225,9 +1213,6 @@ setup_esgcet() {
     [ $? != 0 ] && echo "**WARNING**: Could not change owner successfully - this will lead to inability to use the publisher properly!"
     #Let's make sure the group is there before we attempt to assign a file to it....
 
-
-
-
     if [ ! $(getent group ${tomcat_group}) ]; then
         /usr/sbin/groupadd -r ${tomcat_group}
         [ $? != 0 ] && [ $? != 9 ] && echo "ERROR: *Could not add tomcat system group: ${tomcat_group}" && popd && checked_done 1
@@ -1246,6 +1231,7 @@ setup_esgcet() {
 
         ESGINI=${publisher_home}/${publisher_config} esgsetup $( ((${recommended} == 1 )) && echo "--minimal-setup" ) --db $( [ -n "${db_database}" ] && echo "--db-name ${db_database}" ) $( [ -n "${postgress_user}" ] && echo "--db-admin ${postgress_user}" ) $([ -n "${pg_sys_acct_passwd:=${security_admin_password}}" ] && echo "--db-admin-password ${pg_sys_acct_passwd}") $( [ -n "${publisher_db_user}" ] && echo "--db-user ${publisher_db_user}" ) $([ -n "${publisher_db_user_passwd}" ] && echo "--db-user-password ${publisher_db_user_passwd}") $( [ -n "${postgress_host}" ] && echo "--db-host ${postgress_host}" ) $( [ -n "${postgress_port}" ] && echo "--db-port ${postgress_port}" )
         [ $? != 0 ] && popd && checked_done 1
+
     fi
 
     unset choice

@@ -122,7 +122,6 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         for req in requirements:
             pip.main(["install", req.strip()])
 
-        # esg_functions.stream_subprocess_output("pip install -r requirements.txt")
         # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
         # manually install additional dependencies
@@ -134,10 +133,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=true")
 
         # collect static files to ./static directory
-        # must use a minimal settings file (configured with sqllite3 database)
-        # shutil.copyfile(os.path.join(current_directory, "cog_conf/cog_settings.cfg"), "{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
         esg_functions.stream_subprocess_output("python manage.py collectstatic --no-input")
-        # os.remove("{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
 
     # create non-privileged user to run django
     try:

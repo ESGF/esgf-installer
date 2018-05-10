@@ -76,6 +76,10 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     # -s Sets the solr.solr.home system property; -p Start Solr on the defined port;
     # -a Start Solr with additional JVM parameters,
     # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
+
+    if check_solr_process(solr_config_type, port_number):
+        return
+        
     if solr_config_type == "master":
         enable_nodes = "'-Denable.master=true'"
     elif solr_config_type == "localhost":
@@ -96,10 +100,10 @@ def solr_status(SOLR_INSTALL_DIR):
     except OSError:
         pass
 
-def check_solr_process(solr_config_type="master"):
+def check_solr_process(solr_config_type="master", port=8984):
     try:
-        solr_pid = [proc for proc in psutil.net_connections() if proc.laddr.port == 8984][0].pid
-        print " Solr process for {solr_config_type} running on port [{solr_server_port}] with pid {solr_pid}".format(solr_config_type, "8984", solr_pid)
+        solr_pid = [proc for proc in psutil.net_connections() if proc.laddr.port == port][0].pid
+        print " Solr process for {solr_config_type} running on port [{solr_server_port}] with pid {solr_pid}".format(solr_config_type, port, solr_pid)
         return True
     except:
         print "Solr not running"

@@ -39,7 +39,8 @@ def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="master"):
 
     # Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
     Repo.clone_from("https://github.com/William-Hill/COG.git", COG_INSTALL_DIR, progress=Progress())
-    checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
+    # checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
+    checkout_cog_branch(COG_INSTALL_DIR, "ESGF_3.0")
 
 #TODO:Probably need to add a force_install param to force an update
 def setup_django_openid_auth(target_directory):

@@ -26,7 +26,7 @@ import yaml
 import netifaces
 from clint.textui import progress
 from lxml import etree
-from esg_exceptions import UnverifiedScriptError, SubprocessError
+from esg_exceptions import UnverifiedScriptError, SubprocessError, NoNodeTypeError
 import esg_bash2py
 import esg_property_manager
 

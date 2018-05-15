@@ -25,14 +25,20 @@ current_directory = os.path.join(os.path.dirname(__file__))
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def check_for_globus_installation(globus_version):
+def check_for_globus_installation(globus_version, installation_type):
     if os.access("/usr/bin/globus-version", os.X_OK):
         print "Detected an existing Globus installation"
         print "Checking for Globus {}".format(globus_version)
         installed_globus_version = esg_functions.call_subprocess("/usr/bin/globus-version")['stdout']
         if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
-            print "Globus version appears sufficiently current"
-            return True
+            if installation_type == "DATA" and os.path.exists("/usr/bin/globus-connect-server-io-setup"):
+                print "GridFTP already installed"
+                print "Globus version appears sufficiently current"
+                return True
+            if installation_type == "IDP" and os.path.exists("/usr/bin/globus-connect-server-id-setup"):
+                print "MyProxy already installed"
+                print "Globus version appears sufficiently current"
+                return True
 
 def setup_globus(installation_type):
     '''
@@ -45,7 +51,7 @@ def setup_globus(installation_type):
 
     globus_version = "6.0"
 
-    if check_for_globus_installation(globus_version):
+    if check_for_globus_installation(globus_version, installation_type):
         try:
             setup_globus_answer = esg_property_manager.get_property("update.globus")
             if not setup_globus_answer:
@@ -175,6 +181,7 @@ def stop_globus_services(config_type):
 def check_for_existing_globus_rpm_packages():
     rpm_packages = esg_functions.call_subprocess("rpm -qa")["stdout"].split("\n")
     globus_packages = [package for package in rpm_packages if "globus" in package]
+    logger.debug("globus_packages: %s", globus_packages)
     return globus_packages
 
 #--------------------------------------------------------------

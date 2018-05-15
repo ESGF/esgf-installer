@@ -18,7 +18,7 @@ from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError, SubprocessError
-from idp_node import globus
+from idp_node import globus, gridftp, myproxy
 from index_node import solr
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -45,11 +45,11 @@ def start(node_types):
     esg_tomcat_manager.start_tomcat()
     esg_postgres.start_postgres()
 
-    # if "DATA" in node_types:
-    #     try:
-    #         globus.start_globus("DATA")
-    #     except SubprocessError, error:
-    #         logger.error("Could not start globus: %s", error)
+    if "DATA" in node_types:
+        try:
+            globus.start_globus("DATA")
+        except SubprocessError, error:
+            logger.error("Could not start globus: %s", error)
 
     if "IDP" in node_types:
         try:
@@ -134,14 +134,14 @@ def get_node_status():
         print "\n*******************************"
         print "GridFTP status"
         print "******************************* \n"
-        if not globus.gridftp_server_status():
+        if not gridftp.gridftp_server_status():
             node_running = False
 
     if "IDP" in node_type:
         print "\n*******************************"
         print "MyProxy status"
         print "******************************* \n"
-        if not globus.myproxy_status():
+        if not myproxy.myproxy_status():
             node_running = False
 
     if "INDEX" in node_type:

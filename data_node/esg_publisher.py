@@ -54,6 +54,8 @@ def symlink_pg_binary():
 def install_publisher():
     symlink_pg_binary()
     esg_functions.stream_subprocess_output("python setup.py install")
+    #Need for esgtest_publish (the post-installation publisher test)
+    esg_bash2py.mkdir_p("/esg/data/test")
 
 
 def generate_esgsetup_options():

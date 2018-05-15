@@ -228,9 +228,6 @@ def system_component_installation(esg_dist_url, node_type_list):
         orp.main()
         thredds.main()
         globus.setup_globus("DATA")
-    if "DATA" in node_type_list and "COMPUTE" in node_type_list:
-        #CDAT only used on with Publisher; move
-        esg_setup.setup_cdat()
     if "IDP" in node_type_list:
         print "\n*******************************"
         print "Installing IDP Node Components"

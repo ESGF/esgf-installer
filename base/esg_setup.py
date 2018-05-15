@@ -146,33 +146,3 @@ def check_for_my_ip(force_install=False):
     esg_property_manager.set_property("esgf_host_ip", my_ip_address)
     esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
     return esgf_host_ip
-
-
-def setup_cdat():
-    print "Checking for *UV* CDAT (Python+CDMS) {cdat_version} ".format(cdat_version=config["cdat_version"])
-    try:
-        sys.path.insert(0, os.path.join(
-            config["cdat_home"], "bin", "python"))
-        import cdat_info
-        import cdms2
-        #if semver.match(cdat_info.Version, ">="+config["cdat_version"])
-        if esg_version_manager.check_version_atleast(cdat_info.Version, config["cdat_version"]) == 0 and not force_install:
-            print "CDAT already installed [OK]"
-            return True
-    except ImportError:
-        logger.exception("Unable to import cdms2")
-
-    print "\n*******************************"
-    print "Setting up CDAT - (Python + CDMS)... {cdat_version}".format(cdat_version=config["cdat_version"])
-    print "******************************* \n"
-
-
-    if os.access(os.path.join(config["cdat_home"], "bin", "uvcdat"), os.X_OK):
-        print "Detected an existing CDAT installation..."
-        cdat_setup_choice = raw_input(
-            "Do you want to continue with CDAT installation and setup? [y/N] ")
-        if cdat_setup_choice.lower().strip() not in ["y", "yes"]:
-            print "Skipping CDAT installation and setup - will assume CDAT is setup properly"
-            return True
-
-    return True

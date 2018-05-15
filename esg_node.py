@@ -72,7 +72,7 @@ def esgf_node_info():
         print info_file.read()
 
 def set_esg_dist_url(install_type):
-    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist")
+    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist", "https://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "https://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "https://esg-dn2.nsc.liu.se/esgf/dist")
 
     try:
         local_mirror = esg_property_manager.get_property("local_mirror")

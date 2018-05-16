@@ -139,7 +139,7 @@ def setup_gcs_id(first_run=None):
         except ConfigParser.DuplicateSectionError:
             logger.debug("section already exists")
 
-        parser.set('Security', "FetchCredentialFromRelay", "True")
+        parser.set('Security', "FetchCredentialFromRelay", "False")
         parser.set('Security', "CertificateFile", "/etc/grid-security/hostcert.pem")
         parser.set('Security', "KeyFile", "/etc/grid-security/hostkey.pem")
         parser.set('Security', "TrustedCertificateDirectory", "/etc/grid-security/certificates/")
@@ -397,7 +397,7 @@ def fetch_esg_attribute_callout_app():
 
 def edit_etc_myproxyd():
     with open("/etc/myproxy.d/myproxy-esgf", "w") as myproxy_esgf_file:
-        myproxy_esgf_file.write('''"export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\""'''.format(config["esg_config_dir"]))
+        myproxy_esgf_file.write('''export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\"'''.format(config["esg_config_dir"]))
 
 def write_db_name_env():
     esgf_db_name = esg_property_manager.get_property("db.database")

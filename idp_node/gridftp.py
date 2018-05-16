@@ -342,7 +342,7 @@ def setup_gcs_io(first_run=None):
         except ConfigParser.DuplicateSectionError:
             logger.debug("section already exists")
 
-        parser.set('Security', "FetchCredentialFromRelay", "True")
+        parser.set('Security', "FetchCredentialFromRelay", "False")
         parser.set('Security', "CertificateFile", "/etc/grid-security/hostcert.pem")
         parser.set('Security', "KeyFile", "/etc/grid-security/hostkey.pem")
         parser.set('Security', "TrustedCertificateDirectory", "/etc/grid-security/certificates/")

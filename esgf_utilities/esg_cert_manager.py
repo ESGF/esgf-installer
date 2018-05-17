@@ -33,6 +33,10 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 
+def convert_hash_to_hex(subject_name_hash):
+    '''Converts the subject_name_hash from a long to a hex string'''
+    return format(subject_name_hash, 'x')
+
 #------------------------------------
 #   Certificate functions
 #------------------------------------
@@ -164,8 +168,8 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
 
-        # simpleCA_cert_hash = str(cert_obj.subject_name_hash())
-        simpleCA_cert_hash = cert_obj.subject_name_hash().hex()
+
+        simpleCA_cert_hash = convert_hash_to_hex(cert_obj.subject_name_hash())
         print "checking for MY cert: {globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)
         if os.path.isfile("{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)):
             print "Local CA cert file detected...."
@@ -872,8 +876,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
 
-        # local_hash = str(cert_obj.subject_name_hash())
-        local_hash = cert_obj.subject_name_hash().hex()
+        local_hash = convert_hash_to_hex(cert_obj.subject_name_hash())
         globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)
         esg_bash2py.mkdir_p(globus_cert_dir)
 
@@ -998,8 +1001,7 @@ def install_local_certs(node_type_list, firstrun=None):
             except OpenSSL.crypto.Error:
                 logger.exception("Certificate is not correct.")
 
-            # local_hash = str(cert_obj.subject_name_hash())
-            local_hash = cert_obj.subject_name_hash().hex()
+            local_hash = convert_hash_to_hex(cert_obj.subject_name_hash())
             globus_pack = "globus_simple_ca_{}_setup-0.tar.gz".format(local_hash)
             if not os.path.exists(globus_pack):
                 esg_functions.exit_with_error("File {} is not found in {}; Please place it there and reexecute esg_node.py --install-local-certs".format(globus_pack, certdir))
@@ -1065,8 +1067,7 @@ def get_certificate_subject_hash(cert_path):
     except IOError:
         logger.exception("Could not open %s", cert_path)
 
-    # return str(cert_obj.subject_name_hash())
-    return cert_obj.subject_name_hash().hex()
+    return convert_hash_to_hex(cert_obj.subject_name_hash())
 
 def find_certificate_issuer_cert():
     myproxy_config_file = "{}/config/myproxy/myproxy-server.config".format(config["esg_root_dir"])

@@ -1009,6 +1009,7 @@ def install_local_certs(node_type_list, firstrun=None):
 
         if os.path.exists("hostkey.pem"):
             shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
+            os.chmod("/etc/grid-security/hostkey.pem", 0600)
         if os.path.exists("hostcert.pem"):
             shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
 

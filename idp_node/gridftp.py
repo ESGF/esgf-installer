@@ -264,6 +264,7 @@ def setup_gcs_io(first_run=None):
     with esg_bash2py.pushd(cert_dir):
         if os.path.isfile("hostkey.pem"):
             shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
+            os.chmod("/etc/grid-security/hostkey.pem", 0600)
         if os.path.isfile("hostcert.pem"):
             shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
 

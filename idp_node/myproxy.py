@@ -47,6 +47,7 @@ def setup_gcs_id(first_run=None):
 
         shutil.copyfile("hostcert.pem", "/etc/grid-security/hostcert.pem")
         shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
+        os.chmod("/etc/grid-security/hostkey.pem", 0600)
 
         try:
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())

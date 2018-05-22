@@ -1,79 +1,29 @@
-#!/bin/bash
+'''Description: Installation of the esg-security infrastructure.'''
+import os
+import logging
+import shutil
+import ConfigParser
+import zipfile
+import OpenSSL
+from lxml import etree
+import stat
+import glob
+import psutil
+import yaml
+from esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
+from esgf_utilities import esg_version_manager
+from esgf_utilities import esg_cert_manager
+from esgf_utilities.esg_exceptions import SubprocessError
+from base import esg_tomcat_manager
+from base import esg_postgres
 
-#####
-# ESG SECURITY
-# This script is intended to be an adjunct to the esg-node / esg-gway scripts
-#             (author: gavin@llnl.gov)
-#****************************************************************************
-#*                                                                          *
-#*  Organization: Lawrence Livermore National Lab (LLNL)                    *
-#*   Directorate: Computation                                               *
-#*    Department: Computing Applications and Research                       *
-#*      Division: S&T Global Security                                       *
-#*        Matrix: Atmospheric, Earth and Energy Division                    *
-#*       Program: PCMDI                                                     *
-#*       Project: Earth Systems Grid (ESG) Data Node Software Stack         *
-#*  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
-#*                                                                          *
-#****************************************************************************
-#*                                                                          *
-#*   Copyright (c) 2009, Lawrence Livermore National Security, LLC.         *
-#*   Produced at the Lawrence Livermore National Laboratory                 *
-#*   Written by: Gavin M. Bell (gavin@llnl.gov)                             *
-#*   LLNL-CODE-420962                                                       *
-#*                                                                          *
-#*   All rights reserved. This file is part of the:                         *
-#*   Earth System Grid (ESG) Data Node Software Stack, Version 1.0          *
-#*                                                                          *
-#*   For details, see http://esgf.org/                                      *
-#*   Please also read this link                                             *
-#*    http://esgf.org/LICENSE                                               *
-#*                                                                          *
-#*   * Redistribution and use in source and binary forms, with or           *
-#*   without modification, are permitted provided that the following        *
-#*   conditions are met:                                                    *
-#*                                                                          *
-#*   * Redistributions of source code must retain the above copyright       *
-#*   notice, this list of conditions and the disclaimer below.              *
-#*                                                                          *
-#*   * Redistributions in binary form must reproduce the above copyright    *
-#*   notice, this list of conditions and the disclaimer (as noted below)    *
-#*   in the documentation and/or other materials provided with the          *
-#*   distribution.                                                          *
-#*                                                                          *
-#*   Neither the name of the LLNS/LLNL nor the names of its contributors    *
-#*   may be used to endorse or promote products derived from this           *
-#*   software without specific prior written permission.                    *
-#*                                                                          *
-#*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    *
-#*   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      *
-#*   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS      *
-#*   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE    *
-#*   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR     *
-#*   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,           *
-#*   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       *
-#*   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF       *
-#*   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND    *
-#*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,     *
-#*   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT     *
-#*   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     *
-#*   SUCH DAMAGE.                                                           *
-#*                                                                          *
-#****************************************************************************
-######
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
+current_directory = os.path.join(os.path.dirname(__file__))
 
-
-# Description: Installation of the esg-security infrastructure.  This
-#              file is meant to be sourced by the esg-node
-#              scripts that has the definition of checked_get(),
-#              stop_tomcat(), start_tomcat(), $workdir,
-
-workdir=${workdir:-${installer_home}/workbench/esg}
-service_name=${service_name:-"thredds"}
-extensions=${extensions:-".nc"}
-exempt_extensions=${exempt_extensions:-".xml"}
-exempt_services=${exempt_services:-"thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"}
-
+with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
+    config = yaml.load(config_file)
 
 def setup_access_logging_filter():
     esg_bash2py.mkdir_p(config["workdir"])
@@ -98,7 +48,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     esg_filter_entry_pattern = "<!--@@esg_access_logging_filter_entry@@-->"
 
     print "*******************************"
-    print "Installing ESGF Node's Access Logging Filters To: [{}]".format()
+    print "Installing ESGF Node's Access Logging Filters To: [{}]".format(dest_dir)
     print "*******************************"
     print "Filter installation destination dir = {}".format(dest_dir)
     print "Filter entry file = {}".format(esg_filter_entry_file)
@@ -142,87 +92,83 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
 
     with esg_bash2py.pushd(os.path.join(dest_dir, "WEB-INF")):
+        #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
+        #Use utility function...
+        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
+
+        #Edit the web.xml file for ${service_name} to include these token replacement values
+        parser = etree.XMLParser(remove_comments=False)
+        tree = etree.parse("web.xml", parser)
+        root = tree.getroot()
+        exempt_extensions = ".xml"
+        exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
+        extensions = ".nc"
+        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@service.name\\@/{}/g' web.xml"'''.format(service_name))
+        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@exempt_extensions\\@/{}/g' web.xml"'''.format(exempt_extensions))
+        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's#\\@exempt_services\\@#{}#g' web.xml"'''.format(exempt_services))
+        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@extensions\\@/${}/g' web.xml'''.format(extensions))
+
+    tomcat_user = esg_functions.get_user_id("tomcat")
+    tomcat_group = esg_functions.get_group_id("tomcat")
+    esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
 
 
-install_access_logging_filter() {
+#TODO: refactor
+def insert_file_at_pattern(target_file, input_file, pattern):
+    '''Replace a pattern inside the target file with the contents of the input file'''
+    f=open(target_file)
+    s=f.read()
+    f.close()
+    f=open(input_file)
+    filter = f.read()
+    f.close()
+    s=s.replace(pattern,filter)
+    f=open(target_file,'w')
+    f.write(s)
+    f.close()
 
-    #----------------------
-    #${service_name}'s configuration...
-    pushd ${dest_dir}/WEB-INF >& /dev/null
-    [ $? != 0 ] && echo " WARNING: Could not find the ${service_name} web application (${tomcat_install_dir}/webapps/${service_name}/)" && return 0
-    local target_file=web.xml
+def get_mgr_libs(dest_dir):
+    print "Checking for / Installing required jars..."
 
-    #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
-    #Use utility function...
-    insert_file_at_pattern $(readlink -f ${target_file}) ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
+    node_manager_app_home = "/usr/local/tomcat/webapps/esgf-node-manager"
+    src_dir = os.path.join(node_manager_app_home, "WEB-INF", "lib")
 
-    #Edit the web.xml file for ${service_name} to include these token replacement values
-    echo -n "Replacing tokens... "
-    eval "perl -p -i -e 's/\\@service.name\\@/${service_name}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@exempt_extensions\\@/${exempt_extensions}/g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@exempt_services\\@#${exempt_services}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's/\\@extensions\\@/${extensions}/g' ${target_file}"; echo -n "*"
-    echo " [OK]"
-    popd >& /dev/null
-    #----------------------
-    chown -R ${tomcat_user} ${dest_dir}/WEB-INF
-    chgrp -R ${tomcat_group} ${dest_dir}/WEB-INF
-
-    return 0
-}
-
-get_mgr_libs() {
-    echo "Checking for / Installing required jars..."
-
-    node_manager_app_home=${node_manager_app_home:-"${CATALINA_HOME}/webapps/esgf-node-manager"}
-
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
-    local src_dir=${node_manager_app_home}/WEB-INF/lib
-
-    ([ ! -d ${dest_dir} ] || [ ! -d ${src_dir} ]) && echo "WARNING: source and/or destination dir(s) not present!!! (punting)" && return 1
+    if not os.path.exists(dest_dir) or not os.path.exists(src_dir):
+        logger.error("source and/or destination dir(s) not present!!! (punting)")
+        return
 
     #Jar versions...
-    local commons_dbcp_version=${commons_dbcp_version:-1.4}
-    local commons_dbutils_version=${commons_dbutils_version:-1.3}
-    local commons_pool_version=${commons_pool_version:-1.5.4}
+    commons_dbcp_version = "1.4"
+    commons_dbutils_version = "1.3"
+    commons_pool_version = "1.5.4"
 
     #----------------------------
     #Jar Libraries Needed To Be Present For Node Manager (AccessLogging) Filter Support
     #----------------------------
-    local dbcp_jar=commons-dbcp-${commons_dbcp_version}.jar
-    local dbutils_jar=commons-dbutils-${commons_dbutils_version}.jar
-    local pool_jar=commons-pool-${commons_pool_version}.jar
-    local postgress_jar=${postgress_jar:-postgresql-9.4-1201.jdbc41.jar}
+    dbcp_jar = "commons-dbcp-{}.jar".format(commons_dbcp_version)
+    dbutils_jar = "commons-dbutils-{}.jar".format(commons_dbutils_version)
+    pool_jar = "commons-pool-{}.jar".format(commons_pool_version)
+    postgress_jar = "postgresql-9.4-1201.jdbc41.jar"
 
     #move over libraries...
-    echo "getting (copying) libary jars from the Node Manager App to ${dest_dir} ..."
+    print "getting (copying) library jars from the Node Manager App to {} ...".format(dest_dir)
 
-    [ ! -e ${dest_dir}/${dbcp_jar} ]      && cp -v ${src_dir}/${dbcp_jar}      ${dest_dir}
-    [ ! -e ${dest_dir}/${dbutils_jar} ]   && cp -v ${src_dir}/${dbutils_jar}   ${dest_dir}
-    [ ! -e ${dest_dir}/${pool_jar} ]      && cp -v ${src_dir}/${pool_jar}      ${dest_dir}
-    [ ! -e ${dest_dir}/${postgress_jar} ] && cp -v ${src_dir}/${postgress_jar} ${dest_dir}
-
+    shutil.copyfile(os.path.join(src_dir, dbcp_jar), os.path.join(dest_dir, dbcp_jar))
+    shutil.copyfile(os.path.join(src_dir, dbutils_jar), os.path.join(dest_dir, dbutils_jar))
+    shutil.copyfile(os.path.join(src_dir, pool_jar), os.path.join(dest_dir, pool_jar))
+    shutil.copyfile(os.path.join(src_dir, postgress_jar), os.path.join(dest_dir, postgress_jar))
 
     #----------------------------
     #Fetching Node Manager Jars from Distribution Site...
     #----------------------------
+    node_manager_commons_jar = "esgf-node-manager-common-{}.jar".format(config["esgf_node_manager_version"])
+    node_manager_filters_jar = "esgf-node-manager-filters-{}.jar".format(config["esgf_node_manager_version"])
 
-    #values inherited from esg-node calling script
-    local node_manager_commons_jar=esgf-node-manager-common-${esgf_node_manager_version}.jar
-    local node_manager_filters_jar=esgf-node-manager-filters-${esgf_node_manager_version}.jar
+    print "getting (downloading) library jars from Node Manager Distribution Server to {} ...".format(dest_dir)
 
-    echo "getting (downloading) library jars from Node Manager Distribution Server to ${dest_dir} ..."
-    local make_backup_file=0 #Do NOT make backup file
-    checked_get ${dest_dir}/${node_manager_commons_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_commons_jar} $((force_install)) $((make_backup_file))
-    checked_get ${dest_dir}/${node_manager_filters_jar} ${esg_dist_url}/esgf-node-manager/${node_manager_filters_jar} $((force_install)) $((make_backup_file))
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "https://aims1.llnl.gov/esgf/dist/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar")
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "https://aims1.llnl.gov/esgf/dist/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar")
 
-
-    #remove all other node manager jars that are not what we want
-    echo "cleaning up (removing) other, unnecessary, Node Manager project jars from ${dest_dir} ..."
-    rm -vf $(/bin/ls ${dest_dir}/${node_manager_commons_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
-    rm -vf $(/bin/ls ${dest_dir}/${node_manager_filters_jar%-*}-*.jar | grep -v ${esgf_node_manager_version})
-    #---
-
-    chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}
-
-}
+    tomcat_user = esg_functions.get_user_id("tomcat")
+    tomcat_group = esg_functions.get_group_id("tomcat")
+    esg_functions.change_ownership_recursive(dest_dir, tomcat_user, tomcat_group)

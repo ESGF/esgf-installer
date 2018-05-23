@@ -1,67 +1,3 @@
-#!/bin/bash
-
-#####
-# ESG SECURITY
-# This script is intended to be an adjunct to the esg-node / esg-gway scripts
-#             (author: gavin@llnl.gov)
-#****************************************************************************
-#*                                                                          *
-#*  Organization: Lawrence Livermore National Lab (LLNL)                    *
-#*   Directorate: Computation                                               *
-#*    Department: Computing Applications and Research                       *
-#*      Division: S&T Global Security                                       *
-#*        Matrix: Atmospheric, Earth and Energy Division                    *
-#*       Program: PCMDI                                                     *
-#*       Project: Earth Systems Grid (ESG) Data Node Software Stack         *
-#*  First Author: Gavin M. Bell (gavin@llnl.gov)                            *
-#*                                                                          *
-#****************************************************************************
-#*                                                                          *
-#*   Copyright (c) 2009, Lawrence Livermore National Security, LLC.         *
-#*   Produced at the Lawrence Livermore National Laboratory                 *
-#*   Written by: Gavin M. Bell (gavin@llnl.gov)                             *
-#*   LLNL-CODE-420962                                                       *
-#*                                                                          *
-#*   All rights reserved. This file is part of the:                         *
-#*   Earth System Grid (ESG) Data Node Software Stack, Version 1.0          *
-#*                                                                          *
-#*   For details, see http://esg-repo.llnl.gov/esg-node/                    *
-#*   Please also read this link                                             *
-#*    http://esg-repo.llnl.gov/LICENSE                                      *
-#*                                                                          *
-#*   * Redistribution and use in source and binary forms, with or           *
-#*   without modification, are permitted provided that the following        *
-#*   conditions are met:                                                    *
-#*                                                                          *
-#*   * Redistributions of source code must retain the above copyright       *
-#*   notice, this list of conditions and the disclaimer below.              *
-#*                                                                          *
-#*   * Redistributions in binary form must reproduce the above copyright    *
-#*   notice, this list of conditions and the disclaimer (as noted below)    *
-#*   in the documentation and/or other materials provided with the          *
-#*   distribution.                                                          *
-#*                                                                          *
-#*   Neither the name of the LLNS/LLNL nor the names of its contributors    *
-#*   may be used to endorse or promote products derived from this           *
-#*   software without specific prior written permission.                    *
-#*                                                                          *
-#*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS    *
-#*   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT      *
-#*   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS      *
-#*   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE    *
-#*   LIVERMORE NATIONAL SECURITY, LLC, THE U.S. DEPARTMENT OF ENERGY OR     *
-#*   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,           *
-#*   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT       *
-#*   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF       *
-#*   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND    *
-#*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,     *
-#*   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT     *
-#*   OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     *
-#*   SUCH DAMAGE.                                                           *
-#*                                                                          *
-#****************************************************************************
-######
-
 
 # Description: Installation of the esg-security infrastructure.  This
 #              file is meant to be sourced by the esg-node | esg-gway
@@ -80,6 +16,20 @@ def setup_security_tokenless_filters():
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
         install_security_tokenless_filters()
+
+#TODO: refactor
+def insert_file_at_pattern(target_file, input_file, pattern):
+    '''Replace a pattern inside the target file with the contents of the input file'''
+    f=open(target_file)
+    s=f.read()
+    f.close()
+    f=open(input_file)
+    filter = f.read()
+    f.close()
+    s=s.replace(pattern,filter)
+    f=open(target_file,'w')
+    f.write(s)
+    f.close()
 
 def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
 
@@ -123,7 +73,14 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
         return
 
     with esg_bash2py.pushd(config["workdir"]):
-        
+        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+        esg_security_filters_dist_url = "{}/filters".format(esg_dist_url)
+        esg_functions.download_update("{}/{}".format(esg_security_filters_dist_url, esg_filter_entry_file))
+        esg_filter_entry_file_path = esg_functions._readlinkf(esg_filter_entry_file)
+
+    with esg_bash2py.pushd(os.path.join(dest_dir, "WEB-INF")):
+
+
 
 #NOTE:This function will stop tomcat, it is up to the caller to restart tomcat!
 
@@ -136,15 +93,6 @@ install_security_tokenless_filters() {
     #Installs esg filter into web application's web.xml file, by replacing a
     #place holder token with the contents of the filter snippet file
     #"esg-security-filter.xml".
-
-
-
-    mkdir -p $workdir
-    [ $? != 0 ] && return 1
-    pushd $workdir >& /dev/null
-    checked_get ${esg_security_filters_dist_url}/${esg_filter_entry_file}; (( $? > 1 )) && popd && checked_done 1
-    esg_filter_entry_file=$(readlink -f ${esg_filter_entry_file}) #going to need full path for pattern replacement below
-    popd >& /dev/null
 
     #----------------------
     #Configuration...
@@ -164,7 +112,7 @@ install_security_tokenless_filters() {
     #Edit the web.xml file for the web app to include these token replacement values
     echo -n "Replacing tokens... "
     eval "perl -p -i -e 's#\\@orp_host\\@#${orp_host}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@truststore_file\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
+    eval "perl -p -i -e 's#\\@\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@truststore_password\\@#${truststore_password}#g' ${target_file}"; echo -n "*"
     eval "perl -p -i -e 's#\\@esg_root_dir\\@#${esg_root_dir}#g' ${target_file}"; echo -n "*"
     echo " [OK]"

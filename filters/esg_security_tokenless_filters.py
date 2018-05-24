@@ -1,16 +1,22 @@
+'''Description: Installation of the esg-security infrastructure'''
+import os
+import logging
+import shutil
+import yaml
+from esgf_utilities import esg_functions
+from esgf_utilities import esg_bash2py
+from esgf_utilities import esg_property_manager
+from esgf_utilities import esg_version_manager
+from esgf_utilities import esg_cert_manager
+from esgf_utilities.esg_exceptions import SubprocessError
+from base import esg_tomcat_manager
+from base import esg_postgres
 
-# Description: Installation of the esg-security infrastructure.  This
-#              file is meant to be sourced by the esg-node | esg-gway
-#              scripts that has the definition of checked_get(),
-#              stop_tomcat(), start_tomcat(), $workdir,
+logger = logging.getLogger("esgf_logger" +"."+ __name__)
+current_directory = os.path.join(os.path.dirname(__file__))
 
-service_name=${service_name:-"thredds"}
-esg_root_dir=${esg_root_dir:-${ESGF_HOME:-"/esg"}}
-
-esg_security_filters_dist_url=${esg_dist_url}/filters
-
-esg_orp_version=${esg_orp_version:-"2.3.5"}
-esgf_security_version=${esgf_security_version:-"2.3.15"}
+with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
+    config = yaml.load(config_file)
 
 def setup_security_tokenless_filters():
     esg_bash2py.mkdir_p(config["workdir"])
@@ -76,135 +82,102 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
         esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         esg_security_filters_dist_url = "{}/filters".format(esg_dist_url)
         esg_functions.download_update("{}/{}".format(esg_security_filters_dist_url, esg_filter_entry_file))
-        esg_filter_entry_file_path = esg_functions._readlinkf(esg_filter_entry_file)
-
-    with esg_bash2py.pushd(os.path.join(dest_dir, "WEB-INF")):
-
-
-
-#NOTE:This function will stop tomcat, it is up to the caller to restart tomcat!
-
-#Takes 2 arguments:
-# First  - The top level directory of the webapp where filter is to be installed.
-# Second - The file containing the filter entry xml snippet (optional: defaulted)
-install_security_tokenless_filters() {
-
+        esg_filter_entry_file_path = esg_functions.readlinkf(esg_filter_entry_file)
 
     #Installs esg filter into web application's web.xml file, by replacing a
     #place holder token with the contents of the filter snippet file
     #"esg-security-filter.xml".
+    with esg_bash2py.pushd(os.path.join(dest_dir, "WEB-INF")):
+        #Replace the filter's place holder token in web app's web.xml file with the filter entry.
+        #Use utility function...
+        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
 
-    #----------------------
-    #Configuration...
-    pushd ${dest_dir}/WEB-INF >& /dev/null
-    [ $? != 0 ] && echo " ERROR: Could not find web application (${dest_dir})" && return 1
-    local target_file=web.xml
+        orp_host = esg_functions.get_esgf_host() #default assumes local install
+        authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+        truststore_file = config["truststore_file"]
+        truststore_password = config["truststore_password"]
+        esg_root_dir = "/esg"
 
-    #Replace the filter's place holder token in web app's web.xml file with the filter entry.
-    #Use utility function...
-    insert_file_at_pattern $(readlink -f ${target_file}) ${esg_filter_entry_file} "${esg_filter_entry_pattern}"
+        print "Replacing tokens... "
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@orp_host\\@#{}#g' web.xml\"".format(orp_host))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@truststore_file\\@#{}#g' web.xml\"".format(truststore_file))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@truststore_password\\@#${}#g' web.xml\"".format(truststore_password))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@esg_root_dir\\@#${}#g' web.xml\"".format(esg_root_dir))
 
-    local orp_host=${orp_host:-${esgf_host}} #default assumes local install
-    local authorization_service_root=${authorization_service_root:-${esgf_idp_peer}} #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
-    local truststore_file=${truststore_file:-"${tomcat_install_dir}/conf/jssecacerts"}
-    local truststore_password=${truststore_password:-"changeit"}
+    tomcat_user = esg_functions.get_user_id("tomcat")
+    tomcat_group = esg_functions.get_group_id("tomcat")
+    esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
 
-    #Edit the web.xml file for the web app to include these token replacement values
-    echo -n "Replacing tokens... "
-    eval "perl -p -i -e 's#\\@orp_host\\@#${orp_host}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@\\@#${truststore_file}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@truststore_password\\@#${truststore_password}#g' ${target_file}"; echo -n "*"
-    eval "perl -p -i -e 's#\\@esg_root_dir\\@#${esg_root_dir}#g' ${target_file}"; echo -n "*"
-    echo " [OK]"
-    popd >& /dev/null
-    #----------------------
+    print "orp/security filters installed..."
 
 
-    chown -R ${tomcat_user} ${dest_dir}/WEB-INF
-    chgrp -R ${tomcat_group} ${dest_dir}/WEB-INF
-    echo "orp/security filters installed..."
-    return 0
-}
+def get_orp_libs(service_name="thredds"):
+    '''Copies the filter jar file to the web app's lib dir
+    arg 1 - The destination web application lib directory (default thredds)'''
 
-#Copies the filter jar file to the web app's lib dir
-#arg 1 - The destination web application lib directory (default thredds)
-get_orp_libs() {
-
-    orp_service_app_home=${orp_service_app_home:-"${CATALINA_HOME}/webapps/esg-orp"}
-
-    local dest_dir=${1:-${tomcat_install_dir}/webapps/${service_name}/WEB-INF/lib}
-    local src_dir=${orp_service_app_home}/WEB-INF/lib
+    orp_service_app_home = "/usr/local/tomcat/webapps/esg-orp"
+    dest_dir = "/usr/local/tomcat/webapps/{}/WEB-INF/lib".format(service_name)
+    src_dir = os.path.join(orp_service_app_home, "WEB-INF", "lib")
 
     #Jar versions...
-    opensaml_version=${opensaml_version:-"2.3.2"}
-    openws_version=${openws_version:-"1.3.1"}
-    xmltooling_version=${xmltooling_version:-"1.2.2"}
-    xsgroup_role_version=${xsgroup_role_version:-"1.0.0"}
+    opensaml_version = "2.3.2"
+    openws_version = "1.3.1"
+    xmltooling_version = "1.2.2"
+    xsgroup_role_version = "1.0.0"
 
     #(formerly known as endorsed jars)
-    commons_collections_version=${commons_collections_version:-"3.2.2"}
-    serializer_version=${serializer_version:-"2.9.1"}
-    velocity_version=${velocity_version:-"1.5"}
-    xalan_version=${xalan_version:-"2.7.2"}
-    xercesImpl_version=${xercesImpl_version:-"2.10.0"}
-    xml_apis_version=${xml_apis_version:-"1.4.01"}
-    xmlsec_version=${xmlsec_version:-"1.4.2"}
-    joda_version=${joda_version:-"2.0"}
-    commons_io_version=${commons_io_version:-"2.4"}
-    slf4j_version="1.6.4"
+    commons_collections_version = "3.2.2"
+    serializer_version = "2.9.1"
+    velocity_version = "1.5"
+    xalan_version = "2.7.2"
+    xercesImpl_version = "2.10.0"
+    xml_apis_version = "1.4.01"
+    xmlsec_version = "1.4.2"
+    joda_version = "2.0"
+    commons_io_version = "2.4"
+    slf4j_version = "1.6.4"
 
     #------------------------------------------------------------------
     #NOTE: Make sure that this version matches the version that is in
     #the esg-orp project!!!
-    spring_version=${spring_version:-"4.2.3.RELEASE"}
+    spring_version = "4.2.3.RELEASE"
     #------------------------------------------------------------------
 
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
     #----------------------------
-    opensaml_jar=opensaml-${opensaml_version}.jar
-    openws_jar=openws-${openws_version}.jar
-    xmltooling_jar=xmltooling-${xmltooling_version}.jar
-    xsgroup_role_jar=XSGroupRole-${xsgroup_role_version}.jar
+    opensaml_jar = "opensaml-{}.jar".format(opensaml_version)
+    openws_jar = "openws-{}.jar".format(openws_version)
+    xmltooling_jar = "xmltooling-{}.jar".format(xmltooling_version)
+    xsgroup_role_jar = "XSGroupRole-{}.jar".format(xsgroup_role_version)
 
     #(formerly known as endorsed jars)
-    commons_collections_jar=commons-collections-${commons_collections_version}.jar
-    serializer_jar=serializer-${serializer_version}.jar
-    velocity_jar=velocity-${velocity_version}.jar
-    xalan_jar=xalan-${xalan_version}.jar
-    xercesImpl_jar=xercesImpl-${xercesImpl_version}.jar
-    xml_apis_jar=xml-apis-${xml_apis_version}.jar
-    xmlsec_jar=xmlsec-${xmlsec_version}.jar
-    joda_time_jar=joda-time-${joda_version}.jar
-    commons_io_jar=commons-io-${commons_io_version}.jar
-    slf4j_api_jar=slf4j-api-${slf4j_version}.jar
-    slf4j_log4j_jar=slf4j-log4j12-${slf4j_version}.jar
+    commons_collections_jar = "commons-collections-{}.jar".format(commons_collections_version)
+    serializer_jar = "serializer-{}.jar".format(serializer_version)
+    velocity_jar = "velocity-{}.jar".format(velocity_version)
+    xalan_jar = "xalan-{}.jar".format(xalan_version)
+    xercesImpl_jar = "xercesImpl-{}.jar".format(xercesImpl_version)
+    xml_apis_jar = "xml-apis-{}.jar".format(xml_apis_version)
+    xmlsec_jar = "xmlsec-{}.jar".format(xmlsec_version)
+    joda_time_jar = "joda-time-{}.jar".format(joda_version)
+    commons_io_jar = "commons-io-{}.jar".format(commons_io_version)
+    slf4j_api_jar = "slf4j-api-{}.jar".format(slf4j_version)
+    slf4j_log4j_jar = "slf4j-log4j12-{}.jar".format(slf4j_version)
 
-    spring_jar=spring-core-${spring_version}.jar
-    spring_web_jar=spring-web-${spring_version}.jar
-    spring_webmvc_jar=spring-webmvc-${spring_version}.jar
+    spring_jar = "spring-core-{}.jar".format(spring_version)
+    spring_web_jar = "spring-web-{}.jar".format(spring_version)
+    spring_webmvc_jar = "spring-webmvc-{}.jar".format(spring_version)
 
-    if [ -d ${dest_dir} ]; then
+    jar_list = [opensaml_jar, openws_jar, xmltooling_jar, xsgroup_role_jar, commons_collections_jar, serializer_jar, velocity_jar,
+                xalan_jar, xercesImpl_jar, xml_apis_jar, xmlsec_jar, joda_time_jar, commons_io_jar, slf4j_api_jar, slf4j_log4j_jar]
+
+    if os.path.exists(dest_dir):
         #move over SAML libraries...
-        echo "getting (copying) libary jars from the ORP to ${dest_dir}"
-
-        [ ! -e ${dest_dir}/${opensaml_jar} ]     && cp -v ${src_dir}/${opensaml_jar}     ${dest_dir}
-        [ ! -e ${dest_dir}/${openws_jar} ]       && cp -v ${src_dir}/${openws_jar}       ${dest_dir}
-        [ ! -e ${dest_dir}/${xmltooling_jar} ]   && cp -v ${src_dir}/${xmltooling_jar}   ${dest_dir}
-        [ ! -e ${dest_dir}/${xsgroup_role_jar} ] && cp -v ${src_dir}/${xsgroup_role_jar} ${dest_dir}
-
-        #(formerly known as endorsed jars)
-        [ ! -e ${dest_dir}/${commons_collections_jar} ] && cp -v ${src_dir}/${commons_collections_jar}  ${dest_dir}
-        [ ! -e ${dest_dir}/${serializer_jar} ] && cp -v ${src_dir}/${serializer_jar} ${dest_dir}
-        [ ! -e ${dest_dir}/${velocity_jar} ]   && cp -v ${src_dir}/${velocity_jar}   ${dest_dir}
-        [ ! -e ${dest_dir}/${xalan_jar} ]      && cp -v ${src_dir}/${xalan_jar}      ${dest_dir}
-        [ ! -e ${dest_dir}/${xercesImpl_jar} ] && cp -v ${src_dir}/${xercesImpl_jar} ${dest_dir}
-        [ ! -e ${dest_dir}/${xml_apis_jar} ]   && cp -v ${src_dir}/${xml_apis_jar}   ${dest_dir}
-        [ ! -e ${dest_dir}/${xmlsec_jar} ]     && cp -v ${src_dir}/${xmlsec_jar}     ${dest_dir}
-        [ ! -e ${dest_dir}/${joda_time_jar} ]  && cp -v ${src_dir}/${joda_time_jar}  ${dest_dir}
-        [ ! -e ${dest_dir}/${commons_io_jar} ] && cp -v ${src_dir}/${commons_io_jar}  ${dest_dir}
-        [ ! -e ${dest_dir}/${slf4j_api_jar} ]  && cp -v ${src_dir}/${slf4j_api_jar}  ${dest_dir}
-        [ ! -e ${dest_dir}/${slf4j_log4j12_jar} ] && cp -v ${src_dir}/${slf4j_log4j12_jar} ${dest_dir}
+        print "getting (copying) libary jars from the ORP to {}".format(dest_dir)
+        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+        for jar in jar_list:
+            if not os.path.exists(os.path.join(dest_dir,jar)):
+                shutil.copyfile(os.path.join(src_dir, jar), os.path.join(dest_dir,jar))
 
         #----------------------------
         #Fetching ORP / Security Jars from Distribution Site...
@@ -213,69 +186,27 @@ get_orp_libs() {
         #values inherited from esg-node calling script
         #-----
         #project generated jarfiles...
-        local esg_orp_jar=esg-orp-${esg_orp_version}.jar
-        local esgf_security_jar=esgf-security-${esgf_security_version}.jar
+        esg_orp_jar = "esg-orp-{}.jar".format(config["esg_orp_version"])
+        esgf_security_jar = "esgf-security-{}.jar".format(config["esgf_security_version"])
         #-----
 
-        echo "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to ${dest_dir} ..."
-        local make_backup_file=0 #Do NOT make backup file
+        print  "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to {} ...".format(dest_dir)
+        library_jars = [spring_jar, spring_web_jar, spring_webmvc_jar, esgf_security_jar, esg_orp_jar]
 
-		if [ "$service_name" = "las" ]; then
-        #Trying to avoid going on the wire to fetch files... see if the ORP has it locally first.
-        if [[ ! -e "${dest_dir}/${spring_jar}" ]]; then
-            if [[ -e "${src_dir}/${spring_jar}" ]]; then
-                cp -v ${src_dir}/${spring_jar} ${dest_dir}/${spring_jar}
-            else
-                checked_get ${dest_dir}/${spring_jar} ${esg_dist_url}/filters/${spring_jar} $((force_install)) $((make_backup_file))
-            fi
-        else
-            ((DEBUG)) && echo "${dest_dir}/${spring_jar} - [OK]"
-        fi
+        for jar in library_jars:
+            if jar == spring_jar and service_name != "las":
+                continue
+            if not os.path.exists(os.path.join(dest_dir, jar)) and os.path.exists(os.path.join(src_dir,jar)):
+                shutil.copyfile(os.path.join(src_dir,jar), os.path.join(dest_dir, jar))
+            else:
+                #change url for security jar
+                if jar == esgf_security_jar:
+                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))
+                elif jar == esg_orp_jar:
+                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
+                else:
+                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/filters/{}".format(esg_dist_url, jar))
 
-        if [[ ! -e "${dest_dir}/${spring_webmvc_jar}" ]]; then
-            if [[ -e "${src_dir}/${spring_webmvc_jar}" ]]; then
-                cp -v ${src_dir}/${spring_webmvc_jar} ${dest_dir}/${spring_webmvc_jar}
-            else
-                checked_get ${dest_dir}/${spring_webmvc_jar} ${esg_dist_url}/filters/${spring_webmvc_jar} $((force_install)) $((make_backup_file))
-            fi
-        else
-            ((DEBUG)) && echo "${dest_dir}/${spring_webmvc_jar} - [OK]"
-        fi
-
-        if [[ ! -e "${dest_dir}/${spring_web_jar}" ]]; then
-            if [[ -e "${src_dir}/${spring_web_jar}" ]]; then
-                cp -v ${src_dir}/${spring_web_jar} ${dest_dir}/${spring_web_jar}
-            else
-                checked_get ${dest_dir}/${spring_web_jar} ${esg_dist_url}/filters/${spring_web_jar} $((force_install)) $((make_backup_file))
-            fi
-        else
-            ((DEBUG)) && echo "${dest_dir}/${spring_web_jar} - [OK]"
-        fi
-
-		fi #end of las-only block for the spring jars.
-
-        if [[ ! -e "${dest_dir}/${esgf_security_jar}" ]]; then
-            if [[ -e "${src_dir}/${esgf_security_jar}" ]]; then
-                cp -v ${src_dir}/${esgf_security_jar} ${dest_dir}/${esgf_security_jar}
-            else
-                checked_get ${dest_dir}/${esgf_security_jar} ${esg_dist_url}/esgf-security/${esgf_security_jar} $((force_install)) $((make_backup_file))
-            fi
-        else
-            ((DEBUG)) && echo "${dest_dir}/${esgf_security_jar} - [OK]"
-        fi
-
-        if [[ ! -e "${dest_dir}/${esg_orp_jar}" ]]; then
-            checked_get ${dest_dir}/${esg_orp_jar} ${esg_dist_url}/esg-orp/${esg_orp_jar} $((force_install)) $((make_backup_file))
-        fi
-
-
-        #remove all other orp / security jar versions that we don't want
-        echo "cleaning up (removing) other, unnecessary, orp/security project jars from ${dest_dir} ..."
-        rm -vf $(/bin/ls ${dest_dir}/${esg_orp_jar%-*}-*.jar | grep -v ${esg_orp_version})
-        rm -vf $(/bin/ls ${dest_dir}/${esgf_security_jar%-*}-*.jar | grep -v ${esgf_security_version})
-        #---
-
-        chown -R ${tomcat_user}:${tomcat_group} ${dest_dir}
-    fi
-
-}
+        tomcat_user = esg_functions.get_user_id("tomcat")
+        tomcat_group = esg_functions.get_group_id("tomcat")
+        esg_functions.change_ownership_recursive(os.path.join(dest_dir), tomcat_user, tomcat_group)

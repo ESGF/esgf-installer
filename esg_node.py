@@ -30,6 +30,7 @@ from base import esg_apache_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_questionnaire
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
+from filters import access_logging_filters, esg_security_tokenless_filters
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -227,6 +228,8 @@ def system_component_installation(esg_dist_url, node_type_list):
         from idp_node import globus
         orp.main()
         thredds.main()
+        access_logging_filters.install_access_logging_filter()
+        esg_security_tokenless_filters.setup_security_tokenless_filters()
         globus.setup_globus("DATA")
     if "IDP" in node_type_list:
         print "\n*******************************"

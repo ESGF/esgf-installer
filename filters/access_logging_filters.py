@@ -103,10 +103,10 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         exempt_extensions = ".xml"
         exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
         extensions = ".nc"
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@service.name\\@/{}/g' web.xml"'''.format(service_name))
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@exempt_extensions\\@/{}/g' web.xml"'''.format(exempt_extensions))
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's#\\@exempt_services\\@#{}#g' web.xml"'''.format(exempt_services))
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@extensions\\@/${}/g' web.xml'''.format(extensions))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's/\\@service.name\\@/{}/g' web.xml\"".format(service_name))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's/\\@exempt_extensions\\@/{}/g' web.xml\"".format(exempt_extensions))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@exempt_services\\@#{}#g' web.xml\"".format(exempt_services))
+        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's/\\@extensions\\@/${}/g' web.xml\"".format(extensions))
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

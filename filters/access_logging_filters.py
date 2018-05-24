@@ -30,7 +30,7 @@ def setup_access_logging_filter():
     with esg_bash2py.pushd(config["workdir"]):
         install_access_logging_filter()
 
-    esg_tomcat_manager.start_tomcat()
+    # esg_tomcat_manager.start_tomcat()
 
 
 def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):

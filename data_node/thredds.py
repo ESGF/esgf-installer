@@ -414,8 +414,8 @@ def setup_thredds():
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
     download_thredds_xml()
-    # get_webxml_file()
-    shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
+    get_webxml_file()
+    # shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
     os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
     copy_public_directory()
     # TDS configuration root

@@ -135,7 +135,7 @@ def get_webxml_file():
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
 
-    os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 #TODO: terrible, undescriptive name; come up with something better
 def register(remote_host, truststore_password, keystore_password=None):

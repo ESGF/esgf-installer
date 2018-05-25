@@ -454,7 +454,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     remove_unused_esgf_webapps()
 
     esg_functions.update_fileupload_jar()
-    esg_functions.setup_whitelist_files(esg_dist_url)
+    esg_functions.setup_whitelist_files()
 
     esg_cli_argument_manager.start(node_type_list)
     install_bash_completion_file(esg_dist_url)

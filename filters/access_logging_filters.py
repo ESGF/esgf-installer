@@ -137,8 +137,8 @@ def get_mgr_libs(dest_dir):
     node_manager_app_home = "/usr/local/tomcat/webapps/esgf-node-manager"
     src_dir = os.path.join(node_manager_app_home, "WEB-INF", "lib")
 
-    if not os.path.exists(dest_dir) or not os.path.exists(src_dir):
-        logger.error("source and/or destination dir(s) not present!!! (punting)")
+    if not os.path.exists(src_dir):
+        logger.error("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
         return
 
     #Jar versions...

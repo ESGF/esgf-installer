@@ -97,16 +97,20 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
 
         #Edit the web.xml file for ${service_name} to include these token replacement values
-        parser = etree.XMLParser(remove_comments=False)
-        tree = etree.parse("web.xml", parser)
-        root = tree.getroot()
         exempt_extensions = ".xml"
         exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
         extensions = ".nc"
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's/\\@service.name\\@/{}/g' web.xml\"".format(service_name))
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's/\\@exempt_extensions\\@/{}/g' web.xml\"".format(exempt_extensions))
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@exempt_services\\@#{}#g' web.xml\"".format(exempt_services))
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's/\\@extensions\\@/${}/g' web.xml\"".format(extensions))
+
+        with open("web.xml", 'r') as file_handle:
+            filedata = file_handle.read()
+        filedata = filedata.replace("@service.name@", service_name)
+        filedata = filedata.replace("@exempt_extensions@", exempt_extensions)
+        filedata = filedata.replace("@exempt_services@", exempt_services)
+        filedata = filedata.replace("@extensions@", extensions)
+
+        # Write the file out again
+        with open("web.xml", 'w') as file_handle:
+            file_handle.write(filedata)
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

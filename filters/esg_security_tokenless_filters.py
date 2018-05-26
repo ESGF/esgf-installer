@@ -99,10 +99,17 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
         esg_root_dir = "/esg"
 
         print "Replacing tokens... "
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@orp_host\\@#{}#g' web.xml\"".format(orp_host))
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@truststore_file\\@#{}#g' web.xml\"".format(truststore_file))
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@truststore_password\\@#${}#g' web.xml\"".format(truststore_password))
-        esg_functions.stream_subprocess_output("eval \"perl -p -i -e 's#\\@esg_root_dir\\@#${}#g' web.xml\"".format(esg_root_dir))
+
+        with open("web.xml", 'r') as file_handle:
+            filedata = file_handle.read()
+        filedata = filedata.replace("@orp_host@", orp_host)
+        filedata = filedata.replace("@truststore_file@", truststore_file)
+        filedata = filedata.replace("@truststore_password@", truststore_password)
+        filedata = filedata.replace("@esg_root_dir@", esg_root_dir)
+
+        # Write the file out again
+        with open("web.xml", 'w') as file_handle:
+            file_handle.write(filedata)
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

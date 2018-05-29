@@ -48,6 +48,7 @@ esg-purge () {
         esg-purge-las
         esg-purge-postgres
         esg-purge-tomcat
+        esg-purge-slcs
         # ... but we add ...
         esg-purge-utils
         esg-purge-workbench
@@ -259,6 +260,10 @@ esg-purge-utils () {
     rm -f /usr/local/java
 }
 
+esg-purge-slcs() {
+    rm -rf /usr/local/src/esgf-slcs-server-playbook
+    rm -rf /usr/local/esgf-slcs/server
+}
 esg-purge-workbench() {
     rm -rf /usr/local/src/esgf/workbench
 }

@@ -51,7 +51,7 @@ init() {
     esg_orp_version=${esg_orp_version:-"2.9.10"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.7.13"}
+    esgf_idp_version=${esgf_idp_version:-"2.7.14"}
 
     #see esg-search project:
     esg_search_version=${esg_search_version:-"4.15.7"}

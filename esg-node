@@ -227,6 +227,9 @@ is_supported_system() {
     if check_rpm_version redhat-release-server; then
 	DISTRIB="Red Hat"
 	MAJREV=`echo $rpm_version | sed 's/Server//'`
+    elif check_rpm_version redhat-release-workstation; then
+    DISTRIB="Red Hat"
+    MAJREV=`echo $rpm_version | sed 's/Server//'`
     elif check_rpm_version centos-release; then
 	DISTRIB="CentOS"
 	MAJREV=$rpm_version
@@ -284,7 +287,7 @@ printf "
     #----------------------------------------
     echo "Checking requisites... "
 
-    if [ ! is_supported_system ] ; then
+    if ! is_supported_system 
     then
 	echo 'ESGF can only be installed on versions 6/7 of Red Hat, CentOS or Scientific Linux x86_64 systems'
 	exit 1

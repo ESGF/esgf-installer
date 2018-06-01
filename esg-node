@@ -229,7 +229,7 @@ is_supported_system() {
 	MAJREV=`echo $rpm_version | sed 's/Server//'`
     elif check_rpm_version redhat-release-workstation; then
     DISTRIB="Red Hat"
-    MAJREV=`echo $rpm_version | sed 's/Server//'`
+    MAJREV=`echo $rpm_version | sed 's/Workstation//'`
     elif check_rpm_version centos-release; then
 	DISTRIB="CentOS"
 	MAJREV=$rpm_version

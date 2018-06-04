@@ -29,6 +29,7 @@ from esgf_utilities import esg_mirror_manager
 from base import esg_apache_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_questionnaire
+from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from filters import access_logging_filters, esg_security_tokenless_filters
 
@@ -240,6 +241,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         esg_security.setup_security(node_type_list, esg_dist_url)
         globus.setup_globus("IDP")
         idp.setup_slcs()
+    esg_cert_manager.install_local_certs("firstrun")
     if "INDEX" in node_type_list:
         print "\n*******************************"
         print "Installing Index Node Components"

@@ -93,7 +93,10 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
         insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
 
         orp_host = esg_functions.get_esgf_host() #default assumes local install
-        authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+        try:
+            authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+        except ConfigParser.NoOptionError:
+            authorization_service_root = esg_functions.get_esgf_host()
         truststore_file = config["truststore_file"]
         truststore_password = config["truststore_password"]
         esg_root_dir = "/esg"

@@ -214,31 +214,31 @@ def select_idp_peer():
             esgf_idp_peer = idp_fqdn
             esgf_idp_peer_name = esgf_idp_peer.upper()
 
-            myproxy_endpoint = esgf_idp_peer
-            esgf_host = esg_functions.get_esgf_host()
+    myproxy_endpoint = esgf_idp_peer
+    esgf_host = esg_functions.get_esgf_host()
 
-            # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
-            if esgf_host != esgf_idp_peer:
-                print '''
-                  ----------------------------------------------------------------------
-                  The IDP selected must share at least one of the peer group(s)
-                  [${node_peer_group}] that this node is a member of!
+    # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
+    if esgf_host != esgf_idp_peer:
+        print '''
+          ----------------------------------------------------------------------
+          The IDP selected must share at least one of the peer group(s)
+          [${node_peer_group}] that this node is a member of!
 
-                  run: esg-node --federation-sanity-check ${esgf_idp_peer}
+          run: esg-node --federation-sanity-check ${esgf_idp_peer}
 
-                  for confirmation.
-                  ----------------------------------------------------------------------'''
+          for confirmation.
+          ----------------------------------------------------------------------'''
 
-            if esgf_host != myproxy_endpoint:
-                register(myproxy_endpoint, config["truststore_password"])
+    if esgf_host != myproxy_endpoint:
+        register(myproxy_endpoint, config["truststore_password"])
 
-            esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
-            esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)
+    esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
+    esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)
 
-            esg_property_manager.set_property("myproxy_endpoint", myproxy_endpoint)
-            esg_property_manager.set_property("myproxy_port", default_myproxy_port)
+    esg_property_manager.set_property("myproxy_endpoint", myproxy_endpoint)
+    esg_property_manager.set_property("myproxy_port", default_myproxy_port)
 
-            write_tds_env()
+    write_tds_env()
 
 def write_tds_env():
     esg_property_manager.set_property("ESGF_IDP_PEER_NAME", "export ESGF_IDP_PEER_NAME={}".format(esg_property_manager.get_property("esgf_idp_peer_name")), config_file=config["envfile"], section_name="esgf.env", separator="_")

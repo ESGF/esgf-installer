@@ -184,7 +184,7 @@ def start_tomcat():
     print "\n*******************************"
     print "Attempting to start Tomcat"
     print "******************************* \n"
-    if check_tomcat_status:
+    if check_tomcat_status():
         print "Tomcat already running"
         return
     try:

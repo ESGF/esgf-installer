@@ -28,31 +28,46 @@ def init():
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------
-    apache_frontend_version = "v1.02"
-    cdat_version = "2.2.0"
-    # cdat_tag = "1.5.1.esgf-v1.7.0"
-    esgcet_version = "3.4.0a1"
-    publisher_tag = "v3.4.0a1"
-    # see esgf-node-manager project:
-    esgf_node_manager_version = "0.7.16"
-    esgf_node_manager_db_version = "0.1.5"
-    # see esgf-security project:
-    esgf_security_version = "2.7.6"
-    esgf_security_db_version = "0.1.5"
-    # see esg-orp project:
-    esg_orp_version = "2.8.10"
-    # see esgf-idp project:
-    esgf_idp_version = "2.7.2"
-    # see esg-search project:
-    esg_search_version = "4.8.4"
-    # see esgf-web-fe project:
-    esgf_web_fe_version = "2.6.5"
-    # see esgf-dashboard project:
-    esgf_dashboard_version = "1.3.18"
-    esgf_dashboard_db_version = "0.01"
-    # see esgf-desktop project:
-    esgf_desktop_version = "0.0.20"
 
+    apache_frontend_version = "1.0.9"
+    apache_frontend_tag = "v1.12"
+
+    cdat_version = "2.2.0"
+
+    esgcet_version = "3.4.7"
+    publisher_tag = "v3.4.7"
+
+    esgprep_version="2.8.1"
+    cmor_version="3.3.2"
+
+    #see esgf-node-manager project:
+    esgf_node_manager_version = "1.0.1"
+
+    esgf_node_manager_db_version = "0.1.5"
+
+    #see esgf-security project:
+    esgf_security_version = "2.7.17"
+    esgf_security_db_version = "0.1.5"
+
+    #see esg-orp project:
+    esg_orp_version = "2.9.10"
+
+    #see esgf-idp project:
+    esgf_idp_version = "2.7.14"
+
+    #see esg-search project:
+    esg_search_version = "4.15.8"
+
+    #see esgf-web-fe project:
+
+    #see esgf-dashboard project:
+    esgf_dashboard_version = "1.5.19"
+    esgf_dashboard_db_version = "0.0.2"
+
+    #see esgf-desktop project:
+    esgf_desktop_version = "0.0.22"
+
+    esgf_stats_api_version = "1.0.5"
     #--------------------------------
     # External programs' versions
     #--------------------------------
@@ -67,8 +82,10 @@ def init():
     postgress_min_version = "8.4.20"
     tomcat_version = "8.5.9"
     tomcat_min_version = "8.5.9"
-    tds_version = "5.0.0"
-    tds_min_version = "5.0.0"
+    tds_version = "5.0.2"
+    tds_min_version = "5.0.2"
+    sqlalchemy_version = "0.7.10"
+    sqlalchemy_min_version = "0.7.10"
     python_version = "2.7"
 
     #--------------------------------

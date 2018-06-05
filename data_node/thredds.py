@@ -135,7 +135,7 @@ def get_webxml_file():
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
     TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
 
-    os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
 #TODO: terrible, undescriptive name; come up with something better
 def register(remote_host, truststore_password, keystore_password=None):
@@ -172,7 +172,7 @@ def register(remote_host, truststore_password, keystore_password=None):
             #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
             #The output of the program is a new file named jssecacerts!      So here we get the output and rename it.
 
-            esg_functions.stream_subprocess_output("/usr/local/java/bin/java -classpath {CP} InstallCert {ssl_endpoint}:{ssl_port} {my_truststore_password} {truststore_file}".format(CP=CP, ssl_endpoint=ssl_endpoint, ssl_port=ssl_port, my_truststore_password=config["truststore_password"], truststore_file=config["truststore_file"]))
+            esg_functions.stream_subprocess_output("/usr/local/java/bin/java -classpath {class_path} InstallCert {ssl_endpoint}:{ssl_port} {my_truststore_password} {truststore_file}".format(class_path=class_path, ssl_endpoint=ssl_endpoint, ssl_port=ssl_port, my_truststore_password=config["truststore_password"], truststore_file=config["truststore_file"]))
 
             with esg_bash2py.pushd(config["tomcat_conf_dir"]):
                 os.chmod(config["truststore_file"], 0644)
@@ -185,7 +185,7 @@ def register(remote_host, truststore_password, keystore_password=None):
                 esg_cert_manager.sync_with_java_truststore(config["truststore_file"])
 
 
-def select_idp_peer(node_type_list):
+def select_idp_peer():
     '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
     esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
 
@@ -195,6 +195,8 @@ def select_idp_peer(node_type_list):
 
     default_myproxy_port=7512
     custom_myproxy_port=""
+
+    node_type_list = esg_functions.get_node_type()
 
     if "INDEX" in node_type_list:
         external_idp = raw_input("Do you wish to use an external IDP peer?(N/y): ") or 'n'
@@ -212,31 +214,31 @@ def select_idp_peer(node_type_list):
             esgf_idp_peer = idp_fqdn
             esgf_idp_peer_name = esgf_idp_peer.upper()
 
-            myproxy_endpoint = esgf_idp_peer
-            esgf_host = esg_functions.get_esgf_host()
+    myproxy_endpoint = esgf_idp_peer
+    esgf_host = esg_functions.get_esgf_host()
 
-            # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
-            if esgf_host != esgf_idp_peer:
-                print '''
-                  ----------------------------------------------------------------------
-                  The IDP selected must share at least one of the peer group(s)
-                  [${node_peer_group}] that this node is a member of!
+    # print "Selection: [${choice}] source: ${esgf_host_ip}   dest: ${esgf_idp_peer_name}:${esgf_idp_peer}"
+    if esgf_host != esgf_idp_peer:
+        print '''
+          ----------------------------------------------------------------------
+          The IDP selected must share at least one of the peer group(s)
+          [${node_peer_group}] that this node is a member of!
 
-                  run: esg-node --federation-sanity-check ${esgf_idp_peer}
+          run: esg-node --federation-sanity-check ${esgf_idp_peer}
 
-                  for confirmation.
-                  ----------------------------------------------------------------------'''
+          for confirmation.
+          ----------------------------------------------------------------------'''
 
-            if esgf_host != myproxy_endpoint:
-                register(myproxy_endpoint)
+    if esgf_host != myproxy_endpoint:
+        register(myproxy_endpoint, config["truststore_password"])
 
-            esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
-            esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)
+    esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
+    esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)
 
-            esg_property_manager.set_property("myproxy_endpoint", myproxy_endpoint)
-            esg_property_manager.set_property("myproxy_port", default_myproxy_port)
+    esg_property_manager.set_property("myproxy_endpoint", myproxy_endpoint)
+    esg_property_manager.set_property("myproxy_port", default_myproxy_port)
 
-            write_tds_env()
+    write_tds_env()
 
 def write_tds_env():
     esg_property_manager.set_property("ESGF_IDP_PEER_NAME", "export ESGF_IDP_PEER_NAME={}".format(esg_property_manager.get_property("esgf_idp_peer_name")), config_file=config["envfile"], section_name="esgf.env", separator="_")
@@ -414,9 +416,10 @@ def setup_thredds():
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
     download_thredds_xml()
-    # get_webxml_file()
-    shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
-    os.chown("/usr/local/tomcat/webapps/thredds/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    get_webxml_file()
+    # shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
+    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    select_idp_peer()
     copy_public_directory()
     # TDS configuration root
     esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
@@ -429,7 +432,7 @@ def setup_thredds():
     esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
     # TDS customized applicationContext.xml file with ESGF authorizer
     download_application_context()
-    copy_jar_files()
+    # copy_jar_files()
 
     # TDS customized logging (uses DEBUG)
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/log4j2.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")

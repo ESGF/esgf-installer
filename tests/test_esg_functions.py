@@ -76,7 +76,7 @@ class test_ESG_Functions(unittest.TestCase):
 
 
     def test_setup_whitelist_files(self):
-        esg_functions.setup_whitelist_files("http://aims1.llnl.gov/esgf/dist", whitelist_file_dir="/tmp")
+        esg_functions.setup_whitelist_files(whitelist_file_dir="/tmp")
         self.assertTrue(os.path.isfile("/tmp/esgf_ats.xml"))
 
     def test_stream_subprocess_output(self):

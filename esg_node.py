@@ -29,7 +29,9 @@ from esgf_utilities import esg_mirror_manager
 from base import esg_apache_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_questionnaire
+from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
+from filters import access_logging_filters, esg_security_tokenless_filters
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -221,12 +223,14 @@ def system_component_installation(esg_dist_url, node_type_list):
         print "\n*******************************"
         print "Installing Data Node Components"
         print "******************************* \n"
-        pip.main(['install', "esgprep==2.7.38"])
+        pip.main(['install', "esgprep==2.8.1"])
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
         from idp_node import globus
         orp.main()
         thredds.main()
+        access_logging_filters.install_access_logging_filter()
+        esg_security_tokenless_filters.setup_security_tokenless_filters()
         globus.setup_globus("DATA")
     if "IDP" in node_type_list:
         print "\n*******************************"
@@ -237,6 +241,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         esg_security.setup_security(node_type_list, esg_dist_url)
         globus.setup_globus("IDP")
         idp.setup_slcs()
+    esg_cert_manager.install_local_certs("firstrun")
     if "INDEX" in node_type_list:
         print "\n*******************************"
         print "Installing Index Node Components"
@@ -451,7 +456,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     remove_unused_esgf_webapps()
 
     esg_functions.update_fileupload_jar()
-    esg_functions.setup_whitelist_files(esg_dist_url)
+    esg_functions.setup_whitelist_files()
 
     esg_cli_argument_manager.start(node_type_list)
     install_bash_completion_file(esg_dist_url)

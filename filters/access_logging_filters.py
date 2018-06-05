@@ -30,7 +30,7 @@ def setup_access_logging_filter():
     with esg_bash2py.pushd(config["workdir"]):
         install_access_logging_filter()
 
-    esg_tomcat_manager.start_tomcat()
+    # esg_tomcat_manager.start_tomcat()
 
 
 def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
@@ -97,16 +97,20 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
 
         #Edit the web.xml file for ${service_name} to include these token replacement values
-        parser = etree.XMLParser(remove_comments=False)
-        tree = etree.parse("web.xml", parser)
-        root = tree.getroot()
         exempt_extensions = ".xml"
         exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
         extensions = ".nc"
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@service.name\\@/{}/g' web.xml"'''.format(service_name))
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@exempt_extensions\\@/{}/g' web.xml"'''.format(exempt_extensions))
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's#\\@exempt_services\\@#{}#g' web.xml"'''.format(exempt_services))
-        esg_functions.stream_subprocess_output('''eval "perl -p -i -e 's/\\@extensions\\@/${}/g' web.xml'''.format(extensions))
+
+        with open("web.xml", 'r') as file_handle:
+            filedata = file_handle.read()
+        filedata = filedata.replace("@service.name@", service_name)
+        filedata = filedata.replace("@exempt_extensions@", exempt_extensions)
+        filedata = filedata.replace("@exempt_services@", exempt_services)
+        filedata = filedata.replace("@extensions@", extensions)
+
+        # Write the file out again
+        with open("web.xml", 'w') as file_handle:
+            file_handle.write(filedata)
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")
@@ -133,8 +137,8 @@ def get_mgr_libs(dest_dir):
     node_manager_app_home = "/usr/local/tomcat/webapps/esgf-node-manager"
     src_dir = os.path.join(node_manager_app_home, "WEB-INF", "lib")
 
-    if not os.path.exists(dest_dir) or not os.path.exists(src_dir):
-        logger.error("source and/or destination dir(s) not present!!! (punting)")
+    if not os.path.exists(src_dir):
+        logger.error("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
         return
 
     #Jar versions...

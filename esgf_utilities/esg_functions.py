@@ -1000,7 +1000,7 @@ def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"
     current_mode = os.stat(xml_file_path)
     os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
+def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
     '''Setups up whitelist XML files from the distribution mirror'''
 
     print "*******************************"
@@ -1014,19 +1014,21 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
     for file_name in conf_file_list:
         local_file_name = file_name.split(".tmpl")[0]
         local_file_path = os.path.join(whitelist_file_dir, local_file_name)
-        remote_file_url = "https://aims1.llnl.gov/esgf/dist/confs/{file_name}".format(file_name=file_name)
+        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+        remote_file_url = "{esg_dist_url}confs/{file_name}".format(esg_dist_url=esg_dist_url, file_name=file_name)
 
         download_update(local_file_path, remote_file_url)
 
         #replace placeholder.fqdn
         tree = etree.parse(local_file_path)
         #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
+        esgf_host = get_esgf_host()
         if file_name == "esgf_ats.xml.tmpl":
             placeholder_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').get("attributeService")
-            updated_string = placeholder_string.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            updated_string = placeholder_string.replace("placeholder.fqdn", esgf_host)
             tree.find('.//{http://www.esgf.org/whitelist}attribute').set("attributeService", updated_string)
         else:
-            updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", esgf_host)
             tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
         tree.write(local_file_path)
 

@@ -213,6 +213,9 @@ def select_idp_peer():
 
             esgf_idp_peer = idp_fqdn
             esgf_idp_peer_name = esgf_idp_peer.upper()
+    else:
+        esgf_idp_peer = esg_functions.get_esgf_host()
+        esgf_idp_peer_name = esgf_idp_peer.upper()
 
     myproxy_endpoint = esgf_idp_peer
     esgf_host = esg_functions.get_esgf_host()

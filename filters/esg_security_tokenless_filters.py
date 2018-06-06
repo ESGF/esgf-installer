@@ -37,9 +37,15 @@ def insert_file_at_pattern(target_file, input_file, pattern):
     f.write(s)
     f.close()
 
-def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
+def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thredds"):
 
     service_name = esg_bash2py.trim_string_from_head(dest_dir)
+
+    if service_name == "thredds":
+        esg_filter_entry_file = "esg-security-tokenless-thredds-filters.xml"
+    else:
+        esg_filter_entry_file = "esg-security-tokenless-generic-filters.xml"
+
     esg_filter_entry_pattern = "<!--@@esg_security_tokenless_filter_entry@@-->"
 
     print "*******************************"

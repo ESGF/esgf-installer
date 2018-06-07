@@ -227,8 +227,8 @@ def system_component_installation(esg_dist_url, node_type_list):
         esg_publisher.main()
         from data_node import esg_dashboard, orp, thredds
         from idp_node import globus
-        orp.main()
         thredds.main()
+        orp.main()
         access_logging_filters.install_access_logging_filter()
         esg_security_tokenless_filters.setup_security_tokenless_filters()
         globus.setup_globus("DATA")

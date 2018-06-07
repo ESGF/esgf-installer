@@ -928,7 +928,7 @@ setup_cdat() {
        [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
     fi
 
-     bash Miniconda2-latest-Linux-x86_64.sh -b -p $cdat_home
+     bash Miniconda2-latest-Linux-x86_64.sh -u -b -p $cdat_home
       [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
 
     export PATH=${cdat_home}/bin:$PATH

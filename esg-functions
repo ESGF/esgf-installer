@@ -671,7 +671,7 @@ check_postgress_process() {
 }
 
 check_esgf_httpd_process() {
-    service esgf-httpd status
+    service httpd status
 }
 
 check_tomcat_process() {

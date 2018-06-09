@@ -950,6 +950,10 @@ def bump_git_tag(bump_level="patch", commit_message=None):
     new_tag = repo.create_tag(current_tag, message='Automatic tag "{0}"'.format(current_tag))
     repo.remotes.origin.push(new_tag)
 
+def write_security_lib_install_log():
+    security_library_path = "/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/esgf-security-{}.jar".format(config["esgf_security_version"])
+    write_to_install_manifest("esgf->library:esg-security", security_library_path, config["esgf_security_version"])
+
 def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
     # from configobj import ConfigObj
     # config = ConfigObj("/esg/esgf-install-manifest")

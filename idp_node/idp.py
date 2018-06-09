@@ -45,9 +45,6 @@ def write_idp_install_log(idp_service_app_home):
     esg_property_manager.set_property("idp_security_registration_service_endpoint", idp_security_registration_service_endpoint)
 
 
-def write_security_lib_install_log():
-    pass
-
 def setup_idp():
     print "*******************************"
     print "Setting up The ESGF Idp Services"
@@ -86,7 +83,7 @@ def setup_idp():
         esg_functions.change_ownership_recursive(idp_service_app_home, tomcat_user, tomcat_group)
 
     write_idp_install_log(idp_service_app_home)
-    write_security_lib_install_log()
+    esg_functions.write_security_lib_install_log()
 
     # esg_tomcat_manager.start_tomcat()
 

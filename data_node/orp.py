@@ -75,8 +75,6 @@ def extract_orp_war():
         zf.extractall()
     os.remove("esg-orp.war")
 
-def write_security_lib_install_log(security_library_path):
-    esg_functions.write_to_install_manifest("esgf->library:esg-security", security_library_path, config["esgf_security_version"])
 
 def get_orp_support_libs(dest_dir):
     '''Takes the destination directory you wish to have supported libs checked and downloaded to
@@ -94,7 +92,7 @@ def get_orp_support_libs(dest_dir):
         #-----
         print "Downloading dependent library jars from ESGF Distribution Server (Security) to {} ...".format(dest_dir)
         esg_functions.download_update(os.path.join(dest_dir, esgf_security_jar), "{}/esgf-security/{}".format(esg_dist_url, esgf_security_jar))
-        write_security_lib_install_log(os.path.join(dest_dir, esgf_security_jar))
+        esg_functions.write_security_lib_install_log()
         esg_functions.download_update(os.path.join(dest_dir, esgf_security_test_jar), "{}/esgf-security/{}".format(esg_dist_url, esgf_security_test_jar))
 
         TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()

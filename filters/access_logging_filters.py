@@ -70,15 +70,16 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
 
     esg_tomcat_manager.stop_tomcat()
 
-    get_mgr_libs(os.path.join(dest_dir, "WEB-INF", "lib"))
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+    get_mgr_libs(os.path.join(dest_dir, "WEB-INF", "lib"), esg_dist_url)
 
     if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
         return
 
-    #TODO: break into separat function; extract esg_filter_entry_file from jar
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "https://aims1.llnl.gov/esgf/dist/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar")
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "https://aims1.llnl.gov/esgf/dist/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar")
+    #TODO: break into separate function; extract esg_filter_entry_file from jar
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
     with esg_bash2py.pushd(config["workdir"]):
         with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as zf:
             #Pull out the templated filter entry snippet file...
@@ -131,7 +132,7 @@ def insert_file_at_pattern(target_file, input_file, pattern):
     f.write(s)
     f.close()
 
-def get_mgr_libs(dest_dir):
+def get_mgr_libs(dest_dir, esg_dist_url):
     print "Checking for / Installing required jars..."
 
     node_manager_app_home = "/usr/local/tomcat/webapps/esgf-node-manager"
@@ -170,8 +171,8 @@ def get_mgr_libs(dest_dir):
 
     print "getting (downloading) library jars from Node Manager Distribution Server to {} ...".format(dest_dir)
 
-    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "https://aims1.llnl.gov/esgf/dist/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar")
-    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "https://aims1.llnl.gov/esgf/dist/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar")
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

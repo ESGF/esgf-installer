@@ -45,8 +45,9 @@ def setup_gridftp_metrics_logging():
     globus_workdir= os.path.join(config["workdir"],"extra", "globus")
     esg_bash2py.mkdir_p(globus_workdir)
 
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     esg_usage_parser_dist_file = "esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
-    esg_usage_parser_dist_url= "https://aims1.llnl.gov/esgf/dist//globus/gridftp/esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
+    esg_usage_parser_dist_url= "{}/globus/gridftp/esg_usage_parser-{}.tar.bz2".format(esg_dist_url, usage_parser_version)
     esg_usage_parser_dist_dir = os.path.join(globus_workdir, "esg_usage_parser-{}".format(usage_parser_version))
     esg_bash2py.mkdir_p(esg_usage_parser_dist_dir)
 

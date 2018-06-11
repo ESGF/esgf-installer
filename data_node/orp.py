@@ -198,9 +198,9 @@ def update_common_loader(config_dir):
 
 
 
-def setup_providers_dropdown():
+def setup_providers_dropdown(esg_dist_url):
     '''Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs'''
-    known_providers_url = "https://aims1.llnl.gov/esgf/dist/lists/esgf_known_providers.xml"
+    known_providers_url = "{}/lists/esgf_known_providers.xml".format(esg_dist_url)
     config_dir = os.path.join("{esg_root_dir}".format(esg_root_dir=config["esg_root_dir"]), "config")
     known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir),"esgf_known_providers.xml")
 

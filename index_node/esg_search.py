@@ -100,10 +100,10 @@ def check_for_existing_solr_install():
             if backup_esg_search.lower in ["y", "yes"]:
                 esg_functions.backup("/usr/local/tomcat/webapps/esg-search")
 
-def download_esg_search(esg_search_version):
+def download_esg_search(esg_search_version, esg_dist_url):
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
-        search_service_dist_url = "https://aims1.llnl.gov/esgf/dist/devel/esg-search/esg-search-{}.tar.gz".format(esg_search_version)
+        search_service_dist_url = "{}/esg-search/esg-search-{}.tar.gz".format(esg_dist_url, esg_search_version)
         search_service_dist_file = "esg-search-{}.tar.gz".format(esg_search_version)
         esg_functions.download_update(search_service_dist_file, search_service_dist_url)
 
@@ -164,7 +164,9 @@ def setup_search_service():
     esg_search_version = "4.9.2"
     search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
     search_service_war_file = "esg-search.war"
-    download_esg_search(esg_search_version)
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+
+    download_esg_search(esg_search_version, esg_dist_url)
 
     copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file)
     extract_esg_search_war(search_web_service_dir, search_service_war_file)
@@ -179,9 +181,10 @@ def setup_search_service():
     write_search_rss_properties()
     setup_publisher_resources()
 
+
     #Get utility script for crawling thredds sites
-    fetch_crawl_launcher()
-    fetch_index_optimization_launcher()
+    fetch_crawl_launcher(esg_dist_url)
+    fetch_index_optimization_launcher(esg_dist_url)
 
     #restart tomcat to put modifications in effect.
     # esg_tomcat_manager.start_tomcat()
@@ -197,23 +200,23 @@ def write_search_rss_properties():
     esg_property_manager.set_property("esgf_feed_datasets_link", esgf_feed_datasets_link)
 
 
-def fetch_crawl_launcher():
+def fetch_crawl_launcher(esg_dist_url):
     esgf_crawl_launcher = "esgf-crawl"
     with esg_bash2py.pushd(config["scripts_dir"]):
-        esgf_crawl_launcher_url = "https://aims1.llnl.gov/esgf/dist/devel/esg-search/esgf-crawl"
+        esgf_crawl_launcher_url = "{}/esg-search/esgf-crawl".format(esg_dist_url)
         esg_functions.download_update(esgf_crawl_launcher, esgf_crawl_launcher_url)
         os.chmod(esgf_crawl_launcher, 0755)
 
-def fetch_index_optimization_launcher():
+def fetch_index_optimization_launcher(esg_dist_url):
     with esg_bash2py.pushd(config["scripts_dir"]):
         esgf_index_optimization_launcher = "esgf-optimize-index"
-        esgf_index_optimization_launcher_url = "https://aims1.llnl.gov/esgf/dist/devel/esg-search/esgf-optimize-index"
+        esgf_index_optimization_launcher_url = "{}/esg-search/esgf-optimize-index".format(esg_dist_url)
         esg_functions.download_update(esgf_index_optimization_launcher, esgf_index_optimization_launcher_url)
         os.chmod(esgf_index_optimization_launcher, 0755)
 
-def fetch_static_shards_file():
+def fetch_static_shards_file(esg_dist_url):
     static_shards_file = "esgf_shards_static.xml"
-    static_shards_url = "https://aims1.llnl.gov/esgf/dist/devel/lists/esgf_shards_static.xml"
+    static_shards_url = "{}/lists/esgf_shards_static.xml".format(esg_dist_url)
     esg_functions.download_update(static_shards_file, static_shards_url)
 
 
@@ -231,35 +234,11 @@ def download_esg_search_war(esg_search_war_url):
                 f.write(chunk)
                 f.flush()
 
-def setup_esg_search():
-    '''Setting up the ESG Search application'''
-
-    print "\n*******************************"
-    print "Setting up ESG Search"
-    print "******************************* \n"
-
-    ESGF_REPO = "http://aims1.llnl.gov/esgf"
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-search")
-    esg_search_war_url = "{ESGF_REPO}/dist/esg-search/esg-search.war".format(ESGF_REPO=ESGF_REPO)
-    download_esg_search_war(esg_search_war_url)
-    #Extract esg-search war
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-search"):
-        with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
-            zf.extractall()
-        os.remove("esg-search.war")
-
-    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-    esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-search", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
-
 def main():
-    # setup_esg_search()
     print "*******************************"
     print "Setting up The ESGF Search Sub-Project..."
     print "*******************************"
-
     setup_search_service()
-
 
 if __name__ == '__main__':
     main()

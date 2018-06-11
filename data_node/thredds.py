@@ -17,7 +17,7 @@ from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import SubprocessError
-from base import esg_tomcat_manager
+from base import esg_tomcat_manager, esg_postgres
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -129,7 +129,8 @@ def add_tomcat_user():
 def get_webxml_file():
     '''Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)'''
     web_xml_path = os.path.join("{tomcat_install_dir}".format(tomcat_install_dir=config["tomcat_install_dir"]), "webapps", "thredds", "WEB-INF","web.xml")
-    web_xml_download_url = "https://aims1.llnl.gov/esgf/dist/devel/thredds/thredds.web.xml"
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+    web_xml_download_url = "{}thredds/thredds.web.xml".format(esg_dist_url)
     esg_functions.download_update(web_xml_path, web_xml_download_url)
 
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
@@ -161,9 +162,10 @@ def register(remote_host, truststore_password, keystore_password=None):
         else:
             esg_bash2py.mkdir_p(config["workdir"])
             with esg_bash2py.pushd(config["workdir"]):
-                if not esg_functions.download_update('./InstallCert.class', "https://aims1.llnl.gov/esgf/dist/utils/InstallCert.class"):
+                esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+                if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
                     esg_functions.exit_with_error("Could not download utility class(1) for installing certificates")
-                if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "https://aims1.llnl.gov/esgf/dist/utils/InstallCert$SavingTrustManager.class"):
+                if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "{}/utils/InstallCert$SavingTrustManager.class".format(esg_dist_url)):
                     esg_functions.exit_with_error("Could not download utility class(2) for installing certificates")
 
             class_path = ".:{}".format(config["workdir"])
@@ -354,24 +356,24 @@ def copy_jar_files():
     except IOError:
         urllib.urlretrieve("{esgf_devel_url}/filters/postgresql-8.4-703.jdbc3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
-def download_thredds_xml():
+def download_thredds_xml(esg_dist_url):
     '''Download the thredds.xml file from the distribution mirror'''
-    thredds_xml_url = "https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-thredds.xml"
+    thredds_xml_url = "{}/externals/bootstrap/tomcat-thredds.xml".format(esg_dist_url)
     esg_functions.download_update("{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]), thredds_xml_url)
 
-def download_thredds_config_xml():
+def download_thredds_config_xml(esg_dist_url):
     '''Download the threddsConfig.xml file from the distribution mirror'''
-    thredds_config_url = "https://aims1.llnl.gov/esgf/dist/thredds/threddsConfig.xml.tmpl"
+    thredds_config_url = "{}/thredds/threddsConfig.xml.tmpl".format(esg_dist_url)
     esg_functions.download_update("/esg/content/thredds/threddsConfig.xml", thredds_config_url)
 
-def download_application_context():
+def download_application_context(esg_dist_url):
     '''Download the applicationContext.xml file from the distribution mirror'''
-    application_context_url = "https://aims1.llnl.gov/esgf/dist/thredds/applicationContext.xml"
+    application_context_url = "{}/thredds/applicationContext.xml".format(esg_dist_url)
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml", application_context_url)
 
-def download_tomcat_users_xml():
+def download_tomcat_users_xml(esg_dist_url):
     '''Download the tomcat-users.xml template from the distribution mirror'''
-    tomcat_users_xml_url = "https://aims1.llnl.gov/esgf/dist/externals/bootstrap/tomcat-users.xml"
+    tomcat_users_xml_url = "{}/externals/bootstrap/tomcat-users.xml".format(esg_dist_url)
     tomcat_users_xml_local_path = "{tomcat_conf_dir}/tomcat-users.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"])
     esg_functions.download_update(tomcat_users_xml_local_path, tomcat_users_xml_url)
     tomcat_user_id = esg_functions.get_user_id("tomcat")
@@ -417,11 +419,13 @@ def setup_thredds():
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
-    download_tomcat_users_xml()
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+
+    download_tomcat_users_xml(esg_dist_url)
     add_tomcat_user()
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
-    download_thredds_xml()
+    download_thredds_xml(esg_dist_url)
     # get_webxml_file()
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
     os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
@@ -430,14 +434,14 @@ def setup_thredds():
     # TDS configuration root
     esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
     # TDS memory configuration
-    download_thredds_config_xml()
+    download_thredds_config_xml(esg_dist_url)
     update_mail_admin_address()
 
     # ESGF root catalog
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/catalog.xml"), "/esg/content/thredds/catalog.xml-esgcet")
     esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
     # TDS customized applicationContext.xml file with ESGF authorizer
-    download_application_context()
+    download_application_context(esg_dist_url)
     copy_jar_files()
 
     # TDS customized logging (uses DEBUG)
@@ -457,7 +461,7 @@ def setup_thredds():
     #restart tomcat to put modifications in effect.
     esg_tomcat_manager.stop_tomcat()
     esg_tomcat_manager.start_tomcat()
-    esg_postgres.start_postgress()
+    esg_postgres.start_postgres()
 
     esgsetup_thredds()
 

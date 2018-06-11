@@ -1,6 +1,6 @@
 ESGINI: /esg/config/esgcet/esg.ini
 LD_LIBRARY_PATH: /usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server
-PATH: /usr/local/openssl/bin:/usr/local/java/bin:/usr/local/ant/bin:/usr/local/uvcdat/2.2.0/bin:/usr/local/uvcdat/2.2.0/Externals/bin:/usr/local/tomcat/bin:/usr/local/globus/bin:/usr/local/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/openssl/bin:/usr/local/java/bin:/usr/local/ant/bin:/usr/local/uvcdat/2.2.0/bin:/usr/local/uvcdat/2.2.0/Externals/bin:/usr/local/tomcat/bin:/usr/local/globus/bin:/usr/local/bin:/sbin:/usr/bin:/usr/sbin://anaconda/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/ant/bin
+PATH: /usr/local/openssl/bin:/usr/local/java/bin:/usr/local/ant/bin:/usr/local/uvcdat/2.2.0/bin:/usr/local/uvcdat/2.2.0/Externals/bin:/usr/local/tomcat/bin:/usr/local/globus/bin:/usr/local/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/openssl/bin:/usr/local/java/bin:/usr/local/ant/bin:/usr/local/uvcdat/2.2.0/bin:/usr/local/uvcdat/2.2.0/Externals/bin:/usr/local/tomcat/bin:/usr/local/globus/bin:/usr/local/bin:/sbin:/usr/bin:/usr/sbin:/Applications/Postgres.app/Contents/Versions/latest/bin:/anaconda2/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Postgres.app/Contents/Versions/latest/bin
 ant_dist_url: http://archive.apache.org/dist/ant/binaries/apache-ant-1.9.1-bin.tar.gz
 ant_install_dir: /usr/local/ant
 ant_min_version: 1.9.1
@@ -33,8 +33,8 @@ esg_root_dir: /esg
 esg_search_version: 4.15.8
 esg_testdir: /usr/local/src/esgf/workbench/esg/../esg_test
 esg_tools_dir: /esg/tools
-esgcet_egg_file: esgcet-3.4.7-py2.7.egg
-esgcet_version: 3.4.7
+esgcet_egg_file: esgcet-3.5.0-py2.7.egg
+esgcet_version: 3.5.0
 esgf_coffee_dist_mirror: distrib-coffee.ipsl.jussieu.fr/pub/esgf
 esgf_dashboard_db_version: 0.0.2
 esgf_dashboard_ip_workdir: /usr/local/src/esgf/workbench/esg/esgf-dashboard-ip
@@ -56,10 +56,10 @@ globus_location: /usr/local/globus
 index_config: master slave
 install_manifest: /esg/esgf-install-manifest
 install_prefix: /usr/local
-installer_gid: 47256
+installer_gid: 20
 installer_home: /usr/local/src/esgf
-installer_uid: 47256
-installer_user: hill119
+installer_uid: 501
+installer_user: williamhill
 java_dist_url: http://aims1.llnl.gov/esgf/dist/java/1.8.0_162/jdk1.8.0_162-64.tar.gz
 java_install_dir: /usr/local/java
 java_min_version: 1.8.0_162
@@ -71,13 +71,13 @@ keystore_file: /esg/config/tomcat/keystore-tomcat
 keystore_password: ''
 ks_secret_file: /esg/config/.esg_keystore_pass
 mail_admin_address: ''
-mail_smtp_host: smtp.llnl.gov
+mail_smtp_host: smtp.43.168.192.in-addr.arpa
 myLD_LIBRARY_PATH: /usr/local/openssl/lib:/usr/local/uvcdat/2.2.0/Externals/lib:/usr/local/globus/lib:/usr/local/geoip/lib:/usr/lib64:/usr/lib
 myPATH: /usr/local/openssl/bin:/usr/local/java/bin:/usr/local/ant/bin:/usr/local/uvcdat/2.2.0/bin:/usr/local/uvcdat/2.2.0/Externals/bin:/usr/local/tomcat/bin:/usr/local/globus/bin:/usr/local/bin:/sbin:/usr/bin:/usr/sbin
 no_globus: false
 node_db_name: esgcet
 num_backups_to_keep: '7'
-number_of_cpus: 8
+number_of_cpus: 4
 openssl_dist_url: http://www.openssl.org/source/openssl-/0.9.8r/.tar.gz
 openssl_install_dir: /usr/local/openssl
 openssl_max_version: 0.9.9z
@@ -106,7 +106,7 @@ publisher_db_user_passwd: ''
 publisher_home: /esg/config/esgcet
 publisher_repo: git://github.com/ESGF/esg-publisher.git
 publisher_repo_https: https://github.com/ESGF/esg-publisher.git
-publisher_tag: v3.4.7
+publisher_tag: v3.5.0
 python_version: '2.7'
 scripts_dir: /usr/local/bin
 show_summary_latch: 0

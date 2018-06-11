@@ -34,8 +34,8 @@ def init():
 
     cdat_version = "2.2.0"
 
-    esgcet_version = "3.4.7"
-    publisher_tag = "v3.4.7"
+    esgcet_version = "3.5.0"
+    publisher_tag = "v3.5.0"
 
     esgprep_version="2.8.1"
     cmor_version="3.3.2"

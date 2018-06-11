@@ -54,6 +54,10 @@ def get_mirror_response_times():
         except requests.exceptions.Timeout:
             logger.warn("%s request timed out", mirror)
             failed_requests[mirror] = "Request timed out"
+        except requests.exceptions.ConnectionError, error:
+            logger.warn(error)
+            failed_requests[mirror] = "Unable to connect to mirror"
+
 
     return (response_times,failed_requests)
 

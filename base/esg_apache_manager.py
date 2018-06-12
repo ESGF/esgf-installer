@@ -6,10 +6,7 @@ import datetime
 import ConfigParser
 from distutils.spawn import find_executable
 import yaml
-try:
-    from pip import main
-except ImportError:
-    from pip._internal import main
+import pip
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_functions
@@ -70,7 +67,7 @@ def install_mod_wsgi():
     print "Setting mod_wsgi"
     print "******************************* \n"
 
-    main(['install', "mod_wsgi==4.5.3"])
+    pip._internal.main(['install', "mod_wsgi==4.5.3"])
     with esg_bash2py.pushd("/etc/httpd/modules"):
         # If installer running in a conda env
         if "conda" in find_executable("python"):

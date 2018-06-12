@@ -74,6 +74,8 @@ class test_ESG_Functions(unittest.TestCase):
         prop = esg_property_manager.get_property("foo_app", config_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
         self.assertTrue("1.0" in prop)
 
+    def test_is_valid_password(self):
+        self.assertTrue(esg_functions.is_valid_password("Esgf4Dev"))
 
     def test_setup_whitelist_files(self):
         esg_functions.setup_whitelist_files(whitelist_file_dir="/tmp")

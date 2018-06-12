@@ -353,6 +353,13 @@ def purge_publisher():
     except OSError:
         pass
 
+    publisher_binaries = glob.glob("/usr/local/conda/envs/esgf-pub/bin/esg*")
+    for binary in publisher_binaries:
+        try:
+            os.remove(binary)
+        except OSError:
+            pass
+
 
 #TODO: define purge_dashboard()
 def purge_dashboard():

@@ -9,6 +9,7 @@ node.namespace=
 #Choose between esgf-test, esgf-dev, esgf-prod
 node.peer.group=
 #Usually the fully qualified domain name (fqdn) of your server
+#Gateway
 esgf.index.peer=
 mail.admin.address=
 publisher.db.user=
@@ -45,6 +46,7 @@ update.cog=
 update.solr=
 
 #IDP node Components
+use.external.idp=
 register.myproxy=
 update.globus=
 globus.user=

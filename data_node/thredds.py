@@ -202,11 +202,15 @@ def select_idp_peer():
 
     node_type_list = esg_functions.get_node_type()
 
-    if "INDEX" in node_type_list:
+    if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
         #TODO: check if esgf_idp_peer = esgf.host
         #TODO: esg_property_manager.get_property("esgf_idp_peer") == esg_property_manager.get_property("esgf.host"); then no external IDP
         #TODO: check esgf.properties first
-        external_idp = raw_input("Do you wish to use an external IDP peer?(N/y): ") or 'n'
+        try:
+            external_idp = esg_property_manager.get_property("use_external_idp")
+        except ConfigParser.NoOptionError:
+            external_idp = raw_input("Do you wish to use an external IDP peer?(N/y): ") or 'n'
+
         if external_idp.lower() in ["no", 'n']:
             esgf_idp_peer = esg_functions.get_esgf_host()
             esgf_idp_peer_name = esgf_idp_peer.upper()

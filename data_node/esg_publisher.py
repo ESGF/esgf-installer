@@ -33,7 +33,7 @@ def check_publisher_version():
 
 
 def clone_publisher_repo(publisher_path):
-    print "Fetching the cdat project from GIT Repo... %s" % (config["publisher_repo_https"])
+    print "Fetching the publisher project from GIT Repo... %s" % (config["publisher_repo_https"])
 
     if not os.path.isdir(os.path.join(publisher_path, ".git")):
         Repo.clone_from(config[

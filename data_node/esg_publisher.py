@@ -8,7 +8,10 @@ import ConfigParser
 from git import Repo
 import yaml
 import re
-from pip.operations import freeze
+try:
+    from pip._internal.operations import freeze
+except ImportError:
+    from pip.operations import freeze
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_bash2py

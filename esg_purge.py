@@ -347,6 +347,12 @@ def purge_globus():
         pass
 
 
+def purge_publisher():
+    try:
+        shutil.rmtree("/tmp/esg-publisher")
+    except OSError:
+        pass
+
 
 #TODO: define purge_dashboard()
 def purge_dashboard():
@@ -380,6 +386,7 @@ def main():
     purge_tomcat()
     purge_thredds()
     purge_ant()
+    purge_publisher()
     purge_solr()
     purge_java()
     purge_base()

@@ -301,7 +301,7 @@ def check_for_update(filename_1, filename_2=None):
         return 0
     return 1
 
-
+#TODO: rename to download_from_mirror
 def download_update(local_file, remote_file=None, force_download=False, make_backup_file=False, use_local_files=False):
     '''
 
@@ -576,7 +576,7 @@ def get_publisher_password():
     '''Gets the publisher database user's password'''
     try:
         with open(config['pub_secret_file'], "r") as secret_file:
-            publisher_db_user_passwd = secret_file.read()
+            publisher_db_user_passwd = secret_file.read().strip()
         return publisher_db_user_passwd
     except IOError:
         logger.exception("%s not found", config['pub_secret_file'])

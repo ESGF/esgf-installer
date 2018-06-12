@@ -68,9 +68,9 @@ def install_mod_wsgi():
     print "******************************* \n"
 
     try:
-        pip.main(['install', "mod_wsgi==4.5.3"])
-    except AttributeError:
         pip._internal.main(['install', "mod_wsgi==4.5.3"])
+    except AttributeError:
+        pip.main(['install', "mod_wsgi==4.5.3"])
     with esg_bash2py.pushd("/etc/httpd/modules"):
         # If installer running in a conda env
         if "conda" in find_executable("python"):

@@ -33,8 +33,8 @@ def check_thredds_version():
         matcher = re.compile("Implementation-Version.*")
         results_list = filter(matcher.match, contents)
         if results_list:
-            version_number = results_list[0].split(":")[1].strip().split("-")[1]
-            print "Found existing Thredds installation (Thredds version {version})".format(version=version_number)
+            version_number = results_list[0].split(":")[1].strip().split("-")[0]
+            logger.debug("(Thredds version %s)", version_number)
             return version_number
         else:
             print "Thredds not found on system."

@@ -61,6 +61,9 @@ class test_Thredds(unittest.TestCase):
     def test_setup_orp(self):
         orp.setup_orp()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-orp"))
+        self.assertTrue(os.path.exists("/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties"))
+        self.assertTrue(os.path.exists("/esg/config/esgf_known_providers.xml"))
+        self.assertTrue(os.path.exists("/esg/esgf-install-manifest"))
 
 
 if __name__ == '__main__':

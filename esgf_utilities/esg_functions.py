@@ -958,7 +958,7 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
     # from configobj import ConfigObj
     # config = ConfigObj("/esg/esgf-install-manifest")
     # config.filename = filename
-    parser = ConfigParser.SafeConfigParser()
+    parser = ConfigParser.ConfigParser()
     parser.read(manifest_file)
 
     try:

@@ -116,11 +116,16 @@ def orp_startup_hook():
 
 def setup_orp():
     print "Checking for Openid Relying Party {}".format(config["esg_orp_version"])
-    if esg_version_manager.check_webapp_version("esg-orp", config["esg_orp_version"]):
-        print "Detected an existing openid relying party installation..."
-        if not update_existing_orp():
-            print "Skipping node openid relying party installation and setup - will assume it's setup properly"
-            return
+    try:
+        existing_orp_install = esg_version_manager.check_webapp_version("esg-orp", config["esg_orp_version"])
+    except IOError:
+        pass
+    else:
+        if existing_orp_install:
+            print "Detected an existing openid relying party installation..."
+            if not update_existing_orp():
+                print "Skipping node openid relying party installation and setup - will assume it's setup properly"
+                return
 
     print "*******************************"
     print "Setting up The OpenID Relying Party..."

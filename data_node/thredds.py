@@ -190,12 +190,13 @@ def register(remote_host, truststore_password, keystore_password=None):
 def select_idp_peer():
     '''called during setup_tds or directly by --set-idp-peer | --set-admin-peer flags'''
     try:
-        esgf_host_ip = esg_property_manager.get_property("esgf.host.ip")
+        public_ip = esg_property_manager.get_property("esgf.host.ip")
     except ConfigParser.NoOptionError:
-        public_ip = raw_input("Please Enter the public (i.e. routable) IP address of this host [{}]: ".format(esgf_host_ip)) or esgf_host_ip
+        default_public_ip = esg_functions.get_public_ip()
+        public_ip = raw_input("Please Enter the public (i.e. routable) IP address of this host [{}]: ".format(default_public_ip)) or default_public_ip
 
     if public_ip:
-        print "\nUsing IP: {}\n".format(esgf_host_ip)
+        print "\nUsing IP: {}\n".format(public_ip)
 
     default_myproxy_port=7512
     custom_myproxy_port=""

@@ -1044,6 +1044,13 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
     # update_idp_static_xml_permissions(whitelist_file_dir)
 
 
+def get_public_ip():
+    from urllib2 import urlopen
+    my_ip = urlopen('http://ip.42.pl/raw').read()
+
+    esg_property_manager.set_property("esgf_host_ip", my_ip)
+    return my_ip
+
 
 def get_node_type(config_file=config["esg_config_type_file"]):
     '''

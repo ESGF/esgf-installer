@@ -88,14 +88,7 @@ def init_structure():
     # Setup variables....
     #--------------
 
-    get_public_ip()
-
-def get_public_ip():
-    from urllib2 import urlopen
-    my_ip = urlopen('http://ip.42.pl/raw').read()
-
-    esg_property_manager.set_property("esgf_host_ip", my_ip)
-    return my_ip
+    esg_functions.get_public_ip()
 
 def _select_ip_address():
     choice = int(raw_input(""))

@@ -141,9 +141,9 @@ def setup_orp():
     esg_bash2py.mkdir_p(orp_service_app_home)
     try:
         if esg_property_manager.get_property("devel"):
-            orp_url = "{}/devel/esg-orp/esg-orp.war"
+            orp_url = "{}/devel/esg-orp/esg-orp.war".format(esg_dist_url)
     except ConfigParser.NoOptionError:
-        orp_url = orp_url = "{}/esg-orp/esg-orp.war"
+        orp_url = orp_url = "{}/esg-orp/esg-orp.war".format(esg_dist_url)
     download_orp_war(orp_url)
 
     esg_tomcat_manager.stop_tomcat()

@@ -352,19 +352,19 @@ def copy_jar_files(esg_dist_url):
     try:
         shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
     except IOError:
-        urllib.urlretrieve("{esgf_devel_url}/filters/commons-dbcp-1.4.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
+        urllib.urlretrieve("{}/filters/commons-dbcp-1.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
     try:
         shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
     except IOError:
-        urllib.urlretrieve("{esgf_devel_url}/filters/commons-dbutils-1.3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
+        urllib.urlretrieve("{}/filters/commons-dbutils-1.3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
     try:
         shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
     except IOError:
-        urllib.urlretrieve("{esgf_devel_url}/filters/commons-pool-1.5.4.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
+        urllib.urlretrieve("{}/filters/commons-pool-1.5.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
     try:
         shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
     except IOError:
-        urllib.urlretrieve("{esgf_devel_url}/filters/postgresql-8.4-703.jdbc3.jar".format(esgf_devel_url=esgf_devel_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
+        urllib.urlretrieve("{}/filters/postgresql-8.4-703.jdbc3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
 def download_thredds_xml(esg_dist_url):
     '''Download the thredds.xml file from the distribution mirror'''
@@ -417,9 +417,10 @@ def setup_thredds():
 
     esg_tomcat_manager.stop_tomcat()
 
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")]
-    #TODO: refactor to use version from config yaml
-    thredds_url = os.path.join(config["esgf_dist_mirror"], "dist", "devel", "thredds", "5.0", "5.0.2", "thredds.war")
+    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+
+    thredds_url = "{}/thredds/5.0/{}/thredds.war".format(esg_dist_url, config["tds_version"])
     download_thredds_war(thredds_url)
 
     with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
@@ -429,8 +430,6 @@ def setup_thredds():
         TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
-
-    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
 
     download_tomcat_users_xml(esg_dist_url)
     add_tomcat_user()
@@ -457,9 +456,6 @@ def setup_thredds():
 
     # TDS customized logging (uses DEBUG)
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/log4j2.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
-
-    # data node scripts
-    #TODO: Convert data node scripts to Python
 
     # change ownership of content directory
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()

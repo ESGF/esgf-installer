@@ -133,21 +133,19 @@ def setup_orp():
 
         backup_orp()
 
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
-        try:
-            if esg_property_manager.get_property("devel"):
-                orp_url = os.path.join(esg_dist_url, "dist", "devel", "esg-orp", "esg-orp.war")
-        except ConfigParser.NoOptionError:
-            orp_url = os.path.join(esg_dist_url, "dist", "esg-orp", "esg-orp.war")
-        download_orp_war(orp_url)
-
-        esg_tomcat_manager.stop_tomcat()
-
-        #NOTE: The saving of the last config file must be done *BEFORE* we untar the new distro!
-        backup_orp_properties()
-
     esg_bash2py.mkdir_p(orp_service_app_home)
+    try:
+        if esg_property_manager.get_property("devel"):
+            orp_url = os.path.join(esg_dist_url, "dist", "devel", "esg-orp", "esg-orp.war")
+    except ConfigParser.NoOptionError:
+        orp_url = os.path.join(esg_dist_url, "dist", "esg-orp", "esg-orp.war")
+    download_orp_war(orp_url)
+
+    esg_tomcat_manager.stop_tomcat()
+
+    #NOTE: The saving of the last config file must be done *BEFORE* we untar the new distro!
+    backup_orp_properties()
+
     with esg_bash2py.pushd(orp_service_app_home):
         extract_orp_war()
 
@@ -157,7 +155,7 @@ def setup_orp():
         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
-    setup_providers_dropdown()
+    setup_providers_dropdown(esg_dist_url)
     get_orp_support_libs("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib")
 
     write_orp_install_log()

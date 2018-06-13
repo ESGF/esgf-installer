@@ -118,7 +118,7 @@ def setup_orp():
     print "Checking for Openid Relying Party {}".format(config["esg_orp_version"])
     if esg_version_manager.check_webapp_version("esg-orp", config["esg_orp_version"]):
         print "Detected an existing openid relying party installation..."
-        if not update_existing_orp:
+        if not update_existing_orp():
             print "Skipping node openid relying party installation and setup - will assume it's setup properly"
             return
 
@@ -127,7 +127,7 @@ def setup_orp():
     print "*******************************"
     if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
         print "Detected an existing openid relying party installation..."
-        if not update_existing_orp:
+        if not update_existing_orp():
             print "Skipping node openid relying party installation and setup - will assume it's setup properly"
             return
 

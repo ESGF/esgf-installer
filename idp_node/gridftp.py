@@ -367,14 +367,6 @@ def setup_gcs_io(first_run=None):
         gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
         parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_user))
 
-        try:
-            parser.add_section("MyProxy")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('MyProxy', "Server", myproxy_hostname)
-        parser.set('MyProxy', "CA", "false")
-
         with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
             parser.write(config_file_object)
 

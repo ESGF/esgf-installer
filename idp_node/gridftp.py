@@ -373,6 +373,7 @@ def setup_gcs_io(first_run=None):
             logger.debug("section already exists")
 
         parser.set('MyProxy', "Server", myproxy_hostname)
+        parser.set('MyProxy', "CA", "false")
 
         with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
             parser.write(config_file_object)

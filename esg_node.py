@@ -87,21 +87,20 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
             return
 
     try:
-        if esg_functions.is_valid_mirror(esg_property_manager.get_property("esg.dist.url")):
-            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.dist.url")+"/{}/{}".format(script_maj_version, script_release))
-            esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
+        if esg_functions.is_valid_mirror(esg_property_manager.get_property("esg.root.url")):
+            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
             return
-        elif esg_property_manager.get_property("esg.dist.url") == "fastest":
-            esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror(install_type)+"/{}/{}".format(script_maj_version, script_release))
-            esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
+        elif esg_property_manager.get_property("esg.root.url") == "fastest":
+            esg_property_manager.set_property("esg.root.url", esg_mirror_manager.find_fastest_mirror(install_type))
+            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
         else:
             selected_mirror = esg_mirror_manager.select_dist_mirror()
-            esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
-            esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
+            esg_property_manager.set_property("esg.root.url", selected_mirror)
+            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
     except ConfigParser.NoOptionError:
         selected_mirror = esg_mirror_manager.select_dist_mirror()
-        esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
-        esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
+        esg_property_manager.set_property("esg.root.url", selected_mirror)
+        esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
 
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
@@ -305,7 +304,7 @@ def setup_esgf_rpm_repo():
     print "Setting up ESGF RPM repository"
     print "******************************* \n"
 
-    esg_mirror_url = esg_property_manager.get_property("esg.mirror.url")
+    esg_mirror_url = esg_property_manager.get_property("esg.root.url").rsplit("/", 1)[0]
 
     parser = ConfigParser.SafeConfigParser()
     parser.read("esgf_utilities/esgf.repo")

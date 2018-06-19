@@ -73,9 +73,9 @@ def esgf_node_info():
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
 
-def set_esg_dist_url(install_type):
-    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist", "https://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "https://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "https://esg-dn2.nsc.liu.se/esgf/dist")
 
+
+def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8"):
     try:
         local_mirror = esg_property_manager.get_property("local_mirror")
     except ConfigParser.NoOptionError:
@@ -87,19 +87,20 @@ def set_esg_dist_url(install_type):
             return
 
     try:
-        if esg_property_manager.get_property("esg.dist.url") in esgf_dist_mirrors_list:
+        if esg_functions.is_valid_mirror(esg_property_manager.get_property("esg.dist.url")):
+            esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.dist.url")+"/{}/{}".format(script_maj_version, script_release))
             esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
             return
         elif esg_property_manager.get_property("esg.dist.url") == "fastest":
-            esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror(install_type))
+            esg_property_manager.set_property("esg.dist.url", esg_mirror_manager.find_fastest_mirror(install_type)+"/{}/{}".format(script_maj_version, script_release))
             esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
         else:
             selected_mirror = esg_mirror_manager.select_dist_mirror()
-            esg_property_manager.set_property("esg.dist.url", selected_mirror)
+            esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
             esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
     except ConfigParser.NoOptionError:
         selected_mirror = esg_mirror_manager.select_dist_mirror()
-        esg_property_manager.set_property("esg.dist.url", selected_mirror)
+        esg_property_manager.set_property("esg.dist.url", selected_mirror+"/{}/{}".format(script_maj_version, script_release))
         esg_property_manager.set_property("esg.mirror.url", esg_property_manager.get_property("esg.dist.url").rsplit("/",1)[0])
 
 def download_esg_installarg(esg_dist_url):
@@ -244,7 +245,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         esg_security.setup_security(node_type_list, esg_dist_url)
         globus.setup_globus("IDP")
         idp.setup_slcs()
-    esg_cert_manager.install_local_certs(node_type_list, "firstrun")
+    esg_cert_manager.install_local_certs("firstrun")
     if "INDEX" in node_type_list:
         print "\n*******************************"
         print "Installing Index Node Components"

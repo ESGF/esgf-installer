@@ -374,6 +374,7 @@ def fetch_remote_file(local_file, remote_file):
 
     try:
         remote_file_request = requests.get(remote_file, stream=True)
+        remote_file_request.raise_for_status()
         with open(local_file, "wb") as downloaded_file:
             total_length = int(remote_file_request.headers.get('content-length'))
             for chunk in progress.bar(remote_file_request.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):

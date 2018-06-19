@@ -115,7 +115,7 @@ def setup_root_app():
 
     esg_bash2py.mkdir_p(config["workdir"])
     with esg_bash2py.pushd(config["workdir"]):
-        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+        esg_root_url = esg_property_manager.get_property("esg.root.url")
         root_app_dist_url = "{}/ROOT.tgz".format(esg_dist_url)
         esg_functions.download_update("ROOT.tgz", root_app_dist_url)
 

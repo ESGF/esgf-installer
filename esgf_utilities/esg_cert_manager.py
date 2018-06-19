@@ -153,8 +153,8 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
 
     #Download trusted certs tarball
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
-    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    esg_trusted_certs_file_url = "{esg_dist_url}/certs/{esg_trusted_certs_file}".format(esg_dist_url=esg_dist_url, esg_trusted_certs_file=esg_trusted_certs_file)
+    esg_root_url = esg_property_manager.get_property("esg.root.url")
+    esg_trusted_certs_file_url = "{esg_root_url}/certs/{esg_trusted_certs_file}".format(esg_root_url=esg_root_url, esg_trusted_certs_file=esg_trusted_certs_file)
     esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
 
     #untar the esg_trusted_certs_file

@@ -1019,8 +1019,8 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
     for file_name in conf_file_list:
         local_file_name = file_name.split(".tmpl")[0]
         local_file_path = os.path.join(whitelist_file_dir, local_file_name)
-        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-        remote_file_url = "{esg_dist_url}/confs/{file_name}".format(esg_dist_url=esg_dist_url, file_name=file_name)
+        esg_root_url = esg_property_manager.get_property("esg.root.url")
+        remote_file_url = "{esg_root_url}/confs/{file_name}".format(esg_root_url=esg_root_url, file_name=file_name)
 
         download_update(local_file_path, remote_file_url)
 

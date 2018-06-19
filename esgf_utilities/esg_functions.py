@@ -1074,6 +1074,17 @@ def get_node_type(config_file=config["esg_config_type_file"]):
         sys.exit(1)
 
 
+def is_valid_mirror(mirror_url):
+    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist", "https://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "https://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "https://esg-dn2.nsc.liu.se/esgf/dist")
+    mirror_base_url = re.sub(r'\/\d\.\d', '', mirror_url)
+    if mirror_base_url not in esgf_dist_mirrors_list:
+        logger.error("%s is not a valid distribution mirror url", mirror_base_url)
+        return
+    return True
+    # response = requests.get(mirror_url)
+    # if response.ok:
+    #     return True
+
 def esgf_node_info():
     '''Print basic info about ESGF installation'''
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:

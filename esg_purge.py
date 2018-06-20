@@ -251,6 +251,7 @@ def purge_solr():
 
 
 def purge_globus():
+    logger.info("Purging Globus")
     esg_functions.stream_subprocess_output("yum remove -y globus\* myproxy\*")
 
     try:

@@ -2,6 +2,7 @@
 import os
 import logging
 import shutil
+import ConfigParser
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
@@ -52,7 +53,7 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
     print "Installing Tomcat ESG SAML/ORP (Tokenless) Security Filters... for {}".format(service_name)
     print "-------------------------------"
     print "ESG ORP Filter: v{}".format(config["esg_orp_version"])
-    print "ESGF Security (SAML): v${}".format(config["esgf_security_version"])
+    print "ESGF Security (SAML): v{}".format(config["esgf_security_version"])
     print "*******************************"
     print "Filter installation destination dir = {}".format(dest_dir)
     print "Filter entry file = {}".format(esg_filter_entry_file)
@@ -63,14 +64,8 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
     #"esg-security-filter.xml".
 
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
-    if not os.path.exists(os.path.join(dest_dir, "WEB-INF")):
-        logger.error("WARNING: Could not find %s's installation dir - Filter Not Applied",service_name)
-        return False
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
-        logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
-        return False
-    if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
-        logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
+        logger.error("Could not find %s/WEB-INF/lib installation dir - Filter Not Applied", dest_dir)
         return False
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "web.xml")):
         logger.error("No web.xml file found for %s - Filter Not Applied", service_name)
@@ -78,7 +73,7 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
 
     esg_tomcat_manager.stop_tomcat()
 
-    get_orp_libs(os.path.join(dest_dir, "WEB-INF", "lib"))
+    get_orp_libs()
 
     if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)

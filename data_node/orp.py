@@ -220,7 +220,7 @@ def setup_providers_dropdown(esg_dist_url):
 
 
 def write_orp_install_log():
-    esg_functions.write_to_install_manifest("webapp:esg-orp", "/usr/local/tomcat/webapps/{}", config["esg_orp_version"])
+    esg_functions.write_to_install_manifest("webapp:esg-orp", "/usr/local/tomcat/webapps/esg-orp", config["esg_orp_version"])
     esg_property_manager.set_property("orp_service_endpoint", orp_service_endpoint)
     esg_property_manager.set_property("orp_service_app_home", orp_service_app_home)
     esg_property_manager.set_property("orp_security_authorization_service_endpoint", orp_security_authorization_service_endpoint)

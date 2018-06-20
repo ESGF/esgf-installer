@@ -994,7 +994,7 @@ def install_local_certs(node_type_list, firstrun=None):
     with esg_bash2py.pushd(certdir):
         for file_name in file_list:
             if not os.path.exists(file_name):
-                raise OSError("File %s is not found in %s; Please place it there and reexecute esg_node.py --install-local-certs", file_name, certdir)
+                raise OSError("File {} is not found in {}; Please place it there and reexecute esg_node.py --install-local-certs", file_name, certdir)
 
         if "IDP" in node_type_list:
             try:

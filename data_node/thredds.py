@@ -130,7 +130,7 @@ def get_webxml_file():
     '''Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)'''
     web_xml_path = os.path.join("{tomcat_install_dir}".format(tomcat_install_dir=config["tomcat_install_dir"]), "webapps", "thredds", "WEB-INF","web.xml")
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    web_xml_download_url = "{}thredds/thredds.web.xml".format(esg_dist_url)
+    web_xml_download_url = "{}/thredds/thredds.web.xml".format(esg_dist_url)
     esg_functions.download_update(web_xml_path, web_xml_download_url)
 
     TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
@@ -330,42 +330,42 @@ def copy_jar_files(esg_dist_url):
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar", "{esg_dist_url}/filters/commons-lang-2.6.jar".format(esg_dist_url=esg_dist_url))
 
 
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar", "{esg_dist_url}/filters/XSGroupRole-1.0.0.jar".format(esg_dist_url=esg_dist_url))
-
-    #TODO: refactor orp and security jar to pull versions from config yaml; move other jar versions from filters module to config yaml
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esg-orp-2.9.3.jar", "{esg_dist_url}/esg-orp/esg-orp-2.9.3.jar".format(esg_dist_url=esg_dist_url))
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-common-1.0.0.jar", "{esg_dist_url}/esgf-node-manager/esgf-node-manager-common-1.0.0.jar".format(esg_dist_url=esg_dist_url))
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-filters-1.0.0.jar", "{esg_dist_url}/esgf-node-manager/esgf-node-manager-filters-1.0.0.jar".format(esg_dist_url=esg_dist_url))
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-security-2.7.10.jar", "{esg_dist_url}/esgf-security/esgf-security-2.7.10.jar".format(esg_dist_url=esg_dist_url))
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/opensaml-2.3.2.jar", "{esg_dist_url}/filters/opensaml-2.3.2.jar".format(esg_dist_url=esg_dist_url))
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/openws-1.3.1.jar", "{esg_dist_url}/filters/openws-1.3.1.jar".format(esg_dist_url=esg_dist_url))
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmltooling-1.2.2.jar", "{esg_dist_url}/filters/xmltooling-1.2.2.jar".format(esg_dist_url=esg_dist_url))
-
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar")
-    # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar")
-
-    try:
-        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
-    except IOError:
-        urllib.urlretrieve("{}/filters/commons-dbcp-1.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
-    try:
-        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
-    except IOError:
-        urllib.urlretrieve("{}/filters/commons-dbutils-1.3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
-    try:
-        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
-    except IOError:
-        urllib.urlretrieve("{}/filters/commons-pool-1.5.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
-    try:
-        shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
-    except IOError:
-        urllib.urlretrieve("{}/filters/postgresql-8.4-703.jdbc3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/XSGroupRole-1.0.0.jar", "{esg_dist_url}/filters/XSGroupRole-1.0.0.jar".format(esg_dist_url=esg_dist_url))
+    #
+    # #TODO: refactor orp and security jar to pull versions from config yaml; move other jar versions from filters module to config yaml
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esg-orp-2.9.3.jar", "{esg_dist_url}/esg-orp/esg-orp-2.9.3.jar".format(esg_dist_url=esg_dist_url))
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-common-1.0.0.jar", "{esg_dist_url}/esgf-node-manager/esgf-node-manager-common-1.0.0.jar".format(esg_dist_url=esg_dist_url))
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-node-manager-filters-1.0.0.jar", "{esg_dist_url}/esgf-node-manager/esgf-node-manager-filters-1.0.0.jar".format(esg_dist_url=esg_dist_url))
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/esgf-security-2.7.10.jar", "{esg_dist_url}/esgf-security/esgf-security-2.7.10.jar".format(esg_dist_url=esg_dist_url))
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/opensaml-2.3.2.jar", "{esg_dist_url}/filters/opensaml-2.3.2.jar".format(esg_dist_url=esg_dist_url))
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/openws-1.3.1.jar", "{esg_dist_url}/filters/openws-1.3.1.jar".format(esg_dist_url=esg_dist_url))
+    # esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmltooling-1.2.2.jar", "{esg_dist_url}/filters/xmltooling-1.2.2.jar".format(esg_dist_url=esg_dist_url))
+    #
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/serializer-2.9.1.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/serializer-2.9.1.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/velocity-1.5.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/velocity-1.5.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xalan-2.7.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xalan-2.7.2.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xercesImpl-2.10.0.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xercesImpl-2.10.0.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xml-apis-1.4.01.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xml-apis-1.4.01.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/xmlsec-1.4.2.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/xmlsec-1.4.2.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/log4j-1.2.17.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/log4j-1.2.17.jar")
+    # # shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/commons-io-2.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-io-2.4.jar")
+    #
+    # try:
+    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbcp-1.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
+    # except IOError:
+    #     urllib.urlretrieve("{}/filters/commons-dbcp-1.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbcp-1.4.jar")
+    # try:
+    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-dbutils-1.3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
+    # except IOError:
+    #     urllib.urlretrieve("{}/filters/commons-dbutils-1.3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-dbutils-1.3.jar")
+    # try:
+    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/commons-pool-1.5.4.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
+    # except IOError:
+    #     urllib.urlretrieve("{}/filters/commons-pool-1.5.4.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-pool-1.5.4.jar")
+    # try:
+    #     shutil.copyfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar", "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
+    # except IOError:
+    #     urllib.urlretrieve("{}/filters/postgresql-8.4-703.jdbc3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
 def download_thredds_xml(esg_dist_url):
     '''Download the thredds.xml file from the distribution mirror'''

@@ -360,7 +360,7 @@ def edit_pam_pgsql_conf():
     with esg_bash2py.pushd("/etc"):
         pgsql_conf_file = "pam_pgsql.conf"
         "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
         esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
 
         os.chmod(pgsql_conf_file, 0600)
@@ -383,7 +383,7 @@ def fetch_etc_pam_d_myproxy():
     with esg_bash2py.pushd("/etc/pam.d"):
         myproxy_file = "myproxy"
         "Fetching pam's myproxy resource file: {}".format(myproxy_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
         esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
 
 def fetch_esg_attribute_callout_app():

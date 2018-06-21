@@ -32,8 +32,13 @@ class test_ESG_Globus(unittest.TestCase):
     def setUpClass(cls):
         purge_globus()
 
-    def test_setup_globus(self):
+    def test_setup_globus_data(self):
         globus.setup_globus("DATA")
+        self.assertTrue(os.path.exists("/usr/bin/globus-version"))
+        self.assertTrue(os.path.exists("/usr/local/globus"))
+
+    def test_setup_globus_idp(self):
+        globus.setup_globus("IDP")
         self.assertTrue(os.path.exists("/usr/bin/globus-version"))
         self.assertTrue(os.path.exists("/usr/local/globus"))
 

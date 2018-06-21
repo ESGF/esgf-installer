@@ -122,15 +122,7 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
 
     print "orp/security filters installed..."
 
-
-def get_orp_libs(service_name="thredds"):
-    '''Copies the filter jar file to the web app's lib dir
-    arg 1 - The destination web application lib directory (default thredds)'''
-
-    orp_service_app_home = "/usr/local/tomcat/webapps/esg-orp"
-    dest_dir = "/usr/local/tomcat/webapps/{}/WEB-INF/lib".format(service_name)
-    src_dir = os.path.join(orp_service_app_home, "WEB-INF", "lib")
-
+def initialize_orp_jar_list():
     #Jar versions...
     opensaml_version = "2.3.2"
     openws_version = "1.3.1"
@@ -148,12 +140,6 @@ def get_orp_libs(service_name="thredds"):
     joda_version = "2.0"
     commons_io_version = "2.4"
     slf4j_version = "1.6.4"
-
-    #------------------------------------------------------------------
-    #NOTE: Make sure that this version matches the version that is in
-    #the esg-orp project!!!
-    spring_version = "4.2.3.RELEASE"
-    #------------------------------------------------------------------
 
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
@@ -176,17 +162,40 @@ def get_orp_libs(service_name="thredds"):
     slf4j_api_jar = "slf4j-api-{}.jar".format(slf4j_version)
     slf4j_log4j_jar = "slf4j-log4j12-{}.jar".format(slf4j_version)
 
+    return [opensaml_jar, openws_jar, xmltooling_jar, xsgroup_role_jar, commons_collections_jar, serializer_jar, velocity_jar,
+                xalan_jar, xercesImpl_jar, xml_apis_jar, xmlsec_jar, joda_time_jar, commons_io_jar, slf4j_api_jar, slf4j_log4j_jar]
+
+def initialize_esgf_mirror_jar_list():
+    #------------------------------------------------------------------
+    #NOTE: Make sure that this version matches the version that is in
+    #the esg-orp project!!!
+    spring_version = "4.2.3.RELEASE"
+    #------------------------------------------------------------------
     spring_jar = "spring-core-{}.jar".format(spring_version)
     spring_web_jar = "spring-web-{}.jar".format(spring_version)
     spring_webmvc_jar = "spring-webmvc-{}.jar".format(spring_version)
 
-    jar_list = [opensaml_jar, openws_jar, xmltooling_jar, xsgroup_role_jar, commons_collections_jar, serializer_jar, velocity_jar,
-                xalan_jar, xercesImpl_jar, xml_apis_jar, xmlsec_jar, joda_time_jar, commons_io_jar, slf4j_api_jar, slf4j_log4j_jar]
+    #project generated jarfiles...
+    esg_orp_jar = "esg-orp-{}.jar".format(config["esg_orp_version"])
+    esgf_security_jar = "esgf-security-{}.jar".format(config["esgf_security_version"])
+
+    return [spring_jar, spring_web_jar, spring_webmvc_jar, esgf_security_jar, esg_orp_jar]
+
+def get_orp_libs(service_name="thredds"):
+    '''Copies the filter jar file to the web app's lib dir
+    arg 1 - The destination web application lib directory (default thredds)'''
+
+    orp_service_app_home = "/usr/local/tomcat/webapps/esg-orp"
+    dest_dir = "/usr/local/tomcat/webapps/{}/WEB-INF/lib".format(service_name)
+    src_dir = os.path.join(orp_service_app_home, "WEB-INF", "lib")
+
+
+    orp_jar_list = initialize_orp_jar_list()
 
     if os.path.exists(dest_dir):
         #move over SAML libraries...
         print "getting (copying) libary jars from the ORP to {}".format(dest_dir)
-        for jar in jar_list:
+        for jar in orp_jar_list:
             if not os.path.exists(os.path.join(dest_dir,jar)):
                 shutil.copyfile(os.path.join(src_dir, jar), os.path.join(dest_dir,jar))
 
@@ -194,30 +203,25 @@ def get_orp_libs(service_name="thredds"):
         #Fetching ORP / Security Jars from Distribution Site...
         #----------------------------
 
-        #values inherited from esg-node calling script
-        #-----
-        #project generated jarfiles...
-        esg_orp_jar = "esg-orp-{}.jar".format(config["esg_orp_version"])
-        esgf_security_jar = "esgf-security-{}.jar".format(config["esgf_security_version"])
-        #-----
 
         print  "getting (downloading) library jars from ESGF Distribution Server (ORP/Security) to {} ...".format(dest_dir)
-        library_jars = [spring_jar, spring_web_jar, spring_webmvc_jar, esgf_security_jar, esg_orp_jar]
+        library_jars = initialize_esgf_mirror_jar_list()
 
         for jar in library_jars:
-            if jar in [spring_jar, spring_web_jar, spring_webmvc_jar] and service_name != "las":
+            if "spring" in jar and service_name != "las":
+                logger.debug("LAS not present, skipping download of %s", jar)
                 continue
             if not os.path.exists(os.path.join(dest_dir, jar)) and os.path.exists(os.path.join(src_dir,jar)):
                 shutil.copyfile(os.path.join(src_dir,jar), os.path.join(dest_dir, jar))
             else:
                 esg_dist_url = esg_property_manager.get_property("esg.dist.url")
                 #TODO: try/except HTTPError: raise
-                if jar == esgf_security_jar:
+                if "esgf-security" in jar:
                     try:
                         esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))
                     except requests.exceptions.HTTPError:
                         raise
-                elif jar == esg_orp_jar:
+                elif "esg-orp" in jar:
                     try:
                         esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
                     except requests.exceptions.HTTPError:

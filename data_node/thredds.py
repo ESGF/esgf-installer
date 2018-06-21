@@ -436,6 +436,7 @@ def setup_thredds():
     add_tomcat_user()
 
     esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+    #TODO: determine which web.xml function to use
     download_thredds_xml(esg_dist_url)
     # get_webxml_file()
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")

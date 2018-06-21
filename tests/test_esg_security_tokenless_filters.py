@@ -38,13 +38,15 @@ class test_ESG_Security_Tokenless_Filters(unittest.TestCase):
         if not os.path.exists("/usr/local/tomcat/webapps/thredds/WEB-INF/lib"):
             esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds/WEB-INF/lib")
 
+        esg_bash2py.touch("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml")
+
 
     def test_setup_security_tokenless_filters(self):
         esg_security_tokenless_filters.setup_security_tokenless_filters()
         lib_directory = "/usr/local/tomcat/webapps/thredds/WEB-INF/lib"
         orp_jar_list = esg_security_tokenless_filters.initialize_orp_jar_list()
         library_jars = esg_security_tokenless_filters.initialize_esgf_mirror_jar_list()
-        
+
         for orp_jar in orp_jar_list:
             jar_path = os.path.join(lib_directory, orp_jar)
             self.assertTrue(os.path.exists(jar_path))

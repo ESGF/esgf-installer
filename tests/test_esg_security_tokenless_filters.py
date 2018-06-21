@@ -51,9 +51,9 @@ class test_ESG_Security_Tokenless_Filters(unittest.TestCase):
             jar_path = os.path.join(lib_directory, orp_jar)
             self.assertTrue(os.path.exists(jar_path))
 
-        for jar in library_jars:
-            jar_path = os.path.join(lib_directory, jar)
-            self.assertTrue(os.path.exists(jar_path))
+        # for jar in library_jars:
+        #     jar_path = os.path.join(lib_directory, jar)
+        #     self.assertTrue(os.path.exists(jar_path))
 
 
 

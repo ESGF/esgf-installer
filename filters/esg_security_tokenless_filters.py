@@ -166,6 +166,7 @@ def initialize_orp_jar_list():
                 xalan_jar, xercesImpl_jar, xml_apis_jar, xmlsec_jar, joda_time_jar, commons_io_jar, slf4j_api_jar, slf4j_log4j_jar]
 
 def initialize_esgf_mirror_jar_list():
+    #TODO: split spring/las jars into separate function
     #------------------------------------------------------------------
     #NOTE: Make sure that this version matches the version that is in
     #the esg-orp project!!!
@@ -215,7 +216,6 @@ def get_orp_libs(service_name="thredds"):
                 shutil.copyfile(os.path.join(src_dir,jar), os.path.join(dest_dir, jar))
             else:
                 esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-                #TODO: try/except HTTPError: raise
                 if "esgf-security" in jar:
                     try:
                         esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))

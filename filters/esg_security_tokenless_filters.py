@@ -223,7 +223,7 @@ def get_orp_libs(service_name="thredds"):
                         raise
                 elif "esg-orp" in jar:
                     try:
-                        esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
+                        esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esg-orp/{}".format(esg_dist_url, jar))
                     except requests.exceptions.HTTPError:
                         raise
                 else:

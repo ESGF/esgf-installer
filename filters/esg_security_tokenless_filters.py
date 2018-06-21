@@ -210,14 +210,23 @@ def get_orp_libs(service_name="thredds"):
                 shutil.copyfile(os.path.join(src_dir,jar), os.path.join(dest_dir, jar))
             else:
                 esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-                #change url for security jar
+                #TODO: try/except HTTPError: raise
                 if jar == esgf_security_jar:
-                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))
+                    try:
+                        esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))
+                    except HTTPError:
+                        raise
                 elif jar == esg_orp_jar:
-                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
+                    try:
+                        esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
+                    except HTTPError:
+                        raise
                 else:
                     esg_root_url = esg_property_manager.get_property("esg.root.url")
-                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/filters/{}".format(esg_root_url, jar))
+                    try:
+                        esg_functions.download_update(os.path.join(dest_dir,jar), "{}/filters/{}".format(esg_root_url, jar))
+                    except HTTPError:
+                        raise
 
         tomcat_user = esg_functions.get_user_id("tomcat")
         tomcat_group = esg_functions.get_group_id("tomcat")

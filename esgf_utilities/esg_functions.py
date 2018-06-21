@@ -1077,6 +1077,7 @@ def get_node_type(config_file=config["esg_config_type_file"]):
 def is_valid_mirror(mirror_url):
     esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist", "https://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "https://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "https://esg-dn2.nsc.liu.se/esgf/dist")
     mirror_base_url = re.sub(r'\/\d\.\d', '', mirror_url)
+    logger.debug("mirror_base_url: %s", mirror_base_url)
     if mirror_base_url not in esgf_dist_mirrors_list:
         logger.error("%s is not a valid distribution mirror url", mirror_base_url)
         return

@@ -204,7 +204,7 @@ def get_orp_libs(service_name="thredds"):
         library_jars = [spring_jar, spring_web_jar, spring_webmvc_jar, esgf_security_jar, esg_orp_jar]
 
         for jar in library_jars:
-            if jar == spring_jar and service_name != "las":
+            if jar in [spring_jar, spring_web_jar, spring_webmvc_jar] and service_name != "las":
                 continue
             if not os.path.exists(os.path.join(dest_dir, jar)) and os.path.exists(os.path.join(src_dir,jar)):
                 shutil.copyfile(os.path.join(src_dir,jar), os.path.join(dest_dir, jar))

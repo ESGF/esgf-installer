@@ -1,4 +1,5 @@
 [installer.properties]
+esg.root.url
 esgf.host.ip=
 #Usually the fully qualified domain name (fqdn) of your server
 esgf.host=
@@ -46,6 +47,7 @@ update.cog=
 update.solr=
 
 #IDP node Components
+backup.idp=
 use.external.idp=
 register.myproxy=
 update.globus=

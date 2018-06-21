@@ -58,6 +58,7 @@ def setup_idp():
             print "Skipping IDP installation."
             return
 
+    #TODO: add config file property
     backup_idp = raw_input("Do you want to make a back up of the existing distribution?? [Y/n] ") or "y"
     if backup_idp.lower() in ["yes", "y"]:
         "Creating a backup archive of this web application {}".format(idp_service_app_home)

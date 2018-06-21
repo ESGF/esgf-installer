@@ -7,6 +7,7 @@ import stat
 import glob
 import psutil
 import yaml
+from requests.exceptions import HTTPError
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
@@ -216,12 +217,22 @@ def config_myproxy_server(globus_location, install_mode="install"):
     #--------------------
     if not os.path.exists(os.path.join(globus_location, "bin", "ESGOpenIDRetriever.class")) or os.path.exists(os.path.join(globus_location, "bin", "ESGGroupRetriever")):
         with esg_bash2py.pushd("{}/bin".format(globus_location)):
-            myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
-            esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
-            esg_functions.download_update("ESGGroupRetriever.java", "{}/ESGGroupRetriever.java".format(myproxy_dist_url_base))
+            myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
+            try:
+                esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
+            except HTTPError:
+                raise
+            try:
+                esg_functions.download_update("ESGGroupRetriever.java", "{}/ESGGroupRetriever.java".format(myproxy_dist_url_base))
+            except HTTPError:
+                raise
 
             postgress_jar = "postgresql-8.4-703.jdbc3.jar"
-            esg_functions.download_update(postgress_jar, "{}/{}".format(myproxy_dist_url_base, postgress_jar))
+            try:
+                esg_functions.download_update(postgress_jar, "{}/{}".format(myproxy_dist_url_base, postgress_jar))
+            except HTTPError:
+                raise
+
 
             #Find all files with a .jar extension and concat file names separated by a colon.
             java_class_path = glob.glob("*.jar")
@@ -351,7 +362,10 @@ def fetch_myproxy_certificate_mapapp():
         mapapp_file = "myproxy-certificate-mapapp"
         print "Downloading configuration file: {}".format(mapapp_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
+        try:
+            esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
+        except HTTPError:
+            raise
 
         os.chmod(mapapp_file, 0751)
         esg_functions.replace_string_in_file(mapapp_file, "/root/.globus/simpleCA/cacert.pem", "var/lib/globus-connect-server/myproxy-ca/cacert.pem")
@@ -361,7 +375,10 @@ def edit_pam_pgsql_conf():
         pgsql_conf_file = "pam_pgsql.conf"
         "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
+        try:
+            esg_functions.download_update(pgsql_conf_file, myproxy_dist_url_base+"/etc_{}".format(pgsql_conf_file))
+        except HTTPError:
+            raise
 
         os.chmod(pgsql_conf_file, 0600)
 
@@ -384,7 +401,10 @@ def fetch_etc_pam_d_myproxy():
         myproxy_file = "myproxy"
         "Fetching pam's myproxy resource file: {}".format(myproxy_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
+        try:
+            esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
+        except HTTPError:
+            raise
 
 def fetch_esg_attribute_callout_app():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
@@ -392,8 +412,11 @@ def fetch_esg_attribute_callout_app():
     with esg_bash2py.pushd(myproxy_config_dir):
         callout_app_file = "esg_attribute_callout_app"
         print "Downloading configuration file: {}".format(callout_app_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
-        esg_functions.download_update(callout_app_file, myproxy_dist_url_base+"/{}".format(callout_app_file))
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
+        try:
+            esg_functions.download_update(callout_app_file, myproxy_dist_url_base+"/{}".format(callout_app_file))
+        except HTTPError:
+            raise
         os.chmod(callout_app_file, 0751)
 
 def edit_etc_myproxyd():

@@ -4,6 +4,7 @@ import logging
 import shutil
 import ConfigParser
 import yaml
+import requests
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
@@ -214,18 +215,18 @@ def get_orp_libs(service_name="thredds"):
                 if jar == esgf_security_jar:
                     try:
                         esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))
-                    except HTTPError:
+                    except requests.exceptions.HTTPError:
                         raise
                 elif jar == esg_orp_jar:
                     try:
                         esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
-                    except HTTPError:
+                    except requests.exceptions.HTTPError:
                         raise
                 else:
                     esg_root_url = esg_property_manager.get_property("esg.root.url")
                     try:
                         esg_functions.download_update(os.path.join(dest_dir,jar), "{}/filters/{}".format(esg_root_url, jar))
-                    except HTTPError:
+                    except requests.exceptions.HTTPError:
                         raise
 
         tomcat_user = esg_functions.get_user_id("tomcat")

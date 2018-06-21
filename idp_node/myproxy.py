@@ -350,7 +350,7 @@ def fetch_myproxy_certificate_mapapp():
     with esg_bash2py.pushd(myproxy_config_dir):
         mapapp_file = "myproxy-certificate-mapapp"
         print "Downloading configuration file: {}".format(mapapp_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.dist.url"))
+        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
         esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
 
         os.chmod(mapapp_file, 0751)

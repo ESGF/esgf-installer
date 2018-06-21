@@ -185,7 +185,6 @@ def get_orp_libs(service_name="thredds"):
     if os.path.exists(dest_dir):
         #move over SAML libraries...
         print "getting (copying) libary jars from the ORP to {}".format(dest_dir)
-        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         for jar in jar_list:
             if not os.path.exists(os.path.join(dest_dir,jar)):
                 shutil.copyfile(os.path.join(src_dir, jar), os.path.join(dest_dir,jar))
@@ -210,13 +209,15 @@ def get_orp_libs(service_name="thredds"):
             if not os.path.exists(os.path.join(dest_dir, jar)) and os.path.exists(os.path.join(src_dir,jar)):
                 shutil.copyfile(os.path.join(src_dir,jar), os.path.join(dest_dir, jar))
             else:
+                esg_dist_url = esg_property_manager.get_property("esg.dist.url")
                 #change url for security jar
                 if jar == esgf_security_jar:
                     esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-security/{}".format(esg_dist_url, jar))
                 elif jar == esg_orp_jar:
                     esg_functions.download_update(os.path.join(dest_dir,jar), "{}/esgf-orp/{}".format(esg_dist_url, jar))
                 else:
-                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/filters/{}".format(esg_dist_url, jar))
+                    esg_root_url = esg_property_manager.get_property("esg.root.url")
+                    esg_functions.download_update(os.path.join(dest_dir,jar), "{}/filters/{}".format(esg_root_url, jar))
 
         tomcat_user = esg_functions.get_user_id("tomcat")
         tomcat_group = esg_functions.get_group_id("tomcat")

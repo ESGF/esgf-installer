@@ -76,8 +76,7 @@ def stop_search_services():
 #---------------------------------------------------------
 
 def check_for_existing_solr_install():
-    esg_search_version = "4.9.2"
-    print "Checking for search service {}".format(esg_search_version)
+    print "Checking for search service {}".format(config["esg_search_version"])
     try:
         installed_esg_search_version = esg_version_manager.get_current_webapp_version("esg-search")
     except IOError,error:
@@ -161,14 +160,13 @@ def setup_search_service():
     print "*******************************"
     print "Setting up The ESGF Search Service..."
     print "*******************************"
-    esg_search_version = "4.9.2"
     search_web_service_dir = "/usr/local/tomcat/webapps/esg-search"
     search_service_war_file = "esg-search.war"
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
 
-    download_esg_search(esg_search_version, esg_dist_url)
+    download_esg_search(config["esg_search_version"], esg_dist_url)
 
-    copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file)
+    copy_esg_search_war_to_tomcat(config["esg_search_version"], search_web_service_dir, search_service_war_file)
     extract_esg_search_war(search_web_service_dir, search_service_war_file)
     update_solr_cores_schema(search_web_service_dir)
 
@@ -177,7 +175,7 @@ def setup_search_service():
 
     esg_functions.change_ownership_recursive(search_web_service_dir, TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
-    write_search_service_install_log(search_web_service_dir, esg_search_version)
+    write_search_service_install_log(search_web_service_dir, config["esg_search_version"])
     write_search_rss_properties()
     setup_publisher_resources()
 

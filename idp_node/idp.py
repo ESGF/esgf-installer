@@ -97,6 +97,7 @@ def clone_slcs():
         return
     Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
 
+#TODO: convert slcs to use Ansible python API
 def setup_slcs():
     print "*******************************"
     print "Setting up SLCS Oauth Server"
@@ -105,7 +106,7 @@ def setup_slcs():
     try:
         install_slcs = esg_property_manager.get_property("update.slcs")
     except ConfigParser.NoOptionError:
-        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "y"
+        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
 
     if install_slcs.lower() in ["n", "no"]:
         print "Skipping installation of SLCS server"

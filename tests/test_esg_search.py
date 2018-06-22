@@ -6,7 +6,6 @@ import os
 from context import esgf_utilities
 from context import base
 from context import index_node
-from esgf_utilities import esg_purge
 from esgf_utilities import esg_bash2py
 from base import esg_tomcat_manager
 from index_node import esg_search
@@ -43,7 +42,7 @@ class test_Esg_Search(unittest.TestCase):
             print "error deleting /tmp/cog:", error
 
     def test_setup_esg_search(self):
-        esg_search.setup_esg_search()
+        esg_search.main()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/esg-search"))
 
 

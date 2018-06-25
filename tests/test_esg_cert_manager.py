@@ -99,6 +99,12 @@ class test_ESG_cert_manager(unittest.TestCase):
     def test_new_ca(self):
         with esg_bash2py.pushd("/tmp"):
             esg_cert_manager.new_ca()
+            self.assertTrue(os.path.exists("CA"))
+            self.assertTrue(os.path.exists("CA/certs"))
+            self.assertTrue(os.path.exists("CA/crl"))
+            self.assertTrue(os.path.exists("CA/newcerts"))
+            self.assertTrue(os.path.exists("CA/private"))
+            self.assertTrue(os.path.exists("CA/index.txt"))
             self.assertTrue(os.path.exists("CA/cacert.pem"))
 
             try:

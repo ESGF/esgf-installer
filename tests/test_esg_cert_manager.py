@@ -6,7 +6,7 @@ import os
 import shutil
 from context import esgf_utilities
 from esgf_utilities import esg_cert_manager
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, esg_bash2py
 import yaml
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -94,6 +94,11 @@ class test_ESG_cert_manager(unittest.TestCase):
     def test_setup_temp_ca(self):
         esg_cert_manager.setup_temp_ca(temp_ca_dir="/tmp/tempcerts")
         self.assertTrue(os.listdir("/tmp/tempcerts/CA"))
+
+    def test_new_ca(self):
+        with esg_bash2py.pushd("/tmp"):
+            esg_cert_manager.new_ca()
+            self.assertTrue(os.path.exists("CA/cacert.pem"))
 
 
 

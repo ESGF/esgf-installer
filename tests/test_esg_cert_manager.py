@@ -108,6 +108,7 @@ class test_ESG_cert_manager(unittest.TestCase):
 
             cert_subject_object = cert_obj.get_subject()
             print "cert_subject_object:", cert_subject_object
+            self.assertEquals(cert_subject_object.OU, "ESGF.ORG")
 
 
 

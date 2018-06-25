@@ -100,6 +100,14 @@ class test_ESG_cert_manager(unittest.TestCase):
             esg_cert_manager.new_ca()
             self.assertTrue(os.path.exists("CA/cacert.pem"))
 
+            try:
+                cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
+            except OpenSSL.crypto.Error:
+                logger.exception("Certificate is not correct.")
+
+            cert_subject_object = cert_obj.get_subject()
+            print "cert_subject_object:", cert_subject_object
+
 
 
 

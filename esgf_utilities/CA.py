@@ -9,6 +9,7 @@ from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_functions, esg_cert_manager
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
+current_directory = os.path.join(os.path.dirname(__file__))
 
 def new_ca():
     '''Mimics perl CA.pl -newca'''

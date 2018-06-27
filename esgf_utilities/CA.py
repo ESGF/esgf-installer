@@ -98,6 +98,8 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
 
     esg_bash2py.mkdir_p(temp_ca_dir)
 
+    shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "{}/myproxy-server.config".format(temp_ca_dir))
+
     with esg_bash2py.pushd(temp_ca_dir):
         delete_existing_temp_CA()
         new_ca()
@@ -182,7 +184,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         # mkdir -p /etc/certs
         esg_bash2py.mkdir_p("/etc/certs")
     	# cp openssl.cnf /etc/certs/
-        shutil.copyfile("openssl.cnf", "/etc/certs/openssl.cnf")
+        shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "/etc/certs/openssl.cnf")
     	# cp host*.pem /etc/certs/
         host_pem_files = glob.glob('new*.pem')
         for pem_file in host_pem_files:

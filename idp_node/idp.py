@@ -97,6 +97,7 @@ def clone_slcs():
         return
     Repo.clone_from("https://github.com/ESGF/esgf-slcs-server-playbook.git", os.getcwd()+"/esgf-slcs-server-playbook")
 
+#TODO: convert slcs to use Ansible python API
 def setup_slcs():
     print "*******************************"
     print "Setting up SLCS Oauth Server"

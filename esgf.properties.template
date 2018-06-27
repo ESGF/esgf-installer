@@ -55,3 +55,4 @@ globus.user=
 globus.password=
 myproxy.endpoint=
 register.gridftp=
+update.slcs=

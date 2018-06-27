@@ -120,7 +120,10 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         with open("requirements.txt", "r") as req_file:
             requirements = req_file.readlines()
         for req in requirements:
-            pip.main(["install", req.strip()])
+            try:
+                pip._internal.main(['install', req.strip()])
+            except AttributeError:
+                pip.main(['install', req.strip()])
 
         # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")

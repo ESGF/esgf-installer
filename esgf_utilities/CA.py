@@ -5,7 +5,6 @@ import logging
 import tarfile
 import OpenSSL
 import errno
-import OpenSSL
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_functions, esg_cert_manager
 
@@ -165,6 +164,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         esg_bash2py.mkdir_p(globus_cert_dir)
 
         shutil.copyfile("cacert.pem", os.path.join(globus_cert_dir,local_hash+".0"))
+        shutil.copyfile(os.path.join(current_directory, "signing-policy.template"), os.path.join(globus_cert_dir,local_hash+".signing_policy"))
 
         cert_subject_object = cert_obj.get_subject()
         cert_subject = "/OU={OU}/CN={CN}/O={O}".format(OU=cert_subject_object.OU, CN=cert_subject_object.CN, O=cert_subject_object.O)

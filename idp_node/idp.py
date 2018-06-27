@@ -105,7 +105,7 @@ def setup_slcs():
     try:
         install_slcs = esg_property_manager.get_property("update.slcs")
     except ConfigParser.NoOptionError:
-        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "y"
+        install_slcs = raw_input("Would you like to install the SLCS OAuth server on this node? [y/N] ") or "n"
 
     if install_slcs.lower() in ["n", "no"]:
         print "Skipping installation of SLCS server"

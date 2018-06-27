@@ -39,31 +39,31 @@ class test_CA(unittest.TestCase):
         pass
 
 
-def test_setup_temp_ca(self):
-    CA.setup_temp_ca(temp_ca_dir="/tmp/tempcerts")
-    self.assertTrue(os.listdir("/tmp/tempcerts/CA"))
+    def test_setup_temp_ca(self):
+        CA.setup_temp_ca(temp_ca_dir="/tmp/tempcerts")
+        self.assertTrue(os.listdir("/tmp/tempcerts/CA"))
 
-def test_new_ca(self):
-    with esg_bash2py.pushd("/tmp"):
-        CA.new_ca()
-        self.assertTrue(os.path.exists("CA"))
-        self.assertTrue(os.path.exists("CA/certs"))
-        self.assertTrue(os.path.exists("CA/crl"))
-        self.assertTrue(os.path.exists("CA/newcerts"))
-        self.assertTrue(os.path.exists("CA/private"))
-        self.assertTrue(os.path.exists("CA/index.txt"))
-        self.assertTrue(os.path.exists("CA/cacert.pem"))
+    def test_new_ca(self):
+        with esg_bash2py.pushd("/tmp"):
+            CA.new_ca()
+            self.assertTrue(os.path.exists("CA"))
+            self.assertTrue(os.path.exists("CA/certs"))
+            self.assertTrue(os.path.exists("CA/crl"))
+            self.assertTrue(os.path.exists("CA/newcerts"))
+            self.assertTrue(os.path.exists("CA/private"))
+            self.assertTrue(os.path.exists("CA/index.txt"))
+            self.assertTrue(os.path.exists("CA/cacert.pem"))
 
-        try:
-            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
-        except OpenSSL.crypto.Error:
-            logger.exception("Certificate is not correct.")
+            try:
+                cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
+            except OpenSSL.crypto.Error:
+                logger.exception("Certificate is not correct.")
 
-        cert_subject_object = cert_obj.get_subject()
-        print "cert_subject_object:", cert_subject_object
-        self.assertEquals(cert_subject_object.OU, "ESGF.ORG")
-        self.assertEquals(cert_subject_object.CN, "esgf-dev2.llnl.gov-CA")
-        self.assertEquals(cert_subject_object.O, "ESGF")
+            cert_subject_object = cert_obj.get_subject()
+            print "cert_subject_object:", cert_subject_object
+            self.assertEquals(cert_subject_object.OU, "ESGF.ORG")
+            self.assertEquals(cert_subject_object.CN, "esgf-dev2.llnl.gov-CA")
+            self.assertEquals(cert_subject_object.O, "ESGF")
 
 
 

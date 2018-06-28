@@ -143,6 +143,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+            raise
 
         with open('cacert.pem', 'w') as ca:
             ca.write(
@@ -156,6 +157,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("newcert.pem").read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+            raise
 
         with open('hostcert.pem', 'w') as ca:
             ca.write(
@@ -180,6 +182,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+            raise
 
         local_hash = esg_cert_manager.convert_hash_to_hex(cert_obj.subject_name_hash())
         globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)

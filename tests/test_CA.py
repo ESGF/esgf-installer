@@ -44,7 +44,7 @@ class test_CA(unittest.TestCase):
         self.assertTrue(os.listdir("/tmp/tempcerts/CA"))
 
         try:
-            host_cert_object = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("/etc/tempcerts/hostcert.pem").read())
+            host_cert_object = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("/tmp/tempcerts/hostcert.pem").read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
         host_cert_subject_object = host_cert_object.get_subject()

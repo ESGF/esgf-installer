@@ -38,6 +38,19 @@ class test_CA(unittest.TestCase):
         print "******************************* \n"
         pass
 
+    def convert_X509Name_to_string(self, cert):
+        subject_components = cert.get_subject().get_components()
+        subject_string = ""
+
+        for component in subject_components:
+            subject_string = subject_string + "/" +  component[0] + "=" + component[1]
+
+        issuer_components = cert.get_issuer().get_components()
+        issuer_string = ""
+        for component in issuer_components:
+            issuer_string = issuer_string + "/" +  component[0] + "=" + component[1]
+
+        return (subject_string, issuer_string)
 
     def test_setup_temp_ca(self):
         CA.setup_temp_ca(temp_ca_dir="/tmp/tempcerts")
@@ -47,8 +60,11 @@ class test_CA(unittest.TestCase):
             host_cert_object = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("/tmp/tempcerts/hostcert.pem").read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+
+        print self.convert_X509Name_to_string(host_cert_object)
         host_cert_subject_object = host_cert_object.get_subject()
         print "host_cert_subject_object:", host_cert_subject_object
+
         #Make sure the hostcert isn't self-signed; should be signed by the Temp CA
         print "get_issuer:", host_cert_object.get_issuer()
         self.assertNotEqual(host_cert_object.get_subject(), host_cert_object.get_issuer())

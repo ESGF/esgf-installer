@@ -68,10 +68,24 @@ def newreq_nodes():
 
 
 
-def sign_request(ca_req, req_key):
+def sign_request(ca_req):
     '''Mimics perl CA.pl -sign'''
     '''-sign  Calls the ca program to sign a certificate request. It expects the request to be in the file "newreq.pem".'''
-    newcert = esg_cert_manager.createCertificate(ca_req, (ca_req, req_key), 0, (0, 60*60*24*365*5))
+
+    #Issuer (CA) Key
+    try:
+        private_cakey = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open("CA/private/cakey.pem").read())
+    except OpenSSL.crypto.Error:
+        logger.exception("Certificate is not correct.")
+        raise
+    #Issuer (CA) Cert
+    try:
+        ca_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("CA/cacert.pem").read())
+    except OpenSSL.crypto.Error:
+        logger.exception("Certificate is not correct.")
+        raise
+
+    newcert = esg_cert_manager.createCertificate(ca_req, (ca_cert, private_cakey), 0, (0, 60*60*24*365*5))
 
     with open('newcert.pem', 'w') as ca:
         ca.write(
@@ -122,7 +136,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         # perl CA.pl -newreq-nodes <reqhost.ans
         new_careq, new_req_key = newreq_nodes()
         # perl CA.pl -sign <setuphost.ans
-        sign_request(new_careq, new_req_key)
+        sign_request(new_careq)
 
         # openssl x509 -in CA/cacert.pem -inform pem -outform pem >cacert.pem
         try:

@@ -62,6 +62,8 @@ class test_CA(unittest.TestCase):
             logger.exception("Certificate is not correct.")
 
         subject_string, issuer_string = self.convert_X509Name_to_string(host_cert_object)
+        logger.info("subject_string: %s", subject_string)
+        logger.info("issuer_string: %s", issuer_string)
         self.assertNotEqual(subject_string, issuer_string)
 
     def test_new_ca(self):

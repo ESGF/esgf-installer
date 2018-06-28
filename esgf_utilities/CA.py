@@ -13,6 +13,7 @@ current_directory = os.path.join(os.path.dirname(__file__))
 
 def new_ca():
     '''Mimics perl CA.pl -newca'''
+    '''-newca  Creates a new CA hierarchy for use with the ca program (or the -signcert and -xsign options). '''
     esg_bash2py.mkdir_p("CA")
     esg_bash2py.mkdir_p("CA/certs")
     esg_bash2py.mkdir_p("CA/crl")
@@ -43,6 +44,9 @@ def new_ca():
 
 def newreq_nodes():
     '''Mimics perl CA.pl -newreq-nodes'''
+    '''-newreq creates a new certificate request. The private key and request are written to the file ``newreq.pem''.'''
+    '''-newreq-nodes is like -newreq except that the private key will not be encrypted.'''
+
 
     new_req_key = esg_cert_manager.createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
     new_careq = esg_cert_manager.createCertRequest(new_req_key, CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
@@ -66,6 +70,7 @@ def newreq_nodes():
 
 def sign_request(ca_req, req_key):
     '''Mimics perl CA.pl -sign'''
+    '''-sign  Calls the ca program to sign a certificate request. It expects the request to be in the file "newreq.pem".'''
     newcert = esg_cert_manager.createCertificate(ca_req, (ca_req, req_key), 0, (0, 60*60*24*365*5))
 
     with open('newcert.pem', 'w') as ca:

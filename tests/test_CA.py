@@ -61,13 +61,8 @@ class test_CA(unittest.TestCase):
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
 
-        print self.convert_X509Name_to_string(host_cert_object)
-        host_cert_subject_object = host_cert_object.get_subject()
-        print "host_cert_subject_object:", host_cert_subject_object
-
-        #Make sure the hostcert isn't self-signed; should be signed by the Temp CA
-        print "get_issuer:", host_cert_object.get_issuer()
-        self.assertNotEqual(host_cert_object.get_subject(), host_cert_object.get_issuer())
+        subject_string, issuer_string = self.convert_X509Name_to_string(host_cert_object)
+        self.assertNotEqual(subject_string, issuer_string)
 
     def test_new_ca(self):
         with esg_bash2py.pushd("/tmp"):

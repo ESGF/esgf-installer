@@ -20,7 +20,7 @@ from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_bash2py
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_cert_manager
+from esgf_utilities import esg_cert_manager, CA
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -508,7 +508,7 @@ def configure_tomcat():
 
 
             #Setup temp CA
-            esg_cert_manager.setup_temp_ca()
+            CA.setup_temp_ca()
 
             #Fetch/Copy truststore to $tomcat_conf_dir
             if not os.path.exists(config["truststore_file"]):

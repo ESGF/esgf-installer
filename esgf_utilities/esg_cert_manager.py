@@ -690,10 +690,13 @@ def createCertRequest(pkey, digest="sha256", **name):
     logger.debug("name: %s", name)
     logger.debug("name type: %s", type(name))
     logger.debug("name[O]: %s", name["O"])
-    for key, value in name.items():
-        logger.debug("key: %s", key)
-        logger.debug("value: %s", value)
-        setattr(subj, key, value)
+    setattr(subj, "O", name["O"])
+    setattr(subj, "OU", name["OU"])
+    setattr(subj, "CN", name["CN"])
+    # for key, value in name.items():
+    #     logger.debug("key: %s", key)
+    #     logger.debug("value: %s", value)
+    #     setattr(subj, key, value)
 
     req.set_pubkey(pkey)
     req.sign(pkey, digest)

@@ -685,8 +685,11 @@ def createCertRequest(pkey, digest="sha256", **name):
     """
     req = OpenSSL.crypto.X509Req()
     subj = req.get_subject()
+    logger.debug("subj: %s", subj)
 
     for key, value in name.items():
+        logger.debug("key: %s", key)
+        logger.debug("value: %s", value)
         setattr(subj, key, value)
 
     req.set_pubkey(pkey)
@@ -710,6 +713,7 @@ def createCertificate(req, issuerCertKey, serial, validityPeriod,
     Returns:   The signed certificate in an X509 object
     """
     issuerCert, issuerKey = issuerCertKey
+    logger.debug("issuerCert: %s", issuerCert)
     notBefore, notAfter = validityPeriod
     cert = OpenSSL.crypto.X509()
     cert.set_serial_number(serial)
@@ -950,10 +954,11 @@ def generate_ssl_key_and_csr(private_key="/usr/local/tomcat/hostkey.pem", public
         public_cert_req = "/usr/local/tomcat/{}-esg-node.csr".format(esg_functions.get_esgf_host())
 
     public_cert_dn = extract_keystore_dn()
+    logger.debug("public_cert_dn: %s", public_cert_dn)
     if public_cert_dn:
         careq = createCertRequest(private_key, public_cert_dn)
     else:
-        careq = createCertRequest(private_key, CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+        careq = createCertRequest(private_key, O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host())
 
     print "Generating 30 day temporary self-signed certificate... "
 

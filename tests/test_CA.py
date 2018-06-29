@@ -9,7 +9,7 @@ from context import esgf_utilities
 from context import base
 from context import data_node
 from esgf_utilities import esg_bash2py
-from esgf_utilities import CA
+from esgf_utilities import CA, esg_functions
 from base import esg_tomcat_manager
 from data_node import orp
 import yaml
@@ -87,6 +87,11 @@ class test_CA(unittest.TestCase):
             self.assertEquals(cert_subject_object.OU, "ESGF.ORG")
             self.assertEquals(cert_subject_object.CN, "esgf-dev2.llnl.gov-CA")
             self.assertEquals(cert_subject_object.O, "ESGF")
+
+            #check subject string format
+            subject_string_expected = "/O=ESGF/OU=ESGF.ORG/CN=esgf-dev2.llnl.gov-CA"
+            subject_string, issuer_string = self.convert_X509Name_to_string(cert_obj)
+            self.assertEquals(subject_string, subject_string_expected)
 
 
 

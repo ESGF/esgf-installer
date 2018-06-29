@@ -687,6 +687,9 @@ def createCertRequest(pkey, digest="sha256", **name):
     subj = req.get_subject()
     logger.debug("subj: %s", subj)
 
+    logger.debug("name: %s", name)
+    logger.debug("name type: %s", type(name))
+    logger.debug("name[O]: %s", name["O"])
     for key, value in name.items():
         logger.debug("key: %s", key)
         logger.debug("value: %s", value)

@@ -192,7 +192,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         shutil.copyfile(os.path.join(current_directory, "signing-policy.template"), os.path.join(globus_cert_dir,local_hash+".signing_policy"))
 
         cert_subject_object = cert_obj.get_subject()
-        cert_subject = "/O={O}/OU={OU}/CN={CN}".format(OU=cert_subject_object.OU, CN=cert_subject_object.CN, O=cert_subject_object.O)
+        cert_subject = "/O={O}/OU={OU}/CN={CN}".format(O=cert_subject_object.O, OU=cert_subject_object.OU, CN=cert_subject_object.CN)
         esg_functions.replace_string_in_file(os.path.join(globus_cert_dir,local_hash+".signing_policy"), '/O=ESGF/OU=ESGF.ORG/CN=placeholder', cert_subject)
         shutil.copyfile(os.path.join(globus_cert_dir,local_hash+".signing_policy"), "signing-policy")
 

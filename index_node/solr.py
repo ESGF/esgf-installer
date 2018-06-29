@@ -79,7 +79,7 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
 
     if check_solr_process(solr_config_type, port_number):
         return
-        
+
     if solr_config_type == "master":
         enable_nodes = "'-Denable.master=true'"
     elif solr_config_type == "localhost":
@@ -100,6 +100,7 @@ def solr_status(SOLR_INSTALL_DIR):
     except OSError:
         pass
 
+#TODO: fix and test
 def check_solr_process(solr_config_type="master", port=8984):
     try:
         solr_pid = [proc for proc in psutil.net_connections() if proc.laddr.port == port][0].pid

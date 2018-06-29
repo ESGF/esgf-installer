@@ -25,7 +25,7 @@ def new_ca():
 
     cakey = esg_cert_manager.createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
     ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
-    careq = esg_cert_manager.createCertRequest(cakey, CN=ca_answer, O="ESGF", OU="ESGF.ORG")
+    careq = esg_cert_manager.createCertRequest(cakey, O="ESGF", OU="ESGF.ORG", CN=ca_answer)
     # CA certificate is valid for five years.
     cacert = esg_cert_manager.createCertificate(careq, (careq, cakey), 0, (0, 60*60*24*365*5))
 
@@ -49,7 +49,7 @@ def newreq_nodes():
 
 
     new_req_key = esg_cert_manager.createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
-    new_careq = esg_cert_manager.createCertRequest(new_req_key, CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+    new_careq = esg_cert_manager.createCertRequest(new_req_key, O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host())
 
     print('Creating Certificate Authority private key in "newkey.pem"')
     with open('newkey.pem', 'w') as new_key_file:

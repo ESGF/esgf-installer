@@ -990,7 +990,7 @@ def generate_esgf_csrs(node_type_list):
         with open("/etc/esgfcerts/cakey.pem", "wt") as key_file_handle:
             key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
-        careq = createCertRequest("/etc/esgfcerts/cakey.pem", CN=esg_functions.get_esgf_host()+"-CA", O="ESGF", OU="ESGF.ORG")
+        careq = createCertRequest("/etc/esgfcerts/cakey.pem", O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host()+"-CA")
         with open('/etc/esgfcerts/cacert_req.csr', 'w') as csr:
             csr.write(
                 OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
@@ -1003,7 +1003,7 @@ def generate_esgf_csrs(node_type_list):
     with open("/etc/esgfcerts/hostkey.pem", "wt") as key_file_handle:
         key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
-    careq = createCertRequest("/etc/esgfcerts/hostkey.pem", CN=esg_functions.get_esgf_host(), O="ESGF", OU="ESGF.ORG")
+    careq = createCertRequest("/etc/esgfcerts/hostkey.pem", O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host())
     with open('/etc/esgfcerts/hostcert_req.csr', 'w') as csr:
         csr.write(
             OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
@@ -1034,7 +1034,7 @@ def generate_esgf_csrs_ext(node_type):
         with open("/etc/extcsrs/cakey.pem", "wt") as key_file_handle:
             key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
-        careq = createCertRequest("/etc/extcsrs/cakey.pem", CN=esg_functions.get_esgf_host()+"-CA", O="ESGF", OU="ESGF.ORG")
+        careq = createCertRequest("/etc/extcsrs/cakey.pem", O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host()+"-CA")
         with open('/etc/extcsrs/cacert_req.csr', 'w') as csr:
             csr.write(
                 OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')
@@ -1047,7 +1047,7 @@ def generate_esgf_csrs_ext(node_type):
     with open("/etc/extcsrs/hostkey.pem", "wt") as key_file_handle:
         key_file_handle.write(OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key_pair))
 
-    careq = createCertRequest("/etc/extcsrs/hostkey.pem", CN=req_node_hostname, O="ESGF", OU="ESGF.ORG")
+    careq = createCertRequest("/etc/extcsrs/hostkey.pem", O="ESGF", OU="ESGF.ORG", CN=req_node_hostname)
     with open('/etc/extcsrs/hostcert_req.csr', 'w') as csr:
         csr.write(
             OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM, careq).decode('utf-8')

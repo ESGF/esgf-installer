@@ -15,7 +15,7 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_cert_manager
+from esgf_utilities import esg_cert_manager, esg_truststore_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager, esg_postgres
 
@@ -184,7 +184,7 @@ def register(remote_host, truststore_password, keystore_password=None):
 
                 os.chown(config["truststore_file"], tomcat_user, tomcat_group)
 
-                esg_cert_manager.sync_with_java_truststore(config["truststore_file"])
+                esg_truststore_manager.sync_with_java_truststore(config["truststore_file"])
 
 
 def select_idp_peer():

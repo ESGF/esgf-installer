@@ -14,7 +14,7 @@ except ImportError:
     from pip.operations import freeze
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -52,13 +52,13 @@ def checkout_publisher_branch(publisher_path, branch_name):
 #TODO: Might belong in esg_postgres.py
 def symlink_pg_binary():
     '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
-    esg_bash2py.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
+    pybash.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
 
 def install_publisher():
     symlink_pg_binary()
     esg_functions.stream_subprocess_output("python setup.py install")
     #Need for esgtest_publish (the post-installation publisher test)
-    esg_bash2py.mkdir_p("/esg/data/test")
+    pybash.mkdir_p("/esg/data/test")
 
 
 def generate_esgsetup_options():
@@ -165,11 +165,11 @@ def setup_publisher():
     print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
     print "******************************* \n"
     ESG_PUBLISHER_VERSION = config["publisher_tag"]
-    with esg_bash2py.pushd("/tmp"):
+    with pybash.pushd("/tmp"):
         clone_publisher_repo("/tmp/esg-publisher")
-        with esg_bash2py.pushd("esg-publisher"):
+        with pybash.pushd("esg-publisher"):
             checkout_publisher_branch("/tmp/esg-publisher", ESG_PUBLISHER_VERSION)
-            with esg_bash2py.pushd("src/python/esgcet"):
+            with pybash.pushd("src/python/esgcet"):
                 install_publisher()
 
 

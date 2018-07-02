@@ -6,7 +6,7 @@ import ConfigParser
 import yaml
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
@@ -73,10 +73,10 @@ def setup_java():
             return
         last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
 
-        java_tarfile = esg_bash2py.trim_string_from_head(config["java_dist_url"])
+        java_tarfile = pybash.trim_string_from_head(config["java_dist_url"])
         jdk_directory = java_tarfile.split("-")[0]
         java_install_dir_parent = config["java_install_dir"].rsplit("/",1)[0]
 
@@ -89,7 +89,7 @@ def setup_java():
         esg_functions.extract_tarball(java_tarfile, java_install_dir_parent)
 
         #Create symlink to Java install directory (/usr/local/java)
-        esg_bash2py.symlink_force(os.path.join(java_install_dir_parent, jdk_directory), config["java_install_dir"])
+        pybash.symlink_force(os.path.join(java_install_dir_parent, jdk_directory), config["java_install_dir"])
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
         #recursively change permissions

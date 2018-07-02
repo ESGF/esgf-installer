@@ -11,7 +11,7 @@ import requests
 import yaml
 from clint.textui import progress
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
@@ -42,15 +42,15 @@ def extract_solr_tarball(solr_tarball_path, SOLR_VERSION, target_path="/usr/loca
     print "Extracting Solr"
     print "******************************* \n"
 
-    with esg_bash2py.pushd(target_path):
+    with pybash.pushd(target_path):
         esg_functions.extract_tarball(solr_tarball_path)
         os.remove(solr_tarball_path)
-        esg_bash2py.symlink_force("solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), "solr")
+        pybash.symlink_force("solr-{SOLR_VERSION}".format(SOLR_VERSION=SOLR_VERSION), "solr")
 
 def download_template_directory():
     '''download template directory structure for shards home'''
     ESGF_REPO = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
-    with esg_bash2py.pushd("/usr/local/src"):
+    with pybash.pushd("/usr/local/src"):
         r = requests.get("{ESGF_REPO}/dist/esg-search/solr-home.tar".format(ESGF_REPO=ESGF_REPO))
 
         path = 'solr-home.tar'
@@ -228,12 +228,12 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     solr_extract_to_path = SOLR_INSTALL_DIR.rsplit("/",1)[0]
     extract_solr_tarball('/tmp/solr-{SOLR_VERSION}.tgz'.format(SOLR_VERSION=SOLR_VERSION), SOLR_VERSION, target_path=solr_extract_to_path)
 
-    esg_bash2py.mkdir_p(SOLR_DATA_DIR)
+    pybash.mkdir_p(SOLR_DATA_DIR)
 
     # download template directory structure for shards home
     download_template_directory()
 
-    esg_bash2py.mkdir_p(SOLR_HOME)
+    pybash.mkdir_p(SOLR_HOME)
 
     # create non-privilged user to run Solr server
     try:
@@ -270,7 +270,7 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
 
     # custom logging properties
     shutil.copyfile(os.path.join(current_directory, "solr_scripts/log4j.properties"), "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
-    esg_bash2py.mkdir_p("/esg/solr-logs")
+    pybash.mkdir_p("/esg/solr-logs")
 
     #start solr
     # solr_shards = read_shard_config()

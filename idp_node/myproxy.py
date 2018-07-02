@@ -9,7 +9,7 @@ import psutil
 import yaml
 from requests.exceptions import HTTPError
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
@@ -34,12 +34,12 @@ def setup_gcs_id(first_run=None):
 
     logger.debug("cert_dir: %s", cert_dir)
 
-    with esg_bash2py.pushd(cert_dir):
+    with pybash.pushd(cert_dir):
         myproxyca_dir = "/var/lib/globus-connect-server/myproxy-ca"
 
-        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir, "newcerts"))
+        pybash.mkdir_p(os.path.join(myproxyca_dir, "newcerts"))
         os.chmod(myproxyca_dir, 0700)
-        esg_bash2py.mkdir_p(os.path.join(myproxyca_dir, "private"))
+        pybash.mkdir_p(os.path.join(myproxyca_dir, "private"))
         os.chmod(os.path.join(myproxyca_dir, "private"), 0700)
 
         shutil.copyfile("cacert.pem", os.path.join(myproxyca_dir, "cacert.pem"))
@@ -114,7 +114,7 @@ def setup_gcs_id(first_run=None):
             myproxy_hostname = esg_functions.get_esgf_host().upper()
 
         myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
-        esg_bash2py.mkdir_p(myproxy_config_dir)
+        pybash.mkdir_p(myproxy_config_dir)
         globus_server_conf_file = os.path.join(myproxy_config_dir, "globus-connect-server.conf")
 
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
@@ -171,7 +171,7 @@ def setup_gcs_id(first_run=None):
         esg_functions.stream_subprocess_output("globus-connect-server-id-setup -c {}/globus-connect-server.conf -v".format(myproxy_config_dir))
 
     # Create a substitution of Globus generated confguration files for MyProxy server
-    esg_bash2py.mkdir_p("/etc/myproxy.d")
+    pybash.mkdir_p("/etc/myproxy.d")
     with open("/etc/myproxy.d/globus-connect-esgf", "w") as globus_connect_conf_file:
         globus_connect_conf_file.write("export MYPROXY_USER=root\n")
         globus_connect_conf_file.write('export X509_CERT_DIR="/etc/grid-security/certificates"\n')
@@ -216,7 +216,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
     # Compile Java Code Used by "callout" scripts in ${globus_location}/bin
     #--------------------
     if not os.path.exists(os.path.join(globus_location, "bin", "ESGOpenIDRetriever.class")) or os.path.exists(os.path.join(globus_location, "bin", "ESGGroupRetriever")):
-        with esg_bash2py.pushd("{}/bin".format(globus_location)):
+        with pybash.pushd("{}/bin".format(globus_location)):
             myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
             try:
                 esg_functions.download_update("ESGOpenIDRetriever.java", "{}/ESGOpenIDRetriever.java".format(myproxy_dist_url_base))
@@ -320,8 +320,8 @@ def write_myproxy_install_log():
 
 def edit_myproxy_server_config():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
-    esg_bash2py.mkdir_p(myproxy_config_dir)
-    with esg_bash2py.pushd(myproxy_config_dir):
+    pybash.mkdir_p(myproxy_config_dir)
+    with pybash.pushd(myproxy_config_dir):
         myproxy_config_file = "myproxy-server.config"
         "Creating/Modifying myproxy server configuration file: {}".format(myproxy_config_file)
         if os.path.isfile(myproxy_config_file):
@@ -357,8 +357,8 @@ def edit_myproxy_server_config():
 
 def fetch_myproxy_certificate_mapapp():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
-    esg_bash2py.mkdir_p(myproxy_config_dir)
-    with esg_bash2py.pushd(myproxy_config_dir):
+    pybash.mkdir_p(myproxy_config_dir)
+    with pybash.pushd(myproxy_config_dir):
         mapapp_file = "myproxy-certificate-mapapp"
         print "Downloading configuration file: {}".format(mapapp_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
@@ -371,7 +371,7 @@ def fetch_myproxy_certificate_mapapp():
         esg_functions.replace_string_in_file(mapapp_file, "/root/.globus/simpleCA/cacert.pem", "var/lib/globus-connect-server/myproxy-ca/cacert.pem")
 
 def edit_pam_pgsql_conf():
-    with esg_bash2py.pushd("/etc"):
+    with pybash.pushd("/etc"):
         pgsql_conf_file = "pam_pgsql.conf"
         "Download and Modifying pam pgsql configuration file: {}".format(pgsql_conf_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
@@ -397,7 +397,7 @@ def edit_pam_pgsql_conf():
             file_handle.write(filedata)
 
 def fetch_etc_pam_d_myproxy():
-    with esg_bash2py.pushd("/etc/pam.d"):
+    with pybash.pushd("/etc/pam.d"):
         myproxy_file = "myproxy"
         "Fetching pam's myproxy resource file: {}".format(myproxy_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
@@ -408,8 +408,8 @@ def fetch_etc_pam_d_myproxy():
 
 def fetch_esg_attribute_callout_app():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
-    esg_bash2py.mkdir_p(myproxy_config_dir)
-    with esg_bash2py.pushd(myproxy_config_dir):
+    pybash.mkdir_p(myproxy_config_dir)
+    with pybash.pushd(myproxy_config_dir):
         callout_app_file = "esg_attribute_callout_app"
         print "Downloading configuration file: {}".format(callout_app_file)
         myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))

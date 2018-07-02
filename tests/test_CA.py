@@ -8,7 +8,7 @@ import OpenSSL
 from context import esgf_utilities
 from context import base
 from context import data_node
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import CA, esg_functions
 from base import esg_tomcat_manager
 from data_node import orp
@@ -67,7 +67,7 @@ class test_CA(unittest.TestCase):
         self.assertNotEqual(subject_string, issuer_string)
 
     def test_new_ca(self):
-        with esg_bash2py.pushd("/tmp"):
+        with pybash.pushd("/tmp"):
             CA.new_ca()
             self.assertTrue(os.path.exists("CA"))
             self.assertTrue(os.path.exists("CA/certs"))

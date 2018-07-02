@@ -6,7 +6,7 @@ import os
 import shutil
 from context import esgf_utilities
 from esgf_utilities import esg_cert_manager
-from esgf_utilities import esg_functions, esg_bash2py
+from esgf_utilities import esg_functions, pybash
 import yaml
 
 current_directory = os.path.join(os.path.dirname(__file__))

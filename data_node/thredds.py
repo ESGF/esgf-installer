@@ -13,7 +13,7 @@ from lxml import etree
 import zipfile
 from clint.textui import progress
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import SubprocessError
@@ -151,7 +151,7 @@ def register(remote_host, truststore_password, keystore_password=None):
 
      print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
 
-     with esg_bash2py.pushd(config["tomcat_conf_dir"]):
+     with pybash.pushd(config["tomcat_conf_dir"]):
         esgf_host = esg_functions.get_esgf_host()
         ssl_endpoint = urlparse(remote_host).hostname
         ssl_port = "443"
@@ -160,8 +160,8 @@ def register(remote_host, truststore_password, keystore_password=None):
             #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
             esg_cert_manager.add_my_cert_to_truststore()
         else:
-            esg_bash2py.mkdir_p(config["workdir"])
-            with esg_bash2py.pushd(config["workdir"]):
+            pybash.mkdir_p(config["workdir"])
+            with pybash.pushd(config["workdir"]):
                 esg_dist_url = esg_property_manager.get_property("esg.dist.url")
                 if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
                     esg_functions.exit_with_error("Could not download utility class(1) for installing certificates")
@@ -176,7 +176,7 @@ def register(remote_host, truststore_password, keystore_password=None):
 
             esg_functions.stream_subprocess_output("/usr/local/java/bin/java -classpath {class_path} InstallCert {ssl_endpoint}:{ssl_port} {my_truststore_password} {truststore_file}".format(class_path=class_path, ssl_endpoint=ssl_endpoint, ssl_port=ssl_port, my_truststore_password=config["truststore_password"], truststore_file=config["truststore_file"]))
 
-            with esg_bash2py.pushd(config["tomcat_conf_dir"]):
+            with pybash.pushd(config["tomcat_conf_dir"]):
                 os.chmod(config["truststore_file"], 0644)
 
                 tomcat_user = esg_functions.get_user_id("tomcat")
@@ -279,7 +279,7 @@ def copy_public_directory():
     So have to manually move over this directory to avert server not starting! -gavin'''
     content_dir = os.path.join("{thredds_content_dir}".format(thredds_content_dir=config["thredds_content_dir"]), "thredds")
     if not os.path.isdir(content_dir):
-        esg_bash2py.mkdir_p(content_dir)
+        pybash.mkdir_p(content_dir)
         try:
             public_dir = "{tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public".format(tomcat_install_dir=config["tomcat_install_dir"])
             copy_tree(public_dir, content_dir)
@@ -418,13 +418,13 @@ def setup_thredds():
 
     esg_tomcat_manager.stop_tomcat()
 
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds")
+    pybash.mkdir_p("/usr/local/tomcat/webapps/thredds")
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
 
     thredds_url = "{}/thredds/5.0/{}/thredds.war".format(esg_dist_url, config["tds_version"])
     download_thredds_war(thredds_url)
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps/thredds"):
+    with pybash.pushd("/usr/local/tomcat/webapps/thredds"):
         with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
             zf.extractall()
         os.remove("thredds.war")
@@ -435,7 +435,7 @@ def setup_thredds():
     download_tomcat_users_xml(esg_dist_url)
     add_tomcat_user()
 
-    esg_bash2py.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+    pybash.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
     #TODO: determine which web.xml function to use
     download_thredds_xml(esg_dist_url)
     # get_webxml_file()
@@ -444,14 +444,14 @@ def setup_thredds():
     select_idp_peer()
     copy_public_directory()
     # TDS configuration root
-    esg_bash2py.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
+    pybash.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
     # TDS memory configuration
     download_thredds_config_xml(esg_dist_url)
     update_mail_admin_address()
 
     # ESGF root catalog
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/catalog.xml"), "/esg/content/thredds/catalog.xml-esgcet")
-    esg_bash2py.mkdir_p("/esg/content/thredds/esgcet")
+    pybash.mkdir_p("/esg/content/thredds/esgcet")
     # TDS customized applicationContext.xml file with ESGF authorizer
     download_application_context(esg_dist_url)
     copy_jar_files(esg_dist_url)

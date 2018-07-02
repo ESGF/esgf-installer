@@ -6,7 +6,7 @@ import os
 from context import esgf_utilities
 from context import base
 from context import index_node
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_cert_manager
 from esgf_utilities import esg_functions
 from base import esg_tomcat_manager

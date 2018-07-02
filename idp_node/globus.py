@@ -8,7 +8,7 @@ import glob
 import psutil
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
@@ -66,15 +66,15 @@ def setup_globus(installation_type):
 
     globus_location = "/usr/local/globus"
 
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         directive = "notype"
         if installation_type == "DATA":
             logger.info("Globus Setup for Data-Node... (GridFTP server) ")
             directive = "datanode"
             setup_globus_services(directive)
             write_globus_env(globus_location)
-            esg_bash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
+            pybash.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
         if installation_type == "IDP":
             logger.info("Globus Setup for Index-Node... (MyProxy server)")
@@ -82,7 +82,7 @@ def setup_globus(installation_type):
             setup_mode = "install"
             setup_globus_services(directive)
             write_globus_env(globus_location)
-            esg_bash2py.touch(os.path.join(globus_location,"esg_esg-node_installed"))
+            pybash.touch(os.path.join(globus_location,"esg_esg-node_installed"))
 
 def write_globus_env(globus_location):
     esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), config_file=config["envfile"], section_name="esgf.env", separator="_")
@@ -124,7 +124,7 @@ def setup_globus_services(config_type):
     logger.debug("setup_globus_services for %s", config_type)
 
     globus_location = "/usr/local/globus"
-    esg_bash2py.mkdir_p(os.path.join(globus_location, "bin"))
+    pybash.mkdir_p(os.path.join(globus_location, "bin"))
 
     if config_type == "datanode":
         print "*******************************"
@@ -206,11 +206,11 @@ def _install_globus(config_type):
         return
 
     globus_workdir= os.path.join(config["workdir"],"extra", "globus")
-    esg_bash2py.mkdir_p(globus_workdir)
+    pybash.mkdir_p(globus_workdir)
     current_mode = os.stat(globus_workdir)
     # chmod a+rw $globus_workdir
     os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
-    with esg_bash2py.pushd(globus_workdir):
+    with pybash.pushd(globus_workdir):
         # Setup Globus RPM repo
         if not check_for_existing_globus_rpm_packages():
             install_globus_rpm()

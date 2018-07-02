@@ -7,7 +7,7 @@ import logging
 from context import esgf_utilities
 from context import base
 from context import data_node
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from base import esg_tomcat_manager
 from data_node import orp
 import yaml
@@ -52,7 +52,7 @@ class test_Thredds(unittest.TestCase):
             print "error deleting /tmp/cog:", error
 
     def test_download_orp_war(self):
-        esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
+        pybash.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
         orp.download_orp_war("http://aims1.llnl.gov/esgf/dist/devel/esg-orp/esg-orp.war")
         self.assertTrue(os.path.isfile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war"))
         st = os.stat("/usr/local/tomcat/webapps/esg-orp/esg-orp.war")

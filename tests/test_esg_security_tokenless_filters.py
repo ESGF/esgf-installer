@@ -6,7 +6,7 @@ from context import esgf_utilities
 from context import base
 from context import data_node
 from context import filters
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from base import esg_tomcat_manager
 from data_node import orp
 from filters import esg_security_tokenless_filters
@@ -36,9 +36,9 @@ class test_ESG_Security_Tokenless_Filters(unittest.TestCase):
             pass
 
         if not os.path.exists("/usr/local/tomcat/webapps/thredds/WEB-INF/lib"):
-            esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/thredds/WEB-INF/lib")
+            pybash.mkdir_p("/usr/local/tomcat/webapps/thredds/WEB-INF/lib")
 
-        esg_bash2py.touch("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml")
+        pybash.touch("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml")
 
 
     def test_setup_security_tokenless_filters(self):

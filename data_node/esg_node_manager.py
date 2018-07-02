@@ -6,7 +6,7 @@ import glob
 import pwd
 import yaml
 import requests
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
@@ -46,11 +46,11 @@ def setup_node_manager_old():
     print "\n*******************************"
     print "Setting up ESGF Node Manager (old)"
     print "******************************* \n"
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
+    pybash.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
     node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
     download_node_manager_war(node_manager_url)
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
+    with pybash.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-node-manager.war")
@@ -202,13 +202,13 @@ def setup_node_manager(mode="install"):
             # TODO: Implement this
             # esg_postgres.backup_db() -db ${node_db_name} -s node_manager
 
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         logger.debug("changed directory to : %s", os.getcwd())
 
         # strip off .tar.gz at the end
         #(Ex: esgf-node-manager-0.9.0.tar.gz -> esgf-node-manager-0.9.0)
-        node_dist_file = esg_bash2py.trim_string_from_head(node_dist_url)
+        node_dist_file = pybash.trim_string_from_head(node_dist_url)
         logger.debug("node_dist_file: %s", node_dist_file)
         # Should just be esgf-node-manager-x.x.x
         node_dist_dir = node_dist_file
@@ -243,7 +243,7 @@ def setup_node_manager(mode="install"):
             esg_functions.exit_with_error(1)
 
         # pushd ${node_dist_dir} >& /dev/null
-        with esg_bash2py.pushd(node_dist_dir):
+        with pybash.pushd(node_dist_dir):
             logger.debug("changed directory to : %s", os.getcwd())
             stop_tomcat()
 
@@ -263,7 +263,7 @@ def setup_node_manager(mode="install"):
                 set_aside_web_app(node_manager_service_app_home)
             #----------------------------
             # mkdir -p ${node_manager_service_app_home}
-            esg_bash2py.mkdir_p(node_manager_service_app_home)
+            pybash.mkdir_p(node_manager_service_app_home)
             # cd ${node_manager_service_app_home}
             os.chdir(node_manager_service_app_home)
             logger.debug("changed directory to : %s", os.getcwd())
@@ -300,7 +300,7 @@ def setup_node_manager(mode="install"):
             # Property file fetching and token replacement...
             #----------------------------
             # pushd WEB-INF/classes >& /dev/null
-            with esg_bash2py.pushd("WEB-INF/classes"):
+            with pybash.pushd("WEB-INF/classes"):
                 # cat ${fetch_file}.tmpl >> ${config_file}
                 with open(download_file_name + ".tmpl", "r") as download_file:
                     with open(config["config_file"], "w") as config_file:

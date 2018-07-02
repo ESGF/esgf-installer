@@ -27,7 +27,7 @@ import netifaces
 from clint.textui import progress
 from lxml import etree
 from esg_exceptions import UnverifiedScriptError, SubprocessError, NoNodeTypeError
-import esg_bash2py
+import pybash
 import esg_property_manager
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
@@ -102,7 +102,7 @@ def path_unique(path_string=os.environ["PATH"], path_separator=":"):
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
 
-# TODO: Maybe move this to esg_bash2py
+# TODO: Maybe move this to pybash
 
 
 def readlinkf(file_name):
@@ -163,7 +163,7 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
     current_directory = os.getcwd()
 
     os.chdir(source_directory)
-    esg_bash2py.mkdir_p(source_directory)
+    pybash.mkdir_p(source_directory)
 
     source_backup_name = re.search("\w+$", source_directory).group()
     backup_filename = readlinkf(backup_dir) + "/" + source_backup_name + \
@@ -334,7 +334,7 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     if remote_file is None:
         remote_file = local_file
         # Get the last subpath from the absolute path
-        # TODO: use esg_bash2py.trim_from_head() here
+        # TODO: use pybash.trim_from_head() here
         local_file = local_file.split("/")[-1]
 
     logger.debug("local file : %s", local_file)

@@ -8,7 +8,7 @@ import netifaces
 import yaml
 from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
@@ -73,7 +73,7 @@ def create_esg_directories():
                             config["tomcat_conf_dir"]]
     for directory in directories_to_check:
         if not os.path.isdir(directory):
-            esg_bash2py.mkdir_p(directory)
+            pybash.mkdir_p(directory)
     os.chmod(config["esg_etc_dir"], 0777)
 
 def init_structure():
@@ -82,7 +82,7 @@ def init_structure():
 
     #Create esgf.properties file
     if not os.path.isfile(config["config_file"]):
-        esg_bash2py.touch(config["config_file"])
+        pybash.touch(config["config_file"])
 
     #--------------
     # Setup variables....

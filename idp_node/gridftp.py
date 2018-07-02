@@ -8,7 +8,7 @@ import glob
 import psutil
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
@@ -38,23 +38,23 @@ def setup_gridftp_metrics_logging():
 
     directory_list = [config["esg_backup_dir"], config["esg_tools_dir"], config["esg_log_dir"], config["esg_config_dir"]]
     for directory in directory_list:
-        esg_bash2py.mkdir_p(directory)
+        pybash.mkdir_p(directory)
 
     esg_functions.stream_subprocess_output("yum -y install perl-DBD-Pg")
 
     globus_workdir= os.path.join(config["workdir"],"extra", "globus")
-    esg_bash2py.mkdir_p(globus_workdir)
+    pybash.mkdir_p(globus_workdir)
 
     esg_root_url = esg_property_manager.get_property("esg.root.url")
     esg_usage_parser_dist_file = "esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
     esg_usage_parser_dist_url= "{}/globus/gridftp/esg_usage_parser-{}.tar.bz2".format(esg_root_url, usage_parser_version)
     esg_usage_parser_dist_dir = os.path.join(globus_workdir, "esg_usage_parser-{}".format(usage_parser_version))
-    esg_bash2py.mkdir_p(esg_usage_parser_dist_dir)
+    pybash.mkdir_p(esg_usage_parser_dist_dir)
 
     current_mode = os.stat(globus_workdir)
     # chmod a+rw $globus_workdir
     os.chmod(globus_workdir, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
-    with esg_bash2py.pushd(esg_usage_parser_dist_dir):
+    with pybash.pushd(esg_usage_parser_dist_dir):
         print "Downloading Globus GridFTP Usage Parser from {}".format(esg_usage_parser_dist_url)
         esg_functions.download_update(esg_usage_parser_dist_file, esg_usage_parser_dist_url)
 
@@ -69,7 +69,7 @@ def config_gridftp_metrics_logging():
     print 'Configuring gridftp metrics collection ...'
     gridftp_server_usage_config= "{}/gridftp/esg-server-usage-gridftp.conf".format(config["esg_config_dir"])
     gridftp_server_usage_config_dir = os.path.join(config["esg_config_dir"], "gridftp", "esg-server-usage-gridftp")
-    esg_bash2py.mkdir_p(gridftp_server_usage_config_dir)
+    pybash.mkdir_p(gridftp_server_usage_config_dir)
 
     with open(gridftp_server_usage_config, "w") as config_file:
         config_file.write("DBNAME={}\n".format(esg_property_manager.get_property("db.database")))
@@ -96,13 +96,13 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
     gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
     if not os.path.exists(gridftp_chroot_jail):
         print "{} does not exist, making it...".format(gridftp_chroot_jail)
-        esg_bash2py.mkdir_p(gridftp_chroot_jail)
+        pybash.mkdir_p(gridftp_chroot_jail)
 
         print "Creating chroot jail @ {}".format(gridftp_chroot_jail)
         esg_functions.stream_subprocess_output("globus-gridftp-server-setup-chroot -r {}".format(gridftp_chroot_jail))
 
         globus_jail_path = os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_sys_acct)
-        esg_bash2py.mkdir_p(globus_jail_path)
+        pybash.mkdir_p(globus_jail_path)
         globus_id = esg_functions.get_user_id("globus")
         globus_group = esg_functions.get_group_id("globus")
         esg_functions.change_ownership_recursive(globus_jail_path, globus_id, globus_group)
@@ -131,7 +131,7 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
             print "mounting [{mount_dir}] into chroot jail [{gridftp_chroot_jail}/] as [{mount_name}]".format(mount_dir=mount_dir, mount_name=mount_name, gridftp_chroot_jail=gridftp_chroot_jail)
             real_mount_dir = esg_functions.readlinkf(mount_dir)
             gridftp_mount_dir = os.path.join(gridftp_chroot_jail, mount_name)
-            esg_bash2py.mkdir_p(gridftp_mount_dir)
+            pybash.mkdir_p(gridftp_mount_dir)
             esg_functions.stream_subprocess_output("mount --bind {} {}".format(real_mount_dir, gridftp_mount_dir))
 
 def post_gridftp_jail_setup():
@@ -144,12 +144,12 @@ def post_gridftp_jail_setup():
     # Add a test data file if already not added
     test_data_file = os.path.join(gridftp_chroot_jail, "esg_dataroot", "test", "sftlf.nc")
     if not os.path.isfile(test_data_file):
-        esg_bash2py.mkdir_p(os.path.join(gridftp_chroot_jail, "esg_dataroot", "test"))
+        pybash.mkdir_p(os.path.join(gridftp_chroot_jail, "esg_dataroot", "test"))
         with open(test_data_file, "w") as test_file:
             test_file.write("test")
 
     print "writing sanitized passwd file to [{}/etc/passwd]".format(gridftp_chroot_jail)
-    esg_bash2py.mkdir_p(os.path.join(gridftp_chroot_jail, "etc"))
+    pybash.mkdir_p(os.path.join(gridftp_chroot_jail, "etc"))
     sanitized_passwd = os.path.join(gridftp_chroot_jail, "etc", "passwd")
     if not os.path.exists(sanitized_passwd):
         with open(sanitized_passwd, "w") as sanitized_passwd_file:
@@ -231,7 +231,7 @@ def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["es
     print " syncing local certificates into chroot jail... "
     if os.path.exists(gridftp_chroot_jail) and gridftp_chroot_jail != "/" and os.path.exists(os.path.join(gridftp_chroot_jail, "etc", "grid-security", "certificates")):
         shutil.rmtree(os.path.join(gridftp_chroot_jail, "etc", "grid-security", "certificates"))
-        esg_bash2py.mkdir_p(os.path.join(gridftp_chroot_jail, "etc", "grid-security"))
+        pybash.mkdir_p(os.path.join(gridftp_chroot_jail, "etc", "grid-security"))
         shutil.copytree("/etc/grid-security/certificates", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "certificates"))
 
     configure_esgf_publisher_for_gridftp()
@@ -262,7 +262,7 @@ def setup_gcs_io(first_run=None):
     else:
         cert_dir = "/etc/esgfcerts"
 
-    with esg_bash2py.pushd(cert_dir):
+    with pybash.pushd(cert_dir):
         if os.path.isfile("hostkey.pem"):
             shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
             os.chmod("/etc/grid-security/hostkey.pem", 0600)
@@ -374,7 +374,7 @@ def setup_gcs_io(first_run=None):
         esg_functions.stream_subprocess_output("globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v")
 
     # Create a substitution of GCS configuration files for GridFTP server
-    esg_bash2py.mkdir_p("/etc/gridftp.d")
+    pybash.mkdir_p("/etc/gridftp.d")
 
     with open("/etc/gridftp.d/globus-connect-esgf", "w") as globus_connect_file:
         globus_connect_file.write("port_range 50000,51000\n")

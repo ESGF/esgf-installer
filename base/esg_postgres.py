@@ -16,7 +16,7 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -221,7 +221,7 @@ def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
             logger.info("Skipping backup database.")
             return
 
-    esg_bash2py.mkdir_p(backup_dir)
+    pybash.mkdir_p(backup_dir)
     try:
         conn = connect_to_db(db_name, user_name)
         cur = conn.cursor()

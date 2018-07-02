@@ -7,7 +7,7 @@ import logging
 import datetime
 from context import esgf_utilities
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 import yaml
@@ -51,7 +51,7 @@ class test_ESG_Functions(unittest.TestCase):
 
     def test_backup(self):
         test_backup_dir = "/esg/test_backup"
-        esg_bash2py.mkdir_p(test_backup_dir)
+        pybash.mkdir_p(test_backup_dir)
         output = esg_functions.backup(os.getcwd(), backup_dir=test_backup_dir)
         self.assertEqual(output, 0)
 

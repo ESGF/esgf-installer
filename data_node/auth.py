@@ -9,7 +9,7 @@ import pip
 from git import Repo, GitCommandError
 
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
@@ -87,16 +87,16 @@ def setup_auth_webapp(auth_dir='/usr/local/esgf-auth'):
     os.chown(esgf_oauth2_credentials_path, apache_uid, -1)
 
     # Create Auth install directory
-    esg_bash2py.mkdir_p(auth_install_dir)
+    pybash.mkdir_p(auth_install_dir)
 
     # Install crypto-cookie package
     crypto_cookie_path = os.path.join(auth_install_dir, 'crypto-cookie')
     clone_crypto_cookie_repo(crypto_cookie_path, None)
-    with esg_bash2py.pushd(crypto_cookie_path):
+    with pybash.pushd(crypto_cookie_path):
         pip.main(['install', '-e', '.'])
 
     # Install Auth Webapp
-    with esg_bash2py.pushd(auth_install_dir):
+    with pybash.pushd(auth_install_dir):
         esg_functions.fetch_remote_file(
                 'esgf-auth-v{}'.format(version),
                 'https://github.com/ESGF/esgf-auth/archive/v{}.zip'
@@ -108,14 +108,14 @@ def setup_auth_webapp(auth_dir='/usr/local/esgf-auth'):
             os.unlink('esgf-auth')
         os.symlink('esgf-auth-v{}'.format(version), 'esgf-auth')
 
-    with esg_bash2py.pushd(os.path.join(auth_install_dir, 'esgf-auth')):
+    with pybash.pushd(os.path.join(auth_install_dir, 'esgf-auth')):
         with open("requirements.txt", "r") as req_file:
             requirements = req_file.readlines()
         for req in requirements:
             pip.main(["install", req.strip()])
 
     # Set up the database
-    esg_bash2py.mkdir_p(os.path.join(auth_install_dir, 'db'))
+    pybash.mkdir_p(os.path.join(auth_install_dir, 'db'))
     try:
         esg_functions.stream_subprocess_output('manage.py migrate')
         os.chown(os.path.join(auth_install_dir, 'db'),

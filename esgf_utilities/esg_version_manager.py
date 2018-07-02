@@ -7,7 +7,7 @@ import logging
 import yaml
 import semver
 from git import Repo
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
@@ -83,7 +83,7 @@ def get_current_esgf_library_version(library_name):
 
 
 def get_current_webapp_version(webapp_name, version_command=None):
-    version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
+    version_property = pybash.Expand.colonMinus(version_command, "Version")
     print "version_property: ", version_property
     reg_ex = r"^(" + re.escape(version_property) + ".*)"
     with open(config["tomcat_install_dir"] + "/webapps/" + webapp_name + "/META-INF/MANIFEST.MF", "r") as manifest_file:
@@ -97,7 +97,7 @@ def get_current_webapp_version(webapp_name, version_command=None):
 
 
 def check_webapp_version(webapp_name, min_version, version_command=None):
-    version_property = esg_bash2py.Expand.colonMinus(version_command, "Version")
+    version_property = pybash.Expand.colonMinus(version_command, "Version")
     if not os.path.isdir(config["tomcat_install_dir"] + "/webapps/" + webapp_name):
         print "Web Application %s is not present or cannot be detected!" % (webapp_name)
         return False

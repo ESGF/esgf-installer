@@ -9,7 +9,7 @@ import yaml
 from git import Repo
 from clint.textui import progress
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -40,11 +40,11 @@ def setup_dashboard():
     print "Setting up ESGF Stats API (dashboard)"
     print "******************************* \n"
 
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
+    pybash.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
     stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
     download_stats_api_war(stats_api_url)
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):
+    with pybash.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-stats-api.war")
@@ -95,7 +95,7 @@ def run_dashboard_script():
     GeoipDir = "/usr/local/geoip"
     Fed="no"
 
-    with esg_bash2py.pushd("/usr/local"):
+    with pybash.pushd("/usr/local"):
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")
 

@@ -3,7 +3,7 @@ import os
 import subprocess
 import logging
 import yaml
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -43,7 +43,7 @@ def deduplicate_settings_in_file(envfile = None):
     arg 1 - The environment file to dedup.
     '''
 
-    infile = esg_bash2py.Expand.colonMinus(envfile, config.envfile)
+    infile = pybash.Expand.colonMinus(envfile, config.envfile)
     try:
         my_set = set()
         deduplicated_list = []
@@ -75,7 +75,7 @@ def deduplicate_settings_in_file(envfile = None):
 
 
 def deduplicate_properties(properties_file = None):
-    infile = esg_bash2py.Expand.colonMinus(properties_file, config.config_dictionary["config_file"])
+    infile = pybash.Expand.colonMinus(properties_file, config.config_dictionary["config_file"])
     try:
         my_set = set()
         deduplicated_list = []

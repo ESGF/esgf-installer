@@ -7,7 +7,7 @@ from context import esgf_utilities
 from context import base
 from context import data_node
 from esgf_utilities import esg_purge
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from base import esg_tomcat_manager
 from data_node import esg_dashboard
 

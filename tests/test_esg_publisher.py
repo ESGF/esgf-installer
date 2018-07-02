@@ -10,7 +10,7 @@ from context import data_node
 from data_node import esg_publisher
 from data_node import thredds
 from base import esg_postgres
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities.esg_exceptions import SubprocessError
 import yaml
@@ -35,7 +35,7 @@ class test_ESG_publisher(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Publisher Test Fixture"
         print "******************************* \n"
-        esg_bash2py.mkdir_p(config["esg_config_dir"])
+        pybash.mkdir_p(config["esg_config_dir"])
         esg_postgres.setup_postgres()
 
     @classmethod
@@ -76,7 +76,7 @@ class test_ESG_publisher(unittest.TestCase):
         match = re.search(r'\d.*', output).group()
         self.assertTrue(match)
 
-        esg_bash2py.mkdir_p("/esg/config/esgcet")
+        pybash.mkdir_p("/esg/config/esgcet")
         os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
         esg_publisher.run_esgsetup()
         self.assertTrue(os.path.isfile("/esg/config/esgcet/esg.ini"))
@@ -116,12 +116,12 @@ class test_ESG_publisher(unittest.TestCase):
 
         esgcet_testdir = os.path.join(config[
                                       "thredds_root_dir"], "test")
-        esg_bash2py.mkdir_p(esgcet_testdir)
+        pybash.mkdir_p(esgcet_testdir)
 
         os.chown(esgcet_testdir, config[
                  "installer_uid"], config["installer_gid"])
 
-        esg_bash2py.mkdir_p(config["thredds_replica_dir"])
+        pybash.mkdir_p(config["thredds_replica_dir"])
 
         os.chown(config["thredds_replica_dir"], config[
                  "installer_uid"], config["installer_gid"])

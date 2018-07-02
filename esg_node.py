@@ -17,7 +17,7 @@ from git import Repo
 #This needs to be imported before other esg_* modules to properly setup the root logger
 from esgf_utilities import esg_logging_manager
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from base import esg_setup
 from base import esg_postgres
 from base import esg_java
@@ -105,14 +105,14 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
 def download_esg_installarg(esg_dist_url):
     ''' Downloading esg-installarg file '''
     if not os.path.isfile(config["esg_installarg_file"]) or force_install or os.path.getmtime(config["esg_installarg_file"]) < os.path.getmtime(os.path.realpath(__file__)):
-        esg_installarg_file_name = esg_bash2py.trim_string_from_head(
+        esg_installarg_file_name = pybash.trim_string_from_head(
             config["esg_installarg_file"])
         esg_functions.download_update(config["esg_installarg_file"], os.path.join(
             esg_dist_url, "esgf-installer", esg_installarg_file_name), force_download=force_install)
         try:
             if not os.path.getsize(config["esg_installarg_file"]) > 0:
                 os.remove(config["esg_installarg_file"])
-            esg_bash2py.touch(config["esg_installarg_file"])
+            pybash.touch(config["esg_installarg_file"])
         except IOError:
             logger.exception("Unable to access esg-installarg file")
 
@@ -381,7 +381,7 @@ def sanity_check_web_xmls():
     '''Editing web.xml files for projects who use the authorizationService'''
     print "sanity checking webapps' web.xml files accordingly... "
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
+    with pybash.pushd("/usr/local/tomcat/webapps"):
         webapps = os.listdir("/usr/local/tomcat/webapps")
         if not webapps:
             return
@@ -391,7 +391,7 @@ def sanity_check_web_xmls():
         tomcat_group = esg_functions.get_group_id("tomcat")
 
         for app in webapps:
-            with esg_bash2py.pushd(os.path.join(app,"WEB-INF")):
+            with pybash.pushd(os.path.join(app,"WEB-INF")):
                 print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
                 os.chown("web.xml", tomcat_user, tomcat_group)
 

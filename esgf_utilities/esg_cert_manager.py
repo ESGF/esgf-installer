@@ -16,7 +16,7 @@ import requests
 import yaml
 import jks
 import OpenSSL
-import esg_bash2py
+import pybash
 import esg_functions
 import esg_property_manager
 from esg_exceptions import SubprocessError
@@ -73,7 +73,7 @@ def create_self_signed_cert(cert_dir):
         cert.set_pubkey(k)
         cert.sign(k, 'sha1')
 
-        esg_bash2py.mkdir_p(cert_dir)
+        pybash.mkdir_p(cert_dir)
 
         with open(os.path.join(cert_dir, CERT_FILE), "wt") as cert_file_handle:
             cert_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert))
@@ -102,8 +102,8 @@ def create_certificate_chain_list():
                 else:
                     print "{default_cachain} does not exist".format(default_cachain=default_cachain)
                     print "Creating {default_cachain}".format(default_cachain=default_cachain)
-                    esg_bash2py.mkdir_p("/etc/esgfcerts")
-                    esg_bash2py.touch(default_cachain)
+                    pybash.mkdir_p("/etc/esgfcerts")
+                    pybash.touch(default_cachain)
                     cert_files.append(default_cachain)
                     break
                     # esg_functions.exit_with_error(1)
@@ -149,7 +149,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     if os.path.isdir(config["globus_global_certs_dir"]):
         esg_functions.backup(config["globus_global_certs_dir"], os.path.join(config["globus_global_certs_dir"], ".bak.tz"))
         shutil.rmtree(config["globus_global_certs_dir"])
-    esg_bash2py.mkdir_p(config["globus_global_certs_dir"])
+    pybash.mkdir_p(config["globus_global_certs_dir"])
 
     #Download trusted certs tarball
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
@@ -186,7 +186,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
             simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{simpleCA_cert_hash}_setup-0.tar.gz".format(simpleCA_cert_hash=simpleCA_cert_hash))
             esg_functions.extract_tarball(simpleCA_setup_tar_file)
 
-            with esg_bash2py.pushd("globus_simple_ca_{simpleCA_cert_hash}_setup-0".format(simpleCA_cert_hash=simpleCA_cert_hash)):
+            with pybash.pushd("globus_simple_ca_{simpleCA_cert_hash}_setup-0".format(simpleCA_cert_hash=simpleCA_cert_hash)):
                 shutil.copyfile("{simpleCA_cert_hash}.signing_policy".format(simpleCA_cert_hash=simpleCA_cert_hash), "{globus_global_certs_dir}/{simpleCA_cert_hash}.signing_policy".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash))
             if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
                 esg_functions.stream_subprocess_output("openssl x509 -text -hash -in {simpleCA_cert} > {tomcat_install_dir}/webapps/ROOT/cacert.pem".format(simpleCA_cert=simpleCA_cert, tomcat_install_dir="/usr/loca/tomcat"))
@@ -201,7 +201,7 @@ def install_extkeytool():
     print "\n*******************************"
     print "Installing Extkeytool"
     print "******************************* \n"
-    extkeytool_tarfile = esg_bash2py.trim_string_from_head(config["extkeytool_download_url"])
+    extkeytool_tarfile = pybash.trim_string_from_head(config["extkeytool_download_url"])
     esg_functions.download_update(extkeytool_tarfile, config["extkeytool_download_url"])
     esg_functions.extract_tarball(extkeytool_tarfile, "/esg/tools/idptools")
 
@@ -345,7 +345,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     print "Public cert  : {public_cert}".format(public_cert=public_cert)
     print "Certificates..."
 
-    esg_bash2py.mkdir_p(idptools_install_dir)
+    pybash.mkdir_p(idptools_install_dir)
 
     cert_bundle = os.path.join(idptools_install_dir, "cert.bundle")
     ca_chain_bundle = os.path.join(idptools_install_dir, "ca_chain.bundle")
@@ -549,7 +549,7 @@ def rebuild_truststore(truststore_file, certs_dir=config["globus_global_certs_di
         create_new_truststore(truststore_file)
 
     tmp_dir = "/tmp/esg_scratch"
-    esg_bash2py.mkdir_p(tmp_dir)
+    pybash.mkdir_p(tmp_dir)
 
     cert_files = glob.glob('{certs_dir}/*.0'.format(certs_dir=certs_dir))
     for cert in cert_files:
@@ -781,7 +781,7 @@ def check_for_commercial_ca(commercial_ca_directory="/etc/esgfcerts"):
     else:
         return
             # file_list = ["hostcert.pem", "hostkey.pem"]
-            # with esg_bash2py.pushd(commercial_ca_directory):
+            # with pybash.pushd(commercial_ca_directory):
             #     for file_name in file_list:
             #         if not os.path.isfile(file_name):
             #             print "{file_name} not found in /etc/esgfcerts. Exiting."
@@ -804,7 +804,7 @@ def install_local_certs(node_type_list, firstrun=None):
 
         certdir= "/etc/esgfcerts"
 
-    with esg_bash2py.pushd(certdir):
+    with pybash.pushd(certdir):
         for file_name in file_list:
             if not os.path.exists(file_name):
                 raise OSError("File {} is not found in {}; Please place it there and reexecute esg_node.py --install-local-certs", file_name, certdir)
@@ -1013,7 +1013,7 @@ def generate_esgf_csrs_ext(node_type):
 
     req_node_hostname = raw_input("Enter FQDN of node you are requesting certificates for")
 
-    esg_bash2py.mkdir_p("/etc/extcsrs")
+    pybash.mkdir_p("/etc/extcsrs")
 
     cert_files = ['hostkey.pem', 'hostcert_req.csr']
     if node_type == "index":
@@ -1044,7 +1044,7 @@ def generate_esgf_csrs_ext(node_type):
     )
     print "Successfully generated request for a simpleCA CA certificate: /etc/extcsrs/hostcert_req.csr"
 
-    with esg_bash2py.pushd("/etc/extcsrs"):
+    with pybash.pushd("/etc/extcsrs"):
         try:
             with tarfile.open(req_node_hostname, "w:tgz") as tar:
                 for file_name in cert_files:

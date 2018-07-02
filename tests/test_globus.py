@@ -11,7 +11,7 @@ from context import idp_node
 from data_node import esg_publisher
 from data_node import thredds
 from base import esg_postgres
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from idp_node import globus
 from esgf_utilities.esg_exceptions import SubprocessError

@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 import yaml
 import pip
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
@@ -71,17 +71,17 @@ def install_mod_wsgi():
         pip._internal.main(['install', "mod_wsgi==4.5.3"])
     except AttributeError:
         pip.main(['install', "mod_wsgi==4.5.3"])
-    with esg_bash2py.pushd("/etc/httpd/modules"):
+    with pybash.pushd("/etc/httpd/modules"):
         # If installer running in a conda env
         if "conda" in find_executable("python"):
-            esg_bash2py.symlink_force(
+            pybash.symlink_force(
                 "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
         else:
-            esg_bash2py.symlink_force(
+            pybash.symlink_force(
                 "/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
 
 def make_python_eggs_dir():
-    esg_bash2py.mkdir_p("/var/www/.python-eggs")
+    pybash.mkdir_p("/var/www/.python-eggs")
     apache_user_id = esg_functions.get_user_id("apache")
     apache_group_id = esg_functions.get_group_id("apache")
     os.chown("/var/www/.python-eggs", apache_user_id, apache_group_id)
@@ -89,7 +89,7 @@ def make_python_eggs_dir():
 
 def copy_apache_conf_files():
     ''' Copy custom apache conf files '''
-    esg_bash2py.mkdir_p("/etc/certs")
+    pybash.mkdir_p("/etc/certs")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_certs/esgf-ca-bundle.crt"),
                     "/etc/certs/esgf-ca-bundle.crt")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_html/index.html"), "/var/www/html/index.html")

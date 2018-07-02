@@ -8,7 +8,7 @@ from distutils.spawn import find_executable
 from context import esgf_utilities
 from context import base
 from base import esg_tomcat_manager
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 import yaml
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -50,7 +50,7 @@ class test_ESG_tomcat(unittest.TestCase):
         self.delete_tomcat_download()
 
     def test_extract_tomcat_tarball(self):
-        esg_bash2py.mkdir_p("/usr/local/tomcat_test")
+        pybash.mkdir_p("/usr/local/tomcat_test")
         esg_tomcat_manager.download_tomcat()
         esg_tomcat_manager.extract_tomcat_tarball("/usr/local/tomcat_test")
         self.assertTrue(os.path.isdir("/usr/local/tomcat_test/apache-tomcat-8.5.20"))

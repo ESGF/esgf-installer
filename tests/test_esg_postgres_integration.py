@@ -8,7 +8,7 @@ from context import esgf_utilities
 from context import base
 from base import esg_postgres
 from esg_purge import purge_postgres
-from esgf_utilities import esg_bash2py, esg_functions
+from esgf_utilities import pybash, esg_functions
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -24,7 +24,7 @@ class test_ESG_postgres_integration(unittest.TestCase):
         print "******************************* \n"
         esg_postgres.stop_postgres()
         purge_postgres()
-        esg_bash2py.mkdir_p(config["esg_config_dir"])
+        pybash.mkdir_p(config["esg_config_dir"])
 
     @classmethod
     def tearDownClass(cls):

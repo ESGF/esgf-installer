@@ -11,7 +11,7 @@ import glob
 import psutil
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
@@ -26,8 +26,8 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
     config = yaml.load(config_file)
 
 def setup_access_logging_filter():
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         install_access_logging_filter()
 
     # esg_tomcat_manager.start_tomcat()
@@ -44,7 +44,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     "esg-filter-web.xml".  Copies the filter jar file to the ${service_name}'s
     lib dir
     '''
-    service_name = esg_bash2py.trim_string_from_head(dest_dir)
+    service_name = pybash.trim_string_from_head(dest_dir)
     esg_filter_entry_pattern = "<!--@@esg_access_logging_filter_entry@@-->"
 
     print "*******************************"
@@ -80,7 +80,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     #TODO: break into separate function; extract esg_filter_entry_file from jar
     esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
     esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
-    with esg_bash2py.pushd(config["workdir"]):
+    with pybash.pushd(config["workdir"]):
         with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as zf:
             #Pull out the templated filter entry snippet file...
             zf.extract(esg_filter_entry_file)
@@ -92,7 +92,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         shutil.copyfile("esgf-node-manager-common-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-common-1.0.1.jar"))
         shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
 
-    with esg_bash2py.pushd(os.path.join(dest_dir, "WEB-INF")):
+    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
         #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
         #Use utility function...
         insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)

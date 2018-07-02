@@ -8,7 +8,7 @@ import tld
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -210,9 +210,9 @@ def initial_setup_questionnaire(force_install=False):
     print 'Welcome to the ESGF Node installation program! :-)'
     print "-------------------------------------------------------"
 
-    esg_bash2py.mkdir_p(config['esg_config_dir'])
+    pybash.mkdir_p(config['esg_config_dir'])
 
-    with esg_bash2py.pushd(config['esg_config_dir']):
+    with pybash.pushd(config['esg_config_dir']):
 
         _choose_fqdn()
 

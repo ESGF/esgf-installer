@@ -2,7 +2,7 @@
 
 import unittest
 from context import esgf_utilities
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 import os
 import yaml
 
@@ -12,14 +12,14 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
     config = yaml.load(config_file)
 
 
-class test_ESG_bash2py(unittest.TestCase):
+class test_pybash(unittest.TestCase):
 
     def test_trim_string_from_head(self):
-        output = esg_bash2py.trim_string_from_head("/usr/local/bin/esg_installarg_file")
+        output = pybash.trim_string_from_head("/usr/local/bin/esg_installarg_file")
         self.assertEqual(output, "esg_installarg_file")
 
     def test_trim_string_from_tail(self):
-        output = esg_bash2py.trim_string_from_tail("8.0.33")
+        output = pybash.trim_string_from_tail("8.0.33")
         self.assertEqual(output, "8")
 
 

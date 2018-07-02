@@ -9,7 +9,6 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
 
     def setUp(self):
         self.node_type_list = ["DATA"]
-        self.installater_mode_dictionary = {"install_mode": False, "upgrade_mode": False}
         self.devel = True
         self.esg_dist_url = "http://aims1.llnl.gov/esgf/dist"
     # def tearDown(self):
@@ -38,11 +37,25 @@ class test_ESG_CLI_Argument_Manager(unittest.TestCase):
     def test_start(self):
         sys.argv.append("--start")
         pprint.pprint(sys.argv)
-        status = esg_cli_argument_manager.process_arguments(self.node_type_list, self.devel, self.esg_dist_url)
+        status = esg_cli_argument_manager.process_arguments()
         self.assertTrue(status)
 
+    def test_set_type(self):
+        sys.argv.append("--set-type index idp")
+        # pprint.pprint("args:", sys.argv)
+        print "args:", sys.argv
+        status = esg_cli_argument_manager.process_arguments()
+        self.assertTrue(status)
 
+    def test_type(self):
+        sys.argv.append("--type data")
+        status = esg_cli_argument_manager.process_arguments()
+        self.assertTrue(status)
 
+    def test_check_for_valid_node_combo(self):
+        sys.argv.append("--set-type index idp")
+        pprint.pprint(sys.argv)
+        self.assertTrue(esg_cli_argument_manager.check_for_valid_node_combo("index idp"))
 
 if __name__ == '__main__':
     unittest.main()

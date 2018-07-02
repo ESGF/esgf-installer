@@ -11,7 +11,7 @@ import requests
 from clint.textui import progress
 from git import Repo
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from base import esg_tomcat_manager
@@ -100,8 +100,8 @@ def check_for_existing_solr_install():
                 esg_functions.backup("/usr/local/tomcat/webapps/esg-search")
 
 def download_esg_search(esg_search_version, esg_dist_url):
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         search_service_dist_url = "{}/esg-search/esg-search-{}.tar.gz".format(esg_dist_url, esg_search_version)
         search_service_dist_file = "esg-search-{}.tar.gz".format(esg_search_version)
         esg_functions.download_update(search_service_dist_file, search_service_dist_url)
@@ -114,15 +114,15 @@ def download_esg_search(esg_search_version, esg_dist_url):
 
 def copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file):
     search_service_dist_dir = "esg-search-{}".format(esg_search_version)
-    with esg_bash2py.pushd(os.path.join(config["workdir"],search_service_dist_dir)):
+    with pybash.pushd(os.path.join(config["workdir"],search_service_dist_dir)):
         esg_tomcat_manager.stop_tomcat()
 
-        esg_bash2py.mkdir_p(search_web_service_dir)
+        pybash.mkdir_p(search_web_service_dir)
         shutil.copyfile(search_service_war_file, os.path.join(search_web_service_dir, search_service_war_file))
 
 
 def extract_esg_search_war(search_web_service_dir, search_service_war_file):
-    with esg_bash2py.pushd(search_web_service_dir):
+    with pybash.pushd(search_web_service_dir):
         print "Expanding war {search_service_war_file} in {pwd}".format(search_service_war_file=search_service_war_file, pwd=os.getcwd())
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-search/esg-search.war", 'r') as zf:
             zf.extractall()
@@ -200,13 +200,13 @@ def write_search_rss_properties():
 
 def fetch_crawl_launcher(esg_dist_url):
     esgf_crawl_launcher = "esgf-crawl"
-    with esg_bash2py.pushd(config["scripts_dir"]):
+    with pybash.pushd(config["scripts_dir"]):
         esgf_crawl_launcher_url = "{}/esg-search/esgf-crawl".format(esg_dist_url)
         esg_functions.download_update(esgf_crawl_launcher, esgf_crawl_launcher_url)
         os.chmod(esgf_crawl_launcher, 0755)
 
 def fetch_index_optimization_launcher(esg_dist_url):
-    with esg_bash2py.pushd(config["scripts_dir"]):
+    with pybash.pushd(config["scripts_dir"]):
         esgf_index_optimization_launcher = "esgf-optimize-index"
         esgf_index_optimization_launcher_url = "{}/esg-search/esgf-optimize-index".format(esg_dist_url)
         esg_functions.download_update(esgf_index_optimization_launcher, esgf_index_optimization_launcher_url)

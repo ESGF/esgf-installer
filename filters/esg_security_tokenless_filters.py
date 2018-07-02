@@ -6,7 +6,7 @@ import ConfigParser
 import yaml
 import requests
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
@@ -21,8 +21,8 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
     config = yaml.load(config_file)
 
 def setup_security_tokenless_filters():
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         install_security_tokenless_filters()
 
 #TODO: refactor
@@ -41,7 +41,7 @@ def insert_file_at_pattern(target_file, input_file, pattern):
 
 def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thredds"):
 
-    service_name = esg_bash2py.trim_string_from_head(dest_dir)
+    service_name = pybash.trim_string_from_head(dest_dir)
 
     if service_name == "thredds":
         esg_filter_entry_file = "esg-security-tokenless-thredds-filters.xml"
@@ -80,7 +80,7 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
         return
 
-    with esg_bash2py.pushd(config["workdir"]):
+    with pybash.pushd(config["workdir"]):
         esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         esg_security_filters_dist_url = "{}/filters".format(esg_dist_url)
         esg_functions.download_update("{}/{}".format(esg_security_filters_dist_url, esg_filter_entry_file))
@@ -89,7 +89,7 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
     #Installs esg filter into web application's web.xml file, by replacing a
     #place holder token with the contents of the filter snippet file
     #"esg-security-filter.xml".
-    with esg_bash2py.pushd(os.path.join(dest_dir, "WEB-INF")):
+    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
         #Replace the filter's place holder token in web app's web.xml file with the filter entry.
         #Use utility function...
         insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)

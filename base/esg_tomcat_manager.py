@@ -18,7 +18,7 @@ from lxml import etree
 from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_cert_manager, CA
 
@@ -65,7 +65,7 @@ def download_tomcat():
 
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):
-    with esg_bash2py.pushd(dest_dir):
+    with pybash.pushd(dest_dir):
         esg_functions.extract_tarball(
             "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
 
@@ -80,13 +80,13 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
 
 
 def create_symlink(TOMCAT_VERSION):
-    esg_bash2py.symlink_force(
+    pybash.symlink_force(
         "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION), "/usr/local/tomcat")
 
 
 def remove_example_webapps():
     '''remove Tomcat example applications'''
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps"):
+    with pybash.pushd("/usr/local/tomcat/webapps"):
         try:
             shutil.rmtree("docs")
             shutil.rmtree("examples")
@@ -113,8 +113,8 @@ def setup_root_app():
     print "Setting up Apache Tomcat...(v{}) ROOT webapp".format(config["tomcat_version"])
     print "*******************************"
 
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         esg_root_url = esg_property_manager.get_property("esg.root.url")
         root_app_dist_url = "{}/ROOT.tgz".format(esg_root_url)
         esg_functions.download_update("ROOT.tgz", root_app_dist_url)
@@ -141,7 +141,7 @@ def copy_config_files():
     try:
         # shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile(os.path.join(current_directory, "tomcat_conf/context.xml"), "/usr/local/tomcat/conf/context.xml")
-        esg_bash2py.mkdir_p("/esg/config/tomcat")
+        pybash.mkdir_p("/esg/config/tomcat")
 
         shutil.copyfile(os.path.join(current_directory, "certs/tomcat-users.xml"), "/esg/config/tomcat/tomcat-users.xml")
         tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
@@ -253,7 +253,7 @@ def copy_credential_files(tomcat_install_config_dir):
                                os.path.join(tomcat_install_config_dir, "hostkey.pem")]
 
     for file_path in tomcat_credential_files:
-        credential_file_name = esg_bash2py.trim_string_from_head(file_path)
+        credential_file_name = pybash.trim_string_from_head(file_path)
         if os.path.exists(os.path.join(tomcat_install_config_dir, credential_file_name)) and not os.path.exists(file_path):
             try:
                 shutil.move(os.path.join(tomcat_install_config_dir,
@@ -305,7 +305,7 @@ def migrate_tomcat_credentials_to_esgf():
 
     if tomcat_install_config_dir != config["tomcat_conf_dir"]:
         if not os.path.exists(config["tomcat_conf_dir"]):
-            esg_bash2py.mkdir_p(config["tomcat_conf_dir"])
+            pybash.mkdir_p(config["tomcat_conf_dir"])
 
         esg_functions.backup(tomcat_install_config_dir)
 
@@ -457,14 +457,14 @@ def setup_tomcat_logrotate():
 
     if not os.path.exists("/usr/local/tomcat/logs/catalina.out"):
         print "Creating /usr/local/tomcat/logs/catalina.out"
-        esg_bash2py.touch("/usr/local/tomcat/logs/catalina.out")
+        pybash.touch("/usr/local/tomcat/logs/catalina.out")
         os.chmod("/usr/local/tomcat/logs/catalina.out", 0644)
         os.chown("/usr/local/tomcat/logs/catalina.out", tomcat_user, tomcat_group)
 
 
     if not os.path.exists("/usr/local/tomcat/logs/catalina.err"):
         print "Creating /usr/local/tomcat/logs/catalina.err"
-        esg_bash2py.touch("/usr/local/tomcat/logs/catalina.err")
+        pybash.touch("/usr/local/tomcat/logs/catalina.err")
         os.chmod("/usr/local/tomcat/logs/catalina.err", 0644)
         os.chown("/usr/local/tomcat/logs/catalina.err", tomcat_user, tomcat_group)
 
@@ -480,7 +480,7 @@ def configure_tomcat():
 
     setup_tomcat_logrotate()
 
-    with esg_bash2py.pushd("/usr/local/tomcat/conf"):
+    with pybash.pushd("/usr/local/tomcat/conf"):
         # Get server.xml
         # if not os.path.exists("server.xml"):
         shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")

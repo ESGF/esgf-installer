@@ -7,7 +7,7 @@ import requests
 import yaml
 from clint.textui import progress
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from base import esg_tomcat_manager
@@ -138,7 +138,7 @@ def setup_orp():
 
         backup_orp()
 
-    esg_bash2py.mkdir_p(orp_service_app_home)
+    pybash.mkdir_p(orp_service_app_home)
     try:
         if esg_property_manager.get_property("devel"):
             orp_url = "{}/devel/esg-orp/esg-orp.war".format(esg_dist_url)
@@ -151,7 +151,7 @@ def setup_orp():
     #NOTE: The saving of the last config file must be done *BEFORE* we untar the new distro!
     backup_orp_properties()
 
-    with esg_bash2py.pushd(orp_service_app_home):
+    with pybash.pushd(orp_service_app_home):
         extract_orp_war()
 
         orp_startup_hook()
@@ -241,13 +241,13 @@ def write_orp_install_log():
 #
 #         if orp_install.lower() in ["no", "n"]:
 #             return
-#     esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
+#     pybash.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
 #
 #     orp_url = os.path.join(config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
 #     print "orp_url:", orp_url
 #
 #     download_orp_war(orp_url)
-#     with esg_bash2py.pushd("/usr/local/tomcat/webapps/esg-orp"):
+#     with pybash.pushd("/usr/local/tomcat/webapps/esg-orp"):
 #         with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as zf:
 #             zf.extractall()
 #         os.remove("esg-orp.war")

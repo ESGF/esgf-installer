@@ -3,7 +3,7 @@ import logging
 import shutil
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from base import esg_postgres
@@ -67,8 +67,8 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
             esg_postgres.postgres_clean_schema_migration("ESGF Security")
 
         db_dir = os.path.join("{}/esgf-security-{}/db".format(config["workdir"], esgf_security_version))
-        esg_bash2py.mkdir_p(db_dir)
-        with esg_bash2py.pushd(db_dir):
+        pybash.mkdir_p(db_dir)
+        with pybash.pushd(db_dir):
             #------------------------------------------------------------------------
             #Based on the node type selection we build the appropriate database tables
             #------------------------------------------------------------------------
@@ -146,8 +146,8 @@ def _setup_policy_files(node_type_list, esgf_security_version):
 
         if not os.path.isfile(os.path.join(config["esg_config_dir"], "esgf_policies_local.xml")):
             tmp_extract_dir = os.path.join(config["esg_root_dir"], "tmp")
-            esg_bash2py.mkdir_p(tmp_extract_dir)
-            with esg_bash2py.pushd(tmp_extract_dir):
+            pybash.mkdir_p(tmp_extract_dir)
+            with pybash.pushd(tmp_extract_dir):
                 esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
             shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_file_name+"_common.xml"), config["esg_config_dir"])
 
@@ -185,8 +185,8 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
             esg_config_xml = os.path.join(config["esg_config_dir"], "esgf_{}_static.xml".format(service_type))
             app_config_xml = os.path.join(app_config_dir, "esgf_{}_static.xml".format(service_type))
             if not os.path.isfile(esg_config_xml) and os.path.isfile(app_config_xml):
-                esg_bash2py.mkdir_p(tmp_extract_dir)
-                with esg_bash2py.pushd(tmp_extract_dir):
+                pybash.mkdir_p(tmp_extract_dir)
+                with pybash.pushd(tmp_extract_dir):
                     esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/esgf_{service_type}_static.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, service_type=service_type))
                     shutil.copyfile(os.path.join(full_extracted_jar_dir, "esgf_{}_static.xml".format(service_type)), config["esg_config_dir"])
 
@@ -220,7 +220,7 @@ def clean_security_webapp_subsystem():
 
 def fetch_user_migration_launcher(node_type_list, esg_dist_url):
     if "IDP" in node_type_list:
-        with esg_bash2py.pushd(config["scripts_dir"]):
+        with pybash.pushd(config["scripts_dir"]):
             security_web_service_name = "esgf-security"
             esgf_user_migration_launcher = "esgf-user-migrate"
             esgf_user_migration_launcher_url = "{}/{}/{}".format(esg_dist_url, security_web_service_name, esgf_user_migration_launcher)
@@ -231,7 +231,7 @@ def fetch_user_migration_launcher(node_type_list, esg_dist_url):
 
 def fetch_policy_check_launcher(node_type_list, esg_dist_url):
     if "IDP" in node_type_list and "DATA" in node_type_list:
-        with esg_bash2py.pushd(config["scripts_dir"]):
+        with pybash.pushd(config["scripts_dir"]):
             security_web_service_name = "esgf-security"
             esgf_policy_check_launcher = "esgf-policy-check"
             esgf_user_migration_launcher = "esgf-user-migrate"

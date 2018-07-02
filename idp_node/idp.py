@@ -6,7 +6,7 @@ import stat
 import yaml
 from git import Repo
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
@@ -67,8 +67,8 @@ def setup_idp():
         "Creating a backup archive of this web application {}".format(idp_service_app_home)
         esg_functions.backup(idp_service_app_home)
 
-    esg_bash2py.mkdir_p(idp_service_app_home)
-    with esg_bash2py.pushd(idp_service_app_home):
+    pybash.mkdir_p(idp_service_app_home)
+    with pybash.pushd(idp_service_app_home):
         idp_dist_file = os.path.join(os.getcwd(), "esgf-idp.war")
         esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         idp_dist_url = "{}/esgf-idp/esgf-idp.war".format(esg_dist_url)
@@ -117,14 +117,14 @@ def setup_slcs():
     #create slcs Database
     esg_postgres.create_database("slcsdb")
 
-    with esg_bash2py.pushd("/usr/local/src"):
+    with pybash.pushd("/usr/local/src"):
         clone_slcs()
 
         apache_user = esg_functions.get_user_id("apache")
         apache_group = esg_functions.get_group_id("apache")
         esg_functions.change_ownership_recursive("esgf-slcs-server-playbook", apache_user, apache_group)
 
-        with esg_bash2py.pushd("esgf-slcs-server-playbook"):
+        with pybash.pushd("esgf-slcs-server-playbook"):
             #TODO: extract to function
             publisher_repo_local = Repo(os.getcwd())
             publisher_repo_local.git.checkout("devel")
@@ -150,7 +150,7 @@ def setup_slcs():
 
             esg_property_manager.set_property("short.lived.certificate.server", esg_functions.get_esgf_host())
 
-            esg_bash2py.mkdir_p("/usr/local/esgf-slcs-server")
+            pybash.mkdir_p("/usr/local/esgf-slcs-server")
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
 
             #TODO: check if there's an ansible Python module

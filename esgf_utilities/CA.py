@@ -5,7 +5,7 @@ import logging
 import tarfile
 import OpenSSL
 import errno
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions, esg_cert_manager
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -14,12 +14,12 @@ current_directory = os.path.join(os.path.dirname(__file__))
 def new_ca():
     '''Mimics perl CA.pl -newca'''
     '''-newca  Creates a new CA hierarchy for use with the ca program (or the -signcert and -xsign options). '''
-    esg_bash2py.mkdir_p("CA")
-    esg_bash2py.mkdir_p("CA/certs")
-    esg_bash2py.mkdir_p("CA/crl")
-    esg_bash2py.mkdir_p("CA/newcerts")
-    esg_bash2py.mkdir_p("CA/private")
-    esg_bash2py.touch("CA/index.txt")
+    pybash.mkdir_p("CA")
+    pybash.mkdir_p("CA/certs")
+    pybash.mkdir_p("CA/crl")
+    pybash.mkdir_p("CA/newcerts")
+    pybash.mkdir_p("CA/private")
+    pybash.touch("CA/index.txt")
     with open("CA/crlnumber", "w") as crlnumber_file:
         crlnumber_file.write("01\n")
 
@@ -115,11 +115,11 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
     print "Setting up Temp CA"
     print "******************************* \n"
 
-    esg_bash2py.mkdir_p(temp_ca_dir)
+    pybash.mkdir_p(temp_ca_dir)
 
     shutil.copyfile(os.path.join(current_directory, "myproxy-server.config"), "{}/myproxy-server.config".format(temp_ca_dir))
 
-    with esg_bash2py.pushd(temp_ca_dir):
+    with pybash.pushd(temp_ca_dir):
         delete_existing_temp_CA()
         new_ca()
 
@@ -186,7 +186,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
 
         local_hash = esg_cert_manager.convert_hash_to_hex(cert_obj.subject_name_hash())
         globus_cert_dir = "globus_simple_ca_{}_setup-0".format(local_hash)
-        esg_bash2py.mkdir_p(globus_cert_dir)
+        pybash.mkdir_p(globus_cert_dir)
 
         shutil.copyfile("cacert.pem", os.path.join(globus_cert_dir,local_hash+".0"))
         shutil.copyfile(os.path.join(current_directory, "signing-policy.template"), os.path.join(globus_cert_dir,local_hash+".signing_policy"))
@@ -204,7 +204,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
         shutil.rmtree(globus_cert_dir)
 
         # mkdir -p /etc/certs
-        esg_bash2py.mkdir_p("/etc/certs")
+        pybash.mkdir_p("/etc/certs")
     	# cp openssl.cnf /etc/certs/
         shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "/etc/certs/openssl.cnf")
     	# cp host*.pem /etc/certs/
@@ -214,4 +214,4 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
     	# cp cacert.pem /etc/certs/cachain.pem
         shutil.copyfile("cacert.pem", "/etc/certs/cachain.pem")
     	# mkdir -p /etc/esgfcerts
-        esg_bash2py.mkdir_p("/etc/esgfcerts")
+        pybash.mkdir_p("/etc/esgfcerts")

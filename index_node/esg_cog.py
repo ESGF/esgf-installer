@@ -6,7 +6,7 @@ import yaml
 import pip
 from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
@@ -53,7 +53,7 @@ def setup_django_openid_auth(target_directory):
     else:
         Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
 
-    with esg_bash2py.pushd(target_directory):
+    with pybash.pushd(target_directory):
         esg_functions.stream_subprocess_output("python setup.py install")
 
 def transfer_api_client_python(target_directory):
@@ -65,12 +65,12 @@ def transfer_api_client_python(target_directory):
     else:
         Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
 
-    with esg_bash2py.pushd(target_directory):
+    with pybash.pushd(target_directory):
         # esg_functions.stream_subprocess_output("python setup.py install")
         repo = Repo(os.path.join(target_directory))
         git = repo.git
         git.pull()
-        with esg_bash2py.pushd("mkproxy"):
+        with pybash.pushd("mkproxy"):
             esg_functions.stream_subprocess_output("make")
             shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy")
 
@@ -100,13 +100,13 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     # choose CoG version
     COG_TAG = "v3.10.1"
     # setup CoG environment
-    esg_bash2py.mkdir_p(COG_DIR)
+    pybash.mkdir_p(COG_DIR)
 
     COG_CONFIG_DIR = "{COG_DIR}/cog_config".format(COG_DIR=COG_DIR)
-    esg_bash2py.mkdir_p(COG_CONFIG_DIR)
+    pybash.mkdir_p(COG_CONFIG_DIR)
 
     COG_INSTALL_DIR= "{COG_DIR}/cog_install".format(COG_DIR=COG_DIR)
-    esg_bash2py.mkdir_p(COG_INSTALL_DIR)
+    pybash.mkdir_p(COG_INSTALL_DIR)
 
     os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
     try:
@@ -115,7 +115,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         logger.exception("Failed to clone COG repo: \n %s", error)
 
     # install CoG dependencies
-    with esg_bash2py.pushd(COG_INSTALL_DIR):
+    with pybash.pushd(COG_INSTALL_DIR):
         # "pip install -r requirements.txt"
         with open("requirements.txt", "r") as req_file:
             requirements = req_file.readlines()
@@ -152,7 +152,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         if error[0]["returncode"] == 9:
             pass
 
-    esg_bash2py.mkdir_p("~cogadmin")
+    pybash.mkdir_p("~cogadmin")
     esg_functions.stream_subprocess_output("chown cogadmin:cogadmin ~cogadmin")
 
     # change user prompt

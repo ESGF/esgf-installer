@@ -497,7 +497,7 @@ def process_arguments():
         esg_cert_manager.rebuild_truststore()
     elif args.addmycerttotruststore:
         from esgf_utilities import esg_cert_manager
-        esg_cert_manager.add_my_cert_to_truststore()
+        esg_truststore_manager.add_my_cert_to_truststore()
     elif args.generatesslkeyandcsr:
         esg_cert_manager.generate_ssl_key_and_csr(args.generatesslkeyandcsr)
     elif args.migratetomcatcredentialstoesgf:

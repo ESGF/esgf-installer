@@ -158,7 +158,7 @@ def register(remote_host, truststore_password, keystore_password=None):
 
         if ssl_endpoint == esgf_host:
             #For local scenario need to pull from local keystore and put into local truststore... need keystore password in addition
-            esg_cert_manager.add_my_cert_to_truststore()
+            esg_truststore_manager.add_my_cert_to_truststore()
         else:
             pybash.mkdir_p(config["workdir"])
             with pybash.pushd(config["workdir"]):

@@ -516,7 +516,7 @@ def configure_tomcat():
 
             edit_server_xml()
 
-            esg_cert_manager.add_my_cert_to_truststore()
+            esg_truststore_manager.add_my_cert_to_truststore()
 
             esg_functions.change_ownership_recursive(config["tomcat_install_dir"], tomcat_user, tomcat_group)
             esg_functions.change_ownership_recursive(config["tomcat_conf_dir"], tomcat_user, tomcat_group)

@@ -1052,6 +1052,9 @@ def get_public_ip():
     esg_property_manager.set_property("esgf_host_ip", my_ip)
     return my_ip
 
+def convert_hash_to_hex(subject_name_hash):
+    '''Converts the subject_name_hash from a long to a hex string'''
+    return format(subject_name_hash, 'x')
 
 def get_node_type(config_file=config["esg_config_type_file"]):
     '''

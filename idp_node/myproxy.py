@@ -55,7 +55,7 @@ def setup_gcs_id(first_run=None):
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
 
-        cert_hash = esg_cert_manager.convert_hash_to_hex(cert_obj.subject_name_hash())
+        cert_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
         simpleCA_tar_file = "globus_simple_ca_{}_setup-0.tar.gz".format(cert_hash)
         shutil.copyfile(simpleCA_tar_file, os.path.join(myproxyca_dir, simpleCA_tar_file))
         shutil.copyfile(simpleCA_tar_file, os.path.join("/etc/grid-security/certificates", simpleCA_tar_file))

@@ -154,8 +154,6 @@ def copy_config_files():
         logger.exception()
         sys.exit()
 
-    # esg_cert_manager.main()
-
 
 def create_tomcat_user():
     '''Create the Tomcat system user and user group'''
@@ -394,7 +392,6 @@ def get_tomcat_ports():
 def tomcat_port_check():
     '''Test accessibility of tomcat ports listed in the server.xml config file'''
     tomcat_ports = get_tomcat_ports()
-    logger.debug("ports: %s", ports)
 
     failed_connections = []
     for port in tomcat_ports:
@@ -504,7 +501,7 @@ def configure_tomcat():
             #Make empty keystore...
             #-------------
             keystore_password = esg_functions.get_java_keystore_password()
-            esg_cert_manager.create_empty_java_keystore(config["keystore_file"], config["keystore_alias"], keystore_password, distinguished_name)
+            esg_keystore_manager.create_empty_java_keystore(config["keystore_file"], config["keystore_alias"], keystore_password, distinguished_name)
 
 
             #Setup temp CA

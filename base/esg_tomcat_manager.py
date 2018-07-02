@@ -498,7 +498,7 @@ def configure_tomcat():
             distinguished_name = "CN={esgf_host}".format(esgf_host=esg_functions.get_esgf_host())
 
             #if previous keystore is found; backup
-            esg_cert_manager.backup_previous_keystore(config["keystore_file"])
+            esg_keystore_manager.backup_previous_keystore(config["keystore_file"])
 
             #-------------
             #Make empty keystore...

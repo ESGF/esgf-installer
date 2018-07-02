@@ -82,10 +82,8 @@ def get_current_esgf_library_version(library_name):
             return None
 
 
-def get_current_webapp_version(webapp_name, version_command=None):
-    version_property = pybash.Expand.colonMinus(version_command, "Version")
-    print "version_property: ", version_property
-    reg_ex = r"^(" + re.escape(version_property) + ".*)"
+def get_current_webapp_version(webapp_name, version_command="Version"):
+    reg_ex = r"^(" + re.escape(version_command) + ".*)"
     with open(config["tomcat_install_dir"] + "/webapps/" + webapp_name + "/META-INF/MANIFEST.MF", "r") as manifest_file:
         for line in manifest_file:
             line = line.rstrip()  # remove trailing whitespace such as '\n'

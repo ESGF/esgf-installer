@@ -19,7 +19,7 @@ from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
-from esgf_utilities import esg_property_manager, esg_keystore_manager
+from esgf_utilities import esg_property_manager, esg_keystore_manager, esg_truststore_manager
 from esgf_utilities import esg_cert_manager, CA
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)

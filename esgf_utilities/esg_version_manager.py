@@ -96,13 +96,12 @@ def get_current_webapp_version(webapp_name, version_command=None):
     return False
 
 
-def check_webapp_version(webapp_name, min_version, version_command=None):
-    version_property = pybash.Expand.colonMinus(version_command, "Version")
+def check_webapp_version(webapp_name, min_version, version_command="Version"):
     if not os.path.isdir(config["tomcat_install_dir"] + "/webapps/" + webapp_name):
         print "Web Application %s is not present or cannot be detected!" % (webapp_name)
         return False
     else:
-        current_version = str(get_current_webapp_version(webapp_name, version_property)).strip()
+        current_version = str(get_current_webapp_version(webapp_name, version_command)).strip()
         if not current_version:
             print " WARNING:(2) Could not detect version of %s" % (webapp_name)
         else:

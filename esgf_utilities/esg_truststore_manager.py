@@ -178,6 +178,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(simpleCA_cert).read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+            raise
 
 
         simpleCA_cert_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())

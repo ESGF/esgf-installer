@@ -77,11 +77,6 @@ class test_ESG_cert_manager(unittest.TestCase):
         print "truststore_keys:", truststore_keys
         self.assertTrue("/tmp/hostcert" in truststore_keys)
 
-    def test_fetch_esgf_certificates(self):
-        esg_cert_manager.fetch_esgf_certificates("/tmp")
-        self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates"))
-
-        shutil.rmtree("/tmp/esg_trusted_certificates")
 
     def test_rebuild_truststore(self):
         esg_cert_manager.rebuild_truststore("/tmp/test-truststore.ts")

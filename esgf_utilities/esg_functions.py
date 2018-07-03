@@ -1006,7 +1006,12 @@ def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"
     os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
 def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
-    '''Setups up whitelist XML files from the distribution mirror'''
+    '''Setups up whitelist XML files from the distribution mirror
+       Downloads the XML files and edits the placeholder string with the esgf hostname
+       Formerly called setup_sensible_confs
+    '''
+
+    update_fileupload_jar()
 
     print "*******************************"
     print "Setting up The ESGF whitelist files"
@@ -1043,7 +1048,11 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
     # update_idp_static_xml_permissions(whitelist_file_dir)
-
+    chmod a+r $esg_config_dir/esgf_idp_static.xml
+    try:
+        os.chmod("/esg/config/esgf_idp_static.xml", current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    except (IOError, OSError):
+        logger.exception("Could not update permissions on esgf_idp_static.xml")
 
 def get_public_ip():
     from urllib2 import urlopen

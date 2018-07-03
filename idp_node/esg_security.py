@@ -107,13 +107,13 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 # SECURITY SETUP
 #******************************************************************
 
-def security_startup_hook(node_type_list, esgf_security_version):
+def security_startup_hook(node_type_list):
     logger.info("Security Startup Hook: Setup policy and whitelists... ")
-    _setup_policy_files(node_type_list, esgf_security_version)
+    _setup_policy_files(node_type_list)
     _setup_static_whitelists("ats", "idp")
 
 
-def _setup_policy_files(node_type_list, esgf_security_version):
+def _setup_policy_files(node_type_list):
     if "DATA" in node_type_list and "INDEX" in node_type_list:
         logger.debug("setup_policy_files()... ")
 
@@ -124,10 +124,10 @@ def _setup_policy_files(node_type_list, esgf_security_version):
 
         if "DATA" in node_type_list:
             app_path = esg_property_manager.get_property("orp_security_authorization_service_app_home")
-            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(esgf_security_version))
+            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(config["esgf_security_version"]))
         elif "INDEX" in node_type_list:
             app_path = esg_property_manager.get_property("index_service_app_home")
-            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(esgf_security_version))
+            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(config["esgf_security_version"]))
 
         if not os.path.isfile(security_jar_file):
             esg_functions.exit_with_error("Could not determine location of security jar, exiting...")

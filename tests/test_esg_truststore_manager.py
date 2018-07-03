@@ -30,4 +30,4 @@ class test_ESG_truststore_manager(unittest.TestCase):
         os.remove("/etc/certs/esgf-ca-bundle.crt")
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

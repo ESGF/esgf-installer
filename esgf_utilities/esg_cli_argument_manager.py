@@ -392,6 +392,7 @@ def process_arguments():
             sys.exit(1)
         logger.debug("STOP SERVICES")
         esg_setup.init_structure()
+        node_type_list = esg_functions.get_node_type()
         stop(node_type_list)
         sys.exit(0)
     elif args.restart:
@@ -400,6 +401,7 @@ def process_arguments():
             sys.exit(1)
         logger.debug("RESTARTING SERVICES")
         esg_setup.init_structure()
+        node_type_list = esg_functions.get_node_type()
         stop(node_type_list)
         sleep(2)
         start(node_type_list)

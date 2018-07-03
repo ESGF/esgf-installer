@@ -1048,7 +1048,6 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
     # update_idp_static_xml_permissions(whitelist_file_dir)
-    chmod a+r $esg_config_dir/esgf_idp_static.xml
     try:
         os.chmod("/esg/config/esgf_idp_static.xml", current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     except (IOError, OSError):

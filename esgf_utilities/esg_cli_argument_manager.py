@@ -12,14 +12,15 @@ from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager
+from esgf_utilities import esg_cert_manager, esg_truststore_manager
 from base import esg_setup
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
+from data_node import esg_publisher, orp
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError, SubprocessError
-from idp_node import globus, gridftp, myproxy
-from index_node import solr
+from idp_node import globus, gridftp, myproxy, esg_security
+from index_node import solr, esg_search
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -34,12 +35,39 @@ def cert_howto():
     with open(os.path.join(os.path.dirname(__file__), os.pardir, 'docs', 'cert_howto.txt'), 'r') as howto_file:
         print howto_file.read()
 
+def run_startup_hooks(node_type_list):
+    '''Run commands that need to be done to set the stage before any of the aparatus begins their launch sequence.
+    Here is a good place to; copy files, set configurations, etc... BEFORE you start running and need them!
+    In the submodule script the convention is <module>_startup_hook() (where module does not contain esg(f) prefix)'''
+
+    print "Running startup hooks..."
+    esg_functions.setup_whitelist_files()
+    esg_publisher.esgcet_startup_hook()
+    orp.orp_startup_hook()
+    esg_security.security_startup_hook(node_type_list)
+    esg_search.search_startup_hook()
+
+    #When starting up pull down necessary federation certificates
+    try:
+        esg_property_manager.get_property("node_auto_fetch_certs")
+    except ConfigParser.NoOptionError:
+        esg_property_manager.set_property("node_auto_fetch_certs", "true")
+
+    if esg_property_manager.get_property("node_auto_fetch_certs") == "true":
+         print "Fetching federation certificates... "
+         esg_truststore_manager.fetch_esgf_certificates()
+
+         print "Fetching federation truststore..... "
+         esg_truststore_manager.fetch_esgf_truststore()
+
 def start(node_types):
     '''Start ESGF Services'''
     print "\n*******************************"
     print "Starting ESGF Node"
     print "******************************* \n"
 
+    print "Starting Services.."
+    run_startup_hooks(node_types)
     #base components
     esg_apache_manager.start_apache()
     esg_tomcat_manager.start_tomcat()
@@ -325,13 +353,13 @@ def process_arguments():
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
-        esg_functions.get_node_type(config["esg_config_type_file"])
-        generate_esgf_csrs()
+        node_type_list = esg_functions.get_node_type()
+        esg_cert_manager.generate_esgf_csrs(node_type_list)
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
-        esg_functions.get_node_type(config["esg_config_type_file"])
-        generate_esgf_csrs_ext()
+        node_type_list = esg_functions.get_node_type()
+        esg_cert_manager.generate_esgf_csrs_ext(node_type_list)
         sys.exit(0)
     if args.certhowto:
         cert_howto()
@@ -450,7 +478,7 @@ def process_arguments():
     elif args.setidppeer:
         node_type_list = esg_functions.get_node_type()
         from data_node import thredds
-        thredds.select_idp_peer(node_type_list)
+        thredds.select_idp_peer()
     elif args.getindexpeer:
         try:
             print "Current Index Peer: {}".format(esg_property_manager.get_property("esgf_index_peer"))
@@ -491,7 +519,7 @@ def process_arguments():
     elif args.fetchesgfcerts:
         esg_dist_url = esg_property_manager.get_property("esg.dist.url")
         from esgf_utilities import esg_cert_manager
-        esg_cert_manager.fetch_esgf_certificates()
+        esg_truststore_manager.fetch_esgf_certificates()
     elif args.rebuildtrustore:
         from esgf_utilities import esg_cert_manager
         esg_cert_manager.rebuild_truststore()
@@ -505,14 +533,15 @@ def process_arguments():
         esg_tomcat_manager.migrate_tomcat_credentials_to_esgf()
         esg_tomcat_manager.sanity_check_web_xmls()
     elif args.updatetempca:
-        from esgf_utilities import esg_cert_manager
+        from esgf_utilities import CA
         logger.debug("updating temporary CA")
-        esg_cert_manager.setup_temp_ca()
+        CA.setup_temp_ca()
         esg_cert_manager.install_local_certs("firstrun")
     elif args.checkcerts:
         esg_cert_manager.check_certificates()
     elif args.installsslkeypair:
-        install_keypair()
+        from esgf_utilities import esg_keystore_manager
+        esg_keystore_manager.install_keypair()
     elif args.optimizeindex:
         if not os.path.exists(os.path.join(config["scripts_dir"], "esgf-optimize-index")):
             print "The flag --optimize-index is not enabled..."

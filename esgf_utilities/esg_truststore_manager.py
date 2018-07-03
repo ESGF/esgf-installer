@@ -208,38 +208,6 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
         esg_functions.change_permissions_recursive(config["globus_global_certs_dir"], 0644)
 
 
-fetch_esgf_truststore() {
-    echo "Fetching ESGF Federation Truststore... "
-    local truststore_file_=${1:-${truststore_file}}
-    [ -z "${truststore_file_}" ] && echo "Sorry, cannot fetch truststore [${truststore_file_}], value not set" && return 1
-    [ -e "${truststore_file_}" ] && mv -v ${truststore_file_}{,.bak}
-    if [ "$node_peer_group" = "esgf-test" ]; then
-        checked_get ${truststore_file} ${esg_dist_url_root}/certs/test-federation/${truststore_file_##*/}
-    else
-        checked_get ${truststore_file} ${esg_dist_url_root}/certs/${truststore_file_##*/}
-    fi
-    (( $? > 1 )) && [FAIL] && mv -v ${truststore_file_}{.bak,} || [OK]
-
-	apache_truststore='/etc/certs/esgf-ca-bundle.crt'
-    [ -e "${apache_truststore}" ] && mv -v ${apache_truststore}{,.bak}
-    if [ "$node_peer_group" = "esgf-test" ]; then
-        checked_get ${apache_truststore} ${esg_dist_url_root}/certs/test-federation/${apache_truststore##*/}
-    else
-        checked_get ${apache_truststore} ${esg_dist_url_root}/certs/${apache_truststore##*/}
-    fi
-    (( $? > 1 )) && [FAIL] && mv -v ${apache_truststore}{.bak,} || [OK] && cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;
-
-    # For the IDP it is good to trust yourself ;-)...
-    if [ -e "${esg_root_dir}/config/myproxy/myproxy-server.config" ] ; then
-        local simpleCA_cert=$(readlink -f $(grep certificate_issuer_cert "${esg_root_dir}/config/myproxy/myproxy-server.config" 2> /dev/null | awk '{print $2}' | tr -d '\"') 2> /dev/null)
-        local simpleCA_cert_hash=$(openssl x509 -noout -in ${simpleCA_cert} -hash)
-        _insert_cert_into_truststore ${globus_global_certs_dir}/${simpleCA_cert_hash}.0 ${truststore_file_}
-    fi
-
-    # From an SSL p.o.v. you should trust yourself as well...
-    add_my_cert_to_truststore
-    #sync_with_java_truststore ${truststore_file_}
-}
 
 def backup_truststore(truststore_file=config["truststore_file"]):
     if os.path.exists(truststore_file):
@@ -254,12 +222,11 @@ def download_truststore(truststore_file, esg_root_url, node_peer_group):
     truststore_file_name = pybash.trim_string_from_head(truststore_file)
 
     if node_peer_group == "esgf-test":
-        esg_functions.download_update(truststore_file, "{}/certs/test-federation/{}".format(esg_root_url, truststore_file))
+        esg_functions.download_update(truststore_file, "{}/certs/test-federation/{}".format(esg_root_url, truststore_file_name))
     else:
-        esg_functions.download_update(truststore_file, "{}/certs/{}".format(esg_root_url, truststore_file))
+        esg_functions.download_update(truststore_file, "{}/certs/{}".format(esg_root_url, truststore_file_name))
 
-def download_apache_truststore(esg_root_url, node_peer_group):
-    apache_truststore = '/etc/certs/esgf-ca-bundle.crt'
+def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group):
     backup_apache_truststore(apache_truststore)
 
     #separate file name from the rest of the file path (esgf-ca-bundle.crt by default)
@@ -287,8 +254,9 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
         #download_truststore
         download_truststore(truststore_file, esg_root_url, node_peer_group)
         #download_apache_truststore
-        download_apache_truststore(esg_root_url, node_peer_group)
-        
+        apache_truststore = '/etc/certs/esgf-ca-bundle.crt'
+        download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
+
         #append cacert.pem to apache_truststore
         with open(apache_truststore, "a") as apache_truststore_file:
             ca_cert = open("/etc/tempcerts/cacert.pem").read()

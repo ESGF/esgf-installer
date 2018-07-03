@@ -15,6 +15,7 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 class test_ESG_truststore_manager(unittest.TestCase):
 
+
     def test_fetch_esgf_certificates(self):
         esg_truststore_manager.fetch_esgf_certificates("/tmp")
         self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates"))
@@ -23,7 +24,7 @@ class test_ESG_truststore_manager(unittest.TestCase):
 
 
     def test_fetch_esgf_truststore(self):
-        esg_truststore_manager.fetch_esgf_truststore("/tmp")
+        esg_truststore_manager.fetch_esgf_truststore("/tmp/esg-truststore.ts")
         self.assertTrue(os.path.exists("/etc/certs/esgf-ca-bundle.crt"))
 
         os.remove("/etc/certs/esgf-ca-bundle.crt")

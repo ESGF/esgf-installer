@@ -117,7 +117,7 @@ def _setup_policy_files(node_type_list):
     if "DATA" in node_type_list and "INDEX" in node_type_list:
         logger.debug("setup_policy_files()... ")
 
-        tmp_extract_dir = os.path.join("esg", "tmp")
+        tmp_extract_dir = os.path.join("/esg", "tmp")
         policy_file_name = "esgf_policies"
         internal_jar_path = "esg/security/config"
         full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)

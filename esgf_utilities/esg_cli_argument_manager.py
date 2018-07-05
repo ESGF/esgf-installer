@@ -69,15 +69,29 @@ def start(node_types):
     print "Starting Services.."
     run_startup_hooks(node_types)
     #base components
-    esg_apache_manager.start_apache()
-    esg_tomcat_manager.start_tomcat()
-    esg_postgres.start_postgres()
+    try:
+        esg_apache_manager.start_apache()
+    except SubprocessError, error:
+        logger.error("Could not start Apache httpd: %s", error)
+        raise
+
+    try:
+        esg_tomcat_manager.start_tomcat()
+    except SubprocessError, error:
+        logger.error("Could not start Tomcat: %s", error)
+        raise
+    try:
+        esg_postgres.start_postgres()
+    except SubprocessError, error:
+        logger.error("Could not start Postgres: %s", error)
+        raise
 
     if "DATA" in node_types:
         try:
             globus.start_globus("DATA")
         except SubprocessError, error:
             logger.error("Could not start globus: %s", error)
+            raise
 
     if "IDP" in node_types:
         try:

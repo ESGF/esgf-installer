@@ -135,15 +135,16 @@ def create_policy_files(policy_type, security_jar_file):
         pybash.mkdir_p(tmp_extract_dir)
         with pybash.pushd(tmp_extract_dir):
             with zipfile.ZipFile(security_jar_file, 'r') as zf:
-                policy_file_extraction_path = "{internal_jar_path}/{policy_file_name}_{policy_type}.xml".format(internal_jar_path=internal_jar_path, policy_file_name=policy_file_name, policy_type=policy_type)
+                policy_name = "{policy_file_name}_{policy_type}.xml".format(policy_file_name=policy_file_name, policy_type=policy_type)
+                policy_file_extraction_path = "{internal_jar_path}/{policy_name}".format(internal_jar_path=internal_jar_path, policy_name=policy_name)
                 logger.info("Extracting %s from %s", policy_file_extraction_path, security_jar_file)
                 zf.extract(policy_file_extraction_path)
             # esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
-        shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_file_name+"_{policy_type}.xml".format(policy_type=policy_type)), config["esg_config_dir"])
+        shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_name), os.path.join(config["esg_config_dir"], policy_name))
 
         tomcat_user_id = esg_functions.get_user_id("tomcat")
         tomcat_group_id = esg_functions.get_group_id("tomcat")
-        policy_file_path = os.path.join(config["esg_config_dir"], policy_file_name+"_{policy_type}.xml".format(policy_type=policy_type))
+        policy_file_path = os.path.join(config["esg_config_dir"], policy_name)
         os.chown(policy_file_path, tomcat_user_id, tomcat_group_id)
         os.chmod(policy_file_path, 0640)
 

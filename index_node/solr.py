@@ -99,6 +99,8 @@ def solr_status(SOLR_INSTALL_DIR):
         esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
     except OSError:
         pass
+    except SubprocessError:
+        raise("Error checking solr status")
 
 #TODO: fix and test
 def check_solr_process(solr_config_type="master", port=8984):
@@ -128,7 +130,7 @@ def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr", port="-all"):
     except OSError:
         pass
 
-    solr_status(SOLR_INSTALL_DIR)
+    check_solr_process()
 
 
 def commit_shard_config(config_type, port_number, config_file="/esg/config/esgf_shards.config"):

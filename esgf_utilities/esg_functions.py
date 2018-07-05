@@ -1000,10 +1000,6 @@ def update_fileupload_jar():
             logger.exception(error)
 
 
-def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
-    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
-    current_mode = os.stat(xml_file_path)
-    os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
 def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
     '''Setups up whitelist XML files from the distribution mirror
@@ -1047,11 +1043,6 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
         #add read permissions to all, i.e. chmod a+r
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-    # update_idp_static_xml_permissions(whitelist_file_dir)
-    try:
-        os.chmod("/esg/config/esgf_idp_static.xml", current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-    except (IOError, OSError):
-        logger.exception("Could not update permissions on esgf_idp_static.xml")
 
 def get_public_ip():
     from urllib2 import urlopen

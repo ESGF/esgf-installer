@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import stat
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
@@ -121,6 +122,7 @@ def _setup_policy_files(node_type_list):
         policy_file_name = "esgf_policies"
         internal_jar_path = "esg/security/config"
         full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)
+        logger.debug("full_extracted_jar_dir: %s", full_extracted_jar_dir)
 
         if "DATA" in node_type_list:
             app_path = esg_property_manager.get_property("orp_security_authorization_service_app_home")
@@ -157,6 +159,14 @@ def _setup_policy_files(node_type_list):
             os.chown(policy_file_common, tomcat_user_id, tomcat_group_id)
             os.chmod(policy_file_common, 0640)
 
+
+def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
+    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
+    current_mode = os.stat(xml_file_path)
+    try:
+        os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    except OSError:
+        raise
 
 def _setup_static_whitelists(node_type_list, esgf_security_version):
     if "DATA" in node_type_list and "INDEX" in node_type_list and "IDP" in node_type_list:

@@ -2,6 +2,7 @@ import os
 import logging
 import shutil
 import stat
+import zipfile
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
@@ -135,6 +136,7 @@ def _setup_policy_files(node_type_list):
             esg_functions.exit_with_error("Could not determine location of security jar, exiting...")
 
         logger.debug("Using security jar file: %s", security_jar_file)
+        print "security_jar_file:", security_jar_file
 
         #If old named file exists rename
         # esgf_polcies.xml -> esgf_policies_local.xml
@@ -150,7 +152,11 @@ def _setup_policy_files(node_type_list):
             tmp_extract_dir = os.path.join(config["esg_root_dir"], "tmp")
             pybash.mkdir_p(tmp_extract_dir)
             with pybash.pushd(tmp_extract_dir):
-                esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
+                with zipfile.ZipFile(security_jar_file, 'r') as zf:
+                    policy_file_extraction_path = "{internal_jar_path}/{policy_file_name}_local.xml".format(internal_jar_path=internal_jar_path, policy_file_name=policy_file_name)
+                    logger.info("Extracting %s from %s", policy_file_extraction_path, security_jar_file)
+                    zf.extract(policy_file_extraction_path)
+                # esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
             shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_file_name+"_common.xml"), config["esg_config_dir"])
 
             tomcat_user_id = esg_functions.get_user_id("tomcat")
@@ -173,7 +179,7 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
         service_types = ["DATA", "INDEX", "IDP"]
         app_config_dir = "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg/orp/orp/config"
 
-        tmp_extract_dir = os.path.join("esg", "tmp")
+        tmp_extract_dir = os.path.join("/esg", "tmp")
         internal_jar_path = "esg/security/config"
         full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)
 

@@ -129,6 +129,11 @@ def purge_base():
     "/etc/tempcerts", "/opt/esgf", "/tmp/inputpipe", "/tmp/outputpipe", "/usr/local/cog", "/var/www/.python-eggs"]
 
     files_to_delete = ["/etc/httpd/conf/esgf-httpd.conf", "/usr/local/bin/add_checksums_to_map.sh"]
+    try:
+        esg_functions.stream_subprocess_output("umount /esg/gridftp_root/esg_dataroot")
+    except SubprocessError:
+        logger.exception("Could not unmount /esg/gridftp_root/esg_dataroot")
+
     for directory in directories_to_delete:
         try:
             print "Deleting {directory}: ".format(directory=directory)

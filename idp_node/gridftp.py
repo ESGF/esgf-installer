@@ -191,9 +191,10 @@ def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root"
         globus_esgf_file.write("usage_stats_target localhost:0\!all\n")
         globus_esgf_file.write("acl customgsiauthzinterface\n")
         gridftp_server_usage_log = "{}/esg-server-usage-gridftp.log".format(config["esg_log_dir"])
-        globus_esgf_file.write("GLOBUS_USAGE_DEBUG \"MESSAGES,{}\n".format(gridftp_server_usage_log))
-        globus_esgf_file.write("GSI_AUTHZ_CONF '/etc/grid-security/authz_callouts_esgsaml.conf'\n")
-        globus_esgf_file.write("GLOBUS_GSI_AUTHZ_DEBUG_FILE '/var/log/gridftp-debug.log'\n")
+        globus_esgf_file.write('$GLOBUS_USAGE_DEBUG "MESSAGES,{}\n"'.format(gridftp_server_usage_log))
+        globus_esgf_file.write('$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_esgsaml.conf"\n')
+        globus_esgf_file.write('#$GLOBUS_GSI_AUTHZ_DEBUG_FILE "/var/log/gridftp-debug.log"\n')
+        globus_esgf_file.write('#$GLOBUS_GSI_AUTHZ_DEBUG_LEVEL "10"\n')
 
 def write_esgsaml_auth_conf():
     '''By making this a separate function it may be called directly in the
@@ -379,11 +380,11 @@ def setup_gcs_io(first_run=None):
 
     with open("/etc/gridftp.d/globus-connect-esgf", "w") as globus_connect_file:
         globus_connect_file.write("port_range 50000,51000\n")
-        globus_connect_file.write("GLOBUS_TCP_SOURCE_RANGE 50000,51000\n")
+        globus_connect_file.write("$GLOBUS_TCP_SOURCE_RANGE 50000,51000\n")
         globus_connect_file.write("restrict_paths R/,N/etc,N/tmp,N/dev\n")
-        globus_connect_file.write("GRIDMAP '/etc/grid-security/grid-mapfile'\n")
-        globus_connect_file.write("X509_USER_CERT '/etc/grid-security/hostcert.pem'\n")
-        globus_connect_file.write("X509_USER_KEY '/etc/grid-security/hostkey.pem'\n")
+        globus_connect_file.write("$GRIDMAP '/etc/grid-security/grid-mapfile'\n")
+        globus_connect_file.write("$X509_USER_CERT '/etc/grid-security/hostcert.pem'\n")
+        globus_connect_file.write("$X509_USER_KEY '/etc/grid-security/hostkey.pem'\n")
         globus_connect_file.write("log_single /var/log/gridftp.log\n")
         globus_connect_file.write("log_level ALL\n")
-        globus_connect_file.write("X509_CERT_DIR '/etc/grid-security/certificates'\n")
+        globus_connect_file.write("$X509_CERT_DIR '/etc/grid-security/certificates'\n")

@@ -128,11 +128,12 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
 
         for dataset in dataset_list:
             mount_name, mount_dir = dataset.split("|")
+            mount_name = mount_name.strip()
+            mount_dir = mount_dir.strip()
             print "mounting [{mount_dir}] into chroot jail [{gridftp_chroot_jail}/] as [{mount_name}]".format(mount_dir=mount_dir, mount_name=mount_name, gridftp_chroot_jail=gridftp_chroot_jail)
-            real_mount_dir = esg_functions.readlinkf(mount_dir)
             gridftp_mount_dir = os.path.join(gridftp_chroot_jail, mount_name)
             pybash.mkdir_p(gridftp_mount_dir)
-            esg_functions.stream_subprocess_output("mount --bind {} {}".format(real_mount_dir, gridftp_mount_dir))
+            esg_functions.stream_subprocess_output("mount --bind {} {}".format(mount_dir, gridftp_mount_dir))
 
 def post_gridftp_jail_setup():
     '''Write our trimmed version of /etc/password in the chroot location'''

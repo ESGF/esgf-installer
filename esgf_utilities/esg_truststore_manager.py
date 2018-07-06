@@ -178,6 +178,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(simpleCA_cert).read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+            raise
 
 
         simpleCA_cert_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
@@ -207,24 +208,56 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
         esg_functions.change_permissions_recursive(config["globus_global_certs_dir"], 0644)
 
 
+
+def backup_truststore(truststore_file=config["truststore_file"]):
+    if os.path.exists(truststore_file):
+        shutil.copyfile(truststore_file, truststore_file+".bak")
+
+def backup_apache_truststore(apache_truststore='/etc/certs/esgf-ca-bundle.crt'):
+    if os.path.exists(apache_truststore):
+        shutil.copyfile(apache_truststore, apache_truststore+".bak")
+
+def download_truststore(truststore_file, esg_root_url, node_peer_group):
+    #separate file name from the rest of the file path (esg-truststore.ts by default)
+    truststore_file_name = pybash.trim_string_from_head(truststore_file)
+
+    if node_peer_group == "esgf-test":
+        esg_functions.download_update(truststore_file, "{}/certs/test-federation/{}".format(esg_root_url, truststore_file_name))
+    else:
+        esg_functions.download_update(truststore_file, "{}/certs/{}".format(esg_root_url, truststore_file_name))
+
+def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group):
+    backup_apache_truststore(apache_truststore)
+
+    #separate file name from the rest of the file path (esgf-ca-bundle.crt by default)
+    apache_truststore_file_name = pybash.trim_string_from_head(apache_truststore)
+
+    if not os.path.exists(apache_truststore):
+        if node_peer_group == "esgf-test":
+            esg_functions.download_update(apache_truststore, "{}/certs/test-federation/{}".format(esg_root_url, apache_truststore_file_name))
+        else:
+            esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
+
 def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
+    print "Fetching ESGF Federation Truststore... "
+
+    esg_root_url = esg_property_manager.get_property("esg.root.url")
+
+    backup_truststore(truststore_file)
+
     if not os.path.exists(truststore_file):
         try:
             node_peer_group = esg_property_manager.get_property("node_peer_group")
-            if node_peer_group == "esgf-test":
-                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore-test-federation.ts"), truststore_file)
-            else:
-                shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore.ts"), truststore_file)
         except ConfigParser.NoOptionError:
-            print "Could not find node peer group property"
+            raise("Could not find node peer group property")
 
+        #download_truststore
+        download_truststore(truststore_file, esg_root_url, node_peer_group)
+        #download_apache_truststore
         apache_truststore = '/etc/certs/esgf-ca-bundle.crt'
-        if not os.path.exists(apache_truststore):
-            if node_peer_group == "esgf-test":
-                shutil.copyfile(os.path.join(os.path.dirname(__file__), "apace_certs/esgf-ca-bundle-test-federation.crt"), apache_truststore)
-            else:
-                shutil.copyfile(os.path.join(os.path.dirname(__file__), "apace_certs/esgf-ca-bundle.crt"), apache_truststore)
+        download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
 
+        #append cacert.pem to apache_truststore
         with open(apache_truststore, "a") as apache_truststore_file:
             ca_cert = open("/etc/tempcerts/cacert.pem").read()
             apache_truststore_file.write(ca_cert)

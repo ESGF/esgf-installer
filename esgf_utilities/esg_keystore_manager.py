@@ -170,7 +170,7 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
     if construct_keystore_output["returncode"] !=0:
         print "Could not import cert %s into keystore %s" % (cert_bundle, keystore_name)
 
-def install_tomcat_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
+def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''
     Once you have submitted the CSR and have gotten it back *signed*; now install the keypair
     If you want to install a commercial CA issued certificate:

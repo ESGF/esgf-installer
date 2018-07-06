@@ -1000,13 +1000,14 @@ def update_fileupload_jar():
             logger.exception(error)
 
 
-def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
-    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
-    current_mode = os.stat(xml_file_path)
-    os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
 def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
-    '''Setups up whitelist XML files from the distribution mirror'''
+    '''Setups up whitelist XML files from the distribution mirror
+       Downloads the XML files and edits the placeholder string with the esgf hostname
+       Formerly called setup_sensible_confs
+    '''
+
+    update_fileupload_jar()
 
     print "*******************************"
     print "Setting up The ESGF whitelist files"
@@ -1041,8 +1042,6 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
         current_mode = os.stat(local_file_path)
         #add read permissions to all, i.e. chmod a+r
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-
-    # update_idp_static_xml_permissions(whitelist_file_dir)
 
 
 def get_public_ip():

@@ -18,8 +18,6 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-orp_property_file_dist_url = "{}/esg-orp/esg-orp.properties".format(esg_dist_url)
 orp_context_root = "esg-orp"
 orp_service_app_home = "/usr/local/tomcat/webapps/{}".format(orp_context_root)
 orp_service_endpoint = "https://{}/{}/html.htm".format(esg_functions.get_esgf_host(), orp_context_root)
@@ -76,7 +74,7 @@ def extract_orp_war():
     os.remove("esg-orp.war")
 
 
-def get_orp_support_libs(dest_dir):
+def get_orp_support_libs(dest_dir, esg_dist_url):
     '''Takes the destination directory you wish to have supported libs checked and downloaded to
     returns the number of files downloaded (in this case max of 2)
             0 if there was no update of libs necessary'''
@@ -139,6 +137,9 @@ def setup_orp():
         backup_orp()
 
     pybash.mkdir_p(orp_service_app_home)
+
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
+
     try:
         if esg_property_manager.get_property("devel"):
             orp_url = "{}/devel/esg-orp/esg-orp.war".format(esg_dist_url)
@@ -161,7 +162,7 @@ def setup_orp():
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
 
     setup_providers_dropdown(esg_dist_url)
-    get_orp_support_libs("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib")
+    get_orp_support_libs("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib", esg_dist_url)
 
     write_orp_install_log()
 

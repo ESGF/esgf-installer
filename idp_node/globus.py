@@ -12,7 +12,7 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import SubprocessError
+from esgf_utilities.esg_exceptions import SubprocessError, InvalidNodeTypeError
 from base import esg_tomcat_manager
 from base import esg_postgres
 from idp_node import gridftp
@@ -100,14 +100,14 @@ def start_globus(installation_type):
         start_globus_services(directive)
 
 def stop_globus(installation_type):
-    '''Stops the globus services by delegating out to esg-globus script
-    arg1 selection bit vector ($sel)'''
+    '''Stops the globus services'''
 
     if installation_type == "DATA":
-        directive = "datanode"
-        stop_globus_services(directive)
-    if installation_type == "IDP":
-        stop_globus_services(directive)
+        stop_globus_services("datanode")
+    elif installation_type == "IDP":
+        stop_globus_services("gateway")
+    else:
+        raise InvalidNodeTypeError("Globus is not installed on a {} node type".format(installation_type))
 
 #--------------------------------------------------------------
 # PROCEDURE

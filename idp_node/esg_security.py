@@ -1,6 +1,8 @@
 import os
 import logging
 import shutil
+import stat
+import zipfile
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
@@ -107,63 +109,90 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 # SECURITY SETUP
 #******************************************************************
 
-def security_startup_hook(node_type_list, esgf_security_version):
+def security_startup_hook(node_type_list):
     logger.info("Security Startup Hook: Setup policy and whitelists... ")
-    _setup_policy_files(node_type_list, esgf_security_version)
+    _setup_policy_files(node_type_list)
     _setup_static_whitelists("ats", "idp")
 
 
-def _setup_policy_files(node_type_list, esgf_security_version):
+def create_policy_files(policy_type, security_jar_file):
+    """
+        Creates the policy files depending on the type argument (either local or common).
+
+        :param type: The type of policy file to be created. Must either be 'local' or 'common'
+        :returns: None
+        :raises TypeError: raises an exception
+    """
+    policy_file_name = "esgf_policies"
+    tmp_extract_dir = os.path.join("/esg", "tmp")
+    internal_jar_path = "esg/security/config"
+    full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)
+    logger.debug("full_extracted_jar_dir: %s", full_extracted_jar_dir)
+
+    logger.debug("Creating %s policy files", type)
+    if not os.path.isfile(os.path.join(config["esg_config_dir"], "esgf_policies_{}.xml".format(policy_type))):
+        tmp_extract_dir = os.path.join(config["esg_root_dir"], "tmp")
+        pybash.mkdir_p(tmp_extract_dir)
+        with pybash.pushd(tmp_extract_dir):
+            with zipfile.ZipFile(security_jar_file, 'r') as zf:
+                policy_name = "{policy_file_name}_{policy_type}.xml".format(policy_file_name=policy_file_name, policy_type=policy_type)
+                policy_file_extraction_path = "{internal_jar_path}/{policy_name}".format(internal_jar_path=internal_jar_path, policy_name=policy_name)
+                logger.info("Extracting %s from %s", policy_file_extraction_path, security_jar_file)
+                zf.extract(policy_file_extraction_path)
+            # esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
+        shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_name), os.path.join(config["esg_config_dir"], policy_name))
+
+        tomcat_user_id = esg_functions.get_user_id("tomcat")
+        tomcat_group_id = esg_functions.get_group_id("tomcat")
+        policy_file_path = os.path.join(config["esg_config_dir"], policy_name)
+        os.chown(policy_file_path, tomcat_user_id, tomcat_group_id)
+        os.chmod(policy_file_path, 0640)
+
+def _setup_policy_files(node_type_list):
     if "DATA" in node_type_list and "INDEX" in node_type_list:
         logger.debug("setup_policy_files()... ")
 
-        tmp_extract_dir = os.path.join("esg", "tmp")
-        policy_file_name = "esgf_policies"
-        internal_jar_path = "esg/security/config"
-        full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)
-
         if "DATA" in node_type_list:
             app_path = esg_property_manager.get_property("orp_security_authorization_service_app_home")
-            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(esgf_security_version))
+            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(config["esgf_security_version"]))
         elif "INDEX" in node_type_list:
             app_path = esg_property_manager.get_property("index_service_app_home")
-            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(esgf_security_version))
+            security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(config["esgf_security_version"]))
 
         if not os.path.isfile(security_jar_file):
             esg_functions.exit_with_error("Could not determine location of security jar, exiting...")
 
         logger.debug("Using security jar file: %s", security_jar_file)
+        print "security_jar_file:", security_jar_file
 
         #If old named file exists rename
-        # esgf_polcies.xml -> esgf_policies_local.xml
+        # esgf_policies.xml -> esgf_policies_local.xml
         esgf_policy_file = os.path.join(config["esg_config_dir"], "esgf_policies.xml")
         if os.path.isfile(esgf_policy_file):
             shutil.move(esgf_policy_file, os.path.join(config["esg_config_dir"], "esgf_policies_local.xml"))
-
+        # esgf_policies_static.xml -> esgf_policies_common.xml
         esgf_policy_static_file = os.path.join(config["esg_config_dir"], "esgf_policies_static.xml")
         if os.path.isfile(esgf_policy_static_file):
             shutil.move(esgf_policy_static_file, os.path.join(config["esg_config_dir"], "esgf_policies_common.xml"))
 
-        if not os.path.isfile(os.path.join(config["esg_config_dir"], "esgf_policies_local.xml")):
-            tmp_extract_dir = os.path.join(config["esg_root_dir"], "tmp")
-            pybash.mkdir_p(tmp_extract_dir)
-            with pybash.pushd(tmp_extract_dir):
-                esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
-            shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_file_name+"_common.xml"), config["esg_config_dir"])
+        create_policy_files("local", security_jar_file)
+        create_policy_files("common", security_jar_file)
 
-            tomcat_user_id = esg_functions.get_user_id("tomcat")
-            tomcat_group_id = esg_functions.get_group_id("tomcat")
-            policy_file_common = os.path.join(config["esg_config_dir"], policy_file_name+"_common.xml")
-            os.chown(policy_file_common, tomcat_user_id, tomcat_group_id)
-            os.chmod(policy_file_common, 0640)
 
+def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
+    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
+    current_mode = os.stat(xml_file_path)
+    try:
+        os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    except OSError:
+        raise
 
 def _setup_static_whitelists(node_type_list, esgf_security_version):
     if "DATA" in node_type_list and "INDEX" in node_type_list and "IDP" in node_type_list:
         service_types = ["DATA", "INDEX", "IDP"]
         app_config_dir = "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg/orp/orp/config"
 
-        tmp_extract_dir = os.path.join("esg", "tmp")
+        tmp_extract_dir = os.path.join("/esg", "tmp")
         internal_jar_path = "esg/security/config"
         full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)
 

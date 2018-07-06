@@ -354,9 +354,9 @@ def process_arguments():
         if not esg_setup.check_prerequisites():
             logger.error("Prerequisites for startup not satisfied.  Exiting.")
             sys.exit(1)
-        logger.debug("START SERVICES: %s", node_type_list)
         # esg_setup.init_structure()
         node_type_list = esg_functions.get_node_type()
+        logger.debug("START SERVICES: %s", node_type_list)
         return start(node_type_list)
     elif args.stop:
         if not esg_setup.check_prerequisites():

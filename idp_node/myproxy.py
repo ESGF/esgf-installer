@@ -54,6 +54,7 @@ def setup_gcs_id(first_run=None):
             cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open("cacert.pem").read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
+            raise
 
         cert_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
         simpleCA_tar_file = "globus_simple_ca_{}_setup-0.tar.gz".format(cert_hash)

@@ -194,7 +194,7 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     print "******************************* \n"
     #if globus_global_certs_dir already exists, backup and delete, then recreate empty directory
     if os.path.isdir(config["globus_global_certs_dir"]):
-        esg_functions.backup(config["globus_global_certs_dir"], os.path.join(config["globus_global_certs_dir"], ".bak.tz"))
+        esg_functions.backup(config["globus_global_certs_dir"], os.path.join(config["globus_global_certs_dir"]+".bak.tz"))
         shutil.rmtree(config["globus_global_certs_dir"])
     pybash.mkdir_p(config["globus_global_certs_dir"])
 

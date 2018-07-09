@@ -256,7 +256,7 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
         else:
             esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
 
-def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
+def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_truststore='/etc/certs/esgf-ca-bundle.crt'):
     print "\n*******************************"
     print "Fetching ESGF Federation Truststore... "
     print "******************************* \n"
@@ -274,7 +274,6 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
         #download_truststore
         download_truststore(truststore_file, esg_root_url, node_peer_group)
         #download_apache_truststore
-        apache_truststore = '/etc/certs/esgf-ca-bundle.crt'
         download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
 
         #append cacert.pem to apache_truststore

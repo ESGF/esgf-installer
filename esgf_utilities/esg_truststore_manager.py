@@ -181,8 +181,13 @@ def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificate
 
             with pybash.pushd("globus_simple_ca_{}_setup-0".format(simpleCA_cert_hash)):
                 shutil.copyfile("{}.signing_policy".format(simpleCA_cert_hash), "{}/{}.signing_policy".format(globus_certs_dir, simpleCA_cert_hash))
+
+            #Copy cert to ROOT webapp
             if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
-                esg_functions.stream_subprocess_output("openssl x509 -text -hash -in {} > /usr/local/tomcat/webapps/ROOT/cacert.pem".format(simpleCA_cert))
+                with open('/usr/local/tomcat/webapps/ROOT/cacert.pem', 'w') as ca:
+                    ca.write(
+                        OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
+                )
                 print " My CA Cert now posted @ http://{}/cacert.pem ".format(socket.getfqdn())
                 os.chmod("/usr/local/tomcat/webapps/ROOT/cacert.pem", 0644)
 

@@ -28,6 +28,7 @@ class test_ESG_truststore_manager(unittest.TestCase):
         self.assertTrue(os.path.exists("/tmp/esg-truststore.ts"))
         self.assertTrue(os.path.exists("/tmp/esgf-ca-bundle.crt"))
 
+        os.remove("/tmp/esg-truststore.ts")
         os.remove("/etc/certs/esgf-ca-bundle.crt")
 
 if __name__ == '__main__':

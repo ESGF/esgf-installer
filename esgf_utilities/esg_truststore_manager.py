@@ -148,7 +148,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
             print "added {der_file} to {truststore_file}".format(der_file=der_file, truststore_file=truststore_file)
         os.remove(der_file)
 
-def add_simpleca_cert_to_globus():
+def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificates"):
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
@@ -158,32 +158,35 @@ def add_simpleca_cert_to_globus():
             logger.exception("Certificate is not correct.")
             raise
 
-
         simpleCA_cert_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
-        print "checking for MY cert: {globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)
-        if os.path.isfile("{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash)):
+        my_cert = os.path.join(globus_certs_dir, simpleCA_cert_hash)
+        print "checking for MY cert: {}.0".format(my_cert)
+        if os.path.isfile("{}.0".format(my_cert)):
             print "Local CA cert file detected...."
+            return
+        else:
             print "Integrating in local simpleCA_cert... "
-            print "Local SimpleCA Root Cert: {simpleCA_cert}".format(simpleCA_cert=simpleCA_cert)
-            print "Extracting Signing policy"
+            logger.debug("Local SimpleCA Root Cert: %s", simpleCA_cert)
+            logger.debug("Extracting Signing policy")
 
             #Copy simple CA cert to globus cert directory
-            shutil.copyfile(simpleCA_cert, "{globus_global_certs_dir}/{simpleCA_cert_hash}.0".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash))
+            shutil.copyfile(simpleCA_cert, "{}/{}.0".format(globus_certs_dir, simpleCA_cert_hash))
 
             #extract simple CA cert tarball and copy to globus cert directory
             simpleCA_cert_parent_dir = esg_functions.get_parent_directory(simpleCA_cert)
-            simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{simpleCA_cert_hash}_setup-0.tar.gz".format(simpleCA_cert_hash=simpleCA_cert_hash))
+            simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{}_setup-0.tar.gz".format(simpleCA_cert_hash))
+            logger.debug("simpleCA_setup_tar_file: %s", simpleCA_setup_tar_file)
             esg_functions.extract_tarball(simpleCA_setup_tar_file)
 
-            with pybash.pushd("globus_simple_ca_{simpleCA_cert_hash}_setup-0".format(simpleCA_cert_hash=simpleCA_cert_hash)):
-                shutil.copyfile("{simpleCA_cert_hash}.signing_policy".format(simpleCA_cert_hash=simpleCA_cert_hash), "{globus_global_certs_dir}/{simpleCA_cert_hash}.signing_policy".format(globus_global_certs_dir=config["globus_global_certs_dir"], simpleCA_cert_hash=simpleCA_cert_hash))
+            with pybash.pushd("globus_simple_ca_{}_setup-0".format(simpleCA_cert_hash)):
+                shutil.copyfile("{}.signing_policy".format(simpleCA_cert_hash), "{}/{}.signing_policy".format(globus_certs_dir, simpleCA_cert_hash))
             if os.path.isdir("/usr/local/tomcat/webapps/ROOT"):
-                esg_functions.stream_subprocess_output("openssl x509 -text -hash -in {simpleCA_cert} > {tomcat_install_dir}/webapps/ROOT/cacert.pem".format(simpleCA_cert=simpleCA_cert, tomcat_install_dir="/usr/loca/tomcat"))
-                print " My CA Cert now posted @ http://{fqdn}/cacert.pem ".format(fqdn=socket.getfqdn())
+                esg_functions.stream_subprocess_output("openssl x509 -text -hash -in {} > /usr/local/tomcat/webapps/ROOT/cacert.pem".format(simpleCA_cert))
+                print " My CA Cert now posted @ http://{}/cacert.pem ".format(socket.getfqdn())
                 os.chmod("/usr/local/tomcat/webapps/ROOT/cacert.pem", 0644)
 
-        os.chmod(config["globus_global_certs_dir"], 0755)
-        esg_functions.change_permissions_recursive(config["globus_global_certs_dir"], 0644)
+        os.chmod(globus_certs_dir, 0755)
+        esg_functions.change_permissions_recursive(globus_certs_dir, 0644)
 
 def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
     '''Goes to ESG distribution server and pulls down all certificates for the federation.

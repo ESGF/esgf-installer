@@ -24,9 +24,9 @@ class test_ESG_truststore_manager(unittest.TestCase):
 
 
     def test_fetch_esgf_truststore(self):
-        esg_truststore_manager.fetch_esgf_truststore("/tmp/esg-truststore.ts")
+        esg_truststore_manager.fetch_esgf_truststore("/tmp/esg-truststore.ts", "/tmp/esgf-ca-bundle.crt")
         self.assertTrue(os.path.exists("/tmp/esg-truststore.ts"))
-        self.assertTrue(os.path.exists("/etc/certs/esgf-ca-bundle.crt"))
+        self.assertTrue(os.path.exists("/tmp/esgf-ca-bundle.crt"))
 
         os.remove("/etc/certs/esgf-ca-bundle.crt")
 

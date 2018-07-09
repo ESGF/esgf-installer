@@ -174,6 +174,7 @@ def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificate
 
             #extract simple CA cert tarball and copy to globus cert directory
             simpleCA_cert_parent_dir = esg_functions.get_parent_directory(simpleCA_cert)
+            logger.debug("simpleCA_cert_parent_dir: %s", simpleCA_cert_parent_dir)
             simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{}_setup-0.tar.gz".format(simpleCA_cert_hash))
             logger.debug("simpleCA_setup_tar_file: %s", simpleCA_setup_tar_file)
             esg_functions.extract_tarball(simpleCA_setup_tar_file)

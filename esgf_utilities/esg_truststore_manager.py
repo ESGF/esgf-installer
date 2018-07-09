@@ -257,7 +257,9 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
             esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
 
 def fetch_esgf_truststore(truststore_file=config["truststore_file"]):
+    print "\n*******************************"
     print "Fetching ESGF Federation Truststore... "
+    print "******************************* \n"
 
     esg_root_url = esg_property_manager.get_property("esg.root.url")
 

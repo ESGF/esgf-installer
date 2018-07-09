@@ -185,7 +185,7 @@ def add_simpleca_cert_to_globus():
         os.chmod(config["globus_global_certs_dir"], 0755)
         esg_functions.change_permissions_recursive(config["globus_global_certs_dir"], 0644)
 
-def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
+def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
     '''Goes to ESG distribution server and pulls down all certificates for the federation.
     (suitable for crontabbing)'''
 
@@ -193,20 +193,21 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
     print "Fetching freshest ESG Federation Certificates..."
     print "******************************* \n"
     #if globus_global_certs_dir already exists, backup and delete, then recreate empty directory
-    if os.path.isdir(config["globus_global_certs_dir"]):
-        esg_functions.backup(config["globus_global_certs_dir"], config["globus_global_certs_dir"])
-        shutil.rmtree(config["globus_global_certs_dir"])
-    pybash.mkdir_p(config["globus_global_certs_dir"])
+    if os.path.isdir(globus_certs_dir):
+        cert_backup_dir = os.path.abspath(os.path.join(globus_certs_dir, os.pardir))
+        esg_functions.backup(globus_certs_dir, cert_backup_dir)
+        shutil.rmtree(globus_certs_dir)
+    pybash.mkdir_p(globus_certs_dir)
 
     #Download trusted certs tarball
     esg_trusted_certs_file = "esg_trusted_certificates.tar"
     esg_root_url = esg_property_manager.get_property("esg.root.url")
     esg_trusted_certs_file_url = "{esg_root_url}/certs/{esg_trusted_certs_file}".format(esg_root_url=esg_root_url, esg_trusted_certs_file=esg_trusted_certs_file)
-    esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
+    esg_functions.download_update(os.path.join(globus_certs_dir, esg_trusted_certs_file), esg_trusted_certs_file_url)
 
     #untar the esg_trusted_certs_file
-    esg_functions.extract_tarball(os.path.join(globus_certs_dir,esg_trusted_certs_file), globus_certs_dir)
-    os.remove(os.path.join(globus_certs_dir,esg_trusted_certs_file))
+    esg_functions.extract_tarball(os.path.join(globus_certs_dir, esg_trusted_certs_file), globus_certs_dir)
+    os.remove(os.path.join(globus_certs_dir, esg_trusted_certs_file))
 
     add_simpleca_cert_to_globus()
 

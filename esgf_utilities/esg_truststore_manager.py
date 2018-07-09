@@ -251,6 +251,9 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
     apache_truststore_file_name = pybash.trim_string_from_head(apache_truststore)
 
     if not os.path.exists(apache_truststore):
+        print "\n*******************************"
+        print "Downloading Apache Truststore... "
+        print "******************************* \n"
         if node_peer_group == "esgf-test":
             esg_functions.download_update(apache_truststore, "{}/certs/test-federation/{}".format(esg_root_url, apache_truststore_file_name))
         else:

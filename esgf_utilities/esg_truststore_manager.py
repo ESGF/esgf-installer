@@ -207,6 +207,12 @@ def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
 
     #untar the esg_trusted_certs_file
     esg_functions.extract_tarball(os.path.join(globus_certs_dir, esg_trusted_certs_file), globus_certs_dir)
+    extracted_certs_dir = os.path.join(globus_certs_dir, "esg_trusted_certificates")
+    cert_files = os.listdir(extracted_certs_dir)
+    for file_name in cert_files:
+        full_file_name = os.path.join(extracted_certs_dir, file_name)
+        if (os.path.isfile(full_file_name)):
+            shutil.copy(full_file_name, globus_certs_dir)
     os.remove(os.path.join(globus_certs_dir, esg_trusted_certs_file))
 
     add_simpleca_cert_to_globus()

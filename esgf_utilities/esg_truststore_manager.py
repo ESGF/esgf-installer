@@ -148,29 +148,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
             print "added {der_file} to {truststore_file}".format(der_file=der_file, truststore_file=truststore_file)
         os.remove(der_file)
 
-def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
-    '''Goes to ESG distribution server and pulls down all certificates for the federation.
-    (suitable for crontabbing)'''
-
-    print "\n*******************************"
-    print "Fetching freshest ESG Federation Certificates..."
-    print "******************************* \n"
-    #if globus_global_certs_dir already exists, backup and delete, then recreate empty directory
-    if os.path.isdir(config["globus_global_certs_dir"]):
-        esg_functions.backup(config["globus_global_certs_dir"], os.path.join(config["globus_global_certs_dir"], ".bak.tz"))
-        shutil.rmtree(config["globus_global_certs_dir"])
-    pybash.mkdir_p(config["globus_global_certs_dir"])
-
-    #Download trusted certs tarball
-    esg_trusted_certs_file = "esg_trusted_certificates.tar"
-    esg_root_url = esg_property_manager.get_property("esg.root.url")
-    esg_trusted_certs_file_url = "{esg_root_url}/certs/{esg_trusted_certs_file}".format(esg_root_url=esg_root_url, esg_trusted_certs_file=esg_trusted_certs_file)
-    esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
-
-    #untar the esg_trusted_certs_file
-    esg_functions.extract_tarball(os.path.join(globus_certs_dir,esg_trusted_certs_file), globus_certs_dir)
-    os.remove(os.path.join(globus_certs_dir,esg_trusted_certs_file))
-
+def add_simpleca_cert_to_globus():
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
     if os.path.isfile(simpleCA_cert):
@@ -207,6 +185,30 @@ def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
         os.chmod(config["globus_global_certs_dir"], 0755)
         esg_functions.change_permissions_recursive(config["globus_global_certs_dir"], 0644)
 
+def fetch_esgf_certificates(globus_certs_dir=config["globus_global_certs_dir"]):
+    '''Goes to ESG distribution server and pulls down all certificates for the federation.
+    (suitable for crontabbing)'''
+
+    print "\n*******************************"
+    print "Fetching freshest ESG Federation Certificates..."
+    print "******************************* \n"
+    #if globus_global_certs_dir already exists, backup and delete, then recreate empty directory
+    if os.path.isdir(config["globus_global_certs_dir"]):
+        esg_functions.backup(config["globus_global_certs_dir"], os.path.join(config["globus_global_certs_dir"], ".bak.tz"))
+        shutil.rmtree(config["globus_global_certs_dir"])
+    pybash.mkdir_p(config["globus_global_certs_dir"])
+
+    #Download trusted certs tarball
+    esg_trusted_certs_file = "esg_trusted_certificates.tar"
+    esg_root_url = esg_property_manager.get_property("esg.root.url")
+    esg_trusted_certs_file_url = "{esg_root_url}/certs/{esg_trusted_certs_file}".format(esg_root_url=esg_root_url, esg_trusted_certs_file=esg_trusted_certs_file)
+    esg_functions.download_update(os.path.join(globus_certs_dir,esg_trusted_certs_file), esg_trusted_certs_file_url)
+
+    #untar the esg_trusted_certs_file
+    esg_functions.extract_tarball(os.path.join(globus_certs_dir,esg_trusted_certs_file), globus_certs_dir)
+    os.remove(os.path.join(globus_certs_dir,esg_trusted_certs_file))
+
+    add_simpleca_cert_to_globus()
 
 
 def backup_truststore(truststore_file=config["truststore_file"]):

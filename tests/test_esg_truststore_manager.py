@@ -17,10 +17,10 @@ class test_ESG_truststore_manager(unittest.TestCase):
 
 
     def test_fetch_esgf_certificates(self):
-        esg_truststore_manager.fetch_esgf_certificates("/tmp")
-        self.assertTrue(os.path.exists("/tmp/esg_trusted_certificates"))
+        esg_truststore_manager.fetch_esgf_certificates("/tmp/grid-security/certificates")
+        self.assertTrue(os.path.exists("/tmp/grid-security/certificates/0119347c.0"))
 
-        shutil.rmtree("/tmp/esg_trusted_certificates")
+        shutil.rmtree("/tmp/grid-security/certificates")
 
 
     def test_fetch_esgf_truststore(self):

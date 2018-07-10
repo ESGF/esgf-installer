@@ -129,6 +129,8 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     '''Takes full path to a pem certificate file and incorporates it into the given truststore'''
 
     print "{cert_file} ->".format(cert_file=cert_file)
+    if not os.path.isfile(cert_file):
+        raise FileNotFoundError
     cert_hash = cert_file.split(".")[0]
     der_file = os.path.join(tmp_dir, cert_hash+".der")
     #--------------

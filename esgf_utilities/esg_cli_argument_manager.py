@@ -363,17 +363,18 @@ def process_arguments():
         logger.debug("installing local certs")
         esg_functions.get_node_type(config["esg_config_type_file"])
         node_type_list = esg_functions.get_node_type()
-        from esgf_utilities import esg_cert_manager
         esg_cert_manager.install_local_certs(node_type_list)
         sys.exit(0)
     if args.generateesgfcsrs:
         logger.debug("generating esgf csrs")
         node_type_list = esg_functions.get_node_type()
+        from esgf_utilities import esg_cert_manager
         esg_cert_manager.generate_esgf_csrs(node_type_list)
         sys.exit(0)
     if args.generateesgfcsrsext:
         logger.debug("generating esgf csrs for other node")
         node_type_list = esg_functions.get_node_type()
+        from esgf_utilities import esg_cert_manager
         esg_cert_manager.generate_esgf_csrs_ext(node_type_list)
         sys.exit(0)
     if args.certhowto:

@@ -259,10 +259,10 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
         else:
             esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
 
-def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_truststore='/etc/certs/esgf-ca-bundle.crt'):
+def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_truststore='/etc/certs/esgf-ca-bundle.crt', globus_certs_dir="/etc/grid-security/certificates"):
     print "\n*******************************"
     print "Fetching ESGF Federation Truststore... "
-    print "******************************* \n"
+    print "*******************************\n"
 
     esg_root_url = esg_property_manager.get_property("esg.root.url")
 
@@ -288,7 +288,7 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_trus
 
         simpleCA_cert_hash = get_certificate_subject_hash(simpleCA_cert)
 
-        simpleCA_cert_hash_file = os.path.join(config["globus_global_certs_dir"], simpleCA_cert_hash+".0")
+        simpleCA_cert_hash_file = os.path.join(globus_certs_dir, simpleCA_cert_hash+".0")
         _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file, "/tmp/esg_scratch")
 
         add_my_cert_to_truststore()

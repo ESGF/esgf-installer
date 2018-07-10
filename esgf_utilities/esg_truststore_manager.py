@@ -131,7 +131,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
 
     print "{cert_file} ->".format(cert_file=cert_file)
     if not os.path.isfile(cert_file):
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), filename)
+        raise IOError("{} not found".format(cert_file))
     cert_hash = cert_file.split(".")[0]
     der_file = os.path.join(tmp_dir, cert_hash+".der")
     #--------------

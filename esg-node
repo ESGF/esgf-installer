@@ -86,6 +86,7 @@ script_version="v2.6.0-devel-release"
 script_release="Name"
 envfile="/etc/esg.env"
 
+
 #--------------
 #User Defined / Settable (public)
 #--------------
@@ -888,6 +889,7 @@ setup_cdat() {
 
     check_version_with "cdat" " source $cdat_home/bin/activate esgf-pub && python -c \"import cdat_info; print cdat_info.Version\" && source deactivate" ${cdat_version} 2> /dev/null
     local ret=$?
+
     ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
@@ -911,10 +913,16 @@ setup_cdat() {
 
         echo Upgrading CDMS
 
+	unset LD_LIBRARY_PATH
         source /usr/local/conda/bin/activate esgf-pub
-
-        conda install -y -c conda-forge cmds2 cdtime        
+	
+	conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf
+        conda install -y -c conda-forge cdms2 cdtime libnetcdf       
         echo
+	python -c "import cdms2"
+	[ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && checked_done 1
+	source deactivate
+	return 0
     fi
 
     mkdir -p ${workdir}
@@ -931,7 +939,7 @@ setup_cdat() {
     if [ ! -f ${cdat_home}/bin/conda ] ; then
 
         if [ ! -f Miniconda2-latest-Linux-x86_64.sh ] ; then
-            get --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+            wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
            [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && 
            checked_done 1
         fi
@@ -948,7 +956,7 @@ setup_cdat() {
 #        binstar config --set verify_ssl False
     fi
 
-    # create a default environment for the publisher with cduitl (and cdms2)
+    # create a default environment for the publisher with cdms2 and cdtime
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
     unset LD_LIBRARY_PATH
 
@@ -1095,7 +1103,7 @@ setup_esgcet() {
 
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
+    conda install -y -c conda-forge lxml requests==2.18.4 psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
 
     if [ $ESGF_INSECURE > 0 ] ; then
         if [ "$mode" = "I" ]; then
@@ -1118,8 +1126,8 @@ setup_esgcet() {
     fi
 
     $pipcmd sqlalchemy_migrate
-    $pipcmd cdf2cim === 0.2.3.0
-    $pipcmd cf-python === 2.2.1
+    $pipcmd cdf2cim==0.2.3.0
+    $pipcmd cf-python==2.2.1
     $pipcmd hurry
     $pipcmd psycopg2-binary
 
@@ -1155,7 +1163,7 @@ setup_esgcet() {
     )
     [ $? != 0 ] && checked_done 1
 
-
+    do_esgsetup=no
     if [ "${mode}" = "I" ]; then
         echo "Install mode - will run esgsetup"
         do_esgsetup="yes"
@@ -1267,9 +1275,7 @@ setup_esgcet() {
 
             echo "WARNING: could not import the cmip6 data handler module.  You may need to reinstall the cdms2 and cmor modules manually following installation.  Please see the installer wiki for more information.  If the problem persists contact support"
         fi
-    fi
-
-    if [ ! -d /usr/local/cmip6-cmor-tables ] ; then
+   else   
 
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
       choice=$(echo ${choice} | tr 'A-Z' 'a-z')

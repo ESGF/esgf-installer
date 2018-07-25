@@ -86,6 +86,7 @@ script_version="v2.6.0-devel-release"
 script_release="Name"
 envfile="/etc/esg.env"
 
+
 #--------------
 #User Defined / Settable (public)
 #--------------
@@ -888,6 +889,7 @@ setup_cdat() {
 
     check_version_with "cdat" " source $cdat_home/bin/activate esgf-pub && python -c \"import cdat_info; print cdat_info.Version\" && source deactivate" ${cdat_version} 2> /dev/null
     local ret=$?
+
     ((ret == 0)) && (( ! force_install )) && [OK] && return 0
 
     echo
@@ -908,7 +910,19 @@ setup_cdat() {
             echo "Skipping CDAT installation and setup - will assume CDAT is setup properly"
             return 0
         fi
+
+        echo Upgrading CDMS
+
+	unset LD_LIBRARY_PATH
+        source /usr/local/conda/bin/activate esgf-pub
+	
+	conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf
+        conda install -y -c conda-forge cdms2 cdtime libnetcdf       
         echo
+	python -c "import cdms2"
+	[ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && checked_done 1
+	source deactivate
+	return 0
     fi
 
     mkdir -p ${workdir}
@@ -922,14 +936,18 @@ setup_cdat() {
 
     # TODO check for conda
 
+    if [ ! -f ${cdat_home}/bin/conda ] ; then
 
-    if [ ! -f Miniconda2-latest-Linux-x86_64.sh ] ; then
-       wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
-       [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && checked_done 1
-    fi
+        if [ ! -f Miniconda2-latest-Linux-x86_64.sh ] ; then
+            wget --no-check-certificate https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+           [ $? != 0 ] && printf "$([FAIL]) \n\tCould not fetch miniconda setup\n\n" && 
+           checked_done 1
+        fi
 
-     bash Miniconda2-latest-Linux-x86_64.sh -u -b -p $cdat_home
-      [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
+        bash Miniconda2-latest-Linux-x86_64.sh -u -b -p $cdat_home
+        [ $? != 0 ] && printf "$([FAIL]) \n\tError in executing Miniconda setup\n\n" && checked_done 1
+
+    fi  # closes conda check
 
     export PATH=${cdat_home}/bin:$PATH
 
@@ -938,11 +956,13 @@ setup_cdat() {
 #        binstar config --set verify_ssl False
     fi
 
-    # create a default environment for the publisher with cduitl (and cdms2)
+    # create a default environment for the publisher with cdms2 and cdtime
     if [ ! -d ${cdat_home}/envs/esgf-pub ] ; then
     unset LD_LIBRARY_PATH
 
-	conda create -y -n esgf-pub -c conda-forge -c uvcdat cdutil "python<3"
+
+
+	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
     fi
 
@@ -1083,7 +1103,7 @@ setup_esgcet() {
 
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy
+    conda install -y -c conda-forge lxml requests==2.18.4 psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
 
     if [ $ESGF_INSECURE > 0 ] ; then
         if [ "$mode" = "I" ]; then
@@ -1106,8 +1126,8 @@ setup_esgcet() {
     fi
 
     $pipcmd sqlalchemy_migrate
-    $pipcmd cdf2cim === 0.2.3.0
-    $pipcmd cf-python === 2.2.1
+    $pipcmd cdf2cim==0.2.3.0
+    $pipcmd cf-python==2.2.1
     $pipcmd hurry
     $pipcmd psycopg2-binary
 
@@ -1143,7 +1163,7 @@ setup_esgcet() {
     )
     [ $? != 0 ] && checked_done 1
 
-
+    do_esgsetup=no
     if [ "${mode}" = "I" ]; then
         echo "Install mode - will run esgsetup"
         do_esgsetup="yes"
@@ -1246,10 +1266,16 @@ setup_esgcet() {
         echo  found cmor installation for PrePARE - upgrading to specified version ${cmor_version}
 
 
-        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
-    fi
+        conda install -y -c conda-forge cmor==${cmor_version}
+        pip install esgfpid --upgrade
 
-    if [ ! -d /usr/local/cmip6-cmor-tables ] ; then
+        python -c "import esgcet.config.cmip6_handler"
+
+        if [ $? != 0 ] ; then
+
+            echo "WARNING: could not import the cmip6 data handler module.  You may need to reinstall the cdms2 and cmor modules manually following installation.  Please see the installer wiki for more information.  If the problem persists contact support"
+        fi
+   else   
 
       read -e -p "Would you like to configure this node for CMIP6 publishing (additional project dependencies will be installed)? [y/N] " choice
       choice=$(echo ${choice} | tr 'A-Z' 'a-z')
@@ -1257,7 +1283,7 @@ setup_esgcet() {
           choice="n"
       fi
       if [ $choice == "y" ] ; then
-        conda install -y -c conda-forge -c pcmdi -c uvcdat cmor==${cmor_version}
+        conda install -y -c conda-forge cmor==${cmor_version}
         pip install esgfpid
         pushd /usr/local
         git clone https://github.com/PCMDI/cmip6-cmor-tables
@@ -1314,33 +1340,23 @@ test_esgcet() {
     pushd $workdir >& /dev/null
 
     start_postgress
+    # TODO - note this test will only work if everything is in place, eg. certifiicates, external config for data-only installations.  If called prior to this, it would be unlikely to 
 
     #esgcet_testdir=$(readlink -f ${thredds_root_dir})/test
     esgcet_testdir=${thredds_root_dir}/test
     mkdir -p ${esgcet_testdir}
     [ $? != 0 ] && checked_done 1
     chown ${installer_uid}:${installer_gid} ${esgcet_testdir} >& /dev/null
-    mkdir -p ${thredds_replica_dir}
-    [ $? != 0 ] && checked_done 1
-    chown ${installer_uid}:${installer_gid} ${thredds_replica_dir} >& /dev/null
 
+    # removed replica dir. not sure why needed...
     echo "esgcet test directory: [${esgcet_testdir}]"
-    local fetch_file
-    fetch_file=sftlf.nc
-    checked_get ${esgcet_testdir}/${fetch_file} ${esg_dist_url_root}/externals/${fetch_file} $((force_install))
-    (( $? > 1 )) && echo " ERROR: Problem pulling down ${fetch_file} from esg distribution" && popd && checked_done 1
 
     source ${cdat_home}/bin/activate esgf-pub
 
     #Run test...
-    echo "$cdat_home/bin/esginitialize -c "
-    esginitialize -c
-    echo "$cdat_home/bin/esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt"
-    esgscan_directory --dataset pcmdi.${esg_root_id}.${node_short_name}.test.mytest --project test ${esgcet_testdir} > mytest.txt
-    [ $? != 0 ] && echo " ERROR: ESG directory scan failed" && popd && checked_done 1
 
-    echo "$cdat_home/bin/esgpublish --service fileservice --map mytest.txt --project test --model test"
-    esgpublish --service fileservice --map mytest.txt --project test --model test
+    esgtest_publish
+
     [ $? != 0 ] && echo " ERROR: ESG publish failed" && popd && checked_done 1
 
 

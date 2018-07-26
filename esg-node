@@ -917,7 +917,7 @@ setup_cdat() {
         source /usr/local/conda/bin/activate esgf-pub
 	
 	conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf
-        conda install -y -c conda-forge cdms2 cdtime libnetcdf       
+        conda install -y -c conda-forge cdms2 cdtime libnetcdf cdat_info      
         echo
 	python -c "import cdms2"
 	[ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && checked_done 1
@@ -962,7 +962,7 @@ setup_cdat() {
 
 
 
-	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime
+	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime cdat_info
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
     fi
 
@@ -1103,7 +1103,7 @@ setup_esgcet() {
 
     unset LD_LIBRARY_PATH
     source ${cdat_home}/bin/activate esgf-pub
-    conda install -y -c conda-forge lxml requests==2.18.4 psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
+    conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient udunits2 esgf-pyclient cython sqlalchemy pyopenssl
 
     if [ $ESGF_INSECURE > 0 ] ; then
         if [ "$mode" = "I" ]; then

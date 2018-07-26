@@ -15,6 +15,7 @@ except ImportError:
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
+from esgf_utilities.esg_exceptions import SubprocessError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -36,6 +37,7 @@ def check_publisher_version():
 
 
 def clone_publisher_repo(publisher_path):
+    '''Clone the publisher repo from Github'''
     print "Fetching the publisher project from GIT Repo... %s" % (config["publisher_repo_https"])
 
     if not os.path.isdir(os.path.join(publisher_path, ".git")):
@@ -49,12 +51,12 @@ def checkout_publisher_branch(publisher_path, branch_name):
     publisher_repo_local.git.checkout(branch_name)
     return publisher_repo_local
 
-#TODO: Might belong in esg_postgres.py
 def symlink_pg_binary():
     '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
     pybash.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
 
 def install_publisher():
+    '''Install publisher using setup.py script'''
     symlink_pg_binary()
     esg_functions.stream_subprocess_output("python setup.py install")
     #Need for esgtest_publish (the post-installation publisher test)
@@ -108,7 +110,7 @@ def edit_esg_ini(node_short_name="test_node"):
     print "esg_ini_path:", esg_ini_path
     esg_functions.call_subprocess('sed -i s/esgcetpass/password/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path))
     esg_functions.call_subprocess('sed -i s/"host\.sample\.gov"/{esgf_host}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path, esgf_host=esg_functions.get_esgf_host()))
-    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path,  node_short_name=node_short_name))
+    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path,   node_short_name=node_short_name))
 
 def run_esgsetup():
     '''generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration'''
@@ -118,15 +120,19 @@ def run_esgsetup():
 
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #Create an initial ESG configuration file (esg.ini); TODO: make break into separate function
-    esg_org_name = esg_property_manager.get_property("esg.org.name")
-    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {esg_org_name} --db-admin-password password'''.format(esg_org_name=esg_property_manager.get_property("esg.org.name"))
+    try:
+        esg_org_name = esg_property_manager.get_property("esg.org.name")
+    except ConfigParser.NoOptionError:
+        raise
+
+    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {} --db-admin-password password'''.format(esg_org_name)
 
     try:
         esg_functions.stream_subprocess_output(generate_esg_ini_command)
         edit_esg_ini()
-    except Exception:
-        logger.exception("Could not finish esgsetup")
-        esg_functions.exit_with_error(1)
+    except SubprocessError:
+        print "Could not finish esgsetup"
+        raise
 
     print "\n*******************************"
     print "Initializing database with esgsetup"
@@ -138,9 +144,9 @@ def run_esgsetup():
 
     try:
         esg_functions.stream_subprocess_output(db_setup_command)
-    except Exception:
-        logger.exception("Could not initialize database.")
-        esg_functions.exit_with_error(1)
+    except SubprocessError:
+        print "Could not initialize database."
+        raise
 
 def run_esginitialize():
     '''Run the esginitialize script to initialize the ESG node database.'''
@@ -164,11 +170,11 @@ def setup_publisher():
     print "\n*******************************"
     print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
     print "******************************* \n"
-    ESG_PUBLISHER_VERSION = config["publisher_tag"]
+    esg_publisher_version = config["publisher_tag"]
     with pybash.pushd("/tmp"):
         clone_publisher_repo("/tmp/esg-publisher")
         with pybash.pushd("esg-publisher"):
-            checkout_publisher_branch("/tmp/esg-publisher", ESG_PUBLISHER_VERSION)
+            checkout_publisher_branch("/tmp/esg-publisher", esg_publisher_version)
             with pybash.pushd("src/python/esgcet"):
                 install_publisher()
 
@@ -195,6 +201,7 @@ def write_esgcet_install_log():
     return 0
 
 def esgcet_startup_hook():
+    '''Prepares the Publisher for startup'''
     print "ESGCET (Publisher) Startup Hook: Setting perms... "
     esg_ini_path = os.path.join(config["publisher_home"], config["publisher_config"])
     if not os.path.exists(esg_ini_path):
@@ -228,14 +235,14 @@ def set_index_peer(host=None, index_type="p2p"):
         print "publishing_service_endpoint property hasn't been set in esgf.properties"
 
     if index_type == "gateway":
-        publishing_service_endpoint="https://{}/remote/secure/client-cert/hessian/publishingService".format(index_peer)
+        publishing_service_endpoint = "https://{}/remote/secure/client-cert/hessian/publishingService".format(index_peer)
     else:
-        publishing_service_endpoint="https://{}/esg-search/remote/secure/client-cert/hessian/publishingService".format(index_peer)
+        publishing_service_endpoint = "https://{}/esg-search/remote/secure/client-cert/hessian/publishingService".format(index_peer)
 
     publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
     esg_property_manager.set_property("hessian_service_url", publishing_service_endpoint, config_file=publisher_config_path, section_name="DEFAULT")
 
-    esg_property_manager.set_property("esgf_index_peer", index_peer.rsplit("/",1)[0])
+    esg_property_manager.set_property("esgf_index_peer", index_peer.rsplit("/", 1)[0])
     esg_property_manager.set_property("publishing_service_endpoint", publishing_service_endpoint)
 
 

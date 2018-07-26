@@ -18,33 +18,36 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 
 def check_for_apache_installation():
-    if find_executable("httpd"):
-        return True
-    else:
-        return False
-
+    '''Check for existing httpd installation'''
+    return find_executable("httpd")
 
 def start_apache():
+    '''Start httpd server'''
     return esg_functions.call_subprocess("service httpd start")
 
 
 def stop_apache():
+    '''Stop httpd server'''
     esg_functions.stream_subprocess_output("service httpd stop")
 
 
 def restart_apache():
+    '''Restart httpd server'''
     esg_functions.stream_subprocess_output("service httpd restart")
 
 
 def check_apache_status():
+    '''Check httpd status'''
     return esg_functions.call_subprocess("service httpd status")
 
 
 def run_apache_config_test():
+    '''Run httpd config test'''
     esg_functions.stream_subprocess_output("service httpd configtest")
 
 
 def install_apache_httpd():
+    '''Install apache from yum'''
     esg_functions.stream_subprocess_output("yum -y update")
     esg_functions.stream_subprocess_output(
         "yum install -y httpd httpd-devel mod_ssl")
@@ -81,6 +84,7 @@ def install_mod_wsgi():
                 "/usr/local/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")
 
 def make_python_eggs_dir():
+    '''Create Python egg directories'''
     pybash.mkdir_p("/var/www/.python-eggs")
     apache_user_id = esg_functions.get_user_id("apache")
     apache_group_id = esg_functions.get_group_id("apache")

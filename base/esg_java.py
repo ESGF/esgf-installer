@@ -1,36 +1,40 @@
-import sys
 import os
 import re
 import logging
 import ConfigParser
 import yaml
-from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from distutils.spawn import find_executable
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 
-logger = logging.getLogger("esgf_logger" +"."+ __name__)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
 def set_default_java():
-    esg_functions.stream_subprocess_output("alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
+    '''Sets the default Java binary to the version installed with ESGF'''
+    esg_functions.stream_subprocess_output(
+        "alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
     esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
+
 
 def check_for_existing_java():
     '''Check if a valid java installation is currently on the system'''
-    java_path = find_executable("java", os.path.join(config["java_install_dir"],"bin"))
+    java_path = find_executable("java", os.path.join(config["java_install_dir"], "bin"))
     if java_path:
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         return check_java_version(java_path)
 
+
 def check_java_version(java_path):
+    '''Checks the Java version on the system'''
     print "Checking Java version"
     try:
-        java_version_output = esg_functions.call_subprocess("{java_path} -version".format(java_path=java_path))["stderr"]
+        java_version_output = esg_functions.call_subprocess(
+            "{java_path} -version".format(java_path=java_path))["stderr"]
     except KeyError:
         logger.exception("Could not check the Java version")
         esg_functions.exit_with_error(1)
@@ -40,18 +44,27 @@ def check_java_version(java_path):
         print "Installed java version meets the minimum requirement "
     return java_version_output
 
+
 def download_java(java_tarfile):
+    '''Download Java from distribution mirror'''
     print "Downloading Java from ", config["java_dist_url"]
     if not esg_functions.download_update(java_tarfile, config["java_dist_url"]):
         logger.error("ERROR: Could not download Java")
         esg_functions.exit_with_error("Java failed to download")
 
+
 def write_java_env():
-    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
+    '''Writes Java config to /etc/esg.env'''
+    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(
+        config["java_install_dir"]), config_file=config["envfile"],
+        section_name="esgf.env", separator="_")
+
 
 def write_java_install_log(java_path):
+    '''Writes Java config to install manifest'''
     java_version = re.search("1.8.0_\w+", check_java_version(java_path)).group()
     esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
+
 
 def setup_java():
     '''
@@ -66,7 +79,8 @@ def setup_java():
         try:
             setup_java_answer = esg_property_manager.get_property("update.java")
         except ConfigParser.NoOptionError:
-            setup_java_answer = raw_input("Do you want to continue with Java installation and setup? [y/N]: ") or "N"
+            setup_java_answer = raw_input(
+                "Do you want to continue with Java installation and setup? [y/N]: ") or "N"
 
         if setup_java_answer.lower().strip() not in ["y", "yes"]:
             print "Skipping Java installation"
@@ -78,34 +92,41 @@ def setup_java():
 
         java_tarfile = pybash.trim_string_from_head(config["java_dist_url"])
         jdk_directory = java_tarfile.split("-")[0]
-        java_install_dir_parent = config["java_install_dir"].rsplit("/",1)[0]
+        java_install_dir_parent = config["java_install_dir"].rsplit("/", 1)[0]
 
-        #Check for Java tar file
+        # Check for Java tar file
         if not os.path.isfile(java_tarfile):
-            print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(),java_tarfile))
+            print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(), java_tarfile))
             download_java(java_tarfile)
 
         print "Extracting Java tarfile", java_tarfile
         esg_functions.extract_tarball(java_tarfile, java_install_dir_parent)
 
-        #Create symlink to Java install directory (/usr/local/java)
-        pybash.symlink_force(os.path.join(java_install_dir_parent, jdk_directory), config["java_install_dir"])
+        # Create symlink to Java install directory (/usr/local/java)
+        pybash.symlink_force(os.path.join(java_install_dir_parent,
+                                          jdk_directory), config["java_install_dir"])
 
         os.chown(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
-        #recursively change permissions
-        esg_functions.change_ownership_recursive(config["java_install_dir"], config["installer_uid"], config["installer_gid"])
+        # recursively change permissions
+        esg_functions.change_ownership_recursive(
+            config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
     set_default_java()
     print check_java_version("java")
     write_java_install_log("java")
     write_java_env()
 
+
 def write_ant_env():
+    '''Writes Ant config to /etc/esg.env'''
     esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", config_file=config["envfile"], section_name="esgf.env", separator="_")
 
+
 def write_ant_install_log():
+    '''Writes Ant config to install manifest'''
     ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
     esg_functions.write_to_install_manifest("ant", "/usr/bin/ant", ant_version)
+
 
 def setup_ant():
     '''Install ant via yum'''
@@ -120,7 +141,8 @@ def setup_ant():
         try:
             setup_ant_answer = esg_property_manager.get_property("update.ant")
         except ConfigParser.NoOptionError:
-            setup_ant_answer = raw_input("Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
+            setup_ant_answer = raw_input(
+                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
 
         if setup_ant_answer.lower() in ["n", "no"]:
             return

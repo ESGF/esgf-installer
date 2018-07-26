@@ -33,10 +33,12 @@ CATALINA_HOME = "/usr/local/tomcat"
 
 
 def check_tomcat_version():
+    '''Check installed tomcat version'''
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/version.sh")
 
 
 def download_tomcat():
+    '''Download tomcat from distribution mirror'''
     if os.path.isdir("/usr/local/tomcat"):
         print "Tomcat directory found."
         check_tomcat_version()
@@ -51,20 +53,21 @@ def download_tomcat():
 
     tomcat_download_url = "http://archive.apache.org/dist/tomcat/tomcat-8/v8.5.20/bin/apache-tomcat-8.5.20.tar.gz"
     print "downloading Tomcat"
-    r = requests.get(tomcat_download_url)
+    response = requests.get(tomcat_download_url)
     tomcat_download_path = "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(
         TOMCAT_VERSION=TOMCAT_VERSION)
-    with open(tomcat_download_path, 'wb') as f:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):
+    with open(tomcat_download_path, 'wb') as tomcat_file:
+        total_length = int(response.headers.get('content-length'))
+        for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):
             if chunk:
-                f.write(chunk)
-                f.flush()
+                tomcat_file.write(chunk)
+                tomcat_file.flush()
 
     return True
 
 
 def extract_tomcat_tarball(dest_dir="/usr/local"):
+    '''Extract tomcat tarball that was downloaded from the distribution mirror'''
     with pybash.pushd(dest_dir):
         esg_functions.extract_tarball(
             "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
@@ -76,12 +79,12 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
                 "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
         except OSError, error:
             print "error:", error
-            pass
 
 
-def create_symlink(TOMCAT_VERSION):
+def create_symlink(tomcat_version):
+    '''Create symlink from tomcat install directory to /usr/local/tomcat'''
     pybash.symlink_force(
-        "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION), "/usr/local/tomcat")
+        "/usr/local/apache-tomcat-{}".format(tomcat_version), "/usr/local/tomcat")
 
 
 def remove_example_webapps():
@@ -99,6 +102,7 @@ def remove_example_webapps():
                 logger.exception()
 
 def setup_root_app():
+    '''Install ROOT appplication'''
     try:
         if "REFRESH" in open("/usr/local/tomcat/webapps/ROOT/index.html").read():
             print "ROOT app in place.."
@@ -131,15 +135,14 @@ def setup_root_app():
 
 
 def copy_config_files():
-    '''copy custom configuration'''
-    '''server.xml: includes references to keystore, truststore in /esg/config/tomcat'''
-    '''context.xml: increases the Tomcat cache to avoid flood of warning messages'''
+    '''copy custom configuration
+    server.xml: includes references to keystore, truststore in /esg/config/tomcat
+    context.xml: increases the Tomcat cache to avoid flood of warning messages'''
 
     print "\n*******************************"
     print "Copying custom Tomcat config files"
     print "******************************* \n"
     try:
-        # shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
         shutil.copyfile(os.path.join(current_directory, "tomcat_conf/context.xml"), "/usr/local/tomcat/conf/context.xml")
         pybash.mkdir_p("/esg/config/tomcat")
 
@@ -179,6 +182,7 @@ def create_tomcat_user():
 
 
 def start_tomcat():
+    '''Start tomcat server'''
     print "\n*******************************"
     print "Attempting to start Tomcat"
     print "******************************* \n"
@@ -194,6 +198,7 @@ def start_tomcat():
 
 
 def stop_tomcat():
+    '''Stop tomcat server'''
     try:
         tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
     except IOError:
@@ -215,6 +220,7 @@ def stop_tomcat():
 
 
 def restart_tomcat():
+    '''Restart tomcat server'''
     print "\n*******************************"
     print "Restarting Tomcat"
     print "******************************* \n"
@@ -227,6 +233,7 @@ def restart_tomcat():
 
 
 def check_tomcat_status():
+    '''Check status of tomcat server'''
     try:
         tomcat_pid = open("/usr/local/tomcat/logs/catalina.pid", "r").read()
         if psutil.pid_exists(int(tomcat_pid)):
@@ -240,6 +247,7 @@ def check_tomcat_status():
 
 
 def run_tomcat_config_test():
+    '''Run tomcat config test'''
     esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh configtest")
 
 
@@ -281,6 +289,7 @@ def check_server_xml():
 
 
 def download_server_config_file(esg_dist_url):
+    '''Download server.xml config file from distribution mirror'''
     server_xml_url = "{esg_dist_url}/externals/bootstrap/node.server.xml-v{tomcat_major_version}".format(
         esg_dist_url=esg_dist_url, tomcat_major_version=config['tomcat_major_version'].strip("''"))
     esg_functions.download_update(os.path.join(
@@ -368,16 +377,19 @@ def edit_server_xml():
 
 
 def write_tomcat_env():
+    '''Write tomcat environment info to /etc/esg.env'''
     esg_property_manager.set_property("CATALINA_HOME", "export CATALINA_HOME={}".format(config["tomcat_install_dir"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
     esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
 def write_tomcat_install_log():
+    '''Write tomcat version to install manifest'''
     esg_functions.write_to_install_manifest("tomcat", config["tomcat_install_dir"], TOMCAT_VERSION)
     esg_property_manager.set_property("tomcat.install.dir", config["tomcat_install_dir"])
     esg_property_manager.set_property("esgf.http.port", "80")
     esg_property_manager.set_property("esgf.https.port", "443")
 
 def get_tomcat_ports():
+    '''Get tomcat ports from server.xml'''
     parser = etree.XMLParser(remove_comments=False)
     tree = etree.parse("/usr/local/tomcat/conf/server.xml", parser)
     root = tree.getroot()
@@ -471,6 +483,7 @@ def setup_tomcat_logrotate():
 
 
 def configure_tomcat():
+    '''Configure tomcat for ESGF Node Manager'''
     print "*******************************"
     print "Configuring Tomcat... (for Node Manager)"
     print "*******************************"
@@ -521,6 +534,7 @@ def configure_tomcat():
 
 
 def main():
+    '''Main function'''
     print "\n*******************************"
     print "Setting up Tomcat {TOMCAT_VERSION}".format(TOMCAT_VERSION=TOMCAT_VERSION)
     print "******************************* \n"

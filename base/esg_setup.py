@@ -1,4 +1,3 @@
-import sys
 import os
 import re
 import socket
@@ -6,19 +5,15 @@ import logging
 import platform
 import netifaces
 import yaml
-from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
-from distutils.spawn import find_executable
+from esgf_utilities.esg_exceptions import WrongOSError
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_version_manager
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
-
-force_install = False
 
 def check_if_root():
     '''Check to see if the user is root'''
@@ -99,12 +94,13 @@ def _render_ip_address_menu(ip_addresses):
     print "Detected multiple IP addresses bound to this host...\n"
     print "Please select the IP address to use for this installation\n"
     print "\t-------------------------------------------\n"
-    for index, ip in enumerate(ip_addresses.iteritems(), 1):
-        print "\t %i) %s" % (index, ip)
+    for index, ip_address in enumerate(ip_addresses.iteritems(), 1):
+        print "\t %i) %s" % (index, ip_address)
     print "\t-------------------------------------------\n"
 
 
 def check_for_my_ip(force_install=False):
+    '''Check server's IP address'''
     logger.debug("Checking for IP address(es)...")
     matched = 0
     my_ip_address = None
@@ -122,8 +118,8 @@ def check_for_my_ip(force_install=False):
 
     # We want to make sure that the IP address we have in our config
     # matches one of the IPs that are associated with this host
-    for ip in ip_addresses:
-        if ip == esgf_host_ip:
+    for ip_address in ip_addresses:
+        if ip_address == esgf_host_ip:
             matched += 1
 
     if matched == 0:

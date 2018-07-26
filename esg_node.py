@@ -1,5 +1,4 @@
 import os
-import subprocess
 import sys
 import logging
 import socket
@@ -9,13 +8,8 @@ import shutil
 import errno
 import filecmp
 import ConfigParser
-import stat
 import yaml
-import semver
 import pip
-from git import Repo
-#This needs to be imported before other esg_* modules to properly setup the root logger
-from esgf_utilities import esg_logging_manager
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from base import esg_setup
@@ -30,7 +24,6 @@ from base import esg_apache_manager
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_questionnaire
 from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import UnprivilegedUserError, WrongOSError, UnverifiedScriptError
 from filters import access_logging_filters, esg_security_tokenless_filters
 
 
@@ -228,7 +221,7 @@ def system_component_installation(esg_dist_url, node_type_list):
         except AttributeError:
             pip.main(['install', "esgprep=={}".format(config["esgprep_version"])])
         esg_publisher.main()
-        from data_node import esg_dashboard, orp, thredds
+        from data_node import orp, thredds
         from idp_node import globus
         thredds.main()
         orp.main()
@@ -293,7 +286,7 @@ def done_remark(node_type_list):
 
     try:
         esg_org_name = esg_property_manager.get_property("esg.org.name")
-    except Exception:
+    except ConfigParser.NoOptionError:
         logger.exception("esg.org.name could not be found in config file")
     print "(\"Test Project\" -> pcmdi.{esg_org_name}.{node_short_name}.test.mytest)".format(esg_org_name=esg_org_name, node_short_name=esg_property_manager.get_property("node.short.name"))
 
@@ -391,7 +384,7 @@ def sanity_check_web_xmls():
         tomcat_group = esg_functions.get_group_id("tomcat")
 
         for app in webapps:
-            with pybash.pushd(os.path.join(app,"WEB-INF")):
+            with pybash.pushd(os.path.join(app, "WEB-INF")):
                 print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
                 os.chown("web.xml", tomcat_user, tomcat_group)
 
@@ -442,14 +435,17 @@ def remove_unused_esgf_webapps():
             pass
 
 def install_bash_completion_file(esg_dist_url):
+    '''Install bash_completion file from distribution mirror'''
     if os.path.exists("/etc/bash_completion") and not os.path.exists("/etc/bash_completion.d/esg-node"):
         esg_functions.download_update("/etc/bash_completion.d/esg-node", "{}/esgf-installer/esg-node.completion".format(esg_dist_url))
 
 def write_script_version_file(script_version):
+    '''Write version file'''
     with open(os.path.join(config["esg_root_dir"], "version"), "w") as version_file:
         version_file.write(script_version)
 
 def system_launch(esg_dist_url, node_type_list, script_version, script_release):
+    '''Prepare the node to start'''
     #---------------------------------------
     #System Launch...
     #---------------------------------------

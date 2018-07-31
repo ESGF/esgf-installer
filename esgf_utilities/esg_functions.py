@@ -19,7 +19,6 @@ import grp
 import stat
 import getpass
 import ConfigParser
-from time import sleep
 from distutils.spawn import find_executable
 import requests
 import yaml
@@ -102,9 +101,6 @@ def path_unique(path_string=os.environ["PATH"], path_separator=":"):
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
 
-# TODO: Maybe move this to pybash
-
-
 def readlinkf(file_name):
     '''
     This is a portable implementation of GNU's "readlink -f" in
@@ -116,7 +112,6 @@ def readlinkf(file_name):
     maximum length.
     '''
     return os.path.realpath(file_name)
-
 
 #----------------------------------------------------------
 # File reading and writing...
@@ -227,6 +222,7 @@ def git_tagrelease():
 
 
 def get_parent_directory(directory_path):
+    '''Returns the parent directory of directory_path'''
     return os.path.abspath(os.path.join(directory_path, os.pardir))
 
 
@@ -381,7 +377,7 @@ def fetch_remote_file(local_file, remote_file):
                 if chunk:
                     downloaded_file.write(chunk)
                     downloaded_file.flush()
-    except requests.exceptions.RequestException, error:
+    except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
         sys.exit()
 
@@ -397,6 +393,7 @@ def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.dat
 
 
 def verify_checksum(local_file, remote_file):
+    '''Verify md5 checksum of file downloaded from distribution mirror'''
     remote_file_md5 = requests.get(remote_file + '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
 
@@ -450,8 +447,6 @@ def stream_subprocess_output(command_string):
         print "Could not stream subprocess output"
         print "stream_subprocess_output error:", error
         raise
-        exit_with_error(error)
-
 
 def call_subprocess(command_string, command_stdin=None):
     ''' Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn't have subprocess.call() '''
@@ -472,31 +467,9 @@ def call_subprocess(command_string, command_stdin=None):
         logger.debug("command_process_stdout: %s", command_process_stdout)
         logger.debug("command_process_stderr: %s", command_process_stderr)
         logger.debug("command_process.returncode: %s", command_process.returncode)
-        if command_process.returncode !=0:
+        if command_process.returncode != 0:
             raise SubprocessError(command_process_stderr)
         return {"stdout": command_process_stdout, "stderr": command_process_stderr, "returncode": command_process.returncode}
-
-
-def subprocess_pipe_commands(command_list):
-    subprocess_list = []
-    for index, command in enumerate(command_list):
-        print "index:", index
-        print "command:", command
-        if index > 0:
-            subprocess_command = subprocess.Popen(
-                command, stdin=subprocess_list[index - 1].stdout, stdout=subprocess.PIPE)
-            subprocess_list.append(subprocess_command)
-        else:
-            subprocess_command = subprocess.Popen(command, stdout=subprocess.PIPE)
-            subprocess_list.append(subprocess_command)
-    subprocess_list_length = len(subprocess_list)
-    for index, process in enumerate(subprocess_list):
-        if index != subprocess_list_length - 1:
-            process.stdout.close()
-        else:
-            subprocess_stdout, subprocess_stderr = process.communicate()
-    return subprocess_stdout
-
 
 def check_shmmax(min_shmmax=48):
     '''
@@ -564,7 +537,7 @@ def set_security_admin_password(updated_password, password_file=config['esgf_sec
     os.chmod(config['esgf_secret_file'], 0640)
     try:
         os.chown(config['esgf_secret_file'], config[
-                 "installer_uid"], tomcat_group_id)
+            "installer_uid"], tomcat_group_id)
     except OSError:
         logger.exception("Unable to change ownership of %s", password_file)
 
@@ -655,6 +628,8 @@ def confirm_password(password_input, password_confirmation):
 
 
 def is_valid_password(password_input):
+    '''Check that password_input meets the valid password requirements:
+    an alphanumeric string greater than 6 characters long'''
     if not password_input:
         print "Password cannot be blank"
         return False
@@ -810,15 +785,14 @@ def add_group(group_name):
 
 
 # def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
-def add_user(name, password="", group="", full_name ="", home_dir="", shell=""):
+def add_user(name, password="", group="", full_name="", home_dir="", shell=""):
     '''Add Unix user'''
     #check if root_user
     existing_user_ids = [user.pw_uid for user in pwd.getpwall()]
     uid = max(existing_user_ids)+1
-    user_string = "{}:{}:{}:{}:{}:{}:{}".format(name,password,uid,group,full_name,home_dir,shell)
+    user_string = "{}:{}:{}:{}:{}:{}:{}".format(name, password, uid, group, full_name, home_dir, shell)
 
     pass
-
 
 def get_tomcat_user_id():
     ''' Returns the id of the Tomcat user '''
@@ -834,6 +808,7 @@ def get_tomcat_group_id():
 
 
 def add_unix_group(group_name):
+    '''Use subprocess to add Unix group'''
     try:
         call_subprocess("groupadd {group_name}".format(group_name=group_name))
     except Exception, error:
@@ -842,6 +817,7 @@ def add_unix_group(group_name):
 
 
 def add_unix_user(user_name):
+    '''Use subprocess to add Unix user'''
     try:
         stream_subprocess_output("useradd {user_name}".format(user_name=user_name))
     except Exception, error:
@@ -869,6 +845,7 @@ def track_extraction_progress(members):
 
 
 def extract_tarball(tarball_name, dest_dir="."):
+    '''Extract a tarball to the given dest_dir'''
     if dest_dir == ".":
         dest_dir_name = os.getcwd()
     else:
@@ -882,8 +859,6 @@ def extract_tarball(tarball_name, dest_dir="."):
     except tarfile.TarError, error:
         logger.exception("Could not extract the tarfile: %s", tarball_name)
         raise
-        exit_with_error(error)
-
 
 def change_ownership_recursive(directory_path, uid=-1, gid=-1):
     '''Recursively changes ownership on a directory and its subdirectories; Mimics chown -R'''
@@ -928,14 +903,15 @@ def get_config_ip(interface_value):
     #     "eth0" or "lo", etc...
     #     '''
     netifaces.ifaddresses(interface_value)
-    ip = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
-    return ip
+    ip_address = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
+    return ip_address
 
 
 def bump_git_tag(bump_level="patch", commit_message=None):
+    '''Update git tag version'''
     import semver
     from git import Repo
-    '''Bump the git tag version when a new release cut'''
+    #Bump the git tag version when a new release cut
     if not find_executable("git"):
         print "Git is not installed"
         return False
@@ -952,18 +928,16 @@ def bump_git_tag(bump_level="patch", commit_message=None):
     repo.remotes.origin.push(new_tag)
 
 def write_security_lib_install_log():
+    '''Write esgf-security library info to install manifest'''
     security_library_path = "/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/esgf-security-{}.jar".format(config["esgf_security_version"])
     write_to_install_manifest("esgf->library:esg-security", security_library_path, config["esgf_security_version"])
 
 def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
-    # from configobj import ConfigObj
-    # config = ConfigObj("/esg/esgf-install-manifest")
-    # config.filename = filename
+    '''Write component info to install manifest'''
     parser = ConfigParser.ConfigParser()
     parser.read(manifest_file)
 
     try:
-        # parser.add_section(datetime.date.today().strftime("%B %d, %Y"))
         parser.add_section("install_manifest")
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
@@ -972,7 +946,8 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
     with open(manifest_file, "w") as config_file_object:
         parser.write(config_file_object)
 
-def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
+def get_version_from_install_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
+    '''Get component version info from install manifest'''
     parser = ConfigParser.SafeConfigParser()
     parser.read(manifest_file)
 
@@ -985,7 +960,7 @@ def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manife
 
 
 def update_fileupload_jar():
-    #quick-fix for removing insecure commons-fileupload jar file
+    '''quick-fix for removing insecure commons-fileupload jar file'''
     try:
         os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
     except OSError, error:
@@ -1045,6 +1020,7 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
 
 
 def get_public_ip():
+    '''Get public ip address of node'''
     from urllib2 import urlopen
     my_ip = urlopen('http://ip.42.pl/raw').read()
 
@@ -1075,25 +1051,13 @@ def get_node_type(config_file=config["esg_config_type_file"]):
         \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
         sys.exit(1)
 
-
-def is_valid_mirror(mirror_url):
-    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist", "https://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "https://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "https://esg-dn2.nsc.liu.se/esgf/dist")
-    mirror_base_url = re.sub(r'\/\d\.\d', '', mirror_url)
-    logger.debug("mirror_base_url: %s", mirror_base_url)
-    if mirror_base_url not in esgf_dist_mirrors_list:
-        logger.error("%s is not a valid distribution mirror url", mirror_base_url)
-        return
-    return True
-    # response = requests.get(mirror_url)
-    # if response.ok:
-    #     return True
-
 def esgf_node_info():
     '''Print basic info about ESGF installation'''
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
 
 def main():
+    '''Main function'''
     import esg_logging_manager
 
     esg_logging_manager.main()

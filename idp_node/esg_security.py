@@ -30,7 +30,7 @@ def setup_security(node_type_list, esg_dist_url):
     print "*******************************"
     print "Setting up ESGF Security Services"
     print "*******************************"
-    currently_installed_version = esg_functions.get_version_from_manifest("esgf-security")
+    currently_installed_version = esg_functions.get_version_from_install_manifest("esgf-security")
     if currently_installed_version:
         if esg_version_manager.compare_versions(currently_installed_version, config["esgf_security_version"]):
             print "A sufficient version of esgf-security is installed"
@@ -134,11 +134,11 @@ def create_policy_files(policy_type, security_jar_file):
         tmp_extract_dir = os.path.join(config["esg_root_dir"], "tmp")
         pybash.mkdir_p(tmp_extract_dir)
         with pybash.pushd(tmp_extract_dir):
-            with zipfile.ZipFile(security_jar_file, 'r') as zf:
+            with zipfile.ZipFile(security_jar_file, 'r') as security_jar_zip:
                 policy_name = "{policy_file_name}_{policy_type}.xml".format(policy_file_name=policy_file_name, policy_type=policy_type)
                 policy_file_extraction_path = "{internal_jar_path}/{policy_name}".format(internal_jar_path=internal_jar_path, policy_name=policy_name)
                 logger.info("Extracting %s from %s", policy_file_extraction_path, security_jar_file)
-                zf.extract(policy_file_extraction_path)
+                security_jar_zip.extract(policy_file_extraction_path)
             # esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
         shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_name), os.path.join(config["esg_config_dir"], policy_name))
 
@@ -198,13 +198,13 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
 
         if "DATA" in node_type_list:
             app_path = esg_property_manager.get_property("orp_security_authorization_service_app_home")
-            security_jar_file="{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
+            security_jar_file = "{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
         elif "INDEX" in node_type_list:
             app_path = esg_property_manager.get_property("index_service_app_home")
-            security_jar_file="{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
+            security_jar_file = "{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
         elif "IDP" in node_type_list:
             app_path = esg_property_manager.get_property("idp_service_app_home")
-            security_jar_file="{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
+            security_jar_file = "{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
         else:
             esg_functions.exit_with_error("Could not find security jar file: esgf-security-{}.jar".format(esgf_security_version))
 

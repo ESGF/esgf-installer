@@ -2,13 +2,10 @@
 ESGF Distribution Mirrors Utilities
 '''
 import os
-import subprocess
+import logging
 import requests
-import stat
-import logging
-from collections import OrderedDict
-import logging
 import yaml
+from collections import OrderedDict
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -59,7 +56,7 @@ def get_mirror_response_times():
             failed_requests[mirror] = "Unable to connect to mirror"
 
 
-    return (response_times,failed_requests)
+    return (response_times, failed_requests)
 
 def rank_response_times(response_times):
     """ Sort the response time of mirrors and return a list of them."""
@@ -120,17 +117,25 @@ def select_dist_mirror():
             choice = _select_distribution_mirror()
             logger.debug("choice result: %s", ranked_response_times.items()[choice][0])
             return ranked_response_times.items()[choice][0]
-        except IndexError, error:
+        except IndexError:
             logger.error("Invalid selection", exc_info=True)
             continue
         break
 
+def is_valid_mirror(mirror_url):
+    esgf_dist_mirrors_list = ("http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "http://dist.ceda.ac.uk/esgf/dist", "http://aims1.llnl.gov/esgf/dist", "http://esg-dn2.nsc.liu.se/esgf/dist", "https://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist", "https://dist.ceda.ac.uk/esgf/dist", "https://aims1.llnl.gov/esgf/dist", "https://esg-dn2.nsc.liu.se/esgf/dist")
+    mirror_base_url = re.sub(r'\/\d\.\d', '', mirror_url)
+    logger.debug("mirror_base_url: %s", mirror_base_url)
+    if mirror_base_url not in esgf_dist_mirrors_list:
+        logger.error("%s is not a valid distribution mirror url", mirror_base_url)
+        return
+    return True
 
 def _render_distribution_mirror_menu(distribution_mirror_choices):
     """ Display the mirrors from fastest (1) to slowest (4)."""
     print "Please select the ESGF distribution mirror for this installation (fastest to slowest): \n"
     print "\t-------------------------------------------\n"
-    for index, (key, _) in enumerate(distribution_mirror_choices.iteritems(),1):
+    for index, (key, _) in enumerate(distribution_mirror_choices.iteritems(), 1):
         print "\t %i) %s" % (index, key)
     print "\n\t-------------------------------------------\n"
 

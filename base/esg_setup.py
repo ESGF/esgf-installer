@@ -76,8 +76,8 @@ def init_structure():
     create_esg_directories()
 
     #Create esgf.properties file
-    if not os.path.isfile(config["config_file"]):
-        pybash.touch(config["config_file"])
+    if not os.path.isfile(config["property_file"]):
+        pybash.touch(config["property_file"])
 
     #--------------
     # Setup variables....

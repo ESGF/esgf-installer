@@ -80,7 +80,7 @@ def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8")
             return
 
     try:
-        if esg_functions.is_valid_mirror(esg_property_manager.get_property("esg.root.url")):
+        if esg_mirror_manager.is_valid_mirror(esg_property_manager.get_property("esg.root.url")):
             esg_property_manager.set_property("esg.dist.url", esg_property_manager.get_property("esg.root.url")+"/{}/{}".format(script_maj_version, script_release))
             return
         elif esg_property_manager.get_property("esg.root.url") == "fastest":

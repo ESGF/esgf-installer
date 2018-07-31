@@ -23,11 +23,11 @@ def new_ca():
     with open("CA/crlnumber", "w") as crlnumber_file:
         crlnumber_file.write("01\n")
 
-    cakey = esg_cert_manager.createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
+    cakey = esg_cert_manager.create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
     ca_answer = "{fqdn}-CA".format(fqdn=esg_functions.get_esgf_host())
-    careq = esg_cert_manager.createCertRequest(cakey, O="ESGF", OU="ESGF.ORG", CN=ca_answer)
+    careq = esg_cert_manager.create_cert_request(cakey, O="ESGF", OU="ESGF.ORG", CN=ca_answer)
     # CA certificate is valid for five years.
-    cacert = esg_cert_manager.createCertificate(careq, (careq, cakey), 0, (0, 60*60*24*365*5))
+    cacert = esg_cert_manager.create_certificate(careq, (careq, cakey), 0, (0, 60*60*24*365*5))
 
     print('Creating Certificate Authority private key in "CA/private/cakey.pem"')
     with open('CA/private/cakey.pem', 'w') as capkey:
@@ -48,8 +48,8 @@ def newreq_nodes():
     '''-newreq-nodes is like -newreq except that the private key will not be encrypted.'''
 
 
-    new_req_key = esg_cert_manager.createKeyPair(OpenSSL.crypto.TYPE_RSA, 4096)
-    new_careq = esg_cert_manager.createCertRequest(new_req_key, O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host())
+    new_req_key = esg_cert_manager.create_key_pair(OpenSSL.crypto.TYPE_RSA, 4096)
+    new_careq = esg_cert_manager.create_cert_request(new_req_key, O="ESGF", OU="ESGF.ORG", CN=esg_functions.get_esgf_host())
 
     print('Creating Certificate Authority private key in "newkey.pem"')
     with open('newkey.pem', 'w') as new_key_file:
@@ -85,7 +85,7 @@ def sign_request(ca_req):
         logger.exception("Certificate is not correct.")
         raise
 
-    newcert = esg_cert_manager.createCertificate(ca_req, (ca_cert, private_cakey), 0, (0, 60*60*24*365*5))
+    newcert = esg_cert_manager.create_certificate(ca_req, (ca_cert, private_cakey), 0, (0, 60*60*24*365*5))
 
     with open('newcert.pem', 'w') as ca:
         ca.write(

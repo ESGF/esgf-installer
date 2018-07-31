@@ -2,19 +2,12 @@ import os
 import logging
 import shutil
 import ConfigParser
-import OpenSSL
 import stat
-import glob
 import psutil
 import yaml
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import SubprocessError
-from base import esg_tomcat_manager
-from base import esg_postgres
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -42,12 +35,12 @@ def setup_gridftp_metrics_logging():
 
     esg_functions.stream_subprocess_output("yum -y install perl-DBD-Pg")
 
-    globus_workdir= os.path.join(config["workdir"],"extra", "globus")
+    globus_workdir = os.path.join(config["workdir"], "extra", "globus")
     pybash.mkdir_p(globus_workdir)
 
     esg_root_url = esg_property_manager.get_property("esg.root.url")
     esg_usage_parser_dist_file = "esg_usage_parser-{}.tar.bz2".format(usage_parser_version)
-    esg_usage_parser_dist_url= "{}/globus/gridftp/esg_usage_parser-{}.tar.bz2".format(esg_root_url, usage_parser_version)
+    esg_usage_parser_dist_url = "{}/globus/gridftp/esg_usage_parser-{}.tar.bz2".format(esg_root_url, usage_parser_version)
     esg_usage_parser_dist_dir = os.path.join(globus_workdir, "esg_usage_parser-{}".format(usage_parser_version))
     pybash.mkdir_p(esg_usage_parser_dist_dir)
 
@@ -67,7 +60,7 @@ def setup_gridftp_metrics_logging():
 def config_gridftp_metrics_logging():
     '''generate config file for gridftp server'''
     print 'Configuring gridftp metrics collection ...'
-    gridftp_server_usage_config= "{}/gridftp/esg-server-usage-gridftp.conf".format(config["esg_config_dir"])
+    gridftp_server_usage_config = "{}/gridftp/esg-server-usage-gridftp.conf".format(config["esg_config_dir"])
     gridftp_server_usage_config_dir = os.path.join(config["esg_config_dir"], "gridftp", "esg-server-usage-gridftp")
     pybash.mkdir_p(gridftp_server_usage_config_dir)
 
@@ -224,7 +217,6 @@ def configure_esgf_publisher_for_gridftp():
 
 
 def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["esg_root_dir"])):
-    global_x509_cert_dir = "/etc/grid-security/certificates"
     print " GridFTP - Starting server... $*"
     write_esgsaml_auth_conf()
     setup_gridftp_jail()
@@ -286,16 +278,16 @@ def setup_gcs_io(first_run=None):
         register_gridftp_answer = esg_property_manager.get_property("register.gridftp")
     except ConfigParser.NoOptionError:
         register_gridftp_answer = raw_input(
-        "Do you want to register the GridFTP server with Globus?: ") or "Y"
+            "Do you want to register the GridFTP server with Globus?: ") or "Y"
 
     if register_gridftp_answer.lower() in ["y", "yes"]:
-        GLOBUS_SETUP = True
+        globus_setup = True
     else:
-        GLOBUS_SETUP = False
+        globus_setup = False
 
-    if GLOBUS_SETUP:
+    if globus_setup:
         try:
-            globus_user= esg_property_manager.get_property("globus.user")
+            globus_user = esg_property_manager.get_property("globus.user")
         except ConfigParser.NoOptionError:
             while True:
                 globus_user = raw_input("Please provide a Globus username: ")

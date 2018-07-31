@@ -7,14 +7,12 @@ import logging
 import yaml
 import semver
 from git import Repo
-from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
-
 
 def set_version_info():
     '''Gathers the version info from the latest git tag'''
@@ -31,11 +29,7 @@ def compare_versions(version_1, version_2):
     '''Check to see if version_1 is greater than or equal to version_2'''
     version_1 = version_1.replace("_", "-")
     version_2 = version_2.replace("_", "-")
-    if semver.compare(version_1, version_2) > -1:
-        return True
-    else:
-        return False
-
+    return semver.compare(version_1, version_2) > -1
 
 def check_module_version(module_name, min_version):
     '''
@@ -57,8 +51,6 @@ def check_module_version(module_name, min_version):
             print "\nThe detected version of %s %s is less than %s \n" % (module_name, module_version, min_version)
             return False
 
-# TODO: implement and test
-
 
 def get_current_esgf_library_version(library_name):
     '''
@@ -67,34 +59,25 @@ def get_current_esgf_library_version(library_name):
         manifest or version command to check, so they must be checked
         against the ESGF install manifest instead.
     '''
-    version_number = ""
-    if not os.path.isfile(config["install_manifest"]):
-        return None
-    else:
-        with open(config["install_manifest"], "r") as manifest_file:
-            for line in manifest_file:
-                line = line.rstrip()  # remove trailing whitespace such as '\n'
-                version_number = re.search(r'(library)\w+', line)
-        if version_number:
-            print "version number: ", version_number
-            return version_number
-        else:
-            return None
+    #TODO: implement
+    pass
 
 
 def get_current_webapp_version(webapp_name, version_command="Version"):
+    '''Gets version of installed webapp'''
     reg_ex = r"^(" + re.escape(version_command) + ".*)"
     with open(config["tomcat_install_dir"] + "/webapps/" + webapp_name + "/META-INF/MANIFEST.MF", "r") as manifest_file:
         for line in manifest_file:
             line = line.rstrip()  # remove trailing whitespace such as '\n'
             version_number = re.search(reg_ex, line)
             if version_number != None:
-                name, version = version_number.group(1).split(":")
+                _, version = version_number.group(1).split(":")
                 return version.strip()
     return False
 
 
 def check_webapp_version(webapp_name, min_version, version_command="Version"):
+    '''Compare webapp version to minimially acceptable version'''
     if not os.path.isdir(config["tomcat_install_dir"] + "/webapps/" + webapp_name):
         print "Web Application %s is not present or cannot be detected!" % (webapp_name)
         return False

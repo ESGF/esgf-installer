@@ -2,7 +2,6 @@ import os
 import shutil
 import glob
 import filecmp
-import errno
 import logging
 import socket
 import ConfigParser
@@ -11,7 +10,6 @@ import OpenSSL
 import pybash
 import esg_functions
 import esg_property_manager
-from esg_exceptions import SubprocessError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -77,14 +75,14 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
-        extract_cert_output= esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
-        if extract_cert_output["returncode"] !=0:
+        extract_cert_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+        if extract_cert_output["returncode"] != 0:
             print "Could not extract certificate from keystore"
             esg_functions.exit_with_error(extract_cert_output["stderr"])
 
         print "Importing keystore's certificate into truststore... "
         import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
-        if import_to_truststore_output["returncode"] !=0:
+        if import_to_truststore_output["returncode"] != 0:
             print "Could not import the certificate into the truststore"
             esg_functions.exit_with_error(import_to_truststore_output["stderr"])
 
@@ -139,7 +137,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     # Convert from PEM format to DER format - for ingest into keystore
     cert_pem = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_file).read())
     with open(der_file, "w") as der_file_handle:
-        der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1,cert_pem))
+        der_file_handle.write(OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_pem))
 
     #--------------
     if os.path.isfile(truststore_file):
@@ -154,10 +152,10 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
 
 def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificates"):
     #certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
-    simpleCA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
-    if os.path.isfile(simpleCA_cert):
+    simple_CA_cert = "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
+    if os.path.isfile(simple_CA_cert):
         try:
-            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(simpleCA_cert).read())
+            cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(simple_CA_cert).read())
         except OpenSSL.crypto.Error:
             logger.exception("Certificate is not correct.")
             raise
@@ -169,15 +167,15 @@ def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificate
             print "Local CA cert file detected...."
             return
         else:
-            print "Integrating in local simpleCA_cert... "
-            logger.debug("Local SimpleCA Root Cert: %s", simpleCA_cert)
+            print "Integrating in local simple_CA_cert... "
+            logger.debug("Local SimpleCA Root Cert: %s", simple_CA_cert)
             logger.debug("Extracting Signing policy")
 
             #Copy simple CA cert to globus cert directory
-            shutil.copyfile(simpleCA_cert, "{}/{}.0".format(globus_certs_dir, simpleCA_cert_hash))
+            shutil.copyfile(simple_CA_cert, "{}/{}.0".format(globus_certs_dir, simpleCA_cert_hash))
 
             #extract simple CA cert tarball and copy to globus cert directory
-            simpleCA_cert_parent_dir = esg_functions.get_parent_directory(simpleCA_cert)
+            simpleCA_cert_parent_dir = esg_functions.get_parent_directory(simple_CA_cert)
             logger.debug("simpleCA_cert_parent_dir: %s", simpleCA_cert_parent_dir)
             simpleCA_setup_tar_file = os.path.join(simpleCA_cert_parent_dir, "globus_simple_ca_{}_setup-0.tar.gz".format(simpleCA_cert_hash))
             logger.debug("simpleCA_setup_tar_file: %s", simpleCA_setup_tar_file)
@@ -191,7 +189,7 @@ def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificate
                 with open('/usr/local/tomcat/webapps/ROOT/cacert.pem', 'w') as ca:
                     ca.write(
                         OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_obj).decode('utf-8')
-                )
+                        )
                 print " My CA Cert now posted @ http://{}/cacert.pem ".format(socket.getfqdn())
                 os.chmod("/usr/local/tomcat/webapps/ROOT/cacert.pem", 0644)
 
@@ -224,7 +222,7 @@ def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
     cert_files = os.listdir(extracted_certs_dir)
     for file_name in cert_files:
         full_file_name = os.path.join(extracted_certs_dir, file_name)
-        if (os.path.isfile(full_file_name)):
+        if os.path.isfile(full_file_name):
             shutil.copy(full_file_name, globus_certs_dir)
     os.remove(os.path.join(globus_certs_dir, esg_trusted_certs_file))
 
@@ -232,14 +230,17 @@ def fetch_esgf_certificates(globus_certs_dir="/etc/grid-security/certificates"):
 
 
 def backup_truststore(truststore_file=config["truststore_file"]):
+    '''Create backup of truststore file'''
     if os.path.exists(truststore_file):
         shutil.copyfile(truststore_file, truststore_file+".bak")
 
 def backup_apache_truststore(apache_truststore='/etc/certs/esgf-ca-bundle.crt'):
+    '''Create backup of Apache truststore file'''
     if os.path.exists(apache_truststore):
         shutil.copyfile(apache_truststore, apache_truststore+".bak")
 
 def download_truststore(truststore_file, esg_root_url, node_peer_group):
+    '''Download truststore file from distribution mirror'''
     #separate file name from the rest of the file path (esg-truststore.ts by default)
     truststore_file_name = pybash.trim_string_from_head(truststore_file)
 
@@ -249,6 +250,7 @@ def download_truststore(truststore_file, esg_root_url, node_peer_group):
         esg_functions.download_update(truststore_file, "{}/certs/{}".format(esg_root_url, truststore_file_name))
 
 def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group):
+    '''Download apache truststore file from distribution mirror'''
     backup_apache_truststore(apache_truststore)
 
     #separate file name from the rest of the file path (esgf-ca-bundle.crt by default)
@@ -264,6 +266,7 @@ def download_apache_truststore(apache_truststore, esg_root_url, node_peer_group)
             esg_functions.download_update(apache_truststore, "{}/certs/{}".format(esg_root_url, apache_truststore_file_name))
 
 def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_truststore='/etc/certs/esgf-ca-bundle.crt', globus_certs_dir="/etc/grid-security/certificates"):
+    '''Download ESGF Truststore from the distribution mirror'''
     print "\n*******************************"
     print "Fetching ESGF Federation Truststore... "
     print "*******************************\n"
@@ -276,7 +279,7 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_trus
         try:
             node_peer_group = esg_property_manager.get_property("node_peer_group")
         except ConfigParser.NoOptionError:
-            raise("Could not find node peer group property")
+            raise "Could not find node peer group property"
 
         #download_truststore
         download_truststore(truststore_file, esg_root_url, node_peer_group)
@@ -288,9 +291,9 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_trus
             ca_cert = open("/etc/tempcerts/cacert.pem").read()
             apache_truststore_file.write(ca_cert)
 
-        simpleCA_cert = find_certificate_issuer_cert()
+        simple_CA_cert = find_certificate_issuer_cert()
 
-        simpleCA_cert_hash = get_certificate_subject_hash(simpleCA_cert)
+        simpleCA_cert_hash = get_certificate_subject_hash(simple_CA_cert)
 
         simpleCA_cert_hash_file = os.path.join(globus_certs_dir, simpleCA_cert_hash+".0")
         _insert_cert_into_truststore(simpleCA_cert_hash_file, truststore_file, "/tmp/esg_scratch")
@@ -302,6 +305,7 @@ def fetch_esgf_truststore(truststore_file=config["truststore_file"], apache_trus
 #------------------------------------
 
 def get_certificate_subject_hash(cert_path):
+    '''Get certificate subject hash from certificate'''
     try:
         cert_obj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert_path).read())
     except OpenSSL.crypto.Error:
@@ -312,14 +316,15 @@ def get_certificate_subject_hash(cert_path):
     return esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
 
 def find_certificate_issuer_cert():
+    '''Returns path of certificate_issuer_cert from /esg/config/myproxy/myproxy-server.config'''
     myproxy_config_file = "{}/config/myproxy/myproxy-server.config".format(config["esg_root_dir"])
     if os.path.exists(myproxy_config_file):
         try:
-            with open(myproxy_config_file) as config_file:
-                for line in config_file.readlines():
+            with open(myproxy_config_file) as myproxy_conf:
+                for line in myproxy_conf.readlines():
                     if "certificate_issuer_cert" in line:
                         #.strip('\"') is for removing quotes
-                        simpleCA_cert = line.split()[1].strip('\"')
-                        return simpleCA_cert
+                        simple_CA_cert = line.split()[1].strip('\"')
+                        return simple_CA_cert
         except IOError:
             raise

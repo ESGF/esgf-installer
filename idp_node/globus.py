@@ -82,10 +82,11 @@ def setup_globus(installation_type):
             setup_mode = "install"
             setup_globus_services(directive)
             write_globus_env(globus_location)
-            pybash.touch(os.path.join(globus_location,"esg_esg-node_installed"))
+            pybash.touch(os.path.join(globus_location, "esg_esg-node_installed"))
 
 def write_globus_env(globus_location):
-    esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), config_file=config["envfile"], section_name="esgf.env", separator="_")
+    '''Write globus properties to /etc/esg.env'''
+    esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), property_file=config["envfile"], section_name="esgf.env", separator="_")
 
 
 def start_globus(installation_type):
@@ -168,6 +169,7 @@ def start_globus_services(config_type):
         return
 
 def stop_globus_services(config_type):
+    '''Stop globus'''
     print "stop_globus_services for {}".format(config_type)
 
     if config_type == "datanode":
@@ -179,6 +181,7 @@ def stop_globus_services(config_type):
         return
 
 def check_for_existing_globus_rpm_packages():
+    '''Check if globus rpm is already installed'''
     rpm_packages = esg_functions.call_subprocess("rpm -qa")["stdout"].split("\n")
     globus_packages = [package for package in rpm_packages if "globus" in package]
     logger.debug("globus_packages: %s", globus_packages)
@@ -190,6 +193,7 @@ def check_for_existing_globus_rpm_packages():
 # All methods below this point should be considered "private" functions
 
 def install_globus_rpm():
+    '''Install globus rpm repo'''
     globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
     globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
     esg_functions.download_update(globus_connect_server_file, globus_connect_server_url)
@@ -205,7 +209,7 @@ def _install_globus(config_type):
         print "You must provide a configuration type arg [datanode | gateway]"
         return
 
-    globus_workdir= os.path.join(config["workdir"],"extra", "globus")
+    globus_workdir = os.path.join(config["workdir"], "extra", "globus")
     pybash.mkdir_p(globus_workdir)
     current_mode = os.stat(globus_workdir)
     # chmod a+rw $globus_workdir
@@ -256,6 +260,7 @@ def create_globus_account(globus_sys_acct):
             pass
 
 def globus_check_certificates():
+    '''Check if globus certificates are valid'''
     print "globus_check_certificates..."
     my_cert = "/etc/grid-security/hostcert.pem"
     esg_cert_manager.check_cert_expiry(my_cert)

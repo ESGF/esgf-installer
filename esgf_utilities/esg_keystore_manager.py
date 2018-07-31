@@ -147,7 +147,7 @@ def create_empty_java_keystore(keystore_name, keystore_alias, keystore_password,
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
     generate_keystore_string = "{java_keytool_executable} -genkey -keyalg RSA -alias {keystore_alias} -keystore {keystore_name} -storepass {keystore_password} -keypass {keystore_password} -validity 360 -dname {distinguished_name} -noprompt".format(java_keytool_executable=java_keytool_executable, keystore_alias=keystore_alias, keystore_name=keystore_name, keystore_password=keystore_password, distinguished_name=distinguished_name)
     keystore_output = esg_functions.call_subprocess(generate_keystore_string)
-    if keystore_output["returncode"] !=0:
+    if keystore_output["returncode"] != 0:
         print "Problem with generating initial keystore...Exiting."
         esg_functions.exit_with_error(keystore_output["stderr"])
 
@@ -167,7 +167,7 @@ def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, 
 
     command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {cert_bundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
     construct_keystore_output = esg_functions.call_subprocess(command)
-    if construct_keystore_output["returncode"] !=0:
+    if construct_keystore_output["returncode"] != 0:
         print "Could not import cert %s into keystore %s" % (cert_bundle, keystore_name)
 
 def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
@@ -268,9 +268,9 @@ def convert_per_to_dem(private_key, key_output_dir):
     print "\n*******************************"
     print "converting private key from PEM to DER... "
     print "******************************* \n"
-    derkey = os.path.join(key_output_dir,"key.der")
+    derkey = os.path.join(key_output_dir, "key.der")
     convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
-    if convert_to_der["returncode"] !=0:
+    if convert_to_der["returncode"] != 0:
         print "Problem with preparing initial keystore...Exiting."
         esg_functions.exit_with_error(convert_to_der["stderr"])
     return derkey

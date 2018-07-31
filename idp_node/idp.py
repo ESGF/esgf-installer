@@ -29,6 +29,7 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 
 
 def write_idp_install_log(idp_service_app_home):
+    '''Write IDP properties to install manifest and property file'''
     esgf_idp_version = "1.1.4"
     idp_service_host = esg_functions.get_esgf_host()
     idp_service_port = "443"
@@ -46,6 +47,7 @@ def write_idp_install_log(idp_service_app_home):
 
 
 def setup_idp():
+    '''Setup IDP service'''
     print "*******************************"
     print "Setting up The ESGF Idp Services"
     print "*******************************"
@@ -78,8 +80,8 @@ def setup_idp():
             esg_tomcat_manager.stop_tomcat()
 
         print "Expanding war {idp_dist_file} in {pwd}".format(idp_dist_file=idp_dist_file, pwd=os.getcwd())
-        with zipfile.ZipFile(idp_dist_file, 'r') as zf:
-            zf.extractall()
+        with zipfile.ZipFile(idp_dist_file, 'r') as idp_dist_zip:
+            idp_dist_zip.extractall()
         os.remove("esgf-idp.war")
 
         tomcat_user = esg_functions.get_user_id("tomcat")
@@ -99,6 +101,7 @@ def clone_slcs():
 
 #TODO: convert slcs to use Ansible python API
 def setup_slcs():
+    '''Setup the slcs_server'''
     print "*******************************"
     print "Setting up SLCS Oauth Server"
     print "*******************************"
@@ -158,6 +161,7 @@ def setup_slcs():
 
 
 def main():
+    '''Main function'''
     setup_idp()
     # setup_slcs()
 

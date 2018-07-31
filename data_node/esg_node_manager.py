@@ -303,7 +303,7 @@ def setup_node_manager(mode="install"):
             with pybash.pushd("WEB-INF/classes"):
                 # cat ${fetch_file}.tmpl >> ${config_file}
                 with open(download_file_name + ".tmpl", "r") as download_file:
-                    with open(config["config_file"], "w") as config_file:
+                    with open(config["property_file"], "w") as config_file:
                         download_file_contents = download_file.read()
                         config_file.write(download_file_contents)
 

@@ -1,4 +1,4 @@
-import os
+©import os
 import sys
 import shutil
 import logging
@@ -361,8 +361,9 @@ def process_arguments():
         sys.exit(0)
     if args.installlocalcerts:
         logger.debug("installing local certs")
-        esg_functions.get_node_type(config["esg_config_type_file"])
+        esg_functions.get_node_type()
         node_type_list = esg_functions.get_node_type()
+        from esgf_utilities import esg_cert_manager
         esg_cert_manager.install_local_certs(node_type_list)
         sys.exit(0)
     if args.generateesgfcsrs:

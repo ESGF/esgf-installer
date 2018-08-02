@@ -262,7 +262,7 @@ def init():
     # allow prompting of user for fields!
     # zoiks: allow this to be empty to allow prompting of user for fields!
     default_distinguished_name = "OU=ESGF.ORG, O=ESGF"
-    config_file = os.path.join(esg_config_dir, "esgf.properties")
+    property_file = os.path.join(esg_config_dir, "esgf.properties")
     index_config = "master slave"
 
 

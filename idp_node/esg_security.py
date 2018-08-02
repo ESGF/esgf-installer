@@ -18,15 +18,15 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 
 
 def setup_security(node_type_list, esg_dist_url):
-    #####
-    # Install The ESGF Security Services
-    #####
-    # - Takes boolean arg: 0 = setup / install mode (default)
-    #                      1 = updated mode
-    #
-    # In setup mode it is an idempotent install (default)
-    # In update mode it will always pull down latest after archiving old
-    #
+    '''####
+    Install The ESGF Security Services
+    ####
+    - Takes boolean arg: 0 = setup / install mode (default)
+                         1 = updated mode
+
+    In setup mode it is an idempotent install (default)
+    In update mode it will always pull down latest after archiving old
+    '''
     print "*******************************"
     print "Setting up ESGF Security Services"
     print "*******************************"
@@ -43,6 +43,7 @@ def setup_security(node_type_list, esg_dist_url):
 
 
 def write_security_db_install_log(db_dir, esgf_security_version):
+    '''Writes esgf-security settings to install manifest'''
     esg_functions.write_to_install_manifest("python:esgf_security", db_dir, esgf_security_version)
 
 def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=config["esgf_security_version"]):
@@ -86,8 +87,8 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
             #TODO: update this to use setuptools
             esg_functions.stream_subprocess_output("easy_install {}".format(esgf_security_egg_file))
 
-            node_db_name= "esgcet"
-            node_db_security_schema_name="esgf_security"
+            node_db_name = "esgcet"
+            node_db_security_schema_name = "esgf_security"
             if node_db_security_schema_name in esg_postgres.postgres_list_db_schemas():
                 schema_backup = raw_input("Do you want to make a back up of the existing database schema [{}:{}]? [Y/n]".format(node_db_name, node_db_security_schema_name)) or "y"
                 if schema_backup.lower() in ["y", "yes"]:
@@ -102,7 +103,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
             write_security_db_install_log(db_dir, esgf_security_version)
 
     else:
-        logger.debug("This function, configure_postgress(), is not applicable to current node type ({})".format(set(node_type_list)))
+        logger.debug("This function, configure_postgress(), is not applicable to current node type (%s)", set(node_type_list))
 
 
 #******************************************************************
@@ -110,6 +111,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 #******************************************************************
 
 def security_startup_hook(node_type_list):
+    '''Prepares esgf-security to start'''
     logger.info("Security Startup Hook: Setup policy and whitelists... ")
     _setup_policy_files(node_type_list)
     _setup_static_whitelists("ats", "idp")
@@ -256,7 +258,7 @@ def fetch_user_migration_launcher(node_type_list, esg_dist_url):
             esg_functions.download_update(esgf_user_migration_launcher, esgf_user_migration_launcher_url)
             os.chmod(esgf_user_migration_launcher, 0755)
     else:
-        logger.debug("This function, fetch_user_migration_launcher(), is not applicable to current node type ({})".format(set(node_type_list)))
+        logger.debug("This function, fetch_user_migration_launcher(), is not applicable to current node type (%s)", set(node_type_list))
 
 def fetch_policy_check_launcher(node_type_list, esg_dist_url):
     if "IDP" in node_type_list and "DATA" in node_type_list:
@@ -268,4 +270,4 @@ def fetch_policy_check_launcher(node_type_list, esg_dist_url):
             esg_functions.download_update(esgf_policy_check_launcher, esgf_policy_check_launcher_url)
             os.chmod(esgf_user_migration_launcher, 0755)
     else:
-        logger.debug("This function, fetch_policy_check_launcher(), is not applicable to current node type ({})".format(set(node_type_list)))
+        logger.debug("This function, fetch_policy_check_launcher(), is not applicable to current node type (%s)", set(node_type_list))

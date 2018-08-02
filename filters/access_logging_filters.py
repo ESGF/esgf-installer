@@ -26,6 +26,7 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
     config = yaml.load(config_file)
 
 def setup_access_logging_filter():
+    '''Main function'''
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):
         install_access_logging_filter()
@@ -56,7 +57,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
 
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF")):
-        logger.error("WARNING: Could not find %s's installation dir - Filter Not Applied",service_name)
+        logger.error("WARNING: Could not find %s's installation dir - Filter Not Applied", service_name)
         return False
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
         logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
@@ -71,7 +72,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     esg_tomcat_manager.stop_tomcat()
 
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    get_mgr_libs(os.path.join(dest_dir, "WEB-INF", "lib"), esg_dist_url)
+    get_node_manager_libs(os.path.join(dest_dir, "WEB-INF", "lib"), esg_dist_url)
 
     if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
@@ -81,9 +82,9 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
     esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
     with pybash.pushd(config["workdir"]):
-        with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as zf:
+        with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as filters_jar:
             #Pull out the templated filter entry snippet file...
-            zf.extract(esg_filter_entry_file)
+            filters_jar.extract(esg_filter_entry_file)
         #going to need full path for pattern replacement below
         esg_filter_entry_file_path = os.path.join(os.getcwd(), esg_filter_entry_file)
 
@@ -117,22 +118,24 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     tomcat_group = esg_functions.get_group_id("tomcat")
     esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
 
-
-#TODO: refactor
 def insert_file_at_pattern(target_file, input_file, pattern):
     '''Replace a pattern inside the target file with the contents of the input file'''
-    f=open(target_file)
-    s=f.read()
-    f.close()
-    f=open(input_file)
-    filter = f.read()
-    f.close()
-    s=s.replace(pattern,filter)
-    f=open(target_file,'w')
-    f.write(s)
-    f.close()
+    target_file_object = open(target_file)
+    target_file_string = target_file_object.read()
+    target_file_object.close()
 
-def get_mgr_libs(dest_dir, esg_dist_url):
+    input_file_object = open(input_file)
+    input_file_string = input_file_object.read()
+    input_file_object.close()
+
+    target_file_string = target_file_string.replace(pattern, input_file_string)
+
+    target_file_object = open(target_file, 'w')
+    target_file_object.write(target_file_string)
+    target_file_object.close()
+
+def get_node_manager_libs(dest_dir, esg_dist_url):
+    '''Get libraries need for Node Manager; formerly called get_mgr_libs()'''
     print "Checking for / Installing required jars..."
 
     node_manager_app_home = "/usr/local/tomcat/webapps/esgf-node-manager"

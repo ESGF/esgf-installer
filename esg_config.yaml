@@ -13,7 +13,7 @@ cdat_version: 2.2.0
 certificate_extensions: pem|crt|cert|key
 cmor_version: 3.3.2
 compress_extensions: .tar.gz|.tar.bz2|.tgz|.bz2|.tar
-config_file: /esg/config/esgf.properties
+property_file: /esg/config/esgf.properties
 date_format: +%Y_%m_%d_%H%M%S
 db_database: esgcet
 default_distinguished_name: OU=ESGF.ORG, O=ESGF

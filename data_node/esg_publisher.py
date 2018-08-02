@@ -3,11 +3,11 @@
 '''
 import os
 import datetime
+import re
 import logging
 import ConfigParser
 from git import Repo
 import yaml
-import re
 try:
     from pip._internal.operations import freeze
 except ImportError:
@@ -42,11 +42,12 @@ def clone_publisher_repo(publisher_path):
 
     if not os.path.isdir(os.path.join(publisher_path, ".git")):
         Repo.clone_from(config[
-                        "publisher_repo_https"], publisher_path)
+            "publisher_repo_https"], publisher_path)
     else:
         print "Publisher repo already exists {publisher_path}".format(publisher_path=publisher_path)
 
 def checkout_publisher_branch(publisher_path, branch_name):
+    '''Checkout branch_name from Publisher repo'''
     publisher_repo_local = Repo(publisher_path)
     publisher_repo_local.git.checkout(branch_name)
     return publisher_repo_local
@@ -110,7 +111,7 @@ def edit_esg_ini(node_short_name="test_node"):
     print "esg_ini_path:", esg_ini_path
     esg_functions.call_subprocess('sed -i s/esgcetpass/password/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path))
     esg_functions.call_subprocess('sed -i s/"host\.sample\.gov"/{esgf_host}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path, esgf_host=esg_functions.get_esgf_host()))
-    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path,   node_short_name=node_short_name))
+    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path,    node_short_name=node_short_name))
 
 def run_esgsetup():
     '''generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration'''
@@ -180,11 +181,12 @@ def setup_publisher():
 
 
 def write_esgcet_env():
-    esg_property_manager.set_property("ESG_ROOT_ID", "export ESG_ROOT_ID={}".format(esg_property_manager.get_property("esg.org.name")), config_file=config["envfile"], section_name="esgf.env", separator="_")
+    '''Write Publisher environment properties to /etc/esg.env'''
+    esg_property_manager.set_property("ESG_ROOT_ID", "export ESG_ROOT_ID={}".format(esg_property_manager.get_property("esg.org.name")), property_file=config["envfile"], section_name="esgf.env", separator="_")
 
-# env needed by Python client to trust the data node server certicate
-# ENV SSL_CERT_DIR /etc/grid-security/certificates
-# ENV ESGINI /esg/config/esgcet/esg.ini
+    # env needed by Python client to trust the data node server certicate
+    # ENV SSL_CERT_DIR /etc/grid-security/certificates
+    # ENV ESGINI /esg/config/esgcet/esg.ini
 
 def write_esgcet_install_log():
     """ Write the Publisher install properties to the install manifest"""
@@ -197,8 +199,7 @@ def write_esgcet_install_log():
     esg_property_manager.set_property(
         "publisher_home", config["publisher_home"])
     esg_property_manager.set_property("monitor.esg.ini", os.path.join(config[
-                                    "publisher_home"], config["publisher_config"]))
-    return 0
+        "publisher_home"], config["publisher_config"]))
 
 def esgcet_startup_hook():
     '''Prepares the Publisher for startup'''
@@ -248,6 +249,7 @@ def set_index_peer(host=None, index_type="p2p"):
 
 
 def main():
+    '''Main function'''
     if os.path.isfile(os.path.join(config["publisher_home"], config["publisher_config"])):
         try:
             publisher_install = esg_property_manager.get_property("update.publisher")

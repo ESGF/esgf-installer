@@ -1,3 +1,4 @@
+'''Module to install the OpenID Relying Party'''
 import os
 import shutil
 import logging
@@ -18,20 +19,9 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-orp_context_root = "esg-orp"
-orp_service_app_home = "/usr/local/tomcat/webapps/{}".format(orp_context_root)
-orp_service_endpoint = "https://{}/{}/html.htm".format(esg_functions.get_esgf_host(), orp_context_root)
-
-#------------------------------------------
-#Security services associated with ORP
-#------------------------------------------
-orp_security_authorization_service_host = esg_functions.get_esgf_host()
-orp_security_authorization_service_port = "443"
-orp_security_authorization_service_app_home = orp_service_app_home
-orp_security_authorization_service_endpoint = "https://{}/esg-orp/saml/soap/secure/authorizationService.htm".format(orp_security_authorization_service_host)
-#------------------------------------------
 
 def update_existing_orp():
+    '''Update an existing ORP installation'''
     try:
         orp_install = esg_property_manager.get_property("update.orp")
     except ConfigParser.NoOptionError:
@@ -43,34 +33,23 @@ def update_existing_orp():
         return True
 
 def backup_orp():
+    '''Backup existing ORP installation'''
     orp_backup = raw_input("Do you want to make a back up of the existing ORP distribution?? [Y/n] ") or "yes"
     if orp_backup.lower() in ["y", "yes"]:
         print "Creating a backup archive of this web application /usr/local/tomcat/webapps/esg-orp"
         esg_functions.backup("/usr/local/tomcat/webapps/esg-orp")
 
-#DEPRECATED: No need to download the properties file from mirror, it already exists in the war file
-def download_orp_properties(orp_properties_url):
-    print "\n*******************************"
-    print "Downloading ORP properties file"
-    print "******************************* \n"
-
-    r = requests.get(orp_properties_url, stream=True)
-    path = "esg-orp.properties"
-    with open(path, 'wb') as f:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
-            if chunk:
-                f.write(chunk)
-                f.flush()
 
 def backup_orp_properties():
+    '''Backup orp properties file'''
     if os.path.exists("/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties"):
         shutil.copyfile("/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties", "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties.saved")
 
 def extract_orp_war():
+    '''Extract orp war file'''
     print "Expanding war esg-orp.war in {}".format(os.getcwd())
-    with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as zf:
-        zf.extractall()
+    with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as orp_war_file:
+        orp_war_file.extractall()
     os.remove("esg-orp.war")
 
 
@@ -93,9 +72,9 @@ def get_orp_support_libs(dest_dir, esg_dist_url):
         esg_functions.write_security_lib_install_log()
         esg_functions.download_update(os.path.join(dest_dir, esgf_security_test_jar), "{}/esgf-security/{}".format(esg_dist_url, esgf_security_test_jar))
 
-        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_ownership_recursive(dest_dir, TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+        tomcat_user_id = esg_functions.get_tomcat_user_id()
+        tomcat_group_id = esg_functions.get_tomcat_group_id()
+        esg_functions.change_ownership_recursive(dest_dir, tomcat_user_id, tomcat_group_id)
 
 def orp_startup_hook():
     '''This function is called by esg-node before starting tomcat!
@@ -113,6 +92,7 @@ def orp_startup_hook():
 
 
 def setup_orp():
+    '''Install ORP'''
     print "Checking for Openid Relying Party {}".format(config["esg_orp_version"])
     try:
         existing_orp_install = esg_version_manager.check_webapp_version("esg-orp", config["esg_orp_version"])
@@ -136,6 +116,7 @@ def setup_orp():
 
         backup_orp()
 
+    orp_service_app_home = "/usr/local/tomcat/webapps/esg-orp"
     pybash.mkdir_p(orp_service_app_home)
 
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
@@ -157,37 +138,37 @@ def setup_orp():
 
         orp_startup_hook()
 
-        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+        tomcat_user_id = esg_functions.get_tomcat_user_id()
+        tomcat_group_id = esg_functions.get_tomcat_group_id()
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", tomcat_user_id, tomcat_group_id)
 
     setup_providers_dropdown(esg_dist_url)
     get_orp_support_libs("/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib", esg_dist_url)
 
-    write_orp_install_log()
+    write_orp_install_log(orp_service_app_home)
 
     esg_tomcat_manager.start_tomcat()
 
 def download_orp_war(orp_url):
-
+    '''Download ORP war file from orp_url'''
     print "\n*******************************"
     print "Downloading ORP (Setting up The OpenID Relying Party) war file"
     print "******************************* \n"
 
-    r = requests.get(orp_url, stream=True)
+    response = requests.get(orp_url, stream=True)
     path = '/usr/local/tomcat/webapps/esg-orp/esg-orp.war'
-    with open(path, 'wb') as f:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+    with open(path, 'wb') as orp_war:
+        total_length = int(response.headers.get('content-length'))
+        for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
             if chunk:
-                f.write(chunk)
-                f.flush()
+                orp_war.write(chunk)
+                orp_war.flush()
 
 def update_common_loader(config_dir):
     '''add /esg/config/ to common.loader in catalina.properties if not already present'''
-    catalina_properties_file ="{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=config["tomcat_install_dir"])
-    with open(catalina_properties_file) as f:
-        for line in f:
+    catalina_properties_file = "{tomcat_install_dir}/conf/catalina.properties".format(tomcat_install_dir=config["tomcat_install_dir"])
+    with open(catalina_properties_file) as property_file:
+        for line in property_file:
             if "common.loader" in line:
                 common_loader = line
                 print "common_loader:", common_loader
@@ -206,7 +187,7 @@ def setup_providers_dropdown(esg_dist_url):
     '''Do additional setup to configure CEDA-provided ORP with a dropdown list of IDPs'''
     known_providers_url = "{}/lists/esgf_known_providers.xml".format(esg_dist_url)
     config_dir = os.path.join("{esg_root_dir}".format(esg_root_dir=config["esg_root_dir"]), "config")
-    known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir),"esgf_known_providers.xml")
+    known_providers_file = os.path.join("{config_dir}".format(config_dir=config_dir), "esgf_known_providers.xml")
 
     # add /esg/config/ to common.loader in catalina.properties if not already present
     update_common_loader(config_dir)
@@ -220,7 +201,16 @@ def setup_providers_dropdown(esg_dist_url):
     os.chown("/esg/config/esgf.properties", tomcat_user_id, tomcat_group_id)
 
 
-def write_orp_install_log():
+def write_orp_install_log(orp_service_app_home):
+    '''Write ORP properties to install manifest and properties file'''
+
+    orp_service_endpoint = "https://{}/esg-orp/html.htm".format(esg_functions.get_esgf_host())
+
+    orp_security_authorization_service_host = esg_functions.get_esgf_host()
+    orp_security_authorization_service_port = "443"
+    orp_security_authorization_service_app_home = orp_service_app_home
+    orp_security_authorization_service_endpoint = "https://{}/esg-orp/saml/soap/secure/authorizationService.htm".format(orp_security_authorization_service_host)
+
     esg_functions.write_to_install_manifest("webapp:esg-orp", "/usr/local/tomcat/webapps/esg-orp", config["esg_orp_version"])
     esg_property_manager.set_property("orp_service_endpoint", orp_service_endpoint)
     esg_property_manager.set_property("orp_service_app_home", orp_service_app_home)
@@ -228,41 +218,8 @@ def write_orp_install_log():
     esg_property_manager.set_property("orp_security_authorization_service_app_home", orp_security_authorization_service_app_home)
 
 
-# def setup_orp():
-#     '''Setup the ORP subsystem'''
-#     print "\n*******************************"
-#     print "Setting up ORP"
-#     print "******************************* \n"
-#
-#     if os.path.isdir("/usr/local/tomcat/webapps/esg-orp"):
-#         try:
-#             orp_install = esg_property_manager.get_property("update.orp")
-#         except ConfigParser.NoOptionError:
-#             orp_install = raw_input("Existing ORP installation found.  Do you want to continue with the ORP installation [y/N]: ") or "no"
-#
-#         if orp_install.lower() in ["no", "n"]:
-#             return
-#     pybash.mkdir_p("/usr/local/tomcat/webapps/esg-orp")
-#
-#     orp_url = os.path.join(config["esgf_dist_mirror"], "dist", "devel", "esg-orp", "esg-orp.war")
-#     print "orp_url:", orp_url
-#
-#     download_orp_war(orp_url)
-#     with pybash.pushd("/usr/local/tomcat/webapps/esg-orp"):
-#         with zipfile.ZipFile("/usr/local/tomcat/webapps/esg-orp/esg-orp.war", 'r') as zf:
-#             zf.extractall()
-#         os.remove("esg-orp.war")
-#         TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-#         TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-#         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esg-orp", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
-#
-#     # properties to read the Tomcat keystore, used to sign the authentication cookie
-#     # these values are the same for all ESGF nodes
-#     shutil.copyfile(os.path.join(os.path.dirname(__file__), "esgf_orp_conf/esg-orp.properties"), "/usr/local/tomcat/webapps/esg-orp/WEB-INF/classes/esg-orp.properties")
-#
-#     setup_providers_dropdown()
-
 def main():
+    '''Main function'''
     setup_orp()
 
 if __name__ == '__main__':

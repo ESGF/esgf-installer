@@ -3,19 +3,18 @@ import shutil
 import logging
 import getpass
 import ConfigParser
+import zipfile
 import re
-import urllib
 from urlparse import urlparse
-import requests
 from distutils.dir_util import copy_tree
+import requests
 import yaml
 from lxml import etree
-import zipfile
 from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities import esg_cert_manager, esg_truststore_manager
+from esgf_utilities import esg_truststore_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager, esg_postgres
 
@@ -40,19 +39,19 @@ def check_thredds_version():
             print "Thredds not found on system."
 
 def download_thredds_war(thredds_url):
-
+    '''Download thredds war file from thredds_url'''
     print "\n*******************************"
     print "Downloading Thredds war file"
     print "******************************* \n"
 
-    r = requests.get(thredds_url, stream=True)
+    response = requests.get(thredds_url, stream=True)
     path = '/usr/local/tomcat/webapps/thredds/thredds.war'
-    with open(path, 'wb') as f:
-        total_length = int(r.headers.get('content-length'))
-        for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+    with open(path, 'wb') as thredds_war:
+        total_length = int(response.headers.get('content-length'))
+        for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
             if chunk:
-                f.write(chunk)
-                f.flush()
+                thredds_war.write(chunk)
+                thredds_war.flush()
 
 def create_password_hash(tomcat_user_password):
     '''Creates a hash for a Tomcat user's password using Tomcat's digest.sh script'''
@@ -109,7 +108,7 @@ def add_tomcat_user():
             tomcat_username = esg_property_manager.get_property("tomcat.user")
         except ConfigParser.NoOptionError:
             default_user = "dnode_user"
-            tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user= default_user)) or default_user
+            tomcat_username = raw_input("Please enter username for tomcat [{default_user}]:  ".format(default_user=default_user)) or default_user
 
         valid_password = False
         while not valid_password:
@@ -128,30 +127,30 @@ def add_tomcat_user():
 
 def get_webxml_file():
     '''Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)'''
-    web_xml_path = os.path.join("{tomcat_install_dir}".format(tomcat_install_dir=config["tomcat_install_dir"]), "webapps", "thredds", "WEB-INF","web.xml")
+    web_xml_path = os.path.join("{tomcat_install_dir}".format(tomcat_install_dir=config["tomcat_install_dir"]), "webapps", "thredds", "WEB-INF", "web.xml")
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     web_xml_download_url = "{}/thredds/thredds.web.xml".format(esg_dist_url)
     esg_functions.download_update(web_xml_path, web_xml_download_url)
 
-    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
+    tomcat_user_id = esg_functions.get_tomcat_user_id()
+    tomcat_group_id = esg_functions.get_tomcat_group_id()
 
-    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", tomcat_user_id, tomcat_group_id)
 
 #TODO: terrible, undescriptive name; come up with something better
-def register(remote_host, truststore_password, keystore_password=None):
-     '''This function is for pulling in keys from hosts we wish to
-     communicate with over an encrypted ssl connection.  This function
-     must be run after tomcat is set up since it references server.xml.
+def register(remote_host):
+    '''This function is for pulling in keys from hosts we wish to
+    communicate with over an encrypted ssl connection.  This function
+    must be run after tomcat is set up since it references server.xml.
 
-     (called by setup_idp_peer)
-     arg1 - hostname of the machine with the cert you want to get
-     (arg2 - password to truststore where cert will be inserted)
-     (arg3 - password to keystore - only applicable in "local" registration scenario)'''
+    (called by setup_idp_peer)
+    arg1 - hostname of the machine with the cert you want to get
+    (arg2 - password to truststore where cert will be inserted)
+    (arg3 - password to keystore - only applicable in "local" registration scenario)'''
 
-     print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
+    print "Installing Public Certificate of Target Peer Node...[{}]".format(remote_host)
 
-     with pybash.pushd(config["tomcat_conf_dir"]):
+    with pybash.pushd(config["tomcat_conf_dir"]):
         esgf_host = esg_functions.get_esgf_host()
         ssl_endpoint = urlparse(remote_host).hostname
         ssl_port = "443"
@@ -198,9 +197,6 @@ def select_idp_peer():
     if public_ip:
         print "\nUsing IP: {}\n".format(public_ip)
 
-    default_myproxy_port=7512
-    custom_myproxy_port=""
-
     node_type_list = esg_functions.get_node_type()
 
     if "INDEX" in node_type_list and not set(["idp", "data", "compute"]).issubset(node_type_list):
@@ -245,26 +241,30 @@ def select_idp_peer():
           ----------------------------------------------------------------------'''
 
     if esgf_host != myproxy_endpoint:
-        register(myproxy_endpoint, config["truststore_password"])
+        register(myproxy_endpoint)
 
     esg_property_manager.set_property("esgf_idp_peer_name", esgf_idp_peer_name)
     esg_property_manager.set_property("esgf_idp_peer", esgf_idp_peer)
 
     esg_property_manager.set_property("myproxy_endpoint", myproxy_endpoint)
+    default_myproxy_port = 7512
     esg_property_manager.set_property("myproxy_port", default_myproxy_port)
 
     write_tds_env()
 
 def write_tds_env():
-    esg_property_manager.set_property("ESGF_IDP_PEER_NAME", "export ESGF_IDP_PEER_NAME={}".format(esg_property_manager.get_property("esgf_idp_peer_name")), config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("ESGF_IDP_PEER", "export ESGF_IDP_PEER={}".format(esg_property_manager.get_property("esgf_idp_peer")), config_file=config["envfile"], section_name="esgf.env", separator="_")
+    '''Write thredds info to /etc/esg.env'''
+    esg_property_manager.set_property("ESGF_IDP_PEER_NAME", "export ESGF_IDP_PEER_NAME={}".format(esg_property_manager.get_property("esgf_idp_peer_name")), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("ESGF_IDP_PEER", "export ESGF_IDP_PEER={}".format(esg_property_manager.get_property("esgf_idp_peer")), property_file=config["envfile"], section_name="esgf.env", separator="_")
 
 def update_mail_admin_address():
+    '''Updates mail_admin_address in threddsConfig.xml'''
     mail_admin_address = esg_property_manager.get_property("mail.admin.address")
     esg_functions.stream_subprocess_output('sed -i "s/support@my.group/{mail_admin_address}/g" /esg/content/thredds/threddsConfig.xml'.format(mail_admin_address=mail_admin_address))
 
 
 def esgsetup_thredds():
+    '''Configures Thredds with esgsetup'''
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #TODO: --gateway is esg_property_manager.get_property("esgf.index.peer")
     esgsetup_command = '''esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password {security_admin_password}'''.format(security_admin_password=esg_functions.get_security_admin_password())
@@ -291,7 +291,7 @@ def copy_public_directory():
         esg_functions.change_ownership_recursive(config["thredds_content_dir"], tomcat_user, tomcat_group)
 
 def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini", tomcat_users_file=config["tomcat_users_file"]):
-
+    '''Verifies that Thredds credentials in /esg/config/esgcet/esg.ini matches /esg/config/tomcat/tomcat-users.xml'''
     print "Inspecting tomcat... "
     tree = etree.parse(tomcat_users_file)
     root = tree.getroot()
@@ -300,8 +300,8 @@ def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini", to
     tomcat_password_hash = user_element.get("password")
 
     print "Inspecting publisher... "
-    thredds_username = esg_property_manager.get_property("thredds.username", config_file=thredds_ini_file, section_name="DEFAULT")
-    thredds_password = esg_property_manager.get_property("thredds.password", config_file=thredds_ini_file, section_name="DEFAULT")
+    thredds_username = esg_property_manager.get_property("thredds.username", property_file=thredds_ini_file, section_name="DEFAULT")
+    thredds_password = esg_property_manager.get_property("thredds.password", property_file=thredds_ini_file, section_name="DEFAULT")
     thredds_password_hash = create_password_hash(thredds_password)
 
     print "Checking username... "
@@ -322,9 +322,10 @@ def verify_thredds_credentials(thredds_ini_file="/esg/config/esgcet/esg.ini", to
     return True
 
 def copy_jar_files(esg_dist_url):
-    # TDS jars necessary to support ESGF security filters
-    # some jars are retrieved from the ESGF repository
-    # other jars are copied from the unpacked ORP or NM distributions
+    '''TDS jars necessary to support ESGF security filters
+    some jars are retrieved from the ESGF repository
+    other jars are copied from the unpacked ORP or NM distributions'''
+
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/jdom-legacy-1.1.3.jar", "{esg_dist_url}/filters/jdom-legacy-1.1.3.jar".format(esg_dist_url=esg_dist_url))
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-httpclient-3.1.jar", "{esg_dist_url}/filters/commons-httpclient-3.1.jar".format(esg_dist_url=esg_dist_url))
     esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/lib/commons-lang-2.6.jar", "{esg_dist_url}/filters/commons-lang-2.6.jar".format(esg_dist_url=esg_dist_url))
@@ -392,6 +393,7 @@ def download_tomcat_users_xml(esg_dist_url):
     os.chown(tomcat_users_xml_local_path, tomcat_user_id, tomcat_group_id)
 
 def write_tds_install_log():
+    '''Write thredds info to install manifest'''
     thredds_version = check_thredds_version()
     thredds_install_dir = os.path.join("{}".format(config["tomcat_install_dir"]), "webapps", "thredds")
     esg_functions.write_to_install_manifest("webapp:thredds", thredds_install_dir, thredds_version)
@@ -401,7 +403,7 @@ def write_tds_install_log():
     esg_property_manager.set_property("thredds_service_app_home", "{}/webapps/thredds".format(config["tomcat_install_dir"]))
 
 def setup_thredds():
-
+    '''Install Thredds'''
     print "\n*******************************"
     print "Setting up Thredds"
     print "******************************* \n"
@@ -410,7 +412,7 @@ def setup_thredds():
         try:
             thredds_install = esg_property_manager.get_property("update.thredds")
         except ConfigParser.NoOptionError:
-            thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: " ) or "no"
+            thredds_install = raw_input("Existing Thredds installation found.  Do you want to continue with the Thredds installation [y/N]: ") or "no"
 
         if thredds_install.lower() in ["no", "n"]:
             print "Using existing Thredds installation.  Skipping setup."
@@ -425,12 +427,12 @@ def setup_thredds():
     download_thredds_war(thredds_url)
 
     with pybash.pushd("/usr/local/tomcat/webapps/thredds"):
-        with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as zf:
-            zf.extractall()
+        with zipfile.ZipFile("/usr/local/tomcat/webapps/thredds/thredds.war", 'r') as thredds_war_file:
+            thredds_war_file.extractall()
         os.remove("thredds.war")
-        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+        tomcat_user_id = esg_functions.get_tomcat_user_id()
+        tomcat_group_id = esg_functions.get_tomcat_group_id()
+        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds", tomcat_user_id, tomcat_group_id)
 
     download_tomcat_users_xml(esg_dist_url)
     add_tomcat_user()
@@ -440,7 +442,7 @@ def setup_thredds():
     download_thredds_xml(esg_dist_url)
     # get_webxml_file()
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
-    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", tomcat_user_id, tomcat_group_id)
     select_idp_peer()
     copy_public_directory()
     # TDS configuration root
@@ -460,12 +462,12 @@ def setup_thredds():
     shutil.copyfile(os.path.join(current_directory, "thredds_conf/log4j2.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
 
     # change ownership of content directory
-    TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-    TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-    esg_functions.change_ownership_recursive("/esg/content/thredds/", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    tomcat_user_id = esg_functions.get_tomcat_user_id()
+    tomcat_group_id = esg_functions.get_tomcat_group_id()
+    esg_functions.change_ownership_recursive("/esg/content/thredds/", tomcat_user_id, tomcat_group_id)
 
     # change ownership of source directory
-    esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+    esg_functions.change_ownership_recursive("/usr/local/webapps/thredds", tomcat_user_id, tomcat_group_id)
 
     #restart tomcat to put modifications in effect.
     esg_tomcat_manager.stop_tomcat()
@@ -482,11 +484,13 @@ def setup_thredds():
     # shutil.rmtree("/usr/local/tomcat/webapps/esgf-node-manager/")
 
 def tds_startup_hook():
+    '''Prepares thredds to start'''
     print "TDS (THREDDS) Startup Hook: Setting perms... "
     esg_functions.change_ownership_recursive(config["thredds_content_dir"], uid=esg_functions.get_user_id("tomcat"))
 
 
 def main():
+    '''Main function'''
     setup_thredds()
 
 if __name__ == '__main__':

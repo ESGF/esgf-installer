@@ -1,3 +1,4 @@
+'''Main control script for the ESGF Installer'''
 import os
 import sys
 import logging
@@ -69,6 +70,7 @@ def esgf_node_info():
 
 
 def set_esg_dist_url(install_type, script_maj_version="2.6", script_release="8"):
+    '''Sets the distribution mirror url'''
     try:
         local_mirror = esg_property_manager.get_property("local_mirror")
     except ConfigParser.NoOptionError:
@@ -153,8 +155,8 @@ def init_connection():
 
 
 def get_installation_type(script_version):
-    # Determining if devel or master directory of the ESGF distribution mirror
-    # will be use for download of binaries
+    '''Determining if devel or master directory of the ESGF distribution mirror
+    will be use for download of binaries'''
     if "devel" in script_version:
         logger.debug("Using devel version")
         return "devel"
@@ -163,6 +165,7 @@ def get_installation_type(script_version):
 
 
 def install_log_info(node_type_list):
+    '''Logs out the selected installation types'''
     if force_install:
         logger.info("(force install is ON)")
     if "DATA" in node_type_list:
@@ -313,6 +316,7 @@ def setup_esgf_rpm_repo():
 
 
 def main():
+    '''Main function'''
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 
@@ -406,6 +410,7 @@ def sanity_check_web_xmls():
             -------------------------------------------------------------------------------------------------'''
 
 def clear_tomcat_cache():
+    '''Delete the tomcat cache directories'''
     try:
         cache_directories = glob.glob("/usr/local/tomcat/work/Catalina/localhost/*")
         for directory in cache_directories:
@@ -471,6 +476,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     esg_node_finally(node_type_list)
 
 def esg_node_finally(node_type_list):
+    '''Runs after installation, final setup'''
     global_x509_cert_dir = "/etc/grid-security/certificates"
     esg_functions.change_ownership_recursive(global_x509_cert_dir, config["installer_uid"], config["installer_gid"])
 

@@ -6,7 +6,7 @@ services:
   - docker
 
 before_install:
-- docker pull hill119/esgf_centos6a:v1
+- docker pull hill119/esgf_centos6:v1
 # - docker run -d -p 127.0.0.1:80:4567 esgf_centos6 /bin/sh -c "cd /root/sinatra; bundle exec foreman start;"
 # - docker ps -a
 # - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"

@@ -12,7 +12,8 @@ before_install:
 # - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"
 
 script:
-- docker run -it -d esgf_centos6 /bin/bash
+- docker images -a
+- docker run -it -d esgf_centos6:v1 /bin/bash
 - docker ps -a
 - docker exec esgf_install pwd
 

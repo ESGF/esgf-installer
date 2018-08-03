@@ -7,12 +7,12 @@ services:
 
 before_install:
 - docker pull hill119/esgf_centos6:v1
+- docker run --name esgf_install -it -d esgf_install:v1 /bin/bash
 # - docker run -d -p 127.0.0.1:80:4567 esgf_centos6 /bin/sh -c "cd /root/sinatra; bundle exec foreman start;"
 # - docker ps -a
 # - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"
 
 script:
-- docker run --name esgf_install -it -d esgf_install /bin/bash
 - docker ps -a
 - docker exec esgf_install pwd
 

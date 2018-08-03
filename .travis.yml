@@ -13,7 +13,7 @@ before_install:
 
 script:
 - docker images -a
-- docker run -it -d hill119/esgf_centos6:v1 /bin/bash
+- docker run --name esgf_install -it -d hill119/esgf_centos6:v1 /bin/bash
 - docker ps -a
 - docker exec esgf_install pwd
 

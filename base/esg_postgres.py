@@ -515,13 +515,13 @@ def log_postgres_properties():
 
 def write_postgress_env():
     '''Write postgres environment properties to /etc/esg.env'''
-    esg_property_manager.set_property("PGHOME", "export PGHOME=/usr/bin/postgres", config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGUSER", "export PGUSER={}".format(config["postgress_user"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(config["postgress_port"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(config["postgress_bin_dir"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(config["postgress_lib_dir"]), config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PATH", config["myPATH"], config_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"], config_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("PGHOME", "export PGHOME=/usr/bin/postgres", property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("PGUSER", "export PGUSER={}".format(config["postgress_user"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(config["postgress_port"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(config["postgress_bin_dir"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(config["postgress_lib_dir"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("PATH", config["myPATH"], property_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"], property_file=config["envfile"], section_name="esgf.env", separator="_")
 
 def write_postgress_install_log():
     '''Write postgres version to install manifest'''

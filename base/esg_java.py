@@ -56,7 +56,7 @@ def download_java(java_tarfile):
 def write_java_env():
     '''Writes Java config to /etc/esg.env'''
     esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(
-        config["java_install_dir"]), config_file=config["envfile"],
+        config["java_install_dir"]), property_file=config["envfile"],
         section_name="esgf.env", separator="_")
 
 
@@ -119,7 +119,7 @@ def setup_java():
 
 def write_ant_env():
     '''Writes Ant config to /etc/esg.env'''
-    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", config_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", property_file=config["envfile"], section_name="esgf.env", separator="_")
 
 
 def write_ant_install_log():

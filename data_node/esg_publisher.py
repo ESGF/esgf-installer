@@ -241,7 +241,7 @@ def set_index_peer(host=None, index_type="p2p"):
         publishing_service_endpoint = "https://{}/esg-search/remote/secure/client-cert/hessian/publishingService".format(index_peer)
 
     publisher_config_path = os.path.join(config["publisher_home"], config["publisher_config"])
-    esg_property_manager.set_property("hessian_service_url", publishing_service_endpoint, config_file=publisher_config_path, section_name="DEFAULT")
+    esg_property_manager.set_property("hessian_service_url", publishing_service_endpoint, property_file=publisher_config_path, section_name="DEFAULT")
 
     esg_property_manager.set_property("esgf_index_peer", index_peer.rsplit("/", 1)[0])
     esg_property_manager.set_property("publishing_service_endpoint", publishing_service_endpoint)

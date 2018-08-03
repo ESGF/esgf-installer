@@ -426,4 +426,4 @@ def edit_etc_myproxyd():
 
 def write_db_name_env():
     esgf_db_name = esg_property_manager.get_property("db.database")
-    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), config_file=config["envfile"], section_name="esgf.env", separator="_")
+    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), property_file=config["envfile"], section_name="esgf.env", separator="_")

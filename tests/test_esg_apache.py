@@ -21,7 +21,10 @@ class test_ESG_apache(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         esg_functions.stream_subprocess_output("yum remove -y httpd")
-        pip.main(["uninstall", "mod_wsgi"])
+        try:
+            pip._internal.main(['uninstall', "-y", "mod_wsgi==4.5.3"])
+        except AttributeError:
+            pip.main(['uninstall', "-y", "mod_wsgi==4.5.3"])
         try:
             shutil.rmtree("/var/www/.python-eggs")
             shutil.rmtree('/var/www/html/')
@@ -52,7 +55,6 @@ class test_ESG_apache(unittest.TestCase):
         self.assertEqual(group, "apache")
 
         esg_apache_manager.copy_apache_conf_files()
-        self.assertTrue(os.path.isfile("/etc/httpd/conf.d/httpd.conf"))
         self.assertTrue(os.path.isfile("/etc/httpd/conf.d/ssl.conf"))
         self.assertTrue(os.listdir("/var/www/html/"))
         self.assertTrue(os.listdir("/etc/certs"))

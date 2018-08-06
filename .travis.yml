@@ -17,9 +17,9 @@ script:
 - docker ps -a
 - docker exec esgf_install pwd
 - docker exec esgf_install ls
-- docker exec git clone https://github.com/ESGF/esgf-installer.git
-- docker exec git checkout python_devel
-- docker exec python tests/test_esg_version_manager.py
+- docker exec esgf_install git clone https://github.com/ESGF/esgf-installer.git
+- docker exec esgf_install git checkout python_devel
+- docker exec esgf_install python tests/test_esg_version_manager.py
 
 # language: python
 # python:

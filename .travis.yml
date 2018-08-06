@@ -6,18 +6,14 @@ services:
   - docker
 
 before_install:
-- docker pull hill119/esgf_centos6:v1
-# - docker run -d -p 127.0.0.1:80:4567 esgf_centos6 /bin/sh -c "cd /root/sinatra; bundle exec foreman start;"
-# - docker ps -a
-# - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"
+- docker pull hill119/esgf_centos6
+- docker images -a
+- docker run --name esgf_install -it -d hill119/esgf_centos6 /bin/bash
 
 script:
-- docker images -a
-- docker run --name esgf_install -it -d hill119/esgf_centos6:v1 /bin/bash
 - docker ps -a
 - docker exec esgf_install pwd
 - docker exec esgf_install ls
-- docker exec esgf_install git clone --depth=50 --branch=python_devel https://github.com/ESGF/esgf-installer.git
 - docker exec esgf_install cd esgf-installer
 - docker exec esgf_install git checkout python_devel
 - docker exec esgf_install python tests/test_esg_version_manager.py

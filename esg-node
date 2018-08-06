@@ -913,15 +913,20 @@ setup_cdat() {
 
         echo Upgrading CDMS
 
-	unset LD_LIBRARY_PATH
+	   unset LD_LIBRARY_PATH
         source /usr/local/conda/bin/activate esgf-pub
 	
-	conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf
+	   conda remove -y cdms2 cdtime cdutil cdat_info libnetcdf
         conda install -y -c conda-forge cdms2 cdtime libnetcdf cdat_info      
         echo
+    source deactivate
+
+    source /usr/local/conda/bin/activate esgf-pub
 	python -c "import cdms2"
+
 	[ $? != 0 ] && echo " ERROR: Could not load CDMS (cdms2) module" && checked_done 1
-	source deactivate
+    source deactivate
+    
 	return 0
     fi
 
@@ -1130,7 +1135,7 @@ setup_esgcet() {
     $pipcmd cf-python==2.2.1
     $pipcmd hurry
     $pipcmd psycopg2-binary
-
+    
     #clone publisher
     local publisher_git_protocol="git://"
     #---------

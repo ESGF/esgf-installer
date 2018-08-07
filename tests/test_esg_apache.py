@@ -7,7 +7,7 @@ import shutil
 from context import esgf_utilities
 from context import base
 from base import esg_apache_manager
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, pybash
 import yaml
 import pip
 
@@ -17,6 +17,11 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
     config = yaml.load(config_file)
 
 class test_ESG_apache(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pybash.mkdir_p("/etc/tempcerts")
+        pybash.touch("/etc/tempcerts/cacert.pem")
 
     @classmethod
     def tearDownClass(cls):

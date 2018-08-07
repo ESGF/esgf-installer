@@ -460,15 +460,13 @@ def call_subprocess(command_string, command_stdin=None):
         else:
             command_process_stdout, command_process_stderr = command_process.communicate()
     except (OSError, ValueError), error:
-        logger.exception("Error with subprocess")
-        # exit_with_error(error)
         raise SubprocessError(error)
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)
         logger.debug("command_process_stderr: %s", command_process_stderr)
         logger.debug("command_process.returncode: %s", command_process.returncode)
         if command_process.returncode != 0:
-            raise SubprocessError(command_process_stderr)
+            raise SubprocessError({"stdout": command_process_stdout, "stderr": command_process_stderr, "returncode": command_process.returncode})
         return {"stdout": command_process_stdout, "stderr": command_process_stderr, "returncode": command_process.returncode}
 
 def check_shmmax(min_shmmax=48):

@@ -21,7 +21,6 @@ class test_ESG_apache(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         esg_functions.stream_subprocess_output("yum remove -y httpd")
-        esg_functions.stream_subprocess_output("pip uninstall -y mod_wsgi")
         try:
             shutil.rmtree("/var/www/.python-eggs")
             shutil.rmtree('/var/www/html/')

@@ -21,10 +21,7 @@ class test_ESG_apache(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         esg_functions.stream_subprocess_output("yum remove -y httpd")
-        try:
-            pip._internal.main(['uninstall', "-y", "mod_wsgi==4.5.3"])
-        except AttributeError:
-            pip.main(['uninstall', "-y", "mod_wsgi==4.5.3"])
+        esg_functions.stream_subprocess_output("pip uninstall -y mod_wsgi==4.5.3")
         try:
             shutil.rmtree("/var/www/.python-eggs")
             shutil.rmtree('/var/www/html/')

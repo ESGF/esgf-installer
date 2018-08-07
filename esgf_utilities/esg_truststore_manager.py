@@ -131,6 +131,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     if not os.path.isfile(cert_file):
         raise IOError("{} not found".format(cert_file))
 
+    logger.debug("cert_file: %s", cert_file)
     cert_hash = cert_file.split(".")[0]
     der_file = os.path.join(tmp_dir, cert_hash+".der")
     #--------------

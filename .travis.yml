@@ -11,13 +11,9 @@ before_install:
 - docker run --name esgf_install -it -d hill119/esgf_centos6 /bin/bash
 
 script:
-- docker ps -a
-- pwd
-- ls
-- docker exec esgf_install pwd
 - docker exec -i esgf_install bash -c "cd esgf-installer && git checkout python_devel && git pull"
-- docker exec esgf_install ls
 - docker exec -i esgf_install bash -c "source /usr/local/conda/bin/activate esgf-pub && python esgf-installer/tests/test_esg_apache.py"
+- docker exec -i esgf_install bash -c "source /usr/local/conda/bin/activate esgf-pub && python esgf-installer/tests/test_pybash.py"
 
 # language: python
 # python:

@@ -21,7 +21,7 @@ class test_pybash(unittest.TestCase):
         self.assertEqual(output, "esg_installarg_file")
 
     def test_trim_string_from_tail(self):
-        output = pybash.trim_string_from_tail("8.0.33")
+        output = pybash.trim_string_from_tail("8.0.33", ".")
         self.assertEqual(output, "8")
 
     def test_touch(self):
@@ -46,4 +46,4 @@ class test_pybash(unittest.TestCase):
                 print "error:", error
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

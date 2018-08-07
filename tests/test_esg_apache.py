@@ -56,7 +56,6 @@ class test_ESG_apache(unittest.TestCase):
         self.assertEqual(group, "apache")
 
         esg_apache_manager.copy_apache_conf_files()
-        self.assertTrue(os.path.isfile("/etc/httpd/conf.d/httpd.conf"))
         self.assertTrue(os.path.isfile("/etc/httpd/conf.d/ssl.conf"))
         self.assertTrue(os.listdir("/var/www/html/"))
         self.assertTrue(os.listdir("/etc/certs"))

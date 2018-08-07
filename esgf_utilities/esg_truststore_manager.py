@@ -141,6 +141,9 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
 
     #--------------
     if os.path.isfile(truststore_file):
+        logger.debug("cert_hash: %s", cert_hash)
+        logger.debug("truststore_file: %s", truststore_file)
+        logger.debug("truststore_password: %s", config["truststore_password"])
         output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
         if output["returncode"] == 0:
             print "Deleted cert hash"

@@ -4,6 +4,7 @@ import unittest
 import os
 import shutil
 import logging
+import socket
 import OpenSSL
 from context import esgf_utilities
 from context import base
@@ -84,12 +85,14 @@ class test_CA(unittest.TestCase):
 
             cert_subject_object = cert_obj.get_subject()
             print "cert_subject_object:", cert_subject_object
+            host_name = socket.getfqdn()
+            logger.debug("host_name: %s", host_name)
             self.assertEquals(cert_subject_object.OU, "ESGF.ORG")
-            self.assertEquals(cert_subject_object.CN, "esgf-dev2.llnl.gov-CA")
+            self.assertEquals(cert_subject_object.CN, "{}-CA".format(host_name))
             self.assertEquals(cert_subject_object.O, "ESGF")
 
             #check subject string format
-            subject_string_expected = "/O=ESGF/OU=ESGF.ORG/CN=esgf-dev2.llnl.gov-CA"
+            subject_string_expected = "/O=ESGF/OU=ESGF.ORG/CN={}-CA".format(host_name)
             subject_string, issuer_string = self.convert_X509Name_to_string(cert_obj)
             self.assertEquals(subject_string, subject_string_expected)
 

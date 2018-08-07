@@ -24,12 +24,13 @@ class test_ESG_truststore_manager(unittest.TestCase):
 
 
     def test_fetch_esgf_truststore(self):
+        pybash.touch("/etc/tempcerts/cacert.pem")
         esg_truststore_manager.fetch_esgf_truststore("/tmp/esg-truststore.ts", "/tmp/esgf-ca-bundle.crt", "/tmp/grid-security/certificates")
         self.assertTrue(os.path.exists("/tmp/esg-truststore.ts"))
         self.assertTrue(os.path.exists("/tmp/esgf-ca-bundle.crt"))
 
         os.remove("/tmp/esg-truststore.ts")
-        os.remove("/etc/certs/esgf-ca-bundle.crt")
+        os.remove("/tmp/esgf-ca-bundle.crt")
 
 
     def test_rebuild_truststore(self):

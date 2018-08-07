@@ -31,5 +31,14 @@ class test_ESG_truststore_manager(unittest.TestCase):
         os.remove("/tmp/esg-truststore.ts")
         os.remove("/etc/certs/esgf-ca-bundle.crt")
 
+
+    def test_rebuild_truststore(self):
+        esg_truststore_manager.rebuild_truststore("/tmp/test-truststore.ts")
+        self.assertTrue(os.path.isfile("/tmp/test-truststore.ts"))
+
+    def test_create_new_truststore(self):
+        esg_truststore_manager.create_new_truststore("/tmp/new-truststore.ts")
+        self.assertTrue(os.path.isfile("/tmp/new-truststore.ts"))
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

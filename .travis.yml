@@ -14,6 +14,7 @@ script:
 - docker exec -i esgf_install bash -c "cd esgf-installer && git checkout python_devel && git pull"
 - docker exec -i esgf_install bash -c "source /usr/local/conda/bin/activate esgf-pub && python esgf-installer/tests/test_esg_apache.py"
 - docker exec -i esgf_install bash -c "source /usr/local/conda/bin/activate esgf-pub && python esgf-installer/tests/test_pybash.py"
+- docker exec -i esgf_install bash -c "source /usr/local/conda/bin/activate esgf-pub && python esgf-installer/tests/test_CA.py"
 
 # language: python
 # python:

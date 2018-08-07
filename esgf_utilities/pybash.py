@@ -33,12 +33,6 @@ def mkdir_p(path, mode = 0777):
         else:
             raise
 
-def getLongestSequenceSize(search_str, polymer_str):
-    matches = re.findall(r'(?:\b%s\b\s?)+' % search_str, polymer_str)
-    longest_match = max(matches)
-    return longest_match.count(search_str)
-
-
 def touch(path):
     '''
         Mimics Bash's touch command; Creates a new file and sets the access and modified times

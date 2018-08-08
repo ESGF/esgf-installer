@@ -150,9 +150,15 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         logger.debug("truststore_password: %s", config["truststore_password"])
 
         #If cert is already in truststore, delete existing cert and replace it with updated cert
-        output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
-        if output["returncode"] == 0:
-            print "Deleted cert hash"
+        try:
+            output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
+        except SubprocessError, error:
+            if "does not exist" in error["stdout"]:
+                logger.debug("No existing cert with alias %s found", cert_hash)
+                pass
+        else:
+            if output["returncode"] == 0:
+                print "Deleted cert hash"
 
         output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -import -alias {cert_hash} -file {der_file} -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(cert_hash=cert_hash, der_file=der_file, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
         if output["returncode"] == 0:

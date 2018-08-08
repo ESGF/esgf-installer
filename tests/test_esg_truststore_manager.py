@@ -27,6 +27,9 @@ class test_ESG_truststore_manager(unittest.TestCase):
         pybash.mkdir_p("/etc/tempcerts")
         pybash.touch("/etc/tempcerts/cacert.pem")
 
+        pybash.mkdir_p("/esg/config/myproxy")
+        shutil.copyfile(os.path.join(current_directory, "mock_files", "myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
+
         if not os.path.exists("/tmp/grid-security/certificates"):
             esg_truststore_manager.fetch_esgf_certificates("/tmp/grid-security/certificates")
         esg_truststore_manager.fetch_esgf_truststore("/tmp/esg-truststore.ts", "/tmp/esgf-ca-bundle.crt", "/tmp/grid-security/certificates")

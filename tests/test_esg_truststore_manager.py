@@ -26,6 +26,9 @@ class test_ESG_truststore_manager(unittest.TestCase):
     def test_fetch_esgf_truststore(self):
         pybash.mkdir_p("/etc/tempcerts")
         pybash.touch("/etc/tempcerts/cacert.pem")
+
+        if not os.path.exists("/tmp/grid-security/certificates"):
+            esg_truststore_manager.fetch_esgf_certificates("/tmp/grid-security/certificates")
         esg_truststore_manager.fetch_esgf_truststore("/tmp/esg-truststore.ts", "/tmp/esgf-ca-bundle.crt", "/tmp/grid-security/certificates")
         self.assertTrue(os.path.exists("/tmp/esg-truststore.ts"))
         self.assertTrue(os.path.exists("/tmp/esgf-ca-bundle.crt"))

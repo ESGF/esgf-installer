@@ -154,10 +154,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         try:
             output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
         except SubprocessError, error:
-            logger.debug("error: %s", error)
-            logger.debug("error type: %s", type(error))
-            logger.debug(type(error))
-            if "does not exist" in error["stdout"]:
+            if "does not exist" in error.__dict__["data"]["stdout"]:
                 logger.debug("No existing cert with alias %s found", cert_hash)
                 pass
         else:

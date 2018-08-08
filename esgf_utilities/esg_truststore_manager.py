@@ -127,12 +127,15 @@ def sync_with_java_truststore(truststore_file):
 def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
     '''Takes full path to a pem certificate file and incorporates it into the given truststore'''
 
-    print "{cert_file} ->".format(cert_file=cert_file)
+    print "Adding {cert_file} -> truststore ({truststore_file})".format(cert_file=cert_file, truststore_file=truststore_file)
     if not os.path.isfile(cert_file):
         raise IOError("{} not found".format(cert_file))
 
     logger.debug("cert_file: %s", cert_file)
-    cert_hash = cert_file.split(".")[0]
+    cert_name = pybash.trim_string_from_head(cert_file)
+    logger.debug("cert_name: %s", cert_name)
+    cert_hash = cert_name.split(".")[0]
+    logger.debug("cert_hash: %s", cert_hash)
     der_file = os.path.join(tmp_dir, cert_hash+".der")
     #--------------
     # Convert from PEM format to DER format - for ingest into keystore
@@ -145,6 +148,8 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         logger.debug("cert_hash: %s", cert_hash)
         logger.debug("truststore_file: %s", truststore_file)
         logger.debug("truststore_password: %s", config["truststore_password"])
+
+        #If cert is already in truststore, delete existing cert and replace it with updated cert
         output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
         if output["returncode"] == 0:
             print "Deleted cert hash"

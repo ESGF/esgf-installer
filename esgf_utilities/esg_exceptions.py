@@ -18,3 +18,5 @@ class SubprocessError(Exception):
         self.data = data
     def __str__(self):
         return repr(self.data)
+    def __repr__(self):
+        return dict(self.data)

@@ -156,6 +156,7 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         except SubprocessError, error:
             logger.debug("error: %s", error)
             logger.debug("error type: %s", type(error))
+            logger.debug(type(error))
             if "does not exist" in error["stdout"]:
                 logger.debug("No existing cert with alias %s found", cert_hash)
                 pass

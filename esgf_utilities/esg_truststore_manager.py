@@ -9,7 +9,8 @@ import yaml
 import OpenSSL
 import pybash
 import esg_functions
-import esg_property_manager
+from esgf_utilities import esg_property_manager
+from esgf_utilities.esg_exceptions import SubprocessError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)

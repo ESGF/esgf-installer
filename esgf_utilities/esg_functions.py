@@ -809,18 +809,18 @@ def add_unix_group(group_name):
     '''Use subprocess to add Unix group'''
     try:
         call_subprocess("groupadd {group_name}".format(group_name=group_name))
-    except Exception, error:
-        print "Could not add group {group_name}".format(group_name=group_name)
-        exit_with_error(error)
+    except SubprocessError, error:
+        logger.info("Could not add group %s", group_name)
+        logger.error(error.__dict__["data"])
 
 
 def add_unix_user(user_name):
     '''Use subprocess to add Unix user'''
     try:
         stream_subprocess_output("useradd {user_name}".format(user_name=user_name))
-    except Exception, error:
-        print "Could not add user {user_name}".format(user_name=user_name)
-        exit_with_error(error)
+    except SubprocessError, error:
+        logger.info("Could not add user %s", user_name)
+        logger.error(error.__dict__["data"])
 
 
 def get_dir_owner_and_group(path):

@@ -343,8 +343,6 @@ def main():
 
     esg_setup.check_prerequisites()
 
-    esg_functions.verify_esg_node_script(os.path.basename(
-        __file__), esg_dist_url, script_version, script_maj_version, devel)
 
     logger.debug("node_type_list: %s", node_type_list)
 

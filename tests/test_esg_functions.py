@@ -56,7 +56,7 @@ class test_ESG_Functions(unittest.TestCase):
         self.assertEqual(output, 0)
 
     def test_is_in_git_repo(self):
-        output = esg_functions.is_in_git_repo(os.getcwd())
+        output = esg_functions.is_in_git_repo(__file__)
         self.assertTrue(output)
 
     def test_add_unix_group(self):

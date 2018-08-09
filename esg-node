@@ -1124,17 +1124,17 @@ setup_esgcet() {
         fi
     fi
 
-    if [ "$mode" = "I" ]; then
-        $pipcmd esgprep==${esgprep_version}
-    else
-        $pipcmd "esgprep>=${esgprep_version}"
-    fi
-
     $pipcmd sqlalchemy_migrate
     $pipcmd cdf2cim==0.2.3.0
     $pipcmd cf-python==2.2.1
     $pipcmd hurry
     $pipcmd psycopg2-binary
+    
+    if [ "$mode" = "I" ]; then
+        $pipcmd esgprep==${esgprep_version}
+    else
+        $pipcmd "esgprep>=${esgprep_version}"
+    fi
     
     #clone publisher
     local publisher_git_protocol="git://"

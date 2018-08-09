@@ -27,6 +27,9 @@ class test_ESG_Functions(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        print "\n*******************************"
+        print "Tearing down test_ESG_Functions"
+        print "******************************* \n"
         try:
             esg_functions.stream_subprocess_output("groupdel test_esgf_group")
         except SubprocessError:
@@ -87,4 +90,4 @@ class test_ESG_Functions(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

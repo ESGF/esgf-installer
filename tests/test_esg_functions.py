@@ -67,9 +67,9 @@ class test_ESG_Functions(unittest.TestCase):
     def test_write_to_install_manifest(self):
         esg_functions.write_to_install_manifest("foo_app", "/tmp/foo", "1.0", "/tmp/install_manifest")
         self.assertTrue(os.path.isfile("/tmp/install_manifest"))
-        prop = esg_functions.get_version_from_install_manifest("foo_app")
+        prop = esg_functions.get_version_from_install_manifest("foo_app", manifest_file="/tmp/install_manifest")
         logger.info("prop: %s", prop)
-        self.assertEqual("1.0", prop)
+        self.assertTrue("1.0" in prop)
 
     def test_is_valid_password(self):
         self.assertTrue(esg_functions.is_valid_password("Esgf4Dev"))

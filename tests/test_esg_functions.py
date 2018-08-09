@@ -28,7 +28,7 @@ class test_ESG_Functions(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         try:
-            esg_functions.call_subprocess("groupdel test_esgf_group")
+            esg_functions.stream_subprocess_output("groupdel test_esgf_group")
         except SubprocessError:
             pass
         try:
@@ -67,7 +67,7 @@ class test_ESG_Functions(unittest.TestCase):
     def test_write_to_install_manifest(self):
         esg_functions.write_to_install_manifest("foo_app", "/tmp/foo", "1.0", "/tmp/install_manifest")
         self.assertTrue(os.path.isfile("/tmp/install_manifest"))
-        prop = esg_property_manager.get_property("foo_app", property_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
+        prop = esg_property_manager.get_property("foo_app", property_file="/tmp/install_manifest")
         self.assertTrue("1.0" in prop)
 
     def test_is_valid_password(self):

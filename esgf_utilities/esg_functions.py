@@ -192,35 +192,6 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
     return 0
 
 
-# TODO: No uses found
-def git_tagrelease():
-    '''
-        Makes a commit to the current git repository updating the
-        release version string and codename, tags that commit with the
-        version string, and then immediately makes another commit
-        appending "-devel" to the version string.
-
-        This is to prepare for a release merge.  Note that the tag will
-        not be against the correct revision after a merge to the release
-        branch if it was not a fast-forward merge, so ensure that there
-        are no unmerged changes from the release branch before using.
-
-        If that happens, delete the tag, issue a git reset --hard
-        against the last commit before the tag, merge the release
-        branch, and try again.
-
-        Arguments:
-        $1: the release version string (mandatory)
-        $2: the release codename (optional)
-
-        Examples:
-          git-tagrelease v4.5.6 AuthenticGreekPizzaEdition
-        or just
-          git-tagrelease v4.5.6
-    '''
-    pass
-
-
 def get_parent_directory(directory_path):
     '''Returns the parent directory of directory_path'''
     return os.path.abspath(os.path.join(directory_path, os.pardir))
@@ -704,59 +675,6 @@ def _check_keystore_password(keystore_password):
     return True
 
 
-def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version, script_maj_version, devel, update_action=None):
-    ''' Verify the esg_node script is the most current version '''
-    # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
-    logger.info("esg_node_filename: %s", esg_node_filename)
-    if is_in_git_repo(esg_node_filename):
-        logger.info("Git repository detected; not checking checksum of esg-node")
-        return
-
-    if "devel" in script_version:
-        devel = True
-        remote_url = "{esg_dist_url_root}/esgf-installer/{script_maj_version}".format(
-            esg_dist_url_root=esg_dist_url_root, script_maj_version=script_maj_version)
-    else:
-        devel = False
-        remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(
-            esg_dist_url_root=esg_dist_url_root, script_maj_version=script_maj_version)
-    try:
-        _verify_against_mirror(remote_url, script_maj_version)
-    except UnverifiedScriptError:
-        logger.info('''WARNING: %s could not be verified!! \n(This file, %s, may have been tampered
-            with or there is a newer version posted at the distribution server.
-            \nPlease update this script.)\n\n''', os.path.basename(__file__), os.path.basename(__file__))
-
-        if update_action is None:
-            update_action = raw_input(
-                "Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: ")
-
-        if update_action in ["C".lower(), "Y".lower()]:
-            print "Continuing..."
-            return
-        elif update_action in ["U".lower(), "update", "--update"]:
-            print "Updating local script with script from distribution server..."
-
-            if devel is True:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap --devel"
-            else:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap"
-            invoke_bootstrap = subprocess.Popen(
-                bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            invoke_bootstrap.communicate()
-
-            print "Please re-run this updated script: {current_script_name}".format(current_script_name=esg_node_filename)
-            sys.exit(invoke_bootstrap.returncode)
-        elif update_action is "X".lower():
-            print "Exiting..."
-            sys.exit(1)
-        else:
-            print "Unknown option: {update_action} - Exiting".format(update_action=update_action)
-            sys.exit(1)
-
-    return True
-
-
 def get_group_list():
     '''Returns a list of the Unix groups on the system'''
     return [group.gr_name for group in grp.getgrall()]
@@ -777,21 +695,6 @@ def get_user_id(user_name):
     return pwd.getpwnam(user_name).pw_uid
 
 
-def add_group(group_name):
-    '''Add a Unix user group'''
-    call_subprocess("groupadd {group_name}".format(group_name=group_name))
-
-
-# def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
-def add_user(name, password="", group="", full_name="", home_dir="", shell=""):
-    '''Add Unix user'''
-    #check if root_user
-    existing_user_ids = [user.pw_uid for user in pwd.getpwall()]
-    uid = max(existing_user_ids)+1
-    user_string = "{}:{}:{}:{}:{}:{}:{}".format(name, password, uid, group, full_name, home_dir, shell)
-
-    pass
-
 def get_tomcat_user_id():
     ''' Returns the id of the Tomcat user '''
     return pwd.getpwnam("tomcat").pw_uid
@@ -808,7 +711,7 @@ def get_tomcat_group_id():
 def add_unix_group(group_name):
     '''Use subprocess to add Unix group'''
     try:
-        call_subprocess("groupadd {group_name}".format(group_name=group_name))
+        stream_subprocess_output("sudo groupadd {group_name}".format(group_name=group_name))
     except SubprocessError, error:
         logger.info("Could not add group %s", group_name)
         logger.error(error.__dict__["data"])
@@ -817,7 +720,7 @@ def add_unix_group(group_name):
 def add_unix_user(user_name):
     '''Use subprocess to add Unix user'''
     try:
-        stream_subprocess_output("useradd {user_name}".format(user_name=user_name))
+        stream_subprocess_output("sudo useradd {user_name}".format(user_name=user_name))
     except SubprocessError, error:
         logger.info("Could not add user %s", user_name)
         logger.error(error.__dict__["data"])
@@ -828,7 +731,6 @@ def get_dir_owner_and_group(path):
     stat_info = os.stat(path)
     uid = stat_info.st_uid
     gid = stat_info.st_gid
-    # print uid, gid
 
     user = pwd.getpwuid(uid)[0]
     group = grp.getgrgid(gid)[0]

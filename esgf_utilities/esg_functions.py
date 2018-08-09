@@ -714,8 +714,7 @@ def add_unix_group(group_name):
         stream_subprocess_output("sudo groupadd {group_name}".format(group_name=group_name))
     except SubprocessError, error:
         logger.info("Could not add group %s", group_name)
-        logger.error(error.__dict__["data"])
-
+        logger.error(error)
 
 def add_unix_user(user_name):
     '''Use subprocess to add Unix user'''
@@ -723,7 +722,7 @@ def add_unix_user(user_name):
         stream_subprocess_output("sudo useradd {user_name}".format(user_name=user_name))
     except SubprocessError, error:
         logger.info("Could not add user %s", user_name)
-        logger.error(error.__dict__["data"])
+        logger.error(error)
 
 
 def get_dir_owner_and_group(path):

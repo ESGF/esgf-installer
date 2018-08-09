@@ -24,5 +24,11 @@ class Test_ESG_MIRROR_MANAGER(unittest.TestCase):
         pass
 
 
+    def test_is_valid_mirror(self):
+        self.assertTrue(esg_mirror_manager.is_valid_mirror("http://aims1.llnl.gov/esgf/dist"))
+        self.assertTrue(esg_mirror_manager.is_valid_mirror("http://aims1.llnl.gov/esgf/dist/2.6"))
+        self.assertFalse(esg_mirror_manager.is_valid_mirror("http://aims1.llnl.gov/esgf/dist/2.8"))
+
+
 if __name__ == "__main__":
     unittest.main()

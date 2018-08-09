@@ -55,10 +55,6 @@ class test_ESG_Functions(unittest.TestCase):
         output = esg_functions.backup(os.getcwd(), backup_dir=test_backup_dir)
         self.assertEqual(output, 0)
 
-    # def test_subprocess_pipe_commands(self):
-    #     output = esg_functions.subprocess_pipe_commands("/bin/ps -elf | grep grep")
-    #     self.assertIsNotNone(output)
-
     def test_is_in_git_repo(self):
         output = esg_functions.is_in_git_repo(os.getcwd())
         self.assertTrue(output)
@@ -71,7 +67,7 @@ class test_ESG_Functions(unittest.TestCase):
     def test_write_to_install_manifest(self):
         esg_functions.write_to_install_manifest("foo_app", "/tmp/foo", "1.0", "/tmp/install_manifest")
         self.assertTrue(os.path.isfile("/tmp/install_manifest"))
-        prop = esg_property_manager.get_property("foo_app", config_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
+        prop = esg_property_manager.get_property("foo_app", property_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
         self.assertTrue("1.0" in prop)
 
     def test_is_valid_password(self):
@@ -87,10 +83,6 @@ class test_ESG_Functions(unittest.TestCase):
         except SubprocessError, error:
             print "error:", error
 
-    def test_is_valid_mirror(self):
-        self.assertTrue(esg_functions.is_valid_mirror("http://aims1.llnl.gov/esgf/dist"))
-        self.assertTrue(esg_functions.is_valid_mirror("http://aims1.llnl.gov/esgf/dist/2.6"))
-        self.assertFalse(esg_functions.is_valid_mirror("http://aims1.llnl.gov/esgf/dist/2.8"))
 
 
 if __name__ == '__main__':

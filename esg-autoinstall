@@ -112,10 +112,10 @@ expect {
       send \n ; exp_continue
     }
     "Do you want to continue with CDAT installation and setup?" {
-      send \n ; exp_continue
+      send ${UPGRADECDAT}\n ; exp_continue
     }
     "Do you want to continue with esgcet installation and setup?" {
-        send \n ; exp_continue
+        send ${UPGRADECDAT}\n ; exp_continue
     }
     "Do you want to continue with thredds installation and setup?" {
         send ${THREDDS}\n ; exp_continue

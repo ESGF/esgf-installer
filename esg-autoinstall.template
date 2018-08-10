@@ -78,6 +78,9 @@ set GLOBUS "y"
 # For now, N is recommended for 2.5.13 or later (until new version released)
 set THREDDS "Y"
 
+# Should CDAT and esgcet be upgraded ?
+set UPGRADECDAT "Y"
+
 ### Special-use variables (you probably don't want to change these) ###
 
 # Which install script to run

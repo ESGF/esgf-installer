@@ -256,8 +256,8 @@ def create_globus_account(globus_sys_acct):
     try:
         esg_functions.stream_subprocess_output('''/usr/sbin/useradd -r -c "Globus System User" -g {globus_sys_acct_group} -p {globus_sys_acct_passwd} -s /bin/bash {globus_sys_acct}'''.format(globus_sys_acct_group="globus", globus_sys_acct_passwd=globus_sys_acct_passwd, globus_sys_acct=globus_sys_acct))
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
 
 def globus_check_certificates():

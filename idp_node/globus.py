@@ -249,7 +249,7 @@ def create_globus_account(globus_sys_acct):
     except SubprocessError, error:
         logger.debug("error: %s", error)
         logger.debug("error: %s", error.__dict__["data"]["returncode"])
-        if error[0]["returncode"] == 9:
+        if error.__dict__["data"]["returncode"] == 9:
             pass
 
     globus_sys_acct_passwd = esg_functions.get_security_admin_password()

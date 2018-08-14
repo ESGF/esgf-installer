@@ -241,14 +241,14 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     try:
         esg_functions.stream_subprocess_output("groupadd solr")
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
     try:
         esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
 
     SOLR_USER_ID = pwd.getpwnam("solr").pw_uid

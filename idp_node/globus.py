@@ -245,15 +245,16 @@ def create_globus_account(globus_sys_acct):
     '''Create the system account for globus to run as.'''
 
     try:
-        esg_functions.stream_subprocess_output("groupadd -r {}".format(globus_sys_acct))
+        esg_functions.call_subprocess("groupadd -r {}".format(globus_sys_acct))
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
+        logger.debug("error: %s", error)
+        logger.debug("error: %s", error.__dict__["data"]["returncode"])
         if error[0]["returncode"] == 9:
             pass
 
     globus_sys_acct_passwd = esg_functions.get_security_admin_password()
     try:
-        esg_functions.stream_subprocess_output('''/usr/sbin/useradd -r -c"Globus System User" -g {globus_sys_acct_group} -p {globus_sys_acct_passwd} -s /bin/bash {globus_sys_acct}'''.format(globus_sys_acct_group="globus", globus_sys_acct_passwd=globus_sys_acct_passwd, globus_sys_acct=globus_sys_acct))
+        esg_functions.stream_subprocess_output('''/usr/sbin/useradd -r -c "Globus System User" -g {globus_sys_acct_group} -p {globus_sys_acct_passwd} -s /bin/bash {globus_sys_acct}'''.format(globus_sys_acct_group="globus", globus_sys_acct_passwd=globus_sys_acct_passwd, globus_sys_acct=globus_sys_acct))
     except SubprocessError, error:
         logger.debug(error[0]["returncode"])
         if error[0]["returncode"] == 9:

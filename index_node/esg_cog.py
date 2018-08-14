@@ -142,14 +142,14 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     try:
         esg_functions.stream_subprocess_output("groupadd -r cogadmin")
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
     try:
         esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
 
     pybash.mkdir_p("~cogadmin")

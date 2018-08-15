@@ -2,7 +2,8 @@ import os
 import socket
 import logging
 import platform
-import distro
+import sys
+
 import yaml
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
@@ -15,7 +16,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 def check_if_root():
     '''Check to see if the user has root privileges'''
 
-    print "Checking for root privileges on {host}...".format(host=socket.gethostname())
+    print "Checking for root privileges..."
 
     err_msg = "This program must be run with root privileges"
     assert (os.geteuid() == 0), err_msg
@@ -26,20 +27,21 @@ def check_os():
     ''' Check if the operating system on server is Redhat or CentOS '''
 
     print "Checking operating system..."
-    print "  {}".format(distro.name(pretty=True))
+    print "  {}".format(platform.platform())
     machine = platform.machine()
     req_machines = ['x86_64']
     assert machine in req_machines, "Accepted machine types: {}, Found: {}".format(req_machines, machine)
-    
-    name = distro.id()
+
+    uname = platform.uname()
+    name = uname[0].lower()
     req_names = ['rhel', 'redhat', 'centos', 'scientific']
     assert name in req_names, "Accepted distrobutions: {}, Found: {}".format(req_names, name)
 
-    major = distro.major_version()
+    major = uname[2].split('.')[0]
     req_major = ['6']
     assert major in req_major, "Accepted versions: {}, Found: {}".format(req_major, major)
 
-    logger.debug("Distrobution info: %s", distro.info())
+    logger.debug("uname: %s", uname)
 
 
 def check_prerequisites():
@@ -55,7 +57,7 @@ def check_prerequisites():
             check()
         except AssertionError as err:
             logger.error(str(err))
-            esg_functions.exit_with_error()
+            sys.exit(1)
 
     return True
 

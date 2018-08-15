@@ -1,9 +1,8 @@
 import os
-import re
 import socket
 import logging
 import platform
-import netifaces
+import distro
 import yaml
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
@@ -18,7 +17,7 @@ def check_if_root():
 
     print "Checking for root privileges on {host}...".format(host=socket.gethostname())
 
-    err_msg = "\nThis program must be run with root privileges\n\n"
+    err_msg = "This program must be run with root privileges"
     assert (os.geteuid() == 0), err_msg
 
     logger.debug("Root privileges found")
@@ -27,24 +26,20 @@ def check_os():
     ''' Check if the operating system on server is Redhat or CentOS '''
 
     print "Checking operating system..."
+    print "  {}".format(distro.name(pretty=True))
+    machine = platform.machine()
+    req_machines = ['x86_64']
+    assert machine in req_machines, "Accepted machine types: {}, Found: {}".format(req_machines, machine)
+    
+    name = distro.id()
+    req_names = ['rhel', 'redhat', 'centos', 'scientific']
+    assert name in req_names, "Accepted distrobutions: {}, Found: {}".format(req_names, name)
 
-    release_version = re.search(
-        r"(centos|redhat)-(\S*)-",
-        platform.platform()
-    ).groups()
+    major = distro.major_version()
+    req_major = ['6']
+    assert major in req_major, "Accepted versions: {}, Found: {}".format(req_major, major)
 
-    logger.debug("Release Version: %s", release_version)
-
-    err_msg = """
-        ESGF can only be installed on versions 6 of Red Hat,
-        CentOS or Scientific Linux x86_64 systems
-    """
-    assert ("6" in release_version[1]), err_msg
-
-    print "Operating System = {OS} {version}".format(
-        OS=release_version[0],
-        version=release_version[1]
-    )
+    logger.debug("Distrobution info: %s", distro.info())
 
 
 def check_prerequisites():
@@ -52,17 +47,16 @@ def check_prerequisites():
         A check for what is expected to be on the system a-priori that we are
         not going to install or be responsible for.
     '''
-
+    # checking for OS, architecture, distribution and version
     print "Checking prerequisites..."
-    checks = [check_if_root, check_os]
+    checks = [check_os, check_if_root]
     for check in checks:
         try:
             check()
         except AssertionError as err:
-            logger.exception(str(err))
-            esg_functions.exit_with_error(1)
+            logger.error(str(err))
+            esg_functions.exit_with_error()
 
-    # checking for OS, architecture, distribution and version
     return True
 
 def create_esg_directories():

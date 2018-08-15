@@ -84,9 +84,3 @@ def init_structure():
     #Create esgf.properties file
     if not os.path.isfile(config["property_file"]):
         pybash.touch(config["property_file"])
-
-    #--------------
-    # Setup variables....
-    #--------------
-
-    esg_functions.get_public_ip()

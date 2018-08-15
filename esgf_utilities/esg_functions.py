@@ -912,15 +912,6 @@ def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
         #add read permissions to all, i.e. chmod a+r
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-
-def get_public_ip():
-    '''Get public ip address of node'''
-    from urllib2 import urlopen
-    my_ip = urlopen('http://ip.42.pl/raw').read()
-
-    esg_property_manager.set_property("esgf_host_ip", my_ip)
-    return my_ip
-
 def convert_hash_to_hex(subject_name_hash):
     '''Converts the subject_name_hash from a long to a hex string'''
     return format(subject_name_hash, 'x')

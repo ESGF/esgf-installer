@@ -143,17 +143,6 @@ def check_selected_node_type(node_types, node_type_list):
     return True
 
 
-def init_connection():
-    """ Initialize Connection to node."""
-    logger.info("esg-node initializing...")
-    try:
-        logger.info(socket.getfqdn())
-    except socket.error:
-        logger.error(
-            "Please be sure this host has a fully qualified hostname and reponds to socket.getfdqn() command")
-        sys.exit()
-
-
 def get_installation_type(script_version):
     '''Determining if devel or master directory of the ESGF distribution mirror
     will be use for download of binaries'''
@@ -317,11 +306,12 @@ def setup_esgf_rpm_repo():
 
 def main():
     '''Main function'''
+
+    esg_setup.check_prerequisites()
+    esg_setup.init_structure()
+
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
-
-    # initialize connection
-    init_connection()
 
     # determine installation type
     install_type = get_installation_type(script_version)
@@ -341,9 +331,6 @@ def main():
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     download_esg_installarg(esg_dist_url)
 
-    esg_setup.check_prerequisites()
-
-
     logger.debug("node_type_list: %s", node_type_list)
 
     print '''
@@ -357,8 +344,6 @@ def main():
 
     if devel:
         print "(Installing DEVELOPMENT tree...)"
-
-    esg_setup.init_structure()
 
     # log info
     install_log_info(node_type_list)

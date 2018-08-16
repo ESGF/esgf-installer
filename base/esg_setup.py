@@ -53,6 +53,20 @@ def check_os():
 
     logger.debug("uname: %s", uname)
 
+def check_fqdn():
+    ''' Check the machine's fully qualified domain name'''
+
+    #NOTE This is a psuedo check.
+
+    err_msg = "Error get fully qualified domain name"
+    try:
+        fqdn = socket.getfqdn()
+    except socket.error as err:
+        logger.error("%s, %s", err_msg, str(err))
+        sys.exit(1)
+    exit_on_false(fqdn != '' and fqdn != None, err_msg)
+
+    logger.debug("FQDN: %s", fqdn)
 
 def check_prerequisites():
     '''
@@ -63,6 +77,7 @@ def check_prerequisites():
     print "Checking prerequisites..."
     check_os()
     check_if_root()
+    check_fqdn()
 
     return True
 

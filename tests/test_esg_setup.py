@@ -21,9 +21,14 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 class test_ESG_Setup(unittest.TestCase):
 
-    def test_prereq(self):
-        self.assertTrue(esg_setup.check_prerequisites())
+    def test_check_os(self):
+        self.assertTrue(esg_setup.check_os())
 
+    def test_check_if_root(self):
+        self.assertTrue(esg_setup.check_if_root())
+
+    def test_check_fqdn(self):
+        self.assertTrue(esg_setup.check_fqdn())
 
 if __name__ == '__main__':
     unittest.main()

@@ -29,6 +29,7 @@ def check_if_root():
     exit_on_false(os.geteuid() == 0, err_msg)
 
     logger.debug("Root privileges found")
+    return True
 
 def check_os():
     ''' Check if the operating system on server is Redhat or CentOS '''
@@ -52,6 +53,7 @@ def check_os():
     exit_on_false(major in req_major, err_msg)
 
     logger.debug("uname: %s", uname)
+    return True
 
 def check_fqdn():
     ''' Check the machine's fully qualified domain name'''
@@ -67,6 +69,7 @@ def check_fqdn():
     exit_on_false(fqdn != '' and fqdn != None, err_msg)
 
     logger.debug("FQDN: %s", fqdn)
+    return True
 
 def check_prerequisites():
     '''

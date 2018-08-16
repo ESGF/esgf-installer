@@ -109,8 +109,8 @@ def download_esg_search(esg_search_version, esg_dist_url):
         #Extract in workdir to get esg-search.war file
         try:
             esg_functions.extract_tarball(search_service_dist_file)
-        except Exception, error:
-            esg_functions.exit_with_error(error)
+        except tarfile.TarError:
+            raise
 
 def copy_esg_search_war_to_tomcat(esg_search_version, search_web_service_dir, search_service_war_file):
     search_service_dist_dir = "esg-search-{}".format(esg_search_version)

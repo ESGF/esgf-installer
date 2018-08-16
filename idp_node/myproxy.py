@@ -207,8 +207,9 @@ def setup_gcs_id(first_run=None):
 
 def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:
-        print "The install mode must be either 'install' or 'update'"
-        esg_functions.exit_with_error("ERROR: You have entered an invalid argument: [{}]".format(install_mode))
+        logger.error("You have entered an invalid argument: [%s]", install_mode)
+        logger.error("The install mode must be either 'install' or 'update'")
+        raise RuntimeError
 
     print "MyProxy - Configuration... [{}]".format(install_mode)
 

@@ -232,8 +232,9 @@ def set_local_mirror(mirror_url):
         os.path.exists(mirror_url)
         esg_property_manager.set_property("use_local_mirror", True)
         esg_property_manager.set_property("local_mirror", mirror_url)
-    except OSError, error:
-        esg_functions.exit_with_error(error)
+    except OSError:
+        logger.error("Local mirror {} not found".format(mirror_url))
+        raise
 
 #Formerly get_bit_value
 def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):

@@ -124,9 +124,9 @@ def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr", port="-all"):
             if psutil.pid_exists(int(solr_pid)):
                 try:
                     os.kill(int(solr_pid), signal.SIGKILL)
-                except OSError, error:
-                    print "Could not kill process"
-                    esg_functions.exit_with_error(error)
+                except OSError:
+                    logger.error("Could not kill solr process with pid %s", solr_pid)
+                    raise
     except OSError:
         pass
 

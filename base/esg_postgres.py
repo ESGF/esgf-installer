@@ -317,12 +317,16 @@ def create_postgres_group():
     '''Creates postgres Unix group'''
     groupadd_command = "/usr/sbin/groupadd -r %s" % (
         config["pg_sys_acct_group"])
-    groupadd_output = esg_functions.call_subprocess(groupadd_command)
-    if groupadd_output["returncode"] != 0 or groupadd_output["returncode"] != 9:
-        print "ERROR: *Could not add postgres system group: %s" % (config["pg_sys_acct_group"])
-        esg_functions.exit_with_error(1)
+    try:
+        groupadd_output = esg_functions.call_subprocess(groupadd_command)
+    except SubprocessError, error:
+        raise
     else:
-        print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
+        if groupadd_output["returncode"] != 0 or groupadd_output["returncode"] != 9:
+            logger.error("Could not add postgres system group: %s", config["pg_sys_acct_group"])
+            raise RuntimeError
+        else:
+            print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 
 def set_pg_sys_account_password():
@@ -345,25 +349,32 @@ def set_pg_sys_account_password():
 
 def create_postgres_system_user(pg_sys_acct_homedir):
     '''Create Postgres Unix user'''
-    print "Creating account..."
+    print "Creating Postgres user account..."
     useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF'
     -d {pg_sys_acct_homedir} -g {pg_sys_acct_group} -p
     {pg_sys_acct_passwd} -s /bin/bash {pg_sys_acct}'''.format(pg_sys_acct_homedir=pg_sys_acct_homedir,
                                                               pg_sys_acct_group=config["pg_sys_acct_group"],
                                                               pg_sys_acct_passwd=config["pg_sys_acct_passwd"],
                                                               pg_sys_acct=config["pg_sys_acct"])
-    useradd_output = esg_functions.call_subprocess(useradd_command)
+
+
+    try:
+        useradd_output = esg_functions.call_subprocess(useradd_command)
+    except SubprocessError:
+        logger.error("Could not create postgres user")
+        raise
+    else:
+        if useradd_output["returncode"] != 0 or useradd_output["returncode"] != 9:
+            raise RuntimeError("Could not add postgres system account user")
+
 
     postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
 
-    if useradd_output["returncode"] != 0 or useradd_output["returncode"] != 9:
-        print "ERROR: Could not add postgres system account user"
-        esg_functions.exit_with_error(1)
-    elif not postgres_user_id:
-        print " ERROR: Problem with {pg_sys_acct} creation!!!".format(pg_sys_acct=config["pg_sys_acct"])
-        esg_functions.exit_with_error(1)
+    if not postgres_user_id:
+        raise RuntimeError("Problem with {} creation!!!".format(config["pg_sys_acct"]))
     else:
-        print "Created postgres user with group id: {postgres_user_id}".format(postgres_user_id=pwd.getpwnam(config["pg_sys_acct"]).pw_uid)
+        postgres_group_id = grp.getgrnam("postgres").gr_gid
+        print "Created postgres user with group id: {}".format(postgres_group_id)
 
 
 def get_postgres_user_shell():
@@ -462,13 +473,13 @@ def download_config_files(force_install):
     # #Get files
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     hba_conf_file = "pg_hba.conf"
-    if esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install) > 1:
-        esg_functions.exit_with_error(1)
+    if not esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install):
+        raise RuntimeError("Could not download pg_hba.conf from distribution mirror")
     os.chmod(hba_conf_file, 0600)
 
     postgres_conf_file = "postgresql.conf"
-    if esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", postgres_conf_file), force_install) > 1:
-        esg_functions.exit_with_error(1)
+    if not esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", postgres_conf_file), force_install):
+        raise RuntimeError("Could not download postgresql.conf from distribution mirror")
     os.chmod(postgres_conf_file, 0600)
 
 

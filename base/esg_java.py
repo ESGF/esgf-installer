@@ -35,9 +35,9 @@ def check_java_version(java_path):
     try:
         java_version_output = esg_functions.call_subprocess(
             "{java_path} -version".format(java_path=java_path))["stderr"]
-    except KeyError:
-        logger.exception("Could not check the Java version")
-        esg_functions.exit_with_error(1)
+    except SubprocessError, error:
+        logger.error("Could not check the Java version")
+        raise
 
     installed_java_version = re.search("1.8.0_\w+", java_version_output).group()
     if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
@@ -50,7 +50,7 @@ def download_java(java_tarfile):
     print "Downloading Java from ", config["java_dist_url"]
     if not esg_functions.download_update(java_tarfile, config["java_dist_url"]):
         logger.error("ERROR: Could not download Java")
-        esg_functions.exit_with_error("Java failed to download")
+        raise RuntimeError
 
 
 def write_java_env():

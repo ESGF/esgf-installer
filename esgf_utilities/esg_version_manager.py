@@ -42,8 +42,8 @@ def check_module_version(module_name, min_version):
     try:
         module_version = __import__(module_name).__version__
     except (AttributeError, ImportError):
-        logger.exception("Couldn't check module version")
-        esg_functions.exit_with_error(1)
+        logger.error("Couldn't check %s module version", module_name)
+        raise
     else:
         if semver.compare(module_version, min_version) > 0:
             return True

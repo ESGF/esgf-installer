@@ -5,7 +5,7 @@ import logging
 import platform
 import netifaces
 import yaml
-from esgf_utilities.esg_exceptions import WrongOSError
+from esgf_utilities.esg_exceptions import WrongOSError, UnprivilegedUserError
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
@@ -19,14 +19,10 @@ def check_if_root():
     '''Check to see if the user is root'''
     print "Checking that you have root privileges on %s... " % (socket.gethostname())
     root_check = os.geteuid()
-    try:
-        if root_check != 0:
-            raise UnprivilegedUserError
-        logger.debug("Root user found.")
-        return True
-    except UnprivilegedUserError:
-        logger.exception("\nMust run this program with root's effective UID\n\n")
-        esg_functions.exit_with_error(1)
+    if root_check != 0:
+        raise UnprivilegedUserError("\nMust run this program with root's effective UID\n\n")
+    logger.debug("Root user found.")
+    return True
 
 def check_os():
     '''Check if the operating system on server is Redhat or CentOS;

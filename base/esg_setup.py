@@ -13,13 +13,20 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+def exit_on_false(assertion, err_msg):
+    try:
+        assert assertion, err_msg
+    except AssertionError:
+        logger.error(err_msg)
+        sys.exit(1)
+
 def check_if_root():
     '''Check to see if the user has root privileges'''
 
     print "Checking for root privileges..."
 
     err_msg = "This program must be run with root privileges"
-    assert (os.geteuid() == 0), err_msg
+    exit_on_false(os.geteuid() == 0, err_msg)
 
     logger.debug("Root privileges found")
 
@@ -30,16 +37,19 @@ def check_os():
     print "  {}".format(platform.platform())
     machine = platform.machine()
     req_machines = ['x86_64']
-    assert machine in req_machines, "Accepted machine types: {}, Found: {}".format(req_machines, machine)
+    err_msg = "Accepted machine types: {}, Found: {}".format(req_machines, machine)
+    exit_on_false(machine in req_machines, err_msg)
 
     uname = platform.uname()
     name = uname[0].lower()
     req_names = ['rhel', 'redhat', 'centos', 'scientific']
-    assert name in req_names, "Accepted distrobutions: {}, Found: {}".format(req_names, name)
+    err_msg = "Accepted distrobutions: {}, Found: {}".format(req_names, name)
+    exit_on_false(name in req_names, err_msg)
 
     major = uname[2].split('.')[0]
     req_major = ['6']
-    assert major in req_major, "Accepted versions: {}, Found: {}".format(req_major, major)
+    err_msg = "Accepted versions: {}, Found: {}".format(req_major, major)
+    exit_on_false(major in req_major, err_msg)
 
     logger.debug("uname: %s", uname)
 
@@ -51,13 +61,8 @@ def check_prerequisites():
     '''
     # checking for OS, architecture, distribution and version
     print "Checking prerequisites..."
-    checks = [check_os, check_if_root]
-    for check in checks:
-        try:
-            check()
-        except AssertionError as err:
-            logger.error(str(err))
-            sys.exit(1)
+    check_os()
+    check_if_root()
 
     return True
 

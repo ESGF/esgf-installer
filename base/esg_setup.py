@@ -41,18 +41,18 @@ def check_os():
     err_msg = "Accepted machine types: {}, Found: {}".format(req_machines, machine)
     exit_on_false(machine in req_machines, err_msg)
 
-    uname = platform.uname()
-    name = uname[0].lower()
+    dist = platform.linux_distribution(full_distribution_name=0)
+    name = dist[0].lower()
     req_names = ['rhel', 'redhat', 'centos', 'scientific']
     err_msg = "Accepted distrobutions: {}, Found: {}".format(req_names, name)
     exit_on_false(name in req_names, err_msg)
 
-    major = uname[2].split('.')[0]
+    major = dist[1].split('.')[0]
     req_major = ['6']
     err_msg = "Accepted versions: {}, Found: {}".format(req_major, major)
     exit_on_false(major in req_major, err_msg)
 
-    logger.debug("uname: %s", uname)
+    logger.debug("dist: %s", dist)
     return True
 
 def check_fqdn():

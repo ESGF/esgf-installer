@@ -18,7 +18,7 @@ def exit_on_false(assertion, err_msg):
         assert assertion, err_msg
     except AssertionError:
         logger.error(err_msg)
-        sys.exit(1)
+        raise
 
 def check_if_root():
     '''Check to see if the user has root privileges'''
@@ -65,7 +65,7 @@ def check_fqdn():
         fqdn = socket.getfqdn()
     except socket.error as err:
         logger.error("%s, %s", err_msg, str(err))
-        sys.exit(1)
+        raise
     exit_on_false(fqdn != '' and fqdn != None, err_msg)
 
     logger.debug("FQDN: %s", fqdn)
@@ -84,7 +84,7 @@ def check_prerequisites():
 
     return True
 
-def init_structure():
+def create_esg_directories():
     '''Create directories to hold ESGF scripts, config files, and logs'''
     directories_to_check = [
         config["scripts_dir"],
@@ -100,9 +100,5 @@ def init_structure():
             pybash.mkdir_p(directory)
 
     os.chmod(config["esg_etc_dir"], 0777)
-
-    #Create esgf.properties file
-    if not os.path.isfile(config["property_file"]):
-        pybash.touch(config["property_file"])
 
     return True

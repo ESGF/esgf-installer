@@ -308,7 +308,7 @@ def main():
     '''Main function'''
 
     esg_setup.check_prerequisites()
-    esg_setup.init_structure()
+    esg_setup.create_esg_directories()
 
     node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()

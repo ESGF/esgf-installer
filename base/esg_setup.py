@@ -6,7 +6,6 @@ import sys
 
 import yaml
 from esgf_utilities import pybash
-from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -14,6 +13,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
     config = yaml.load(config_file)
 
 def exit_on_false(assertion, err_msg):
+    ''' Exit if the assertion fails '''
     try:
         assert assertion, err_msg
     except AssertionError:
@@ -60,7 +60,7 @@ def check_fqdn():
 
     #NOTE This is a psuedo check.
 
-    err_msg = "Error get fully qualified domain name"
+    err_msg = "Error getting fully qualified domain name"
     try:
         fqdn = socket.getfqdn()
     except socket.error as err:
@@ -84,7 +84,7 @@ def check_prerequisites():
 
     return True
 
-def create_esg_directories():
+def init_structure():
     '''Create directories to hold ESGF scripts, config files, and logs'''
     directories_to_check = [
         config["scripts_dir"],
@@ -98,12 +98,11 @@ def create_esg_directories():
     for directory in directories_to_check:
         if not os.path.isdir(directory):
             pybash.mkdir_p(directory)
+
     os.chmod(config["esg_etc_dir"], 0777)
-
-def init_structure():
-
-    create_esg_directories()
 
     #Create esgf.properties file
     if not os.path.isfile(config["property_file"]):
         pybash.touch(config["property_file"])
+
+    return True

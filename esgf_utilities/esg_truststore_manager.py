@@ -76,16 +76,26 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
-        extract_cert_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
-        if extract_cert_output["returncode"] != 0:
-            print "Could not extract certificate from keystore"
-            esg_functions.exit_with_error(extract_cert_output["stderr"])
+        try:
+            extract_cert_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
+        except SubprocessError:
+            logger.error("Error extracting the certificate from the keystore %s", keystore_alias)
+            raise
+        else:
+            if extract_cert_output["returncode"] != 0:
+                logger.error(extract_cert_output)
+                raise RuntimeError("Could not extract certificate from keystore")
 
         print "Importing keystore's certificate into truststore... "
-        import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
-        if import_to_truststore_output["returncode"] != 0:
-            print "Could not import the certificate into the truststore"
-            esg_functions.exit_with_error(import_to_truststore_output["stderr"])
+        try:
+            import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
+        except SubprocessError:
+            logger.error("Error import certificate into truststore %s", config["truststore_file"])
+            raise
+        else:
+            if import_to_truststore_output["returncode"] != 0:
+                logger.error(import_to_truststore_output)
+                raise RuntimeError("Could not import the certificate into the truststore")
 
         sync_with_java_truststore(truststore_file)
 
@@ -103,8 +113,8 @@ def sync_with_java_truststore(truststore_file):
         shutil.copyfile(cacerts_path, jssecacerts_path)
 
     if not os.path.join(truststore_file):
-        print "{truststore_file} does not exist. Exiting."
-        esg_functions.exit_with_error()
+        logger.error("%s does not exist. Exiting.", truststore_file)
+        raise OSError
 
     print "Syncing {truststore_file} with {java_truststore} ... ".format(truststore_file=truststore_file, java_truststore=jssecacerts_path)
     if filecmp.cmp(truststore_file, jssecacerts_path):

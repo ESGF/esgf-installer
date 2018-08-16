@@ -34,8 +34,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
 
     if len(intermediate_certs) < 1:
-        print "No intermediate_certs files given"
-        esg_functions.exit_with_error()
+        raise RuntimeError("No intermediate_certs files given")
 
     if not os.path.isfile(private_key):
         print "Private key file {private_key} does not exist".format(private_key=private_key)
@@ -63,8 +62,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     if check_associate_cert_with_private_key(public_cert, private_key):
         print "The keypair was congruent"
     else:
-        print "The keypair was not congruent"
-        esg_functions.exit_with_error()
+        raise RuntimeError("The keypair was not congruent")
 
 
     print "creating keystore... "
@@ -104,8 +102,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
         print "Don't forget to change your tomcat's server.xml entry accordingly :-)"
         print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
     else:
-        print "Failed to check keystore"
-        esg_functions.exit_with_error(keystore_output["stderr"])
+        raise RuntimeError("Failed to check keystore")
 
 def check_associate_cert_with_private_key(cert, private_key):
     """
@@ -146,10 +143,14 @@ def create_empty_java_keystore(keystore_name, keystore_alias, keystore_password,
     '''Create a new empty Java Keystore using the JDK's keytool'''
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
     generate_keystore_string = "{java_keytool_executable} -genkey -keyalg RSA -alias {keystore_alias} -keystore {keystore_name} -storepass {keystore_password} -keypass {keystore_password} -validity 360 -dname {distinguished_name} -noprompt".format(java_keytool_executable=java_keytool_executable, keystore_alias=keystore_alias, keystore_name=keystore_name, keystore_password=keystore_password, distinguished_name=distinguished_name)
-    keystore_output = esg_functions.call_subprocess(generate_keystore_string)
-    if keystore_output["returncode"] != 0:
-        print "Problem with generating initial keystore...Exiting."
-        esg_functions.exit_with_error(keystore_output["stderr"])
+    try:
+        keystore_output = esg_functions.call_subprocess(generate_keystore_string)
+    except SubprocessError:
+        logger.error("Could not create new empty Java Keystore")
+        raise
+    else:
+        if keystore_output["returncode"] != 0:
+            raise RuntimeError("Problem with generating initial keystore...Exiting.")
 
 
 def backup_previous_keystore(keystore_name):
@@ -180,12 +181,10 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
 
     #Exit if public_cert(signed CSR isn't found)
     if not os.path.isfile(public_cert):
-        print "{public_cert} not found. Exiting.".format(public_cert=public_cert)
-        esg_functions.exit_with_error()
+        raise OSError("{} not found. Exiting.".format(public_cert))
 
     if not os.path.isfile(private_key):
-        print "{private_key} not found. Exiting.".format(private_key=private_key)
-        esg_functions.exit_with_error()
+        raise OSError ("{} not found. Exiting.".format(private_key))
 
     print "private key = ", private_key
     print "public cert = ", public_cert
@@ -269,10 +268,14 @@ def convert_per_to_dem(private_key, key_output_dir):
     print "converting private key from PEM to DER... "
     print "******************************* \n"
     derkey = os.path.join(key_output_dir, "key.der")
-    convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
-    if convert_to_der["returncode"] != 0:
-        print "Problem with preparing initial keystore...Exiting."
-        esg_functions.exit_with_error(convert_to_der["stderr"])
+    try:
+        convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
+    except SubprocessError:
+        logger.error("Could not convert the private key from pem to der format")
+        raise
+    else:
+        if convert_to_der["returncode"] != 0:
+            raise RuntimeError("Could not convert the private key from pem to der format")
     return derkey
 
 
@@ -381,7 +384,6 @@ def create_certificate_chain_list():
                     pybash.touch(default_cachain)
                     cert_files.append(default_cachain)
                     break
-                    # esg_functions.exit_with_error(1)
             else:
                 break
         else:
@@ -403,8 +405,7 @@ def create_certificate_chain(cert_files):
     with open("/etc/certs/tmpchain", "w") as tmpchain_file:
         for cert in cert_files:
             if not os.path.isfile(cert):
-                print "{cert} not found. Exiting.".format(cert=cert)
-                esg_functions.exit_with_error()
+                raise OSError("{} not found. Exiting.".format(cert))
 
             with open(cert, "r") as cert_file_handle:
                 cert_file_contents = cert_file_handle.read()

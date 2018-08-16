@@ -161,18 +161,6 @@ def check_for_commercial_ca():
 
     else:
         return
-        # file_list = ["hostcert.pem", "hostkey.pem"]
-        # with pybash.pushd(commercial_ca_directory):
-        #     for file_name in file_list:
-        #         if not os.path.isfile(file_name):
-        #             print "{file_name} not found in /etc/esgfcerts. Exiting."
-        #             esg_functions.exit_with_error(1)
-        #         else:
-        #             try:
-        #                 shutil.copyfile(file_name, "/etc/grid-security/{file_name}".format(file_name=file_name))
-        #             except OSError:
-        #                 logger.exception("Could not copy %s", file_name)
-
 
 
 def install_local_certs(node_type_list, firstrun=None):
@@ -205,7 +193,7 @@ def install_local_certs(node_type_list, firstrun=None):
             local_hash = esg_functions.convert_hash_to_hex(cert_obj.subject_name_hash())
             globus_pack = "globus_simple_ca_{}_setup-0.tar.gz".format(local_hash)
             if not os.path.exists(globus_pack):
-                esg_functions.exit_with_error(
+                raise OSError(
                     "File {} is not found in {}; Please place it there and reexecute esg_node.py --install-local-certs".format(globus_pack, certdir))
 
         if "IDP" in node_type_list:

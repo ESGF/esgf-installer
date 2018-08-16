@@ -215,19 +215,18 @@ def setup_node_manager(mode="install"):
 
         # checked_get ${node_dist_file} ${node_dist_url} $((force_install))
         if not esg_functions.download_update(node_dist_file, node_dist_url, force_download=force_install):
-            print "ERROR: Could not download {node_dist_url} :-(".format(node_dist_url=node_dist_url)
-            esg_functions.exit_with_error(1)
+            raise RuntimeError("Could not download {} :-(".format(node_dist_file))
 
         # make room for new install
         if force_install:
             print "Removing Previous Installation of the ESGF Node Manager... ({node_dist_dir})".format(node_dist_dir=node_dist_dir)
             try:
                 shutil.rmtree(node_dist_dir)
-                logger.info("Deleted directory: %s", node_dist_dir)
             except IOError, error:
-                logger.error(error)
                 logger.error("Could not delete directory: %s", node_dist_dir)
-                esg_functions.exit_with_error(1)
+                raise
+            else:
+                logger.info("Deleted directory: %s", node_dist_dir)
 
             clean_node_manager_webapp_subsystem()
 
@@ -239,8 +238,7 @@ def setup_node_manager(mode="install"):
             tar.close()
         except Exception, error:
             logger.error(error)
-            print "ERROR: Could not extract the ESG Node: {node_dist_file}".format(node_dist_file=node_dist_file)
-            esg_functions.exit_with_error(1)
+            raise RuntimeError("Could not extract the ESG Node Manager file: {}".format(node_dist_file))
 
         # pushd ${node_dist_dir} >& /dev/null
         with pybash.pushd(node_dist_dir):
@@ -291,10 +289,9 @@ def setup_node_manager(mode="install"):
                 tar = tarfile.open(node_war_file)
                 tar.extractall()
                 tar.close()
-            except Exception, error:
-                logger.error(error)
-                print "ERROR: Could not extract the ESG Node: {node_war_file}".format(node_war_file=node_war_file)
-                esg_functions.exit_with_error(1)
+            except tarfile.TarError, error:
+                logger.error("Could not extract the ESG Node Manager war file: %s", node_war_file)
+                raise
 
             #----------------------------
             # Property file fetching and token replacement...
@@ -330,7 +327,7 @@ def setup_node_manager(mode="install"):
 
     if db_set > 0:
         if write_node_manager_config() != 0 or configure_postgress() != 0:
-            esg_functions.exit_with_error(1)
+            raise RuntimeError
 
     touch_generated_whitelist_files()
     write_node_manager_install_log()
@@ -343,7 +340,6 @@ def setup_node_manager(mode="install"):
 
     setup_nm_repo()
 
-    esg_functions.exit_with_error(0)
 
 
 def setup_nm_repo():

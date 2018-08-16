@@ -34,6 +34,12 @@ class test_ESG_Functions(unittest.TestCase):
             esg_functions.stream_subprocess_output("groupdel test_esgf_group")
         except SubprocessError:
             pass
+
+        try:
+            esg_functions.stream_subprocess_output("groupdel cogadmin")
+        except SubprocessError:
+            pass
+            
         try:
             shutil.rmtree("/esg/test_backup")
         except OSError:

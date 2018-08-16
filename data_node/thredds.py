@@ -163,9 +163,9 @@ def register(remote_host):
             with pybash.pushd(config["workdir"]):
                 esg_dist_url = esg_property_manager.get_property("esg.dist.url")
                 if not esg_functions.download_update('./InstallCert.class', "{}/utils/InstallCert.class".format(esg_dist_url)):
-                    esg_functions.exit_with_error("Could not download utility class(1) for installing certificates")
+                    raise RuntimeError("Could not download utility class(1) for installing certificates")
                 if not esg_functions.download_update('./InstallCert$SavingTrustManager.class', "{}/utils/InstallCert$SavingTrustManager.class".format(esg_dist_url)):
-                    esg_functions.exit_with_error("Could not download utility class(2) for installing certificates")
+                    raise RuntimeError("Could not download utility class(2) for installing certificates")
 
             class_path = ".:{}".format(config["workdir"])
 
@@ -262,9 +262,9 @@ def esgsetup_thredds():
     esgsetup_command = '''esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password {security_admin_password}'''.format(security_admin_password=esg_functions.get_security_admin_password())
     try:
         esg_functions.stream_subprocess_output(esgsetup_command)
-    except SubprocessError, error:
-        logger.exception("Could not finish esgsetup: \n %s", error)
-        # esg_functions.exit_with_error(1)
+    except SubprocessError:
+        logger.error("Could configure Thredds using esgsetup")
+        raise
 
 def copy_public_directory():
     '''HACK ALERT!! For some reason the public directory does not respect thredds' tds.context.root.path property...
@@ -272,11 +272,11 @@ def copy_public_directory():
     content_dir = os.path.join("{thredds_content_dir}".format(thredds_content_dir=config["thredds_content_dir"]), "thredds")
     if not os.path.isdir(content_dir):
         pybash.mkdir_p(content_dir)
+        public_dir = "{}/webapps/thredds/WEB-INF/altContent/startup/public".format(config["tomcat_install_dir"])
         try:
-            public_dir = "{tomcat_install_dir}/webapps/thredds/WEB-INF/altContent/startup/public".format(tomcat_install_dir=config["tomcat_install_dir"])
             copy_tree(public_dir, content_dir)
-        except OSError, error:
-            esg_functions.exit_with_error(error)
+        except OSError:
+            raise
 
         tomcat_user = esg_functions.get_user_id("tomcat")
         tomcat_group = esg_functions.get_group_id("tomcat")

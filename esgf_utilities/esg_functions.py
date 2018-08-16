@@ -35,25 +35,6 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 
-def exit_with_error(error=None):
-    print(
-        ""
-        "Sorry... \n"
-        "This action did not complete successfully\n")
-    if error:
-        print "The following error occurred:\n", error
-    print(
-        "Also please review the installation FAQ it may assist you\n"
-        "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
-        ""
-    )
-    # Move back to starting directory
-    os.chdir(config["install_prefix"])
-    sys.exit()
-
-#-------------------------------
-# Process checking utility functions
-#-------------------------------
 
 #----------------------------------------------------------
 # Process Launching and Checking...
@@ -540,9 +521,8 @@ def set_publisher_password(password=None):
             secret_file.write(password)
         print "Updated password for database {db_user}".format(db_user=config["postgress_user"])
     except IOError, error:
-        logger.exception("Could not update password for %s", config["postgress_user"])
-        print "error:", error
-        exit_with_error(error)
+        logger.error("Could not update password for %s", config["postgress_user"])
+        raise
 
 
 def set_postgres_password(password):
@@ -751,7 +731,7 @@ def extract_tarball(tarball_name, dest_dir="."):
         tar.extractall(dest_dir, members=track_extraction_progress(tar))
         tar.close()
     except tarfile.TarError, error:
-        logger.exception("Could not extract the tarfile: %s", tarball_name)
+        logger.error("Could not extract the tarfile: %s", tarball_name)
         raise
 
 def change_ownership_recursive(directory_path, uid=-1, gid=-1):

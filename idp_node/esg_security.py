@@ -162,7 +162,8 @@ def _setup_policy_files(node_type_list):
             security_jar_file = os.path.join(app_path, "WEB-INF", "lib", "esgf-security-{}.jar".format(config["esgf_security_version"]))
 
         if not os.path.isfile(security_jar_file):
-            esg_functions.exit_with_error("Could not determine location of security jar, exiting...")
+            logger.error("%s not found", security_jar_file)
+            raise OSError
 
         logger.debug("Using security jar file: %s", security_jar_file)
         print "security_jar_file:", security_jar_file
@@ -198,6 +199,7 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
         internal_jar_path = "esg/security/config"
         full_extracted_jar_dir = os.path.join(tmp_extract_dir, internal_jar_path)
 
+        #TODO: review and fix; poor design, security_jar_file would get overwritten if there are multiple node types
         if "DATA" in node_type_list:
             app_path = esg_property_manager.get_property("orp_security_authorization_service_app_home")
             security_jar_file = "{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
@@ -207,8 +209,10 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
         elif "IDP" in node_type_list:
             app_path = esg_property_manager.get_property("idp_service_app_home")
             security_jar_file = "{}/WEB-INF/lib/esgf-security-{}.jar".format(app_path, esgf_security_version)
-        else:
-            esg_functions.exit_with_error("Could not find security jar file: esgf-security-{}.jar".format(esgf_security_version))
+
+        if not os.path.exists(security_jar_file):
+            logger.error("Could not find security jar file %s", security_jar_file)
+            raise
 
         logger.debug("Using security jar file: %s", security_jar_file)
 

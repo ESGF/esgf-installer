@@ -155,15 +155,19 @@ def run_esginitialize():
     print "Running esginitialize"
     print "******************************* \n"
 
-    esginitialize_process = esg_functions.call_subprocess("esginitialize -c")
-    if esginitialize_process["returncode"] != 0:
-        logger.exception("esginitialize failed")
-        logger.error(esginitialize_process["stderr"])
-        print esginitialize_process["stderr"]
-        esg_functions.exit_with_error(1)
+    try:
+        esginitialize_process = esg_functions.call_subprocess("esginitialize -c")
+    except SubprocessError:
+        logger.error("esginitialize failed")
+        raise
     else:
-        print esginitialize_process["stdout"]
-        print esginitialize_process["stderr"]
+        if esginitialize_process["returncode"] != 0:
+            logger.exception()
+            logger.error(esginitialize_process)
+            raise RuntimeError("esginitialize failed")
+        else:
+            print esginitialize_process["stdout"]
+            print esginitialize_process["stderr"]
 
 def setup_publisher():
     '''Install ESGF publisher'''
@@ -206,7 +210,7 @@ def esgcet_startup_hook():
     print "ESGCET (Publisher) Startup Hook: Setting perms... "
     esg_ini_path = os.path.join(config["publisher_home"], config["publisher_config"])
     if not os.path.exists(esg_ini_path):
-        esg_functions.exit_with_error("Could not find publisher configuration file: {}".format(esg_ini_path))
+        raise OSError("{} does not exists".format(esg_ini_path))
     os.chown(esg_ini_path, -1, esg_functions.get_group_id("tomcat"))
     os.chmod(esg_ini_path, 0644)
 

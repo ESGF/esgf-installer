@@ -90,52 +90,5 @@ class test_ESG_publisher(unittest.TestCase):
         self.assertTrue(output)
 
 
-    def test_publication(self):
-        print "\n*******************************"
-        print "Publication Test"
-        print "******************************* \n"
-
-        try:
-            esg_functions.call_subprocess("groupadd tomcat")
-        except SubprocessError, error:
-            logger.debug(error[0]["returncode"])
-            if error[0]["returncode"] == 9:
-                pass
-        try:
-            esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
-        except SubprocessError, error:
-            logger.debug(error[0]["returncode"])
-            if error[0]["returncode"] == 9:
-                pass
-
-        if not os.path.isdir("/usr/local/tomcat/webapps/thredds"):
-            thredds.setup_thredds()
-
-        if not esg_postgres.postgres_status():
-            esg_postgres.start_postgres()
-
-        esgcet_testdir = os.path.join(config[
-                                      "thredds_root_dir"], "test")
-        pybash.mkdir_p(esgcet_testdir)
-
-        os.chown(esgcet_testdir, config[
-                 "installer_uid"], config["installer_gid"])
-
-        pybash.mkdir_p(config["thredds_replica_dir"])
-
-        os.chown(config["thredds_replica_dir"], config[
-                 "installer_uid"], config["installer_gid"])
-        print "esgcet test directory: [%s]" % esgcet_testdir
-
-        fetch_file = "sftlf.nc"
-        if not esg_functions.download_update(os.path.join(esgcet_testdir, fetch_file), "http://" + config["esg_dist_url_root"] + "/externals/" + fetch_file):
-            print " ERROR: Problem pulling down %s from esg distribution" % (fetch_file)
-            esg_functions.exit_with_error(1)
-
-        self.assertTrue(os.path.isfile(os.path.join(esgcet_testdir, fetch_file)))
-
-        esg_functions.stream_subprocess_output("esgtest_publish")
-
-
 if __name__ == '__main__':
     unittest.main()

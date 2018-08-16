@@ -44,12 +44,12 @@ def check_os():
     dist = platform.linux_distribution(full_distribution_name=0)
     name = dist[0].lower()
     req_names = ['rhel', 'redhat', 'centos', 'scientific']
-    err_msg = "Accepted distrobutions: {}, Found: {}".format(req_names, name)
+    err_msg = "Accepted distributions: {}, Found: {}".format(req_names, name or "None")
     exit_on_false(name in req_names, err_msg)
 
     major = dist[1].split('.')[0]
     req_major = ['6']
-    err_msg = "Accepted versions: {}, Found: {}".format(req_major, major)
+    err_msg = "Accepted versions: {}, Found: {}".format(req_major, major or "None")
     exit_on_false(major in req_major, err_msg)
 
     logger.debug("dist: %s", dist)

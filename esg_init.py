@@ -9,6 +9,114 @@ import yaml
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
+def env(variables):
+    for variable in variables:
+        os.environ[variable] = variables[variable]
+
+class Config(object):
+    def __getitem__(self, key):
+        return self.__dict__[key]
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+    def read(self):
+        pass
+    def write(self, filename):
+        pass
+
+class BaseConfig(Config):
+    def __init__(self):
+        self.install_prefix = os.path.join(os.sep, "usr", "local")
+        self.esg_root_dir = os.path.join(os.sep, "esg")
+        self.esg_config_dir = os.path.join(self.esg_root_dir, "config")
+        self.install_manifest = os.path.join(self.esg_root_dir, "esgf-install-manifest")
+        self.envfile = "/etc/esg.env"
+
+class UserConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        self.installer_user = pwd.getpwuid(os.getuid())[0]
+        self.installer_uid = pwd.getpwnam(self.installer_user).pw_uid
+        self.installer_gid = pwd.getpwnam(self.installer_user).pw_gid
+        self.installer_home = os.path.join(self.install_prefix, "src", "esgf")
+        try:
+            os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
+            os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
+            del os.environ["SUDO_UID"]
+            del os.environ["SUDO_GID"]
+        except KeyError:
+            pass
+
+class PostgresConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        self.postgress_version = "8.4.20"
+        self.postgress_min_version = "8.4.20"
+        self.postgress_install_dir = os.path.join(os.sep, "var", "lib", "pgsql")
+        self.postgress_bin_dir = os.path.join(os.sep, "usr", "bin")
+        self.postgress_lib_dir = os.path.join(os.sep, "usr", "lib64", "pgsql")
+        self.postgress_user = "dbsuper"
+        self.pg_sys_acct_passwd = "changeme"
+        self.pg_secret_file = os.path.join(self.esg_config_dir, ".esg_pg_pass")
+        self.postgress_host = "localhost"
+        self.postgress_port = "5432"
+        env({
+            "PGHOME": self.postgress_install_dir,
+            "PGBINDIR": self.postgress_bin_dir,
+            "PGLIBDIR": self.postgress_lib_dir,
+            "PGUSER": self.postgress_user,
+            "PGHOST": self.postgress_host,
+            "PGPORT": self.postgress_port
+        })
+
+class PublisherConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        self.publisher_repo = "git://github.com/ESGF/esg-publisher.git"
+        self.publisher_repo_https = "https://github.com/ESGF/esg-publisher.git"
+        self.esgcet_version = "3.5.0"
+        self.publisher_tag = "v3.5.0"
+        self.pub_secret_file = os.path.join(self.esg_config_dir, ".esg_pg_publisher_pass")
+        try:
+            with open(self.pub_secret_file, 'rb') as filedata:
+                self.pub_secret = filedata.read().strip()
+            self.publisher_db_user_passwd = self.pub_secret
+        except IOError:
+            logger.exception()
+        try:
+            assert "ESGINI" in os.environ
+        except AssertionError:
+            self.publisher_home = os.path.join(self.esg_config_dir, "esgcet")
+            self.publisher_config = "esg.ini"
+            self.ESGINI = os.path.join(self.publisher_home, self.publisher_config)
+
+class ThreddsConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        self.thredds_content_dir = os.path.join(self.esg_root_dir, "content")
+        # #NOTE: This root dir should match a root set in the thredds setup
+        self.thredds_root_dir = os.path.join(self.esg_root_dir, "data")
+        self.thredds_replica_dir = os.path.join(self.thredds_root_dir, "replica")
+
+class TomcatConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+
+class DataNodeConfig(PublisherConfig, ThreddsConfig, TomcatConfig):
+    def __init__(self):
+        PublisherConfig.__init__(self)
+        ThreddsConfig.__init__(self)
+        TomcatConfig.__init__(self)
+
+if __name__ == '__main__':
+    config = DataNodeConfig()
+    # Read  a config value
+    print config['install_prefix']
+    # It is possible to add as well
+    config['foo'] = 'bar'
+    print config['foo']
+
+    exit(0)
+
 def init():
     """ Return a list of all local variables."""
     #--------------

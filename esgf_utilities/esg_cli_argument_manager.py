@@ -238,6 +238,9 @@ def set_local_mirror(mirror_url):
 
 #Formerly get_bit_value
 def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
+
+    check_for_valid_node_type(node_type)
+
     if "all" in node_type:
         node_type = ["data", "index", "idp", "compute"]
 
@@ -340,21 +343,21 @@ def process_arguments():
 
     if args.install:
         if args.type:
-            if check_for_valid_node_type(args.type):
-                set_node_type_value(args.type)
+            set_node_type_value(args.type)
         logger.debug("Install Services")
         if args.base:
             return ["INSTALL"]
         node_type_list = esg_functions.get_node_type()
+        check_for_valid_node_type(node_type_list)
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:
         if args.type:
-            if check_for_valid_node_type(args.type):
-                set_node_type_value(args.type)
+            set_node_type_value(args.type)
         logger.debug("Update Services")
         if args.base:
             return ["INSTALL"]
         node_type_list = esg_functions.get_node_type()
+        check_for_valid_node_type(node_type_list)
         return node_type_list + ["INSTALL"]
     if args.fixperms:
         logger.debug("fixing permissions")
@@ -383,14 +386,12 @@ def process_arguments():
         cert_howto()
         sys.exit(0)
     elif args.type:
-        if check_for_valid_node_type(args.type):
-            set_node_type_value(args.type)
+        set_node_type_value(args.type)
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
         logger.debug("args.settype %s", args.settype)
-        if check_for_valid_node_type(args.settype):
-            set_node_type_value(args.settype)
+        set_node_type_value(args.settype)
         sys.exit(0)
     elif args.gettype:
         print esg_functions.get_node_type(config["esg_config_type_file"])

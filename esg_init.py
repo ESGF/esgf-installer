@@ -97,6 +97,13 @@ class ThreddsConfig(BaseConfig):
         self.thredds_root_dir = os.path.join(self.esg_root_dir, "data")
         self.thredds_replica_dir = os.path.join(self.thredds_root_dir, "replica")
 
+class ApacheConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+class CoGConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+
 class TomcatConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)

@@ -83,22 +83,3 @@ def check_prerequisites():
     check_fqdn()
 
     return True
-
-def create_esg_directories():
-    '''Create directories to hold ESGF scripts, config files, and logs'''
-    directories_to_check = [
-        config["scripts_dir"],
-        config["esg_backup_dir"],
-        config["esg_tools_dir"],
-        config["esg_log_dir"],
-        config["esg_config_dir"],
-        config["esg_etc_dir"],
-        config["tomcat_conf_dir"]
-    ]
-    for directory in directories_to_check:
-        if not os.path.isdir(directory):
-            pybash.mkdir_p(directory)
-
-    os.chmod(config["esg_etc_dir"], 0777)
-
-    return True

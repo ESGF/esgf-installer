@@ -7,6 +7,8 @@ import multiprocessing
 import logging
 import yaml
 
+from esgf_utilities import pybash
+
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 def env(variables):
@@ -26,10 +28,27 @@ class Config(object):
 class BaseConfig(Config):
     def __init__(self):
         self.install_prefix = os.path.join(os.sep, "usr", "local")
+        self.scripts_dir = os.path.join(self.install_prefix, "bin")
         self.esg_root_dir = os.path.join(os.sep, "esg")
         self.esg_config_dir = os.path.join(self.esg_root_dir, "config")
         self.install_manifest = os.path.join(self.esg_root_dir, "esgf-install-manifest")
-        self.envfile = "/etc/esg.env"
+        self.esg_backup_dir = os.path.join(self.esg_root_dir, "backups")
+        self.esg_log_dir = os.path.join(self.esg_root_dir, "log")
+        self.esg_tools_dir = os.path.join(self.esg_root_dir, "tools")
+        self.esg_etc_dir = os.path.join(self.esg_root_dir, "etc")
+        self.envfile = os.path.join(os.sep, "etc", "esg.env")
+
+    def init_directories(self):
+        directories = [
+            self.scripts_dir,
+            self.esg_backup_dir,
+            self.esg_tools_dir,
+            self.esg_log_dir,
+            self.esg_config_dir,
+            self.esg_etc_dir
+        ]
+        for directory in directories:
+            pybash.mkdir_p(directory)
 
 class UserConfig(BaseConfig):
     def __init__(self):
@@ -92,6 +111,8 @@ class PublisherConfig(BaseConfig):
 class ThreddsConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
+        self.tds_version = "5.0.2"
+        self.tds_min_version = "5.0.2"
         self.thredds_content_dir = os.path.join(self.esg_root_dir, "content")
         # #NOTE: This root dir should match a root set in the thredds setup
         self.thredds_root_dir = os.path.join(self.esg_root_dir, "data")
@@ -100,6 +121,10 @@ class ThreddsConfig(BaseConfig):
 class ApacheConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
+        self.apache_frontend_version = "1.0.9"
+        self.apache_frontend_tag = "v1.12"
+        self.apache_frontend_repo = "https://github.com/ESGF/apache-frontend.git"
+
 class CoGConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
@@ -107,6 +132,26 @@ class CoGConfig(BaseConfig):
 class TomcatConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
+        tomcat_version = "8.5.9"
+        tomcat_http_path = "http://archive.apache.org/dist/tomcat/tomcat"
+        self.tomcat_major_version = tomcat_version.split(".")[0]
+        self.tomcat_dist_url = "{0}-{1}/v{2}/bin/apache-tomcat-{2}.tar.gz".format(
+            tomcat_http_path,
+            self.tomcat_major_version,
+            tomcat_version
+        )
+        self.tomcat_install_dir = os.path.join(self.install_prefix, "tomcat")
+        self.tomcat_conf_dir = os.path.join(self.esg_config_dir, "tomcat")
+        self.tomcat_user = "tomcat"
+        self.tomcat_group = self.tomcat_user
+        self.tomcat_pid_file = "/var/run/tomcat-jsvc.pid"
+
+    def init_directories(self):
+        directories = [
+            self.tomcat_conf_dir
+        ]
+        for directory in directories:
+            pybash.mkdir_p(directory)
 
 class DataNodeConfig(PublisherConfig, ThreddsConfig, TomcatConfig):
     def __init__(self):
@@ -114,14 +159,21 @@ class DataNodeConfig(PublisherConfig, ThreddsConfig, TomcatConfig):
         ThreddsConfig.__init__(self)
         TomcatConfig.__init__(self)
 
-if __name__ == '__main__':
-    config = DataNodeConfig()
-    # Read  a config value
-    print config['install_prefix']
-    # It is possible to add as well
-    config['foo'] = 'bar'
-    print config['foo']
+def init_directories():
+    base = BaseConfig()
+    base.init_directories()
+    tomcat = TomcatConfig()
+    tomcat.init_directories()
 
+
+if __name__ == '__main__':
+    # config = DataNodeConfig()
+    # # Read  a config value
+    # print config['install_prefix']
+    # # It is possible to add as well
+    # config['foo'] = 'bar'
+    # print config['foo']
+    init_directories()
     exit(0)
 
 def init():

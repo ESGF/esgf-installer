@@ -81,17 +81,6 @@ class UserConfig(BaseConfig):
         except KeyError:
             pass
 
-class OpenSSLConfig(BaseConfig):
-    def __init__(self):
-        BaseConfig.__init__(self)
-        openssl_version = "0.9.8r"
-        openssl_min_version = "0.9.8e"
-        openssl_max_version = "0.9.9z"
-        self.openssl_install_dir = os.path.join(self.install_prefix, "openssl")
-        os.environ["OPENSSL_HOME"] = self.openssl_install_dir
-        self.openssl_dist_url = "http://www.openssl.org/source/openssl-{}.tar.gz".format(openssl_version)
-        self.openssl_workdir = os.path.join(self.workdir, "openssl")
-
 
 class PostgresConfig(BaseConfig):
     def __init__(self):

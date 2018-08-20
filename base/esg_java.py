@@ -8,6 +8,7 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
+from esgf_utilities.esg_exceptions import SubprocessError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -21,21 +22,20 @@ def set_default_java():
     esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
 
 
-def check_for_existing_java():
+def check_for_existing_java(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
     '''Check if a valid java installation is currently on the system'''
-    java_path = find_executable("java", os.path.join(config["java_install_dir"], "bin"))
     if java_path:
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         return check_java_version(java_path)
 
 
-def check_java_version(java_path):
+def check_java_version(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
     '''Checks the Java version on the system'''
     print "Checking Java version"
     try:
         java_version_output = esg_functions.call_subprocess(
             "{java_path} -version".format(java_path=java_path))["stderr"]
-    except SubprocessError, error:
+    except SubprocessError:
         logger.error("Could not check the Java version")
         raise
 
@@ -60,9 +60,9 @@ def write_java_env():
         section_name="esgf.env", separator="_")
 
 
-def write_java_install_log(java_path):
+def write_java_install_log(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
     '''Writes Java config to install manifest'''
-    java_version = re.search("1.8.0_\w+", check_java_version(java_path)).group()
+    java_version = re.search("1.8.0_\w+", check_java_version()).group()
     esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
 
 
@@ -111,9 +111,9 @@ def setup_java():
         esg_functions.change_ownership_recursive(
             config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
-    set_default_java()
-    print check_java_version("java")
-    write_java_install_log("java")
+    # set_default_java()
+    print check_java_version()
+    write_java_install_log()
     write_java_env()
 
 

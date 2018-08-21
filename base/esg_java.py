@@ -32,6 +32,7 @@ def check_for_existing_java(java_path=find_executable("java", os.path.join(confi
 def check_java_version(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
     '''Checks the Java version on the system'''
     print "Checking Java version"
+    logger.debug("java_path: %s", java_path)
     try:
         java_version_output = esg_functions.call_subprocess(
             "{java_path} -version".format(java_path=java_path))["stderr"]

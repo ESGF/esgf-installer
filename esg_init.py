@@ -50,6 +50,8 @@ class BaseConfig(Config):
 
         self.esgf_dist_mirror = "http://aims1.llnl.gov/esgf"
         self.esg_dist_url_root = "%s/dist" % self.esgf_dist_mirror
+        self.extkeytool_download_url= "%s/etc/idptools.tar.gz" % self.esg_dist_url_root
+
 
         self.esgf_coffee_dist_mirror = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         self.esg_coffee_dist_url_root = "%s/dist" % self.esgf_coffee_dist_mirror
@@ -182,6 +184,7 @@ class TomcatConfig(BaseConfig):
         self.keystore_file = os.path.join(self.tomcat_conf_dir, "keystore-tomcat")
         self.keystore_alias = "my_esgf_node"
         self.keystore_password = ""
+        self.ks_secret_file = os.path.join(self.esg_config_dir, ".esg_keystore_pass")
         self.truststore_file = os.path.join(self.tomcat_conf_dir, "esg-truststore.ts")
         self.truststore_password = "changeit"
     def init_directories(self):
@@ -228,7 +231,6 @@ def init():
     # User Defined / Settable (public)
     #--------------
 
-    ks_secret_file = os.path.join(esg_config_dir, ".esg_keystore_pass")
 
     #--------------------------------
     # Internal esgf node code versions
@@ -331,18 +333,12 @@ def init():
         ant_version + "-bin.tar.gz"
     esgf_dashboard_ip_workdir = os.path.join(workdir, "esgf-dashboard-ip")
 
-    esg_testdir = workdir + "/../esg_test"
-    thredds_content_dir = os.path.join(esg_root_dir, "content")
-    # #NOTE: This root dir should match a root set in the thredds setup
-    thredds_root_dir = os.path.join(esg_root_dir, "data")
-    thredds_replica_dir = os.path.join(thredds_root_dir, "replica")
     # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
     show_summary_latch = 0
     source_latch = "0"
     scripts_dir = os.path.join(install_prefix, "bin")
     no_globus = False
     force_install = False
-    extkeytool_download_url= esg_dist_url_root + "/etc/idptools.tar.gz"
 
     globus_global_certs_dir = "/etc/grid-security/certificates"
     # #NOTE: java keystore style DN...

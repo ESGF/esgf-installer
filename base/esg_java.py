@@ -96,7 +96,7 @@ def setup_java():
 
         # Check for Java tar file
         if not os.path.isfile(java_tarfile):
-            print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(), java_tarfile))
+            print "Don't see java distribution file {java_dist_file_path}".format(java_dist_file_path=os.path.join(os.getcwd(), java_tarfile))
             download_java(java_tarfile)
 
         print "Extracting Java tarfile", java_tarfile

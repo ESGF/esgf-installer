@@ -6,7 +6,7 @@ import errno
 import logging
 import psutil
 import yaml
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, pybash
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from index_node import solr
@@ -85,6 +85,12 @@ def purge_java():
     print "\n*******************************"
     print "Purging Java"
     print "******************************* \n"
+
+    java_tarfile = pybash.trim_string_from_head(config["java_dist_url"])
+    try:
+        os.remove("/usr/local/src/esgf/workbench/esg/{}".format(java_tarfile))
+    except OSError:
+        pass
 
     try:
         shutil.rmtree("/usr/local/jdk{}".format(config["java_version"]))

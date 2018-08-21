@@ -120,13 +120,6 @@ class PublisherConfig(BaseConfig):
         self.publisher_tag = "v3.5.0"
         self.pub_secret_file = os.path.join(self.esg_config_dir, ".esg_pg_publisher_pass")
 
-
-        #NOTE this is unused:
-        self.esgcet_egg_file = "esgcet-{}-py{}.{}.egg".format(
-            self.esgcet_version,
-            sys.version_info.major,
-            sys.version_info.minor
-        )
         try:
             with open(self.pub_secret_file, 'rb') as filedata:
                 self.pub_secret = filedata.read().strip()

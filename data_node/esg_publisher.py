@@ -173,7 +173,7 @@ def setup_publisher():
     '''Install ESGF publisher'''
 
     print "\n*******************************"
-    print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
+    print "Setting up ESGCET Package"
     print "******************************* \n"
     esg_publisher_version = config["publisher_tag"]
     with pybash.pushd("/tmp"):

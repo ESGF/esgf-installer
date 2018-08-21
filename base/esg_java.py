@@ -113,7 +113,7 @@ def setup_java():
             config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
     # set_default_java()
-    print check_java_version()
+    # print check_java_version()
     write_java_install_log()
     write_java_env()
 

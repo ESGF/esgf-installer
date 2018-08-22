@@ -194,13 +194,6 @@ class TomcatConfig(BaseConfig):
         for directory in directories:
             pybash.mkdir_p(directory)
 
-class CDATConfig(BaseConfig):
-    def __init__(self):
-        BaseConfig.__init__(self)
-        self.cdat_version = "2.2.0"
-        self.cdat_home = os.path.join(self.install_prefix, "uvcdat", "2.2.0")
-        os.environ["CDAT_HOME"] = self.cdat_home
-
 
 class DataNodeConfig(PublisherConfig, ThreddsConfig, TomcatConfig):
     def __init__(self):

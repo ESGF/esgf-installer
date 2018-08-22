@@ -1,5 +1,5 @@
 [installer.properties]
-esg.root.url
+esg.root.url=
 esgf.host.ip=
 #Usually the fully qualified domain name (fqdn) of your server
 esgf.host=

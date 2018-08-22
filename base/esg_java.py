@@ -79,6 +79,7 @@ def setup_java():
     if check_for_existing_java():
         try:
             setup_java_answer = esg_property_manager.get_property("update.java")
+            logger.debug("setup_java_answer: %s", setup_java_answer)
         except ConfigParser.NoOptionError:
             setup_java_answer = raw_input(
                 "Do you want to continue with Java installation and setup? [y/N]: ") or "N"

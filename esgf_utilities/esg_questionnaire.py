@@ -22,7 +22,6 @@ def _prompt(key, msg, default=None, validate=None):
     '''
     try:
         logger.info("%s = %s", key, esg_property_manager.get_property(key))
-        return
     except ConfigParser.NoOptionError:
         if validate is None:
             new_value = raw_input("{} [{}]".format(msg, default)) or default
@@ -31,9 +30,9 @@ def _prompt(key, msg, default=None, validate=None):
             while not is_valid:
                 new_value = raw_input("{} [{}]".format(msg, default)) or default
                 is_valid = validate(new_value)
+        esg_property_manager.set_property(key, new_value)
     except ConfigParser.NoSectionError:
         raise
-    return new_value
 
 def _choose_fqdn():
 
@@ -48,8 +47,7 @@ def _choose_fqdn():
 
     msg = "What is the fully qualified domain name of this node?"
     key = "esgf.host"
-    new_value = _prompt(key, msg, default=default_host_name)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg, default=default_host_name)
 
 
 def _choose_organization_name():
@@ -63,8 +61,7 @@ def _choose_organization_name():
 
     msg = "What is the name of your organization?"
     key = "esg.org.name"
-    new_value = _prompt(key, msg, default=default_org_name)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg, default=default_org_name)
     #NOTE Not sure what this is about, maybe meant to switch the arguments
     # Does not edit in place, returns a new string:
     #org_name_input.replace("", "_")
@@ -76,15 +73,13 @@ def _choose_node_short_name():
 
     msg = "Please give this node a \"short\" name"
     key = "node.short.name"
-    new_value = _prompt(key, msg)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg)
 
 def _choose_node_long_name():
 
     msg = "Please give this node a \"long\" name"
     key = "node.long.name"
-    new_value = _prompt(key, msg)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg)
 
 def _choose_node_namespace():
 
@@ -107,8 +102,7 @@ def _choose_node_namespace():
 
     msg = "What is the namespace for this node? (set to your reverse fqdn - Ex: \"gov.llnl\")"
     key = "node.namespace"
-    new_value = _prompt(key, msg, default=default_node_namespace, validate=validate)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg, default=default_node_namespace, validate=validate)
 
 
 def _choose_node_peer_group():
@@ -125,8 +119,7 @@ def _choose_node_peer_group():
     msg += " Only choose esgf-test for test install or esgf-prod for production installation."
     msg += " Otherwise choose esgf-dev. (esgf-test|esgf-prod|esgf-dev)"
     key = "node.peer.group"
-    new_value = _prompt(key, msg, default="esgf-dev", validate=validate)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg, default="esgf-dev", validate=validate)
 
 
 def _choose_esgf_index_peer():
@@ -134,24 +127,24 @@ def _choose_esgf_index_peer():
     default_esgf_index_peer = socket.getfqdn()
     msg = "What is the hostname of the node do you plan to publish to?"
     key = "esgf.index.peer"
-    new_value = _prompt(key, msg, default=default_esgf_index_peer)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg, default=default_esgf_index_peer)
+
 
 def _choose_mail_admin_address():
 
     msg = "What email address should notifications be sent as?"
     msg += " (The notification system will not be enabled without an email address)"
     key = "mail.admin.address"
-    new_value = _prompt(key, msg)
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg)
+
 
 def _choose_publisher_db_user(force_install=False):
     '''Sets the name of the database user for the Publisher'''
 
     msg = "What is the (low privilege) db account for publisher?"
     key = "publisher.db.user"
-    new_value = _prompt(key, msg, default="esgcet")
-    esg_property_manager.set_property(key, new_value)
+    _prompt(key, msg, default="esgcet")
+
 
 def _choose_publisher_db_user_passwd(force_install=False):
     '''Choose the password for the publisher (esgcet) database user'''

@@ -15,6 +15,37 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+class Prompt(object):
+    def __init__(self, msg, default=None, choices=None, not_none=True):
+        self.not_none = not_none
+        self.msg = msg
+        self.default = default
+        self.choices = choices
+        if self.choices is None:
+            self.msg = "{} [{}]: ".format(self.msg, self.default)
+        else:
+            self.choice_str = "({})".format("|".join(self.choices))
+            self.msg = "{} {} [{}]: ".format(self.msg, self.choice_str, self.default)
+
+    def pre(self):
+        return True
+    def prompt(self):
+
+        is_valid = False
+        while not is_valid:
+            new_value = raw_input(self.format(self.msg, self.default)) or self.default
+            is_valid = self.validate(new_value)
+
+    def validate(self, value):
+        if self.choices is not None:
+            return value in self.choices
+        if self.not_none:
+            return value is not None
+
+        return True
+
+    def post(self):
+        return True
 def _prompt(key, msg, default=None, validate=None):
     '''
         A function for prompting the user for a property value if the value does not already exist

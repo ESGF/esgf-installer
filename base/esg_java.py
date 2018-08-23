@@ -3,7 +3,6 @@ import re
 import logging
 import ConfigParser
 import yaml
-from distutils.spawn import find_executable
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
@@ -22,14 +21,14 @@ def set_default_java():
     esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
 
 
-def check_for_existing_java(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
+def check_for_existing_java(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
     '''Check if a valid java installation is currently on the system'''
-    if java_path:
+    if pybash.is_exe(java_path):
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         return check_java_version(java_path)
 
 
-def check_java_version(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
+def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
     '''Checks the Java version on the system'''
     print "Checking Java version"
     logger.debug("java_path: %s", java_path)
@@ -39,8 +38,8 @@ def check_java_version(java_path=find_executable("java", os.path.join(config["ja
     except SubprocessError:
         logger.error("Could not check the Java version")
         raise
-
-    installed_java_version = re.search("1.8.0_\w+", java_version_output).group()
+    print java_version_output
+    installed_java_version = re.search(r"1.8.0_\w+", java_version_output).group()
     if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
         print "Installed java version meets the minimum requirement "
     return java_version_output
@@ -61,9 +60,9 @@ def write_java_env():
         section_name="esgf.env", separator="_")
 
 
-def write_java_install_log(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
+def write_java_install_log():
     '''Writes Java config to install manifest'''
-    java_version = re.search("1.8.0_\w+", check_java_version()).group()
+    java_version = re.search(r"1.8.0_\w+", check_java_version()).group()
     esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
 
 

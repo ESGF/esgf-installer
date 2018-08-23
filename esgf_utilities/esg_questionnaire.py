@@ -28,7 +28,7 @@ def _prompt(key, msg, default=None, validate=None):
         else:
             is_valid = False
             while not is_valid:
-                new_value = raw_input("{} [{}]".format(msg, default)) or default
+                new_value = raw_input("{} [{}]: ".format(msg, default)) or default
                 is_valid = validate(new_value)
         esg_property_manager.set_property(key, new_value)
     except ConfigParser.NoSectionError:

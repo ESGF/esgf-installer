@@ -301,10 +301,10 @@ def edit_myproxy_server_config():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
     if os.path.isfile("/esg/config/myproxy/myproxy-server.config"):
-        esg_functions.create_backup_file(myproxy_config_file)
+        esg_functions.create_backup_file("/esg/config/myproxy/myproxy-server.config")
     logger.debug("Copying myproxy-server.config file to /esg/config/myproxy/")
     shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
-    os.chmod(myproxy_config_file, 0600)
+    os.chmod("/esg/config/myproxy/myproxy-server.config", 0600)
 
 ############################################
 # Configuration File Editing Functions

@@ -1,5 +1,4 @@
 import os
-import re
 import logging
 import ConfigParser
 import yaml
@@ -38,11 +37,13 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     except SubprocessError:
         logger.error("Could not check the Java version")
         raise
-    print java_version_output
-    installed_java_version = re.search(r"1.8.0_\w+", java_version_output).group()
-    if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
-        print "Installed java version meets the minimum requirement "
-    return java_version_output
+    version_line = java_version_output.split("\n")[0]
+    version = version_line.split(" ")[2]
+    installed_java_version = version.translate(None, "\"")
+
+    assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
+    print "Installed java version meets the minimum requirement {}".format(config["java_version"])
+    return installed_java_version
 
 
 def download_java(java_tarfile):
@@ -55,20 +56,27 @@ def download_java(java_tarfile):
 
 def write_java_env():
     '''Writes Java config to /etc/esg.env'''
-    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(
-        config["java_install_dir"]), property_file=config["envfile"],
-        section_name="esgf.env", separator="_")
+    esg_property_manager.set_property(
+        "JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]),
+        property_file=config["envfile"],
+        section_name="esgf.env",
+        separator="_"
+    )
 
 
 def write_java_install_log():
     '''Writes Java config to install manifest'''
-    java_version = re.search(r"1.8.0_\w+", check_java_version()).group()
-    esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
+    esg_functions.write_to_install_manifest(
+        "java",
+        config["java_install_dir"],
+        check_java_version()
+    )
 
 
 def setup_java():
     '''
-        Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.
+        Installs Oracle Java from rpm using yum localinstall.
+        Does nothing if an acceptible Java install is found.
     '''
 
     print "*******************************"
@@ -86,7 +94,8 @@ def setup_java():
         if setup_java_answer.lower().strip() not in ["y", "yes"]:
             print "Skipping Java installation"
             return
-        last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
+        #NOTE unused variable:
+        #last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):

@@ -13,7 +13,6 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager, esg_truststore_manager
-from base import esg_setup
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
@@ -399,18 +398,15 @@ def process_arguments():
         sys.exit(0)
     elif args.start:
         logger.debug("args: %s", args)
-        esg_setup.check_prerequisites()
         node_type_list = esg_functions.get_node_type()
         logger.debug("START SERVICES: %s", node_type_list)
         return start(node_type_list)
     elif args.stop:
-        esg_setup.check_prerequisites()
         logger.debug("STOP SERVICES")
         node_type_list = esg_functions.get_node_type()
         stop(node_type_list)
         sys.exit(0)
     elif args.restart:
-        esg_setup.check_prerequisites()
         logger.debug("RESTARTING SERVICES")
         node_type_list = esg_functions.get_node_type()
         stop(node_type_list)

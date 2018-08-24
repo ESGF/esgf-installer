@@ -3,7 +3,6 @@ import os
 import pwd
 import platform
 import socket
-import multiprocessing
 import logging
 import sys
 import yaml
@@ -25,6 +24,9 @@ class Config(object):
         pass
     def write(self, filename):
         pass
+class SystemConfig(Config):
+    def __init__(self):
+        self.word_size = platform.architecture()[0].split('bit')[0]
 
 class BaseConfig(Config):
     def __init__(self):
@@ -50,11 +52,14 @@ class BaseConfig(Config):
 
         self.esgf_dist_mirror = "http://aims1.llnl.gov/esgf"
         self.esg_dist_url_root = "%s/dist" % self.esgf_dist_mirror
-        self.extkeytool_download_url= "%s/etc/idptools.tar.gz" % self.esg_dist_url_root
+        self.extkeytool_download_url = "%s/etc/idptools.tar.gz" % self.esg_dist_url_root
 
 
         self.esgf_coffee_dist_mirror = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
         self.esg_coffee_dist_url_root = "%s/dist" % self.esgf_coffee_dist_mirror
+
+        self.num_backups_to_keep = "7"
+        self.index_config = "master slave"
 
 
     def init_directories(self):
@@ -159,18 +164,47 @@ class CoGConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
 
+class JavaConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        self.java_version = "1.8.0_162"
+        java_min_version = "1.8.0_162"
+        self.java_opts = ""
+        self.java_install_dir = os.path.join(self.install_prefix, "java")
+        os.environ["JAVA_HOME"] = self.java_install_dir
+        os.environ["JAVA_OPTS"] = self.java_opts
+        self.java_dist_url = "%s/java/%s/jdk%s-64.tar.gz" % (
+            self.esg_dist_url_root,
+            self.java_version,
+            self.java_version
+        )
+        self.java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
+            self.esg_dist_url_root,
+            self.java_version
+        )
+
+class AntConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        ant_version = "1.9.1"
+        ant_min_version = "1.9.1"
+        self.ant_install_dir = os.path.join(self.install_prefix, "ant")
+        ant_http_path = "http://archive.apache.org/dist/ant/binaries/apache-ant"
+        self.ant_dist_url = "{}-{}-bin.tar.gz".format(ant_http_path, ant_version)
+        os.environ["ANT_HOME"] = self.ant_install_dir
+
 class TomcatConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
-        tomcat_version = "8.5.9"
+        self.tomcat_version = "8.5.9"
         tomcat_min_version = "8.5.9"
         tomcat_opts = ""
         tomcat_http_path = "http://archive.apache.org/dist/tomcat/tomcat"
-        self.tomcat_major_version = tomcat_version.split(".")[0]
+        self.tomcat_major_version = self.tomcat_version.split(".")[0]
         self.tomcat_dist_url = "{0}-{1}/v{2}/bin/apache-tomcat-{2}.tar.gz".format(
             tomcat_http_path,
             self.tomcat_major_version,
-            tomcat_version
+            self.tomcat_version
         )
         self.tomcat_install_dir = os.path.join(self.install_prefix, "tomcat")
         self.tomcat_conf_dir = os.path.join(self.esg_config_dir, "tomcat")
@@ -193,6 +227,14 @@ class TomcatConfig(BaseConfig):
         ]
         for directory in directories:
             pybash.mkdir_p(directory)
+
+class GlobusConfig(BaseConfig):
+    def __init__(self):
+        BaseConfig.__init__(self)
+        self.globus_location = os.path.join(self.install_prefix, "globus")
+        self.globus_global_certs_dir = "/etc/grid-security/certificates"
+        os.environ["GLOBUS_LOCATION"] = self.globus_location
+
 
 
 class DataNodeConfig(PublisherConfig, ThreddsConfig, TomcatConfig):
@@ -263,10 +305,8 @@ def init():
     #--------------------------------
     # External programs' versions
     #--------------------------------
-    java_version = "1.8.0_162"
-    java_min_version = "1.8.0_162"
-    ant_version = "1.9.1"
-    ant_min_version = "1.9.1"
+
+
     sqlalchemy_version = "0.7.10"
     sqlalchemy_min_version = "0.7.10"
     python_version = "2.7"
@@ -275,21 +315,14 @@ def init():
     # Script vars (~external)
     #--------------------------------
     # Double Check HERE
-    java_opts = ""
-    java_install_dir = os.path.join(install_prefix, "java")
-    ant_install_dir = os.path.join(install_prefix, "ant")
-    globus_location = os.path.join(install_prefix, "globus")
     mail_smtp_host = "smtp."+socket.getfqdn().split('.', 1)[1]
     mail_admin_address = ""
 
     ############################################
     ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
     ############################################
-    os.environ["GIT_SSL_NO_VERIFY"] = "1"
-    os.environ["JAVA_HOME"] = java_install_dir
-    os.environ["JAVA_OPTS"] = java_opts
-    os.environ["ANT_HOME"] = ant_install_dir
-    os.environ["GLOBUS_LOCATION"] = globus_location
+    # os.environ["GIT_SSL_NO_VERIFY"] = "1"
+
 
     myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + \
         os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + \
@@ -311,35 +344,23 @@ def init():
     #--------------
     # Script vars (internal)
     #--------------
-    word_size = platform.architecture()[0].split('bit')[0]
-    number_of_cpus = multiprocessing.cpu_count()
-    date_format = "+%Y_%m_%d_%H%M%S"
-    num_backups_to_keep = "7"
-    compress_extensions = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
-    certificate_extensions = "pem|crt|cert|key"
+    # date_format = "+%Y_%m_%d_%H%M%S"
+    # compress_extensions = ".tar.gz|.tar.bz2|.tgz|.bz2|.tar"
+    # certificate_extensions = "pem|crt|cert|key"
 
-    java_dist_url = "%s/java/%s/jdk%s-%s.tar.gz" % (
-        esg_dist_url_root, java_version, java_version, word_size)
-    java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
-        esg_dist_url_root, java_version)
-    ant_dist_url = "http://archive.apache.org/dist/ant/binaries/apache-ant-" + \
-        ant_version + "-bin.tar.gz"
-    esgf_dashboard_ip_workdir = os.path.join(workdir, "esgf-dashboard-ip")
+    # esgf_dashboard_ip_workdir = os.path.join(workdir, "esgf-dashboard-ip")
 
     # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
-    show_summary_latch = 0
-    source_latch = "0"
-    scripts_dir = os.path.join(install_prefix, "bin")
-    no_globus = False
-    force_install = False
+    # show_summary_latch = 0
+    # source_latch = "0"
+    # no_globus = False
+    # force_install = False
 
-    globus_global_certs_dir = "/etc/grid-security/certificates"
     # #NOTE: java keystore style DN...
     # default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to
     # allow prompting of user for fields!
     # zoiks: allow this to be empty to allow prompting of user for fields!
-    default_distinguished_name = "OU=ESGF.ORG, O=ESGF"
-    index_config = "master slave"
+    # default_distinguished_name = "OU=ESGF.ORG, O=ESGF"
 
 
     with open("esg_config.yaml", "w") as esg_config:

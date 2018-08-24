@@ -39,6 +39,11 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 #----------------------------------------------------------
 # Process Launching and Checking...
 #----------------------------------------------------------
+def install_header(component, version=""):
+    ''' Prints an install header '''
+    divider = "*"*30
+    msg = "Installing {} {}".format(component, version)
+    print "\n{0}\n{1}\n{0}".format(divider, msg)
 
 
 def get_md5sum(file_name):

@@ -1,17 +1,16 @@
 import os
 import logging
 import ConfigParser
-import yaml
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
-
+from esg_init import JavaConfig
+from esg_init import AntConfig
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
-with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+config = JavaConfig()
 
 def set_default_java():
     '''Sets the default Java binary to the version installed with ESGF'''
@@ -126,37 +125,28 @@ def setup_java():
     write_java_install_log()
     write_java_env()
 
+class Ant(AntConfig):
+    def __init__(self):
+        AntConfig.__init__(self)
 
-def write_ant_env():
-    '''Writes Ant config to /etc/esg.env'''
-    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", property_file=config["envfile"], section_name="esgf.env", separator="_")
-
-
-def write_ant_install_log():
-    '''Writes Ant config to install manifest'''
-    ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
-    esg_functions.write_to_install_manifest("ant", "/usr/bin/ant", ant_version)
+    def install(self):
+        esg_functions.install_header("Ant")
+        if pybash.is_exe(os.path.join(os.sep, "bin", "ant")):
+            esg_functions.stream_subprocess_output("ant -version")
+            try:
+                setup_ant_answer = esg_property_manager.get_property("update.ant")
+            except ConfigParser.NoOptionError:
+                setup_ant_answer = raw_input(
+                    "Do you want to continue with the Ant installation [y/N]: ") or "no"
+            if setup_ant_answer.lower() in ["n", "no"]:
+                return
+        esg_functions.stream_subprocess_output("yum -y install ant")
+        esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", property_file=self.envfile, section_name="esgf.env", separator="_")
+        ant_version = esg_functions.call_subprocess("ant -version")["stderr"]
+        esg_functions.write_to_install_manifest("ant", "/usr/bin/ant", ant_version)
 
 
 def setup_ant():
     '''Install ant via yum'''
-
-    print "\n*******************************"
-    print "Setting up Ant"
-    print "******************************* \n"
-
-    if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        esg_functions.stream_subprocess_output("ant -version")
-
-        try:
-            setup_ant_answer = esg_property_manager.get_property("update.ant")
-        except ConfigParser.NoOptionError:
-            setup_ant_answer = raw_input(
-                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
-
-        if setup_ant_answer.lower() in ["n", "no"]:
-            return
-
-    esg_functions.stream_subprocess_output("yum -y install ant")
-    write_ant_install_log()
-    write_ant_env()
+    ant = Ant()
+    ant.install()

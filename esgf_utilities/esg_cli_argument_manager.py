@@ -13,7 +13,6 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager, esg_truststore_manager
-from base import esg_setup
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
@@ -238,6 +237,9 @@ def set_local_mirror(mirror_url):
 
 #Formerly get_bit_value
 def set_node_type_value(node_type, config_file=config["esg_config_type_file"]):
+
+    check_for_valid_node_type(node_type)
+
     if "all" in node_type:
         node_type = ["data", "index", "idp", "compute"]
 
@@ -250,6 +252,7 @@ def check_for_valid_node_type(node_type_args):
     '''The observed valid combinations appear to be as follows: "all" "index idp" and "data";
     raise error and exit if an invalid node combination is given'''
     valid_node_types = ["all", "idp index", "data", "compute data idp index"]
+    node_type_args = [node.lower() for node in node_type_args]
     node_type = " ".join(sorted(node_type_args))
 
     logger.debug("node_type: %s", node_type)
@@ -340,21 +343,21 @@ def process_arguments():
 
     if args.install:
         if args.type:
-            if check_for_valid_node_type(args.type):
-                set_node_type_value(args.type)
+            set_node_type_value(args.type)
         logger.debug("Install Services")
         if args.base:
             return ["INSTALL"]
         node_type_list = esg_functions.get_node_type()
+        check_for_valid_node_type(node_type_list)
         return node_type_list + ["INSTALL"]
     if args.update or args.upgrade:
         if args.type:
-            if check_for_valid_node_type(args.type):
-                set_node_type_value(args.type)
+            set_node_type_value(args.type)
         logger.debug("Update Services")
         if args.base:
             return ["INSTALL"]
         node_type_list = esg_functions.get_node_type()
+        check_for_valid_node_type(node_type_list)
         return node_type_list + ["INSTALL"]
     if args.fixperms:
         logger.debug("fixing permissions")
@@ -383,32 +386,27 @@ def process_arguments():
         cert_howto()
         sys.exit(0)
     elif args.type:
-        if check_for_valid_node_type(args.type):
-            set_node_type_value(args.type)
+        set_node_type_value(args.type)
         sys.exit(0)
     elif args.settype:
         logger.debug("Selecting type for next start up")
         logger.debug("args.settype %s", args.settype)
-        if check_for_valid_node_type(args.settype):
-            set_node_type_value(args.settype)
+        set_node_type_value(args.settype)
         sys.exit(0)
     elif args.gettype:
         print esg_functions.get_node_type(config["esg_config_type_file"])
         sys.exit(0)
     elif args.start:
         logger.debug("args: %s", args)
-        esg_setup.check_prerequisites()
         node_type_list = esg_functions.get_node_type()
         logger.debug("START SERVICES: %s", node_type_list)
         return start(node_type_list)
     elif args.stop:
-        esg_setup.check_prerequisites()
         logger.debug("STOP SERVICES")
         node_type_list = esg_functions.get_node_type()
         stop(node_type_list)
         sys.exit(0)
     elif args.restart:
-        esg_setup.check_prerequisites()
         logger.debug("RESTARTING SERVICES")
         node_type_list = esg_functions.get_node_type()
         stop(node_type_list)

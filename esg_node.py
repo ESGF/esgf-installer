@@ -112,37 +112,6 @@ def download_esg_installarg(esg_dist_url):
             logger.exception("Unable to access esg-installarg file")
 
 
-def check_selected_node_type(node_types, node_type_list):
-    ''' Make sure a valid node_type has been selected before performing and install '''
-    for option in node_type_list:
-        logger.debug("option: %s", option)
-        if option.upper() in node_types:
-            continue
-        else:
-            print '''
-                Sorry no suitable node type has been selected
-                Please run the script again with --set-type and provide any number of type values (\"data\", \"index\", \"idp\", \"compute\" [or \"all\"]) you wish to install
-                (no quotes - and they can be specified in any combination or use \"all\" as a shortcut)
-
-                Ex:  esg_node.py --set-type data
-                esg_node.py install
-
-                or do so as a single command line:
-
-                Ex:  esg_node.py --type data install
-
-                Use the --help | -h option for more information
-
-                Note: The type value is recorded upon successfully starting the node.
-                the value is used for subsequent launches so the type value does not have to be
-                always specified.  A simple \"esg_node.py start\" will launch with the last type used
-                that successfully launched.  Thus ideal for use in the boot sequence (chkconfig) scenario.
-                (more documentation available at https://github.com/ESGF/esgf-installer/wiki)\n\n
-                  '''
-            sys.exit(1)
-    return True
-
-
 def get_installation_type(script_version):
     '''Determining if devel or master directory of the ESGF distribution mirror
     will be use for download of binaries'''
@@ -309,7 +278,6 @@ def main():
 
     esg_setup.check_prerequisites()
 
-    node_types = ("INSTALL", "DATA", "INDEX", "IDP", "COMPUTE", "ALL")
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 
     # determine installation type
@@ -336,7 +304,6 @@ def main():
     -----------------------------------
     ESGF Node Installation Program
     -----------------------------------'''
-    check_selected_node_type(node_types, node_type_list)
 
     # Display node information to user
     esgf_node_info()

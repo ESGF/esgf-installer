@@ -1,9 +1,7 @@
 import os
-import re
 import logging
 import ConfigParser
 import yaml
-from distutils.spawn import find_executable
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
@@ -22,27 +20,30 @@ def set_default_java():
     esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
 
 
-def check_for_existing_java(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
+def check_for_existing_java(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
     '''Check if a valid java installation is currently on the system'''
-    if java_path:
+    if pybash.is_exe(java_path):
         print "Detected an existing java installation at {java_path}...".format(java_path=java_path)
         return check_java_version(java_path)
 
 
-def check_java_version(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
+def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
     '''Checks the Java version on the system'''
     print "Checking Java version"
+    logger.debug("java_path: %s", java_path)
     try:
         java_version_output = esg_functions.call_subprocess(
             "{java_path} -version".format(java_path=java_path))["stderr"]
     except SubprocessError:
         logger.error("Could not check the Java version")
         raise
+    version_line = java_version_output.split("\n")[0]
+    version = version_line.split(" ")[2]
+    installed_java_version = version.translate(None, "\"")
 
-    installed_java_version = re.search("1.8.0_\w+", java_version_output).group()
-    if esg_version_manager.compare_versions(installed_java_version, config["java_version"]):
-        print "Installed java version meets the minimum requirement "
-    return java_version_output
+    assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
+    print "Installed java version meets the minimum requirement {}".format(config["java_version"])
+    return installed_java_version
 
 
 def download_java(java_tarfile):
@@ -55,20 +56,27 @@ def download_java(java_tarfile):
 
 def write_java_env():
     '''Writes Java config to /etc/esg.env'''
-    esg_property_manager.set_property("JAVA_HOME", "export JAVA_HOME={}".format(
-        config["java_install_dir"]), property_file=config["envfile"],
-        section_name="esgf.env", separator="_")
+    esg_property_manager.set_property(
+        "JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]),
+        property_file=config["envfile"],
+        section_name="esgf.env",
+        separator="_"
+    )
 
 
-def write_java_install_log(java_path=find_executable("java", os.path.join(config["java_install_dir"], "bin"))):
+def write_java_install_log():
     '''Writes Java config to install manifest'''
-    java_version = re.search("1.8.0_\w+", check_java_version()).group()
-    esg_functions.write_to_install_manifest("java", config["java_install_dir"], java_version)
+    esg_functions.write_to_install_manifest(
+        "java",
+        config["java_install_dir"],
+        check_java_version()
+    )
 
 
 def setup_java():
     '''
-        Installs Oracle Java from rpm using yum localinstall.  Does nothing if an acceptible Java install is found.
+        Installs Oracle Java from rpm using yum localinstall.
+        Does nothing if an acceptible Java install is found.
     '''
 
     print "*******************************"
@@ -78,6 +86,7 @@ def setup_java():
     if check_for_existing_java():
         try:
             setup_java_answer = esg_property_manager.get_property("update.java")
+            logger.debug("setup_java_answer: %s", setup_java_answer)
         except ConfigParser.NoOptionError:
             setup_java_answer = raw_input(
                 "Do you want to continue with Java installation and setup? [y/N]: ") or "N"
@@ -85,7 +94,8 @@ def setup_java():
         if setup_java_answer.lower().strip() not in ["y", "yes"]:
             print "Skipping Java installation"
             return
-        last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
+        #NOTE unused variable:
+        #last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):
@@ -96,7 +106,7 @@ def setup_java():
 
         # Check for Java tar file
         if not os.path.isfile(java_tarfile):
-            print "Don't see java distribution file {java_dist_file_path} either".format(java_dist_file_path=os.path.join(os.getcwd(), java_tarfile))
+            print "Don't see java distribution file {java_dist_file_path}".format(java_dist_file_path=os.path.join(os.getcwd(), java_tarfile))
             download_java(java_tarfile)
 
         print "Extracting Java tarfile", java_tarfile
@@ -112,7 +122,7 @@ def setup_java():
             config["java_install_dir"], config["installer_uid"], config["installer_gid"])
 
     # set_default_java()
-    print check_java_version()
+    # print check_java_version()
     write_java_install_log()
     write_java_env()
 

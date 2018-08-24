@@ -22,12 +22,15 @@ def get_property(property_name, property_file=config["property_file"], section_n
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
     parser.read(property_file)
     try:
-        return parser.get(section_name, property_name)
+        value = parser.get(section_name, property_name)
+        if value is None or value == "":
+            raise ConfigParser.NoOptionError(property_name, section_name)
+        return value
     except ConfigParser.NoSectionError:
-        logger.debug("could not find property %s", property_name)
+        logger.debug("Could not find section: %s", section_name)
         raise
     except ConfigParser.NoOptionError:
-        logger.debug("could not find property %s", property_name)
+        logger.debug("Could not find property or property has no value: %s", property_name)
         raise
 
 def set_property(property_name, property_value=None, property_file=config["property_file"], section_name="installer.properties", separator="."):

@@ -94,6 +94,9 @@ def pushd(new_dir):
     yield
     os.chdir(previous_dir)
 
+def is_exe(fpath):
+    ''' Checks if a file exists and if it is executable '''
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 def symlink_force(target, link_name):
     '''Creates a symlink; if a symlink already exists, delete it and create new symlink'''

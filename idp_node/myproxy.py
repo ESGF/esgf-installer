@@ -370,7 +370,7 @@ def fetch_myproxy_certificate_mapapp():
             raise
 
         os.chmod(mapapp_file, 0751)
-        esg_functions.replace_string_in_file(mapapp_file, "/root/.globus/simpleCA/cacert.pem", "var/lib/globus-connect-server/myproxy-ca/cacert.pem")
+        esg_functions.replace_string_in_file(mapapp_file, "/root/.globus/simpleCA/cacert.pem", "/var/lib/globus-connect-server/myproxy-ca/cacert.pem")
 
 def edit_pam_pgsql_conf():
     with pybash.pushd("/etc"):

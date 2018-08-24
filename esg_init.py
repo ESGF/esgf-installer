@@ -186,12 +186,12 @@ class JavaConfig(BaseConfig):
 class AntConfig(BaseConfig):
     def __init__(self):
         BaseConfig.__init__(self)
-        ant_version = "1.9.1"
-        ant_min_version = "1.9.1"
-        self.ant_install_dir = os.path.join(self.install_prefix, "ant")
-        ant_http_path = "http://archive.apache.org/dist/ant/binaries/apache-ant"
-        self.ant_dist_url = "{}-{}-bin.tar.gz".format(ant_http_path, ant_version)
-        os.environ["ANT_HOME"] = self.ant_install_dir
+        # ant_version = "1.9.1"
+        # ant_min_version = "1.9.1"
+        # self.ant_install_dir = os.path.join(self.install_prefix, "ant")
+        # ant_http_path = "http://archive.apache.org/dist/ant/binaries/apache-ant"
+        # self.ant_dist_url = "{}-{}-bin.tar.gz".format(ant_http_path, ant_version)
+        # os.environ["ANT_HOME"] = self.ant_install_dir
 
 class TomcatConfig(BaseConfig):
     def __init__(self):

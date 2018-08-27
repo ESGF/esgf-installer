@@ -15,55 +15,77 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-class Prompt(object):
-    def __init__(self, msg, default=None, choices=None, not_none=True):
+class PropertyPrompt(object):
+    def __init__(self, key, msg, default=None, choices=None, not_none=True):
         self.not_none = not_none
         self.msg = msg
         self.default = default
         self.choices = choices
-        if self.choices is None:
+        self.key = key
+        if self.default is None and self.not_none:
+            self.msg = "{}: ".format(self.msg)
+        elif self.choices is None:
             self.msg = "{} [{}]: ".format(self.msg, self.default)
         else:
             self.choice_str = "({})".format("|".join(self.choices))
             self.msg = "{} {} [{}]: ".format(self.msg, self.choice_str, self.default)
 
-    def pre(self):
-        return True
-    def prompt(self):
+    def pre_check(self):
+        ''' Check if the value exists '''
+        try:
+            value = esg_property_manager.get_property(self.key)
+            logger.info(
+                "%s = %s",
+                self.key,
+                value
+            )
+            return value
+        except ConfigParser.NoOptionError:
+            return None
+        except ConfigParser.NoSectionError:
+            raise
 
+    def prompt(self):
+        # Check if the value exists in the properties file
+        existing_value = self.pre_check()
+        if existing_value is not None:
+            # Check if it is valid
+            if self._validate(existing_value) and self.validate(existing_value):
+                return existing_value
+            print "Existing value is invalid"
+
+        # Get input, clean it as specified, and check if it is valid
         is_valid = False
         while not is_valid:
-            new_value = raw_input(self.format(self.msg, self.default)) or self.default
-            is_valid = self.validate(new_value)
+            new_value = raw_input(self.msg) or self.default
+            new_value = self.clean(new_value)
+            is_valid = self._validate(new_value) and self.validate(new_value)
+
+        # Do something with the new_value
+        self.post(new_value)
+        return new_value
+
+    def _validate(self, value):
+        if self.choices is not None:
+            if value not in self.choices:
+                print "{} not in choices".format(value)
+                return False
+        if self.not_none:
+            if value is None:
+                print "Input cannot be None"
+                return False
+        return True
 
     def validate(self, value):
-        if self.choices is not None:
-            return value in self.choices
-        if self.not_none:
-            return value is not None
-
+        ''' A function that can be realized for a specific case '''
         return True
 
-    def post(self):
-        return True
-def _prompt(key, msg, default=None, validate=None):
-    '''
-        A function for prompting the user for a property value if the value does not already exist
-        in the property file.
-    '''
-    try:
-        logger.info("%s = %s", key, esg_property_manager.get_property(key))
-    except ConfigParser.NoOptionError:
-        if validate is None:
-            new_value = raw_input("{} [{}]".format(msg, default)) or default
-        else:
-            is_valid = False
-            while not is_valid:
-                new_value = raw_input("{} [{}]: ".format(msg, default)) or default
-                is_valid = validate(new_value)
-        esg_property_manager.set_property(key, new_value)
-    except ConfigParser.NoSectionError:
-        raise
+    def clean(self, value):
+        ''' A function that can be realized for a specific case '''
+        return value.strip()
+
+    def post(self, value):
+        esg_property_manager.set_property(self.key, value)
 
 def _choose_fqdn():
 
@@ -78,7 +100,8 @@ def _choose_fqdn():
 
     msg = "What is the fully qualified domain name of this node?"
     key = "esgf.host"
-    _prompt(key, msg, default=default_host_name)
+    prompt = PropertyPrompt(key, msg, default=default_host_name)
+    prompt.prompt()
 
 
 def _choose_organization_name():
@@ -92,7 +115,8 @@ def _choose_organization_name():
 
     msg = "What is the name of your organization?"
     key = "esg.org.name"
-    _prompt(key, msg, default=default_org_name)
+    prompt = PropertyPrompt(key, msg, default=default_org_name)
+    prompt.prompt()
     #NOTE Not sure what this is about, maybe meant to switch the arguments
     # Does not edit in place, returns a new string:
     #org_name_input.replace("", "_")
@@ -104,13 +128,15 @@ def _choose_node_short_name():
 
     msg = "Please give this node a \"short\" name"
     key = "node.short.name"
-    _prompt(key, msg)
+    prompt = PropertyPrompt(key, msg)
+    prompt.prompt()
 
 def _choose_node_long_name():
 
     msg = "Please give this node a \"long\" name"
     key = "node.long.name"
-    _prompt(key, msg)
+    prompt = PropertyPrompt(key, msg)
+    prompt.prompt()
 
 def _choose_node_namespace():
 
@@ -133,32 +159,30 @@ def _choose_node_namespace():
 
     msg = "What is the namespace for this node? (set to your reverse fqdn - Ex: \"gov.llnl\")"
     key = "node.namespace"
-    _prompt(key, msg, default=default_node_namespace, validate=validate)
+    prompt = PropertyPrompt(key, msg, default=default_node_namespace)
+    prompt.validate = validate
+    prompt.prompt()
 
 
 def _choose_node_peer_group():
 
-    def validate(node_peer_group_input):
-        ''' Validates node peer group input '''
-        if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
-            print "Invalid Selection: {}".format(node_peer_group_input)
-            print "Please choose either esgf-test, esgf-dev, or esgf-prod"
-            return False
-        return True
     #NOTE What is the exact meaning of the different options here?
     msg = "What peer group(s) will this node participate in?"
     msg += " Only choose esgf-test for test install or esgf-prod for production installation."
-    msg += " Otherwise choose esgf-dev. (esgf-test|esgf-prod|esgf-dev)"
+    msg += " Otherwise choose esgf-dev."
     key = "node.peer.group"
-    _prompt(key, msg, default="esgf-dev", validate=validate)
+    choices = ["esgf-test", "esgf-prod", "esgf-dev"]
+    prompt = PropertyPrompt(key, msg, default="esgf-dev", choices=choices)
+    prompt.prompt()
 
 
 def _choose_esgf_index_peer():
 
     default_esgf_index_peer = socket.getfqdn()
-    msg = "What is the hostname of the node do you plan to publish to?"
+    msg = "What is the hostname of the node you plan to publish to?"
     key = "esgf.index.peer"
-    _prompt(key, msg, default=default_esgf_index_peer)
+    prompt = PropertyPrompt(key, msg, default=default_esgf_index_peer)
+    prompt.prompt()
 
 
 def _choose_mail_admin_address():
@@ -166,15 +190,17 @@ def _choose_mail_admin_address():
     msg = "What email address should notifications be sent as?"
     msg += " (The notification system will not be enabled without an email address)"
     key = "mail.admin.address"
-    _prompt(key, msg)
+    prompt = PropertyPrompt(key, msg, not_none=False)
+    prompt.prompt()
 
 
-def _choose_publisher_db_user(force_install=False):
+def _choose_publisher_db_user():
     '''Sets the name of the database user for the Publisher'''
 
     msg = "What is the (low privilege) db account for publisher?"
     key = "publisher.db.user"
-    _prompt(key, msg, default="esgcet")
+    prompt = PropertyPrompt(key, msg, default="esgcet")
+    prompt.prompt()
 
 
 def _choose_publisher_db_user_passwd(force_install=False):

@@ -51,19 +51,24 @@ class PropertyPrompt(object):
         if existing_value is not None:
             # Check if it is valid
             if self._validate(existing_value) and self.validate(existing_value):
-                existing_value = self.clean(existing_value)
-                self.post(existing_value)
+                #NOTE Hold off on cleaning as there is a chicken/egg problem
+                # Do we validate before cleaning or after?
+                # existing_value = self.clean(existing_value)
+                # self.post(existing_value)
                 return existing_value
             print "Existing value is invalid"
 
-        # Get input, clean it as specified, and check if it is valid
+        # Get input and check if it is valid
         is_valid = False
         while not is_valid:
             new_value = raw_input(self.msg) or self.default
             is_valid = self._validate(new_value) and self.validate(new_value)
 
-        # Do something with the new_value
-        new_value = self.clean(new_value)
+        # #NOTE Hold off on cleaning as there is a chicken/egg problem
+        # Do we validate before cleaning or after?
+        # new_value = self.clean(new_value)
+
+        # Do something with the new value
         self.post(new_value)
         return new_value
 

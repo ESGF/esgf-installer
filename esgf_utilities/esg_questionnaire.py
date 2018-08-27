@@ -58,10 +58,10 @@ class PropertyPrompt(object):
         is_valid = False
         while not is_valid:
             new_value = raw_input(self.msg) or self.default
-            new_value = self.clean(new_value)
             is_valid = self._validate(new_value) and self.validate(new_value)
 
         # Do something with the new_value
+        new_value = self.clean(new_value)
         self.post(new_value)
         return new_value
 

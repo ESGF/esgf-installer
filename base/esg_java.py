@@ -58,7 +58,7 @@ class Java(JavaConfig):
             logger.error("ERROR: Could not download Java")
             raise RuntimeError
     def install(self):
-        '''Called by the installer if this component needs to be installed'''
+        '''Called by the Installer if this component needs to be installed'''
         esg_functions.install_header("Java", version=self.java_version)
         pybash.mkdir_p(self.workdir)
         with pybash.pushd(self.workdir):
@@ -114,18 +114,22 @@ class Ant(AntConfig):
     def __init__(self):
         AntConfig.__init__(self)
         self.existing_version = None
-
+        logger.debug("Initialize an Ant component")
 
     def version(self):
         ''' Gets the version of ant using "ant -version" '''
+        print "Checking Ant version"
         if find_executable("ant") is not None:
             version_output = esg_functions.call_subprocess("ant -version")['stdout']
             self.existing_version = version_output.split(" ")[3]
             logger.debug("ant %s %s", find_executable("ant"), self.existing_version)
+            print "Found version {}".format(self.existing_version)
             return self.existing_version
+        print "None found"
         return None
 
     def status(self):
+        '''Check status of this components installation, return respective code to the Installer'''
         self.existing_version = self.version()
         if self.existing_version is not None:
             # valid_version = esg_version_manager.compare_versions(self.existing_version, self.ant_version)
@@ -133,6 +137,7 @@ class Ant(AntConfig):
         return install_codes.NOT_INSTALLED
 
     def install(self):
+        '''Called by the Installer if this component needs to be installed'''
         esg_functions.install_header("Ant")
 
         esg_functions.stream_subprocess_output("yum -y install ant")
@@ -140,6 +145,7 @@ class Ant(AntConfig):
         self.post_install()
 
     def post_install(self):
+        '''Writes Ant config to install manifest and env'''
         esg_property_manager.set_property(
             "ANT_HOME", "export ANT_HOME=/usr/bin/ant",
             property_file=self.envfile,

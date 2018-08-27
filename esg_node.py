@@ -277,7 +277,6 @@ def main():
     '''Main function'''
 
     esg_setup.check_prerequisites()
-    esg_setup.create_esg_directories()
 
     script_version, script_maj_version, script_release = esg_version_manager.set_version_info()
 

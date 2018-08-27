@@ -15,6 +15,7 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 class Java(JavaConfig):
     def __init__(self):
         JavaConfig.__init__(self)
+        logger.debug("Initialize a Java component object")
         self.java_bin_path = os.path.join(self.java_install_dir, "bin", "java")
         self.existing_version = None
 
@@ -39,7 +40,8 @@ class Java(JavaConfig):
         return None
 
     def status(self):
-
+        '''Check status of this components installation, return respective code to the Installer'''
+        logger.debug("Checking status of Java installation")
         self.existing_version = self.version()
         if self.existing_version is not None:
             valid_version = esg_version_manager.compare_versions(self.existing_version, self.java_version)
@@ -56,6 +58,7 @@ class Java(JavaConfig):
             logger.error("ERROR: Could not download Java")
             raise RuntimeError
     def install(self):
+        '''Called by the installer if this component needs to be installed'''
         esg_functions.install_header("Java", version=self.java_version)
         pybash.mkdir_p(self.workdir)
         with pybash.pushd(self.workdir):
@@ -112,11 +115,13 @@ class Ant(AntConfig):
         AntConfig.__init__(self)
         self.existing_version = None
 
+
     def version(self):
         ''' Gets the version of ant using "ant -version" '''
         if find_executable("ant") is not None:
             version_output = esg_functions.call_subprocess("ant -version")['stdout']
             self.existing_version = version_output.split(" ")[3]
+            logger.debug("ant %s %s", find_executable("ant"), self.existing_version)
             return self.existing_version
         return None
 

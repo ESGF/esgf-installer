@@ -7,7 +7,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
-from installer import installer
+from installer import install_codes
 from esg_init import JavaConfig
 from esg_init import AntConfig
 logger = logging.getLogger("esgf_logger" + "." + __name__)
@@ -44,10 +44,10 @@ class Java(JavaConfig):
         if self.existing_version is not None:
             valid_version = esg_version_manager.compare_versions(self.existing_version, self.java_version)
             if valid_version:
-                return installer.OK
+                return install_codes.OK
             else:
-                return installer.BAD_VERSION
-        return installer.NOT_INSTALLED
+                return install_codes.BAD_VERSION
+        return install_codes.NOT_INSTALLED
 
     def _download(self, java_tarfile):
         '''Download Java from distribution mirror'''
@@ -124,8 +124,8 @@ class Ant(AntConfig):
         self.existing_version = self.version()
         if self.existing_version is not None:
             # valid_version = esg_version_manager.compare_versions(self.existing_version, self.ant_version)
-            return installer.OK
-        return installer.NOT_INSTALLED
+            return install_codes.OK
+        return install_codes.NOT_INSTALLED
 
     def install(self):
         esg_functions.install_header("Ant")
@@ -143,13 +143,3 @@ class Ant(AntConfig):
         )
         logger.debug("ant %s %s", find_executable("ant"), self.version())
         esg_functions.write_to_install_manifest("ant", find_executable("ant"), self.version())
-
-if __name__ == "__main__":
-    java = Java()
-    ant = Ant()
-    java.status()
-    java.install()
-    java.status()
-    ant.status()
-    ant.install()
-    ant.status()

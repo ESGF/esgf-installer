@@ -1,10 +1,6 @@
 
 from base.esg_java import Java, Ant
-
-# Codes to be used by Installer to figure out what to do
-OK = 0
-NOT_INSTALLED = 1
-BAD_VERSION = 2
+from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
@@ -37,8 +33,3 @@ class Installer(object):
         for component in self.components:
             if self.components[component]["status"] != OK:
                 component.install()
-
-if __name__ == "__main__":
-    installer = Installer(["base"])
-    installer.status_check()
-    installer.install()

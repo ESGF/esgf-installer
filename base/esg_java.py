@@ -7,7 +7,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
-import installer
+from installer import installer
 from esg_init import JavaConfig
 from esg_init import AntConfig
 logger = logging.getLogger("esgf_logger" + "." + __name__)

@@ -28,8 +28,23 @@ class SystemConfig(Config):
     def __init__(self):
         self.word_size = platform.architecture()[0].split('bit')[0]
 
-class BaseConfig(Config):
+class UserConfig(Config):
     def __init__(self):
+        self.installer_user = pwd.getpwuid(os.getuid())[0]
+        self.installer_uid = pwd.getpwnam(self.installer_user).pw_uid
+        self.installer_gid = pwd.getpwnam(self.installer_user).pw_gid
+        try:
+            os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
+            os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
+            del os.environ["SUDO_UID"]
+            del os.environ["SUDO_GID"]
+        except KeyError:
+            pass
+
+class BaseConfig(SystemConfig, UserConfig):
+    def __init__(self):
+        UserConfig.__init__(self)
+        SystemConfig.__init__(self)
         self.envfile = os.path.join(os.sep, "etc", "esg.env")
         self.esg_root_dir = os.path.join(os.sep, "esg")
 
@@ -73,20 +88,6 @@ class BaseConfig(Config):
         ]
         for directory in directories:
             pybash.mkdir_p(directory)
-
-class UserConfig(BaseConfig):
-    def __init__(self):
-        BaseConfig.__init__(self)
-        self.installer_user = pwd.getpwuid(os.getuid())[0]
-        self.installer_uid = pwd.getpwnam(self.installer_user).pw_uid
-        self.installer_gid = pwd.getpwnam(self.installer_user).pw_gid
-        try:
-            os.environ["ESG_USER_UID"] = os.environ["SUDO_UID"]
-            os.environ["ESG_USER_GID"] = os.environ["SUDO_GID"]
-            del os.environ["SUDO_UID"]
-            del os.environ["SUDO_GID"]
-        except KeyError:
-            pass
 
 
 class PostgresConfig(BaseConfig):

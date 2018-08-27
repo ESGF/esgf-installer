@@ -33,7 +33,7 @@ class PropertyPrompt(object):
     def pre_check(self):
         ''' Check if the value exists '''
         try:
-            value = esg_property_manager.get_property(self.key)
+            value = esg_property_manager.get_property(self.key, not_none=self.not_none)
             logger.info(
                 "%s = %s",
                 self.key,

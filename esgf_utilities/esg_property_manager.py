@@ -45,3 +45,4 @@ def set_property(property_name, property_value=None, property_file=config["prope
         parser[section_name] = {}
     parser[section_name][property_name] = property_value
     parser.write()
+    logger.info("Set property: %s = %s", property_name, property_value)

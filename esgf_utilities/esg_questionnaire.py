@@ -15,170 +15,136 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def _choose_fqdn(force_install=False):
+def _prompt(key, msg, default=None, validate=None):
+    '''
+        A function for prompting the user for a property value if the value does not already exist
+        in the property file.
+    '''
     try:
-        logger.info("esgf_host = [%s]", esg_property_manager.get_property("esgf.host"))
-        return
+        logger.info("%s = %s", key, esg_property_manager.get_property(key))
     except ConfigParser.NoOptionError:
-        default_host_name = socket.getfqdn()
-        defaultdomain_regex = r"^\w+-*\w*\W*(.+)"
-        defaultdomain = re.search(
-            defaultdomain_regex, default_host_name).group(1)
-        if not default_host_name:
-            default_host_name = "localhost.localdomain"
-        elif not defaultdomain:
-            default_host_name = default_host_name + ".localdomain"
-
-        default_host_name = raw_input("What is the fully qualified domain name of this node? [{default_host_name}]: ".format(
-            default_host_name=default_host_name)) or default_host_name
-        esgf_host = default_host_name
-        logger.info("esgf_host = [%s]", esgf_host)
-        esg_property_manager.set_property("esgf_host", esgf_host)
-
-def _choose_admin_password(password_file=config["esgf_secret_file"]):
-    '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
-    if esg_functions.get_security_admin_password():
-        return
-
-    while True:
-        password_input = getpass.getpass(
-            "What is the admin password to use for this installation? (alpha-numeric only): ")
-        if not esg_functions.is_valid_password(password_input):
-            continue
-
-        password_input_confirmation = getpass.getpass(
-            "Please re-enter password to confirm: ")
-
-        if esg_functions.confirm_password(password_input, password_input_confirmation):
-            esg_functions.set_security_admin_password(password_input)
-            esg_functions.set_java_keystore_password(password_input)
-            break
-
-def _choose_organization_name(force_install=False):
-    '''Choose the organization name for the installation'''
-    try:
-        logger.info("esg_org_name = [%s]", esg_property_manager.get_property("esg.org.name"))
-        return
-
-    except ConfigParser.NoOptionError:
-        try:
-            default_org_name = tld.get_tld(
-                "http://" + socket.gethostname(), as_object=True).domain
-        except tld.exceptions.TldDomainNotFound, error:
-            logger.exception("Could not find top level domain for %s.", socket.gethostname())
-            default_org_name = "llnl"
-        while True:
-            org_name_input = raw_input("What is the name of your organization? [{default_org_name}]: ".format(default_org_name=default_org_name)) or default_org_name
-            org_name_input.replace("", "_")
-            esg_property_manager.set_property("esg_org_name", org_name_input)
-            break
-
-def _choose_node_short_name(force_install=False):
-    '''Choose the short name for the node installation'''
-    try:
-        logger.info("node_short_name = [%s]", esg_property_manager.get_property("node.short.name"))
-        return
-    except ConfigParser.NoOptionError:
-        node_short_name_input = raw_input("Please give this node a \"short\" name [{node_short_name}]: ".format(node_short_name=None)) or None
-        node_short_name_input.replace("", "_")
-        esg_property_manager.set_property(
-            "node_short_name", node_short_name_input)
-
-
-def _choose_node_long_name(force_install=False):
-    try:
-        logger.info("node_long_name = [%s]", esg_property_manager.get_property("node.long.name"))
-        return
-
-    except ConfigParser.NoOptionError:
-        node_long_name_input = raw_input("Please give this node a more descriptive \"long\" name [{node_long_name}]: ".format(
-            node_long_name=None)) or None
-        esg_property_manager.set_property(
-            "node_long_name", node_long_name_input)
-
-def _choose_node_namespace(force_install=False):
-    try:
-        logger.info("node_namespace = [%s]", esg_property_manager.get_property("node.namespace"))
-        return
-    except ConfigParser.NoOptionError:
-        try:
-            top_level_domain = tld.get_tld(
-                "http://" + socket.gethostname(), as_object=True)
-            domain = top_level_domain.domain
-            suffix = top_level_domain.suffix
-            default_node_namespace = suffix + "." + domain
-        except tld.exceptions.TldDomainNotFound:
-            top_level_domain = None
-            default_node_namespace = None
-        while True:
-            node_namespace_input = raw_input("What is the namespace to use for this node? (set to your reverse fqdn - Ex: \"gov.llnl\") [{default_node_namespace}]: ".format(
-                default_node_namespace=default_node_namespace)) or default_node_namespace
-            namespace_pattern_requirement = re.compile("(\w+.{1}\w+)$")
-            if not namespace_pattern_requirement.match(node_namespace_input):
-                print "Namespace entered is not in a valid format.  Valid format is [suffix].[domain].  Example: gov.llnl"
-                continue
-            else:
-                esg_property_manager.set_property(
-                    "node_namespace", node_namespace_input)
-                break
-
-def _choose_node_peer_group(force_install=False):
-    try:
-        logger.info("node_peer_group = [%s]", esg_property_manager.get_property("node.peer.group"))
-        return
-    except ConfigParser.NoOptionError:
-        while True:
-            node_peer_group_input = raw_input(
-                "What peer group(s) will this node participate in? (esgf-test|esgf-prod|esgf-dev)[{node_peer_group}]: \nOnly choose esgf-test for test federation install or esgf-prod for production installation.  Otherwise choose esgf-dev.".format(node_peer_group="esgf-dev"))\
-                or "esgf-dev"
-            if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
-                print "Invalid Selection: {node_peer_group_input}".format(node_peer_group_input=node_peer_group_input)
-                print "Please choose either esgf-test, esgf-dev, or esgf-prod"
-                continue
-            else:
-                esg_property_manager.set_property(
-                    "node_peer_group", node_peer_group_input)
-                break
-
-def _choose_esgf_index_peer(force_install=False):
-    try:
-        logger.info("esgf_index_peer = [%s]", esg_property_manager.get_property("esgf.index.peer"))
-        return
-    except ConfigParser.NoOptionError:
-        default_esgf_index_peer = socket.getfqdn()
-        esgf_index_peer_input = raw_input("What is the hostname of the node do you plan to publish to? [{default_esgf_index_peer}]: ".format(
-            default_esgf_index_peer=default_esgf_index_peer)) or default_esgf_index_peer
-        esg_property_manager.set_property(
-            "esgf_index_peer", esgf_index_peer_input)
-
-
-def _choose_mail_admin_address(force_install=False):
-    try:
-        logger.info("mail_admin_address = [%s]", esg_property_manager.get_property("mail.admin.address"))
-        return
-    except ConfigParser.NoOptionError:
-        mail_admin_address_input = raw_input(
-            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail.admin.address")))
-        if mail_admin_address_input:
-            esg_property_manager.set_property(
-                "mail_admin_address", mail_admin_address_input)
+        if validate is None:
+            new_value = raw_input("{} [{}]".format(msg, default)) or default
         else:
-            print " (The notification system will not be enabled without an email address)"
+            is_valid = False
+            while not is_valid:
+                new_value = raw_input("{} [{}]: ".format(msg, default)) or default
+                is_valid = validate(new_value)
+        esg_property_manager.set_property(key, new_value)
+    except ConfigParser.NoSectionError:
+        raise
+
+def _choose_fqdn():
+
+    default_host_name = socket.getfqdn()
+    defaultdomain_regex = r"^\w+-*\w*\W*(.+)"
+    defaultdomain = re.search(
+        defaultdomain_regex, default_host_name).group(1)
+    if not default_host_name:
+        default_host_name = "localhost.localdomain"
+    elif not defaultdomain:
+        default_host_name = default_host_name + ".localdomain"
+
+    msg = "What is the fully qualified domain name of this node?"
+    key = "esgf.host"
+    _prompt(key, msg, default=default_host_name)
+
+
+def _choose_organization_name():
+    '''Choose the organization name for the installation'''
+
+    try:
+        default_org_name = tld.get_tld("http://" + socket.gethostname(), as_object=True).domain
+    except tld.exceptions.TldDomainNotFound:
+        logger.exception("Could not find top level domain for %s.", socket.gethostname())
+        default_org_name = "llnl"
+
+    msg = "What is the name of your organization?"
+    key = "esg.org.name"
+    _prompt(key, msg, default=default_org_name)
+    #NOTE Not sure what this is about, maybe meant to switch the arguments
+    # Does not edit in place, returns a new string:
+    #org_name_input.replace("", "_")
+    # --> org_name_input = org_name_input.replace("_", "") ?
+    # The same pattern occurs in the next two functions
+
+def _choose_node_short_name():
+    '''Choose the short name for the node installation'''
+
+    msg = "Please give this node a \"short\" name"
+    key = "node.short.name"
+    _prompt(key, msg)
+
+def _choose_node_long_name():
+
+    msg = "Please give this node a \"long\" name"
+    key = "node.long.name"
+    _prompt(key, msg)
+
+def _choose_node_namespace():
+
+    try:
+        top_level_domain = tld.get_tld("http://" + socket.gethostname(), as_object=True)
+        domain = top_level_domain.domain
+        suffix = top_level_domain.suffix
+        default_node_namespace = suffix + "." + domain
+    except tld.exceptions.TldDomainNotFound:
+        top_level_domain = None
+        default_node_namespace = None
+
+    namespace_pattern_requirement = re.compile(r"(\w+.{1}\w+)$")
+    def validate(node_namespace_input):
+        ''' Validates node namespace input'''
+        if not namespace_pattern_requirement.match(node_namespace_input):
+            print "Namespace entered is not in a valid format. Valid format is [suffix].[domain]."
+            return False
+        return True
+
+    msg = "What is the namespace for this node? (set to your reverse fqdn - Ex: \"gov.llnl\")"
+    key = "node.namespace"
+    _prompt(key, msg, default=default_node_namespace, validate=validate)
+
+
+def _choose_node_peer_group():
+
+    def validate(node_peer_group_input):
+        ''' Validates node peer group input '''
+        if node_peer_group_input.strip() not in ["esgf-test", "esgf-prod", "esgf-dev"]:
+            print "Invalid Selection: {}".format(node_peer_group_input)
+            print "Please choose either esgf-test, esgf-dev, or esgf-prod"
+            return False
+        return True
+    #NOTE What is the exact meaning of the different options here?
+    msg = "What peer group(s) will this node participate in?"
+    msg += " Only choose esgf-test for test install or esgf-prod for production installation."
+    msg += " Otherwise choose esgf-dev. (esgf-test|esgf-prod|esgf-dev)"
+    key = "node.peer.group"
+    _prompt(key, msg, default="esgf-dev", validate=validate)
+
+
+def _choose_esgf_index_peer():
+
+    default_esgf_index_peer = socket.getfqdn()
+    msg = "What is the hostname of the node do you plan to publish to?"
+    key = "esgf.index.peer"
+    _prompt(key, msg, default=default_esgf_index_peer)
+
+
+def _choose_mail_admin_address():
+
+    msg = "What email address should notifications be sent as?"
+    msg += " (The notification system will not be enabled without an email address)"
+    key = "mail.admin.address"
+    _prompt(key, msg)
+
 
 def _choose_publisher_db_user(force_install=False):
     '''Sets the name of the database user for the Publisher'''
-    publisher_db_user = esg_property_manager.get_property("publisher.db.user")
-    if publisher_db_user and not force_install:
-        print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
-        logger.info("publisher_db_user: %s", publisher_db_user)
-        return
 
-    else:
-        default_publisher_db_user = "esgcet"
-        publisher_db_user_input = raw_input(
-            "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ".format(default_publisher_db_user=default_publisher_db_user)) or default_publisher_db_user
-        esg_property_manager.set_property(
-            "publisher_db_user", publisher_db_user_input)
+    msg = "What is the (low privilege) db account for publisher?"
+    key = "publisher.db.user"
+    _prompt(key, msg, default="esgcet")
+
 
 def _choose_publisher_db_user_passwd(force_install=False):
     '''Choose the password for the publisher (esgcet) database user'''
@@ -203,6 +169,25 @@ def _choose_publisher_db_user_passwd(force_install=False):
 
         if esg_functions.confirm_password(publisher_db_user_passwd_input, password_input_confirmation):
             esg_functions.set_publisher_password(publisher_db_user_passwd_input)
+            break
+
+def _choose_admin_password(password_file=config["esgf_secret_file"]):
+    '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
+    if esg_functions.get_security_admin_password():
+        return
+
+    while True:
+        password_input = getpass.getpass(
+            "What is the admin password to use for this installation? (alpha-numeric only): ")
+        if not esg_functions.is_valid_password(password_input):
+            continue
+
+        password_input_confirmation = getpass.getpass(
+            "Please re-enter password to confirm: ")
+
+        if esg_functions.confirm_password(password_input, password_input_confirmation):
+            esg_functions.set_security_admin_password(password_input)
+            esg_functions.set_java_keystore_password(password_input)
             break
 
 def initial_setup_questionnaire(force_install=False):

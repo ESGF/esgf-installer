@@ -82,7 +82,9 @@ class PropertyPrompt(object):
 
     def clean(self, value):
         ''' A function that can be realized for a specific case '''
-        return value.strip()
+        if value is not None:
+            return value.strip()
+        return value
 
     def post(self, value):
         esg_property_manager.set_property(self.key, value)

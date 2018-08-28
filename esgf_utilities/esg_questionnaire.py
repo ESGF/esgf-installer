@@ -158,7 +158,7 @@ def _choose_mail_admin_address(force_install=False):
         return
     except ConfigParser.NoOptionError:
         mail_admin_address_input = raw_input(
-            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail.admin.address")))
+            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=None))
         if mail_admin_address_input:
             esg_property_manager.set_property(
                 "mail_admin_address", mail_admin_address_input)

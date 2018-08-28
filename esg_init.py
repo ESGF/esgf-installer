@@ -172,8 +172,6 @@ class JavaConfig(BaseConfig):
         java_min_version = "1.8.0_162"
         self.java_opts = ""
         self.java_install_dir = os.path.join(self.install_prefix, "java")
-        os.environ["JAVA_HOME"] = self.java_install_dir
-        os.environ["JAVA_OPTS"] = self.java_opts
         self.java_dist_url = "%s/java/%s/jdk%s-64.tar.gz" % (
             self.esg_dist_url_root,
             self.java_version,
@@ -183,6 +181,8 @@ class JavaConfig(BaseConfig):
             self.esg_dist_url_root,
             self.java_version
         )
+        os.environ["JAVA_HOME"] = self.java_install_dir
+        os.environ["JAVA_OPTS"] = self.java_opts
 
 class AntConfig(BaseConfig):
     def __init__(self):
@@ -212,9 +212,6 @@ class TomcatConfig(BaseConfig):
         self.tomcat_user = "tomcat"
         self.tomcat_group = self.tomcat_user
         self.tomcat_pid_file = "/var/run/tomcat-jsvc.pid"
-        os.environ["CATALINA_HOME"] = self.tomcat_install_dir
-        os.environ["CATALINA_BASE"] = os.environ["CATALINA_HOME"]
-        os.environ["CATALINA_OPTS"] = tomcat_opts
         self.tomcat_users_file = os.path.join(self.tomcat_conf_dir, "tomcat-users.xml")
         self.keystore_file = os.path.join(self.tomcat_conf_dir, "keystore-tomcat")
         self.keystore_alias = "my_esgf_node"
@@ -222,6 +219,9 @@ class TomcatConfig(BaseConfig):
         self.ks_secret_file = os.path.join(self.esg_config_dir, ".esg_keystore_pass")
         self.truststore_file = os.path.join(self.tomcat_conf_dir, "esg-truststore.ts")
         self.truststore_password = "changeit"
+        os.environ["CATALINA_HOME"] = self.tomcat_install_dir
+        os.environ["CATALINA_BASE"] = self.tomcat_install_dir
+        os.environ["CATALINA_OPTS"] = tomcat_opts
     def init_directories(self):
         directories = [
             self.tomcat_conf_dir
@@ -237,12 +237,6 @@ class GlobusConfig(BaseConfig):
         os.environ["GLOBUS_LOCATION"] = self.globus_location
 
 
-
-class DataNodeConfig(PublisherConfig, ThreddsConfig, TomcatConfig):
-    def __init__(self):
-        PublisherConfig.__init__(self)
-        ThreddsConfig.__init__(self)
-        TomcatConfig.__init__(self)
 
 def init_directories():
     base = BaseConfig()
@@ -263,10 +257,6 @@ if __name__ == '__main__':
 
 def init():
     """ Return a list of all local variables."""
-    #--------------
-    # User Defined / Settable (public)
-    #--------------
-
 
     #--------------------------------
     # Internal esgf node code versions
@@ -316,23 +306,17 @@ def init():
     # Script vars (~external)
     #--------------------------------
     # Double Check HERE
-    mail_smtp_host = "smtp."+socket.getfqdn().split('.', 1)[1]
-    mail_admin_address = ""
-
-    ############################################
-    ####  DO NOT EDIT BELOW THIS POINT!!!!! ####
-    ############################################
-    # os.environ["GIT_SSL_NO_VERIFY"] = "1"
+    # mail_smtp_host = "smtp."+socket.getfqdn().split('.', 1)[1]
+    # mail_admin_address = ""
 
 
-    myPATH = os.environ["OPENSSL_HOME"] + "/bin:" + os.environ["JAVA_HOME"] + "/bin:" + \
-        os.environ["ANT_HOME"] + "/bin:" + os.environ["CDAT_HOME"] + "/bin:" + \
-        os.environ["CDAT_HOME"] + "/Externals/bin:" + os.environ["CATALINA_HOME"] + \
+    myPATH = os.environ["JAVA_HOME"] + "/bin:" + \
+        os.environ["ANT_HOME"] + "/bin:" + \
+         os.environ["CATALINA_HOME"] + \
         "/bin:" + os.environ["GLOBUS_LOCATION"] + "/bin:" + install_prefix + \
         "/bin:/sbin:/usr/bin:/usr/sbin"
 
-    myLD_LIBRARY_PATH = os.environ["OPENSSL_HOME"] + "/lib:" + \
-        os.environ["CDAT_HOME"] + "/Externals/lib:" + \
+    myLD_LIBRARY_PATH = os.environ["CDAT_HOME"] + "/Externals/lib:" + \
         os.environ["GLOBUS_LOCATION"] + "/lib:" + \
         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
@@ -356,19 +340,3 @@ def init():
     # source_latch = "0"
     # no_globus = False
     # force_install = False
-
-    # #NOTE: java keystore style DN...
-    # default_dname="OU=ESGF.ORG, O=ESGF" #zoiks: allow this to be empty to
-    # allow prompting of user for fields!
-    # zoiks: allow this to be empty to allow prompting of user for fields!
-    # default_distinguished_name = "OU=ESGF.ORG, O=ESGF"
-
-
-    with open("esg_config.yaml", "w") as esg_config:
-        yaml.dump(locals(), esg_config)
-
-
-    return locals()
-
-if __name__ == "__main__":
-    init()

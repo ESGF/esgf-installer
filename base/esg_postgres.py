@@ -10,7 +10,6 @@ import logging
 import getpass
 from time import sleep
 from distutils.spawn import find_executable
-import yaml
 import semver
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -18,10 +17,10 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 
-logger = logging.getLogger("esgf_logger" + "." + __name__)
+from installer import install_codes
+from esg_init import PostgresConfig
 
-with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 
 def download_postgres():
@@ -124,7 +123,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     esg_functions.check_shmmax()
     write_postgress_env()
     write_postgress_install_log()
-    log_postgres_properties()
 
 
 def create_pg_super_user(psycopg2_cursor, db_user_password):
@@ -373,12 +371,6 @@ def setup_hba_conf_file():
 #----------------------------------------------------------
 # Postgresql logging functions
 #----------------------------------------------------------
-def log_postgres_properties():
-    '''Write postgres properties to /esg/config/esgf.properties'''
-    esg_property_manager.set_property("db.user", config["postgress_user"])
-    esg_property_manager.set_property("db.host", config["postgress_host"])
-    esg_property_manager.set_property("db.port", config["postgress_port"])
-    esg_property_manager.set_property("db.database", "esgcet")
 
 def write_postgress_env():
     '''Write postgres environment properties to /etc/esg.env'''
@@ -521,11 +513,71 @@ def postgres_clean_schema_migration(repository_id):
     except Exception, error:
         print "error: ", error
 
+class Postgres(PostgresConfig):
+    def __init__(self):
+        PostgresConfig.__init__(self)
+        self.existing_version = None
+        self.data_dir = os.path.join(self.postgress_install_dir, "data")
+        logger.debug("Initialize a Postgres component")
 
-def main():
-    '''Main function'''
-    setup_postgres()
+    def version(self):
+        ''' Gets the version of ant using "psql --version" '''
+        print "Checking for postgresql >= {} ".format(self.postgress_min_version)
+        psql_bin_path = find_executable("psql")
+        if psql_bin_path is not None:
+            try:
+                postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
+                self.existing_version = re.search(r"\d.*", postgres_version_found).group()
+                print "Found version {}".format(self.existing_version)
+                return self.existing_version
+            except OSError:
+                logger.exception("Unable to check existing Postgres version \n")
+        print "None found"
+        return None
 
+    def status(self):
+        '''Check status of this components installation, return respective code to the Installer'''
+        self.existing_version = self.version()
+        if self.existing_version is not None:
+            if semver.compare(self.existing_version, self.postgress_min_version) >= 0:
+                logger.info("Found acceptible Postgres version")
+                return install_codes.OK
+            logger.info("The Postgres version on the system does not meet the minimum requirements")
+            return install_codes.BAD_VERSION
+        return install_codes.NOT_INSTALLED
 
-if __name__ == '__main__':
-    main()
+    def install(self):
+        '''Called by the Installer if this component needs to be installed'''
+        esg_functions.install_header("Postgres")
+
+        esg_functions.stream_subprocess_output(
+            "yum -y install postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64"
+        )
+        self.initialize()
+        self.post_install()
+
+    def post_install(self):
+        '''Writes Postgres config to install manifest and env'''
+        logger.debug("psql %s %s", find_executable("psql"), self.version())
+        esg_property_manager.set_property("db.user", self.postgress_user)
+        esg_property_manager.set_property("db.host", self.postgress_host)
+        esg_property_manager.set_property("db.port", self.postgress_port)
+        esg_property_manager.set_property("db.database", self.db_database)
+        esg_property_manager.set_property("PGHOME", "export PGHOME=/usr/bin/postgres", property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_property_manager.set_property("PGUSER", "export PGUSER={}".format(self.postgress_user), property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(self.postgress_port), property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(self.postgress_bin_dir), property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(self.postgress_lib_dir), property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_property_manager.set_property("PATH", self.myPATH, property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_property_manager.set_property("LD_LIBRARY_PATH", self.myLD_LIBRARY_PATH, property_file=self.envfile, section_name="esgf.env", separator="_")
+        esg_functions.write_to_install_manifest("psql", find_executable("psql"), self.version())
+
+    def initialize(self):
+        try:
+            if os.listdir(self.data_dir):
+                logger.info("Data directory already exists. Skipping initialize_postgres().")
+                return
+        except OSError, error:
+            logger.error(error)
+        esg_functions.stream_subprocess_output("service postgresql initdb")
+        os.chmod(self.data_dir, 0700)

@@ -27,6 +27,7 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 # Register with Globus Web Service and get a host certificate
 #--------------------
 def setup_gcs_id(first_run=None):
+    '''Runs the Globus Connect Server (gcs) ID setup script and gets a host certificate'''
     if first_run == "firstrun":
         cert_dir = "/etc/tempcerts"
     else:
@@ -182,7 +183,7 @@ def setup_gcs_id(first_run=None):
         globus_connect_conf_file.write('export MYPROXY_OPTIONS="-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
 
 
-    shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
+    # shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
 
 def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:

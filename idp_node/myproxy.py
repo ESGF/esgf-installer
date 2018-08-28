@@ -182,6 +182,8 @@ def setup_gcs_id(first_run=None):
         globus_connect_conf_file.write('export MYPROXY_OPTIONS="-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
 
 
+    shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
+
 def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:
         logger.error("You have entered an invalid argument: [%s]", install_mode)
@@ -230,7 +232,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
         #--------------------
         # Create /esg/config/myproxy/myproxy-server.config
         #--------------------
-        edit_myproxy_server_config()
+        copy_myproxy_server_config()
         #--------------------
         # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
         #--------------------
@@ -297,14 +299,14 @@ def write_myproxy_install_log():
         #TODO: Find myproxy_version
         # esg_functions.write_to_install_manifest("globus:myproxy", thredds_install_dir, thredds_version)
 
-def edit_myproxy_server_config():
+def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.config"):
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
-    if os.path.isfile("/esg/config/myproxy/myproxy-server.config"):
-        esg_functions.create_backup_file("/esg/config/myproxy/myproxy-server.config")
+    if os.path.isfile(config_path):
+        esg_functions.create_backup_file(config_path)
     logger.debug("Copying myproxy-server.config file to /esg/config/myproxy/")
-    shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
-    os.chmod("/esg/config/myproxy/myproxy-server.config", 0600)
+    shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), config_path)
+    os.chmod(config_path, 0600)
 
 ############################################
 # Configuration File Editing Functions

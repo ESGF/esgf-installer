@@ -183,8 +183,6 @@ def setup_gcs_id(first_run=None):
         globus_connect_conf_file.write('export MYPROXY_OPTIONS="-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
 
 
-    # shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), "/esg/config/myproxy/myproxy-server.config")
-
 def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:
         logger.error("You have entered an invalid argument: [%s]", install_mode)

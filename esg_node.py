@@ -26,6 +26,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_questionnaire
 from esgf_utilities import esg_cert_manager
 from filters import access_logging_filters, esg_security_tokenless_filters
+from esgf_utilities.esg_env_manager import EnvWriter
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -142,12 +143,11 @@ def show_summary():
     print "-------------------"
 
     print "The following environment variables were used during last full install"
-    print "They are written to the file {}".format(config["envfile"])
+    print "They are written to the file {}".format(EnvWriter.envfile)
     print "Please source this file when using these tools"
 
     try:
-        with open(config["envfile"], 'r') as env_file:
-            print env_file.read()
+        EnvWriter.read()
     except IOError, error:
         logger.exception(error)
 
@@ -420,8 +420,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
 
     esg_property_manager.set_property("version", script_version)
     esg_property_manager.set_property("release", script_release)
-
-    esg_property_manager.set_property("activate_conda", "source /usr/local/conda/bin/activate esgf-pub", property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.add_source("/usr/local/conda/bin/activate esgf-pub")
     #     write_as_property gridftp_config
     esg_node_finally(node_type_list)
 

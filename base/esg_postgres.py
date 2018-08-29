@@ -17,6 +17,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
+from esgf_utilities.esg_env_manager import EnvWriter
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -526,13 +527,13 @@ def log_postgres_properties():
 
 def write_postgress_env():
     '''Write postgres environment properties to /etc/esg.env'''
-    esg_property_manager.set_property("PGHOME", "export PGHOME=/usr/bin/postgres", property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGUSER", "export PGUSER={}".format(config["postgress_user"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGPORT", "export PGPORT={}".format(config["postgress_port"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGBINDIR", "export PGBINDIR={}".format(config["postgress_bin_dir"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PGLIBDIR", "export PGLIBDIR={}".format(config["postgress_lib_dir"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("PATH", config["myPATH"], property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"], property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.write("PGHOME", "/usr/bin/postgres")
+    EnvWriter.write("PGUSER", config["postgress_user"])
+    EnvWriter.write("PGPORT", config["postgress_port"])
+    EnvWriter.write("PGBINDIR", config["postgress_bin_dir"])
+    EnvWriter.write("PGLIBDIR", config["postgress_lib_dir"])
+    EnvWriter.write("PATH", config["myPATH"])
+    EnvWriter.write("LD_LIBRARY_PATH", config["myLD_LIBRARY_PATH"],)
 
 def write_postgress_install_log():
     '''Write postgres version to install manifest'''

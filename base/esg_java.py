@@ -7,6 +7,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
+from esgf_utilities.esg_env_manager import EnvWriter
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -56,13 +57,7 @@ def download_java(java_tarfile):
 
 def write_java_env():
     '''Writes Java config to /etc/esg.env'''
-    esg_property_manager.set_property(
-        "JAVA_HOME", "export JAVA_HOME={}".format(config["java_install_dir"]),
-        property_file=config["envfile"],
-        section_name="esgf.env",
-        separator="_"
-    )
-
+    EnvWriter.write("JAVA_HOME", config["java_install_dir"])
 
 def write_java_install_log():
     '''Writes Java config to install manifest'''
@@ -129,8 +124,7 @@ def setup_java():
 
 def write_ant_env():
     '''Writes Ant config to /etc/esg.env'''
-    esg_property_manager.set_property("ANT_HOME", "export ANT_HOME=/usr/bin/ant", property_file=config["envfile"], section_name="esgf.env", separator="_")
-
+    EnvWriter.write("ANT_HOME", "/usr/bin/ant")
 
 def write_ant_install_log():
     '''Writes Ant config to install manifest'''

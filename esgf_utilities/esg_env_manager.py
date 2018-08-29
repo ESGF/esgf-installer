@@ -19,4 +19,4 @@ class _EnvWriter(object):
         with open(self.envfile, "r") as envfile:
             print envfile.read()
 
-EnvWriter = _EnvWriter("sample.env")
+EnvWriter = _EnvWriter("/etc/esg.env")

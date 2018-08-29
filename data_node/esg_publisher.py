@@ -16,6 +16,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_exceptions import SubprocessError
+from esgf_utilities.esg_env_manager import EnvWriter
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -186,7 +187,7 @@ def setup_publisher():
 
 def write_esgcet_env():
     '''Write Publisher environment properties to /etc/esg.env'''
-    esg_property_manager.set_property("ESG_ROOT_ID", "export ESG_ROOT_ID={}".format(esg_property_manager.get_property("esg.org.name")), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.write("ESG_ROOT_ID", esg_property_manager.get_property("esg.org.name"))
 
     # env needed by Python client to trust the data node server certicate
     # ENV SSL_CERT_DIR /etc/grid-security/certificates

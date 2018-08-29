@@ -21,6 +21,9 @@ class test_myproxy(unittest.TestCase):
         myproxy.copy_myproxy_server_config(config_path="/tmp/myproxy-server.config")
         self.assertTrue(os.path.exists("/tmp/myproxy-server.config"))
 
+    def test_copy_globus_connect_esgf(self):
+        myproxy.copy_globus_connect_esgf(config_path="/tmp/globus-connect-esgf")
+        self.assertTrue(os.path.exists("/tmp/globus-connect-esgf"))
 
 
 

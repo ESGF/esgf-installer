@@ -17,6 +17,7 @@ from base import esg_tomcat_manager
 from base import esg_postgres
 from idp_node import gridftp
 from idp_node import myproxy
+from esgf_utilities.esg_env_manager import EnvWriter
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -86,8 +87,7 @@ def setup_globus(installation_type):
 
 def write_globus_env(globus_location):
     '''Write globus properties to /etc/esg.env'''
-    esg_property_manager.set_property("GLOBUS_LOCATION", "export GLOBUS_LOCATION={}".format(globus_location), property_file=config["envfile"], section_name="esgf.env", separator="_")
-
+    EnvWriter.write("GLOBUS_LOCATION", globus_location)
 
 def start_globus(installation_type):
     '''Starts the globus services by delegating out to esg-globus script

@@ -17,6 +17,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_truststore_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager, esg_postgres
+from esgf_utilities.esg_env_manager import EnvWriter
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -246,8 +247,8 @@ def select_idp_peer():
 
 def write_tds_env():
     '''Write thredds info to /etc/esg.env'''
-    esg_property_manager.set_property("ESGF_IDP_PEER_NAME", "export ESGF_IDP_PEER_NAME={}".format(esg_property_manager.get_property("esgf_idp_peer_name")), property_file=config["envfile"], section_name="esgf.env", separator="_")
-    esg_property_manager.set_property("ESGF_IDP_PEER", "export ESGF_IDP_PEER={}".format(esg_property_manager.get_property("esgf_idp_peer")), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.write("ESGF_IDP_PEER_NAME", esg_property_manager.get_property("esgf_idp_peer_name"))
+    EnvWriter.write("ESGF_IDP_PEER", esg_property_manager.get_property("esgf_idp_peer"))
 
 def update_mail_admin_address():
     '''Updates mail_admin_address in threddsConfig.xml'''

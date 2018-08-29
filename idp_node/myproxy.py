@@ -16,6 +16,7 @@ from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from base import esg_postgres
+from esgf_utilities.esg_env_manager import EnvWriter
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -426,5 +427,4 @@ def edit_etc_myproxyd():
         myproxy_esgf_file.write('''export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\"'''.format(config["esg_config_dir"]))
 
 def write_db_name_env():
-    esgf_db_name = esg_property_manager.get_property("db.database")
-    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.write("ESGF_DB_NAME", esg_property_manager.get_property("db.database"))

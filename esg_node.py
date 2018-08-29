@@ -147,7 +147,7 @@ def show_summary():
     print "Please source this file when using these tools"
 
     try:
-        EnvWriter.read()
+        print EnvWriter.read()
     except IOError, error:
         logger.exception(error)
 

@@ -382,7 +382,11 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
 def stream_subprocess_output(command_string):
     ''' Print out the stdout of the subprocess in real time '''
     try:
-        process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
+        logger.debug("Streaming subprocess stdout")
+        logger.debug("Raw command string: %s", command_string)
+        shlexsplit = shlex.split(command_string)
+        logger.debug("shlex.split %s", str(shlexsplit))
+        process = subprocess.Popen(shlexsplit, stdout=subprocess.PIPE)
         with process.stdout:
             for line in iter(process.stdout.readline, b''):
                 print line,

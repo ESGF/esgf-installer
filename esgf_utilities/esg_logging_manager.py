@@ -22,6 +22,7 @@ def main():
 
     error_log_path = os.path.join(logs_dir, "esgf_error_log.out")
     info_log_path = os.path.join(logs_dir, "esgf_info_log.out")
+    debug_log_path = os.path.join(logs_dir, "esgf_debug_log.out")
     #----------------------------------------------------------------------
     logger = logging.getLogger('esgf_logger')
     logger.setLevel(logging.DEBUG)
@@ -32,6 +33,9 @@ def main():
                                   backupCount=5)
 
     info_handler = RotatingFileHandler(info_log_path, maxBytes=10*1024*1024,
+                                  backupCount=5)
+
+    debug_handler = RotatingFileHandler(debug_log_path, maxBytes=10*1024*1024,
                                   backupCount=5)
 
     error_handler.setLevel(logging.ERROR)
@@ -51,6 +55,7 @@ def main():
 
     logger.addHandler(error_handler)
     logger.addHandler(info_handler)
+    logger.addHandler(debug_handler)
     logger.addHandler(ch)
 
 

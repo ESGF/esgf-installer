@@ -40,6 +40,7 @@ def main():
 
     error_handler.setLevel(logging.ERROR)
     info_handler.setLevel(logging.INFO)
+    debug_handler.setLevel(logging.DEBUG)
 
     # create console handler with a higher log level
     ch = logging.StreamHandler()
@@ -51,6 +52,7 @@ def main():
 
     error_handler.setFormatter(formatter)
     info_handler.setFormatter(formatter)
+    debug_handler.setFormatter(formatter)
     ch.setFormatter(color_formatter)
 
     logger.addHandler(error_handler)

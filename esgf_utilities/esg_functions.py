@@ -558,7 +558,7 @@ def get_postgres_password():
     pg_password = None
     try:
         with open(config['pg_secret_file'], "r") as secret_file:
-            pg_password = secret_file.read()
+            pg_password = secret_file.read().strip()
     except IOError:
         logger.exception("Could not open %s", config['pg_secret_file'])
 

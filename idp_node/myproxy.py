@@ -27,6 +27,7 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 # Register with Globus Web Service and get a host certificate
 #--------------------
 def setup_gcs_id(first_run=None):
+    '''Runs the Globus Connect Server (gcs) ID setup script and gets a host certificate'''
     if first_run == "firstrun":
         cert_dir = "/etc/tempcerts"
     else:
@@ -181,29 +182,6 @@ def setup_gcs_id(first_run=None):
         globus_connect_conf_file.write('export X509_USER_PROXY=""\n')
         globus_connect_conf_file.write('export MYPROXY_OPTIONS="-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
 
-    with open("/esg/config/myproxy/myproxy-server.config", "w") as myproxy_server_file:
-        myproxy_server_file.write('authorized_retrievers      "*"\n')
-        myproxy_server_file.write('default_retrievers         "*"\n')
-        myproxy_server_file.write('authorized_renewers        "*"\n')
-        myproxy_server_file.write('authorized_key_retrievers  "*"\n')
-        myproxy_server_file.write('trusted_retrievers         "*"\n')
-        myproxy_server_file.write('default_trusted_retrievers "none"\n')
-        myproxy_server_file.write('max_cert_lifetime          "72"\n')
-        myproxy_server_file.write('disable_usage_stats        "true"\n')
-        myproxy_server_file.write('cert_dir                   "/etc/grid-security/certificates"\n')
-
-        myproxy_server_file.write('pam_id "myproxy"\n')
-        myproxy_server_file.write('pam "required"\n')
-
-        myproxy_server_file.write('certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"\n')
-        myproxy_server_file.write('certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"\n')
-        myproxy_server_file.write('certificate_issuer_key_passphrase "globus"\n')
-        myproxy_server_file.write('certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"\n')
-        myproxy_server_file.write('certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"\n')
-        myproxy_server_file.write('certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"\n')
-        myproxy_server_file.write('certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp\n')
-        myproxy_server_file.write('certificate_extapp /esg/config/myproxy/esg_attribute_callout_app\n')
-
 
 def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:
@@ -253,7 +231,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
         #--------------------
         # Create /esg/config/myproxy/myproxy-server.config
         #--------------------
-        edit_myproxy_server_config()
+        copy_myproxy_server_config()
         #--------------------
         # Add /etc/myproxy.d/myproxy-esgf to force MyProxy server to use /esg/config/myproxy/myproxy-server.config
         #--------------------
@@ -320,38 +298,14 @@ def write_myproxy_install_log():
         #TODO: Find myproxy_version
         # esg_functions.write_to_install_manifest("globus:myproxy", thredds_install_dir, thredds_version)
 
-def edit_myproxy_server_config():
+def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.config"):
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
-    with pybash.pushd(myproxy_config_dir):
-        myproxy_config_file = "myproxy-server.config"
-        "Creating/Modifying myproxy server configuration file: {}".format(myproxy_config_file)
-        if os.path.isfile(myproxy_config_file):
-            esg_functions.create_backup_file(myproxy_config_file)
-        with open("/esg/config/myproxy/myproxy-server.config", "w") as myproxy_server_file:
-            myproxy_server_file.write('authorized_retrievers      "*"\n')
-            myproxy_server_file.write('default_retrievers         "*"\n')
-            myproxy_server_file.write('authorized_renewers        "*"\n')
-            myproxy_server_file.write('authorized_key_retrievers  "*"\n')
-            myproxy_server_file.write('trusted_retrievers         "*"\n')
-            myproxy_server_file.write('default_trusted_retrievers "none"\n')
-            myproxy_server_file.write('max_cert_lifetime          "72"\n')
-            myproxy_server_file.write('disable_usage_stats        "true"\n')
-            myproxy_server_file.write('cert_dir                   "/etc/grid-security/certificates"\n')
-
-            myproxy_server_file.write('pam_id "myproxy"\n')
-            myproxy_server_file.write('pam "required"\n')
-
-            myproxy_server_file.write('certificate_issuer_cert "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"\n')
-            myproxy_server_file.write('certificate_issuer_key "/var/lib/globus-connect-server/myproxy-ca/private/cakey.pem"\n')
-            myproxy_server_file.write('certificate_issuer_key_passphrase "globus"\n')
-            myproxy_server_file.write('certificate_serialfile "/var/lib/globus-connect-server/myproxy-ca/serial"\n')
-            myproxy_server_file.write('certificate_out_dir "/var/lib/globus-connect-server/myproxy-ca/newcerts"\n')
-            myproxy_server_file.write('certificate_issuer_subca_certfile "/var/lib/globus-connect-server/myproxy-ca/cacert.pem"\n')
-            myproxy_server_file.write('certificate_mapapp /esg/config/myproxy/myproxy-certificate-mapapp\n')
-            myproxy_server_file.write('certificate_extapp /esg/config/myproxy/esg_attribute_callout_app\n')
-
-        os.chmod(myproxy_config_file, 0600)
+    if os.path.isfile(config_path):
+        esg_functions.create_backup_file(config_path)
+    logger.debug("Copying myproxy-server.config file to /esg/config/myproxy/")
+    shutil.copyfile(os.path.join(current_directory, "../config/myproxy-server.config"), config_path)
+    os.chmod(config_path, 0600)
 
 ############################################
 # Configuration File Editing Functions

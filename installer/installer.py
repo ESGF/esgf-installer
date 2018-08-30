@@ -29,6 +29,7 @@ class Installer(object):
         print self.header.format("Creating objects")
         for component in component_types:
             self.components.append(component())
+            print "    {}".format(type(component).__name__)
 
     def status_check(self):
         # Check the status of of component

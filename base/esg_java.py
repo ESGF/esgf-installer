@@ -15,13 +15,12 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 class Java(JavaConfig):
     def __init__(self):
         JavaConfig.__init__(self)
-        logger.debug("Initialize a Java component object")
+        logger.debug("Initialize a Java component")
         self.java_bin_path = os.path.join(self.java_install_dir, "bin", "java")
         self.existing_version = None
 
     def version(self):
         '''Checks the Java version on the system'''
-        print "Checking Java version"
         if pybash.is_exe(self.java_bin_path):
             logger.debug("java_bin_path: %s", self.java_bin_path)
             try:
@@ -35,13 +34,11 @@ class Java(JavaConfig):
             version = version_line.split(" ")[2]
             self.existing_version = version.strip("\"")
 
-            print "Found version {}".format(self.existing_version)
             return self.existing_version
         return None
 
     def status(self):
         '''Check status of this components installation, return respective code to the Installer'''
-        logger.debug("Checking status of Java installation")
         self.existing_version = self.version()
         if self.existing_version is not None:
             valid_version = esg_version_manager.compare_versions(self.existing_version, self.java_version)
@@ -53,7 +50,7 @@ class Java(JavaConfig):
 
     def _download(self, java_tarfile):
         '''Download Java from distribution mirror'''
-        print "Downloading Java from {}".format(self.java_dist_url)
+        logger.debug("Downloading Java from %s", self.java_dist_url)
         if not esg_functions.download_update(java_tarfile, self.java_dist_url):
             logger.error("ERROR: Could not download Java")
             raise RuntimeError
@@ -69,12 +66,13 @@ class Java(JavaConfig):
 
             # Check for Java tar file
             if not os.path.isfile(java_tarfile):
-                print "Don't see java distribution file {}".format(
+                logger.debug(
+                    "Don't see java distribution file %s",
                     os.path.join(os.getcwd(), java_tarfile)
                 )
                 self._download(java_tarfile)
 
-            print "Extracting Java tarfile", java_tarfile
+            logger.debug("Extracting Java tarfile %s", java_tarfile)
             esg_functions.extract_tarball(java_tarfile, java_install_dir_parent)
 
             # Create symlink to Java install directory (/usr/local/java)
@@ -113,14 +111,11 @@ class Ant(AntConfig):
 
     def version(self):
         ''' Gets the version of ant using "ant -version" '''
-        print "Checking Ant version"
         if find_executable("ant") is not None:
             version_output = esg_functions.call_subprocess("ant -version")['stdout']
             self.existing_version = version_output.split(" ")[3]
             logger.debug("ant %s %s", find_executable("ant"), self.existing_version)
-            print "Found version {}".format(self.existing_version)
             return self.existing_version
-        print "None found"
         return None
 
     def status(self):

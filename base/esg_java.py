@@ -3,9 +3,9 @@ import logging
 from distutils.spawn import find_executable
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
+from esgf_utilities.esg_env_manager import EnvWriter
 
 from installer import install_codes
 from esg_init import JavaConfig
@@ -103,12 +103,7 @@ class Java(JavaConfig):
             self.java_install_dir,
             self.version()
         )
-        esg_property_manager.set_property(
-            "JAVA_HOME", "export JAVA_HOME={}".format(self.java_install_dir),
-            property_file=self.envfile,
-            section_name="esgf.env",
-            separator="_"
-        )
+        EnvWriter.write("JAVA_HOME", self.java_install_dir,)
 
 class Ant(AntConfig):
     def __init__(self):
@@ -146,11 +141,6 @@ class Ant(AntConfig):
 
     def post_install(self):
         '''Writes Ant config to install manifest and env'''
-        esg_property_manager.set_property(
-            "ANT_HOME", "export ANT_HOME=/usr/bin/ant",
-            property_file=self.envfile,
-            section_name="esgf.env",
-            separator="_"
-        )
+        EnvWriter.write("ANT_HOME", find_executable("ant"))
         logger.debug("ant %s %s", find_executable("ant"), self.version())
         esg_functions.write_to_install_manifest("ant", find_executable("ant"), self.version())

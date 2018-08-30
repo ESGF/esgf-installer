@@ -30,7 +30,7 @@ class Installer(object):
     def status_check(self):
         # Check the status of of component
         for component in self.components:
-            self.components_status[component.status()] = component
+            self.components_status[component.status()].append(component)
         divider = "_"*30
         print "Not installed\n{}".format(divider)
         for component in self.components_status[NOT_INSTALLED]:

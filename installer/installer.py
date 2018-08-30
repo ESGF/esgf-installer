@@ -11,6 +11,11 @@ class Installer(object):
             # "index": [ Foo, Bar ]
             "base": [ Java, Ant ]
         }
+        self.components_status = {
+            OK: [],
+            NOT_INSTALLED: [],
+            BAD_VERSION: []
+        }
         # Find unique components, as there may be overlap
         component_types = set()
         for node_type in node_types:
@@ -18,18 +23,24 @@ class Installer(object):
                 component_types.add(component)
 
         # Initialize the unique types and give them a dictionary to store information
-        self.components = {}
+        self.components = []
         for component in component_types:
-            self.components[component()] = {"status": None}
-        print "Initialized Components:", self.components
+            self.components.append(component())
 
     def status_check(self):
         # Check the status of of component
         for component in self.components:
-            self.components[component]["status"] = component.status()
-
+            self.components_status[component.status()] = component
+        divider = "_"*30
+        print "Not installed\n{}".format(divider)
+        for component in self.components_status[NOT_INSTALLED]:
+            print "    {}".format(component.__name__)
+        print "Invalid Version\n{}".format(divider)
+        for component in self.components_status[BAD_VERSION]:
+            print "    {}".format(component.__name__)
+        print "Installed\n{}".format(divider)
+        for component in self.components_status[OK]:
+            print "    {}".format(component.__name__)
     def install(self):
         # Handle components based on their status
-        for component in self.components:
-            if self.components[component]["status"] != OK:
-                component.install()
+        pass

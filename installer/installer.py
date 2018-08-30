@@ -31,16 +31,21 @@ class Installer(object):
         # Check the status of of component
         for component in self.components:
             self.components_status[component.status()].append(component)
-        divider = "*"*30
-        print "Not installed\n{}".format(divider)
-        for component in self.components_status[NOT_INSTALLED]:
-            print "    {}".format(component.__name__)
-        print "Invalid Version\n{}".format(divider)
-        for component in self.components_status[BAD_VERSION]:
-            print "    {}".format(component.__name__)
-        print "Installed\n{}".format(divider)
-        for component in self.components_status[OK]:
-            print "    {}".format(type(component).__name__)
+
+        divider = "_"*30
+        if len(self.components_status[NOT_INSTALLED]) != 0:
+            print "{}\nNot installed:".format(divider)
+            for component in self.components_status[NOT_INSTALLED]:
+                print "    {}".format(component.__name__)
+        if len(self.components_status[BAD_VERSION]) != 0:
+            print "{}\nInvalid Version:".format(divider)
+            for component in self.components_status[BAD_VERSION]:
+                print "    {}".format(component.__name__)
+        if len(self.components_status[OK]) != 0:
+            print "{}\nAlready Installed:".format(divider)
+            for component in self.components_status[OK]:
+                print "    {}".format(type(component).__name__)
+
     def install(self):
         # Handle components based on their status
         pass

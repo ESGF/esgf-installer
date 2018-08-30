@@ -468,6 +468,10 @@ install_las() {
     sed -i '12 s/^.*$/'${esgf_host}'/' ${ferret_workdir}/${las_config_input_file_url##*/}
     echo "$(pwd)/configure < ${ferret_workdir}/${las_config_input_file_url##*/}"
     ./configure < ${ferret_workdir}/${las_config_input_file_url##*/}
+    if [ $? -ne 0 ]; then
+        popd >& /dev/null
+        return 1
+    fi
     popd >& /dev/null
     chown -R ${tomcat_user}:${tomcat_group} ${tomcat_install_dir}/webapps/las
     write_las_install_log && return ${ret}

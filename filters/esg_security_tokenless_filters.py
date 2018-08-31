@@ -140,6 +140,7 @@ def initialize_orp_jar_list():
     joda_version = "2.0"
     commons_io_version = "2.4"
     slf4j_version = "1.6.4"
+    log4j_version = "1.2.17"
 
     #----------------------------
     #Jar Libraries Needed To Be Present For ORP (tokenless) Filter Support
@@ -160,10 +161,12 @@ def initialize_orp_jar_list():
     joda_time_jar = "joda-time-{}.jar".format(joda_version)
     commons_io_jar = "commons-io-{}.jar".format(commons_io_version)
     slf4j_api_jar = "slf4j-api-{}.jar".format(slf4j_version)
+    # NOTE Since this is log4j12 the log4j version likely needs to be 1.2.*
     slf4j_log4j_jar = "slf4j-log4j12-{}.jar".format(slf4j_version)
+    log4j_jar = "log4j-{}.jar".format(log4j_version)
 
     return [opensaml_jar, openws_jar, xmltooling_jar, xsgroup_role_jar, commons_collections_jar, serializer_jar, velocity_jar,
-                xalan_jar, xercesImpl_jar, xml_apis_jar, xmlsec_jar, joda_time_jar, commons_io_jar, slf4j_api_jar, slf4j_log4j_jar]
+                xalan_jar, xercesImpl_jar, xml_apis_jar, xmlsec_jar, joda_time_jar, commons_io_jar, slf4j_api_jar, slf4j_log4j_jar, log4j_jar]
 
 def initialize_esgf_mirror_jar_list():
     #TODO: split spring/las jars into separate function

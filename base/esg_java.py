@@ -57,7 +57,7 @@ def download_java(java_tarfile):
 
 def write_java_env():
     '''Writes Java config to /etc/esg.env'''
-    EnvWriter.write("JAVA_HOME", config["java_install_dir"])
+    EnvWriter.export("JAVA_HOME", config["java_install_dir"])
 
 def write_java_install_log():
     '''Writes Java config to install manifest'''
@@ -124,7 +124,7 @@ def setup_java():
 
 def write_ant_env():
     '''Writes Ant config to /etc/esg.env'''
-    EnvWriter.write("ANT_HOME", "/usr/bin/ant")
+    EnvWriter.export("ANT_HOME", "/usr/bin/ant")
 
 def write_ant_install_log():
     '''Writes Ant config to install manifest'''

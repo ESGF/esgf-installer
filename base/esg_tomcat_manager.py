@@ -380,7 +380,7 @@ def edit_server_xml():
 
 def write_tomcat_env():
     '''Write tomcat environment info to /etc/esg.env'''
-    EnvWriter.write("CATALINA_HOME", config["tomcat_install_dir"])
+    EnvWriter.export("CATALINA_HOME", config["tomcat_install_dir"])
     esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
 def write_tomcat_install_log():

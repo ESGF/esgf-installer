@@ -87,7 +87,7 @@ def setup_globus(installation_type):
 
 def write_globus_env(globus_location):
     '''Write globus properties to /etc/esg.env'''
-    EnvWriter.write("GLOBUS_LOCATION", globus_location)
+    EnvWriter.export("GLOBUS_LOCATION", globus_location)
 
 def start_globus(installation_type):
     '''Starts the globus services by delegating out to esg-globus script

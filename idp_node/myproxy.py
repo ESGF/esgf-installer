@@ -427,4 +427,4 @@ def edit_etc_myproxyd():
         myproxy_esgf_file.write('''export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\"'''.format(config["esg_config_dir"]))
 
 def write_db_name_env():
-    EnvWriter.write("ESGF_DB_NAME", esg_property_manager.get_property("db.database"))
+    EnvWriter.export("ESGF_DB_NAME", esg_property_manager.get_property("db.database"))

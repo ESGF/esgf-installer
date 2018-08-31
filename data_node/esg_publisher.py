@@ -187,7 +187,7 @@ def setup_publisher():
 
 def write_esgcet_env():
     '''Write Publisher environment properties to /etc/esg.env'''
-    EnvWriter.write("ESG_ROOT_ID", esg_property_manager.get_property("esg.org.name"))
+    EnvWriter.export("ESG_ROOT_ID", esg_property_manager.get_property("esg.org.name"))
 
     # env needed by Python client to trust the data node server certicate
     # ENV SSL_CERT_DIR /etc/grid-security/certificates

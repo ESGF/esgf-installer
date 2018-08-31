@@ -247,8 +247,8 @@ def select_idp_peer():
 
 def write_tds_env():
     '''Write thredds info to /etc/esg.env'''
-    EnvWriter.write("ESGF_IDP_PEER_NAME", esg_property_manager.get_property("esgf_idp_peer_name"))
-    EnvWriter.write("ESGF_IDP_PEER", esg_property_manager.get_property("esgf_idp_peer"))
+    EnvWriter.export("ESGF_IDP_PEER_NAME", esg_property_manager.get_property("esgf_idp_peer_name"))
+    EnvWriter.export("ESGF_IDP_PEER", esg_property_manager.get_property("esgf_idp_peer"))
 
 def update_mail_admin_address():
     '''Updates mail_admin_address in threddsConfig.xml'''

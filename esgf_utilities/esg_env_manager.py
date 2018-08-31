@@ -7,22 +7,18 @@ throughout the program.
 class _EnvWriter(object):
     ''' A class for managing the ESG environment file '''
     def __init__(self, envfile):
-        self.env = {}
         self.envfile = envfile
+        open(self.envfile, "a").close()
 
     def add_source(self, source_env):
         ''' When envfile is sourced, source_env will also be sourced '''
-        with open(self.envfile, "w") as envfile:
-            for key in self.env:
-                envfile.write("export {}={}\n".format(key, self.env[key]))
-            envfile.write("source {}".format(source_env))
+        with open(self.envfile, "a") as envfile:
+            envfile.write("source {}\n".format(source_env))
 
-    def write(self, variable, value):
+    def export(self, variable, value):
         ''' Writes the export statement to be executed when envfile is sourced '''
-        self.env[variable] = value
-        with open(self.envfile, "w") as envfile:
-            for key in self.env:
-                envfile.write("export {}={}\n".format(key, self.env[key]))
+        with open(self.envfile, "a") as envfile:
+            envfile.write("export {}={}\n".format(variable, value))
 
     def read(self):
         ''' Returns the contents of the envfile '''

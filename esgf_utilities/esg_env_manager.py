@@ -3,21 +3,16 @@ A module for the managment of an env file with exports and sources.
 Note to only use the instantiated version at the bottom to maintain state
 throughout the program.
 '''
-import shelve
-
+ENV = {
+    "sources": [],
+    "exports": {}
+}
 class _EnvWriter(object):
     ''' A class for managing the ESG environment file '''
-    def __init__(self, envfile, shelf_file):
+    def __init__(self, envfile):
         self.envfile = envfile
-        self.env = shelve.open(shelf_file)
-        source_key = "sources"
-        export_key = "exports"
-        if source_key not in self.env:
-            self.env[source_key] = []
-        if export_key  not in self.env:
-            self.env[export_key ] = {}
-        self.sources = self.env[source_key]
-        self.exports = self.env[export_key]
+        self.sources = ENV["sources"]
+        self.exports = ENV["exports"]
 
     def add_source(self, source_env):
         ''' When envfile is sourced, source_env will also be sourced '''
@@ -42,4 +37,4 @@ class _EnvWriter(object):
             return envfile.read()
 
 
-EnvWriter = _EnvWriter("sample.env", "/tmp/esg.env")
+EnvWriter = _EnvWriter("/etc/esg.env")

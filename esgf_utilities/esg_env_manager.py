@@ -3,22 +3,38 @@ A module for the managment of an env file with exports and sources.
 Note to only use the instantiated version at the bottom to maintain state
 throughout the program.
 '''
+import shelve
 
 class _EnvWriter(object):
     ''' A class for managing the ESG environment file '''
-    def __init__(self, envfile):
+    def __init__(self, envfile, shelf_file):
         self.envfile = envfile
-        open(self.envfile, "a").close()
+        self.env = shelve.open(shelf_file)
+        source_key = "sources"
+        export_key = "exports"
+        if source_key not in self.env:
+            self.env[source_key] = []
+        if export_key  not in self.env:
+            self.env[export_key ] = {}
+        self.sources = self.env[source_key]
+        self.exports = self.env[export_key]
 
     def add_source(self, source_env):
         ''' When envfile is sourced, source_env will also be sourced '''
-        with open(self.envfile, "a") as envfile:
-            envfile.write("source {}\n".format(source_env))
+        self.sources += [source_env]
+        self._rewrite()
 
     def export(self, variable, value):
         ''' Writes the export statement to be executed when envfile is sourced '''
-        with open(self.envfile, "a") as envfile:
-            envfile.write("export {}={}\n".format(variable, value))
+        self.exports[variable] = value
+        self._rewrite()
+
+    def _rewrite(self):
+        with open(self.envfile, "w") as envfile:
+            for export in self.exports:
+                envfile.write("export {}={}\n".format(export, self.exports[export]))
+            for source in self.sources:
+                envfile.write("source {}\n".format(source))
 
     def read(self):
         ''' Returns the contents of the envfile '''
@@ -26,4 +42,4 @@ class _EnvWriter(object):
             return envfile.read()
 
 
-EnvWriter = _EnvWriter("/etc/esg.env")
+EnvWriter = _EnvWriter("sample.env", "/tmp/esg.env")

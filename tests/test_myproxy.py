@@ -38,7 +38,7 @@ class test_myproxy(unittest.TestCase):
         gridftp_server = parser.get('GridFTP', "Server")
         self.assertTrue(gridftp_server, esgf_host_name)
         self.assertTrue(parser.get('MyProxy', "Server"), esgf_host_name)
-        self.assertTrue(parser.set('Endpoint', "Name"), esg_property_manager.get_property("node.short.name"))
+        self.assertTrue(parser.get('Endpoint', "Name"), esg_property_manager.get_property("node.short.name"))
 
 
 

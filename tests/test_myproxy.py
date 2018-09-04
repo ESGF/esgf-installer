@@ -6,7 +6,7 @@ import logging
 import ConfigParser
 from context import esgf_utilities
 from context import base
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, esg_property_manager
 from idp_node import myproxy
 import yaml
 
@@ -34,8 +34,10 @@ class test_myproxy(unittest.TestCase):
         parser = ConfigParser.SafeConfigParser(allow_no_value=True)
         parser.read("/tmp/globus-connect-server.conf")
 
-        self.assertTrue(parser.get('GridFTP', "Server"), esg_functions.get_esgf_host())
-        self.assertTrue(parser.get('MyProxy', "Server"), esg_functions.get_esgf_host())
+        esgf_host_name = esg_functions.get_esgf_host()
+        gridftp_server = parser.get('GridFTP', "Server")
+        self.assertTrue(gridftp_server, esgf_host_name)
+        self.assertTrue(parser.get('MyProxy', "Server"), esgf_host_name)
         self.assertTrue(parser.set('Endpoint', "Name"), esg_property_manager.get_property("node.short.name"))
 
 

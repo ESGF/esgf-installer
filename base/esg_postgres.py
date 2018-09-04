@@ -181,10 +181,6 @@ def setup_db_schemas(publisher_password=None):
 
     load_esgf_schemas(db_user_password)
 
-    # IMPORTANT: change connections to require encrypted password
-    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
-
-
 def load_esgf_schemas(db_user_password):
     '''Loads ESGF schemas from SQL scripts'''
     conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
@@ -456,17 +452,21 @@ def restart_postgres():
 
 def setup_postgres_conf_file():
     '''Copies postgres.conf file to proper location'''
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "postgres_conf/postgresql.conf"), "/var/lib/pgsql/data/postgresql.conf")
+    pg_conf = "/var/lib/pgsql/data/postgresql.conf"
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "postgres_conf/postgresql.conf"), pg_conf)
     postgres_user_id = esg_functions.get_user_id("postgres")
     postgres_group_id = esg_functions.get_group_id("postgres")
-    os.chown("/var/lib/pgsql/data/postgresql.conf", postgres_user_id, postgres_group_id)
+    os.chown(pg_conf, postgres_user_id, postgres_group_id)
+    os.chmod(pg_conf, 0600)
 
 def setup_hba_conf_file():
-    '''Modify the pg_hba.conf file for md5 authencation'''
-    with open("/var/lib/pgsql/data/pg_hba.conf", "w") as hba_conf_file:
-        hba_conf_file.write("local    all             postgres                    ident\n")
-        hba_conf_file.write("local    all             all                         md5\n")
-        hba_conf_file.write("host     all             all         ::1/128         md5\n")
+    '''Copy the static pg_hba.conf file to proper location'''
+    pg_hba_file = "/var/lib/pgsql/data/pg_hba.conf"
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), "postgres_conf/pg_hba.conf"), pg_hba_file)
+    postgres_user_id = esg_functions.get_user_id("postgres")
+    postgres_group_id = esg_functions.get_group_id("postgres")
+    os.chown(pg_hba_file, postgres_user_id, postgres_group_id)
+    os.chmod(pg_hba_file, 0600)
 
 def download_config_files(force_install):
     ''' Download config files '''

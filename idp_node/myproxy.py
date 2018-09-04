@@ -144,6 +144,8 @@ def copy_gcs_conf(gcs_conf_path="/esg/config/myproxy/globus-connect-server.conf"
     parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
     parser.set('MyProxy', "Server", esg_functions.get_esgf_host())
 
+    parser.write()
+
 
 def config_myproxy_server(globus_location, install_mode="install"):
     if install_mode not in ["install", "update"]:

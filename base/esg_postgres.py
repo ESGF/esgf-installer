@@ -124,12 +124,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     write_postgress_install_log()
     log_postgres_properties()
 
-    # NOTE: The default pg_hba.conf starts with ident for auth, which means system accounts are used
-    # This is so the postgres account can be initialized, ie have a password setup
-    # After that is done it needs to be switched to md5. This command will also replace the idents
-    # in the comments of the file.
-    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
-
 def create_pg_super_user(psycopg2_cursor, db_user_password):
     '''Create postgres super user'''
     print "Create {db_user} user: ".format(db_user=config["postgress_user"]), psycopg2_cursor.mogrify("CREATE USER {db_user} with CREATEROLE superuser PASSWORD \'{db_user_password}\';".format(db_user=config["postgress_user"], db_user_password=db_user_password))
@@ -180,7 +174,12 @@ def setup_db_schemas(publisher_password=None):
     create_database("esgcet", cur)
     cur.close()
     conn.close()
-
+    # NOTE: The default pg_hba.conf starts with ident for auth, which means system accounts are used
+    # This is so the postgres account can be initialized, ie have a password setup
+    # After that is done it needs to be switched to md5. This command will also replace the idents
+    # in the comments of the file.
+    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
+    restart_postgres()
     # TODO: move download_config_files() here
 
     load_esgf_schemas(db_user_password)

@@ -81,94 +81,12 @@ def setup_gcs_id(first_run=None):
         register_myproxy_answer = raw_input(
         "Do you want to register the MyProxy server with Globus?: ") or "Y"
 
-    if register_myproxy_answer.lower() in ["y", "yes"]:
-        GLOBUS_SETUP = True
-    else:
-        GLOBUS_SETUP = False
+    globus_setup = register_myproxy_answer.lower() in ["y", "yes"]
 
-    if GLOBUS_SETUP:
-        try:
-            globus_user = esg_property_manager.get_property("globus.user")
-        except ConfigParser.NoOptionError:
-            while True:
-                globus_user = raw_input("Please provide a Globus username: ")
-                if not globus_user:
-                    print "Globus username cannot be blank."
-                else:
-                    esg_property_manager.set_property("globus.user", globus_user)
-                    break
-
-        try:
-            globus_password = esg_property_manager.get_property("globus.password")
-        except ConfigParser.NoOptionError:
-            while True:
-                globus_password = raw_input("Please enter your Globus password: ")
-                if not globus_password:
-                    print "The Globus password can not be blank"
-                    continue
-                else:
-                    esg_property_manager.set_property("globus.password", globus_password)
-                    break
-
-        try:
-            myproxy_hostname = esg_property_manager.get_property("myproxy_endpoint")
-        except ConfigParser.NoOptionError:
-            myproxy_hostname = esg_functions.get_esgf_host().upper()
-
+    if globus_setup:
         myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
         pybash.mkdir_p(myproxy_config_dir)
-        globus_server_conf_file = os.path.join(myproxy_config_dir, "globus-connect-server.conf")
-
-        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
-        parser.read(globus_server_conf_file)
-
-        try:
-            parser.add_section("Globus")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('Globus', "User", globus_user)
-        parser.set('Globus', "Password", globus_password)
-
-        try:
-            parser.add_section("Endpoint")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('Endpoint', "Name", esg_property_manager.get_property("node.short.name"))
-        parser.set('Endpoint', "Public", "True")
-
-        try:
-            parser.add_section("Security")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('Security', "FetchCredentialFromRelay", "False")
-        parser.set('Security', "CertificateFile", "/etc/grid-security/hostcert.pem")
-        parser.set('Security', "KeyFile", "/etc/grid-security/hostkey.pem")
-        parser.set('Security', "TrustedCertificateDirectory", "/etc/grid-security/certificates/")
-        parser.set('Security', "IdentityMethod", "MyProxy")
-        parser.set('Security', "AuthorizationMethod", "Gridmap")
-
-        try:
-            parser.add_section("GridFTP")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
-        parser.set('GridFTP', "RestrictPaths", "R/,N/etc,N/tmp,N/dev")
-        parser.set('GridFTP', "Sharing", "False")
-        parser.set('GridFTP', "SharingRestrictPaths", "R/")
-
-        try:
-            parser.add_section("MyProxy")
-        except ConfigParser.DuplicateSectionError:
-            logger.debug("section already exists")
-
-        parser.set('MyProxy', "Server", esg_functions.get_esgf_host())
-
-        with open(globus_server_conf_file, "w") as config_file_object:
-            parser.write(config_file_object)
+        copy_gcs_conf()
 
         esg_functions.stream_subprocess_output("globus-connect-server-id-setup -c {}/globus-connect-server.conf -v".format(myproxy_config_dir))
 
@@ -181,6 +99,50 @@ def setup_gcs_id(first_run=None):
         globus_connect_conf_file.write('export X509_USER_KEY="/etc/grid-security/hostkey.pem"\n')
         globus_connect_conf_file.write('export X509_USER_PROXY=""\n')
         globus_connect_conf_file.write('export MYPROXY_OPTIONS="-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
+
+def get_globus_username():
+    try:
+        globus_user = esg_property_manager.get_property("globus.user")
+    except ConfigParser.NoOptionError:
+        while True:
+            globus_user = raw_input("Please provide a Globus username: ")
+            if not globus_user:
+                print "Globus username cannot be blank."
+            else:
+                esg_property_manager.set_property("globus.user", globus_user)
+                break
+    return globus_user
+
+def get_globus_password():
+    try:
+        globus_password = esg_property_manager.get_property("globus.password")
+    except ConfigParser.NoOptionError:
+        while True:
+            globus_password = raw_input("Please enter your Globus password: ")
+            if not globus_password:
+                print "The Globus password can not be blank"
+                continue
+            else:
+                esg_property_manager.set_property("globus.password", globus_password)
+                break
+
+    return globus_password
+
+def copy_gcs_conf(gcs_conf_path="/esg/config/myproxy/globus-connect-server.conf"):
+    '''Setups up the globus-connect-server.conf config file to be used with the globus-connect-server-id-setup binary'''
+    shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-server.conf"), gcs_conf_path)
+
+    parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+    parser.read(gcs_conf_path)
+
+    globus_user = get_globus_username()
+    globus_password = get_globus_password()
+
+    parser.set('Globus', "User", globus_user)
+    parser.set('Globus', "Password", globus_password)
+    parser.set('Endpoint', "Name", esg_property_manager.get_property("node.short.name"))
+    parser.set('GridFTP', "Server", esg_functions.get_esgf_host())
+    parser.set('MyProxy', "Server", esg_functions.get_esgf_host())
 
 
 def config_myproxy_server(globus_location, install_mode="install"):

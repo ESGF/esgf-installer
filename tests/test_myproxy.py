@@ -3,6 +3,7 @@ import os
 import shutil
 import errno
 import logging
+import ConfigParser
 from context import esgf_utilities
 from context import base
 from esgf_utilities import esg_functions
@@ -25,6 +26,18 @@ class test_myproxy(unittest.TestCase):
     def test_edit_etc_myproxyd(self):
         myproxy.edit_etc_myproxyd("/tmp/myproxy-esgf")
         self.assertTrue(os.path.exists("/tmp/myproxy-esgf"))
+
+    def test_copy_gcs_conf(self):
+        myproxy.copy_gcs_conf("/tmp/globus-connect-server.conf")
+        self.assertTrue(os.path.exists("/tmp/globus-connect-server.conf"))
+
+        parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+        parser.read("/tmp/globus-connect-server.conf")
+
+        self.assertTrue(parser.get('GridFTP', "Server"), esg_functions.get_esgf_host())
+        self.assertTrue(parser.get('MyProxy', "Server"), esg_functions.get_esgf_host())
+        self.assertTrue(parser.set('Endpoint', "Name"), esg_property_manager.get_property("node.short.name"))
+
 
 
 

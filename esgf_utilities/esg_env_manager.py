@@ -1,9 +1,7 @@
 '''
 A module for the managment of an env file with exports and sources.
-Note to only use the instantiated version at the bottom to maintain state
-throughout the program.
 '''
-ENV = {
+_ENV = {
     "sources": [],
     "exports": {}
 }
@@ -11,12 +9,12 @@ class _EnvWriter(object):
     ''' A class for managing the ESG environment file '''
     def __init__(self, envfile):
         self.envfile = envfile
-        self.sources = ENV["sources"]
-        self.exports = ENV["exports"]
+        self.sources = _ENV["sources"]
+        self.exports = _ENV["exports"]
 
     def add_source(self, source_env):
         ''' When envfile is sourced, source_env will also be sourced '''
-        self.sources += [source_env]
+        self.sources.append(source_env)
         self._rewrite()
 
     def export(self, variable, value):

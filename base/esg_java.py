@@ -7,7 +7,8 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
-from plumbum import yum, TEE
+from plumbum import TEE
+from plumbum.cmd import yum
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 

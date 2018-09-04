@@ -90,15 +90,8 @@ def setup_gcs_id(first_run=None):
 
         esg_functions.stream_subprocess_output("globus-connect-server-id-setup -c {}/globus-connect-server.conf -v".format(myproxy_config_dir))
 
-    # Create a substitution of Globus generated confguration files for MyProxy server
-    pybash.mkdir_p("/etc/myproxy.d")
-    with open("/etc/myproxy.d/globus-connect-esgf", "w") as globus_connect_conf_file:
-        globus_connect_conf_file.write("export MYPROXY_USER=root\n")
-        globus_connect_conf_file.write('export X509_CERT_DIR="/etc/grid-security/certificates"\n')
-        globus_connect_conf_file.write('export X509_USER_CERT="/etc/grid-security/hostcert.pem"\n')
-        globus_connect_conf_file.write('export X509_USER_KEY="/etc/grid-security/hostkey.pem"\n')
-        globus_connect_conf_file.write('export X509_USER_PROXY=""\n')
-        globus_connect_conf_file.write('export MYPROXY_OPTIONS="-c /var/lib/globus-connect-server/myproxy-server.conf -s /var/lib/globus-connect-server/myproxy-ca/store"')
+    # Create a substitution of Globus generated configuration files for MyProxy server
+    copy_globus_connect_esgf()
 
 def get_globus_username():
     try:
@@ -146,6 +139,11 @@ def copy_gcs_conf(gcs_conf_path="/esg/config/myproxy/globus-connect-server.conf"
 
     with open(gcs_conf_path, "w") as conf_file:
         parser.write(conf_file)
+
+def copy_globus_connect_esgf(config_path="/etc/myproxy.d/globus-connect-esgf"):
+    pybash.mkdir_p("/etc/myproxy.d")
+    logger.debug("Copying globus-connect-esgf file to /etc/myproxy.d")
+    shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-esgf"), config_path)
 
 
 def config_myproxy_server(globus_location, install_mode="install"):

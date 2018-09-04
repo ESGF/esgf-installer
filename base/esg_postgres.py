@@ -113,7 +113,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     # start the postgres server
     start_postgres()
     setup_postgres_conf_file()
-    setup_hba_conf_file()
 
     restart_postgres()
 
@@ -125,6 +124,11 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     write_postgress_install_log()
     log_postgres_properties()
 
+    # NOTE: The default pg_hba.conf starts with ident for auth, which means system accounts are used
+    # This is so the postgres account can be initialized, ie have a password setup
+    # After that is done it needs to be switched to md5. This command will also replace the idents
+    # in the comments of the file.
+    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
 
 def create_pg_super_user(psycopg2_cursor, db_user_password):
     '''Create postgres super user'''
@@ -458,15 +462,6 @@ def setup_postgres_conf_file():
     postgres_group_id = esg_functions.get_group_id("postgres")
     os.chown(pg_conf, postgres_user_id, postgres_group_id)
     os.chmod(pg_conf, 0600)
-
-def setup_hba_conf_file():
-    '''Copy the static pg_hba.conf file to proper location'''
-    pg_hba_file = "/var/lib/pgsql/data/pg_hba.conf"
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "postgres_conf/pg_hba.conf"), pg_hba_file)
-    postgres_user_id = esg_functions.get_user_id("postgres")
-    postgres_group_id = esg_functions.get_group_id("postgres")
-    os.chown(pg_hba_file, postgres_user_id, postgres_group_id)
-    os.chmod(pg_hba_file, 0600)
 
 def download_config_files(force_install):
     ''' Download config files '''

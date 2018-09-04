@@ -1,0 +1,1 @@
+export MYPROXY_OPTIONS="-c /esg/config/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store"

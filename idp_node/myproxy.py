@@ -375,9 +375,8 @@ def fetch_esg_attribute_callout_app():
             raise
         os.chmod(callout_app_file, 0751)
 
-def edit_etc_myproxyd():
-    with open("/etc/myproxy.d/myproxy-esgf", "w") as myproxy_esgf_file:
-        myproxy_esgf_file.write('''export MYPROXY_OPTIONS=\"-c {}/myproxy/myproxy-server.config -s /var/lib/globus-connect-server/myproxy-ca/store\"'''.format(config["esg_config_dir"]))
+def edit_etc_myproxyd(myproxy_esgf_path="/etc/myproxy.d/myproxy-esgf"):
+    shutil.copyfile(os.path.join(current_directory, "../config/myproxy-esgf"), myproxy_esgf_path)
 
 def write_db_name_env():
     esgf_db_name = esg_property_manager.get_property("db.database")

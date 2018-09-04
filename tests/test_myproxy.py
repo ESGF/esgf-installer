@@ -22,6 +22,11 @@ class test_myproxy(unittest.TestCase):
         self.assertTrue(os.path.exists("/tmp/myproxy-server.config"))
 
 
+    def test_edit_etc_myproxyd(self):
+        myproxy.edit_etc_myproxyd("/tmp/myproxy-esgf")
+        self.assertTrue(os.path.exists("/tmp/myproxy-esgf"))
+
+
 
 
 

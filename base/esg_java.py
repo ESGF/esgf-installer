@@ -7,6 +7,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities.esg_exceptions import SubprocessError
+from plumbum import yum, TEE
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -145,18 +146,19 @@ def setup_ant():
     print "Setting up Ant"
     print "******************************* \n"
 
-    if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        esg_functions.stream_subprocess_output("ant -version")
+    # if os.path.exists(os.path.join("/usr", "bin", "ant")):
+    #     esg_functions.stream_subprocess_output("ant -version")
+    #
+    #     try:
+    #         setup_ant_answer = esg_property_manager.get_property("update.ant")
+    #     except ConfigParser.NoOptionError:
+    #         setup_ant_answer = raw_input(
+    #             "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
+    #
+    #     if setup_ant_answer.lower() in ["n", "no"]:
+    #         return
 
-        try:
-            setup_ant_answer = esg_property_manager.get_property("update.ant")
-        except ConfigParser.NoOptionError:
-            setup_ant_answer = raw_input(
-                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
-
-        if setup_ant_answer.lower() in ["n", "no"]:
-            return
-
-    esg_functions.stream_subprocess_output("yum -y install ant")
+    # esg_functions.stream_subprocess_output("yum -y install ant")
+    yum["-y", "install", "ant"] & TEE
     write_ant_install_log()
     write_ant_env()

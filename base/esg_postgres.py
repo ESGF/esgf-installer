@@ -181,10 +181,6 @@ def setup_db_schemas(publisher_password=None):
 
     load_esgf_schemas(db_user_password)
 
-    # IMPORTANT: change connections to require encrypted password
-    esg_functions.replace_string_in_file("/var/lib/pgsql/data/pg_hba.conf", "ident", "md5")
-
-
 def load_esgf_schemas(db_user_password):
     '''Loads ESGF schemas from SQL scripts'''
     conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)

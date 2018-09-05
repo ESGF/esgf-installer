@@ -4,6 +4,7 @@ import unittest
 import os
 import errno
 import shutil
+import logging
 from context import esgf_utilities
 from context import base
 from base import esg_apache_manager
@@ -15,6 +16,8 @@ current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
+
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 class test_ESG_apache(unittest.TestCase):
 
@@ -37,6 +40,12 @@ class test_ESG_apache(unittest.TestCase):
                 print "error:", error
         # os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
 
+    def test_start_apache(self):
+        try:
+            esg_apache_manager.start_apache()
+        except Exception, err:
+            logger.error("Error occurred starting apache: %s", err)
+            self.fail("start_apache() failed")
 
     def test_install_apache_httpd(self):
         esg_apache_manager.install_apache_httpd()
@@ -63,4 +72,4 @@ class test_ESG_apache(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

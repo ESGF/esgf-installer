@@ -23,35 +23,38 @@ def check_for_apache_installation():
 
 def start_apache():
     '''Start httpd server'''
-    return esg_functions.call_subprocess("service httpd start")
+    esg_functions.call_binary("service", ["httpd", "start"])
 
 
 def stop_apache():
     '''Stop httpd server'''
-    esg_functions.stream_subprocess_output("service httpd stop")
+    esg_functions.call_binary("service", ["httpd", "stop"])
 
 
 def restart_apache():
     '''Restart httpd server'''
-    esg_functions.stream_subprocess_output("service httpd restart")
+    esg_functions.call_binary("service", ["httpd", "restart"])
 
 
 def check_apache_status():
     '''Check httpd status'''
-    return esg_functions.call_subprocess("service httpd status")
+    esg_functions.call_binary("service", ["httpd", "status"])
 
 
 def run_apache_config_test():
     '''Run httpd config test'''
-    esg_functions.stream_subprocess_output("service httpd configtest")
+    esg_functions.call_binary("service", ["httpd", "configtest"])
+
+
+def check_apache_version():
+    esg_functions.call_binary("httpd", ["-version"])
 
 
 def install_apache_httpd():
     '''Install apache from yum'''
-    esg_functions.stream_subprocess_output("yum -y update")
-    esg_functions.stream_subprocess_output(
-        "yum install -y httpd httpd-devel mod_ssl")
-    esg_functions.stream_subprocess_output("yum clean all")
+    esg_functions.call_binary("yum", ["-y", "update"])
+    esg_functions.call_binary("yum", ["-y", "install", "httpd", "httpd-devel", "mod_ssl"])
+    esg_functions.call_binary("yum", ["clean", "all"])
 
     # Custom ESGF Apache files that setup proxying
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
@@ -112,15 +115,6 @@ def copy_apache_conf_files():
     except OSError:
         logger.exception()
 
-# def copy_files():
-#     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
-#
-#     #add LD_LIBRARY_PATH to /etc/sysconfig/httpd
-#     with open("/etc/sysconfig/httpd", "a") as httpd_file:
-#         httpd_file.write(open(os.path.join(os.path.dirname(__file__), "apache_conf/ldval.tmpl")).read())
-
-
-
 def main():
     print "\n*******************************"
     print "Setting up Apache (httpd) Web Server"
@@ -128,7 +122,7 @@ def main():
 
     if check_for_apache_installation():
         print "Found existing Apache installation."
-        esg_functions.call_subprocess("httpd -version")
+        check_apache_version()
 
         try:
             setup_apache_answer = esg_property_manager.get_property(
@@ -141,7 +135,7 @@ def main():
             return
     install_apache_httpd()
     stop_apache()
-    esg_functions.stream_subprocess_output("chkconfig --levels 2345 httpd off")
+    esg_functions.call_binary("chkconfig", ["--levels", "2345", "httpd", "off"])
     install_mod_wsgi()
     make_python_eggs_dir()
     copy_apache_conf_files()

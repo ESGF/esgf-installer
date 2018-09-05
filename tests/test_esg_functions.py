@@ -11,6 +11,8 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 import yaml
+import distutils.spawn
+
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -39,7 +41,7 @@ class test_ESG_Functions(unittest.TestCase):
             esg_functions.stream_subprocess_output("groupdel cogadmin")
         except SubprocessError:
             pass
-            
+
         try:
             shutil.rmtree("/esg/test_backup")
         except OSError:
@@ -92,6 +94,12 @@ class test_ESG_Functions(unittest.TestCase):
             esg_functions.stream_subprocess_output("groupadd -r cogadmin")
         except SubprocessError, error:
             print "error:", error
+
+    def test_call_binary(self):
+        esg_functions.call_binary("yum", ["install", "-y", "nano"])
+        self.assertTrue(distutils.spawn.find_executable("nano"))
+
+
 
 
 

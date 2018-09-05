@@ -17,10 +17,8 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 def set_default_java():
     '''Sets the default Java binary to the version installed with ESGF'''
-    esg_functions.stream_subprocess_output(
-        "alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
-    esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
-
+    esg_functions.call_binary("alternatives", ["--install", "/usr/bin/java", "/usr/local/java/bin/java", "3"])
+    esg_functions.call_binary("alternatives", ["--set", "java", "/usr/local/java/bin/java"])
 
 def check_for_existing_java(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
     '''Check if a valid java installation is currently on the system'''
@@ -160,6 +158,7 @@ def setup_ant():
     #         return
 
     # esg_functions.stream_subprocess_output("yum -y install ant")
-    yum["-y", "install", "ant"] & TEE
+    esg_functions.call_binary("yum", ["-y", "install", "ant"])
+    # yum["-y", "install", "ant"] & TEE
     write_ant_install_log()
     write_ant_env()

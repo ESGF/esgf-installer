@@ -87,8 +87,6 @@ def setup_java():
         if setup_java_answer.lower().strip() not in ["y", "yes"]:
             print "Skipping Java installation"
             return
-        #NOTE unused variable:
-        #last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):

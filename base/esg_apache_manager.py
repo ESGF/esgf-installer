@@ -46,6 +46,10 @@ def run_apache_config_test():
     esg_functions.call_binary("service", ["httpd", "configtest"])
 
 
+def check_apache_version():
+    esg_functions.call_binary("httpd", ["-version"])
+
+
 def install_apache_httpd():
     '''Install apache from yum'''
     esg_functions.call_binary("yum", ["-y", "update"])
@@ -118,7 +122,7 @@ def main():
 
     if check_for_apache_installation():
         print "Found existing Apache installation."
-        esg_functions.call_subprocess("httpd -version")
+        check_apache_version()
 
         try:
             setup_apache_answer = esg_property_manager.get_property(
@@ -131,7 +135,7 @@ def main():
             return
     install_apache_httpd()
     stop_apache()
-    esg_functions.stream_subprocess_output("chkconfig --levels 2345 httpd off")
+    esg_functions.call_binary("chkconfig", ["--levels", "2345", "httpd", "off"])
     install_mod_wsgi()
     make_python_eggs_dir()
     copy_apache_conf_files()

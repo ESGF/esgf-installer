@@ -37,6 +37,11 @@ class test_ESG_apache(unittest.TestCase):
                 print "error:", error
         # os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
 
+    def test_start_apache(self):
+        try:
+            esg_apache_manager.start_apache()
+        except Exception:
+            self.fail("start_apache() failed")
 
     def test_install_apache_httpd(self):
         esg_apache_manager.install_apache_httpd()

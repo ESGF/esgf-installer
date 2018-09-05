@@ -23,7 +23,7 @@ def check_for_apache_installation():
 
 def start_apache():
     '''Start httpd server'''
-    return esg_functions.call_subprocess("service httpd start")
+    esg_functions.call_binary("service", ["httpd", "start"])
 
 
 def stop_apache():
@@ -38,7 +38,7 @@ def restart_apache():
 
 def check_apache_status():
     '''Check httpd status'''
-    return esg_functions.call_subprocess("service httpd status")
+    esg_functions.call_binary("service", ["httpd", "status"])
 
 
 def run_apache_config_test():

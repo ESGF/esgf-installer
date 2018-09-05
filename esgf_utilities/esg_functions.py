@@ -937,10 +937,19 @@ def call_binary(binary_name, arguments):
         logger.error("Could not find %s executable", binary_name)
         raise
     output = command.__getitem__(arguments) & TEE
+
+    #special case where checking java version is displayed via stderr
+    if command.__str__() == '/usr/local/java/bin/java' and output[0] != 0:
+        return output[2]
+        
     #Check for stderr
-    if output[2]:
-        logger.error(output[2])
+    if output[0] != 0 or output[2]:
+        logger.error("Error occurred when executing %s %s", binary_name, " ".join(arguments))
+        logger.error("stderr: %s", output[2])
         raise ProcessExecutionError
+    else:
+        #return stdout
+        return output[1]
 
 
 

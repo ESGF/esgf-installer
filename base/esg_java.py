@@ -31,18 +31,11 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     '''Checks the Java version on the system'''
     print "Checking Java version"
     logger.debug("java_path: %s", java_path)
-    # try:
-    #     java_version_output = esg_functions.call_subprocess(
-    #         "{java_path} -version".format(java_path=java_path))["stderr"]
-    # except SubprocessError:
-    #     logger.error("Could not check the Java version")
-    #     raise
     java_version_output = esg_functions.call_binary(java_path, ["-version"])
-    logger.debug("java_version_output: %s", java_version_output)
     version_line = java_version_output.split("\n")[0]
-    version = version_line.split(" ")[2]
-    installed_java_version = version.translate(None, "\"")
-
+    version = version_line.split("version")[1].strip()
+    installed_java_version = version.strip('\"')
+    
     assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
     print "Installed java version meets the minimum requirement {}".format(config["java_version"])
     return installed_java_version

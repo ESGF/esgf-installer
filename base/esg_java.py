@@ -6,9 +6,7 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from plumbum import TEE
-from plumbum.cmd import yum
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -35,7 +33,7 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     version_line = java_version_output.split("\n")[0]
     version = version_line.split("version")[1].strip()
     installed_java_version = version.strip('\"')
-    
+
     assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
     print "Installed java version meets the minimum requirement {}".format(config["java_version"])
     return installed_java_version
@@ -141,7 +139,7 @@ def setup_ant():
     print "******************************* \n"
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        esg_functions.stream_subprocess_output("ant -version")
+        esg_functions.call_binary("ant", ["-version"])
 
         try:
             setup_ant_answer = esg_property_manager.get_property("update.ant")

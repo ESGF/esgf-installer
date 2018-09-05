@@ -156,7 +156,7 @@ def setup_publisher():
     base = "https://github.com/ESGF/esg-publisher.git"
     pip_git = "git+{}@{}#egg={}&subdirectory={}".format(base, tag, pkg_name, subdir)
     symlink_pg_binary()
-    esg_functions.call_binary("pip", "install {}".format(pip_git))
+    esg_functions.call_binary("pip", ["install", pip_git])
     pybash.mkdir_p("/esg/data/test")
 
 

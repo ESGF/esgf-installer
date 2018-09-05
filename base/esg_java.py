@@ -6,7 +6,7 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities.esg_exceptions import SubprocessError
+from plumbum import TEE
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -15,10 +15,8 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 def set_default_java():
     '''Sets the default Java binary to the version installed with ESGF'''
-    esg_functions.stream_subprocess_output(
-        "alternatives --install /usr/bin/java java /usr/local/java/bin/java 3")
-    esg_functions.stream_subprocess_output("alternatives --set java /usr/local/java/bin/java")
-
+    esg_functions.call_binary("alternatives", ["--install", "/usr/bin/java", "/usr/local/java/bin/java", "3"])
+    esg_functions.call_binary("alternatives", ["--set", "java", "/usr/local/java/bin/java"])
 
 def check_for_existing_java(java_path=os.path.join(config["java_install_dir"], "bin", "java")):
     '''Check if a valid java installation is currently on the system'''
@@ -31,15 +29,10 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     '''Checks the Java version on the system'''
     print "Checking Java version"
     logger.debug("java_path: %s", java_path)
-    try:
-        java_version_output = esg_functions.call_subprocess(
-            "{java_path} -version".format(java_path=java_path))["stderr"]
-    except SubprocessError:
-        logger.error("Could not check the Java version")
-        raise
+    java_version_output = esg_functions.call_binary(java_path, ["-version"])
     version_line = java_version_output.split("\n")[0]
-    version = version_line.split(" ")[2]
-    installed_java_version = version.translate(None, "\"")
+    version = version_line.split("version")[1].strip()
+    installed_java_version = version.strip('\"')
 
     assert esg_version_manager.compare_versions(installed_java_version, config["java_version"])
     print "Installed java version meets the minimum requirement {}".format(config["java_version"])
@@ -94,8 +87,6 @@ def setup_java():
         if setup_java_answer.lower().strip() not in ["y", "yes"]:
             print "Skipping Java installation"
             return
-        #NOTE unused variable:
-        #last_java_truststore_file = esg_functions.readlinkf(config["truststore_file"])
 
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):
@@ -146,7 +137,7 @@ def setup_ant():
     print "******************************* \n"
 
     if os.path.exists(os.path.join("/usr", "bin", "ant")):
-        esg_functions.stream_subprocess_output("ant -version")
+        esg_functions.call_binary("ant", ["-version"])
 
         try:
             setup_ant_answer = esg_property_manager.get_property("update.ant")
@@ -157,6 +148,6 @@ def setup_ant():
         if setup_ant_answer.lower() in ["n", "no"]:
             return
 
-    esg_functions.stream_subprocess_output("yum -y install ant")
+    esg_functions.call_binary("yum", ["-y", "install", "ant"])
     write_ant_install_log()
     write_ant_env()

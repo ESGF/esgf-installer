@@ -28,6 +28,9 @@ from lxml import etree
 from esg_exceptions import UnverifiedScriptError, SubprocessError, NoNodeTypeError
 import pybash
 import esg_property_manager
+from plumbum import local
+from plumbum import TEE
+from plumbum.commands import ProcessExecutionError
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -924,6 +927,31 @@ def esgf_node_info():
     '''Print basic info about ESGF installation'''
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
+
+
+def call_binary(binary_name, arguments):
+    '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
+    try:
+        command = local[binary_name]
+    except ProcessExecutionError:
+        logger.error("Could not find %s executable", binary_name)
+        raise
+    output = command.__getitem__(arguments) & TEE
+
+    #special case where checking java version is displayed via stderr
+    if command.__str__() == '/usr/local/java/bin/java' and output[0] == 0:
+        return output[2]
+
+    #Check for stderr
+    if output[0] != 0 or output[2]:
+        logger.error("Error occurred when executing %s %s", binary_name, " ".join(arguments))
+        logger.error("stderr: %s", output[2])
+        raise ProcessExecutionError
+    else:
+        #return stdout
+        return output[1]
+
+
 
 def main():
     '''Main function'''

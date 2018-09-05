@@ -4,6 +4,7 @@ import unittest
 import os
 import errno
 import shutil
+import logging
 from context import esgf_utilities
 from context import base
 from base import esg_apache_manager
@@ -15,6 +16,8 @@ current_directory = os.path.join(os.path.dirname(__file__))
 
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
+
+logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 class test_ESG_apache(unittest.TestCase):
 

@@ -31,12 +31,14 @@ def check_java_version(java_path=os.path.join(config["java_install_dir"], "bin",
     '''Checks the Java version on the system'''
     print "Checking Java version"
     logger.debug("java_path: %s", java_path)
-    try:
-        java_version_output = esg_functions.call_subprocess(
-            "{java_path} -version".format(java_path=java_path))["stderr"]
-    except SubprocessError:
-        logger.error("Could not check the Java version")
-        raise
+    # try:
+    #     java_version_output = esg_functions.call_subprocess(
+    #         "{java_path} -version".format(java_path=java_path))["stderr"]
+    # except SubprocessError:
+    #     logger.error("Could not check the Java version")
+    #     raise
+    java_version_output = esg_functions.call_binary(java_path, ["-version"])
+    logger.debug("java_version_output: %s", java_version_output)
     version_line = java_version_output.split("\n")[0]
     version = version_line.split(" ")[2]
     installed_java_version = version.translate(None, "\"")
@@ -145,20 +147,18 @@ def setup_ant():
     print "Setting up Ant"
     print "******************************* \n"
 
-    # if os.path.exists(os.path.join("/usr", "bin", "ant")):
-    #     esg_functions.stream_subprocess_output("ant -version")
-    #
-    #     try:
-    #         setup_ant_answer = esg_property_manager.get_property("update.ant")
-    #     except ConfigParser.NoOptionError:
-    #         setup_ant_answer = raw_input(
-    #             "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
-    #
-    #     if setup_ant_answer.lower() in ["n", "no"]:
-    #         return
+    if os.path.exists(os.path.join("/usr", "bin", "ant")):
+        esg_functions.stream_subprocess_output("ant -version")
 
-    # esg_functions.stream_subprocess_output("yum -y install ant")
+        try:
+            setup_ant_answer = esg_property_manager.get_property("update.ant")
+        except ConfigParser.NoOptionError:
+            setup_ant_answer = raw_input(
+                "Do you want to continue with the Ant installation [y/N]: ") or esg_property_manager.get_property("update.ant") or "no"
+
+        if setup_ant_answer.lower() in ["n", "no"]:
+            return
+
     esg_functions.call_binary("yum", ["-y", "install", "ant"])
-    # yum["-y", "install", "ant"] & TEE
     write_ant_install_log()
     write_ant_env()

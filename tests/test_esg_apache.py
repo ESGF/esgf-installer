@@ -40,7 +40,8 @@ class test_ESG_apache(unittest.TestCase):
     def test_start_apache(self):
         try:
             esg_apache_manager.start_apache()
-        except Exception:
+        except Exception, err:
+            logger.error("Error occurred starting apache: %s", err)
             self.fail("start_apache() failed")
 
     def test_install_apache_httpd(self):
@@ -68,4 +69,4 @@ class test_ESG_apache(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

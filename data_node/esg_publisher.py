@@ -6,7 +6,6 @@ import datetime
 import re
 import logging
 import ConfigParser
-from git import Repo
 import yaml
 try:
     from pip._internal.operations import freeze
@@ -35,34 +34,9 @@ def check_publisher_version():
     else:
         print "esg-publisher not found on system."
 
-
-def clone_publisher_repo(publisher_path):
-    '''Clone the publisher repo from Github'''
-    print "Fetching the publisher project from GIT Repo... %s" % (config["publisher_repo_https"])
-
-    if not os.path.isdir(os.path.join(publisher_path, ".git")):
-        Repo.clone_from(config[
-            "publisher_repo_https"], publisher_path)
-    else:
-        print "Publisher repo already exists {publisher_path}".format(publisher_path=publisher_path)
-
-def checkout_publisher_branch(publisher_path, branch_name):
-    '''Checkout branch_name from Publisher repo'''
-    publisher_repo_local = Repo(publisher_path)
-    publisher_repo_local.git.checkout(branch_name)
-    return publisher_repo_local
-
 def symlink_pg_binary():
     '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
     pybash.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
-
-def install_publisher():
-    '''Install publisher using setup.py script'''
-    symlink_pg_binary()
-    esg_functions.stream_subprocess_output("python setup.py install")
-    #Need for esgtest_publish (the post-installation publisher test)
-    pybash.mkdir_p("/esg/data/test")
-
 
 def generate_esgsetup_options():
     '''Generate the string that will pass arguments to esgsetup to initialize the database'''
@@ -173,15 +147,17 @@ def setup_publisher():
     '''Install ESGF publisher'''
 
     print "\n*******************************"
-    print "Setting up ESGCET Package...(%s)" %(config["esgcet_egg_file"])
+    print "Setting up ESGCET Package"
     print "******************************* \n"
-    esg_publisher_version = config["publisher_tag"]
-    with pybash.pushd("/tmp"):
-        clone_publisher_repo("/tmp/esg-publisher")
-        with pybash.pushd("esg-publisher"):
-            checkout_publisher_branch("/tmp/esg-publisher", esg_publisher_version)
-            with pybash.pushd("src/python/esgcet"):
-                install_publisher()
+
+    subdir = "src/python/esgcet"
+    pkg_name = "esgcet"
+    tag = config["publisher_tag"]
+    base = "https://github.com/ESGF/esg-publisher.git"
+    pip_git = "git+{}@{}#egg={}&subdirectory={}".format(base, tag, pkg_name, subdir)
+    symlink_pg_binary()
+    esg_functions.call_binary("pip", "install {}".format(pip_git))
+    pybash.mkdir_p("/esg/data/test")
 
 
 def write_esgcet_env():

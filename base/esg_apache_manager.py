@@ -28,12 +28,12 @@ def start_apache():
 
 def stop_apache():
     '''Stop httpd server'''
-    esg_functions.stream_subprocess_output("service httpd stop")
+    esg_functions.call_binary("service", ["httpd", "stop"])
 
 
 def restart_apache():
     '''Restart httpd server'''
-    esg_functions.stream_subprocess_output("service httpd restart")
+    esg_functions.call_binary("service", ["httpd", "restart"])
 
 
 def check_apache_status():
@@ -43,15 +43,14 @@ def check_apache_status():
 
 def run_apache_config_test():
     '''Run httpd config test'''
-    esg_functions.stream_subprocess_output("service httpd configtest")
+    esg_functions.call_binary("service", ["httpd", "configtest"])
 
 
 def install_apache_httpd():
     '''Install apache from yum'''
-    esg_functions.stream_subprocess_output("yum -y update")
-    esg_functions.stream_subprocess_output(
-        "yum install -y httpd httpd-devel mod_ssl")
-    esg_functions.stream_subprocess_output("yum clean all")
+    esg_functions.call_binary("yum", ["-y", "update"])
+    esg_functions.call_binary("yum", ["-y", "install", "httpd", "httpd-devel", "mod_ssl"])
+    esg_functions.call_binary("yum", ["clean", "all"])
 
     # Custom ESGF Apache files that setup proxying
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "apache_conf/esgf-httpd"), "/etc/init.d/esgf-httpd")
@@ -111,15 +110,6 @@ def copy_apache_conf_files():
             cert_bundle_file.write(open("/etc/tempcerts/cacert.pem").read())
     except OSError:
         logger.exception()
-
-# def copy_files():
-#     shutil.copyfile("/etc/sysconfig/httpd", "/etc/sysconfig/httpd-{}".format(datetime.date.today()))
-#
-#     #add LD_LIBRARY_PATH to /etc/sysconfig/httpd
-#     with open("/etc/sysconfig/httpd", "a") as httpd_file:
-#         httpd_file.write(open(os.path.join(os.path.dirname(__file__), "apache_conf/ldval.tmpl")).read())
-
-
 
 def main():
     print "\n*******************************"

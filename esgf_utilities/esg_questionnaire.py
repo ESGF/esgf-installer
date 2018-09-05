@@ -158,7 +158,7 @@ def _choose_mail_admin_address(force_install=False):
         return
     except ConfigParser.NoOptionError:
         mail_admin_address_input = raw_input(
-            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=esg_property_manager.get_property("mail.admin.address")))
+            "What email address should notifications be sent as? [{mail_admin_address}]: ".format(mail_admin_address=None))
         if mail_admin_address_input:
             esg_property_manager.set_property(
                 "mail_admin_address", mail_admin_address_input)
@@ -167,13 +167,10 @@ def _choose_mail_admin_address(force_install=False):
 
 def _choose_publisher_db_user(force_install=False):
     '''Sets the name of the database user for the Publisher'''
-    publisher_db_user = esg_property_manager.get_property("publisher.db.user")
-    if publisher_db_user and not force_install:
-        print "Found existing value for property publisher_db_user: {publisher_db_user}".format(publisher_db_user=publisher_db_user)
-        logger.info("publisher_db_user: %s", publisher_db_user)
+    try:
+        logger.info("publisher.db.user = [%s]", esg_property_manager.get_property("publisher.db.user"))
         return
-
-    else:
+    except ConfigParser.NoOptionError:
         default_publisher_db_user = "esgcet"
         publisher_db_user_input = raw_input(
             "What is the (low privilege) db account for publisher? [{default_publisher_db_user}]: ".format(default_publisher_db_user=default_publisher_db_user)) or default_publisher_db_user

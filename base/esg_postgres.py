@@ -51,7 +51,7 @@ def check_existing_pg_version(psql_path, force_install=False):
     '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=config["postgress_min_version"])
 
-    if not os.path.exists(psql_path):
+    if not psql_path:
         print "Postgres not found on system"
     else:
         try:

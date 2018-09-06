@@ -41,6 +41,21 @@ def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="master"):
     # checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
     checkout_cog_branch(COG_INSTALL_DIR, "ESGF_3.0")
 
+def transfer_api_client_python(target_directory):
+    print "\n*******************************"
+    print "Setting up Transfer API Client"
+    print "******************************* \n"
+    if os.path.isdir(target_directory):
+        logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
+    else:
+        Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
+    with pybash.pushd(target_directory):
+        repo = Repo(os.path.join(target_directory))
+        git = repo.git
+        git.pull()
+        with pybash.pushd("mkproxy"):
+            esg_functions.stream_subprocess_output("make install")
+
 def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     # change ownership of COG_CONFIG_DIR/site_media
     apache_user = esg_functions.get_user_id("apache")
@@ -92,6 +107,9 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     with pybash.pushd(COG_INSTALL_DIR):
         # "pip install -r requirements.txt"
         esg_functions.pip_install("requirements.txt", req_file=True)
+
+        # Build and install mkproxy
+        transfer_api_client_python(os.path.join(COG_DIR, "transfer-api-client-python"))
 
         # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")

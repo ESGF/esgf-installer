@@ -945,8 +945,8 @@ def call_binary(binary_name, arguments):
     if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:
         return output[STDERR]
 
-    #Check for STDERR
-    if output[RETURN_CODE] != 0 or output[STDERR]:
+    #Check for non-zero return code
+    if output[RETURN_CODE] != 0:
         logger.error("Error occurred when executing %s %s", binary_name, " ".join(arguments))
         logger.error("STDERR: %s", output[STDERR])
         raise ProcessExecutionError

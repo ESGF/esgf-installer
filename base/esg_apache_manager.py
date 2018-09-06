@@ -5,16 +5,12 @@ import logging
 import datetime
 import ConfigParser
 from distutils.spawn import find_executable
-import yaml
 import pip
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
-
-with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
-    config = yaml.load(config_file)
 
 
 def check_for_apache_installation():

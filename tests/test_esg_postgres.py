@@ -8,7 +8,7 @@ from context import esgf_utilities
 from context import base
 from base import esg_postgres
 from esgf_utilities.esg_exceptions import SubprocessError
-from esgf_utilities.esg_purge import purge_postgres
+from esg_purge import purge_postgres
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -27,7 +27,7 @@ class test_ESG_postgres(unittest.TestCase):
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
         try:
-            esg_postgres.stop_postgress()
+            esg_postgres.stop_postgres()
         except SubprocessError, error:
             pass
         purge_postgres()
@@ -59,7 +59,7 @@ class test_ESG_postgres(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
-        esg_postgres.stop_postgress()
+        esg_postgres.stop_postgres()
         purge_postgres()
         esg_postgres.download_postgres()
         esg_postgres.start_postgres()
@@ -139,7 +139,7 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(schemas_list)
 
     def test_add_schema_from_file(self):
-        esg_postgres.setup_db_schemas(False, publisher_password="changeit")
+        esg_postgres.setup_db_schemas(publisher_password="changeit")
         db_schemas = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
         print "db_schemas:", db_schemas
         self.assertTrue("esgf_security" in db_schemas)
@@ -153,6 +153,12 @@ class test_ESG_postgres(unittest.TestCase):
         test_connection_string = esg_postgres.build_connection_string("postgres", db_name="postgres", host="localhost")
         print "test_connection_string:", test_connection_string
         self.assertIsNotNone(test_connection_string)
+
+
+    def test_create_postgres_group(self):
+        esg_postgres.create_postgres_group()
+        assertTrue("postgres" in esg_functions.get_group_list())
+
 
 
 

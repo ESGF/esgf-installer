@@ -17,6 +17,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -30,8 +31,7 @@ def download_postgres():
     print "Downloading Postgres"
     print "******************************* \n"
 
-    esg_functions.stream_subprocess_output(
-        "yum -y install postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
+    esg_functions.call_binary("yum", ["-y", "install", "postgresql-server.x86_64", "postgresql.x86_64", "postgresql-devel.x86_64"])
 
 
 def initialize_postgres():
@@ -43,7 +43,7 @@ def initialize_postgres():
     except OSError, error:
         logger.error(error)
 
-    esg_functions.stream_subprocess_output("service postgresql initdb")
+    esg_functions.call_binary("service", ["postgresql", "initdb"])
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 
@@ -51,11 +51,11 @@ def check_existing_pg_version(psql_path, force_install=False):
     '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=config["postgress_min_version"])
 
-    if not psql_path:
+    if not os.path.exists(psql_path):
         print "Postgres not found on system"
     else:
         try:
-            postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
+            postgres_version_found = esg_functions.call_binary("psql", ["--version"])
             postgres_version_number = re.search("\d.*", postgres_version_found).group()
             if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0 and not force_install:
                 logger.info("Found acceptible Postgres version")
@@ -308,19 +308,15 @@ def check_for_postgres_sys_acct():
 
 def create_postgres_group():
     '''Creates postgres Unix group'''
-    groupadd_command = "/usr/sbin/groupadd -r %s" % (
-        config["pg_sys_acct_group"])
     try:
-        groupadd_output = esg_functions.call_subprocess(groupadd_command)
-    except SubprocessError, error:
-        raise
-    else:
-        if groupadd_output["returncode"] != 0 or groupadd_output["returncode"] != 9:
-            logger.error("Could not add postgres system group: %s", config["pg_sys_acct_group"])
-            raise RuntimeError
+        esg_functions.call_binary("groupadd", ["postgres"])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
         else:
-            print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
-
+            raise
+    else:
+        print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 def set_pg_sys_account_password():
     '''Sets postgres user account password'''
@@ -343,32 +339,18 @@ def set_pg_sys_account_password():
 def create_postgres_system_user(pg_sys_acct_homedir):
     '''Create Postgres Unix user'''
     print "Creating Postgres user account..."
-    useradd_command = '''/usr/sbin/useradd -r -c'PostgreSQL Service ESGF'
-    -d {pg_sys_acct_homedir} -g {pg_sys_acct_group} -p
-    {pg_sys_acct_passwd} -s /bin/bash {pg_sys_acct}'''.format(pg_sys_acct_homedir=pg_sys_acct_homedir,
-                                                              pg_sys_acct_group=config["pg_sys_acct_group"],
-                                                              pg_sys_acct_passwd=config["pg_sys_acct_passwd"],
-                                                              pg_sys_acct=config["pg_sys_acct"])
-
+    useradd_options = ["-r", "-c" "'PostgreSQL Service ESGF'", "-d", pg_sys_acct_homedir, "-g", config["pg_sys_acct_group"], "-p", config["pg_sys_acct_passwd"], "-s", "/bin/bash", config["pg_sys_acct"]]
 
     try:
-        useradd_output = esg_functions.call_subprocess(useradd_command)
-    except SubprocessError:
-        logger.error("Could not create postgres user")
-        raise
-    else:
-        if useradd_output["returncode"] != 0 or useradd_output["returncode"] != 9:
-            raise RuntimeError("Could not add postgres system account user")
-
-
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-
-    if not postgres_user_id:
-        raise RuntimeError("Problem with {} creation!!!".format(config["pg_sys_acct"]))
+        esg_functions.call_binary("useradd", useradd_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
     else:
         postgres_group_id = grp.getgrnam("postgres").gr_gid
         print "Created postgres user with group id: {}".format(postgres_group_id)
-
 
 def get_postgres_user_shell():
     '''Returns the shell for the postgres user'''
@@ -378,9 +360,12 @@ def get_postgres_user_shell():
 def set_postgres_user_shell():
     '''Sets the postgres user shell to /bin/bash'''
     print "Noticed that the existing postgres user [{pg_sys_acct}] does not have the bash shell... Hmmm... making it so ".format(pg_sys_acct=config["pg_sys_acct"])
-    change_shell_command = "sed -i 's#\('{pg_sys_acct}'.*:\)\(.*\)$#\1/\bin/\bash#' /etc/passwd".format(
-        pg_sys_acct=config["pg_sys_acct"])
-    esg_functions.call_subprocess(change_shell_command)
+    change_shell_arguments = ["-i", "'s#\('postgres'.*:\)\(.*\)$#\1/\bin/\bash#'", "/etc/passwd"]
+    try:
+        esg_functions.call_binary("sed", change_shell_arguments)
+    except ProcessExecutionError, err:
+        logger.error(err)
+        raise
     if get_postgres_user_shell() == "/bin/bash":
         print "[OK]"
         print "Postgres user shell is properly configured"
@@ -395,8 +380,6 @@ def change_pg_install_dir_ownership():
     postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
     os.chown(config["postgress_install_dir"], postgres_user_id, postgres_group_id)
 
-
-
 #----------------------------------------------------------
 # Postgresql process management functions
 #----------------------------------------------------------
@@ -406,8 +389,9 @@ def start_postgres():
     # if the data directory doesn't exist or is empty
     if not os.path.isdir("/var/lib/pgsql/data/") or not os.listdir("/var/lib/pgsql/data/"):
         initialize_postgres()
-    esg_functions.stream_subprocess_output("service postgresql start")
-    esg_functions.stream_subprocess_output("chkconfig postgresql on")
+
+    esg_functions.call_binary("service", ["postgresql", "start"])
+    esg_functions.call_binary("chkconfig", ["postgresql", "on"])
 
     sleep(3)
     if postgres_status():
@@ -416,30 +400,37 @@ def start_postgres():
 
 def stop_postgres():
     '''Stops the postgres server'''
-    esg_functions.stream_subprocess_output("service postgresql stop")
+    esg_functions.call_binary("service", ["postgresql", "stop"])
 
 
 def postgres_status():
     '''Checks the status of the postgres server'''
-    status = esg_functions.call_subprocess("service postgresql status")
-    print "Postgres server status:", status["stdout"]
-    if "running" in status["stdout"]:
-        return (True, status)
+    try:
+        status = esg_functions.call_binary("service", ["postgresql", "status"])
+    except ProcessExecutionError, err:
+        logger.error("Postgres status check failed failed")
+        logger.error(err)
+        raise
     else:
-        return False
+        print "Postgres server status:", status
+        if "running" in status:
+            return (True, status)
+        else:
+            return False
 
 
 def restart_postgres():
     '''Restarts the postgres server'''
     print "Restarting postgres server"
-    restart_process = esg_functions.call_subprocess("service postgresql restart")
-    if restart_process["returncode"] != 0:
-        print "Restart failed."
-        print "Error:", restart_process["stderr"]
-        sys.exit(1)
+    try:
+        restart_process = esg_functions.call_binary("service", ["postgresql", "restart"])
+    except ProcessExecutionError, err:
+        logger.error("Restarting Postgres failed")
+        logger.error(err)
+        raise
     else:
-        print restart_process["stdout"]
-    sleep(7)
+        sleep(7)
+
     postgres_status()
 
 
@@ -533,9 +524,15 @@ def write_postgress_env():
 
 def write_postgress_install_log():
     '''Write postgres version to install manifest'''
-    postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
-    postgres_version_number = re.search("\d.*", postgres_version_found).group()
-    esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
+    try:
+        postgres_version_found = esg_functions.call_binary("psql", ["--version"])
+    except ProcessExecutionError, err:
+        logger.error("Postgres version check failed failed")
+        logger.error(err)
+        raise
+    else:
+        postgres_version_number = re.search("\d.*", postgres_version_found).group()
+        esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
 
 #----------------------------------------------------------
 # Postgresql informational functions

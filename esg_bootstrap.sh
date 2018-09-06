@@ -59,7 +59,7 @@ install_dependencies_pip(){
   # activate virtual env and fetch some pre-requisites
   source ${CDAT_HOME}/bin/activate esgf-pub && \
       conda install -y -c conda-forge lxml requests psycopg2 decorator Tempita myproxyclient \
-      SQLAlchemy sqlalchemy-migrate GitPython coloredlogs pip progressbar2 pyOpenSSL pylint \
+      GitPython coloredlogs pip progressbar2 pyOpenSSL pylint \
       setuptools semver Pyyaml configobj psutil
 
   # install other python pre-requisites

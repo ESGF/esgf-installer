@@ -28,7 +28,7 @@ class test_ESG_apache(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        esg_functions.stream_subprocess_output("yum remove -y httpd")
+        esg_functions.call_binary("yum", ["-y", "remove", "httpd"])
         try:
             shutil.rmtree("/var/www/.python-eggs")
             shutil.rmtree('/var/www/html/')
@@ -49,7 +49,7 @@ class test_ESG_apache(unittest.TestCase):
 
     def test_install_apache_httpd(self):
         esg_apache_manager.install_apache_httpd()
-        output = esg_functions.call_subprocess("httpd -version")["stdout"]
+        output = esg_functions.call_binary("httpd", ["-version"])
         print "output:", output
         self.assertIsNotNone(output)
 

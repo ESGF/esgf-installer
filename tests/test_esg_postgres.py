@@ -9,6 +9,7 @@ from context import base
 from base import esg_postgres
 from esgf_utilities.esg_exceptions import SubprocessError
 from esg_purge import purge_postgres
+from esgf_utilities import esg_functions
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -157,7 +158,7 @@ class test_ESG_postgres(unittest.TestCase):
 
     def test_create_postgres_group(self):
         esg_postgres.create_postgres_group()
-        assertTrue("postgres" in esg_functions.get_group_list())
+        self.assertTrue("postgres" in esg_functions.get_group_list())
 
 
 

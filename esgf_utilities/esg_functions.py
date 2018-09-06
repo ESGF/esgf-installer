@@ -952,10 +952,14 @@ def call_binary(binary_name, arguments):
         #return stdout
         return output[1]
 
-def pip_install(pkg):
+def pip_install(pkg, req_file=False):
     ''' pip installs a package to the current python environment '''
     # TODO: Fine tune options such as --log, --retries and --timeout
-    return call_binary("pip", ["install", pkg])
+    args = ["install"]
+    if req_file:
+        args.append("-r")
+    args.append(pkg)
+    return call_binary("pip", args)
 
 def pip_install_git(repo, name, tag=None, subdir=None):
     ''' Builds a properly formatted string to pip install from a git repo '''

@@ -91,7 +91,7 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     # install CoG dependencies
     with pybash.pushd(COG_INSTALL_DIR):
         # "pip install -r requirements.txt"
-        esg_functions.pip_install("-r requirements.txt")
+        esg_functions.pip_install("requirements.txt", req_file=True)
 
         # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")

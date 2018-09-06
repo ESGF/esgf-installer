@@ -10,7 +10,6 @@ import errno
 import filecmp
 import ConfigParser
 import yaml
-import pip
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from base import esg_setup
@@ -177,10 +176,6 @@ def system_component_installation(esg_dist_url, node_type_list):
         print "\n*******************************"
         print "Installing Data Node Components"
         print "******************************* \n"
-        try:
-            pip._internal.main(['install', "esgprep=={}".format(config["esgprep_version"])])
-        except AttributeError:
-            pip.main(['install', "esgprep=={}".format(config["esgprep_version"])])
         esg_publisher.main()
         from data_node import orp, thredds
         from idp_node import globus

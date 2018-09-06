@@ -21,6 +21,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager, esg_keystore_manager, esg_truststore_manager
 from esgf_utilities import esg_cert_manager, CA
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -158,6 +159,19 @@ def copy_config_files():
         sys.exit()
 
 
+
+def create_tomcat_group():
+    '''Creates Tomcat Unix group'''
+    try:
+        esg_functions.call_binary("groupadd", ["tomcat"])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
+    else:
+        print "Created tomcat group with group id: {}".format(grp.getgrnam("tomcat").gr_gid)
+
 def create_tomcat_user():
     '''Create the Tomcat system user and user group'''
     print "\n*******************************"
@@ -169,9 +183,17 @@ def create_tomcat_user():
         return
 
     if not "tomcat" in esg_functions.get_group_list():
-        esg_functions.call_subprocess("groupadd tomcat")
+        create_tomcat_group()
 
-    esg_functions.call_subprocess("useradd -s /sbin/nologin -g tomcat -d /usr/local/tomcat tomcat")
+    useradd_options = ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat", "tomcat"]
+    try:
+        esg_functions.call_binary("useradd", useradd_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
+
     tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(
         TOMCAT_VERSION=TOMCAT_VERSION)
     tomcat_user_id = pwd.getpwnam("tomcat").pw_uid
@@ -193,6 +215,7 @@ def start_tomcat():
         esg_functions.stream_subprocess_output("/usr/local/tomcat/bin/catalina.sh start")
     except SubprocessError, error:
         logger.error("Could not start Tomcat")
+        logger.error(error)
         raise
 
     check_tomcat_status()

@@ -931,6 +931,9 @@ def esgf_node_info():
 
 def call_binary(binary_name, arguments):
     '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
+    RETURN_CODE = 0
+    STDOUT = 1
+    STDERR = 2
     try:
         command = local[binary_name]
     except ProcessExecutionError:
@@ -939,17 +942,16 @@ def call_binary(binary_name, arguments):
     output = command.__getitem__(arguments) & TEE
 
     #special case where checking java version is displayed via stderr
-    if command.__str__() == '/usr/local/java/bin/java' and output[0] == 0:
-        return output[2]
+    if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:
+        return output[STDERR]
 
-    #Check for stderr
-    if output[0] != 0 or output[2]:
+    #Check for STDERR
+    if output[RETURN_CODE] != 0 or output[STDERR]:
         logger.error("Error occurred when executing %s %s", binary_name, " ".join(arguments))
-        logger.error("stderr: %s", output[2])
+        logger.error("STDERR: %s", output[STDERR])
         raise ProcessExecutionError
     else:
-        #return stdout
-        return output[1]
+        return output[STDOUT]
 
 
 

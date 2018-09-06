@@ -18,10 +18,6 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 
 class test_ESG_postgres(unittest.TestCase):
 
-    # def test_check_for_postgres_db_user(self):
-    #     esg_postgres.stop_postgress()
-    #     esg_postgres.check_for_postgres_db_user()
-
     @classmethod
     def setUpClass(cls):
         print "\n*******************************"
@@ -154,13 +150,6 @@ class test_ESG_postgres(unittest.TestCase):
         test_connection_string = esg_postgres.build_connection_string("postgres", db_name="postgres", host="localhost")
         print "test_connection_string:", test_connection_string
         self.assertIsNotNone(test_connection_string)
-
-
-    def test_create_postgres_group(self):
-        esg_postgres.create_postgres_group()
-        self.assertTrue("postgres" in esg_functions.get_group_list())
-
-
 
 
 

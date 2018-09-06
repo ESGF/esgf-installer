@@ -964,7 +964,7 @@ def pip_install(pkg, req_file=False):
 def pip_install_git(repo, name, tag=None, subdir=None):
     ''' Builds a properly formatted string to pip install from a git repo '''
     git_pkg = "git+{repo}{tag}#egg={name}{subdir}".format(
-        repo=repo,
+        repo=repo if repo.endswith(".git") else repo+".git",
         name=name,
         tag="@"+tag if tag is not None else "",
         subdir="&subdirectory="+subdir if subdir is not None else ""

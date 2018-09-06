@@ -6,7 +6,6 @@ import datetime
 import ConfigParser
 from distutils.spawn import find_executable
 import yaml
-import pip
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities import esg_functions
@@ -73,12 +72,10 @@ def install_mod_wsgi():
     print "Setting mod_wsgi"
     print "******************************* \n"
 
-    try:
-        pip._internal.main(['install', "mod_wsgi==4.5.3"])
-    except AttributeError:
-        pip.main(['install', "mod_wsgi==4.5.3"])
+    esg_functions.pip_install("mod_wsgi==4.5.3")
     with pybash.pushd("/etc/httpd/modules"):
         # If installer running in a conda env
+        # TODO Make this more resilient to potential changes
         if "conda" in find_executable("python"):
             pybash.symlink_force(
                 "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so", "/etc/httpd/modules/mod_wsgi-py27.so")

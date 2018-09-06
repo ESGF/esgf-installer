@@ -3,7 +3,6 @@ import shutil
 import logging
 import ConfigParser
 import yaml
-import pip
 from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
@@ -41,38 +40,6 @@ def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="master"):
     Repo.clone_from("https://github.com/William-Hill/COG.git", COG_INSTALL_DIR, progress=Progress())
     # checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
     checkout_cog_branch(COG_INSTALL_DIR, "ESGF_3.0")
-
-#TODO:Probably need to add a force_install param to force an update
-def setup_django_openid_auth(target_directory):
-    print "\n*******************************"
-    print "Setting up Django OpenID Auth"
-    print "******************************* \n"
-
-    if os.path.isdir(target_directory):
-        logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
-    else:
-        Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
-
-    with pybash.pushd(target_directory):
-        esg_functions.stream_subprocess_output("python setup.py install")
-
-def transfer_api_client_python(target_directory):
-    print "\n*******************************"
-    print "Setting up Transfer API Client"
-    print "******************************* \n"
-    if os.path.isdir(target_directory):
-        logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
-    else:
-        Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
-
-    with pybash.pushd(target_directory):
-        # esg_functions.stream_subprocess_output("python setup.py install")
-        repo = Repo(os.path.join(target_directory))
-        git = repo.git
-        git.pull()
-        with pybash.pushd("mkproxy"):
-            esg_functions.stream_subprocess_output("make")
-            shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy")
 
 def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     # change ownership of COG_CONFIG_DIR/site_media
@@ -114,23 +81,20 @@ def setup_cog(COG_DIR="/usr/local/cog"):
     except GitCommandError, error:
         logger.exception("Failed to clone COG repo: \n %s", error)
 
+    # XXX The git url for django openid auth is a fork at v0.7
+    #  of the real project. The real project is now at v0.14,
+    #  but has very little development currently
+    esg_functions.pip_install_git(
+        "https://github.com/EarthSystemCoG/django-openid-auth.git",
+        "django-openid-auth"
+    )
     # install CoG dependencies
     with pybash.pushd(COG_INSTALL_DIR):
         # "pip install -r requirements.txt"
-        with open("requirements.txt", "r") as req_file:
-            requirements = req_file.readlines()
-        for req in requirements:
-            try:
-                pip._internal.main(['install', req.strip()])
-            except AttributeError:
-                pip.main(['install', req.strip()])
+        esg_functions.pip_install("-r requirements.txt")
 
         # setup CoG database and configuration
         esg_functions.stream_subprocess_output("python setup.py install")
-        # manually install additional dependencies
-        transfer_api_client_python(os.path.join(COG_DIR, "transfer-api-client-python"))
-
-        setup_django_openid_auth(os.path.join(COG_DIR, "django-openid-auth"))
 
         # create or upgrade CoG installation
         esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=true")

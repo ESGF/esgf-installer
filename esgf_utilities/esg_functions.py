@@ -14,6 +14,7 @@ import hashlib
 import shlex
 import socket
 import errno
+import json
 import pwd
 import grp
 import stat
@@ -953,7 +954,37 @@ def call_binary(binary_name, arguments):
     else:
         return output[STDOUT]
 
+def pip_install(pkg, req_file=False):
+    ''' pip installs a package to the current python environment '''
+    # TODO: Fine tune options such as --log, --retries and --timeout
+    args = ["install"]
+    if req_file:
+        args.append("-r")
+    args.append(pkg)
+    return call_binary("pip", args)
 
+def pip_install_git(repo, name, tag=None, subdir=None):
+    ''' Builds a properly formatted string to pip install from a git repo '''
+    git_pkg = "git+{repo}{tag}#egg={name}{subdir}".format(
+        repo=repo if repo.endswith(".git") else repo+".git",
+        name=name,
+        tag="@"+tag if tag is not None else "",
+        subdir="&subdirectory="+subdir if subdir is not None else ""
+    )
+    return pip_install(git_pkg)
+
+def pip_version(pkg_name):
+    ''' Get the version of a package installed with pip, return None if not installed '''
+    info = call_binary("pip", ["list", "--format=json"])
+    info = json.loads(info)
+    # Get the dictionary with "name" matching pkg_name, if not present get None
+    pkg = next((pkg for pkg in info if pkg["name"] == pkg_name), None)
+    if pkg is None:
+        print "{} not found in pip list".format(pkg_name)
+        return None
+    else:
+        print "Found version {} of {} in pip list".format(str(pkg['version']), pkg_name)
+        return str(pkg['version'])
 
 def main():
     '''Main function'''

@@ -3,14 +3,9 @@
 '''
 import os
 import datetime
-import re
 import logging
 import ConfigParser
 import yaml
-try:
-    from pip._internal.operations import freeze
-except ImportError:
-    from pip.operations import freeze
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
@@ -24,15 +19,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 def check_publisher_version():
     '''Check if an existing version of the Publisher is found on the system'''
-    module_list = list(freeze.freeze())
-    matcher = re.compile("esgcet==.*")
-    results_list = filter(matcher.match, module_list)
-    if results_list:
-        version = results_list[0].split("==")[1]
-        print "Found existing esg-publisher installation (esg-publisher version {version})".format(version=version)
-        return version
-    else:
-        print "esg-publisher not found on system."
+    return esg_functions.pip_version("esgcet")
 
 def symlink_pg_binary():
     '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
@@ -143,7 +130,7 @@ def run_esginitialize():
             print esginitialize_process["stdout"]
             print esginitialize_process["stderr"]
 
-def setup_publisher():
+def setup_publisher(tag=config["publisher_tag"]):
     '''Install ESGF publisher'''
 
     print "\n*******************************"
@@ -152,11 +139,9 @@ def setup_publisher():
 
     subdir = "src/python/esgcet"
     pkg_name = "esgcet"
-    tag = config["publisher_tag"]
-    base = "https://github.com/ESGF/esg-publisher.git"
-    pip_git = "git+{}@{}#egg={}&subdirectory={}".format(base, tag, pkg_name, subdir)
+    repo = "https://github.com/ESGF/esg-publisher.git"
     symlink_pg_binary()
-    esg_functions.call_binary("pip", ["install", pip_git])
+    esg_functions.pip_install_git(repo, pkg_name, tag, subdir)
     pybash.mkdir_p("/esg/data/test")
 
 

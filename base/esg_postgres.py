@@ -91,23 +91,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
 
     download_postgres()
 
-    #Create system account (postgres) if it doesn't exist
-    ########
-    # Create the system account for postgress to run as.
-    ########
-    pg_sys_acct_homedir = psql_path
-    if not check_for_postgres_sys_acct():
-        # NOTE: "useradd/groupadd" are a RedHat/CentOS thing... to make this cross distro compatible clean this up.
-        create_postgres_group()
-        set_pg_sys_account_password()
-        create_postgres_system_user(pg_sys_acct_homedir)
-
-    else:
-        postgress_user_shell = get_postgres_user_shell()
-        if postgress_user_shell != "/bin/bash":
-            set_postgres_user_shell()
-    change_pg_install_dir_ownership()
-
     initialize_postgres()
 
     # start the postgres server
@@ -295,90 +278,6 @@ def create_pg_pass_file():
         pg_pass_file.write('localhost:5432:esgcet:dbsuper:password')
     os.chmod(pg_pass_file_path, 0600)
 
-
-def check_for_postgres_sys_acct():
-    '''Check if the postgres user account exists on the server'''
-    try:
-        pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    except KeyError:
-        print " Hmmm...: There is no postgres system account user \"{pg_sys_acct}\" present on system, making one...".format(pg_sys_acct=config["pg_sys_acct"])
-    else:
-        return True
-
-
-def create_postgres_group():
-    '''Creates postgres Unix group'''
-    try:
-        esg_functions.call_binary("groupadd", ["postgres"])
-    except ProcessExecutionError, err:
-        if err.retcode == 9:
-            pass
-        else:
-            raise
-    else:
-        print "Created postgres group with group id: {postgres_group_id}".format(postgres_group_id=grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
-
-def set_pg_sys_account_password():
-    '''Sets postgres user account password'''
-    if esg_functions.get_postgres_password():
-        logger.info("Postgres password already set")
-        return
-    else:
-        while True:
-            pg_sys_acct_passwd_input = getpass.getpass(
-                "Create password for postgress system account: ")
-            if not pg_sys_acct_passwd_input:
-                print "Please enter a password: "
-                continue
-            else:
-                config["pg_sys_acct_passwd"] = pg_sys_acct_passwd_input
-                break
-        esg_functions.set_postgres_password(pg_sys_acct_passwd_input)
-
-
-def create_postgres_system_user(pg_sys_acct_homedir):
-    '''Create Postgres Unix user'''
-    print "Creating Postgres user account..."
-    useradd_options = ["-r", "-c" "'PostgreSQL Service ESGF'", "-d", pg_sys_acct_homedir, "-g", config["pg_sys_acct_group"], "-p", config["pg_sys_acct_passwd"], "-s", "/bin/bash", config["pg_sys_acct"]]
-
-    try:
-        esg_functions.call_binary("useradd", useradd_options)
-    except ProcessExecutionError, err:
-        if err.retcode == 9:
-            pass
-        else:
-            raise
-    else:
-        postgres_group_id = grp.getgrnam("postgres").gr_gid
-        print "Created postgres user with group id: {}".format(postgres_group_id)
-
-def get_postgres_user_shell():
-    '''Returns the shell for the postgres user'''
-    return pwd.getpwnam(config["pg_sys_acct"])[6]
-
-
-def set_postgres_user_shell():
-    '''Sets the postgres user shell to /bin/bash'''
-    print "Noticed that the existing postgres user [{pg_sys_acct}] does not have the bash shell... Hmmm... making it so ".format(pg_sys_acct=config["pg_sys_acct"])
-    change_shell_arguments = ["-i", "'s#\('postgres'.*:\)\(.*\)$#\1/\bin/\bash#'", "/etc/passwd"]
-    try:
-        esg_functions.call_binary("sed", change_shell_arguments)
-    except ProcessExecutionError, err:
-        logger.error(err)
-        raise
-    if get_postgres_user_shell() == "/bin/bash":
-        print "[OK]"
-        print "Postgres user shell is properly configured"
-    else:
-        print "[FAIL]"
-        print "Postgres user shell is not properly configured. The shell is {postgres_shell}. It should be /bin/bash".format(postgres_shell=get_postgres_user_shell())
-
-
-def change_pg_install_dir_ownership():
-    '''Change permissions on postgress_install_dir'''
-    postgres_user_id = pwd.getpwnam(config["pg_sys_acct"]).pw_uid
-    postgres_group_id = grp.getgrnam(config["pg_sys_acct_group"]).gr_gid
-    os.chown(config["postgress_install_dir"], postgres_user_id, postgres_group_id)
 
 #----------------------------------------------------------
 # Postgresql process management functions

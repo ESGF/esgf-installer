@@ -56,7 +56,6 @@ class Java(JavaConfig):
             raise RuntimeError
     def install(self):
         '''Called by the Installer if this component needs to be installed'''
-        esg_functions.install_header("Java", version=self.java_version)
         pybash.mkdir_p(self.workdir)
         with pybash.pushd(self.workdir):
 
@@ -106,36 +105,11 @@ class Java(JavaConfig):
 class Ant(AntConfig):
     def __init__(self):
         AntConfig.__init__(self)
-        self.existing_version = None
-        logger.debug("Initialize an Ant component")
-
-    def version(self):
-        ''' Gets the version of ant using "ant -version" '''
-        if find_executable("ant") is not None:
-            version_output = esg_functions.call_subprocess("ant -version")['stdout']
-            self.existing_version = version_output.split(" ")[3]
-            logger.debug("ant %s %s", find_executable("ant"), self.existing_version)
-            return self.existing_version
-        return None
-
-    def status(self):
-        '''Check status of this components installation, return respective code to the Installer'''
-        self.existing_version = self.version()
-        if self.existing_version is not None:
-            # valid_version = esg_version_manager.compare_versions(self.existing_version, self.ant_version)
-            return install_codes.OK
-        return install_codes.NOT_INSTALLED
-
-    def install(self):
-        '''Called by the Installer if this component needs to be installed'''
-        esg_functions.install_header("Ant")
-
-        esg_functions.stream_subprocess_output("yum -y install ant")
-
-        self.post_install()
+        self.pkg_names = {
+            "yum": "ant"
+        }
 
     def post_install(self):
         '''Writes Ant config to install manifest and env'''
         EnvWriter.write("ANT_HOME", find_executable("ant"))
-        logger.debug("ant %s %s", find_executable("ant"), self.version())
-        esg_functions.write_to_install_manifest("ant", find_executable("ant"), self.version())
+        logger.debug("ant %s", find_executable("ant"))

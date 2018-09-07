@@ -21,6 +21,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager, esg_keystore_manager, esg_truststore_manager
 from esgf_utilities import esg_cert_manager, CA
+from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
@@ -402,7 +403,7 @@ def edit_server_xml():
 
 def write_tomcat_env():
     '''Write tomcat environment info to /etc/esg.env'''
-    esg_property_manager.set_property("CATALINA_HOME", "export CATALINA_HOME={}".format(config["tomcat_install_dir"]), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.export("CATALINA_HOME", config["tomcat_install_dir"])
     esg_property_manager.set_property("PATH_with_tomcat", os.environ["PATH"]+":/usr/local/tomcat/bin")
 
 def write_tomcat_install_log():

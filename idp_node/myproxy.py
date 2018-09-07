@@ -16,6 +16,7 @@ from esgf_utilities import esg_cert_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from base import esg_postgres
+from esgf_utilities.esg_env_manager import EnvWriter
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -342,5 +343,4 @@ def edit_etc_myproxyd(myproxy_esgf_path="/etc/myproxy.d/myproxy-esgf"):
     shutil.copyfile(os.path.join(current_directory, "../config/myproxy-esgf"), myproxy_esgf_path)
 
 def write_db_name_env():
-    esgf_db_name = esg_property_manager.get_property("db.database")
-    esg_property_manager.set_property("ESGF_DB_NAME", "export ESGF_DB_NAME={}".format(esgf_db_name), property_file=config["envfile"], section_name="esgf.env", separator="_")
+    EnvWriter.export("ESGF_DB_NAME", esg_property_manager.get_property("db.database"))

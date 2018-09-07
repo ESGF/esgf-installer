@@ -252,9 +252,12 @@ def write_tds_env():
 
 def update_mail_admin_address():
     '''Updates mail_admin_address in threddsConfig.xml'''
-    mail_admin_address = esg_property_manager.get_property("mail.admin.address")
-    esg_functions.stream_subprocess_output('sed -i "s/support@my.group/{mail_admin_address}/g" /esg/content/thredds/threddsConfig.xml'.format(mail_admin_address=mail_admin_address))
-
+    try:
+        mail_admin_address = esg_property_manager.get_property("mail.admin.address")
+    except ConfigParser.NoOptionError:
+        return
+    else:
+        esg_functions.replace_string_in_file('/esg/content/thredds/threddsConfig.xml', "support@my.group", mail_admin_address)
 
 def esgsetup_thredds():
     '''Configures Thredds with esgsetup'''

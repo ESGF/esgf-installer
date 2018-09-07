@@ -14,6 +14,7 @@ import hashlib
 import shlex
 import socket
 import errno
+import json
 import pwd
 import grp
 import stat
@@ -28,6 +29,9 @@ from lxml import etree
 from esg_exceptions import UnverifiedScriptError, SubprocessError, NoNodeTypeError
 import pybash
 import esg_property_manager
+from plumbum import local
+from plumbum import TEE
+from plumbum.commands import ProcessExecutionError
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -382,7 +386,11 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
 def stream_subprocess_output(command_string):
     ''' Print out the stdout of the subprocess in real time '''
     try:
-        process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
+        logger.debug("Streaming subprocess stdout")
+        logger.debug("Raw command string: %s", command_string)
+        shlexsplit = shlex.split(command_string)
+        logger.debug("shlex.split %s", str(shlexsplit))
+        process = subprocess.Popen(shlexsplit, stdout=subprocess.PIPE)
         with process.stdout:
             for line in iter(process.stdout.readline, b''):
                 print line,
@@ -554,7 +562,7 @@ def get_postgres_password():
     pg_password = None
     try:
         with open(config['pg_secret_file'], "r") as secret_file:
-            pg_password = secret_file.read()
+            pg_password = secret_file.read().strip()
     except IOError:
         logger.exception("Could not open %s", config['pg_secret_file'])
 
@@ -920,6 +928,63 @@ def esgf_node_info():
     '''Print basic info about ESGF installation'''
     with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
         print info_file.read()
+
+
+def call_binary(binary_name, arguments):
+    '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
+    RETURN_CODE = 0
+    STDOUT = 1
+    STDERR = 2
+    try:
+        command = local[binary_name]
+    except ProcessExecutionError:
+        logger.error("Could not find %s executable", binary_name)
+        raise
+    output = command.__getitem__(arguments) & TEE
+
+    #special case where checking java version is displayed via stderr
+    if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:
+        return output[STDERR]
+
+    #Check for non-zero return code
+    if output[RETURN_CODE] != 0:
+        logger.error("Error occurred when executing %s %s", binary_name, " ".join(arguments))
+        logger.error("STDERR: %s", output[STDERR])
+        raise ProcessExecutionError
+    else:
+        return output[STDOUT]
+
+def pip_install(pkg, req_file=False):
+    ''' pip installs a package to the current python environment '''
+    # TODO: Fine tune options such as --log, --retries and --timeout
+    args = ["install"]
+    if req_file:
+        args.append("-r")
+    args.append(pkg)
+    return call_binary("pip", args)
+
+def pip_install_git(repo, name, tag=None, subdir=None):
+    ''' Builds a properly formatted string to pip install from a git repo '''
+    git_pkg = "git+{repo}{tag}#egg={name}{subdir}".format(
+        repo=repo if repo.endswith(".git") else repo+".git",
+        name=name,
+        tag="@"+tag if tag is not None else "",
+        subdir="&subdirectory="+subdir if subdir is not None else ""
+    )
+    return pip_install(git_pkg)
+
+def pip_version(pkg_name):
+    ''' Get the version of a package installed with pip, return None if not installed '''
+    info = call_binary("pip", ["list", "--format=json"])
+    info = json.loads(info)
+    # Get the dictionary with "name" matching pkg_name, if not present get None
+    pkg = next((pkg for pkg in info if pkg["name"] == pkg_name), None)
+    if pkg is None:
+        print "{} not found in pip list".format(pkg_name)
+        return None
+    else:
+        print "Found version {} of {} in pip list".format(str(pkg['version']), pkg_name)
+        return str(pkg['version'])
 
 def main():
     '''Main function'''

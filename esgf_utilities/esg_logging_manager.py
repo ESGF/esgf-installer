@@ -22,6 +22,7 @@ def main():
 
     error_log_path = os.path.join(logs_dir, "esgf_error_log.out")
     info_log_path = os.path.join(logs_dir, "esgf_info_log.out")
+    debug_log_path = os.path.join(logs_dir, "esgf_debug_log.out")
     #----------------------------------------------------------------------
     logger = logging.getLogger('esgf_logger')
     logger.setLevel(logging.DEBUG)
@@ -34,8 +35,12 @@ def main():
     info_handler = RotatingFileHandler(info_log_path, maxBytes=10*1024*1024,
                                   backupCount=5)
 
+    debug_handler = RotatingFileHandler(debug_log_path, maxBytes=10*1024*1024,
+                                  backupCount=5)
+
     error_handler.setLevel(logging.ERROR)
     info_handler.setLevel(logging.INFO)
+    debug_handler.setLevel(logging.DEBUG)
 
     # create console handler with a higher log level
     ch = logging.StreamHandler()
@@ -47,10 +52,12 @@ def main():
 
     error_handler.setFormatter(formatter)
     info_handler.setFormatter(formatter)
+    debug_handler.setFormatter(formatter)
     ch.setFormatter(color_formatter)
 
     logger.addHandler(error_handler)
     logger.addHandler(info_handler)
+    logger.addHandler(debug_handler)
     logger.addHandler(ch)
 
 

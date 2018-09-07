@@ -138,7 +138,7 @@ def purge_base():
     try:
         esg_functions.call_binary("umount", ["/esg/gridftp_root/esg_dataroot"])
     except ProcessExecutionError:
-        logger.exception("Could not unmount /esg/gridftp_root/esg_dataroot")
+        pass
 
     for directory in directories_to_delete:
         try:

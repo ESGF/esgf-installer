@@ -24,7 +24,7 @@ def purge_postgres():
     print "******************************* \n"
 
     try:
-        esg_functions.call_binary("service" ["postgresql", "stop"])
+        esg_functions.call_binary("service", ["postgresql", "stop"])
     except ProcessExecutionError:
         pass
 
@@ -77,7 +77,7 @@ def purge_tomcat():
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     try:
-        esg_functions.call_binary("pkill" ["-9", "-f", "'java.*/usr/local/tomcat'"])
+        esg_functions.call_binary("pkill", ["-9", "-f", "'java.*/usr/local/tomcat'"])
     except ProcessExecutionError:
         pass
 
@@ -256,7 +256,7 @@ def purge_solr():
             logger.exception("Could not delete symlink /usr/local/tomcat")
     # Solr may leave stuck java processes.  Kill them with extreme prejudice
     try:
-        esg_functions.call_binary("pkill" ["-9", "-f", "'java.*/usr/local/tomcat'"])
+        esg_functions.call_binary("pkill", ["-9", "-f", "'java.*/usr/local/tomcat'"])
     except ProcessExecutionError:
         pass
 

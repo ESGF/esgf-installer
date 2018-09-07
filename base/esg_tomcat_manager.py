@@ -75,19 +75,13 @@ def extract_tomcat_tarball(dest_dir="/usr/local"):
             "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
 
         # Create symlink
-        create_symlink(TOMCAT_VERSION)
+        pybash.symlink_force(
+            "/usr/local/apache-tomcat-{}".format(TOMCAT_VERSION), "/usr/local/tomcat")
         try:
             os.remove(
                 "/tmp/apache-tomcat-{TOMCAT_VERSION}.tar.gz".format(TOMCAT_VERSION=TOMCAT_VERSION))
         except OSError, error:
             print "error:", error
-
-
-def create_symlink(tomcat_version):
-    '''Create symlink from tomcat install directory to /usr/local/tomcat'''
-    pybash.symlink_force(
-        "/usr/local/apache-tomcat-{}".format(tomcat_version), "/usr/local/tomcat")
-
 
 def remove_example_webapps():
     '''remove Tomcat example applications'''
@@ -138,7 +132,6 @@ def setup_root_app():
 
 def copy_config_files():
     '''copy custom configuration
-    server.xml: includes references to keystore, truststore in /esg/config/tomcat
     context.xml: increases the Tomcat cache to avoid flood of warning messages'''
 
     print "\n*******************************"
@@ -209,6 +202,10 @@ def start_tomcat():
     print "\n*******************************"
     print "Attempting to start Tomcat"
     print "******************************* \n"
+
+    # This is used by esgf security/node_manager to find the properties file and password files
+    os.environ["ESGF_HOME"] = config["esg_root_dir"]
+
     if check_tomcat_status():
         print "Tomcat already running"
         return
@@ -461,7 +458,7 @@ def setup_tomcat_logrotate():
     default is to cut files after 512M up to 20 times (10G of logs)
     No file older than year should be kept.'''
     if not os.path.exists("/usr/sbin/logrotate"):
-        print "Not able to find logrotate here [/usr/local/logrotate]"
+        print "Not able to find logrotate here [/usr/sbin/logrotate]"
         return False
 
     log_rot_size = "512M"
@@ -514,11 +511,21 @@ def configure_tomcat():
     print "*******************************"
 
     setup_tomcat_logrotate()
-
+    esg_property_manager.set_property(
+        "short.lived.certificate.server",
+        esg_functions.get_esgf_host()
+    )
     with pybash.pushd("/usr/local/tomcat/conf"):
-        # Get server.xml
-        # if not os.path.exists("server.xml"):
-        shutil.copyfile(os.path.join(current_directory, "tomcat_conf/server.xml"), "/usr/local/tomcat/conf/server.xml")
+        server_tmpl = os.path.join(current_directory, "tomcat_conf/server.xml.tmpl")
+        with open(server_tmpl, "r") as template:
+            server_tmpl = template.read()
+            server_xml = server_tmpl.format(
+                proxyName=esg_functions.get_esgf_host(),
+                tspass=esg_functions.get_java_keystore_password(),
+                kspass=esg_functions.get_java_keystore_password()
+            )
+        with open("/usr/local/tomcat/conf/server.xml", "w") as xml_file:
+            xml_file.write(server_xml)
         tomcat_user = esg_functions.get_user_id("tomcat")
         tomcat_group = esg_functions.get_group_id("tomcat")
         os.chmod("/usr/local/tomcat/conf/server.xml", 0600)

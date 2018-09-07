@@ -69,7 +69,7 @@
     <Connector port="8080" protocol="HTTP/1.1"
                connectionTimeout="20000"
                proxyPort="8080"
-               proxyName="esgf-dev2.llnl.gov"
+               proxyName="{proxyName}"
                server='X'
                redirectPort="8443" />
 
@@ -85,19 +85,19 @@
          connector should be using the OpenSSL style configuration
          described in the APR documentation -->
 
-<!--TODO: Update keyAlias; truststorePass and keystorePass  -->
+<!--TODO: Update keyAlias; -->
     <Connector port="8443" SSLEnabled="true" maxHttpHeaderSize="8192"
                maxThreads="150" minSpareThreads="25" maxSpareThreads="75"
                enableLookups="false" disableUploadTimeout="true"
                acceptCount="100" scheme="https" secure="true"
                clientAuth="want" sslEnabledProtocols="TLSv1.2"
                proxyPort="443"
-               proxyName="esgf-dev2.llnl.gov"
+               proxyName="{proxyName}"
                server='X'
                ciphers="TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_128_CBC_SHA"
-               truststoreFile="/esg/config/tomcat/esg-truststore.ts" truststorePass="changeit"
+               truststoreFile="/esg/config/tomcat/esg-truststore.ts" truststorePass="{tspass}"
                keyAlias="my_esgf_node"
-               keystoreFile="/esg/config/tomcat/keystore-tomcat" keystorePass="changeit"/>
+               keystoreFile="/esg/config/tomcat/keystore-tomcat" keystorePass="{kspass}"/>
 
     <!-- The tomcat webapps are proxied from port 8223 -->
     <Connector port="8223" protocol="AJP/1.3" redirectPort="8443"

@@ -1,16 +1,35 @@
 
 from base.esg_java import Java, Ant
+from .methods import PackageManager, Mirror
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
-    def __init__(self, node_types):
+    def __init__(self, node):
         # Store what components are needed for each node type.
-        nodes = {
-            # "data": [ Foo ],
-            # "index": [ Foo, Bar ]
-            "base": [ Java, Ant ]
+        node_types = {
+            # "data": { Foo },
+            # "index": { Foo, Bar }
+            "base": { Java, Ant }
         }
+        # Find unique components, as there may be overlap
+        component_types = set()
+        for node_type in node:
+            component_types |= node_types[node_type]
+
+        method_types = {
+            PackageManager: { Ant },
+            Mirror: { Java }
+        }
+        methods = set()
+        for method_type in method_types:
+            components = method_types[method_type] & component_types
+            methods.add(method_type(components))
+
+        for method in methods:
+            method.install()
+
+
         self.components_status = {
             OK: [],
             NOT_INSTALLED: [],
@@ -18,18 +37,16 @@ class Installer(object):
         }
         self.divider = "_"*30
         self.header = self.divider + "\n{}"
-        # Find unique components, as there may be overlap
-        component_types = set()
-        for node_type in node_types:
-            for component in nodes[node_type]:
-                component_types.add(component)
 
-        # Initialize the unique types and give them a dictionary to store information
-        self.components = []
-        print self.header.format("Creating objects")
-        for component in component_types:
-            self.components.append(component())
-            print "    {}".format(type(component).__name__)
+        #
+        #
+        #
+        # # Initialize the unique types
+        # self.components = []
+        # print self.header.format("Creating objects")
+        # for component in component_types:
+        #     print "    {}".format(component.__name__)
+        #     self.components.append(component())
 
     def status_check(self):
         # Check the status of of component
@@ -52,5 +69,7 @@ class Installer(object):
                 print "    {} {}".format(type(component).__name__, component.version())
 
     def install(self):
+        for component in self.components_status[NOT_INSTALLED]:
+            self.learn_properties(component)
         # Handle components based on their status
         pass

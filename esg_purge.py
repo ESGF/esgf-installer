@@ -10,6 +10,7 @@ from esgf_utilities import esg_functions, pybash
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from index_node import solr
+from plumbum.commands import ProcessExecutionError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -23,17 +24,16 @@ def purge_postgres():
     print "******************************* \n"
 
     try:
-        esg_functions.stream_subprocess_output("service postgresql stop")
-    except SubprocessError, error:
+        esg_functions.call_binary("service" ["postgresql", "stop"])
+    except ProcessExecutionError:
         pass
 
     try:
-        esg_functions.stream_subprocess_output("yum remove -y postgresql-server.x86_64 postgresql.x86_64 postgresql-devel.x86_64")
-    except SubprocessError:
+        esg_functions.call_binary("yum", ["remove", "-y", "postgresql-server.x86_64", "postgresql.x86_64", "postgresql-devel.x86_64"])
+    except ProcessExecutionError:
         pass
 
     try:
-        # shutil.rmtree("/usr/local/pgsql")
         shutil.rmtree("/var/lib/pgsql")
         os.remove(os.path.join(os.environ["HOME"], ".pgpass"))
     except OSError:
@@ -77,8 +77,8 @@ def purge_tomcat():
 
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     try:
-        esg_functions.stream_subprocess_output("pkill -9 -f 'java.*/usr/local/tomcat'")
-    except SubprocessError:
+        esg_functions.call_binary("pkill" ["-9", "-f", "'java.*/usr/local/tomcat'"])
+    except ProcessExecutionError:
         pass
 
 def purge_java():
@@ -112,8 +112,8 @@ def purge_ant():
     print "Purging Ant"
     print "******************************* \n"
     try:
-        esg_functions.stream_subprocess_output("yum remove -y ant")
-    except SubprocessError:
+        esg_functions.call_binary("yum", ["remove", "-y", "ant"])
+    except ProcessExecutionError:
         pass
 
 def purge_thredds():
@@ -136,8 +136,8 @@ def purge_base():
 
     files_to_delete = ["/etc/httpd/conf/esgf-httpd.conf", "/usr/local/bin/add_checksums_to_map.sh"]
     try:
-        esg_functions.stream_subprocess_output("umount /esg/gridftp_root/esg_dataroot")
-    except SubprocessError:
+        esg_functions.call_binary("umount", ["/esg/gridftp_root/esg_dataroot"])
+    except ProcessExecutionError:
         logger.exception("Could not unmount /esg/gridftp_root/esg_dataroot")
 
     for directory in directories_to_delete:
@@ -208,8 +208,8 @@ def purge_cog():
 
 def purge_apache():
     try:
-        esg_functions.stream_subprocess_output("yum remove -y httpd httpd-devel mod_ssl")
-    except SubprocessError:
+        esg_functions.call_binary("yum", ["remove", "-y", "httpd", "httpd-devel", "mod_ssl"])
+    except ProcessExecutionError:
         pass
 
     try:
@@ -256,14 +256,14 @@ def purge_solr():
             logger.exception("Could not delete symlink /usr/local/tomcat")
     # Solr may leave stuck java processes.  Kill them with extreme prejudice
     try:
-        esg_functions.stream_subprocess_output("pkill -9 -f 'java.*/usr/local/tomcat'")
-    except SubprocessError:
+        esg_functions.call_binary("pkill" ["-9", "-f", "'java.*/usr/local/tomcat'"])
+    except ProcessExecutionError:
         pass
 
 
 def purge_globus():
     logger.info("Purging Globus")
-    esg_functions.stream_subprocess_output("yum remove -y globus\* myproxy\*")
+    esg_functions.call_binary("yum", ["remove", "-y", "globus\* myproxy\*"])
 
     try:
         shutil.rmtree("/etc/esgfcerts")

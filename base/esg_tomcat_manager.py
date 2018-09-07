@@ -14,7 +14,6 @@ from time import sleep
 import yaml
 import requests
 import psutil
-from lxml import etree
 from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions

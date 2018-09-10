@@ -20,6 +20,6 @@ class Director(object):
         if self.params["install"]:
             installer = Installer(self.params["types"].split())
             # installer.status_check()
-            installer.versions_installed()
+            print installer.versions_installed()
             installer.install()
-            installer.versions_installed()
+            print installer.versions_installed()

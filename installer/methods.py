@@ -42,7 +42,7 @@ class PackageManager(Method):
         versions = {}
         for component in self.components:
             component_name = component.pkg_names[self.installer_name]
-            args = self.managers[self.manager_name]["version"] + component_name
+            args = self.managers[self.manager_name]["version"] + [component_name]
             result = self.manager.__getitem__(args) & TEE
             if result[0] != 0:
                 versions[component_name] = None

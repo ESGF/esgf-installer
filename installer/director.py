@@ -1,5 +1,5 @@
 from .installer import Installer
-from ..base.esg_java import Java, Ant
+from base.esg_java import Java, Ant
 
 class Director(object):
     ''' A class for managing the flow of the program '''
@@ -24,7 +24,7 @@ class Director(object):
         if self.params["install"]:
             # Find unique components, as there may be overlap
             component_types = set()
-            for node_type in self.params["types"]:
+            for node_type in self.params["types"].split():
                 component_types &= self.node_types[node_type]
             installer = Installer(component_types)
             # installer.status_check()

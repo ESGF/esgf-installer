@@ -1,12 +1,16 @@
 from .installer import Installer
+from ..base.esg_java import Java, Ant
 
 class Director(object):
-    # A class for managing the flow of the program
+    ''' A class for managing the flow of the program '''
     def __init__(self):
         self.params = None
-
+        # Store what components are needed for each node type.
+        self.node_types = {
+            "base": { Java, Ant }
+        }
     def pre_check(self):
-        # Check privileges, OS, etc..
+        # Check privileges, OS, PATH, etc..
         print "Checking prerequisites..."
 
     def get_cmd_line(self):
@@ -15,11 +19,15 @@ class Director(object):
             "install" : True,
             "types": "base"
         }
-    def start(self):
+    def begin(self):
         print "Starting Director"
         if self.params["install"]:
-            installer = Installer(self.params["types"].split())
+            # Find unique components, as there may be overlap
+            component_types = set()
+            for node_type in self.params["types"]:
+                component_types &= self.node_types[node_type]
+            installer = Installer(component_types)
             # installer.status_check()
-            print installer.versions_installed()
+            print installer.status_check()
             installer.install()
-            print installer.versions_installed()
+            print installer.status_check()

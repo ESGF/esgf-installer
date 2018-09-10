@@ -1,6 +1,6 @@
-from installer.director import Director
+from .installer.director import Director
 
 director = Director()
 director.pre_check()
 director.get_cmd_line()
-director.start()
+director.begin()

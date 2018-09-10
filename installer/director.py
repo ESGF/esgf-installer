@@ -25,7 +25,7 @@ class Director(object):
             # Find unique components, as there may be overlap
             component_types = set()
             for node_type in self.params["types"].split():
-                component_types &= self.node_types[node_type]
+                component_types |= self.node_types[node_type]
             installer = Installer(component_types)
             # installer.status_check()
             print installer.status_check()

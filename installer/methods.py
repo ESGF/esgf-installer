@@ -39,10 +39,24 @@ class PackageManager(Method):
         #     component.post_install()
 
     def versions(self):
+        versions = {}
         for component in self.components:
-            args = self.managers[self.manager_name]["version"] + component.pkg_names[self.installer_name]
+            component_name = component.pkg_names[self.installer_name]
+            args = self.managers[self.manager_name]["version"] + component_name
             result = self.manager.__getitem__(args) & TEE
+            if result[0] != 0:
+                versions[component_name] = None
+            else:
+                versions[component_name] = result[1]
+        return versions
+
 
 class Mirror(Method):
     def __init__(self, components):
         Method.__init__(self, components)
+
+    def install(self):
+        pass
+
+    def versions(self):
+        pass

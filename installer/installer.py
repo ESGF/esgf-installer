@@ -21,13 +21,12 @@ class Installer(object):
             PackageManager: { Ant },
             Mirror: { Java }
         }
-        methods = set()
+        self.methods = set()
         for method_type in method_types:
             components = method_types[method_type] & component_types
-            methods.add(method_type(components))
+            self.methods.add(method_type(components))
 
-        for method in methods:
-            method.install()
+
 
 
         self.components_status = {
@@ -69,7 +68,9 @@ class Installer(object):
                 print "    {} {}".format(type(component).__name__, component.version())
 
     def install(self):
-        for component in self.components_status[NOT_INSTALLED]:
-            self.learn_properties(component)
-        # Handle components based on their status
-        pass
+        for method in self.methods:
+            method.install()
+
+    def versions_installed(self):
+        for method in self.methods:
+            method.versions()

@@ -4,7 +4,7 @@ from plumbum import local
 from plumbum import TEE
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
-class Method(object):
+class Generic(object):
     def __init__(self, components):
         self.components = [component() for component in components]
 
@@ -23,8 +23,9 @@ class Method(object):
                 continue
 
     def _install(self):
-        ''' To be implemented for each Method '''
-        pass
+        ''' Generic version, should be reimplemented by children '''
+        for component in self.components:
+            component.install()
 
     def _post_install(self):
         ''' Allows for components to take actions after installation '''
@@ -59,13 +60,23 @@ class Method(object):
         return self._versions()
 
     def _versions(self):
-        ''' To be implemented for each Method '''
+        ''' Generic version, should be reimplemented by children '''
+        versions = {}
+        for component in self.components:
+            versions[type(component).__name__] = component.version()
+
+class DistributionArchive(Generic):
+    ''' Install components from a URL via some fetching tool (wget, fetch, etc.) '''
+    def __init__(self, components):
+        Generic.__init__(self, components)
+
+    def _install(self):
         pass
 
-class PackageManager(Method):
+class PackageManager(Generic):
     ''' System package managers, does not include pip (could it though?) '''
     def __init__(self, components):
-        Method.__init__(self, components)
+        Generic.__init__(self, components)
         # Installer interface for different OS's
         self.installers = {
             "yum": {
@@ -109,39 +120,13 @@ class PackageManager(Method):
                 versions[type(component).__name__] = str(result[1]).strip()
         return versions
 
-class Pip(Method):
+class Pip(Generic):
     ''' Install components using the pip command line tool '''
     def __init__(self, components):
-        Method.__init__(self, components)
+        Generic.__init__(self, components)
 
     def _install(self):
         pass
 
     def _versions(self):
         return {}
-
-class DistributionArchive(Method):
-    ''' Install components from a URL via some fetching tool (wget, fetch, etc.) '''
-    def __init__(self, components):
-        Method.__init__(self, components)
-
-    def _install(self):
-        pass
-
-    def _versions(self):
-        return {}
-
-
-class Generic(Method):
-    ''' Install components according to specifications within each component '''
-    def __init__(self, components):
-        Method.__init__(self, components)
-
-    def _install(self):
-        for component in self.components:
-            component.install()
-
-    def _versions(self):
-        versions = {}
-        for component in self.components:
-            versions[type(component).__name__] = component.version()

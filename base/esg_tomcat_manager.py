@@ -14,7 +14,6 @@ from time import sleep
 import yaml
 import requests
 import psutil
-from lxml import etree
 from clint.textui import progress
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import esg_functions
@@ -298,26 +297,6 @@ def copy_credential_files(tomcat_install_config_dir):
         shutil.move(os.path.join(tomcat_install_config_dir, esgf_host + "-esg-node.pem"),
                     os.path.join(config["tomcat_conf_dir"], esgf_host + "-esg-node.pem"))
 
-
-def check_server_xml():
-    '''Check the Tomcat server.xml file for the explicit Realm specification needed.'''
-    # Be sure that the server.xml file contains the explicit Realm specification needed.
-    server_xml_path = os.path.join(config["tomcat_install_dir"], "conf", "server.xml")
-    tree = etree.parse(server_xml_path)
-    root = tree.getroot()
-    realm_element = root.find(".//Realm")
-    if realm_element:
-        return True
-
-
-def download_server_config_file(esg_dist_url):
-    '''Download server.xml config file from distribution mirror'''
-    server_xml_url = "{esg_dist_url}/externals/bootstrap/node.server.xml-v{tomcat_major_version}".format(
-        esg_dist_url=esg_dist_url, tomcat_major_version=config['tomcat_major_version'].strip("''"))
-    esg_functions.download_update(os.path.join(
-        config["tomcat_install_dir"], "conf", "server.xml"), server_xml_url)
-
-
 def migrate_tomcat_credentials_to_esgf():
     '''
     Move selected config files into esgf tomcat's config dir (certificate et al)
@@ -343,61 +322,6 @@ def migrate_tomcat_credentials_to_esgf():
         os.chown(config["tomcat_conf_dir"], esg_functions.get_user_id(
             "tomcat"), esg_functions.get_group_id("tomcat"))
 
-        if not check_server_xml():
-            esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-            download_server_config_file(esg_dist_url)
-
-        # SET the server.xml variables to contain proper values
-        edit_server_xml()
-
-
-def edit_server_xml():
-    '''Edit the placeholder values in the Tomcat server.xml configuration file'''
-
-    logger.debug("Editing %s/conf/server.xml accordingly...", config["tomcat_install_dir"])
-    keystore_password = esg_functions.get_java_keystore_password()
-
-    xml_file = os.path.join(config["tomcat_install_dir"], "conf", "server.xml")
-    xml_file_output = '{}_out.xml'.format(os.path.splitext(xml_file)[0])
-
-    parser = etree.XMLParser(remove_comments=False)
-    tree = etree.parse(xml_file, parser)
-    root = tree.getroot()
-
-    for param in root.iter():
-        if param.tag == "Resource" or param.tag == "Realm":
-            replaced_pathname = param.get("pathname").replace(
-                "@@tomcat_users_file@@", config["tomcat_users_file"])
-            param.set("pathname", replaced_pathname)
-        if param.tag == "Connector" and param.get("port") == "8443":
-            logger.debug("Port number %s", param.get("port"))
-            replaced_fqdn = param.get("proxyName").replace(
-                "placeholder.fqdn", esg_functions.get_esgf_host())
-            param.set("proxyName", replaced_fqdn)
-
-            replaced_truststore_file = param.get("truststoreFile").replace(
-                "@@truststore_file@@", config["truststore_file"])
-            param.set("truststoreFile", replaced_truststore_file)
-
-            replaced_truststore_pass = param.get("truststorePass").replace(
-                "@@truststore_password@@", config["truststore_password"])
-            param.set("truststorePass", replaced_truststore_pass)
-
-            replaced_key_alias = param.get("keyAlias").replace(
-                "@@keystore_alias@@", config["keystore_alias"])
-            param.set("keyAlias", replaced_key_alias)
-
-            replaced_keystore_file = param.get("keystoreFile").replace(
-                "@@keystore_file@@", config["keystore_file"])
-            param.set("keystoreFile", replaced_keystore_file)
-
-            replaced_keystore_pass = param.get("keystorePass").replace(
-                "@@keystore_password@@", keystore_password)
-            param.set("keystorePass", replaced_keystore_pass)
-
-    tree.write(xml_file_output)
-
-
 def write_tomcat_env():
     '''Write tomcat environment info to /etc/esg.env'''
     EnvWriter.export("CATALINA_HOME", config["tomcat_install_dir"])
@@ -409,49 +333,6 @@ def write_tomcat_install_log():
     esg_property_manager.set_property("tomcat.install.dir", config["tomcat_install_dir"])
     esg_property_manager.set_property("esgf.http.port", "80")
     esg_property_manager.set_property("esgf.https.port", "443")
-
-def get_tomcat_ports():
-    '''Get tomcat ports from server.xml'''
-    parser = etree.XMLParser(remove_comments=False)
-    tree = etree.parse("/usr/local/tomcat/conf/server.xml", parser)
-    root = tree.getroot()
-    ports = []
-
-    for param in root.iter():
-        if param.tag == "Connector":
-            ports.append(param.get("port"))
-    return ports
-
-
-def tomcat_port_check():
-    '''Test accessibility of tomcat ports listed in the server.xml config file'''
-    tomcat_ports = get_tomcat_ports()
-
-    failed_connections = []
-    for port in tomcat_ports:
-        if port == "8223":
-            continue
-
-        if port == "8443":
-            protocol = "https"
-        else:
-            protocol = "http"
-
-        status_code = requests.get("{}://localhost:{}".format(protocol, port)).status_code
-        if status_code != "200":
-            #We only care about reporting a failure for ports below 1024
-            #specifically 80 (http) and 443 (https)
-            if int(port) < 1024:
-                failed_connections.append(port)
-
-    if failed_connections:
-        print "Connections failed on the following ports: {}".format(", ".join(failed_connections))
-        return False
-
-    print "Passed Tomcat port check"
-    return True
-
-
 
 def setup_tomcat_logrotate():
     '''If there is no logrotate file ${tomcat_logrotate_file} then create one
@@ -556,8 +437,6 @@ def configure_tomcat():
             if not os.path.exists(config["truststore_file"]):
                 shutil.copyfile(os.path.join(os.path.dirname(__file__), "tomcat_certs/esg-truststore.ts"), config["truststore_file"])
 
-            edit_server_xml()
-
             esg_truststore_manager.add_my_cert_to_truststore()
 
             esg_functions.change_ownership_recursive(config["tomcat_install_dir"], tomcat_user, tomcat_group)
@@ -580,7 +459,6 @@ def main():
         setup_root_app()
         migrate_tomcat_credentials_to_esgf()
         # start_tomcat()
-        # tomcat_port_check()
         write_tomcat_install_log()
         esg_cert_manager.check_for_commercial_ca()
 

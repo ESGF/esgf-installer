@@ -10,6 +10,7 @@ from git import Repo
 from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -56,8 +57,15 @@ def setup_dashboard():
     run_dashboard_script()
 
     # create non-privileged user to run the dashboard application
-    esg_functions.stream_subprocess_output("groupadd dashboard")
-    esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g dashboard -d /usr/local/dashboard dashboard")
+    esg_functions.add_unix_group("dashboard")
+    useradd_options = ["-s", "/sbin/nologin", "-g", "dashboard", "-d", "/usr/local/dashboard", "dashboard"]
+    try:
+        esg_functions.call_binary("useradd", useradd_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
     DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
     esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)
@@ -109,8 +117,8 @@ def run_dashboard_script():
         print "******************************* \n"
 
         esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
-        esg_functions.stream_subprocess_output("make")
-        esg_functions.stream_subprocess_output("make install")
+        esg_functions.call_binary("make")
+        esg_functions.call_binary("make", ["install"])
 
 def main():
     setup_dashboard()

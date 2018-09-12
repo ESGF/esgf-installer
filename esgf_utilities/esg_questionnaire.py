@@ -37,22 +37,23 @@ def _choose_fqdn(force_install=False):
 
 def _choose_admin_password(password_file=config["esgf_secret_file"]):
     '''Sets the ESGF password that is stored in /esg/config/.esgf_pass'''
-    if esg_functions.get_security_admin_password():
-        return
+    try:
+        if esg_functions.get_security_admin_password():
+            return
+    except IOError:
+        while True:
+            password_input = getpass.getpass(
+                "What is the admin password to use for this installation? (alpha-numeric only): ")
+            if not esg_functions.is_valid_password(password_input):
+                continue
 
-    while True:
-        password_input = getpass.getpass(
-            "What is the admin password to use for this installation? (alpha-numeric only): ")
-        if not esg_functions.is_valid_password(password_input):
-            continue
+            password_input_confirmation = getpass.getpass(
+                "Please re-enter password to confirm: ")
 
-        password_input_confirmation = getpass.getpass(
-            "Please re-enter password to confirm: ")
-
-        if esg_functions.confirm_password(password_input, password_input_confirmation):
-            esg_functions.set_security_admin_password(password_input)
-            esg_functions.set_java_keystore_password(password_input)
-            break
+            if esg_functions.confirm_password(password_input, password_input_confirmation):
+                esg_functions.set_security_admin_password(password_input)
+                esg_functions.set_java_keystore_password(password_input)
+                break
 
 def _choose_organization_name(force_install=False):
     '''Choose the organization name for the installation'''

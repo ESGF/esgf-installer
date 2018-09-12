@@ -465,7 +465,7 @@ def get_security_admin_password():
             security_admin_password = password_file.read().strip()
     except IOError, error:
         if error.errno == errno.ENOENT:
-            logger.error("File doesn't exist %s", config["esgf_secret_file"])
+            raise
         else:
             logger.exception("Could not get password from file")
     else:

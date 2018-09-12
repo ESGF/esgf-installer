@@ -326,7 +326,7 @@ def purge_globus():
             try:
                 shutil.rmtree(directory)
             except OSError, error:
-                if error.ENOTDIR:
+                if error.errno == errno.ENOTDIR:
                     os.remove(directory)
 
     try:
@@ -372,7 +372,7 @@ def purge_publisher():
     publisher_binaries = glob.glob("/usr/local/conda/envs/esgf-pub/bin/esg*")
     for binary in publisher_binaries:
         try:
-            os.remove(binary)
+            shutil.rmtree(binary)
         except OSError:
             pass
 

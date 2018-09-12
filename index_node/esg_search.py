@@ -183,6 +183,7 @@ def setup_search_service():
     #Get utility script for crawling thredds sites
     fetch_crawl_launcher(esg_dist_url)
     fetch_index_optimization_launcher(esg_dist_url)
+    fetch_static_shards_file()
 
     #restart tomcat to put modifications in effect.
     # esg_tomcat_manager.start_tomcat()
@@ -212,10 +213,11 @@ def fetch_index_optimization_launcher(esg_dist_url):
         esg_functions.download_update(esgf_index_optimization_launcher, esgf_index_optimization_launcher_url)
         os.chmod(esgf_index_optimization_launcher, 0755)
 
-def fetch_static_shards_file(esg_dist_url):
-    static_shards_file = "esgf_shards_static.xml"
-    static_shards_url = "{}/lists/esgf_shards_static.xml".format(esg_dist_url)
-    esg_functions.download_update(static_shards_file, static_shards_url)
+def fetch_static_shards_file():
+    with pybash.pushd(config["esg_config_dir"]):
+        static_file = "esgf_shards_static.xml"
+        url = "{}/xml/{}".format(config["esgf_config_repo"], static_file)
+        esg_functions.download_update(static_file, url)
 
 
 def download_esg_search_war(esg_search_war_url):

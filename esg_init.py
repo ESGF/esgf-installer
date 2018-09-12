@@ -11,6 +11,8 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 def init():
     """ Return a list of all local variables."""
+    # TODO make this esgf-test or esgf-prod as specified
+    esgf_config_repo = "https://raw.githubusercontent.com/ESGF/esgf-config/master/esgf-test"
     #--------------
     # User Defined / Settable (public)
     #--------------

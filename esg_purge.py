@@ -298,7 +298,11 @@ def purge_globus():
 
         gridftp_directories = glob.glob("/etc/gridftp*")
         for directory in gridftp_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                if error.errno == errno.ENOTDIR:
+                    os.remove(directory)
 
     try:
         os.remove("/etc/logrotate.d/globus-connect-server")
@@ -372,14 +376,14 @@ def purge_publisher():
     publisher_binaries = glob.glob("/usr/local/conda/envs/esgf-pub/bin/esg*")
     for binary in publisher_binaries:
         try:
-            shutil.rmtree(binary)
+            os.remove(binary)
         except OSError:
             pass
 
     publisher_modules = glob.glob("/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esg*")
     for module in publisher_modules:
         try:
-            os.remove(module)
+            shutil.rmtree(module)
         except OSError:
             pass
 

@@ -11,6 +11,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities.esg_env_manager import EnvWriter
+from plumbum.commands import ProcessExecutionError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -26,54 +27,27 @@ def symlink_pg_binary():
     '''Creates a symlink to the /usr/bin directory so that the publisher setup.py script can find the postgres version'''
     pybash.symlink_force("/usr/pgsql-9.6/bin/pg_config", "/usr/bin/pg_config")
 
+def edit_esg_ini(node_short_name="test_node"):
+    '''Edit placeholder values in the generated esg.ini file'''
+    esg_ini_path = "/esg/config/esgcet/esg.ini"
+    esg_functions.replace_string_in_file(esg_ini_path, "esgcetpass", esg_functions.get_publisher_password())
+    esg_functions.replace_string_in_file(esg_ini_path, "host.sample.gov", esg_functions.get_esgf_host())
+    esg_functions.replace_string_in_file(esg_ini_path, "LASatYourHost", "LASat{}".format(node_short_name))
+
 def generate_esgsetup_options():
     '''Generate the string that will pass arguments to esgsetup to initialize the database'''
-    publisher_db_user = None
     try:
         publisher_db_user = config["publisher_db_user"]
     except KeyError:
         publisher_db_user = esg_property_manager.get_property("publisher_db_user")
 
     security_admin_password = esg_functions.get_security_admin_password()
-
-    try:
-        recommended_setup = esg_property_manager.get_property("recommended_setup")
-    except ConfigParser.NoOptionError:
-        recommended_setup = True
-
-    generate_esg_ini_command = "esgsetup --db"
-    if recommended_setup:
-        generate_esg_ini_command += " --minimal-setup"
-    if config["db_database"]:
-        generate_esg_ini_command += " --db-name %s" % (config["db_database"])
-    if config["postgress_user"]:
-        generate_esg_ini_command += " --db-admin %s" % (config["postgress_user"])
-
-    if security_admin_password:
-        generate_esg_ini_command += " --db-admin-password %s" % (security_admin_password)
-
-    if publisher_db_user:
-        generate_esg_ini_command += " --db-user %s" % (publisher_db_user)
-
     publisher_password = esg_functions.get_publisher_password()
-    if publisher_password:
-        generate_esg_ini_command += " --db-user-password %s" % (publisher_password)
-    if config["postgress_host"]:
-        generate_esg_ini_command += " --db-host %s" % (config["postgress_host"])
-    if config["postgress_port"]:
-        generate_esg_ini_command += " --db-port %s" % (config["postgress_port"])
 
-    logger.info("generate_esg_ini_command in function: %s", generate_esg_ini_command)
-    # print "generate_esg_ini_command in function: %s" % generate_esg_ini_command
-    return generate_esg_ini_command
+    esgsetup_options = ["--db", "--minimal-setup", "--db-name", config["db_database"], "--db-admin", config["postgress_user"], "--db-admin-password", security_admin_password, "--db-user", publisher_db_user, "--db-user-password", publisher_password, "--db-host", config["postgress_host"], "--db-port", config["postgress_port"]]
 
-def edit_esg_ini(node_short_name="test_node"):
-    '''Edit placeholder values in the generated esg.ini file'''
-    esg_ini_path = os.path.join(config["publisher_home"], config["publisher_config"])
-    print "esg_ini_path:", esg_ini_path
-    esg_functions.call_subprocess('sed -i s/esgcetpass/password/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path))
-    esg_functions.call_subprocess('sed -i s/"host\.sample\.gov"/{esgf_host}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path, esgf_host=esg_functions.get_esgf_host()))
-    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path,    node_short_name=node_short_name))
+    logger.info("esgsetup_options: %s", " ".join(esgsetup_options))
+    return esgsetup_options
 
 def run_esgsetup():
     '''generate esg.ini file using esgsetup script; #Makes call to esgsetup - > Setup the ESG publication configuration'''
@@ -88,27 +62,31 @@ def run_esgsetup():
     except ConfigParser.NoOptionError:
         raise
 
-    generate_esg_ini_command = '''esgsetup --config --minimal-setup --rootid {} --db-admin-password password'''.format(esg_org_name)
+    #TODO: password should be replaced with esg_functions.get_publisher_password(); or not there at all like classic esg-node
+    esg_setup_options = ["--config", "--minimal-setup", "--rootid", esg_org_name]
 
     try:
-        esg_functions.stream_subprocess_output(generate_esg_ini_command)
-        edit_esg_ini()
-    except SubprocessError:
-        print "Could not finish esgsetup"
+        esg_functions.call_binary("esgsetup", esg_setup_options)
+    except ProcessExecutionError, err:
+        logger.error("esgsetup failed")
+        logger.error(err)
         raise
+
+    edit_esg_ini()
 
     print "\n*******************************"
     print "Initializing database with esgsetup"
     print "******************************* \n"
 
+    #TODO:break this into esgsetup_database()
     #Initialize the database
-    db_setup_command = generate_esgsetup_options()
-    print "db_setup_command:", db_setup_command
+    esgsetup_options = generate_esgsetup_options()
 
     try:
-        esg_functions.stream_subprocess_output(db_setup_command)
-    except SubprocessError:
-        print "Could not initialize database."
+        esg_functions.call_binary("esgsetup", esgsetup_options)
+    except ProcessExecutionError, err:
+        logger.error("esginitialize failed")
+        logger.error(err)
         raise
 
 def run_esginitialize():
@@ -118,18 +96,11 @@ def run_esginitialize():
     print "******************************* \n"
 
     try:
-        esginitialize_process = esg_functions.call_subprocess("esginitialize -c")
-    except SubprocessError:
+        esg_functions.call_binary("esginitialize", ["-c"])
+    except ProcessExecutionError, err:
         logger.error("esginitialize failed")
+        logger.error(err)
         raise
-    else:
-        if esginitialize_process["returncode"] != 0:
-            logger.exception()
-            logger.error(esginitialize_process)
-            raise RuntimeError("esginitialize failed")
-        else:
-            print esginitialize_process["stdout"]
-            print esginitialize_process["stderr"]
 
 def setup_publisher(tag=config["publisher_tag"]):
     '''Install ESGF publisher'''

@@ -465,7 +465,7 @@ def get_security_admin_password():
             security_admin_password = password_file.read().strip()
     except IOError, error:
         if error.errno == errno.ENOENT:
-            logger.error("File doesn't exist %s", config["esgf_secret_file"])
+            raise
         else:
             logger.exception("Could not get password from file")
     else:
@@ -935,6 +935,8 @@ def call_binary(binary_name, arguments):
     RETURN_CODE = 0
     STDOUT = 1
     STDERR = 2
+    logger.debug("binary_name: %s", binary_name)
+    logger.debug("arguments: %s", " ".join(arguments))
     try:
         command = local[binary_name]
     except ProcessExecutionError:

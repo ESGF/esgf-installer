@@ -18,6 +18,7 @@ from esgf_utilities import esg_truststore_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager, esg_postgres
 from esgf_utilities.esg_env_manager import EnvWriter
+from plumbum.commands import ProcessExecutionError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -173,8 +174,7 @@ def register(remote_host):
             #NOTE: The InstallCert code fetches Java's jssecacerts file (if
             #not there then uses the cacerts file) from java's jre and then adds the target's cert to it.
             #The output of the program is a new file named jssecacerts!      So here we get the output and rename it.
-
-            esg_functions.stream_subprocess_output("/usr/local/java/bin/java -classpath {class_path} InstallCert {ssl_endpoint}:{ssl_port} {my_truststore_password} {truststore_file}".format(class_path=class_path, ssl_endpoint=ssl_endpoint, ssl_port=ssl_port, my_truststore_password=config["truststore_password"], truststore_file=config["truststore_file"]))
+            esg_functions.call_binary("/usr/local/java/bin/java", ["-classpath", class_path, "InstallCert", "{}:{}".format(ssl_endpoint, ssl_port), config["truststore_password"], config["truststore_file"]])
 
             with pybash.pushd(config["tomcat_conf_dir"]):
                 os.chmod(config["truststore_file"], 0644)
@@ -263,11 +263,20 @@ def esgsetup_thredds():
     '''Configures Thredds with esgsetup'''
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
     #TODO: --gateway is esg_property_manager.get_property("esgf.index.peer")
-    esgsetup_command = '''esgsetup --config --minimal-setup --thredds --publish --gateway pcmdi11.llnl.gov --thredds-password {security_admin_password}'''.format(security_admin_password=esg_functions.get_security_admin_password())
     try:
-        esg_functions.stream_subprocess_output(esgsetup_command)
-    except SubprocessError:
-        logger.error("Could configure Thredds using esgsetup")
+        index_peer = esg_property_manager.get_property("esgf.index.peer")
+    except ConfigParser.NoOptionError:
+        #default peer is yourself
+        default_peer = esg_functions.get_esgf_host()
+        index_peer = raw_input("Enter the name of the Index Peer Node: [{}]".format(default_peer)) or default_peer
+
+    security_admin_password = esg_functions.get_security_admin_password()
+    esgsetup_options = ["--config", "--minimal-setup", "--thredds", "--publish", "--gateway", index_peer, "--thredds-password", security_admin_password]
+    try:
+        esg_functions.call_binary("esgsetup", esgsetup_options)
+    except ProcessExecutionError, err:
+        logger.error("esgsetup_thredds failed")
+        logger.error(err)
         raise
 
 def copy_public_directory():

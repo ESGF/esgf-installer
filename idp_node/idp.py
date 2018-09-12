@@ -88,6 +88,16 @@ def setup_idp():
         tomcat_group = esg_functions.get_group_id("tomcat")
         esg_functions.change_ownership_recursive(idp_service_app_home, tomcat_user, tomcat_group)
 
+    with pybash.pushd(config["esg_config_dir"]):
+        static_file = "esgf_idp_static.xml"
+        url = "{}/xml/{}".format(config["esgf_config_repo"], static_file)
+        esg_functions.download_update(static_file, url)
+
+    with pybash.pushd(config["esg_config_dir"]):
+        static_file = "esgf_ats_static.xml"
+        url = "{}/xml/{}".format(config["esgf_config_repo"], static_file)
+        esg_functions.download_update(static_file, url)
+
     write_idp_install_log(idp_service_app_home)
     esg_functions.write_security_lib_install_log()
 

@@ -935,6 +935,8 @@ def call_binary(binary_name, arguments):
     RETURN_CODE = 0
     STDOUT = 1
     STDERR = 2
+    logger.debug("binary_name: %s", binary_name)
+    logger.debug("arguments: %s", " ".join(arguments))
     try:
         command = local[binary_name]
     except ProcessExecutionError:

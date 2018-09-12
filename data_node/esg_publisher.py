@@ -29,11 +29,10 @@ def symlink_pg_binary():
 
 def edit_esg_ini(node_short_name="test_node"):
     '''Edit placeholder values in the generated esg.ini file'''
-    esg_ini_path = os.path.join(config["publisher_home"], config["publisher_config"])
-    print "esg_ini_path:", esg_ini_path
-    esg_functions.call_subprocess('sed -i s/esgcetpass/{password}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path, password=esg_functions.get_publisher_password()))
-    esg_functions.call_subprocess('sed -i s/"host\.sample\.gov"/{esgf_host}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path, esgf_host=esg_functions.get_esgf_host()))
-    esg_functions.call_subprocess('sed -i s/"LASatYourHost"/LASat{node_short_name}/g {esg_ini_path}'.format(esg_ini_path=esg_ini_path,    node_short_name=node_short_name))
+    esg_ini_path = "/esg/config/esgcet/esg.ini"
+    esg_functions.replace_string_in_file(esg_ini_path, "esgcetpass", esg_functions.get_publisher_password())
+    esg_functions.replace_string_in_file(esg_ini_path, "host.sample.gov", esg_functions.get_esgf_host())
+    esg_functions.replace_string_in_file(esg_ini_path, "LASatYourHost", "LASat{}".format(node_short_name))
 
 def generate_esgsetup_options():
     '''Generate the string that will pass arguments to esgsetup to initialize the database'''

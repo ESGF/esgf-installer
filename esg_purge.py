@@ -323,7 +323,11 @@ def purge_globus():
 
         globus_gridftp_directories = glob.glob("/etc/rc.d/init.d/globus-gridftp-*")
         for directory in globus_gridftp_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                if error.ENOTDIR:
+                    os.remove(directory)
 
     try:
         shutil.rmtree(os.path.join(os.environ["HOME"], ".globus"))

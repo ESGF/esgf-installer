@@ -1,5 +1,6 @@
+import json
 from .installer import Installer
-from base.esg_java import Java, Ant
+from .sample_components import Ant
 
 class Director(object):
     ''' A class for managing the flow of the program '''
@@ -7,7 +8,7 @@ class Director(object):
         self.params = None
         # Store what components are needed for each node type.
         self.node_types = {
-            "base": { Java, Ant }
+            "base": { Ant }
         }
     def pre_check(self):
         # Check privileges, OS, PATH, etc..
@@ -26,7 +27,9 @@ class Director(object):
             component_types = set()
             for node_type in self.params["types"].split():
                 component_types |= self.node_types[node_type]
-            installer = Installer(component_types)
+            with open("components.json", "r") as config_file:
+                config = json.load(config_file)
+            installer = Installer(component_types, config)
             # installer.status_check()
             print installer.status_check()
             installer.install()

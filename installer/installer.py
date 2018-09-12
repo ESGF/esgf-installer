@@ -1,17 +1,16 @@
-from base.esg_java import Java, Ant
-from .methods import PackageManager, DistributionArchive
+from .sample_components import Ant
+from .methods import PackageManager
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
-    def __init__(self, component_types):
+    def __init__(self, component_types, component_config):
         method_types = {
-            PackageManager: {Ant},
-            DistributionArchive: {Java}
+            PackageManager: {Ant}
         }
         self.methods = set()
         for method_type in method_types:
             components = method_types[method_type] & component_types
-            self.methods.add(method_type(components))
+            self.methods.add(method_type(components, component_config))
 
         self.divider = "_"*30
         self.header = self.divider + "\n{}"

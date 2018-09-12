@@ -61,14 +61,6 @@ def purge_tomcat():
                 os.unlink(directory)
             pass
 
-    # try:
-    #     os.unlink("/usr/local/tomcat")
-    # except OSError, error:
-    #     if error.errno == errno.ENOENT:
-    #         pass
-    #     else:
-    #         logger.exception("Could not delete symlink /usr/local/tomcat")
-
     try:
         os.remove("/tmp/catalina.pid")
     except OSError, error:
@@ -199,11 +191,7 @@ def purge_cog():
         pass
     try:
         os.remove("/usr/local/bin/wait_for_postgres.sh")
-    except OSError, error:
-        pass
-    try:
-        os.remove("/usr/local/bin/wait_for_postgres.sh")
-    except OSError, error:
+    except OSError:
         pass
 
 def purge_apache():
@@ -298,7 +286,11 @@ def purge_globus():
 
         gridftp_directories = glob.glob("/etc/gridftp*")
         for directory in gridftp_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                if error.errno == errno.ENOTDIR:
+                    os.remove(directory)
 
     try:
         os.remove("/etc/logrotate.d/globus-connect-server")
@@ -307,7 +299,11 @@ def purge_globus():
 
         myproxy_directories = glob.glob("/etc/myproxy*")
         for directory in myproxy_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                if error.errno == errno.ENOTDIR:
+                    os.remove(directory)
     try:
         shutil.rmtree("/etc/pam.d/myproxy")
     except OSError:
@@ -323,7 +319,11 @@ def purge_globus():
 
         globus_gridftp_directories = glob.glob("/etc/rc.d/init.d/globus-gridftp-*")
         for directory in globus_gridftp_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                if error.errno == errno.ENOTDIR:
+                    os.remove(directory)
 
     try:
         shutil.rmtree(os.path.join(os.environ["HOME"], ".globus"))
@@ -358,6 +358,21 @@ def purge_globus():
     except OSError:
         pass
 
+    globus_modules = glob.glob("/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globus*")
+    for module in globus_modules:
+        try:
+            shutil.rmtree(module)
+        except OSError:
+            pass
+
+    globus_binaries = glob.glob("/usr/bin/globus*")
+    for binary in globus_binaries:
+        try:
+            os.remove(binary)
+        except OSError, error:
+            if error.errno == errno.EISDIR:
+                shutil.rmtree(binary)
+
 
 def purge_publisher():
     try:
@@ -372,6 +387,12 @@ def purge_publisher():
         except OSError:
             pass
 
+    publisher_modules = glob.glob("/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esg*")
+    for module in publisher_modules:
+        try:
+            shutil.rmtree(module)
+        except OSError:
+            pass
 
 #TODO: define purge_dashboard()
 def purge_dashboard():

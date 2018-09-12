@@ -372,6 +372,12 @@ def purge_publisher():
         except OSError:
             pass
 
+    publisher_modules = glob.glob("/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/esg*")
+    for module in publisher_modules:
+        try:
+            os.remove(module)
+        except OSError:
+            pass
 
 #TODO: define purge_dashboard()
 def purge_dashboard():

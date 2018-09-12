@@ -1,7 +1,9 @@
 ''' Common methods for performing installations within the ESGF stack '''
 import os
+from zipfile import Zipfile
 from plumbum import local
 from plumbum import TEE
+import requests
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Generic(object):
@@ -67,12 +69,33 @@ class Generic(object):
         return versions
 
 class DistributionArchive(Generic):
-    ''' Install components from a URL via some fetching tool (wget, fetch, etc.) '''
+    ''' Install components from a URL '''
     def __init__(self, components, component_config):
         Generic.__init__(self, components, component_config)
+        self.tmp = os.path.join(os.sep, "tmp")
+        self.chunk_size = 1*1024
 
     def _install(self):
-        pass
+        for component in self.components:
+            response = requests.get(component.url)
+            remote_file = component.url.rsplit('/', 1)
+            try:
+                local_dir = component.local_dir
+            except AttributeError:
+                local_dir = self.tmp
+            filename = os.path.join(local_dir, remote_file)
+            #if not os.path.isfile(filename):
+            with open(filename, 'wb') as localfile:
+                for chunk in response.iter_content(chunk_size=self.chunk_size):
+                    localfile.write(chunk)
+            try:
+                extract_dir = component.extract_dir
+            except AttributeError:
+                pass
+            else:
+                #mkdir --p extract_dir
+                with Zipfile(filename) as archive:
+                    archive.extractall(extract_dir)
 
 class PackageManager(Generic):
     ''' System package managers, does not include pip (could it though?) '''

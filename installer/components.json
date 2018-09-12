@@ -1,11 +1,8 @@
 {
   "ant": "latest",
   "java": {
-    "version": "1.8.0",
-    "names":{
-      "yum": "{name}-{version}-openjdk-{version}",
-      "apt": "{name}"
-    }
+    "url": "http://aims1.llnl.gov/esgf/dist/java/1.8.0_162/jdk1.8.0_162-64.tar.gz",
+    "extract_dir": "/usr/local/java"  
   },
   "mod_wsgi": "4.5.3",
   "esgcet": {

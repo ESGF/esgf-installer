@@ -35,3 +35,13 @@ class Ant(SysPkgComponent):
     def __init__(self, config):
         self.name = "ant"
         SysPkgComponent.__init__(self, config, self.name)
+
+class Java(object):
+    def __init__(self, config):
+        self.name = "java"
+        self.config = config[self.name]
+        self.url = self.config["url"]
+        try:
+            self.extract_dir = self.config["extract_dir"]
+        except KeyError:
+            pass

@@ -377,6 +377,11 @@ def purge_globus():
         except OSError:
             pass
 
+    try:
+        os.remove("/usr/bin/globus-version")
+    except OSError:
+        pass
+
 
 def purge_publisher():
     try:

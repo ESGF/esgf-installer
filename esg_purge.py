@@ -311,7 +311,11 @@ def purge_globus():
 
         myproxy_directories = glob.glob("/etc/myproxy*")
         for directory in myproxy_directories:
-            shutil.rmtree(directory)
+            try:
+                shutil.rmtree(directory)
+            except OSError, error:
+                if error.errno == errno.ENOTDIR:
+                    os.remove(directory)
     try:
         shutil.rmtree("/etc/pam.d/myproxy")
     except OSError:

@@ -370,6 +370,13 @@ def purge_globus():
     except OSError:
         pass
 
+    globus_modules = glob.glob("/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globus*")
+    for module in globus_modules:
+        try:
+            shutil.rmtree(module)
+        except OSError:
+            pass
+
 
 def purge_publisher():
     try:

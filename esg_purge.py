@@ -61,14 +61,6 @@ def purge_tomcat():
                 os.unlink(directory)
             pass
 
-    # try:
-    #     os.unlink("/usr/local/tomcat")
-    # except OSError, error:
-    #     if error.errno == errno.ENOENT:
-    #         pass
-    #     else:
-    #         logger.exception("Could not delete symlink /usr/local/tomcat")
-
     try:
         os.remove("/tmp/catalina.pid")
     except OSError, error:
@@ -199,11 +191,7 @@ def purge_cog():
         pass
     try:
         os.remove("/usr/local/bin/wait_for_postgres.sh")
-    except OSError, error:
-        pass
-    try:
-        os.remove("/usr/local/bin/wait_for_postgres.sh")
-    except OSError, error:
+    except OSError:
         pass
 
 def purge_apache():
@@ -377,10 +365,13 @@ def purge_globus():
         except OSError:
             pass
 
-    try:
-        os.remove("/usr/bin/globus-version")
-    except OSError:
-        pass
+    globus_binaries = glob.glob("/usr/bin/globus*")
+    for binary in globus_binaries:
+        try:
+            os.remove(binary)
+        except OSError, error:
+            if error.errno == errno.EISDIR:
+                shutil.rmtree(binary)
 
 
 def purge_publisher():

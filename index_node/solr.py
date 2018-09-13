@@ -49,9 +49,9 @@ def extract_solr_tarball(solr_tarball_path, SOLR_VERSION, target_path="/usr/loca
 
 def download_template_directory():
     '''download template directory structure for shards home'''
-    ESGF_REPO = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf"
+    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
     with pybash.pushd("/usr/local/src"):
-        r = requests.get("{ESGF_REPO}/dist/esg-search/solr-home.tar".format(ESGF_REPO=ESGF_REPO))
+        r = requests.get("{}/esg-search/solr-home.tar".format(esg_dist_url))
 
         path = 'solr-home.tar'
         with open(path, 'wb') as f:

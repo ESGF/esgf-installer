@@ -20,7 +20,7 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 
 def download_extract(url, dest_dir, owner_user, owner_group):
     r = requests.get(url)
-    remote_file = url.rsplit("/")[1]
+    remote_file = pybash.trim_string_from_head(url)
     filename = os.path.join(os.sep, "tmp", remote_file)
     with open(filename, "wb") as localfile:
         total_length = int(r.headers.get('content-length'))
@@ -30,7 +30,7 @@ def download_extract(url, dest_dir, owner_user, owner_group):
                 localfile.flush()
 
     pybash.mkdir_p(dest_dir)
-    with zipfile.ZipFile(localfile) as archive:
+    with zipfile.ZipFile(filename) as archive:
         archive.extractall(dest_dir)
 
     uid = esg_functions.get_user_id(owner_user)

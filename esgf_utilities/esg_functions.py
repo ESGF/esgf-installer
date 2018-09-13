@@ -942,6 +942,12 @@ def call_binary(binary_name, arguments):
     except ProcessExecutionError:
         logger.error("Could not find %s executable", binary_name)
         raise
+
+    for var in os.environ:
+        local.env[var] = os.environ[var]
+    for var in local.env:
+        logger.debug("env: %s", str(var))
+
     output = command.__getitem__(arguments) & TEE
 
     #special case where checking java version is displayed via stderr

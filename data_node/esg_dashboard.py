@@ -33,8 +33,8 @@ def download_extract(url, dest_dir, owner_user, owner_group):
     with zipfile.ZipFile(localfile) as archive:
         archive.extractall(dest_dir)
 
-    uid = esg_functions.get_user_id(user)
-    gid = esg_functions.get_group_id(group)
+    uid = esg_functions.get_user_id(owner_user)
+    gid = esg_functions.get_group_id(owner_group)
     esg_functions.change_ownership_recursive(dest_dir, uid, gid)
 
 def setup_dashboard():
@@ -49,16 +49,24 @@ def setup_dashboard():
 
     tomcat_webapps = os.path.join(os.sep, "usr", "local", "tomcat", "webapps")
 
+    dist_url = esg_property_manager.get_property("esg.dist.url")
+    dist_root_url = esg_property_manager.get_property("esg.root.url")
 
-    stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
+
+    stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")
     download_extract(stats_api_url, dest_dir, "tomcat", "tomcat")
+
+    dashboard_url = "{}/{}".format(dist_root_url, "esgf-dashboard/esgf-dashboard.war")
+    dest_dir = os.path.join(tomcat_webapps, "esgf-dashboard")
+    download_extract(dashboard_url, dest_dir, "tomcat", "tomcat")
 
     # execute dashboard installation script (without the postgres schema)
     run_dashboard_script()
 
     # create non-privileged user to run the dashboard application
     esg_functions.add_unix_group("dashboard")
+    # TODO Create a function for adding a user that is cross-platform
     useradd_options = ["-s", "/sbin/nologin", "-g", "dashboard", "-d", "/usr/local/dashboard", "dashboard"]
     try:
         esg_functions.call_binary("useradd", useradd_options)
@@ -74,9 +82,27 @@ def setup_dashboard():
     os.chmod("/var/run", stat.S_IWGRP)
     os.chmod("/var/run", stat.S_IWOTH)
 
+    with pybash.pushd(os.path.join(os.sep, "tmp")):
+        egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
+        remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
+
+        esg_functions.download_update(egg_file, remote)
+        esg_functions.call_binary("easy_install", [egg_file])
+
+    dburl = "{user}:{password}@{host}:{port}/{db}".format(
+        user=config["postgress_user"],
+        password=esg_functions.get_postgres_password(),
+        host=config["postgress_host"],
+        port=config["postgress_port"],
+        db=config["node_db_name"]
+    )
+    dashboard_init = ["--dburl", dburl, "-c"]
+    esg_functions.call_binary("esgf_dashboard_initialize", dashboard_init)
     start_dashboard_service()
 
 def start_dashboard_service():
+    # TODO Have a better system for LD_LIBRARY_PATH
+    os.environ["LD_LIBRARY_PATH"] = "/usr/local/conda/envs/esgf-pub/lib"
     os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
     esg_functions.stream_subprocess_output("/usr/local/esgf-dashboard-ip/bin/ip.service start")
 
@@ -103,7 +129,7 @@ def run_dashboard_script():
     DashDir = "/usr/local/esgf-dashboard-ip"
     GeoipDir = "/usr/local/geoip"
     Fed="no"
-
+    esg_functions.call_binary("yum", ["install", "-y", "geoip", "geoip-devel"])
     with pybash.pushd("/usr/local"):
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")

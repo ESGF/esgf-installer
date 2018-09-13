@@ -1,8 +1,14 @@
 {
   "ant": "latest",
+  "thredds": {
+    "version": "5.0.2",
+    "url": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
+    "extract_dir": "/usr/local/java"
+  },
   "java": {
-    "url": "http://aims1.llnl.gov/esgf/dist/java/1.8.0_162/jdk1.8.0_162-64.tar.gz",
-    "extract_dir": "/usr/local/java"  
+    "version": "1.8.0_162",
+    "url": "http://aims1.llnl.gov/esgf/dist/2.6/8/java/{version}/jdk{version}-64.tar.gz",
+    "extract_dir": "/usr/local/java"
   },
   "mod_wsgi": "4.5.3",
   "esgcet": {

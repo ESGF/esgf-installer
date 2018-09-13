@@ -1,5 +1,5 @@
 from .sample_components import Ant
-from .methods import PackageManager
+from .methods.package_manager import PackageManager
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components

@@ -1,4 +1,6 @@
 from string import Formatter
+import pwd
+import grp
 
 class SysPkgComponent(object):
     def __init__(self, config, name):
@@ -36,12 +38,37 @@ class Ant(SysPkgComponent):
         self.name = "ant"
         SysPkgComponent.__init__(self, config, self.name)
 
-class Java(object):
-    def __init__(self, config):
-        self.name = "java"
-        self.config = config[self.name]
+class DistComponent(object):
+    def __init__(self, config, name):
+        self.config = config[name]
         self.url = self.config["url"]
         try:
             self.extract_dir = self.config["extract_dir"]
         except KeyError:
             pass
+        try:
+            self.local_dir = self.config["local_dir"]
+        except KeyError:
+            pass
+        try:
+            self.owner = self.config["owner"]
+        except KeyError:
+            pass
+        else:
+            if isinstance(self.owner, basestring):
+                self.owner_uid = pwd.getpwnam(self.owner).pw_uid
+                self.owner_gid = -1
+            elif isinstance(self.owner, dict):
+                self.owner_uid = pwd.getpwnam(self.owner["user"]).pw_uid
+                self.owner_gid = grp.getgrnam(self.owner["group"]).gr_gid
+
+
+class Java(DistComponent):
+    def __init__(self, config):
+        self.name = "java"
+        DistComponent.__init__(self, config, self.name)
+
+class Thredds(DistComponent):
+    def __init__(self, config):
+        self.name = "thredds"
+        DistComponent.__init__(self, config, self.name)

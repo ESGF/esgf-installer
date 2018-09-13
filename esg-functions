@@ -705,14 +705,16 @@ check_tomcat_process() {
 #----------------------------------------------------------
 postgres_create_db() {
     # Creates a database if it does not already exist
+    local rc=0
     if [ -z "$(postgres_list_dbs ${1})" ] ; then
         #Create the database...
         echo "Creating ESGF database: [${1}]"
-        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} createdb ${1} >& /dev/null
-        (( $? > 1 )) && echo " ERROR: Could not create esgf node database: ${node_db_name}" && return $?
+        PGPASSWORD=${PGPASSWORD:-${pg_sys_acct_passwd}} createdb ${1} >& /dev/null || rc=$?
+        [ ${rc} -ne 0 ] && echo " ERROR: Could not create esgf node database: ${node_db_name}"
     else
         echo "ESGF database [${1}] already exists, not creating."
     fi
+    return ${rc}
 }
 
 postgres_list_db_schemas() {

@@ -17,19 +17,24 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-def download_stats_api_war(stats_api_url):
-    print "\n*******************************"
-    print "Downloading ESGF Stats API war file"
-    print "******************************* \n"
-    r = requests.get(stats_api_url)
-
-    path = '/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war'
-    with open(path, 'wb') as f:
+def download_extract(url, dest_dir, owner_user, owner_group):
+    r = requests.get(url)
+    remote_file = url.rsplit("/")[1]
+    filename = os.path.join(os.sep, "tmp", remote_file)
+    with open(filename, "wb") as localfile:
         total_length = int(r.headers.get('content-length'))
         for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
             if chunk:
-                f.write(chunk)
-                f.flush()
+                localfile.write(chunk)
+                localfile.flush()
+
+    pybash.mkdir_p(dest_dir)
+    with zipfile.ZipFile(localfile) as archive:
+        archive.extractall(dest_dir)
+
+    uid = esg_functions.get_user_id(user)
+    gid = esg_functions.get_group_id(group)
+    esg_functions.change_ownership_recursive(dest_dir, uid, gid)
 
 def setup_dashboard():
 
@@ -41,17 +46,12 @@ def setup_dashboard():
     print "Setting up ESGF Stats API (dashboard)"
     print "******************************* \n"
 
-    pybash.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
-    stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
-    download_stats_api_war(stats_api_url)
+    tomcat_webapps = os.path.join(os.sep, "usr", "local", "tomcat", "webapps")
 
-    with pybash.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):
-        with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-stats-api/esgf-stats-api.war", 'r') as zf:
-            zf.extractall()
-        os.remove("esgf-stats-api.war")
-        TOMCAT_USER_ID = esg_functions.get_tomcat_user_id()
-        TOMCAT_GROUP_ID = esg_functions.get_tomcat_group_id()
-        esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/esgf-stats-api", TOMCAT_USER_ID, TOMCAT_GROUP_ID)
+
+    stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
+    dest_dir = os.path.join(tomcat_webapps, "esgf-stats-api")
+    download_extract(stats_api_url, dest_dir, "tomcat", "tomcat")
 
     # execute dashboard installation script (without the postgres schema)
     run_dashboard_script()
@@ -76,8 +76,8 @@ def setup_dashboard():
     start_dashboard_service()
 
 def start_dashboard_service():
-    os.chmod("dashboard_conf/ip.service", 0555)
-    esg_functions.stream_subprocess_output("dashboard_conf/ip.service start")
+    os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
+    esg_functions.stream_subprocess_output("/usr/local/esgf-dashboard-ip/bin/ip.service start")
 
 
 def clone_dashboard_repo():

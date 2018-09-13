@@ -168,17 +168,8 @@ def load_esgf_schemas(db_user_password):
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
     # load ESGF schemas
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
+    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_dashboard.sql"), "r").read())
-
-    #TODO: A bit of a hack; the CoG setup in an index node has a dependency on the esgf_security schema;
-    # thus the index node has a dependency on the IDP node.  First attempt to decouple
-    #Will eventually be handled in the ClI enforcing valid node types (i.e. index+idp)
-    # node_type = esg_functions.get_node_type()
-    # if "INDEX" in node_type:
-    #     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security.sql"), "r").read())
-
 
     load_esgf_data(cur)
     cur.close()

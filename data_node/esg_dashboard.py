@@ -9,6 +9,7 @@ import yaml
 from git import Repo
 from clint.textui import progress
 from esgf_utilities import esg_functions
+from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from plumbum.commands import ProcessExecutionError
 
@@ -42,7 +43,8 @@ def setup_dashboard():
     print "******************************* \n"
 
     pybash.mkdir_p("/usr/local/tomcat/webapps/esgf-stats-api")
-    stats_api_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-stats-api", "esgf-stats-api.war")
+    dist_url = esg_property_manager.get_property("esg.dist.url")
+    stats_api_url = "{}/{}".format(dist_url, "esgf-stats-api/esgf-stats-api.war")
     download_stats_api_war(stats_api_url)
 
     with pybash.pushd("/usr/local/tomcat/webapps/esgf-stats-api"):

@@ -2,6 +2,7 @@ import os
 import logging
 import shutil
 import stat
+import sys
 import zipfile
 import yaml
 from esgf_utilities import esg_functions
@@ -83,9 +84,7 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
             esg_functions.download_update(esgf_security_egg_file, esgf_security_egg_url)
 
             #install the egg....
-            # esg_functions.stream_subprocess_output("conda install -y postgresql")
-            #TODO: update this to use setuptools
-            esg_functions.stream_subprocess_output("easy_install {}".format(esgf_security_egg_file))
+            esg_functions.call_binary("easy_install", [esgf_security_egg_file])
 
             node_db_name = "esgcet"
             node_db_security_schema_name = "esgf_security"
@@ -97,9 +96,8 @@ def configure_postgress(node_type_list, esg_dist_url, esgf_security_version=conf
 
             #run the code to build the database and install sql migration...
             pg_sys_acct_passwd = esg_functions.get_postgres_password()
-            esgf_security_initialize_command = "esgf_security_initialize --dburl {postgress_user}:{pg_sys_acct_passwd}@{postgress_host}:{postgress_port}/{node_db_name} -c".format(postgress_user=config["postgress_user"], pg_sys_acct_passwd=pg_sys_acct_passwd, postgress_host=config["postgress_host"], postgress_port=config["postgress_port"], node_db_name=node_db_name)
-            esg_functions.stream_subprocess_output(esgf_security_initialize_command)
-
+            esgf_security_initialize_options = ["--dburl", "{}:{}@{}:{}/{}".format(config["postgress_user"], pg_sys_acct_passwd, config["postgress_host"], config["postgress_port"], node_db_name), "-c"]
+            esg_functions.call_binary("esgf_security_initialize", esgf_security_initialize_options)
             write_security_db_install_log(db_dir, esgf_security_version)
 
     else:
@@ -141,7 +139,6 @@ def create_policy_files(policy_type, security_jar_file):
                 policy_file_extraction_path = "{internal_jar_path}/{policy_name}".format(internal_jar_path=internal_jar_path, policy_name=policy_name)
                 logger.info("Extracting %s from %s", policy_file_extraction_path, security_jar_file)
                 security_jar_zip.extract(policy_file_extraction_path)
-            # esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/{policy_file_name}_local.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, policy_file_name=policy_file_name))
         shutil.copyfile(os.path.join(full_extracted_jar_dir, policy_name), os.path.join(config["esg_config_dir"], policy_name))
 
         tomcat_user_id = esg_functions.get_user_id("tomcat")
@@ -212,7 +209,7 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
 
         if not os.path.exists(security_jar_file):
             logger.error("Could not find security jar file %s", security_jar_file)
-            raise
+            sys.exit()
 
         logger.debug("Using security jar file: %s", security_jar_file)
 
@@ -222,7 +219,10 @@ def _setup_static_whitelists(node_type_list, esgf_security_version):
             if not os.path.isfile(esg_config_xml) and os.path.isfile(app_config_xml):
                 pybash.mkdir_p(tmp_extract_dir)
                 with pybash.pushd(tmp_extract_dir):
-                    esg_functions.stream_subprocess_output("/usr/local/java/bin/jar xvf {security_jar_file} {internal_jar_path}/esgf_{service_type}_static.xml".format(security_jar_file=security_jar_file, internal_jar_path=internal_jar_path, service_type=service_type))
+                    with zipfile.ZipFile(security_jar_file, 'r') as security_jar_zip:
+                        static_file_path = "{}/esgf_{}_static.xml".format(internal_jar_path, service_type)
+                        logger.info("Extracting %s from %s", static_file_path, security_jar_file)
+                        security_jar_zip.extract(static_file_path)
                     shutil.copyfile(os.path.join(full_extracted_jar_dir, "esgf_{}_static.xml".format(service_type)), config["esg_config_dir"])
 
                     tomcat_user_id = esg_functions.get_user_id("tomcat")

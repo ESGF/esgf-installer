@@ -9,7 +9,7 @@
 							http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
               http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
               http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-              http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+              http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd">
 
 
     <!-- Enables the Spring MVC @Controller programming model  -->
@@ -105,14 +105,7 @@
         <constructor-arg type="int" value="1"/>
     </bean>
 
-    <!-- Restricted Access (using container managed security, eg Tomcat, or CAMS)
-    <bean id="restrictedDatasetAuthorizer" class="thredds.servlet.restrict.TomcatAuthorizer">
-        <property name="useSSL" value="false"/>
-        <property name="sslPort" value="8443"/>
-    </bean> -->
-
-    <!-- ESGF -->
-    <bean id="restrictedDatasetAuthorizer" class="esg.orp.app.tds.TDSAuthorizer" />
+    <bean id="restrictedDatasetAuthorizer" class="esg.orp.app.tds.TDSAuthorizer"/>
 
     <!-- JMX -->
     <bean id="openRAFMonitor" class="thredds.monitor.OpenRAFMonitorImpl"/>

@@ -14,6 +14,7 @@ from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
+from plumbum.commands import ProcessExecutionError
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -63,10 +64,6 @@ def download_template_directory():
 
         esg_functions.extract_tarball("/usr/local/src/solr-home.tar")
 
-# #Helper Method to figure out the version of solr-home installation
-# check_solr_version() {
-#     [ "$(cat ${solr_install_dir}/VERSION)" = "${solr_version}" ]
-# }
 
 def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr/local/solr-home"):
     print "\n*******************************"
@@ -87,20 +84,20 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     else:
         enable_nodes = "'-Denable.master=true -Denable.slave=true'"
 
-    start_solr_command = "{SOLR_INSTALL_DIR}/bin/solr start -d {SOLR_INSTALL_DIR}/server -s {SOLR_HOME}/{solr_config_type}-{port_number} -p {port_number} -a {enable_nodes} -m 512m".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR, SOLR_HOME=SOLR_HOME, solr_config_type=solr_config_type, port_number=port_number, enable_nodes=enable_nodes)
-    print "start solr command:", start_solr_command
-    esg_functions.stream_subprocess_output(start_solr_command)
+    server_directory = "{}/server".format(SOLR_INSTALL_DIR)
+    solr_solr_home = "{}/{}-{}".format(SOLR_HOME, solr_config_type, port_number)
+    start_solr_options = ["start", "-d", server_directory, "-s", solr_solr_home, "-p", port_number, "-a", enable_nodes, "-m", "512m"]
+    esg_functions.call_binary("/usr/local/bin/solr", start_solr_options)
 
     solr_status(SOLR_INSTALL_DIR)
 
 def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''
     try:
-        esg_functions.stream_subprocess_output("{SOLR_INSTALL_DIR}/bin/solr status".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
-    except OSError:
-        pass
-    except SubprocessError:
-        raise("Error checking solr status")
+        esg_functions.call_binary("/usr/local/bin/solr", ["status"])
+    except ProcessExecutionError:
+        logger.error("Error checking solr status")
+        raise
 
 #TODO: fix and test
 def check_solr_process(solr_config_type="master", port=8984):
@@ -115,9 +112,9 @@ def check_solr_process(solr_config_type="master", port=8984):
 def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr", port="-all"):
     '''Stop the solr process'''
     try:
-        esg_functions.stream_subprocess_output("{}/bin/solr stop {}".format(SOLR_INSTALL_DIR, port))
-    except SubprocessError:
-        print "Could not stop solr with control script. Killing with PID"
+        esg_functions.call_binary("/usr/local/solr/bin/solr", ["stop", port])
+    except ProcessExecutionError:
+        logger.error("Could not stop solr with control script. Killing with PID")
         solr_pid_files = glob.glob("/usr/local/solr/bin/*.pid")
         for pid in solr_pid_files:
             solr_pid = open(pid, "r").read()
@@ -238,18 +235,16 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     pybash.mkdir_p(SOLR_HOME)
 
     # create non-privilged user to run Solr server
+    esg_functions.add_unix_group("solr")
+
+    useradd_options = ["-s", "/sbin/nologin", "-g", "solr", "-d", "/usr/local/solr", "solr"]
     try:
-        esg_functions.stream_subprocess_output("groupadd solr")
-    except SubprocessError, error:
-        logger.debug(error.__dict__["data"]["returncode"])
-        if error.__dict__["data"]["returncode"] == 9:
+        esg_functions.call_binary("useradd", useradd_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
             pass
-    try:
-        esg_functions.stream_subprocess_output("useradd -s /sbin/nologin -g solr -d /usr/local/solr solr")
-    except SubprocessError, error:
-        logger.debug(error.__dict__["data"]["returncode"])
-        if error.__dict__["data"]["returncode"] == 9:
-            pass
+        else:
+            raise
 
     SOLR_USER_ID = pwd.getpwnam("solr").pw_uid
     SOLR_GROUP_ID = grp.getgrnam("solr").gr_gid
@@ -274,10 +269,6 @@ def setup_solr(index_config, SOLR_INSTALL_DIR="/usr/local/solr", SOLR_HOME="/usr
     shutil.copyfile(os.path.join(current_directory, "solr_scripts/log4j.properties"), "{SOLR_INSTALL_DIR}/server/resources/log4j.properties".format(SOLR_INSTALL_DIR=SOLR_INSTALL_DIR))
     pybash.mkdir_p("/esg/solr-logs")
 
-    #start solr
-    # solr_shards = read_shard_config()
-    # for config_type, port_number in solr_shards:
-    #     start_solr(config_type, port_number, SOLR_INSTALL_DIR, SOLR_HOME)
 
 def main(index_config):
     setup_solr(index_config)

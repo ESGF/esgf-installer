@@ -7,7 +7,6 @@ from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -54,7 +53,7 @@ def transfer_api_client_python(target_directory):
         git = repo.git
         git.pull()
         with pybash.pushd("mkproxy"):
-            esg_functions.stream_subprocess_output("make install")
+            esg_functions.call_binary("make", ["install"])
 
 def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     # change ownership of COG_CONFIG_DIR/site_media
@@ -112,30 +111,26 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         transfer_api_client_python(os.path.join(COG_DIR, "transfer-api-client-python"))
 
         # setup CoG database and configuration
-        esg_functions.stream_subprocess_output("python setup.py install")
+        esg_functions.call_binary("python", ["setup.py", "install"])
 
         # create or upgrade CoG installation
-        esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=true")
+        esg_functions.call_binary("python", ["setup.py", "setup_cog", "--esgf=true"])
 
         # collect static files to ./static directory
-        esg_functions.stream_subprocess_output("python manage.py collectstatic --no-input")
+        esg_functions.call_binary("python", ["manage.py", "collectstatic", "--no-input"])
 
     # create non-privileged user to run django
+    esg_functions.add_unix_group("cogadmin")
     try:
-        esg_functions.stream_subprocess_output("groupadd -r cogadmin")
-    except SubprocessError, error:
-        logger.debug(error.__dict__["data"]["returncode"])
-        if error.__dict__["data"]["returncode"] == 9:
+        esg_functions.call_binary("useradd", ["-r", "-g", "cogadmin", "cogadmin"])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
             pass
-    try:
-        esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
-    except SubprocessError, error:
-        logger.debug(error.__dict__["data"]["returncode"])
-        if error.__dict__["data"]["returncode"] == 9:
-            pass
+        else:
+            raise
 
     pybash.mkdir_p("~cogadmin")
-    esg_functions.stream_subprocess_output("chown cogadmin:cogadmin ~cogadmin")
+    esg_functions.call_binary("chown", ["cogadmin:cogadmin", "~cogadmin"])
 
     # change user prompt
     with open("~cogadmin/.bashrc", "a") as cogadmin_bashrc:

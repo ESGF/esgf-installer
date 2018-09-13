@@ -65,7 +65,9 @@ def start_search_services():
     if not os.path.exists(config_facets_props_path) and os.path.exists(esg_search_facets_props_path):
         shutil.copyfile(esg_search_facets_props_path, config_facets_props_path)
 
-    solr.start_solr()
+    solr_shards = solr.read_shard_config()
+    for config_type, port_number in solr_shards:
+        solr.start_solr(config_type, port_number)
 
 def stop_search_services():
     print "Stopping search services..."

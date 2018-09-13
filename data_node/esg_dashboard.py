@@ -9,6 +9,7 @@ import yaml
 from git import Repo
 from clint.textui import progress
 from esgf_utilities import esg_functions
+from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from plumbum.commands import ProcessExecutionError
 

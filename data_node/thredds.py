@@ -251,7 +251,6 @@ def update_mail_admin_address():
 def esgsetup_thredds():
     '''Configures Thredds with esgsetup'''
     os.environ["UVCDAT_ANONYMOUS_LOG"] = "no"
-    #TODO: --gateway is esg_property_manager.get_property("esgf.index.peer")
     try:
         index_peer = esg_property_manager.get_property("esgf.index.peer")
     except ConfigParser.NoOptionError:
@@ -380,8 +379,7 @@ def copy_xml_files():
 
     tomcat_user_id = esg_functions.get_user_id("tomcat")
     tomcat_group_id = esg_functions.get_group_id("tomcat")
-    #TODO: fix path to go in to WEB-INF
-    shutil.copyfile(os.path.join(current_directory, "thredds_conf/thredds.web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/thredds.web.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml")
     os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", tomcat_user_id, tomcat_group_id)
 
     pybash.mkdir_p("/esg/content/thredds/esgcet")

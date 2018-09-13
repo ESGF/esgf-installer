@@ -5553,7 +5553,7 @@ start() {
     echo "$(echo_strong "starting services...") ($sel)"
     run_startup_hooks
 
-    service ntpd status
+    service ntpd status &>/dev/null || service chronyd status &>/dev/null
     if [ $? != 0 ]; then
         service ntpd start
     fi

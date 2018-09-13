@@ -127,17 +127,6 @@ def add_tomcat_user():
 
         done_adding_users = add_another_user()
 
-def get_webxml_file():
-    '''Get the templated web.xml file... (with tokens for subsequent filter entries: see [esg-]security-[token|tokenless]-filters[.xml] files)'''
-    web_xml_path = os.path.join("{tomcat_install_dir}".format(tomcat_install_dir=config["tomcat_install_dir"]), "webapps", "thredds", "WEB-INF", "web.xml")
-    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    web_xml_download_url = "{}/thredds/thredds.web.xml".format(esg_dist_url)
-    esg_functions.download_update(web_xml_path, web_xml_download_url)
-
-    tomcat_user_id = esg_functions.get_tomcat_user_id()
-    tomcat_group_id = esg_functions.get_tomcat_group_id()
-
-    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", tomcat_user_id, tomcat_group_id)
 
 #TODO: terrible, undescriptive name; come up with something better
 def register(remote_host):
@@ -373,29 +362,36 @@ def copy_jar_files(esg_dist_url):
     # except IOError:
     #     urllib.urlretrieve("{}/filters/postgresql-8.4-703.jdbc3.jar".format(esg_dist_url), "/usr/local/tomcat/webapps/thredds/WEB-INF/lib/postgresql-8.4-703.jdbc3.jar")
 
-def download_thredds_xml(esg_dist_url):
-    '''Download the thredds.xml file from the distribution mirror'''
-    thredds_xml_url = "{}/externals/bootstrap/tomcat-thredds.xml".format(esg_dist_url)
-    esg_functions.download_update("{tomcat_conf_dir}/Catalina/localhost/thredds.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"]), thredds_xml_url)
 
-def download_thredds_config_xml(esg_dist_url):
-    '''Download the threddsConfig.xml file from the distribution mirror'''
-    thredds_config_url = "{}/thredds/threddsConfig.xml.tmpl".format(esg_dist_url)
-    esg_functions.download_update("/esg/content/thredds/threddsConfig.xml", thredds_config_url)
+def copy_xml_files():
+    '''Copy Thredds configuration xmls files into proper location on server'''
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/tomcat-users.xml"), "{}/tomcat-users.xml".format(config["tomcat_conf_dir"]))
 
-def download_application_context(esg_dist_url):
-    '''Download the applicationContext.xml file from the distribution mirror'''
-    application_context_url = "{}/thredds/applicationContext.xml".format(esg_dist_url)
-    esg_functions.download_update("/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml", application_context_url)
+    pybash.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/tomcat-thredds.xml"), "{}/Catalina/localhost/thredds.xml".format(config["tomcat_conf_dir"]))
 
-def download_tomcat_users_xml(esg_dist_url):
-    '''Download the tomcat-users.xml template from the distribution mirror'''
-    tomcat_users_xml_url = "{}/externals/bootstrap/tomcat-users.xml".format(esg_dist_url)
-    tomcat_users_xml_local_path = "{tomcat_conf_dir}/tomcat-users.xml".format(tomcat_conf_dir=config["tomcat_conf_dir"])
-    esg_functions.download_update(tomcat_users_xml_local_path, tomcat_users_xml_url)
+    # TDS configuration root
+    pybash.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
+    # TDS memory configuration
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/threddsConfig.xml"), "/esg/content/thredds/threddsConfig.xml")
+
+    # ESGF root catalog
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/catalog.xml"), "/esg/content/thredds/catalog.xml-esgcet")
+
     tomcat_user_id = esg_functions.get_user_id("tomcat")
     tomcat_group_id = esg_functions.get_group_id("tomcat")
-    os.chown(tomcat_users_xml_local_path, tomcat_user_id, tomcat_group_id)
+    #TODO: fix path to go in to WEB-INF
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/thredds.web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
+    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", tomcat_user_id, tomcat_group_id)
+
+    pybash.mkdir_p("/esg/content/thredds/esgcet")
+    # TDS customized applicationContext.xml file with ESGF authorizer
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/applicationContext.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/applicationContext.xml")
+
+    os.chown("{}/tomcat-users.xml".format(config["tomcat_conf_dir"]), tomcat_user_id, tomcat_group_id)
+
+    # TDS customized logging (uses DEBUG)
+    shutil.copyfile(os.path.join(current_directory, "thredds_conf/log4j2.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
 
 def write_tds_install_log():
     '''Write thredds info to install manifest'''
@@ -439,32 +435,14 @@ def setup_thredds():
         tomcat_group_id = esg_functions.get_tomcat_group_id()
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/thredds", tomcat_user_id, tomcat_group_id)
 
-    download_tomcat_users_xml(esg_dist_url)
+    copy_xml_files()
     add_tomcat_user()
 
-    pybash.mkdir_p("{tomcat_conf_dir}/Catalina/localhost".format(tomcat_conf_dir=config["tomcat_conf_dir"]))
-    #TODO: determine which web.xml function to use
-    download_thredds_xml(esg_dist_url)
-    # get_webxml_file()
-    shutil.copyfile(os.path.join(current_directory, "thredds_conf/web.xml"), "/usr/local/tomcat/webapps/thredds/web.xml")
-    os.chown("/usr/local/tomcat/webapps/thredds/WEB-INF/web.xml", tomcat_user_id, tomcat_group_id)
     select_idp_peer()
     copy_public_directory()
-    # TDS configuration root
-    pybash.mkdir_p(os.path.join(config["thredds_content_dir"], "thredds"))
-    # TDS memory configuration
-    download_thredds_config_xml(esg_dist_url)
     update_mail_admin_address()
 
-    # ESGF root catalog
-    shutil.copyfile(os.path.join(current_directory, "thredds_conf/catalog.xml"), "/esg/content/thredds/catalog.xml-esgcet")
-    pybash.mkdir_p("/esg/content/thredds/esgcet")
-    # TDS customized applicationContext.xml file with ESGF authorizer
-    download_application_context(esg_dist_url)
     copy_jar_files(esg_dist_url)
-
-    # TDS customized logging (uses DEBUG)
-    shutil.copyfile(os.path.join(current_directory, "thredds_conf/log4j2.xml"), "/usr/local/tomcat/webapps/thredds/WEB-INF/classes/log4j2.xml")
 
     # change ownership of content directory
     tomcat_user_id = esg_functions.get_tomcat_user_id()
@@ -490,7 +468,7 @@ def setup_thredds():
 
 def tds_startup_hook():
     '''Prepares thredds to start'''
-    print "TDS (THREDDS) Startup Hook: Setting perms... "
+    print "TDS (THREDDS) Startup Hook: Setting permissions... "
     esg_functions.change_ownership_recursive(config["thredds_content_dir"], uid=esg_functions.get_user_id("tomcat"))
 
 

@@ -58,7 +58,6 @@ def download_thredds_war(thredds_url):
 def create_password_hash(tomcat_user_password):
     '''Creates a hash for a Tomcat user's password using Tomcat's digest.sh script'''
     password_hash = esg_functions.call_subprocess("/usr/local/tomcat/bin/digest.sh -a SHA {tomcat_user_password}".format(tomcat_user_password=tomcat_user_password))
-    logger.info("password hash: %s", password_hash["stdout"].split(":")[1])
     return password_hash["stdout"].split(":")[1].strip()
 
 def update_tomcat_users_file(tomcat_username, password_hash, tomcat_users_file=config["tomcat_users_file"]):

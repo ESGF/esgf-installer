@@ -93,7 +93,7 @@ def add_another_user():
         if another_user.lower().strip() in ["n", "no"]:
             valid_selection = True
             done_adding_users = True
-        if another_user.lower().strip() in ["y", "yes"]:
+        elif another_user.lower().strip() in ["y", "yes"]:
             valid_selection = True
             done_adding_users = False
         else:

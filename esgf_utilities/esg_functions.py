@@ -183,6 +183,7 @@ def get_parent_directory(directory_path):
 
 
 def is_in_git_repo(file_name):
+    #TODO: this may get deprecated as we are moving most things to live in repos
     '''
      This determines if a specified file is in a git repository.
      This function will resolve symlinks and check for a .git
@@ -201,21 +202,21 @@ def is_in_git_repo(file_name):
         print "Git is not installed"
         return False
 
-    print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
+    logger.debug("Checking to see if %s is in a git repository...", file_name)
     absolute_path = readlinkf(file_name)
     one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
     two_directories_up = os.path.abspath(os.path.join(one_directory_up, os.pardir))
 
     if not os.path.isfile(file_name):
-        print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
+        logger.debug("%s does not exist yet, allowing creation", file_name)
         return False
 
     if os.path.isdir(one_directory_up + "/.git"):
-        print "%s is in a git repository" % file_name
+        logger.info("%s is in a git repository", file_name)
         return True
 
     if os.path.isdir(two_directories_up + "/.git"):
-        print "%s is in a git repository" % file_name
+        logger.info("%s is in a git repository", file_name)
         return True
 
 
@@ -238,10 +239,9 @@ def check_for_update(filename_1, filename_2=None):
         remote_file = filename_2
 
     if not os.path.isfile(local_file):
-        print " WARNING: Could not find local file %s" % (local_file)
+        logger.warning("Could not find local file %s", local_file)
         return 0
     if not os.access(local_file, os.X_OK):
-        print " WARNING: local file %s not executible" % (local_file)
         os.chmod(local_file, 0755)
 
     remote_file_md5 = requests.get(remote_file + '.md5').content
@@ -288,9 +288,6 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
         # Get the last subpath from the absolute path
         # TODO: use pybash.trim_from_head() here
         local_file = local_file.split("/")[-1]
-
-    logger.debug("local file : %s", local_file)
-    logger.debug("remote file: %s", remote_file)
 
     if is_in_git_repo(local_file):
         print "%s is controlled by Git, not updating" % (local_file)
@@ -356,10 +353,10 @@ def verify_checksum(local_file, remote_file):
     local_file_md5 = get_md5sum(local_file)
 
     if local_file_md5 != remote_file_md5:
-        print " WARNING: Could not verify this file! %s" % (local_file)
+        logger.warning("Could not verify this file! %s", local_file)
         return False
     else:
-        print "{local_file} checksum [VERIFIED]".format(local_file=local_file)
+        logger.info("%s checksum [VERIFIED]", local_file)
         return True
 
 

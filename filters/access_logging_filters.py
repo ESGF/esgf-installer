@@ -78,8 +78,8 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         return
 
     #TODO: break into separate function; extract esg_filter_entry_file from jar
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
     with pybash.pushd(config["workdir"]):
         with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as filters_jar:
             #Pull out the templated filter entry snippet file...

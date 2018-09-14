@@ -1,6 +1,6 @@
 import json
 from .installer import Installer
-from .sample_components import Ant
+from .sample_components import Java
 
 class Director(object):
     ''' A class for managing the flow of the program '''
@@ -8,7 +8,7 @@ class Director(object):
         self.params = None
         # Store what components are needed for each node type.
         self.node_types = {
-            "base": { Ant }
+            "base": {Java}
         }
     def pre_check(self):
         # Check privileges, OS, PATH, etc..

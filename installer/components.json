@@ -8,7 +8,7 @@
   "java": {
     "version": "1.8.0_162",
     "url": "http://aims1.llnl.gov/esgf/dist/2.6/8/java/{version}/jdk{version}-64.tar.gz",
-    "extract_dir": "/usr/local/java"
+    "extract_dir": "/tmp/java"
   },
   "mod_wsgi": "4.5.3",
   "esgcet": {

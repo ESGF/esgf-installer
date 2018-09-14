@@ -1,10 +1,12 @@
-from string import Formatter
 import pwd
 import grp
+
+from .utils import populate
 
 class SysPkgComponent(object):
     def __init__(self, config, name):
         config = config[name]
+        replacements = {"name": name}
         if isinstance(config, basestring):
             version = config
             if version != "latest":
@@ -12,6 +14,7 @@ class SysPkgComponent(object):
         elif isinstance(config, dict):
             try:
                 self.req_version = config["version"]
+                replacements["version"] = config["version"]
             except KeyError:
                 pass
             try:
@@ -20,18 +23,7 @@ class SysPkgComponent(object):
                 pass
             else:
                 for pkg_tool in self.pkg_names:
-                    pkg_name = self.pkg_names[pkg_tool]
-                    fieldnames = [fname for _, fname, _, _ in Formatter().parse(pkg_name) if fname]
-                    if not fieldnames:
-                        continue
-                    replacements = {}
-                    for field in fieldnames:
-                        if field == "version":
-                            replacements["version"] = self.req_version
-                        elif field == "name":
-                            replacements["name"] = name
-                    if replacements:
-                        self.pkg_names[pkg_tool] = pkg_name.format(**replacements)
+                    self.pkg_names[pkg_tool] = populate(self.pkg_names[pkg_tool], replacements)
 
 class Ant(SysPkgComponent):
     def __init__(self, config):
@@ -40,18 +32,23 @@ class Ant(SysPkgComponent):
 
 class DistComponent(object):
     def __init__(self, config, name):
-        self.config = config[name]
-        self.url = self.config["url"]
+        config = config[name]
+        replacements = {"name": name}
         try:
-            self.extract_dir = self.config["extract_dir"]
+            replacements["version"] = config["version"]
+        except KeyError:
+            pass
+        self.url = populate(config["url"], replacements)
+        try:
+            self.extract_dir = config["extract_dir"]
         except KeyError:
             pass
         try:
-            self.local_dir = self.config["local_dir"]
+            self.local_dir = config["local_dir"]
         except KeyError:
             pass
         try:
-            self.owner = self.config["owner"]
+            self.owner = config["owner"]
         except KeyError:
             pass
         else:
@@ -67,6 +64,9 @@ class Java(DistComponent):
     def __init__(self, config):
         self.name = "java"
         DistComponent.__init__(self, config, self.name)
+
+    def version(self):
+        return None
 
 class Thredds(DistComponent):
     def __init__(self, config):

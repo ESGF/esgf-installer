@@ -15,7 +15,6 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from base import esg_postgres
 
@@ -57,7 +56,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
 
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF")):
-        logger.error("WARNING: Could not find %s's installation dir - Filter Not Applied", service_name)
+        logger.error("Could not find %s's installation dir - Filter Not Applied", service_name)
         return False
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
         logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
@@ -142,7 +141,7 @@ def get_node_manager_libs(dest_dir, esg_dist_url):
     src_dir = os.path.join(node_manager_app_home, "WEB-INF", "lib")
 
     if not os.path.exists(src_dir):
-        logger.error("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
+        logger.warning("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
         return
 
     #Jar versions...
@@ -174,8 +173,8 @@ def get_node_manager_libs(dest_dir, esg_dist_url):
 
     print "getting (downloading) library jars from Node Manager Distribution Server to {} ...".format(dest_dir)
 
-    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
-    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

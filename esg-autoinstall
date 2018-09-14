@@ -199,10 +199,10 @@ expect {
         send \n ; exp_continue
     }
     "Do you want to register the GridFTP server with Globus?" {
-        send Y\n ; exp_continue
+        send ${REGISTERGLOBUS}\n ; exp_continue
     }
     "Do you want to register the MyProxy server with Globus?" {
-        send Y\n ; exp_continue
+        send ${REGISTERGLOBUS}\n ; exp_continue
     }
     "Please provide a Globus username" {
         send ${GLOBUSUSER}\n ; exp_continue

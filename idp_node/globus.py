@@ -12,12 +12,13 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import SubprocessError, InvalidNodeTypeError
+from esgf_utilities.esg_exceptions import InvalidNodeTypeError
 from base import esg_tomcat_manager
 from base import esg_postgres
 from idp_node import gridftp
 from idp_node import myproxy
 from esgf_utilities.esg_env_manager import EnvWriter
+from plumbum.commands import ProcessExecutionError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -30,7 +31,7 @@ def check_for_globus_installation(globus_version, installation_type):
     if os.access("/usr/bin/globus-version", os.X_OK):
         print "Detected an existing Globus installation"
         print "Checking for Globus {}".format(globus_version)
-        installed_globus_version = esg_functions.call_subprocess("/usr/bin/globus-version")['stdout']
+        installed_globus_version = esg_functions.call_binary("/usr/bin/globus-version")
         if esg_version_manager.compare_versions(installed_globus_version, globus_version+".0"):
             if installation_type == "DATA" and os.path.exists("/usr/bin/globus-connect-server-io-setup"):
                 print "GridFTP already installed"
@@ -182,9 +183,8 @@ def stop_globus_services(config_type):
 
 def check_for_existing_globus_rpm_packages():
     '''Check if globus rpm is already installed'''
-    rpm_packages = esg_functions.call_subprocess("rpm -qa")["stdout"].split("\n")
+    rpm_packages = esg_functions.call_binary("rpm", ["-qa"]).split("\n")
     globus_packages = [package for package in rpm_packages if "globus" in package]
-    logger.debug("globus_packages: %s", globus_packages)
     return globus_packages
 
 #--------------------------------------------------------------
@@ -197,8 +197,8 @@ def install_globus_rpm():
     globus_connect_server_file = "globus-connect-server-repo-latest.noarch.rpm"
     globus_connect_server_url = "http://toolkit.globus.org/ftppub/globus-connect-server/globus-connect-server-repo-latest.noarch.rpm"
     esg_functions.download_update(globus_connect_server_file, globus_connect_server_url)
-    esg_functions.stream_subprocess_output("rpm --import http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus")
-    esg_functions.stream_subprocess_output("rpm -i globus-connect-server-repo-latest.noarch.rpm")
+    esg_functions.call_binary("rpm", ["--import", "http://www.globus.org/ftppub/globus-connect-server/RPM-GPG-KEY-Globus"])
+    esg_functions.call_binary("rpm", ["-i", "globus-connect-server-repo-latest.noarch.rpm"])
 
 def _install_globus(config_type):
     if config_type == "datanode":
@@ -219,22 +219,20 @@ def _install_globus(config_type):
         if not check_for_existing_globus_rpm_packages():
             install_globus_rpm()
         # Install Globus and ESGF RPMs
-        esg_functions.stream_subprocess_output("yum -y install {}".format(globus_type))
-        esg_functions.stream_subprocess_output("yum -y update {}".format(globus_type))
+        esg_functions.call_binary("yum", ["-y", "install", globus_type])
+        esg_functions.call_binary("yum", ["-y", "update", globus_type])
 
         if globus_type == "globus-connect-server-io":
             try:
-                esg_functions.stream_subprocess_output("yum -y install --nogpgcheck globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
-                esg_functions.stream_subprocess_output("yum -y update --nogpgcheck globus-authz-esgsaml-callout globus-gaa globus-adq customgsiauthzinterface")
-            except SubprocessError, error:
+                esg_functions.call_binary("yum", ["-y", "install", "--nogpgcheck", "globus-authz-esgsaml-callout", "globus-gaa", "globus-adq", "customgsiauthzinterface"])
+                esg_functions.call_binary("yum", ["-y", "update", "--nogpgcheck", "globus-authz-esgsaml-callout", "globus-gaa", "globus-adq", "customgsiauthzinterface"])
+            except ProcessExecutionError, error:
                 logger.error(error)
                 pass
         else:
             #TODO: remove --nogpgcheck check when packages are properly signed
-            esg_functions.stream_subprocess_output("yum -y install --nogpgcheck mhash pam-pgsql")
-            esg_functions.stream_subprocess_output("yum -y update --nogpgcheck mhash pam-pgsql")
-
-
+            esg_functions.call_binary("yum", ["-y", "install", "--nogpgcheck", "mhash", "pam-pgsql"])
+            esg_functions.call_binary("yum", ["-y", "update", "--nogpgcheck", "mhash", "pam-pgsql"])
 
 
 ############################################
@@ -243,22 +241,18 @@ def _install_globus(config_type):
 
 def create_globus_account(globus_sys_acct):
     '''Create the system account for globus to run as.'''
-
-    try:
-        esg_functions.call_subprocess("groupadd -r {}".format(globus_sys_acct))
-    except SubprocessError, error:
-        logger.debug("error: %s", error)
-        logger.debug("error: %s", error.__dict__["data"]["returncode"])
-        if error.__dict__["data"]["returncode"] == 9:
-            pass
+    esg_functions.add_unix_group(globus_sys_acct)
 
     globus_sys_acct_passwd = esg_functions.get_security_admin_password()
+
+    useradd_options = ["-s", "-r", "-c", "Globus System User", "-g", "globus", "-p", globus_sys_acct_passwd, "-s", "/bin/bash", globus_sys_acct]
     try:
-        esg_functions.stream_subprocess_output('''/usr/sbin/useradd -r -c "Globus System User" -g {globus_sys_acct_group} -p {globus_sys_acct_passwd} -s /bin/bash {globus_sys_acct}'''.format(globus_sys_acct_group="globus", globus_sys_acct_passwd=globus_sys_acct_passwd, globus_sys_acct=globus_sys_acct))
-    except SubprocessError, error:
-        logger.debug(error.__dict__["data"]["returncode"])
-        if error.__dict__["data"]["returncode"] == 9:
+        esg_functions.call_binary("useradd", useradd_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
             pass
+        else:
+            raise
 
 def globus_check_certificates():
     '''Check if globus certificates are valid'''

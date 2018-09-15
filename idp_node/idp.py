@@ -125,7 +125,7 @@ def setup_slcs():
         print "Skipping installation of SLCS server"
         return
 
-    esg_functions.stream_subprocess_output("yum  -y install ansible")
+    esg_functions.call_binary("yum", ["-y", "install", "ansible"])
 
     #create slcs Database
     esg_postgres.create_database("slcsdb")
@@ -167,8 +167,7 @@ def setup_slcs():
             esg_functions.change_ownership_recursive("/usr/local/esgf-slcs-server", "apache", "apache")
 
             #TODO: check if there's an ansible Python module
-            esg_functions.stream_subprocess_output('ansible-playbook -i playbook/inventories/localhost -e "@playbook/overrides/production_venv_only.yml" playbook/playbook.yml')
-
+            esg_functions.call_binary("ansible-playbook", ["-i", "playbook/inventories/localhost", "-e", "@playbook/overrides/production_venv_only.yml", "playbook/playbook.yml"])
 
 def main():
     '''Main function'''

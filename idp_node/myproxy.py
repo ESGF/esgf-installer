@@ -13,10 +13,10 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from base import esg_postgres
 from esgf_utilities.esg_env_manager import EnvWriter
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -89,7 +89,7 @@ def setup_gcs_id(first_run=None):
         pybash.mkdir_p(myproxy_config_dir)
         copy_gcs_conf()
 
-        esg_functions.stream_subprocess_output("globus-connect-server-id-setup -c {}/globus-connect-server.conf -v".format(myproxy_config_dir))
+        esg_functions.call_binary("globus-connect-server-id-setup", ["-c", "{}/globus-connect-server.conf".format(myproxy_config_dir), "-v"])
 
     # Create a substitution of Globus generated configuration files for MyProxy server
     copy_globus_connect_esgf()
@@ -182,8 +182,9 @@ def config_myproxy_server(globus_location, install_mode="install"):
             java_class_path = glob.glob("*.jar")
             java_class_path_string = ":".join(java_class_path)
 
-            esg_functions.stream_subprocess_output("javac -classpath {} ESGOpenIDRetriever.java".format(java_class_path_string))
-            esg_functions.stream_subprocess_output("javac -classpath {} ESGGroupRetriever.java".format(java_class_path_string))
+            #TODO: Get rid of Java files and replace with pyscopg functions
+            esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGOpenIDRetriever.java"])
+            esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGGroupRetriever.java"])
 
         fetch_myproxy_certificate_mapapp()
         edit_pam_pgsql_conf()
@@ -208,19 +209,26 @@ def config_myproxy_server(globus_location, install_mode="install"):
 def start_myproxy_server():
     if check_myproxy_process():
         return
-
-    #TODO: this checks if a file has execute permissions; break into helper function
-    if os.access("/etc/init.d/myproxy-server", os.X_OK):
-        esg_functions.stream_subprocess_output("/etc/init.d/myproxy-server start")
-    elif os.access("/etc/init.d/myproxy", os.X_OK):
-        print " MyProxy - Starting server..."
-        esg_functions.stream_subprocess_output("/etc/init.d/myproxy start")
+    try:
+        esg_functions.call_binary("service", ["myproxy-server", "start"])
+    except ProcessExecutionError:
+        pass
+    try:
+        esg_functions.call_binary("service", ["myproxy", "start"])
+    except ProcessExecutionError:
+        logger.error("Error starting Myproxy")
+        raise
 
 def stop_myproxy_server():
-    if os.access("/etc/init.d/myproxy-server", os.X_OK):
-        esg_functions.stream_subprocess_output("/etc/init.d/myproxy-server stop")
-    elif os.access("/etc/init.d/myproxy", os.X_OK):
-        esg_functions.stream_subprocess_output("/etc/init.d/myproxy stop")
+    try:
+        esg_functions.call_binary("service", ["myproxy-server", "stop"])
+    except ProcessExecutionError:
+        pass
+    try:
+        esg_functions.call_binary("service", ["myproxy", "stop"])
+    except ProcessExecutionError:
+        logger.error("Error stopping Myproxy")
+        raise
 
     if not check_myproxy_process():
         print "MyProxy Process is stopped..."
@@ -231,13 +239,17 @@ def restart_myproxy_server():
 
 def myproxy_status():
     '''Checks the status of the myproxy server'''
-    if os.access("/etc/init.d/myproxy-server", os.X_OK):
-        status = esg_functions.call_subprocess("/etc/init.d/myproxy-server status")
-    print "myproxy server status:", status["stdout"]
-    if "running" in status["stdout"]:
-        return (True, status)
-    else:
+    try:
+        status = esg_functions.call_binary("service", ["myproxy-server", "status"])
+    except ProcessExecutionError:
+        pass
+    try:
+        status = esg_functions.call_binary("service", ["myproxy", "status"])
+    except ProcessExecutionError:
+        logger.error("Could not check MyProxy status")
         return False
+    else:
+        return (True, status)
 
 def check_myproxy_process():
     myproxy_processes = [proc for proc in psutil.process_iter(attrs=['pid', 'name', 'username']) if "myproxy-server" in proc.info["name"]]

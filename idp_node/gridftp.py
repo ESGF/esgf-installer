@@ -33,7 +33,7 @@ def setup_gridftp_metrics_logging():
     for directory in directory_list:
         pybash.mkdir_p(directory)
 
-    esg_functions.stream_subprocess_output("yum -y install perl-DBD-Pg")
+    esg_functions.call_binary("yum", ["-y", "install", "perl-DBD-Pg"])
 
     globus_workdir = os.path.join(config["workdir"], "extra", "globus")
     pybash.mkdir_p(globus_workdir)
@@ -92,7 +92,7 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
         pybash.mkdir_p(gridftp_chroot_jail)
 
         print "Creating chroot jail @ {}".format(gridftp_chroot_jail)
-        esg_functions.stream_subprocess_output("globus-gridftp-server-setup-chroot -r {}".format(gridftp_chroot_jail))
+        esg_functions.call_binary("globus-gridftp-server-setup-chroot", ["-r", gridftp_chroot_jail])
 
         globus_jail_path = os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_sys_acct)
         pybash.mkdir_p(globus_jail_path)
@@ -126,7 +126,7 @@ def setup_gridftp_jail(globus_sys_acct="globus"):
             print "mounting [{mount_dir}] into chroot jail [{gridftp_chroot_jail}/] as [{mount_name}]".format(mount_dir=mount_dir, mount_name=mount_name, gridftp_chroot_jail=gridftp_chroot_jail)
             gridftp_mount_dir = os.path.join(gridftp_chroot_jail, mount_name)
             pybash.mkdir_p(gridftp_mount_dir)
-            esg_functions.stream_subprocess_output("mount --bind {} {}".format(mount_dir, gridftp_mount_dir))
+            esg_functions.call_binary("mount", ["--bind", mount_dir, gridftp_mount_dir])
 
 def post_gridftp_jail_setup():
     '''Write our trimmed version of /etc/password in the chroot location'''
@@ -176,7 +176,7 @@ def config_gridftp_server(globus_sys_acct, gridftp_chroot_jail="{}/gridftp_root"
     write_esgsaml_auth_conf()
 
     dnode_root_dn_wildcard = '^.*$'
-    esg_functions.stream_subprocess_output("grid-mapfile-add-entry -dn {} -ln {}".format(dnode_root_dn_wildcard, globus_sys_acct))
+    esg_functions.call_binary("grid-mapfile-add-entry", ["-dn", dnode_root_dn_wildcard, "-ln", globus_sys_acct])
 
     with open("/etc/gridftp.d/globus-esgf", "w") as globus_esgf_file:
         globus_esgf_file.write("chroot_path {}\n".format(gridftp_chroot_jail))
@@ -230,17 +230,15 @@ def start_gridftp_server(gridftp_chroot_jail="{}/gridftp_root".format(config["es
 
     configure_esgf_publisher_for_gridftp()
 
-    esg_functions.stream_subprocess_output("service globus-gridftp-server start")
-
+    esg_functions.call_binary("service", ["globus-gridftp-server", "start"])
 
 def stop_gridftp_server():
-    esg_functions.stream_subprocess_output("service globus-gridftp-server stop")
+    esg_functions.call_binary("service", ["globus-gridftp-server", "stop"])
 
 def gridftp_server_status():
     '''Checks the status of the gridftp server'''
-    status = esg_functions.call_subprocess("service globus-gridftp-server status")
-    print "Gridftp server status:", status["stdout"]
-    if "running" in status["stdout"]:
+    status = esg_functions.call_binary("service", ["globus-gridftp-server", "status"])
+    if "running" in status:
         return (True, status)
     else:
         return False
@@ -364,8 +362,7 @@ def setup_gcs_io(first_run=None):
         with open("/etc/globus-connect-server-esgf.conf", "w") as config_file_object:
             parser.write(config_file_object)
 
-
-        esg_functions.stream_subprocess_output("globus-connect-server-io-setup -c /etc/globus-connect-server-esgf.conf -v")
+        esg_functions.call_binary("globus-connect-server-io-setup", ["-c", "/etc/globus-connect-server-esgf.conf", "-v"])
 
     # Create a substitution of GCS configuration files for GridFTP server
     pybash.mkdir_p("/etc/gridftp.d")

@@ -123,6 +123,9 @@ expect {
     "Do you want to continue with ESGF Dashboard IP installation and setup?" {
         send \n ; exp_continue
     }
+    "Would you like to install the \"COMPUTE\" configuration to support this ?" {
+        send N\n ; exp_continue
+    }
     "Do you want to continue with LAS installation and setup?"  {
         send \n ; exp_continue
     }

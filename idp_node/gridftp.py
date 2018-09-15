@@ -258,6 +258,7 @@ def setup_gcs_io(first_run=None):
 
     with pybash.pushd(cert_dir):
         if os.path.isfile("hostkey.pem"):
+            pybash.mkdir_p("/etc/grid-security")
             shutil.copyfile("hostkey.pem", "/etc/grid-security/hostkey.pem")
             os.chmod("/etc/grid-security/hostkey.pem", 0600)
         if os.path.isfile("hostcert.pem"):

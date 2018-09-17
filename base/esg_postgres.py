@@ -34,6 +34,8 @@ def initialize_postgres():
         logger.error(error)
 
     esg_functions.call_binary("service", ["postgresql", "initdb"])
+    esg_functions.call_binary("chkconfig", ["postgresql", "on"])
+
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 
@@ -270,7 +272,6 @@ def start_postgres():
         initialize_postgres()
 
     esg_functions.call_binary("service", ["postgresql", "start"])
-    esg_functions.call_binary("chkconfig", ["postgresql", "on"])
 
     if postgres_status():
         return True

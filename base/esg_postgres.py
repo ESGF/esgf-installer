@@ -25,16 +25,6 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
-
-def download_postgres():
-    '''Download postgres from yum'''
-    print "\n*******************************"
-    print "Downloading Postgres"
-    print "******************************* \n"
-
-    esg_functions.call_binary("yum", ["-y", "install", "postgresql-server.x86_64", "postgresql.x86_64", "postgresql-devel.x86_64"])
-
-
 def initialize_postgres():
     '''Sets up postgres data directory'''
     try:
@@ -90,7 +80,8 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             force_install = True
             backup_db("postgres", "postgres")
 
-    download_postgres()
+    pkg_name = "postgresql-server-{}".format(config["postgress-version"])
+    esg_functions.call_binary("yum", ["-y", "install", pkg_name])
 
     initialize_postgres()
 

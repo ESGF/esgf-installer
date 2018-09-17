@@ -77,6 +77,10 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             return True
         else:
             force_install = True
+            # TODO At this point we know there is a valid postgres installation
+            # There are no purges, uninstalls, or deletes happening so a db backup is unneeded
+            #   as nothing will happen. If we want to purge the old install that will require
+            #   a bit more functionality to be added here.
             backup_db("postgres", "postgres")
 
     pkg_name = "postgresql-server-{}".format(config["postgress-version"])

@@ -8,7 +8,6 @@ import datetime
 import ConfigParser
 import logging
 import getpass
-from time import sleep
 from distutils.spawn import find_executable
 import yaml
 import semver
@@ -86,7 +85,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     initialize_postgres()
 
     # start the postgres server
-    start_postgres()
     setup_postgres_conf_file()
     setup_hba_conf_file()
     restart_postgres()
@@ -274,7 +272,6 @@ def start_postgres():
     esg_functions.call_binary("service", ["postgresql", "start"])
     esg_functions.call_binary("chkconfig", ["postgresql", "on"])
 
-    sleep(3)
     if postgres_status():
         return True
 
@@ -309,8 +306,6 @@ def restart_postgres():
         logger.error("Restarting Postgres failed")
         logger.error(err)
         raise
-    else:
-        sleep(7)
 
     postgres_status()
 

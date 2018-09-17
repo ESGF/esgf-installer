@@ -158,7 +158,6 @@ def setup_db_schemas(publisher_password=None):
     create_database("esgcet", cur)
     cur.close()
     conn.close()
-    # TODO: move download_config_files() here
 
     load_esgf_schemas(db_user_password)
 
@@ -346,51 +345,6 @@ def setup_hba_conf_file():
     postgres_group_id = esg_functions.get_group_id("postgres")
     os.chown(pg_hba_file, postgres_user_id, postgres_group_id)
     os.chmod(pg_hba_file, 0600)
-
-def download_config_files(force_install):
-    ''' Download config files '''
-    # #Get files
-    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    hba_conf_file = "pg_hba.conf"
-    if not esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install):
-        raise RuntimeError("Could not download pg_hba.conf from distribution mirror")
-    os.chmod(hba_conf_file, 0600)
-
-    postgres_conf_file = "postgresql.conf"
-    if not esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", postgres_conf_file), force_install):
-        raise RuntimeError("Could not download postgresql.conf from distribution mirror")
-    os.chmod(postgres_conf_file, 0600)
-
-
-def update_port_in_config_file():
-    '''Updates the postgres port number in postgresql.conf'''
-    postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(
-        postgress_port=config["postgress_port"])) or config["postgress_port"]
-    print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port=postgres_port_input)
-
-    with open('postgresql.conf', 'r') as pg_conf_file:
-        filedata = pg_conf_file.read()
-    filedata = filedata.replace('@@postgress_port@@', config["postgress_port"])
-
-    # Write the file out again
-    with open('postgresql.conf', 'w') as pg_conf_file:
-        pg_conf_file.write(filedata)
-
-
-def update_log_dir_in_config_file():
-    ''' Edit postgres config file '''
-    print "Setting Postgress Log Dir in config_file: {postgress_install_dir} ".format(postgress_install_dir=config["postgress_install_dir"])
-
-    with open('postgresql.conf', 'r') as pg_conf_file:
-        filedata = pg_conf_file.read()
-    filedata = filedata.replace('@@postgress_install_dir@@', config["postgress_install_dir"])
-
-    # Write the file out again
-    with open('postgresql.conf', 'w') as pg_conf_file:
-        pg_conf_file.write(filedata)
-
-    os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
-             grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 
 #----------------------------------------------------------

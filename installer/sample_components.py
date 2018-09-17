@@ -58,17 +58,22 @@ class DistComponent(object):
             elif isinstance(self.owner, dict):
                 self.owner_uid = pwd.getpwnam(self.owner["user"]).pw_uid
                 self.owner_gid = grp.getgrnam(self.owner["group"]).gr_gid
-
+    def version(self):
+        pass
 
 class Java(DistComponent):
     def __init__(self, config):
         self.name = "java"
         DistComponent.__init__(self, config, self.name)
 
-    def version(self):
-        return None
+
 
 class Thredds(DistComponent):
     def __init__(self, config):
         self.name = "thredds"
+        DistComponent.__init__(self, config, self.name)
+
+class Tomcat(DistComponent):
+    def __init__(self, config):
+        self.name = "tomcat"
         DistComponent.__init__(self, config, self.name)

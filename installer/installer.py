@@ -1,4 +1,4 @@
-from .sample_components import Java
+from .sample_components import Java, Thredds, Tomcat
 # from .methods.package_manager import PackageManager
 from .methods.distribution import DistributionArchive
 
@@ -6,7 +6,7 @@ class Installer(object):
     # A class for handling the installation, updating and general management of components
     def __init__(self, component_types, component_config):
         method_types = {
-            DistributionArchive: {Java}
+            DistributionArchive: {Java, Thredds, Tomcat}
         }
         self.methods = set()
         for method_type in method_types:

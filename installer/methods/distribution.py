@@ -1,6 +1,7 @@
 import os
-import zipfile
+import shutil
 import tarfile
+import zipfile
 
 import requests
 
@@ -16,7 +17,9 @@ class DistributionArchive(Generic):
 
     def _install(self):
         for component in self.components:
+            print "Installing {}".format(component.name)
             remote_file = component.url.rsplit('/', 1)[-1]
+            print "Remote file {}".format(remote_file)
             try:
                 local_dir = component.local_dir
             except AttributeError:
@@ -34,15 +37,33 @@ class DistributionArchive(Generic):
             except AttributeError:
                 pass #TODO fill in these except blocks with logging messages
             else:
-                mkdir_p(extract_dir)
+                print "Extract dir {}".format(extract_dir)
+                # TODO dangerous when root, put safe gaurds here
+                if os.path.isdir(extract_dir):
+                    shutil.rmtree(extract_dir)
                 if tarfile.is_tarfile(filename):
-                    with tarfile.TarFile(filename, "r") as archive:
-                        archive.extractall(extract_dir)
+                    with tarfile.open(filename) as archive:
+                        # The tarball is typically a single directory
+                        tar_dir = os.path.commonprefix(archive.getnames())
+                        # If that is the case "extract" that root directory to the desired location
+                        # This is the alternative strategy to the symlinks previously being made
+                        if tar_dir.endswith(os.sep):
+                            tar_dir = os.path.join(self.tmp, tar_dir)
+                            if os.path.isdir(tar_dir):
+                                shutil.rmtree(tar_dir)
+                            archive.extractall(self.tmp)
+                            print "Tar dir {}".format(tar_dir)
+                            shutil.move(tar_dir, extract_dir)
+                        else:
+                            mkdir_p(extract_dir)
+                            archive.extractall(extract_dir)
+
                 elif zipfile.is_zipfile(filename):
+                    mkdir_p(extract_dir)
                     with zipfile.ZipFile(filename, "r") as archive:
                         archive.extractall(extract_dir)
                 else:
-                    print "Not a compressed file"
+                    print "Not a tar or zip file"
                 filename = extract_dir
             try:
                 chown_R(filename, component.owner_uid, component.owner_gid)

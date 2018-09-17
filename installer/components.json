@@ -1,9 +1,14 @@
 {
   "ant": "latest",
+  "tomcat": {
+    "version": "8.5.20",
+    "url": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
+    "extract_dir": "/tmp/tomcat"
+  },
   "thredds": {
     "version": "5.0.2",
     "url": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
-    "extract_dir": "/usr/local/java"
+    "extract_dir": "/tmp/thredds"
   },
   "java": {
     "version": "1.8.0_162",

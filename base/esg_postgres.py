@@ -15,6 +15,7 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
+from plumbum import local
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
@@ -174,33 +175,24 @@ def load_esgf_data(cur):
 
 def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
     '''Backup database to directory specified by backup_dir'''
-    backup_existing_db = esg_property_manager.get_property("backup.database")
-    if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:
-        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
-        if backup_db_input.lower() in ["n", "no"]:
-            logger.info("Skipping backup database.")
-            return
+    try:
+        backup_db_input = esg_property_manager.get_property("backup.database")
+    except ConfigParser.NoOptionError:
+        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ") or "y"
+
+    if backup_db_input.lower() in ["n", "no"]:
+        logger.info("Skipping backup database.")
+        return
 
     pybash.mkdir_p(backup_dir)
-    try:
-        conn = connect_to_db(db_name, user_name)
-        cur = conn.cursor()
-        tables = list_tables(conn)
-        for table in tables:
-            # cur.execute('SELECT x FROM t')
-            backup_file = os.path.join(backup_dir, '{table}_backup_{date}.sql'.format(
-                table=table, date=str(datetime.date.today())))
-            cur.execute("SELECT * FROM %s" % (table))
-            backup_file_object = open(backup_file, 'w')
-            for row in cur:
-                backup_file_object.write("insert into t values (" + str(row) + ");")
-            backup_file_object.close()
-    except psycopg2.DatabaseError, error:
-        print 'Error %s' % error
-        sys.exit(1)
-    finally:
-        if conn:
-            conn.close()
+    backup_file = "{}{}.sql".format(db_name, str(datetime.datetime.now()))
+    backup_file = os.path.join(backup_dir, backup_file)
+
+    pg_dump = local["pg_dump"]
+    local.env["PGPASSWORD"] = esg_functions.get_publisher_password()
+    args = [db_name, "-U", config["postgress_user"]]
+    # This syntax is strange, but correct for plumbum redirection
+    (pg_dump.__getitem__(args) > backup_file)()
 
 #----------------------------------------------------------
 # Postgresql connections functions

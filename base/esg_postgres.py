@@ -1,13 +1,10 @@
 import os
-import grp
 import pwd
 import shutil
-import sys
 import re
 import datetime
 import ConfigParser
 import logging
-import getpass
 from distutils.spawn import find_executable
 import yaml
 import semver

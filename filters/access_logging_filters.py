@@ -46,7 +46,7 @@ def edit_web_xml(service_name, esg_filter_entry_pattern, dest_dir="/usr/local/to
     with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
         #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
         #Use utility function...
-        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
+        esg_functions.insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
 
         #Edit the web.xml file for ${service_name} to include these token replacement values
         exempt_extensions = ".xml"
@@ -116,21 +116,6 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     tomcat_group = esg_functions.get_group_id("tomcat")
     esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
 
-def insert_file_at_pattern(target_file, input_file, pattern):
-    '''Replace a pattern inside the target file with the contents of the input file'''
-    target_file_object = open(target_file)
-    target_file_string = target_file_object.read()
-    target_file_object.close()
-
-    input_file_object = open(input_file)
-    input_file_string = input_file_object.read()
-    input_file_object.close()
-
-    target_file_string = target_file_string.replace(pattern, input_file_string)
-
-    target_file_object = open(target_file, 'w')
-    target_file_object.write(target_file_string)
-    target_file_object.close()
 
 def get_node_manager_libs(dest_dir, esg_dist_url):
     '''Get libraries need for Node Manager; formerly called get_mgr_libs()'''

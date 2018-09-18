@@ -994,6 +994,22 @@ def pip_version(pkg_name):
         print "Found version {} of {} in pip list".format(str(pkg['version']), pkg_name)
         return str(pkg['version'])
 
+def insert_file_at_pattern(target_file, input_file, pattern):
+    '''Replace a pattern inside the target file with the contents of the input file'''
+    target_file_object = open(target_file)
+    target_file_string = target_file_object.read()
+    target_file_object.close()
+
+    input_file_object = open(input_file)
+    input_file_string = input_file_object.read()
+    input_file_object.close()
+
+    target_file_string = target_file_string.replace(pattern, input_file_string)
+
+    target_file_object = open(target_file, 'w')
+    target_file_object.write(target_file_string)
+    target_file_object.close()
+
 def main():
     '''Main function'''
     import esg_logging_manager

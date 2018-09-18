@@ -3,7 +3,7 @@ import os
 
 from plumbum import local
 from plumbum import TEE
-from plumbum.commands import ProcessExecutionError:
+from plumbum.commands import ProcessExecutionError
 
 from .generic import Generic
 

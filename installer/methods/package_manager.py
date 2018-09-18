@@ -59,8 +59,11 @@ class PackageManager(Generic):
         ''' A realization of a version fetching process '''
         versions = {}
         for component in self.components:
-            component_name = component.pkg_names[self.installer_name]
-            args = self.queries[self.query_name]["version"] + [component_name]
+            try:
+                pkg_name = component.pkg_names[self.installer_name]
+            except AttributeError:
+                pkg_name = component.name
+            args = self.queries[self.query_name]["version"] + [pkg_name]
             try:
                 result = self.query.__getitem__(args) & TEE
             except ProcessExecutionError:

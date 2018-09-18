@@ -26,9 +26,9 @@ def setup_security_tokenless_filters():
         install_security_tokenless_filters()
 
 def edit_web_xml(esg_filter_entry_file, dest_dir, esg_filter_entry_pattern):
-    #Installs esg filter into web application's web.xml file, by replacing a
-    #place holder token with the contents of the filter snippet file
-    #"esg-security-filter.xml".
+    '''Installs esg filter into web application's web.xml file, by replacing a
+    place holder token with the contents of the filter snippet file
+    "esg-security-filter.xml".'''
     if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
         logger.warning("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
         return

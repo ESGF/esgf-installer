@@ -27,7 +27,11 @@ class Installer(object):
     def install(self):
         print self.header.format("Installing")
         for method in self.methods:
+            method.pre_install()
+        for method in self.methods:
             method.install()
+        for method in self.methods:
+            method.post_install()
 
     def versions_installed(self):
         print self.header.format("Checking versions")

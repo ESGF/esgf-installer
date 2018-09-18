@@ -4,10 +4,16 @@ class Generic(object):
     def __init__(self, components, component_config):
         self.components = [component(component_config) for component in components]
 
+    def pre_install(self):
+        ''' Entry function to perform pre installation '''
+        self._pre_install()
+
     def install(self):
         ''' Entry function to perform an installation '''
-        self._pre_install()
         self._install()
+
+    def post_install(self):
+        ''' Entry function to perform post installation '''
         self._post_install()
 
     def _pre_install(self):

@@ -38,10 +38,12 @@ class PackageManager(Generic):
         self.query = local.get(*self.queries.keys())
         self.query_name = os.path.basename(str(self.query))
 
-    def _install(self):
+    def _install(self, names):
         ''' A realization of an install process '''
         pkg_list = []
         for component in self.components:
+            if component.name not in names:
+                continue
             try:
                 version = component.req_version
             except AttributeError:
@@ -80,7 +82,7 @@ class Pip(Generic):
     def __init__(self, components, component_config):
         Generic.__init__(self, components, component_config)
 
-    def _install(self):
+    def _install(self, names):
         pass
 
     def _versions(self):

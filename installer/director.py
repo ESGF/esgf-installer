@@ -31,6 +31,4 @@ class Director(object):
                 config = json.load(config_file)
             installer = Installer(component_types, config)
             # installer.status_check()
-            print installer.status_check()
             installer.install()
-            print installer.status_check()

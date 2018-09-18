@@ -1,6 +1,7 @@
 from .sample_components import Java, Thredds, Tomcat, Ant, Postgres
 from .methods.package_manager import PackageManager
 from .methods.distribution import DistributionArchive
+from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
@@ -27,12 +28,17 @@ class Installer(object):
 
     def install(self):
         print self.header.format("Installing")
+        statuses = self.status_check()
+        print statuses
+        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
         for method in self.methods:
             method.pre_install()
         for method in self.methods:
-            method.install()
+            method.install(not_installed)
         for method in self.methods:
             method.post_install()
+        statuses = self.status_check()
+        print statuses
 
     def versions_installed(self):
         print self.header.format("Checking versions")

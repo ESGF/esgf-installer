@@ -8,9 +8,9 @@ class Generic(object):
         ''' Entry function to perform pre installation '''
         self._pre_install()
 
-    def install(self):
+    def install(self, names):
         ''' Entry function to perform an installation '''
-        self._install()
+        self._install(names)
 
     def post_install(self):
         ''' Entry function to perform post installation '''
@@ -24,9 +24,11 @@ class Generic(object):
             except AttributeError:
                 continue
 
-    def _install(self):
+    def _install(self, names):
         ''' Generic version, should be reimplemented by children '''
         for component in self.components:
+            if component.name not in names:
+                continue
             component.install()
 
     def _post_install(self):

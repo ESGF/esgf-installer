@@ -15,8 +15,10 @@ class DistributionArchive(Generic):
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
 
-    def _install(self):
+    def _install(self, names):
         for component in self.components:
+            if component.name not in names:
+                continue
             print "Installing {}".format(component.name)
             remote_file = component.url.rsplit('/', 1)[-1]
             print "Remote file {}".format(remote_file)

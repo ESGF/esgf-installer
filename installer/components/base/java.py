@@ -1,0 +1,22 @@
+import os
+
+from plumbum import local
+from plumbum import TEE
+
+from ..distribution import DistComponent
+
+class Java(DistComponent):
+    def __init__(self, config):
+        self.name = "java"
+        DistComponent.__init__(self, config, self.name)
+
+    def version(self):
+        java_path = os.path.join(self.extract_dir, "bin", "java")
+        if os.path.isfile(java_path):
+            java = local[java_path]
+            result = java["-version"] & TEE
+            java_version_output = result[2]
+            version_line = java_version_output.split("\n")[0]
+            return version_line.split("version")[1].strip()
+        else:
+            return None

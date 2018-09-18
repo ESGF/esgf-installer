@@ -1,6 +1,7 @@
 import json
 from .installer import Installer
-from .sample_components import Java, Thredds, Tomcat, Postgres, Ant
+import components.base as base
+import components.data as data
 
 class Director(object):
     ''' A class for managing the flow of the program '''
@@ -8,7 +9,8 @@ class Director(object):
         self.params = None
         # Store what components are needed for each node type.
         self.node_types = {
-            "base": {Java, Thredds, Tomcat, Postgres, Ant}
+            "base": {base.Java, base.Tomcat, base.Postgres, base.Ant},
+            "data": {data.Thredds}
         }
     def pre_check(self):
         # Check privileges, OS, PATH, etc..

@@ -45,12 +45,15 @@ class PackageManager(Generic):
             try:
                 version = component.req_version
             except AttributeError:
-                version = "*"
+                version = None
             try:
                 pkg_name = component.pkg_names[self.installer_name]
             except AttributeError:
                 scheme = self.installers[self.installer_name]["name_scheme"]
-                pkg_name = scheme.format(name=component.name, version=version)
+                if version is not None:
+                    pkg_name = scheme.format(name=component.name, version=version)
+                else:
+                    pkg_name = component.name
             pkg_list.append(pkg_name)
         args = self.installers[self.installer_name]["install_y"] + pkg_list
         result = self.installer.__getitem__(args) & TEE

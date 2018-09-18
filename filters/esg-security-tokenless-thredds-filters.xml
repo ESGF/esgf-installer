@@ -1,0 +1,107 @@
+  <!-- ******************************** -->
+  <!-- web.xml entry for the esg node   -->
+  <!-- Access Control Filter chain      -->
+  <!-- ******************************** -->
+  <filter>
+    <filter-name>authenticationFilter</filter-name>
+    <filter-class>esg.orp.app.AuthenticationFilter</filter-class>
+    <init-param>
+      <param-name>policyServiceClass</param-name>
+      <!-- <param-value>esg.orp.app.tds.TDSPolicyService</param-value> -->
+      <param-value>esg.orp.app.CompositePolicyService</param-value>
+    </init-param>
+    <init-param>
+      <param-name>policyServiceClasses</param-name>
+      <param-value>esg.orp.app.RegexPolicyService, esg.orp.app.LocalXmlPolicyService</param-value>
+    </init-param>
+    <init-param>
+      <param-name>authenticationNotRequiredPatterns</param-name>
+      <param-value>"[^?]*/thredds/$","[^?]*catalog\.html;jsessionid=.*","[^?]*((/admin/)(.*)|(/remoteCatalogService\?.*)|(?&lt;=\.(html|xml|css|gif|png|jpg|pdf|asp))(\?.*)?)"</param-value> 
+      <!--  Alternatively, e.g.:
+           <param-name>authenticationRequiredPatterns</param-name>
+           <param-value>"[^?]*/fileServer/.*", "[^?]*/dodsC/[^?]*(?&lt;!\.html)(\?.*)?"</param-value>
+      -->
+    </init-param>
+    <init-param>
+      <param-name>policyFiles</param-name>
+      <param-value>@esg_root_dir@/config/esgf_policies_local.xml, @esg_root_dir@/config/esgf_policies_common.xml</param-value>
+    </init-param>
+    <init-param>
+      <param-name>openidRelyingPartyUrl</param-name>
+      <param-value>https://@orp_host@/esg-orp/home.htm</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trustoreFile</param-name>
+      <param-value>@truststore_file@</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trustorePassword</param-name>
+      <param-value>@truststore_password@</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trimURIRegEx</param-name>
+      <param-value>\.ascii.*,\.dods.*,\.dds.*,\.das.*</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>authenticationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>authorizationFilter</filter-name>
+    <filter-class>esg.orp.app.AuthorizationFilter</filter-class>
+    <init-param>
+      <param-name>authorizationServiceClass</param-name>
+      <!-- <param-value>esg.datanode.security.app.NoAuthorizationServiceFilterCollaborator</param-value> -->
+      <param-value>esg.orp.app.SAMLAuthorizationServiceFilterCollaborator</param-value>
+    </init-param>
+    <init-param>
+      <param-name>urlTransformer</param-name>
+      <param-value>esg.orp.app.RegexReplaceAuthorizationFilterUrlTransformer</param-value>
+    </init-param>
+    <init-param>
+      <param-name>urlTransformerReplacements</param-name>
+      <param-value>"\?.*":"", "/dodsC/":"/fileServer/", "\.(asc|ascii|das|dds|dods|html)\Z":""</param-value>
+    </init-param>
+    <init-param>
+      <param-name>authorizationServiceUrl</param-name>
+      <param-value>
+        https://@orp_host@/esg-orp/saml/soap/secure/authorizationService.htm
+      </param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>authorizationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  
+  <!-- **************************************** -->
+  <!-- web.xml entry for the esg node filter    -->
+  <!-- Calls to through this filter are setup   -->
+  <!-- such that they may be redirected for     -->
+  <!-- registration request servicing to aid    -->
+  <!-- end-user registration workflow           -->
+  <!-- **************************************** -->
+ <filter>
+    <filter-name>registrationFilter</filter-name>
+    <filter-class>esg.orp.app.RegistrationFilter</filter-class>
+    <init-param>
+      <param-name>registrationRelayUrl</param-name>
+      <param-value>https://@orp_host@/esg-orp/registration-request.htm</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>registrationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- Authorization Enforcer -->
+ <filter>
+    <filter-name>enforcererFilter</filter-name>
+    <filter-class>esg.orp.app.FilterAuthorizationEnforcerer</filter-class>
+ </filter>
+ <filter-mapping>
+    <filter-name>enforcererFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+ </filter-mapping>

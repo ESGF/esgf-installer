@@ -83,7 +83,7 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             #   a bit more functionality to be added here.
             backup_db("postgres", "postgres")
 
-    pkg_name = "postgresql-server-{}".format(config["postgress-version"])
+    pkg_name = "postgresql-server-{}".format(config["postgress_version"])
     esg_functions.call_binary("yum", ["-y", "install", pkg_name])
 
     initialize_postgres()

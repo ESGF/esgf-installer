@@ -30,7 +30,39 @@ def setup_access_logging_filter():
     with pybash.pushd(config["workdir"]):
         install_access_logging_filter()
 
-    # esg_tomcat_manager.start_tomcat()
+
+def download_jar_files(esg_dist_url, dest_dir):
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
+    with pybash.pushd(config["workdir"]):
+        #Place (copy) the filter jar in the WEB-INF/lib
+        print "Installing ESGF Node Manager Filter jar..."
+        shutil.copyfile("esgf-node-manager-common-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-common-1.0.1.jar"))
+        shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
+
+def edit_web_xml(service_name, esg_filter_entry_pattern, dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
+    esg_filter_entry_file_path = os.path.join(current_directory, esg_filter_entry_file)
+
+    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
+        #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
+        #Use utility function...
+        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
+
+        #Edit the web.xml file for ${service_name} to include these token replacement values
+        exempt_extensions = ".xml"
+        exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
+        extensions = ".nc"
+
+        with open("web.xml", 'r') as file_handle:
+            filedata = file_handle.read()
+        filedata = filedata.replace("@service.name@", service_name)
+        filedata = filedata.replace("@exempt_extensions@", exempt_extensions)
+        filedata = filedata.replace("@exempt_services@", exempt_services)
+        filedata = filedata.replace("@extensions@", extensions)
+
+        # Write the file out again
+        with open("web.xml", 'w') as file_handle:
+            file_handle.write(filedata)
 
 
 def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
@@ -77,41 +109,8 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
         return
 
-    #TODO: break into separate function; extract esg_filter_entry_file from jar
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
-    with pybash.pushd(config["workdir"]):
-        with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as filters_jar:
-            #Pull out the templated filter entry snippet file...
-            filters_jar.extract(esg_filter_entry_file)
-        #going to need full path for pattern replacement below
-        esg_filter_entry_file_path = os.path.join(os.getcwd(), esg_filter_entry_file)
-
-        #Place (copy) the filter jar in the WEB-INF/lib
-        print "Installing ESGF Node Manager Filter jar..."
-        shutil.copyfile("esgf-node-manager-common-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-common-1.0.1.jar"))
-        shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
-
-    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
-        #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
-        #Use utility function...
-        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
-
-        #Edit the web.xml file for ${service_name} to include these token replacement values
-        exempt_extensions = ".xml"
-        exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
-        extensions = ".nc"
-
-        with open("web.xml", 'r') as file_handle:
-            filedata = file_handle.read()
-        filedata = filedata.replace("@service.name@", service_name)
-        filedata = filedata.replace("@exempt_extensions@", exempt_extensions)
-        filedata = filedata.replace("@exempt_services@", exempt_services)
-        filedata = filedata.replace("@extensions@", extensions)
-
-        # Write the file out again
-        with open("web.xml", 'w') as file_handle:
-            file_handle.write(filedata)
+    download_jar_files(esg_dist_url, dest_dir)
+    edit_web_xml(service_name, esg_filter_entry_pattern)
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

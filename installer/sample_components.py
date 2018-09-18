@@ -30,6 +30,11 @@ class Ant(SysPkgComponent):
         self.name = "ant"
         SysPkgComponent.__init__(self, config, self.name)
 
+class Postgres(SysPkgComponent):
+    def __init__(self, config):
+        self.name = "postgres"
+        SysPkgComponent.__init__(self, config, self.name)
+
 class DistComponent(object):
     def __init__(self, config, name):
         config = config[name]

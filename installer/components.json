@@ -1,5 +1,11 @@
 {
   "ant": "latest",
+  "postgres": {
+    "version": "8.4.20",
+    "names": {
+      "yum": "postgresql-server-{version}"
+    }
+  },
   "tomcat": {
     "version": "8.5.20",
     "url": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",

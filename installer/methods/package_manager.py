@@ -57,8 +57,9 @@ class PackageManager(Generic):
                 else:
                     pkg_name = component.name
             pkg_list.append(pkg_name)
-        args = self.installers[self.installer_name]["install_y"] + pkg_list
-        result = self.installer.__getitem__(args) & TEE
+        if pkg_list:
+            args = self.installers[self.installer_name]["install_y"] + pkg_list
+            result = self.installer.__getitem__(args) & TEE
 
     def _versions(self):
         ''' A realization of a version fetching process '''

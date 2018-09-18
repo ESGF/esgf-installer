@@ -3,6 +3,7 @@ import os
 
 from plumbum import local
 from plumbum import TEE
+from plumbum.commands import ProcessExecutionError:
 
 from .generic import Generic
 
@@ -60,8 +61,9 @@ class PackageManager(Generic):
         for component in self.components:
             component_name = component.pkg_names[self.installer_name]
             args = self.queries[self.query_name]["version"] + [component_name]
-            result = self.query.__getitem__(args) & TEE
-            if result[0] != 0:
+            try:
+                result = self.query.__getitem__(args) & TEE
+            except ProcessExecutionError:
                 versions[component.name] = None
             else:
                 versions[component.name] = str(result[1]).strip()

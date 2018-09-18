@@ -44,10 +44,10 @@ install_miniconda(){
         echo "-----------------------------------"
         echo
         PATH=${CDAT_HOME}/bin:$PATH
-        conda create -y -n esgf-pub "python<3" cdutil -c conda-forge -c cdat \
-        lxml requests psycopg2 decorator Tempita \
+        conda create -y -n esgf-pub "python<3" cdutil lxml requests psycopg2 decorator Tempita \
         GitPython coloredlogs pip progressbar2 pyOpenSSL pylint \
-        setuptools semver Pyyaml configobj psutil
+        setuptools semver Pyyaml configobj psutil \
+        -c conda-forge -c cdat
 
   popd
 

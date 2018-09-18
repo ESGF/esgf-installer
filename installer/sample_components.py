@@ -40,6 +40,10 @@ class DistComponent(object):
             pass
         self.url = populate(config["url"], replacements)
         try:
+            self.tar_root_dir = populate(config["tar_root_dir"], replacements)
+        except KeyError:
+            pass
+        try:
             self.extract_dir = config["extract_dir"]
         except KeyError:
             pass

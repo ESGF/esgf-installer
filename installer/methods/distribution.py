@@ -38,25 +38,26 @@ class DistributionArchive(Generic):
                 pass #TODO fill in these except blocks with logging messages
             else:
                 print "Extract dir {}".format(extract_dir)
-                # TODO dangerous when root, put safe gaurds here
+                # TODO dangerous when root, put safe gaurds on rmtree
                 if os.path.isdir(extract_dir):
                     shutil.rmtree(extract_dir)
                 if tarfile.is_tarfile(filename):
                     with tarfile.open(filename) as archive:
-                        # The tarball is typically a single directory
-                        tar_dir = os.path.commonprefix(archive.getnames())
-                        # If that is the case "extract" that root directory to the desired location
-                        # This is the alternative strategy to the symlinks previously being made
-                        if tar_dir.endswith(os.sep):
-                            tar_dir = os.path.join(self.tmp, tar_dir)
+                        try:
+                            # The tarball is typically a single directory
+                            tar_root_dir = component.tar_root_dir
+                        except AttributeError:
+                            # If there is not a single root directory that has been specified
+                            mkdir_p(extract_dir)
+                            archive.extractall(extract_dir)
+                        else:
+                            # If that is the case "extract" that root directory
+                            # This is the alternative strategy to the symlinks previously being made
+                            tar_dir = os.path.join(self.tmp, tar_root_dir)
                             if os.path.isdir(tar_dir):
                                 shutil.rmtree(tar_dir)
                             archive.extractall(self.tmp)
-                            print "Tar dir {}".format(tar_dir)
                             shutil.move(tar_dir, extract_dir)
-                        else:
-                            mkdir_p(extract_dir)
-                            archive.extractall(extract_dir)
 
                 elif zipfile.is_zipfile(filename):
                     mkdir_p(extract_dir)

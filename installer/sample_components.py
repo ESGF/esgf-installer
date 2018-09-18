@@ -1,5 +1,9 @@
-import pwd
+import os
 import grp
+import pwd
+
+from plumbum import local
+from plumbum import TEE
 
 from .utils import populate
 
@@ -38,6 +42,7 @@ class Postgres(SysPkgComponent):
 class DistComponent(object):
     def __init__(self, config, name):
         config = config[name]
+        # TODO Clean this up somehow
         replacements = {"name": name}
         try:
             replacements["version"] = config["version"]
@@ -67,6 +72,7 @@ class DistComponent(object):
             elif isinstance(self.owner, dict):
                 self.owner_uid = pwd.getpwnam(self.owner["user"]).pw_uid
                 self.owner_gid = grp.getgrnam(self.owner["group"]).gr_gid
+
     def version(self):
         pass
 
@@ -75,7 +81,16 @@ class Java(DistComponent):
         self.name = "java"
         DistComponent.__init__(self, config, self.name)
 
-
+    def version(self):
+        java_path = os.path.join(self.extract_dir, "bin", "java")
+        if os.path.isfile(java_path):
+            java = local[java_path]
+            result = java["-version"] & TEE
+            java_version_output = result[2]
+            version_line = java_version_output.split("\n")[0]
+            return version_line.split("version")[1].strip()
+        else:
+            return None
 
 class Thredds(DistComponent):
     def __init__(self, config):

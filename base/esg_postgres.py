@@ -93,7 +93,15 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     setup_hba_conf_file()
     restart_postgres()
 
-    setup_db_schemas()
+    conn = connect_to_db("postgres")
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    db_user_password = esg_functions.get_publisher_password()
+    create_pg_super_user(cur, db_user_password)
+    create_pg_publisher_user(cur, db_user_password)
+
+
+    # setup_db_schemas()
     create_pg_pass_file()
 
     esg_functions.check_shmmax()
@@ -141,14 +149,12 @@ def setup_db_schemas(publisher_password=None):
         esg_functions.set_publisher_password(publisher_password)
         db_user_password = esg_functions.get_publisher_password()
 
-    create_pg_super_user(cur, db_user_password)
 
     # create 'esgcet' user
-    create_pg_publisher_user(cur, db_user_password)
 
     # create CoG and publisher databases
     # create_database("cogdb", cur)
-    create_database("esgcet", cur)
+    # create_database("esgcet", cur)
     cur.close()
     conn.close()
 

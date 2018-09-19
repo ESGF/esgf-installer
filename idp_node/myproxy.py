@@ -235,11 +235,6 @@ def myproxy_status():
         status = esg_functions.call_binary("service", ["myproxy-server", "status"])
     except ProcessExecutionError:
         pass
-    try:
-        status = esg_functions.call_binary("service", ["myproxy", "status"])
-    except ProcessExecutionError:
-        logger.error("Could not check MyProxy status")
-        return False
     else:
         return (True, status)
 

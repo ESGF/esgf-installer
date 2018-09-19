@@ -121,8 +121,9 @@ def init():
     tomcat_user = "tomcat"
     tomcat_group = tomcat_user
     globus_location = os.path.join(install_prefix, "globus")
+    socket_fqdn = socket.getfqdn().split('.', 1)
     if len(socket_fqdn) > 1:
-        mail_smtp_host = "smtp."+socket.getfqdn().split('.', 1)[1]
+        mail_smtp_host = "smtp."+socket_fqdn[1]
     mail_admin_address = ""
     publisher_home = ""
     publisher_config = ""

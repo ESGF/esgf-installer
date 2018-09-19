@@ -1,14 +1,10 @@
 import os
-import grp
 import pwd
 import shutil
-import sys
 import re
 import datetime
 import ConfigParser
 import logging
-import getpass
-from time import sleep
 from distutils.spawn import find_executable
 import yaml
 import semver
@@ -19,21 +15,12 @@ from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
+from plumbum import local
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
-
-
-def download_postgres():
-    '''Download postgres from yum'''
-    print "\n*******************************"
-    print "Downloading Postgres"
-    print "******************************* \n"
-
-    esg_functions.call_binary("yum", ["-y", "install", "postgresql-server.x86_64", "postgresql.x86_64", "postgresql-devel.x86_64"])
-
 
 def initialize_postgres():
     '''Sets up postgres data directory'''
@@ -45,10 +32,12 @@ def initialize_postgres():
         logger.error(error)
 
     esg_functions.call_binary("service", ["postgresql", "initdb"])
+    esg_functions.call_binary("chkconfig", ["postgresql", "on"])
+
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 
-def check_existing_pg_version(psql_path, force_install=False):
+def check_existing_pg_version(psql_path):
     '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=config["postgress_min_version"])
 
@@ -58,7 +47,7 @@ def check_existing_pg_version(psql_path, force_install=False):
         try:
             postgres_version_found = esg_functions.call_binary("psql", ["--version"])
             postgres_version_number = re.search("\d.*", postgres_version_found).group()
-            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0 and not force_install:
+            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0:
                 logger.info("Found acceptible Postgres version")
                 return True
             else:
@@ -68,7 +57,7 @@ def check_existing_pg_version(psql_path, force_install=False):
             logger.exception("Unable to check existing Postgres version \n")
 
 
-def setup_postgres(force_install=False, default_continue_install="N"):
+def setup_postgres(default_continue_install="N"):
     '''Installs postgres'''
     print "\n*******************************"
     print "Setting up Postgres"
@@ -87,20 +76,28 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             logger.info("Skipping Postgres installation. Using existing Postgres version")
             return True
         else:
-            force_install = True
+            # TODO At this point we know there is a valid postgres installation
+            # There are no purges, uninstalls, or deletes happening so a db backup is unneeded
+            #   as nothing will happen. If we want to purge the old install that will require
+            #   a bit more functionality to be added here.
             backup_db("postgres", "postgres")
 
-    download_postgres()
+    pkg_name = "postgresql-server-{}".format(config["postgress_version"])
+    esg_functions.call_binary("yum", ["-y", "install", pkg_name])
 
     initialize_postgres()
 
     # start the postgres server
-    start_postgres()
     setup_postgres_conf_file()
     setup_hba_conf_file()
     restart_postgres()
 
-    setup_db_schemas()
+    conn = connect_to_db("postgres")
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    db_user_password = esg_functions.get_publisher_password()
+    create_pg_super_user(cur, db_user_password)
+    create_pg_publisher_user(cur, db_user_password)
     create_pg_pass_file()
 
     esg_functions.check_shmmax()
@@ -135,85 +132,26 @@ def create_pg_publisher_user(cursor, db_user_password):
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
-def setup_db_schemas(publisher_password=None):
-    '''Load ESGF schemas'''
-    conn = connect_to_db("postgres")
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = conn.cursor()
-
-    try:
-        db_user_password = esg_functions.get_publisher_password()
-    except IOError, error:
-        logger.debug(error)
-        esg_functions.set_publisher_password(publisher_password)
-        db_user_password = esg_functions.get_publisher_password()
-
-    create_pg_super_user(cur, db_user_password)
-
-    # create 'esgcet' user
-    create_pg_publisher_user(cur, db_user_password)
-
-    # create CoG and publisher databases
-    # create_database("cogdb", cur)
-    create_database("esgcet", cur)
-    cur.close()
-    conn.close()
-    # TODO: move download_config_files() here
-
-    load_esgf_schemas(db_user_password)
-
-def load_esgf_schemas(db_user_password):
-    '''Loads ESGF schemas from SQL scripts'''
-    conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = conn.cursor()
-    # load ESGF schemas
-    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
-
-    # load_esgf_data(cur)
-    cur.close()
-    conn.close()
-
-def load_esgf_data(cur):
-    '''# load ESGF data
-    su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
-
-    # initialize migration table
-    su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"'''
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_migrate_version.sql"), "r").read())
-
-
 def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
     '''Backup database to directory specified by backup_dir'''
-    backup_existing_db = esg_property_manager.get_property("backup.database")
-    if not backup_existing_db or backup_existing_db.lower() not in ["yes", "y", "n", "no"]:
-        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ")
-        if backup_db_input.lower() in ["n", "no"]:
-            logger.info("Skipping backup database.")
-            return
+    try:
+        backup_db_input = esg_property_manager.get_property("backup.database")
+    except ConfigParser.NoOptionError:
+        backup_db_input = raw_input("Do you want to backup the current database? [Y/n]: ") or "y"
+
+    if backup_db_input.lower() in ["n", "no"]:
+        logger.info("Skipping backup database.")
+        return
 
     pybash.mkdir_p(backup_dir)
-    try:
-        conn = connect_to_db(db_name, user_name)
-        cur = conn.cursor()
-        tables = list_tables(conn)
-        for table in tables:
-            # cur.execute('SELECT x FROM t')
-            backup_file = os.path.join(backup_dir, '{table}_backup_{date}.sql'.format(
-                table=table, date=str(datetime.date.today())))
-            cur.execute("SELECT * FROM %s" % (table))
-            backup_file_object = open(backup_file, 'w')
-            for row in cur:
-                backup_file_object.write("insert into t values (" + str(row) + ");")
-            backup_file_object.close()
-    except psycopg2.DatabaseError, error:
-        print 'Error %s' % error
-        sys.exit(1)
-    finally:
-        if conn:
-            conn.close()
+    backup_file = "{}{}.sql".format(db_name, str(datetime.datetime.now()))
+    backup_file = os.path.join(backup_dir, backup_file)
+
+    pg_dump = local["pg_dump"]
+    local.env["PGPASSWORD"] = esg_functions.get_publisher_password()
+    args = [db_name, "-U", config["postgress_user"]]
+    # This syntax is strange, but correct for plumbum redirection
+    (pg_dump.__getitem__(args) > backup_file)()
 
 #----------------------------------------------------------
 # Postgresql connections functions
@@ -282,9 +220,7 @@ def start_postgres():
         initialize_postgres()
 
     esg_functions.call_binary("service", ["postgresql", "start"])
-    esg_functions.call_binary("chkconfig", ["postgresql", "on"])
 
-    sleep(3)
     if postgres_status():
         return True
 
@@ -319,8 +255,6 @@ def restart_postgres():
         logger.error("Restarting Postgres failed")
         logger.error(err)
         raise
-    else:
-        sleep(7)
 
     postgres_status()
 
@@ -346,51 +280,6 @@ def setup_hba_conf_file():
     postgres_group_id = esg_functions.get_group_id("postgres")
     os.chown(pg_hba_file, postgres_user_id, postgres_group_id)
     os.chmod(pg_hba_file, 0600)
-
-def download_config_files(force_install):
-    ''' Download config files '''
-    # #Get files
-    esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-    hba_conf_file = "pg_hba.conf"
-    if not esg_functions.download_update(hba_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", hba_conf_file), force_install):
-        raise RuntimeError("Could not download pg_hba.conf from distribution mirror")
-    os.chmod(hba_conf_file, 0600)
-
-    postgres_conf_file = "postgresql.conf"
-    if not esg_functions.download_update(postgres_conf_file, os.path.join(esg_dist_url, "externals", "bootstrap", postgres_conf_file), force_install):
-        raise RuntimeError("Could not download postgresql.conf from distribution mirror")
-    os.chmod(postgres_conf_file, 0600)
-
-
-def update_port_in_config_file():
-    '''Updates the postgres port number in postgresql.conf'''
-    postgres_port_input = raw_input("Please Enter PostgreSQL port number [{postgress_port}]:> ".format(
-        postgress_port=config["postgress_port"])) or config["postgress_port"]
-    print "\nSetting Postgress Port: {postgress_port} ".format(postgress_port=postgres_port_input)
-
-    with open('postgresql.conf', 'r') as pg_conf_file:
-        filedata = pg_conf_file.read()
-    filedata = filedata.replace('@@postgress_port@@', config["postgress_port"])
-
-    # Write the file out again
-    with open('postgresql.conf', 'w') as pg_conf_file:
-        pg_conf_file.write(filedata)
-
-
-def update_log_dir_in_config_file():
-    ''' Edit postgres config file '''
-    print "Setting Postgress Log Dir in config_file: {postgress_install_dir} ".format(postgress_install_dir=config["postgress_install_dir"])
-
-    with open('postgresql.conf', 'r') as pg_conf_file:
-        filedata = pg_conf_file.read()
-    filedata = filedata.replace('@@postgress_install_dir@@', config["postgress_install_dir"])
-
-    # Write the file out again
-    with open('postgresql.conf', 'w') as pg_conf_file:
-        pg_conf_file.write(filedata)
-
-    os.chown(config["postgress_install_dir"], pwd.getpwnam(config["pg_sys_acct"]).pw_uid,
-             grp.getgrnam(config["pg_sys_acct_group"]).gr_gid)
 
 
 #----------------------------------------------------------

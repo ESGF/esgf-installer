@@ -37,6 +37,14 @@ def download_extract(url, dest_dir, owner_user, owner_group):
     gid = esg_functions.get_group_id(owner_group)
     esg_functions.change_ownership_recursive(dest_dir, uid, gid)
 
+def migration_egg(url, cmd, args):
+    with pybash.pushd(os.path.join(os.sep, "tmp")):
+        egg_file = pybash.trim_string_from_head(url)
+
+        esg_functions.download_update(egg_file, url)
+        esg_functions.call_binary("easy_install", [egg_file])
+    esg_functions.call_binary(cmd, args)
+
 def setup_dashboard():
 
     if os.path.isdir("/usr/local/tomcat/webapps/esgf-stats-api"):
@@ -82,13 +90,6 @@ def setup_dashboard():
     os.chmod("/var/run", stat.S_IWGRP)
     os.chmod("/var/run", stat.S_IWOTH)
 
-    with pybash.pushd(os.path.join(os.sep, "tmp")):
-        egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
-        remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
-
-        esg_functions.download_update(egg_file, remote)
-        esg_functions.call_binary("easy_install", [egg_file])
-
     dburl = "{user}:{password}@{host}:{port}/{db}".format(
         user=config["postgress_user"],
         password=esg_functions.get_postgres_password(),
@@ -96,8 +97,16 @@ def setup_dashboard():
         port=config["postgress_port"],
         db=config["node_db_name"]
     )
-    dashboard_init = ["--dburl", dburl, "-c"]
-    esg_functions.call_binary("esgf_dashboard_initialize", dashboard_init)
+    args = ["--dburl", dburl, "-c"]
+
+    egg_file = "esgf_node_manager-0.1.5-py2.7.egg"
+    remote = "{}/{}/{}".format(dist_root_url, "esgf-node-manager", egg_file)
+    migration_egg(remote, "esgf_node_manager_initialize", args)
+
+    egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
+    remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
+    migration_egg(remote, "esgf_dashboard_initialize", args)
+
     start_dashboard_service()
 
 def start_dashboard_service():
@@ -129,7 +138,8 @@ def run_dashboard_script():
     DashDir = "/usr/local/esgf-dashboard-ip"
     GeoipDir = "/usr/local/geoip"
     Fed="no"
-    esg_functions.call_binary("yum", ["install", "-y", "geoip", "geoip-devel"])
+    pg_devel = "postgresql-devel-{}".format(config["postgress_version"])
+    esg_functions.call_binary("yum", ["install", "-y", pg_devel, "geoip-devel"])
     with pybash.pushd("/usr/local"):
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")

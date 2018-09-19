@@ -212,30 +212,22 @@ def start_myproxy_server():
     try:
         esg_functions.call_binary("service", ["myproxy-server", "start"])
     except ProcessExecutionError:
-        pass
-    try:
-        esg_functions.call_binary("service", ["myproxy", "start"])
-    except ProcessExecutionError:
-        logger.error("Error starting Myproxy")
         raise
 
 def stop_myproxy_server():
     try:
         esg_functions.call_binary("service", ["myproxy-server", "stop"])
     except ProcessExecutionError:
-        pass
-    try:
-        esg_functions.call_binary("service", ["myproxy", "stop"])
-    except ProcessExecutionError:
-        logger.error("Error stopping Myproxy")
         raise
 
     if not check_myproxy_process():
         print "MyProxy Process is stopped..."
 
 def restart_myproxy_server():
-    stop_myproxy_server()
-    start_myproxy_server()
+    try:
+        esg_functions.call_binary("service", ["myproxy-server", "restart"])
+    except ProcessExecutionError:
+        raise
 
 def myproxy_status():
     '''Checks the status of the myproxy server'''

@@ -90,9 +90,6 @@ def setup_dashboard():
     os.chmod("/var/run", stat.S_IWGRP)
     os.chmod("/var/run", stat.S_IWOTH)
 
-
-    egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
-    remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
     dburl = "{user}:{password}@{host}:{port}/{db}".format(
         user=config["postgress_user"],
         password=esg_functions.get_postgres_password(),
@@ -100,13 +97,16 @@ def setup_dashboard():
         port=config["postgress_port"],
         db=config["node_db_name"]
     )
-    dashboard_init = ["--dburl", dburl, "-c"]
-    migration_egg(remote, "esgf_dashboard_initialize", dashboard_init)
+    args = ["--dburl", dburl, "-c"]
 
     egg_file = "esgf_node_manager-0.1.5-py2.7.egg"
     remote = "{}/{}/{}".format(dist_root_url, "esgf-node-manager", egg_file)
-    node_manager_init = dashboard_init
-    migration_egg(remote, "esgf_node_manager_initialize", node_manager_init)
+    migration_egg(remote, "esgf_node_manager_initialize", args)
+
+    egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
+    remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
+    migration_egg(remote, "esgf_dashboard_initialize", args)
+
     start_dashboard_service()
 
 def start_dashboard_service():

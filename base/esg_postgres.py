@@ -57,7 +57,7 @@ def check_existing_pg_version(psql_path, force_install=False):
             logger.exception("Unable to check existing Postgres version \n")
 
 
-def setup_postgres(force_install=False, default_continue_install="N"):
+def setup_postgres(default_continue_install="N"):
     '''Installs postgres'''
     print "\n*******************************"
     print "Setting up Postgres"
@@ -76,7 +76,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
             logger.info("Skipping Postgres installation. Using existing Postgres version")
             return True
         else:
-            force_install = True
             # TODO At this point we know there is a valid postgres installation
             # There are no purges, uninstalls, or deletes happening so a db backup is unneeded
             #   as nothing will happen. If we want to purge the old install that will require
@@ -99,9 +98,6 @@ def setup_postgres(force_install=False, default_continue_install="N"):
     db_user_password = esg_functions.get_publisher_password()
     create_pg_super_user(cur, db_user_password)
     create_pg_publisher_user(cur, db_user_password)
-
-
-    # setup_db_schemas()
     create_pg_pass_file()
 
     esg_functions.check_shmmax()
@@ -135,52 +131,6 @@ def create_pg_publisher_user(cursor, db_user_password):
         # Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
-
-def setup_db_schemas(publisher_password=None):
-    '''Load ESGF schemas'''
-    conn = connect_to_db("postgres")
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = conn.cursor()
-
-    try:
-        db_user_password = esg_functions.get_publisher_password()
-    except IOError, error:
-        logger.debug(error)
-        esg_functions.set_publisher_password(publisher_password)
-        db_user_password = esg_functions.get_publisher_password()
-
-
-    # create 'esgcet' user
-
-    # create CoG and publisher databases
-    # create_database("cogdb", cur)
-    # create_database("esgcet", cur)
-    cur.close()
-    conn.close()
-
-    load_esgf_schemas(db_user_password)
-
-def load_esgf_schemas(db_user_password):
-    '''Loads ESGF schemas from SQL scripts'''
-    conn = connect_to_db("dbsuper", db_name='esgcet', password=db_user_password)
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = conn.cursor()
-    # load ESGF schemas
-    # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
-
-    load_esgf_data(cur)
-    cur.close()
-    conn.close()
-
-def load_esgf_data(cur):
-    '''# load ESGF data
-    su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_security_data.sql"
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_security_data.sql"), "r").read())
-
-    # initialize migration table
-    su --login - postgres --command "psql esgcet < /usr/local/bin/esgf_migrate_version.sql"'''
-    cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_migrate_version.sql"), "r").read())
 
 
 def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):

@@ -967,7 +967,7 @@ setup_cdat() {
 
 
 
-	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime cdat_info
+	conda create -y -n esgf-pub -c conda-forge cdms2 cdtime cdat_info python=2.7
 	[ $? != 0 ] && printf "$([FAIL]) \n\tCould not install or update uvcdat via conda\n\n" && checked_done 1
     fi
 

@@ -85,6 +85,7 @@ script_sub_version="0"
 script_version="v2.6.0-devel-release"
 script_release="Name"
 envfile="/etc/esg.env"
+mirrorfile="/etc/esg.mirror"
 
 
 #--------------
@@ -1650,6 +1651,7 @@ specify_local_mirror() {
         [ -n "${loc_mirror_resp}" ] && loc_mirror_ans=$(echo ${loc_mirror_resp}|tr 'a-z' 'A-Z')
         if [ "$loc_mirror_ans" = "Y" ]; then
             esgf_dist_mirror=$localmirrorurl
+            echo "${esgf_dist_mirror}" >${mirrorfile}
             break;
         fi
     done
@@ -6320,7 +6322,9 @@ main() {
             esg_dist_url_root="${localmirrorurl}/dist"
             esg_dist_url=${esg_dist_url_root}$( ((devel == 1)) && echo "/devel" || echo "")/${script_maj_version}/${script_sub_version}
         else
-            if [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
+            if [ -s "${mirrorfile}" ] ; then
+                esgf_dist_mirror="$(cat ${mirrorfile})"
+            elif [[ $@ == *install* || $@ == *update* || $@ == *upgrade* ]]; then
        	    get_esgf_dist_mirror "interactive" $devel
             else
        	    get_esgf_dist_mirror "fastest" $devel

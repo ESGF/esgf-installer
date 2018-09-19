@@ -251,7 +251,7 @@ def purge_solr():
 
 def purge_globus():
     logger.info("Purging Globus")
-    esg_functions.call_binary("yum", ["remove", "-y", "globus\*" ,"myproxy\*"])
+    esg_functions.call_binary("yum", ["remove", "-y", "globus*" ,"myproxy*"])
 
     try:
         shutil.rmtree("/etc/esgfcerts")

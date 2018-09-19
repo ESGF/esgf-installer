@@ -245,7 +245,7 @@ def create_globus_account(globus_sys_acct):
 
     globus_sys_acct_passwd = esg_functions.get_security_admin_password()
 
-    useradd_options = ["-s", "-r", "-c", "Globus System User", "-g", "globus", "-p", globus_sys_acct_passwd, "-s", "/bin/bash", globus_sys_acct]
+    useradd_options = ["-r", "-c", "Globus System User", "-g", "globus", "-p", globus_sys_acct_passwd, "-s", "/bin/bash", globus_sys_acct]
     try:
         esg_functions.call_binary("useradd", useradd_options)
     except ProcessExecutionError, err:

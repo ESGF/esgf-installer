@@ -1,0 +1,30 @@
+<!-- **************************************** -->
+<!-- web.xml entry for the esg node filter    -->
+<!-- Calls to retrieve files from this service-->
+<!-- pass through this filter and get logged  -->
+<!-- into the database.                       -->
+<!-- **************************************** -->
+<filter>
+  <filter-name>AccessLoggingFilter</filter-name>
+  <filter-class>esg.node.filters.AccessLoggingFilter</filter-class>
+  <init-param>
+    <param-name>service.name</param-name>
+    <param-value>@service.name@</param-value>
+  </init-param>
+  <init-param>
+    <param-name>exempt_extensions</param-name>
+    <param-value>@exempt_extensions@</param-value>
+  </init-param>
+  <init-param>
+    <param-name>exempt_services</param-name>
+    <param-value>@exempt_services@</param-value>
+  </init-param>
+  <init-param>
+    <param-name>extensions</param-name>
+    <param-value>@extensions@</param-value>
+  </init-param>
+</filter>
+<filter-mapping>
+  <filter-name>AccessLoggingFilter</filter-name>
+  <url-pattern>/*</url-pattern>
+</filter-mapping>

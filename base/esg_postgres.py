@@ -37,7 +37,7 @@ def initialize_postgres():
     os.chmod(os.path.join(config["postgress_install_dir"], "data"), 0700)
 
 
-def check_existing_pg_version(psql_path, force_install=False):
+def check_existing_pg_version(psql_path):
     '''Gets the version number if a previous Postgres installation is detected'''
     print "Checking for postgresql >= {postgress_min_version} ".format(postgress_min_version=config["postgress_min_version"])
 
@@ -47,7 +47,7 @@ def check_existing_pg_version(psql_path, force_install=False):
         try:
             postgres_version_found = esg_functions.call_binary("psql", ["--version"])
             postgres_version_number = re.search("\d.*", postgres_version_found).group()
-            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0 and not force_install:
+            if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0:
                 logger.info("Found acceptible Postgres version")
                 return True
             else:
@@ -131,7 +131,6 @@ def create_pg_publisher_user(cursor, db_user_password):
         # Error code reference: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
-
 
 def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
     '''Backup database to directory specified by backup_dir'''

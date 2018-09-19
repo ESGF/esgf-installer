@@ -25,19 +25,49 @@ def setup_security_tokenless_filters():
     with pybash.pushd(config["workdir"]):
         install_security_tokenless_filters()
 
-#TODO: refactor
-def insert_file_at_pattern(target_file, input_file, pattern):
-    '''Replace a pattern inside the target file with the contents of the input file'''
-    f=open(target_file)
-    s=f.read()
-    f.close()
-    f=open(input_file)
-    filter = f.read()
-    f.close()
-    s=s.replace(pattern,filter)
-    f=open(target_file,'w')
-    f.write(s)
-    f.close()
+def edit_web_xml(esg_filter_entry_file, dest_dir, esg_filter_entry_pattern):
+    '''Installs esg filter into web application's web.xml file, by replacing a
+    place holder token with the contents of the filter snippet file
+    "esg-security-filter.xml".'''
+    if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
+        logger.warning("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
+        return
+
+    esg_filter_entry_file_path = os.path.join(current_directory, esg_filter_entry_file)
+    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
+        #Replace the filter's place holder token in web app's web.xml file with the filter entry.
+        #Use utility function...
+        esg_functions.insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
+
+        orp_host = esg_functions.get_esgf_host()
+        try:
+            authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+        except ConfigParser.NoOptionError:
+            authorization_service_root = esg_functions.get_esgf_host()
+        truststore_file = config["truststore_file"]
+        truststore_password = config["truststore_password"]
+        esg_root_dir = "/esg"
+
+        print "Replacing tokens... "
+
+        with open("web.xml", 'r') as file_handle:
+            filedata = file_handle.read()
+
+        filedata = filedata.replace("@orp_host@", orp_host)
+        filedata = filedata.replace("@truststore_file@", truststore_file)
+        filedata = filedata.replace("@truststore_password@", truststore_password)
+        filedata = filedata.replace("@esg_root_dir@", esg_root_dir)
+
+        # Write the file out again
+        with open("web.xml", 'w') as file_handle:
+            file_handle.write(filedata)
+
+    tomcat_user = esg_functions.get_user_id("tomcat")
+    tomcat_group = esg_functions.get_group_id("tomcat")
+    esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
+
+    print "orp/security filters installed..."
+
 
 def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thredds"):
 
@@ -60,10 +90,6 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
     print "Filter entry file = {}".format(esg_filter_entry_file)
     print "Filter entry pattern = {}".format(esg_filter_entry_pattern)
 
-    #Installs esg filter into web application's web.xml file, by replacing a
-    #place holder token with the contents of the filter snippet file
-    #"esg-security-filter.xml".
-
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
         logger.error("Could not find %s/WEB-INF/lib installation dir - Filter Not Applied", dest_dir)
@@ -75,52 +101,7 @@ def install_security_tokenless_filters(dest_dir="/usr/local/tomcat/webapps/thred
     esg_tomcat_manager.stop_tomcat()
 
     get_orp_libs()
-
-    if not esg_filter_entry_pattern in open(os.path.join(dest_dir, "WEB-INF", "web.xml")).read():
-        logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
-        return
-
-    with pybash.pushd(config["workdir"]):
-        esg_dist_url = esg_property_manager.get_property("esg.dist.url")
-        esg_security_filters_dist_url = "{}/filters".format(esg_dist_url)
-        esg_functions.download_update("{}/{}".format(esg_security_filters_dist_url, esg_filter_entry_file))
-        esg_filter_entry_file_path = esg_functions.readlinkf(esg_filter_entry_file)
-
-    #Installs esg filter into web application's web.xml file, by replacing a
-    #place holder token with the contents of the filter snippet file
-    #"esg-security-filter.xml".
-    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
-        #Replace the filter's place holder token in web app's web.xml file with the filter entry.
-        #Use utility function...
-        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
-
-        orp_host = esg_functions.get_esgf_host() #default assumes local install
-        try:
-            authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
-        except ConfigParser.NoOptionError:
-            authorization_service_root = esg_functions.get_esgf_host()
-        truststore_file = config["truststore_file"]
-        truststore_password = config["truststore_password"]
-        esg_root_dir = "/esg"
-
-        print "Replacing tokens... "
-
-        with open("web.xml", 'r') as file_handle:
-            filedata = file_handle.read()
-        filedata = filedata.replace("@orp_host@", orp_host)
-        filedata = filedata.replace("@truststore_file@", truststore_file)
-        filedata = filedata.replace("@truststore_password@", truststore_password)
-        filedata = filedata.replace("@esg_root_dir@", esg_root_dir)
-
-        # Write the file out again
-        with open("web.xml", 'w') as file_handle:
-            file_handle.write(filedata)
-
-    tomcat_user = esg_functions.get_user_id("tomcat")
-    tomcat_group = esg_functions.get_group_id("tomcat")
-    esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
-
-    print "orp/security filters installed..."
+    edit_web_xml(esg_filter_entry_file, dest_dir, esg_filter_entry_pattern)
 
 def initialize_orp_jar_list():
     #Jar versions...

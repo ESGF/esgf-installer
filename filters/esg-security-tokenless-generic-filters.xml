@@ -1,0 +1,66 @@
+
+  <!-- ******************************** -->
+  <!-- web.xml entries for the esg node -->
+  <!-- Access Control Filter chain      -->
+  <!-- ******************************** -->
+  <filter>
+    <filter-name>authenticationFilter</filter-name>
+    <filter-class>esg.orp.app.AuthenticationFilter</filter-class>
+    <init-param>
+      <param-name>policyServiceClass</param-name>
+      <param-value>esg.orp.app.RegexPolicyService</param-value>
+    </init-param>
+    <init-param>
+        <param-name>authenticationNotRequiredPatterns</param-name>
+        <param-value>"[^?]*(/|(.*/json/.*)|(?&lt;=\.(png|jpg|css|gif|js))(\?.*)?)"</param-value>
+    </init-param>
+    <init-param>
+      <param-name>openidRelyingPartyUrl</param-name>
+      <param-value>https://@orp_host@/esg-orp/home.htm</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trustoreFile</param-name>
+      <param-value>@truststore_file@</param-value>
+    </init-param>
+    <init-param>
+      <param-name>trustorePassword</param-name>
+      <param-value>@truststore_password@</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>authenticationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>authorizationFilter</filter-name>
+    <filter-class>esg.orp.app.AuthorizationFilter</filter-class>
+    <init-param>
+      <param-name>authorizationServiceClass</param-name>
+      <param-value>esg.orp.app.SAMLAuthorizationServiceFilterCollaborator</param-value>
+    </init-param>
+    <init-param>
+      <param-name>authorizationServiceUrl</param-name>
+      <param-value>
+        https://@orp_host@/esg-orp/saml/soap/secure/authorizationService.htm
+      </param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>authorizationFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  
+ <filter>
+    <filter-name>enforcererFilter</filter-name>
+    <filter-class>esg.orp.app.FilterAuthorizationEnforcerer</filter-class>
+ </filter>
+ <filter-mapping>
+    <filter-name>enforcererFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+ </filter-mapping>
+  <!-- ******************************** -->
+  >!--    End of ESGF Access Control    -->
+  <!-- ******************************** -->
+
+

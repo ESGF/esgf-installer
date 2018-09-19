@@ -15,7 +15,6 @@ from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
 from esgf_utilities import esg_cert_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from base import esg_tomcat_manager
 from base import esg_postgres
 
@@ -31,7 +30,39 @@ def setup_access_logging_filter():
     with pybash.pushd(config["workdir"]):
         install_access_logging_filter()
 
-    # esg_tomcat_manager.start_tomcat()
+
+def download_jar_files(esg_dist_url, dest_dir):
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
+    with pybash.pushd(config["workdir"]):
+        #Place (copy) the filter jar in the WEB-INF/lib
+        print "Installing ESGF Node Manager Filter jar..."
+        shutil.copyfile("esgf-node-manager-common-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-common-1.0.1.jar"))
+        shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
+
+def edit_web_xml(service_name, esg_filter_entry_pattern, dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
+    esg_filter_entry_file_path = os.path.join(current_directory, esg_filter_entry_file)
+
+    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
+        #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
+        #Use utility function...
+        esg_functions.insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
+
+        #Edit the web.xml file for ${service_name} to include these token replacement values
+        exempt_extensions = ".xml"
+        exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
+        extensions = ".nc"
+
+        with open("web.xml", 'r') as file_handle:
+            filedata = file_handle.read()
+        filedata = filedata.replace("@service.name@", service_name)
+        filedata = filedata.replace("@exempt_extensions@", exempt_extensions)
+        filedata = filedata.replace("@exempt_services@", exempt_services)
+        filedata = filedata.replace("@extensions@", extensions)
+
+        # Write the file out again
+        with open("web.xml", 'w') as file_handle:
+            file_handle.write(filedata)
 
 
 def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", esg_filter_entry_file="esg-access-logging-filter-web.xml"):
@@ -57,7 +88,7 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
 
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF")):
-        logger.error("WARNING: Could not find %s's installation dir - Filter Not Applied", service_name)
+        logger.error("Could not find %s's installation dir - Filter Not Applied", service_name)
         return False
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
         logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
@@ -78,61 +109,13 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
         logger.info("No Pattern Found In File [%s/WEB-INF/web.xml] - skipping this filter setup\n", dest_dir)
         return
 
-    #TODO: break into separate function; extract esg_filter_entry_file from jar
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-common-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
-    esg_functions.download_update(os.path.join(config["workdir"], "esgf-node-manager-filters-1.0.1.jar"), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
-    with pybash.pushd(config["workdir"]):
-        with zipfile.ZipFile("esgf-node-manager-filters-1.0.1.jar", 'r') as filters_jar:
-            #Pull out the templated filter entry snippet file...
-            filters_jar.extract(esg_filter_entry_file)
-        #going to need full path for pattern replacement below
-        esg_filter_entry_file_path = os.path.join(os.getcwd(), esg_filter_entry_file)
-
-        #Place (copy) the filter jar in the WEB-INF/lib
-        print "Installing ESGF Node Manager Filter jar..."
-        shutil.copyfile("esgf-node-manager-common-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-common-1.0.1.jar"))
-        shutil.copyfile("esgf-node-manager-filters-1.0.1.jar", os.path.join(dest_dir, "WEB-INF", "lib", "esgf-node-manager-filters-1.0.1.jar"))
-
-    with pybash.pushd(os.path.join(dest_dir, "WEB-INF")):
-        #Replace the filter's place holder token in ${service_name}'s web.xml file with the filter entry.
-        #Use utility function...
-        insert_file_at_pattern("web.xml", esg_filter_entry_file_path, esg_filter_entry_pattern)
-
-        #Edit the web.xml file for ${service_name} to include these token replacement values
-        exempt_extensions = ".xml"
-        exempt_services = "thredds/wms, thredds/wcs, thredds/ncss, thredds/ncml, thredds/uddc, thredds/iso, thredds/dodsC"
-        extensions = ".nc"
-
-        with open("web.xml", 'r') as file_handle:
-            filedata = file_handle.read()
-        filedata = filedata.replace("@service.name@", service_name)
-        filedata = filedata.replace("@exempt_extensions@", exempt_extensions)
-        filedata = filedata.replace("@exempt_services@", exempt_services)
-        filedata = filedata.replace("@extensions@", extensions)
-
-        # Write the file out again
-        with open("web.xml", 'w') as file_handle:
-            file_handle.write(filedata)
+    download_jar_files(esg_dist_url, dest_dir)
+    edit_web_xml(service_name, esg_filter_entry_pattern)
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")
     esg_functions.change_ownership_recursive(os.path.join(dest_dir, "WEB-INF"), tomcat_user, tomcat_group)
 
-def insert_file_at_pattern(target_file, input_file, pattern):
-    '''Replace a pattern inside the target file with the contents of the input file'''
-    target_file_object = open(target_file)
-    target_file_string = target_file_object.read()
-    target_file_object.close()
-
-    input_file_object = open(input_file)
-    input_file_string = input_file_object.read()
-    input_file_object.close()
-
-    target_file_string = target_file_string.replace(pattern, input_file_string)
-
-    target_file_object = open(target_file, 'w')
-    target_file_object.write(target_file_string)
-    target_file_object.close()
 
 def get_node_manager_libs(dest_dir, esg_dist_url):
     '''Get libraries need for Node Manager; formerly called get_mgr_libs()'''
@@ -142,7 +125,7 @@ def get_node_manager_libs(dest_dir, esg_dist_url):
     src_dir = os.path.join(node_manager_app_home, "WEB-INF", "lib")
 
     if not os.path.exists(src_dir):
-        logger.error("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
+        logger.warning("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
         return
 
     #Jar versions...
@@ -174,8 +157,8 @@ def get_node_manager_libs(dest_dir, esg_dist_url):
 
     print "getting (downloading) library jars from Node Manager Distribution Server to {} ...".format(dest_dir)
 
-    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "{}/2.6/0/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
-    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "{}/2.6/0/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_commons_jar), "{}/esgf-node-manager/esgf-node-manager-common-1.0.1.jar".format(esg_dist_url))
+    esg_functions.download_update(os.path.join(dest_dir, node_manager_filters_jar), "{}/esgf-node-manager/esgf-node-manager-filters-1.0.1.jar".format(esg_dist_url))
 
     tomcat_user = esg_functions.get_user_id("tomcat")
     tomcat_group = esg_functions.get_group_id("tomcat")

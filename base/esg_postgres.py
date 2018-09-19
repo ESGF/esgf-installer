@@ -171,7 +171,7 @@ def load_esgf_schemas(db_user_password):
     # cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_esgcet.sql"), "r").read())
     cur.execute(open(os.path.join(os.path.dirname(__file__), "sqldata/esgf_node_manager.sql"), "r").read())
 
-    load_esgf_data(cur)
+    # load_esgf_data(cur)
     cur.close()
     conn.close()
 

@@ -13,7 +13,23 @@ source /usr/local/etc/esg-autoinstall.conf
 
 ### Expect script begins here ###
 
-spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}
+set install_local_certs 0
+set install_keypair 0
+
+if { $argc > 0 } {
+    foreach opt $argv {
+        if { $opt eq "--install-local-certs" } {
+            set install_local_certs 1
+        } elseif { $opt eq "--install-keypair" } {
+            set install_keypair 1
+        }
+    }
+
+    spawn ${ESGNODESCRIPT} --type ${NODETYPE} {*}$argv
+} else {
+    spawn ${ESGNODESCRIPT} --type ${NODETYPE} --install ${INSTALLFLAGS}
+}
+
 expect {
     # Error messages cause instant abort
 # ERROR and FATAL are found even in working installs
@@ -129,11 +145,20 @@ expect {
     "Would you like to use the DN: (OU=ESGF.ORG, O=ESGF)" {
         send \n ; exp_continue
     }
+    "Please set the password for this keystore" {
+        send ${ADMINPASS}\n ; exp_continue
+    }
     "Please enter the password for this keystore" {
         send ${ADMINPASS}\n ; exp_continue
     }
     "Please re-enter the password for this keystore" {
         send ${ADMINPASS}\n ; exp_continue
+    }
+    "Please enter your Certificate Authority's certificate chain file(s)" {
+        send ${CACERTCHAIN}\n\n ; exp_continue
+    }
+    "Is the above information correct?" {
+        send Y\n ; exp_continue
     }
     "Enter a single ip address which would be cleared to access admin restricted pages." {
         send ${ADMINIP}\n ; exp_continue
@@ -304,5 +329,15 @@ expect {
     # Victory conditions
     "Node installation is complete." {
         exit 0
+    }
+
+    "Local installation of certs complete" {
+        if { $install_local_certs == 1 } { exit 0 }
+        exp_continue
+    }
+
+    "Please restart this node for keys to take effect" {
+        if { $install_keypair == 1 } { exit 0 }
+        exp_continue
     }
 }

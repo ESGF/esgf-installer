@@ -218,14 +218,6 @@ def show_esgf_process_list():
         print process
 
 
-def update_script(script_name, script_directory):
-    '''
-        arg (1) - name of installation script root name. Ex:security which resolves to script file esg-security
-        arg (2) - directory on the distribution site where script is fetched from Ex: orp
-        usage: update_script security orp - looks for the script esg-security in the distriubtion directory "orp"
-    '''
-    pass
-
 def set_local_mirror(mirror_url):
     try:
         os.path.exists(mirror_url)
@@ -317,7 +309,7 @@ def define_acceptable_arguments():
     parser.add_argument("--migrate-tomcat-credentials-to-esgf", dest="migratetomcatcredentialstoesgf", help="", action="store_true")
     parser.add_argument("--update-temp-ca", dest="updatetempca", help="", action="store_true")
     parser.add_argument("--check-certs", dest="checkcerts", help="", action="store_true")
-    parser.add_argument("--install-ssl-keypair", "--install-keypair", dest="installsslkeypair", help="", action="store_true")
+    parser.add_argument("--install-ssl-keypair", "--install-keypair", dest="installsslkeypair", help="", nargs="+")
     parser.add_argument("--optimize-index", dest="optimizeindex", help="", action="store_true")
     parser.add_argument("--myproxy-sanity-check", dest="myproxysanitycheck", help="", action="store_true")
     parser.add_argument("--noglobus", dest="noglobus", help="", action="store_true")
@@ -550,7 +542,8 @@ def process_arguments():
         esg_cert_manager.check_certificates()
     elif args.installsslkeypair:
         from esgf_utilities import esg_keystore_manager
-        esg_keystore_manager.install_keypair()
+        key, cert = args.installsslkeypair
+        esg_keystore_manager.install_keypair(key, cert)
     elif args.optimizeindex:
         if not os.path.exists(os.path.join(config["scripts_dir"], "esgf-optimize-index")):
             print "The flag --optimize-index is not enabled..."

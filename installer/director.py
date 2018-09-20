@@ -3,29 +3,28 @@ from .components.components import ALL
 
 class Director(object):
     ''' A class for managing the flow of the program '''
-    def __init__(self):
-        self.params = None
+    def __init__(self, args):
+        self.args = args
 
     def pre_check(self):
         # Check privileges, OS, PATH, etc..
-        print "Checking prerequisites..."
+        print "Checking prerequisites"
 
-    def get_cmd_line(self):
-        # A sample input from cmd line
-        self.params = {
-            "install" : True,
-            "types": "base data"
-        }
     def begin(self):
         print "Starting Director"
-        if self.params["install"]:
-            # Find unique components, as there may be overlap
+        if self.args.install is not None:
+            # Find required methods and components
             requirements = {}
-            for node_type in self.params["types"].split():
+            if self.args.type:
+                node_types = self.args.type
+            else:
+                node_types = ALL.keys()
+            for node_type in node_types:
                 for method_type in ALL[node_type]:
                     if method_type not in requirements:
                         requirements[method_type] = ALL[node_type][method_type]
                     else:
                         requirements[method_type].update(ALL[node_type][method_type])
-            installer = Installer(requirements)
+
+            installer = Installer(requirements, self.args.install)
             installer.install()

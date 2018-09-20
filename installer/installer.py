@@ -3,18 +3,20 @@ from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
-    def __init__(self, requirements):
+    def __init__(self, requirements, name_spec):
         self.methods = []
         for method_type in requirements:
             component_reqs = requirements[method_type]
             components = []
             for name in component_reqs:
-                config = component_reqs[name]
-                component_type = config["type"]
-                components.append(component_type(name, config))
-            method = method_type(components)
-            self.methods.append(method)
-
+                if not name_spec or name in name_spec:
+                    config = component_reqs[name]
+                    component_type = config["type"]
+                    components.append(component_type(name, config))
+            if components:
+                method = method_type(components)
+                self.methods.append(method)
+        print self.methods
         self.divider = "_"*30
         self.header = self.divider + "\n{}"
 

@@ -337,6 +337,11 @@ def sanity_check_web_xmls():
         orp_host = esg_functions.get_esgf_host()
         truststore_file = config["truststore_file"]
 
+        try:
+            authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+        except ConfigParser.NoOptionError:
+            authorization_service_root = esg_functions.get_esgf_host()
+
         for app in webapps:
             with pybash.pushd(os.path.join(app, "WEB-INF")):
                 print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
@@ -347,6 +352,7 @@ def sanity_check_web_xmls():
 
                 filedata = filedata.replace("@orp_host@", orp_host)
                 filedata = filedata.replace("@truststore_file@", truststore_file)
+                filedata = filedata.replace("@authorization_service_root@", authorization_service_root)
 
                 # Write the file out again
                 with open("web.xml", 'w') as file_handle:

@@ -24,3 +24,7 @@ class PipComponent(object):
                 else:
                     config[param] = populate(config[param], replacements)
                     all_populated = False
+        try:
+            self.pip_name = config["pip_name"]
+        except KeyError:
+            pass

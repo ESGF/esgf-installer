@@ -6,7 +6,6 @@ from ..utils import check_populatable
 class PipComponent(object):
     def __init__(self, name, config):
         self.name = name
-        print "print init pip {}".format(name)
         replacements = {"name": name}
         for param in config:
             if not isinstance(config[param], basestring):
@@ -25,4 +24,3 @@ class PipComponent(object):
                 else:
                     config[param] = populate(config[param], replacements)
                     all_populated = False
-        print "print init pip {}".format(name)

@@ -27,6 +27,5 @@ class Director(object):
                         requirements[method_type] = ALL[node_type][method_type]
                     else:
                         requirements[method_type].update(ALL[node_type][method_type])
-            print requirements
             installer = Installer(requirements)
             installer.install()

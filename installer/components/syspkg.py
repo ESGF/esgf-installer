@@ -4,7 +4,6 @@ from ..utils import populate
 class SysPkgComponent(object):
     def __init__(self, name, config):
         self.name = name
-        print "start init syspkg {}".format(name)
         replacements = {"name": name}
         if isinstance(config, basestring):
             version = config
@@ -23,4 +22,3 @@ class SysPkgComponent(object):
             else:
                 for pkg_tool in self.pkg_names:
                     self.pkg_names[pkg_tool] = populate(self.pkg_names[pkg_tool], replacements)
-        print "stop init syspkg {}".format(name)

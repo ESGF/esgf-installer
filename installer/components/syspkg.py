@@ -16,7 +16,7 @@ class SysPkgComponent(object):
             except KeyError:
                 pass
             try:
-                self.pkg_names = config["names"]
+                self.pkg_names = config["pkg_names"]
             except KeyError:
                 pass
             else:

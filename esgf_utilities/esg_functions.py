@@ -31,6 +31,7 @@ import pybash
 import esg_property_manager
 from plumbum import local
 from plumbum import TEE
+from plumbum import BG
 from plumbum.commands import ProcessExecutionError
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
@@ -944,11 +945,18 @@ def call_binary(binary_name, arguments=None):
         local.env[var] = os.environ[var]
     for var in local.env:
         logger.debug("env: %s", str(var))
-
-    if arguments is not None:
-        output = command.__getitem__(arguments) & TEE
-    else:
-        output = command.run_tee()
+    try:
+        if arguments is not None:
+            output = command.__getitem__(arguments) & TEE
+        else:
+            output = command.run_tee()
+    except UnicodeEncodeError as error:
+        logger.warning("Plumbum encoding error: %s", str(error))
+        if arguments is not None:
+            output = command.__getitem__(arguments) & BG
+        else:
+            output = command.run_bg()
+        command.wait()
 
     #special case where checking java version is displayed via stderr
     if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:

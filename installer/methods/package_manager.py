@@ -103,10 +103,10 @@ class Pip(Generic):
 
     def _versions(self):
         versions = {}
+        args = self.version_cmd
+        result = self.pip.__getitem__(args) & TEE
+        info = json.loads(result[1])
         for component in self.components:
-            args = self.version_cmd
-            result = self.pip.__getitem__(args) & TEE
-            info = json.loads(result[1])
             # Get the dictionary with "name" matching pkg_name, if not present get None
             pkg = next((pkg for pkg in info if pkg["name"] == component.name), None)
             if pkg is None:

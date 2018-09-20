@@ -4,8 +4,8 @@ import pwd
 from ..utils import populate
 
 class DistComponent(object):
-    def __init__(self, config, name):
-        config = config[name]
+    def __init__(self, name, config):
+        self.name = name
         # TODO Clean this up somehow
         replacements = {"name": name}
         try:

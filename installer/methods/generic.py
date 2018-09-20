@@ -1,8 +1,8 @@
 from ..install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Generic(object):
-    def __init__(self, components, component_config):
-        self.components = [component(component_config) for component in components]
+    def __init__(self, components):
+        self.components = components
 
     def pre_install(self):
         ''' Entry function to perform pre installation '''

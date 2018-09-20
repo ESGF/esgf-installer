@@ -1,21 +1,19 @@
-# from .components.base.java import Java
-import components.base as base
-import components.data as data
-from .methods.package_manager import PackageManager
-from .methods.distribution import DistributionArchive
+
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
-    def __init__(self, component_types, component_config):
-        method_types = {
-            DistributionArchive: {base.Java, data.Thredds, base.Tomcat},
-            PackageManager: {base.Ant, base.Postgres}
-        }
-        self.methods = set()
-        for method_type in method_types:
-            components = method_types[method_type] & component_types
-            self.methods.add(method_type(components, component_config))
+    def __init__(self, requirements):
+        self.methods = []
+        for method_type in requirements:
+            component_reqs = requirements[method_type]
+            components = []
+            for name in component_reqs:
+                config = component_reqs[name]
+                component_type = config["type"]
+                components.append(component_type(name, config))
+            method = method_type(components)
+            self.methods.append(method)
 
         self.divider = "_"*30
         self.header = self.divider + "\n{}"

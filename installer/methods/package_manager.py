@@ -9,8 +9,8 @@ from .generic import Generic
 
 class PackageManager(Generic):
     ''' System package managers, does not include pip (could it though?) '''
-    def __init__(self, components, component_config):
-        Generic.__init__(self, components, component_config)
+    def __init__(self, components):
+        Generic.__init__(self, components)
         # Installer interface for different OS's
         self.installers = {
             "yum": {

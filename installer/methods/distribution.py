@@ -10,8 +10,8 @@ from .generic import Generic
 
 class DistributionArchive(Generic):
     ''' Install components from a URL '''
-    def __init__(self, components, component_config):
-        Generic.__init__(self, components, component_config)
+    def __init__(self, components):
+        Generic.__init__(self, components)
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
 

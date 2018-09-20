@@ -6,9 +6,8 @@ from plumbum import TEE
 from ..distribution import DistComponent
 
 class Java(DistComponent):
-    def __init__(self, config):
-        self.name = "java"
-        DistComponent.__init__(self, config, self.name)
+    def __init__(self, name, config):
+        DistComponent.__init__(self, name, config)
 
     def version(self):
         java_path = os.path.join(self.extract_dir, "bin", "java")

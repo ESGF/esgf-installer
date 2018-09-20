@@ -1,6 +1,5 @@
-
 from ..syspkg import SysPkgComponent
 
-class Postgres(SysPkgComponent):
+class HTTPD(SysPkgComponent):
     def __init__(self, name, config):
         SysPkgComponent.__init__(self, name, config)

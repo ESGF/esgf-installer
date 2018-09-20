@@ -2,8 +2,8 @@
 from ..utils import populate
 
 class SysPkgComponent(object):
-    def __init__(self, config, name):
-        config = config[name]
+    def __init__(self, name, config):
+        self.name = name
         replacements = {"name": name}
         if isinstance(config, basestring):
             version = config

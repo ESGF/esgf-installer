@@ -1,3 +1,4 @@
+import json
 
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
@@ -16,7 +17,6 @@ class Installer(object):
             if components:
                 method = method_type(components)
                 self.methods.append(method)
-        print self.methods
         self.divider = "_"*30
         self.header = self.divider + "\n{}"
 
@@ -26,12 +26,12 @@ class Installer(object):
         statuses = {}
         for method in self.methods:
             statuses.update(method.statuses())
+        print json.dumps(statuses, indent=2, sort_keys=True)
         return statuses
 
     def install(self):
         print self.header.format("Installing")
         statuses = self.status_check()
-        print statuses
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
         for method in self.methods:
             method.pre_install()
@@ -40,7 +40,6 @@ class Installer(object):
         for method in self.methods:
             method.post_install()
         statuses = self.status_check()
-        print statuses
 
     def versions_installed(self):
         print self.header.format("Checking versions")

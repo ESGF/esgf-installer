@@ -72,7 +72,7 @@ class PackageManager(Generic):
                 pkg_name = component.name
             args = self.queries[self.query_name]["version"] + [pkg_name]
             try:
-                result = self.query.__getitem__(args) & TEE
+                result = self.query.run(args)
             except ProcessExecutionError:
                 versions[component.name] = None
             else:
@@ -104,7 +104,7 @@ class Pip(Generic):
     def _versions(self):
         versions = {}
         args = self.version_cmd
-        result = self.pip.__getitem__(args) & TEE
+        result = self.pip.run(args)
         info = json.loads(result[1])
         for component in self.components:
             # Get the dictionary with "name" matching pkg_name, if not present get None

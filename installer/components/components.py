@@ -31,7 +31,7 @@ _BASE = {
             "type": SysPkgComponent,
             "version": "1.8.0",
             "pkg_names": {
-                "yum": "java-{version}-openjdk-{version}"
+                "yum": "java-{version}-openjdk"
             }
         }
     },

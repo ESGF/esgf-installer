@@ -12,9 +12,10 @@ class PipComponent(object):
             for param in config:
                 if not isinstance(config[param], basestring):
                     continue
+                if param in replacements:
+                    continue
                 if populated(config[param]):
                     replacements[param] = config[param]
-                    config.pop(param, None)
                 else:
                     config[param] = populate(config[param], replacements)
                     all_populated = False

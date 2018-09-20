@@ -10,6 +10,8 @@ class PipComponent(object):
         while not all_populated:
             all_populated = True
             for param in config:
+                if not isinstance(config[param], basestring):
+                    continue
                 if populated(config[param]):
                     replacements[param] = config[param]
                 else:

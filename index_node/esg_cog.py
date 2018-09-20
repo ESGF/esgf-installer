@@ -143,10 +143,6 @@ def setup_cog(COG_DIR="/usr/local/cog"):
 
     change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR)
 
-    # startup
-    shutil.copyfile(os.path.join(current_directory, "cog_scripts/wait_for_postgres.sh"), "/usr/local/bin/wait_for_postgres.sh")
-    shutil.copyfile(os.path.join(current_directory, "cog_scripts/process_esgf_config_archive.sh"), "/usr/local/bin/process_esgf_config_archive.sh")
-
 def main():
     setup_cog()
 

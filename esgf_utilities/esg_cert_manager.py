@@ -13,6 +13,7 @@ import OpenSSL
 import pybash
 import esg_functions
 import esg_property_manager
+import esg_keystore_manager
 from esg_exceptions import SubprocessError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
@@ -127,14 +128,6 @@ def set_commercial_ca_paths():
 # ------------------------------------
 #   Install Cert functions
 # ------------------------------------
-
-def install_commercial_certs(commercial_key_path, commercial_cert_path, ca_chain_path):
-    '''Install the signed, commericial SSL credentials to /etc/certs'''
-    shutil.copyfile(commercial_key_path, "/etc/certs/hostkey.pem")
-    shutil.copyfile(commercial_cert_path, "/etc/certs/hostcert.pem")
-    shutil.copyfile(ca_chain_path, "/etc/certs/cachain.pem")
-
-
 def check_for_commercial_ca():
     '''Checks if Commerical CA directory has been created; asks user if they would like proceed with
     Commercial CA installation if directory is found'''
@@ -154,13 +147,9 @@ def check_for_commercial_ca():
 
         # Backup existing certs
         backup_existing_certs()
-
-        install_commercial_certs(commercial_key_path, commercial_cert_path, ca_chain_path)
+        esg_keystore_manager.install_keypair(commercial_key_path, commercial_cert_path)
 
         print "Local installation of certs complete."
-
-    else:
-        return
 
 
 def install_local_certs(node_type_list, firstrun=None):
@@ -433,16 +422,3 @@ def backup_existing_certs():
     if os.path.isfile("/etc/certs/hostkey.pem"):
         shutil.copyfile("/etc/certs/hostkey.pem",
                         "/etc/certs/hostkey.pem.{date}.bak".format(date=str(datetime.date.today())))
-
-
-def main():
-    '''Main function'''
-    print "*******************************"
-    print "Setting up SSL Certificates"
-    print "******************************* \n"
-
-    check_for_commercial_ca()
-
-
-if __name__ == '__main__':
-    main()

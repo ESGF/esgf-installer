@@ -2,6 +2,12 @@ import os
 import errno
 from string import Formatter
 
+def populated(template):
+    fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
+    if fieldnames:
+        return False
+    return True
+
 def populate(template, values):
     fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
     if not fieldnames:

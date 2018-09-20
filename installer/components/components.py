@@ -2,8 +2,9 @@ import base
 import data
 from .distribution import DistComponent
 from .syspkg import SysPkgComponent
+from .pip import PipComponent
 from ..methods.distribution import DistributionArchive
-from ..methods.package_manager import PackageManager
+from ..methods.package_manager import PackageManager, Pip
 # from .syspkg import PipComponent
 
 _BASE = {
@@ -50,18 +51,29 @@ _BASE = {
             "extract_dir": "/tmp/tomcat",
             "tar_root_dir": "apache-tomcat-{version}"
         }
+    },
+    Pip: {
+        "mod_wsgi": {
+            "type": PipComponent,
+            "version": "4.5.3",
+            "pip_name": "{name}=={version}"
+        },
+        "esgcet": {
+            "type": PipComponent,
+            "version": "3.5.0",
+            "tag": "v{version}",
+            "repo": "https://github.com/ESGF/esg-publisher.git",
+            "egg": "{name}",
+            "subdirectory": "src/python/esgcet",
+            "pip_name": "git+{repo}@{tag}#egg={egg}&subdirectory={subdirectory}"
+        },
+        "django-openid-auth": {
+            "type": PipComponent,
+            "repo": "https://github.com/EarthSystemCoG/django-openid-auth.git",
+            "egg": "{name}",
+            "pip_name": "git+{repo}@{tag}#egg={egg}"
+        }
     }
-    # "mod_wsgi": "4.5.3",
-    # "esgcet": {
-    # "tag": "v3.5.0",
-    # "repo": "https://github.com/ESGF/esg-publisher.git",
-    # "egg": "{name}",
-    # "subdirectory": "src/python/esgcet"
-    # },
-    # "django-openid-auth": {
-    # "repo": "https://github.com/EarthSystemCoG/django-openid-auth.git",
-    # "egg": "{name}"
-    # }
 }
 _DATA = {
     DistributionArchive: {

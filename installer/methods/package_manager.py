@@ -1,4 +1,5 @@
 ''' Common methods for performing installations '''
+import json
 import os
 
 from plumbum import local
@@ -82,9 +83,36 @@ class Pip(Generic):
     ''' Install components using the pip command line tool '''
     def __init__(self, components, component_config):
         Generic.__init__(self, components, component_config)
+        self.pip = local.get("pip")
+        self.install = ["install"]
+        self.info = ["list", "--format=json"]
 
     def _install(self, names):
-        pass
+        pip_list = []
+        for component in self.components:
+            if component.name not in names:
+                continue
+            try:
+                pip_name = '"{}"'.format(component.pip_name)
+            except AttributeError:
+                pip_name = '"{}"'.format(component.name)
+            pip_list.append(pip_name)
+        if pip_list:
+            args = self.install + pip_list
+            result = self.pip.__getitem__(args) & TEE
 
     def _versions(self):
-        return {}
+        versions = {}
+        for component in self.components:
+            args = self.info + [component.name]
+            info = self.pip.__getitem__(args) & TEE
+            info = json.loads(info)
+            # Get the dictionary with "name" matching pkg_name, if not present get None
+            pkg = next((pkg for pkg in info if pkg["name"] == component.name), None)
+            if pkg is None:
+                print "{} not found in pip list".format(component.name)
+                versions[component.name] = None
+            else:
+                print "Found version {} of {} in pip list".format(str(pkg['version']), component.name)
+                versions[component.name] = str(pkg['version'])
+        return versions

@@ -81,8 +81,8 @@ class PackageManager(Generic):
 
 class Pip(Generic):
     ''' Install components using the pip command line tool '''
-    def __init__(self, components, component_config):
-        Generic.__init__(self, components, component_config)
+    def __init__(self, components):
+        Generic.__init__(self, components)
         self.pip = local.get("pip")
         self.install = ["install"]
         self.info = ["list", "--format=json"]

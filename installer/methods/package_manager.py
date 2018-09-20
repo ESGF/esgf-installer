@@ -93,9 +93,9 @@ class Pip(Generic):
             if component.name not in names:
                 continue
             try:
-                pip_name = '"{}"'.format(component.pip_name)
+                pip_name = component.pip_name
             except AttributeError:
-                pip_name = '"{}"'.format(component.name)
+                pip_name = component.name
             pip_list.append(pip_name)
         if pip_list:
             args = self.install_cmd + pip_list

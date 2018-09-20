@@ -16,8 +16,9 @@ def populate(template, values):
     for field in fieldnames:
         if field in values:
             replacements[field] = values[field]
-        # else:
-        #     raise Exception #TODO make a really exception for unsupported template keywords
+        else:
+            # raise Exception #TODO make a really exception for unsupported template keywords
+            return template
 
     return template.format(**replacements)
 

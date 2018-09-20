@@ -1,12 +1,17 @@
 
 from ..utils import populate
 from ..utils import populated
+from ..utils import check_populatable
 
 class PipComponent(object):
     def __init__(self, name, config):
         self.name = name
         print "print init pip {}".format(name)
         replacements = {"name": name}
+        for param in config:
+            if not isinstance(config[param], basestring):
+                continue
+            check_populatable(param, config[param], config.keys()+replacements.keys())
         all_populated = False
         while not all_populated:
             all_populated = True

@@ -2,6 +2,14 @@ import os
 import errno
 from string import Formatter
 
+def check_populatable(name, template, keys):
+    fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
+    if name in fieldnames:
+        raise Exception #TODO make a real exception for recursive templating
+    for field in fieldnames:
+        if field not in keys:
+            raise Exception #TODO make a real exception for unsupported template keywords
+
 def populated(template):
     fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
     if fieldnames:
@@ -17,7 +25,6 @@ def populate(template, values):
         if field in values:
             replacements[field] = values[field]
         else:
-            # raise Exception #TODO make a really exception for unsupported template keywords
             return template
 
     return template.format(**replacements)

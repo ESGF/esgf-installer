@@ -5,6 +5,7 @@ from ..utils import populated
 class PipComponent(object):
     def __init__(self, name, config):
         self.name = name
+        print "print init pip {}".format(name)
         replacements = {"name": name}
         all_populated = False
         while not all_populated:
@@ -19,5 +20,4 @@ class PipComponent(object):
                 else:
                     config[param] = populate(config[param], replacements)
                     all_populated = False
-        print replacements
-        print config
+        print "print init pip {}".format(name)

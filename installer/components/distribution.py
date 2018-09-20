@@ -6,6 +6,7 @@ from ..utils import populate
 class DistComponent(object):
     def __init__(self, name, config):
         self.name = name
+        print "start init distcomp {}".format(name)
         # TODO Clean this up somehow
         replacements = {"name": name}
         try:
@@ -36,6 +37,7 @@ class DistComponent(object):
             elif isinstance(self.owner, dict):
                 self.owner_uid = pwd.getpwnam(self.owner["user"]).pw_uid
                 self.owner_gid = grp.getgrnam(self.owner["group"]).gr_gid
+        print "stop init distcomp {}".format(name)
 
     def version(self):
         pass

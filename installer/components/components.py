@@ -26,16 +26,23 @@ _BASE = {
         },
         "ant": {
             "type": SysPkgComponent
+        },
+        "java": {
+            "type": SysPkgComponent,
+            "version": "1.8.0",
+            "pkg_names": {
+                "yum": "java-{version}-openjdk-{version}"
+            }
         }
     },
     DistributionArchive: {
-        "java": {
-            "type": base.Java,
-            "version": "1.8.0_162",
-            "url": "http://aims1.llnl.gov/esgf/dist/2.6/8/java/{version}/jdk{version}-64.tar.gz",
-            "extract_dir": "/tmp/java",
-            "tar_root_dir": "jdk{version}"
-        },
+        # "java": {
+        #     "type": base.Java,
+        #     "version": "1.8.0_162",
+        #     "url": "http://aims1.llnl.gov/esgf/dist/2.6/8/java/{version}/jdk{version}-64.tar.gz",
+        #     "extract_dir": "/tmp/java",
+        #     "tar_root_dir": "jdk{version}"
+        # },
         "tomcat": {
             "type": base.Tomcat,
             "version": "8.5.20",

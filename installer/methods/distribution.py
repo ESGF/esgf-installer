@@ -8,8 +8,8 @@ import requests
 from ..utils import mkdir_p, chown_R
 from .generic import Generic
 
-class DistributionArchive(Generic):
-    ''' Install components from a URL '''
+class FileManager(Generic):
+    ''' Install components from a url '''
     def __init__(self, components):
         Generic.__init__(self, components)
         self.tmp = os.path.join(os.sep, "tmp")
@@ -19,56 +19,64 @@ class DistributionArchive(Generic):
         for component in self.components:
             if component.name not in names:
                 continue
-            print "Installing {}".format(component.name)
-            remote_file = component.url.rsplit('/', 1)[-1]
-            print "Remote file {}".format(remote_file)
-            try:
-                local_dir = component.local_dir
-            except AttributeError:
-                local_dir = self.tmp
-            mkdir_p(local_dir)
-            filename = os.path.join(local_dir, remote_file)
-            #if not os.path.isfile(filename):
-            response = requests.get(component.url, stream=True)
-            with open(filename, 'wb') as localfile:
-                for chunk in response.iter_content(chunk_size=self.chunk_size):
-                    localfile.write(chunk)
 
-            try:
-                extract_dir = component.extract_dir
-            except AttributeError:
-                pass #TODO fill in these except blocks with logging messages
+            if not os.path.isfile(component.source):
+                source = self._get_remote(component)
             else:
-                print "Extract dir {}".format(extract_dir)
-                # TODO dangerous when root, put safe gaurds on rmtree
-                if os.path.isdir(extract_dir):
-                    shutil.rmtree(extract_dir)
-                if tarfile.is_tarfile(filename):
-                    with tarfile.open(filename) as archive:
-                        try:
-                            # The tarball is typically a single directory
-                            tar_root_dir = component.tar_root_dir
-                        except AttributeError:
-                            # If there is not a single root directory that has been specified
-                            mkdir_p(extract_dir)
-                            archive.extractall(extract_dir)
-                        else:
-                            # If that is the case "extract" that root directory
-                            # This is the alternative strategy to the symlinks previously being made
-                            tar_dir = os.path.join(self.tmp, tar_root_dir)
-                            if os.path.isdir(tar_dir):
-                                shutil.rmtree(tar_dir)
-                            archive.extractall(self.tmp)
-                            shutil.move(tar_dir, extract_dir)
+                source = component.source
 
-                elif zipfile.is_zipfile(filename):
-                    mkdir_p(extract_dir)
-                    with zipfile.ZipFile(filename, "r") as archive:
-                        archive.extractall(extract_dir)
-                else:
-                    print "Not a tar or zip file"
-                filename = extract_dir
+            filepath = self._extract(source, component)
+
             try:
-                chown_R(filename, component.owner_uid, component.owner_gid)
+                chown_R(filepath, component.owner_uid, component.owner_gid)
             except AttributeError:
                 pass
+
+    def _get_remote(self, component):
+        url = component.source
+        remote_file = url.rsplit('/', 1)[-1]
+        # # mkdir_p(download_dir)
+        filename = os.path.join(self.tmp, remote_file)
+        #if not os.path.isfile(filename):
+        response = requests.get(url, stream=True)
+        with open(filename, 'wb') as localfile:
+            for chunk in response.iter_content(chunk_size=self.chunk_size):
+                localfile.write(chunk)
+        return filename
+
+    def _extract(self, filepath, component):
+        if tarfile.is_tarfile(filepath) and component.extract:
+            try:
+                tar_root_dir = component.tar_root_dir
+            except AttributeError:
+                with tarfile.open(filepath) as archive:
+                    archive.extractall(component.dest)
+            else:
+                with tarfile.open(filepath) as archive:
+                    archive.extractall(self.tmp)
+                tmp_filepath = os.path.join(self.tmp, tar_root_dir)
+                shutil.move(tmp_filepath, component.dest)
+            return component.dest
+        elif zipfile.is_zipfile(filepath) and component.extract:
+            with zipfile.ZipFile(filepath, "r") as archive:
+                archive.extractall(component.dest)
+            return component.dest
+        else:
+            # Not a tar or zip file or do not extract
+            name = os.path.basename(filepath)
+            dest_filepath = os.path.join(component.dest, name)
+            mkdir_p(dest_filepath)
+            shutil.move(filepath, dest_filepath)
+            return dest_filepath
+
+    def _versions(self):
+        #TODO This only checks for existence of files, maybe do a little more, md5 checksum?
+        versions = {}
+        for component in self.components:
+            if os.path.isfile(component.dest):
+                versions[component.name] = "1"
+            elif os.path.isdir(component.dest) and os.listdir(component.dest):
+                versions[component.name] = "1"
+            else:
+                versions[component.name] = None
+        return versions

@@ -1,9 +1,9 @@
 import base
 import data
-from .distribution import DistComponent
+from .files import FileComponent
 from .syspkg import SysPkgComponent
 from .pip import PipComponent
-from ..methods.distribution import DistributionArchive
+from ..methods.distribution import FileManager
 from ..methods.package_manager import PackageManager, Pip
 # from .syspkg import PipComponent
 
@@ -36,7 +36,7 @@ _BASE = {
             }
         }
     },
-    DistributionArchive: {
+    FileManager: {
         # "java": {
         #     "type": base.Java,
         #     "version": "1.8.0_162",
@@ -45,11 +45,25 @@ _BASE = {
         #     "tar_root_dir": "jdk{version}"
         # },
         "tomcat": {
-            "type": base.Tomcat,
+            "type": FileComponent,
             "version": "8.5.20",
-            "url": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
-            "extract_dir": "/tmp/tomcat",
+            "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
+            "dest": "/tmp/tomcat",
             "tar_root_dir": "apache-tomcat-{version}"
+        },
+        "esgf_dashboard.egg": {
+            "type": FileComponent,
+            "version": "0.0.2",
+            "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
+            "dest": "/tmp/esgf_dashboard/{name}",
+            "extract": False
+        },
+        "esgf_node_manager.egg": {
+            "type": FileComponent,
+            "version": "0.1.5",
+            "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
+            "dest": "/tmp/esgf_node_manager/{name}",
+            "extract": False
         }
     },
     Pip: {
@@ -76,7 +90,7 @@ _BASE = {
     }
 }
 _DATA = {
-    DistributionArchive: {
+    FileManager: {
         "thredds": {
             "type": data.Thredds,
             "version": "5.0.2",

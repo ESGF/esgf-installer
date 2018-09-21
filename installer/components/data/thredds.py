@@ -1,6 +1,6 @@
 
-from ..distribution import DistComponent
+from ..files import FileComponent
 
-class Thredds(DistComponent):
+class Thredds(FileComponent):
     def __init__(self, name, config):
-        DistComponent.__init__(self, name, config)
+        FileComponent.__init__(self, name, config)

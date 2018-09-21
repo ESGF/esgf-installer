@@ -3,11 +3,11 @@ import os
 from plumbum import local
 from plumbum import TEE
 
-from ..distribution import DistComponent
+from ..files import FileComponent
 
-class Java(DistComponent):
+class Java(FileComponent):
     def __init__(self, name, config):
-        DistComponent.__init__(self, name, config)
+        FileComponent.__init__(self, name, config)
 
     def version(self):
         java_path = os.path.join(self.extract_dir, "bin", "java")

@@ -928,7 +928,7 @@ def esgf_node_info():
         print info_file.read()
 
 
-def call_binary(binary_name, arguments=None):
+def call_binary(binary_name, arguments=None, silent=False):
     '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
     RETURN_CODE = 0
     STDOUT = 1
@@ -945,18 +945,19 @@ def call_binary(binary_name, arguments=None):
         local.env[var] = os.environ[var]
     for var in local.env:
         logger.debug("env: %s", str(var))
-    try:
+
+    if silent:
+        if arguments is not None:
+            cmd_future = command.__getitem__(arguments) & BG
+        else:
+            cmd_future = command.run_bg()
+        cmd_future.wait()
+        output = [cmd_future.returncode, cmd_future.stdout, cmd_future.stderr]
+    else:
         if arguments is not None:
             output = command.__getitem__(arguments) & TEE
         else:
             output = command.run_tee()
-    except UnicodeEncodeError as error:
-        logger.warning("Plumbum encoding error: %s", str(error))
-        if arguments is not None:
-            output = command.__getitem__(arguments) & BG
-        else:
-            output = command.run_bg()
-        command.wait()
 
     #special case where checking java version is displayed via stderr
     if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:

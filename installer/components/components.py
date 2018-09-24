@@ -10,10 +10,12 @@ from ..methods.package_manager import PackageManager, Pip
 _BASE = {
     PackageManager: {
         "httpd": {
+            "requires": ["thredds"],
             "type": base.HTTPD
         },
         "postgres": {
             "type": base.Postgres,
+            "requires": ["httpd", "thredds"],
             "version": "8.4.20",
             "pkg_names": {
                 "yum": "postgresql-server-{version}"
@@ -46,6 +48,7 @@ _BASE = {
         # },
         "tomcat": {
             "type": FileComponent,
+            "requires": ["esgf_dashboard.egg", "esgf_node_manager.egg"],
             "version": "8.5.20",
             "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
             "dest": "/tmp/tomcat",
@@ -53,12 +56,14 @@ _BASE = {
         },
         "esgf_dashboard.egg": {
             "type": FileComponent,
+            "requires": ["httpd", "postgres"],
             "version": "0.0.2",
             "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
             "dest": "/tmp/esgf_dashboard/{name}",
             "extract": False
         },
         "esgf_node_manager.egg": {
+            "requires": ["esgf_dashboard.egg"],
             "type": FileComponent,
             "version": "0.1.5",
             "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
@@ -69,11 +74,13 @@ _BASE = {
     Pip: {
         "mod_wsgi": {
             "type": PipComponent,
+            "requires": ["httpd"],
             "version": "4.5.3",
             "pip_name": "{name}=={version}"
         },
         "esgcet": {
             "type": PipComponent,
+            "requires": ["postgres"],
             "version": "3.5.0",
             "tag": "v{version}",
             "repo": "https://github.com/ESGF/esg-publisher.git",

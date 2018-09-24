@@ -1,8 +1,10 @@
+import logging
 
 from ..utils import populate
 
 class SysPkgComponent(object):
     def __init__(self, name, config):
+        self.log = logging.getLogger(__name__)
         self.name = name
         replacements = {"name": name}
         if isinstance(config, basestring):

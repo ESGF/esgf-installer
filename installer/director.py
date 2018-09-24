@@ -1,9 +1,12 @@
+import logging
+
 from .installer import Installer
 from .components.components import ALL
 
 class Director(object):
     ''' A class for managing the flow of the program '''
     def __init__(self, args):
+        self.log = logging.getLogger(__name__)
         self.args = args
 
     def pre_check(self):

@@ -1,10 +1,12 @@
 import json
+import logging
 
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
     # A class for handling the installation, updating and general management of components
     def __init__(self, requirements, name_spec):
+        self.log = logging.getLogger(__name__)
         self.methods = []
         for method_type in requirements:
             component_reqs = requirements[method_type]

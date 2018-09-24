@@ -1,5 +1,6 @@
 ''' Common methods for performing installations '''
 import json
+import logging
 import os
 
 from plumbum import local
@@ -12,6 +13,7 @@ class PackageManager(Generic):
     ''' System package managers, does not include pip (could it though?) '''
     def __init__(self, components):
         Generic.__init__(self, components)
+        self.log = logging.getLogger(__name__)
         # Installer interface for different OS's
         self.installers = {
             "yum": {

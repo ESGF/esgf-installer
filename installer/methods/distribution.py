@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import tarfile
@@ -12,6 +13,7 @@ class FileManager(Generic):
     ''' Install components from a url '''
     def __init__(self, components):
         Generic.__init__(self, components)
+        self.log = logging.getLogger(__name__)
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
 

@@ -1,4 +1,5 @@
 import grp
+import logging
 import pwd
 
 from ..utils import populate
@@ -7,6 +8,7 @@ from ..utils import check_populatable
 
 class FileComponent(object):
     def __init__(self, name, config):
+        self.log = logging.getLogger(__name__)
         self.name = name
         # TODO Clean this up somehow
         replacements = {"name": name}

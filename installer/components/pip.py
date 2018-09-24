@@ -1,3 +1,4 @@
+import logging
 
 from ..utils import populate
 from ..utils import populated
@@ -5,6 +6,7 @@ from ..utils import check_populatable
 
 class PipComponent(object):
     def __init__(self, name, config):
+        self.log = logging.getLogger(__name__)
         self.name = name
         replacements = {"name": name}
         for param in config:

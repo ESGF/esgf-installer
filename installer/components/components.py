@@ -5,6 +5,7 @@ from .syspkg import SysPkgComponent
 from .pip import PipComponent
 from ..methods.distribution import FileManager
 from ..methods.package_manager import PackageManager, Pip
+from ..methods.easy_install import EasyInstall
 # from .syspkg import PipComponent
 
 _BASE = {
@@ -53,21 +54,23 @@ _BASE = {
             "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
             "dest": "/tmp/tomcat",
             "tar_root_dir": "apache-tomcat-{version}"
-        },
-        "esgf_dashboard.egg": {
+        }
+    },
+    EasyInstall: {
+        "esgf-dashboard": {
             "type": FileComponent,
             "requires": ["httpd", "postgres"],
             "version": "0.0.2",
             "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
-            "dest": "/tmp/esgf_dashboard/{name}",
+            "dest": "/tmp/esgf_dashboard/{name}.egg",
             "extract": False
         },
-        "esgf_node_manager.egg": {
+        "esgf-node-manager": {
             "requires": ["esgf_dashboard.egg"],
             "type": FileComponent,
             "version": "0.1.5",
             "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
-            "dest": "/tmp/esgf_node_manager/{name}",
+            "dest": "/tmp/esgf_node_manager/{name}.egg",
             "extract": False
         }
     },

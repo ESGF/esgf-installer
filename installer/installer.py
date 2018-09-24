@@ -18,7 +18,7 @@ class Installer(object):
                     if "requires" in config:
                         dependencies[name] = config["requires"]
                     component_type = config["type"]
-                    # components.append(component_type(name, config))
+                    components.append(component_type(name, config))
             if components:
                 method = method_type(components)
                 self.methods.append(method)
@@ -29,7 +29,7 @@ class Installer(object):
             print name
             self._dep_resolve(dependencies, name, resolved, seen)
             print "resolved "+str(resolved)
-        exit()
+
         self.divider = "_"*30
         self.header = self.divider + "\n{}"
 
@@ -56,6 +56,13 @@ class Installer(object):
             statuses.update(method.statuses())
         print json.dumps(statuses, indent=2, sort_keys=True)
         return statuses
+
+    def uninstall(self):
+        print self.header.format("Uninstalling")
+        self.status_check()
+        for method in self.methods:
+            method.uninstall()
+        self.status_check()
 
     def install(self):
         print self.header.format("Installing")

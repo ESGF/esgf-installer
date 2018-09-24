@@ -16,6 +16,7 @@ def main():
     )
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--install", nargs="*", required=False)
+    parser.add_argument("-u", "--uninstall", nargs="*", required=False)
     parser.add_argument("-t", "--type", nargs="+", required=False)
 
     director = Director(parser.parse_args())

@@ -7,6 +7,16 @@ class Generic(object):
         self.log = logging.getLogger(__name__)
         self.components = components
 
+    def uninstall(self):
+        self._uninstall()
+
+    def _uninstall(self):
+        for component in self.components:
+            try:
+                component.uninstall()
+            except AttributeError:
+                self.log.warning("Do not know how to uninstall %s", component.name)
+
     def pre_install(self):
         ''' Entry function to perform pre installation '''
         self._pre_install()

@@ -18,7 +18,8 @@ class PackageManager(Generic):
         self.installers = {
             "yum": {
                 "install_y": ["install", "-y"],
-                "name_scheme": '"{name}-{version}"'
+                "name_scheme": '"{name}-{version}"',
+                "uninstall": ["erase", "-y"]
             },
             "apt": {
                 "install_y": ["install", "-y"],
@@ -81,12 +82,33 @@ class PackageManager(Generic):
                 versions[component.name] = str(result[1]).strip()
         return versions
 
+    def _uninstall(self):
+        pkg_list = []
+        for component in self.components:
+            try:
+                version = component.req_version
+            except AttributeError:
+                version = None
+            try:
+                pkg_name = component.pkg_names[self.installer_name]
+            except AttributeError:
+                scheme = self.installers[self.installer_name]["name_scheme"]
+                if version is not None:
+                    pkg_name = scheme.format(name=component.name, version=version)
+                else:
+                    pkg_name = component.name
+            pkg_list.append(pkg_name)
+        if pkg_list:
+            args = self.installers[self.installer_name]["uninstall"] + pkg_list
+            result = self.installer.__getitem__(args) & TEE
+
 class Pip(Generic):
     ''' Install components using the pip command line tool '''
     def __init__(self, components):
         Generic.__init__(self, components)
         self.pip = local.get("pip")
         self.install_cmd = ["install"]
+        self.uninstall_cmd = ["uninstall", "-y"]
         self.version_cmd = ["list", "--format=json"]
 
     def _install(self, names):
@@ -116,3 +138,11 @@ class Pip(Generic):
             else:
                 versions[component.name] = str(pkg['version'])
         return versions
+
+    def _uninstall(self):
+        pip_list = []
+        for component in self.components:
+            pip_list.append(component.name)
+        if pip_list:
+            args = self.uninstall_cmd + pip_list
+            result = self.pip.__getitem__(args) & TEE

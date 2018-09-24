@@ -86,3 +86,12 @@ class FileManager(Generic):
             else:
                 versions[component.name] = None
         return versions
+
+    def _uninstall(self):
+        for component in self.components:
+            if os.path.isfile(component.dest):
+                os.remove(component.dest)
+            elif os.path.isdir(component.dest):
+                shutil.rmtree(component.dest)
+            else:
+                self.log.info("%s not installed", component.name)

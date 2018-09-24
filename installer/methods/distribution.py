@@ -69,11 +69,10 @@ class FileManager(Generic):
             return component.dest
         else:
             # Not a tar or zip file or do not extract
-            name = os.path.basename(filepath)
-            dest_filepath = os.path.join(component.dest, name)
-            mkdir_p(dest_filepath)
-            shutil.move(filepath, dest_filepath)
-            return dest_filepath
+            dest_dir, dest_file = os.path.split(component.dest)
+            mkdir_p(dest_dir)
+            shutil.move(filepath, component.dest)
+            return component.dest
 
     def _versions(self):
         #TODO This only checks for existence of files, maybe do a little more, md5 checksum?

@@ -334,14 +334,29 @@ def sanity_check_web_xmls():
         tomcat_user = esg_functions.get_user_id("tomcat")
         tomcat_group = esg_functions.get_group_id("tomcat")
 
+        orp_host = esg_functions.get_esgf_host()
+        truststore_file = config["truststore_file"]
+
+        try:
+            authorization_service_root = esg_property_manager.get_property("esgf_idp_peer") #ex: pcmdi3.llnl.gov/esgcet[/saml/soap...]
+        except ConfigParser.NoOptionError:
+            authorization_service_root = esg_functions.get_esgf_host()
+
         for app in webapps:
             with pybash.pushd(os.path.join(app, "WEB-INF")):
                 print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
                 os.chown("web.xml", tomcat_user, tomcat_group)
 
-                print " |--inspecting web.xml files for proper authorization service assignment... "
-                esg_functions.stream_subprocess_output("sed -i.bak 's@\(https://\)[^/]*\(/esg-orp/saml/soap/secure/authorizationService.htm[,]*\)@\1'{}'\2@g' web.xml".format(esg_functions.get_esgf_host()))
-                esg_functions.stream_subprocess_output("sed -i.bak '/<param-name>[ ]*'trustoreFile'[ ]*/,/<\/param-value>/ s#\(<param-value>\)[ ]*[^<]*[ ]*\(</param-value>\)#\1'{}'\2#' web.xml".format(config["truststore_file"]))
+                with open("web.xml", 'r') as file_handle:
+                    filedata = file_handle.read()
+
+                filedata = filedata.replace("@orp_host@", orp_host)
+                filedata = filedata.replace("@truststore_file@", truststore_file)
+                filedata = filedata.replace("@authorization_service_root@", authorization_service_root)
+
+                # Write the file out again
+                with open("web.xml", 'w') as file_handle:
+                    file_handle.write(filedata)
 
                 try:
                     if not filecmp.cmp("web.xml", "web.xml.bak", shallow=False):

@@ -3,6 +3,7 @@ import shutil
 import datetime
 import errno
 import logging
+import ConfigParser
 import yaml
 import jks
 import OpenSSL
@@ -362,37 +363,28 @@ def create_certificate_chain_list():
     '''Create a list of the certificates that will be a part of the certificate
         chain file'''
     default_cachain = "/etc/esgfcerts/cachain.pem"
-    cert_files = []
-    #Enter ca_chain file into list
-    while True:
-        if esg_property_manager.get_property("certfile.entry") in NO_LIST:
-            certfile_entry = None
-        else:
-            print "Please enter your Certificate Authority's certificate chain file(s)"
-            print "[enter each cert file/url press return, press return with blank entry when done]"
-            certfile_entry = raw_input("Enter certificate chain file name: ")
-        if not certfile_entry:
-            if not cert_files:
-                print "Adding default certificate chain file {default_cachain}".format(default_cachain=default_cachain)
-                if os.path.isfile(default_cachain):
-                    cert_files.append(default_cachain)
-                    break
-                else:
-                    print "{default_cachain} does not exist".format(default_cachain=default_cachain)
-                    print "Creating {default_cachain}".format(default_cachain=default_cachain)
-                    pybash.mkdir_p("/etc/esgfcerts")
-                    pybash.touch(default_cachain)
-                    cert_files.append(default_cachain)
-                    break
-            else:
-                break
-        else:
-            if os.path.isfile(certfile_entry):
-                cert_files.append(certfile_entry)
-            else:
-                print "{certfile_entry} does not exist".format(certfile_entry=certfile_entry)
+    try:
+        cert_files = esg_property_manager.get_property("cachain.path")
+    except ConfigParser.NoOptionError:
+        print "Please enter your Certificate Authority's certificate chain file(s).  If there are multiple files, enter them separated by commas."
+        cert_files = raw_input("Enter certificate chain file name: ")
 
-    return cert_files
+    if cert_files:
+        cert_files_list = cert_files.strip().split(",")
+        for filename in cert_files_list:
+            if not os.path.isfile(filename):
+                logger.error("%s does not exist.")
+                raise OSError
+    else:
+        print "Adding default certificate chain file {}".format(default_cachain)
+        if not os.path.isfile(default_cachain):
+            print "{} does not exist".format(default_cachain)
+            print "Creating {}".format(default_cachain)
+            pybash.mkdir_p("/etc/esgfcerts")
+            pybash.touch(default_cachain)
+        cert_files_list = [default_cachain]
+
+    return cert_files_list
 
 
 def create_certificate_chain(cert_files):

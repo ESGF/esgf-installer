@@ -72,7 +72,7 @@ _BASE = {
         }
     },
     Pip: {
-        "mod_wsgi": {
+        "mod-wsgi": {
             "type": PipComponent,
             "requires": ["httpd"],
             "version": "4.5.3",

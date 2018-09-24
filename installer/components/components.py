@@ -93,6 +93,9 @@ _BASE = {
             "repo": "https://github.com/EarthSystemCoG/django-openid-auth.git",
             "egg": "{name}",
             "pip_name": "git+{repo}#egg={egg}"
+        },
+        "somepackage": {
+            "type": PipComponent
         }
     }
 }

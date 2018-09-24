@@ -62,7 +62,7 @@ _BASE = {
             "requires": ["httpd", "postgres"],
             "version": "0.0.2",
             "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
-            "dest": "/tmp/esgf_dashboard/{name}.egg",
+            "dest": "/tmp/esgf_dashboard/esgf_dashboard.egg",
             "extract": False
         },
         "esgf-node-manager": {
@@ -70,7 +70,7 @@ _BASE = {
             "type": FileComponent,
             "version": "0.1.5",
             "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
-            "dest": "/tmp/esgf_node_manager/{name}.egg",
+            "dest": "/tmp/esgf_node_manager/esgf_node_manager.egg",
             "extract": False
         }
     },

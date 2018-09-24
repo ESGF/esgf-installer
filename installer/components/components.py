@@ -104,8 +104,8 @@ _DATA = {
         "thredds": {
             "type": data.Thredds,
             "version": "5.0.2",
-            "url": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
-            "extract_dir": "/tmp/thredds"
+            "source": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
+            "dest": "/tmp/thredds"
         }
     }
 }

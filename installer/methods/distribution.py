@@ -47,7 +47,11 @@ class FileManager(Generic):
         return filename
 
     def _extract(self, filepath, component):
-        if tarfile.is_tarfile(filepath) and component.extract:
+        try:
+            extract_file = component.extract
+        except AttributeError:
+            extract_file = True
+        if tarfile.is_tarfile(filepath) and extract_file:
             try:
                 tar_root_dir = component.tar_root_dir
             except AttributeError:
@@ -59,7 +63,7 @@ class FileManager(Generic):
                 tmp_filepath = os.path.join(self.tmp, tar_root_dir)
                 shutil.move(tmp_filepath, component.dest)
             return component.dest
-        elif zipfile.is_zipfile(filepath) and component.extract:
+        elif zipfile.is_zipfile(filepath) and extract_file:
             with zipfile.ZipFile(filepath, "r") as archive:
                 archive.extractall(component.dest)
             return component.dest

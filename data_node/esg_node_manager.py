@@ -136,23 +136,22 @@ def setup_node_manager():
 
             #----------------------------
             pybash.mkdir_p(node_manager_service_app_home)
-            with pybash.pushd("/usr/local/tomcat/webapps/thredds"):
-                node_manager_properties_file = "esgf-node-manager.properties"
+            node_manager_properties_file = "esgf-node-manager.properties"
 
-                # NOTE: The saving of the last config file must be done *BEFORE* we untar the new distro!
-                if os.path.isfile("WEB-INF/classes/{}".format(node_manager_properties_file)):
-                    esg_functions.create_backup_file("WEB-INF/classes/{}".format(node_manager_properties_file), ".saved")
-                    for file_name in glob.glob("WEB-INF/classes/{}*".format(node_manager_properties_file)):
-                        try:
-                            os.chmod(file_name, 0600)
-                        except OSError, error:
-                            logger.error(error)
-                node_war_file = "esgf-node-manager.war"
-                print "Expanding war {} in {current_directory}".format(node_war_file, current_directory=os.getcwd())
-                with zipfile.ZipFile(node_war_file, 'r') as node_war:
-                    node_war.extractall()
+            # NOTE: The saving of the last config file must be done *BEFORE* we untar the new distro!
+            if os.path.isfile("/usr/local/tomcat/webapps/esgf-node-manager/WEB-INF/classes/{}".format(node_manager_properties_file)):
+                esg_functions.create_backup_file("WEB-INF/classes/{}".format(node_manager_properties_file), ".saved")
+                for file_name in glob.glob("WEB-INF/classes/{}*".format(node_manager_properties_file)):
+                    try:
+                        os.chmod(file_name, 0600)
+                    except OSError, error:
+                        logger.error(error)
+            node_war_file = "esgf-node-manager.war"
+            print "Expanding war {} in {}".format(node_war_file, node_manager_service_app_home)
+            with zipfile.ZipFile(node_war_file, 'r') as node_war:
+                node_war.extractall(node_manager_service_app_home)
 
-                copy_node_manager_properties(node_manager_service_app_home)
+            copy_node_manager_properties(node_manager_service_app_home)
 
 
     write_node_manager_config()

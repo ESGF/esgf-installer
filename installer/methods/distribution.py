@@ -4,18 +4,21 @@ import shutil
 import tarfile
 import zipfile
 
+from plumbum import local
+from plumbum import TEE
 import requests
 
 from ..utils import mkdir_p, chown_R
 from .generic import Generic
 
 class FileManager(Generic):
-    ''' Install components from a url '''
+    ''' Install file, git, and compressed components from a local or remote location '''
     def __init__(self, components):
         Generic.__init__(self, components)
         self.log = logging.getLogger(__name__)
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
+
 
     def _install(self, names):
         for component in self.components:
@@ -36,14 +39,27 @@ class FileManager(Generic):
 
     def _get_remote(self, component):
         url = component.source
-        remote_file = url.rsplit('/', 1)[-1]
-        # # mkdir_p(download_dir)
-        filename = os.path.join(self.tmp, remote_file)
-        #if not os.path.isfile(filename):
-        response = requests.get(url, stream=True)
-        with open(filename, 'wb') as localfile:
-            for chunk in response.iter_content(chunk_size=self.chunk_size):
-                localfile.write(chunk)
+        # Get the name of the remote file
+        remote_file = url.rstrip("/").rsplit('/', 1)[-1]
+        # If it is a git repository
+        if remote_file.endswith(".git"):
+            git = local["git"]
+            args = ["clone", "--depth", "1"]
+            try:
+                args += ["--branch", component.tag]
+            except AttributeError:
+                pass
+            filename = os.path.join(self.tmp, component.name)
+            args += [component.source, filename]
+            result = git.__getitem__(args) & TEE
+        # If it is just a file
+        else:
+            filename = os.path.join(self.tmp, remote_file)
+            #if not os.path.isfile(filename):
+            response = requests.get(url, stream=True)
+            with open(filename, 'wb') as localfile:
+                for chunk in response.iter_content(chunk_size=self.chunk_size):
+                    localfile.write(chunk)
         return filename
 
     def _extract(self, filepath, component):
@@ -51,7 +67,7 @@ class FileManager(Generic):
             extract_file = component.extract
         except AttributeError:
             extract_file = True
-        if tarfile.is_tarfile(filepath) and extract_file:
+        if not os.path.isdir(filepath) and extract_file and tarfile.is_tarfile(filepath):
             try:
                 tar_root_dir = component.tar_root_dir
             except AttributeError:
@@ -63,7 +79,7 @@ class FileManager(Generic):
                 tmp_filepath = os.path.join(self.tmp, tar_root_dir)
                 shutil.move(tmp_filepath, component.dest)
             return component.dest
-        elif zipfile.is_zipfile(filepath) and extract_file:
+        elif not os.path.isdir(filepath) and extract_file and zipfile.is_zipfile(filepath):
             with zipfile.ZipFile(filepath, "r") as archive:
                 archive.extractall(component.dest)
             return component.dest

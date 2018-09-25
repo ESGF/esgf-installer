@@ -105,7 +105,11 @@ def setup_root_app():
     except IOError:
         print "Don't see ESGF ROOT web application"
 
-    esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
+    try:
+        esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
 
 
     print "*******************************"

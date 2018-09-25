@@ -43,6 +43,9 @@ def check_for_existing_node_manager():
                 "esgf_node_manager")
             return True
 
+        backup_node_manager(node_manager_service_app_home, "esgcet")
+
+
 def backup_node_manager(node_manager_service_app_home, node_db_name):
     backup_default_answer = "Y"
     backup_answer = raw_input("Do you want to make a back up of the existing distribution [esgf-node-manager]? [Y/n] ") or backup_default_answer
@@ -109,8 +112,6 @@ def setup_node_manager():
     node_manager_service_app_home = esg_property_manager.get_property(
         "node_manager_service_app_home")
 
-    node_db_name = "esgcet"
-    backup_node_manager(node_manager_service_app_home, node_db_name)
 
     pybash.mkdir_p(config["workdir"])
     with pybash.pushd(config["workdir"]):
@@ -157,6 +158,7 @@ def setup_node_manager():
     esgf_node_manager_egg_file = "esgf_node_manager-{}-py{}.egg".format(
         config["esgf_node_manager_db_version"], config["python_version"])
     node_db_node_manager_schema_name = "esgf_node_manager"
+    node_db_name = "esgcet"
     configure_postgress(node_db_name, node_db_node_manager_schema_name, esgf_node_manager_egg_file, node_dist_dir)
 
     touch_generated_whitelist_files()

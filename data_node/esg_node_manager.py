@@ -3,6 +3,7 @@ import shutil
 import logging
 import grp
 import zipfile
+import errno
 import tarfile
 import ConfigParser
 import glob
@@ -69,9 +70,9 @@ def delete_old_node_manager(node_dist_dir):
     print "Removing Previous Installation of the ESGF Node Manager... ({node_dist_dir})".format(node_dist_dir=node_dist_dir)
     try:
         shutil.rmtree(node_dist_dir)
-    except IOError:
-        logger.error("Could not delete directory: %s", node_dist_dir)
-        raise
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
     else:
         logger.info("Deleted directory: %s", node_dist_dir)
 

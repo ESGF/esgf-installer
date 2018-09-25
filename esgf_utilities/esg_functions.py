@@ -31,6 +31,7 @@ import pybash
 import esg_property_manager
 from plumbum import local
 from plumbum import TEE
+from plumbum import BG
 from plumbum.commands import ProcessExecutionError
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
@@ -927,7 +928,7 @@ def esgf_node_info():
         print info_file.read()
 
 
-def call_binary(binary_name, arguments=None):
+def call_binary(binary_name, arguments=None, silent=False):
     '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
     RETURN_CODE = 0
     STDOUT = 1
@@ -945,10 +946,18 @@ def call_binary(binary_name, arguments=None):
     for var in local.env:
         logger.debug("env: %s", str(var))
 
-    if arguments is not None:
-        output = command.__getitem__(arguments) & TEE
+    if silent:
+        if arguments is not None:
+            cmd_future = command.__getitem__(arguments) & BG
+        else:
+            cmd_future = command.run_bg()
+        cmd_future.wait()
+        output = [cmd_future.returncode, cmd_future.stdout, cmd_future.stderr]
     else:
-        output = command.run_tee()
+        if arguments is not None:
+            output = command.__getitem__(arguments) & TEE
+        else:
+            output = command.run_tee()
 
     #special case where checking java version is displayed via stderr
     if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:

@@ -154,8 +154,10 @@ def run_dashboard_script():
         print "******************************* \n"
 
         esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
-        esg_functions.call_binary("make")
-        esg_functions.call_binary("make", ["install"])
+        print "make"
+        esg_functions.call_binary("make", silent=True)
+        print "make install"
+        esg_functions.call_binary("make", ["install"], silent=True)
 
 def main():
     setup_dashboard()

@@ -93,7 +93,7 @@ def copy_node_manager_properties(node_manager_service_app_home):
     #----------------------------
     # Property file fetching and token replacement...
     #----------------------------
-    with pybash.pushd("WEB-INF/classes"):
+    with pybash.pushd(os.path.join(node_manager_service_app_home, "WEB-INF/classes")):
         with open("esgf-node-manager.properties.tmpl", "r") as node_manager_properties:
             with open(config["property_file"], "a") as prop_file:
                 nm_props = node_manager_properties.read()
@@ -147,7 +147,7 @@ def setup_node_manager():
                     except OSError, error:
                         logger.error(error)
             node_war_file = "esgf-node-manager.war"
-            print "Expanding war {} in {}".format(node_war_file, node_manager_service_app_home)
+            logger.info("Expanding war %s in %s", node_war_file, node_manager_service_app_home)
             with zipfile.ZipFile(node_war_file, 'r') as node_war:
                 node_war.extractall(node_manager_service_app_home)
 

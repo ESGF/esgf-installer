@@ -125,9 +125,9 @@ def setup_root_app():
         esg_functions.extract_tarball("ROOT.tgz", "/usr/local/tomcat/webapps")
 
         if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.nm")
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.nm", "/usr/local/tomcat/webapps/ROOT/index.html")
         if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.fe")
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.fe", "/usr/local/tomcat/webapps/ROOT/index.html")
 
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
         print "ROOT application \"installed\""

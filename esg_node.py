@@ -344,6 +344,8 @@ def sanity_check_web_xmls():
             authorization_service_root = esg_functions.get_esgf_host()
 
         for app in webapps:
+            if not os.path.exists(os.path.join(app, "WEB-INF")):
+                continue
             with pybash.pushd(os.path.join(app, "WEB-INF")):
                 print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
                 os.chown("web.xml", tomcat_user, tomcat_group)

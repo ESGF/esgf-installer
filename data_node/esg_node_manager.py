@@ -41,7 +41,7 @@ def check_for_existing_node_manager():
             # resetting node manager version to what it is already, not what we prescribed in the script
             # this way downstream processes will use the *actual* version in play, namely the (access logging) filter(s)
             esgf_node_manager_version = esg_version_manager.get_current_webapp_version(
-                "esgf_node_manager")
+                "esgf-node-manager")
             return True
 
         backup_node_manager(node_manager_service_app_home, "esgcet")

@@ -364,7 +364,7 @@ def sanity_check_web_xmls():
                         logger.debug("%s/web.xml file was edited. Reboot needed", os.getcwd())
                         instruct_to_reboot = True
                 except OSError, error:
-                    logger.exception(error)
+                    pass
 
         if instruct_to_reboot:
             print '''-------------------------------------------------------------------------------------------------

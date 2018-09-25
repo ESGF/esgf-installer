@@ -54,6 +54,17 @@ _BASE = {
             "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
             "dest": "/tmp/tomcat",
             "tar_root_dir": "apache-tomcat-{version}"
+        },
+        "esgf-config-git": {
+            "type": FileComponent,
+            "source": "https://github.com/ESGF/esgf-config.git",
+            "dest": "/tmp/{name}"
+        },
+        "esgf-dashboard-git": {
+            "type": FileComponent,
+            "tag": "v1.5.20",
+            "source": "https://github.com/ESGF/esgf-dashboard.git",
+            "dest": "/tmp/{name}"
         }
     },
     EasyInstall: {

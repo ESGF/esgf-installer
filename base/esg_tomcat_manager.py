@@ -122,7 +122,7 @@ def setup_root_app():
         root_app_dist_url = "{}/ROOT.tgz".format(esg_root_url)
         esg_functions.download_update("ROOT.tgz", root_app_dist_url)
 
-        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/webapps")
+        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/tomcat/webapps")
 
         if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
             shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.nm")

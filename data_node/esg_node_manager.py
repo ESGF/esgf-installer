@@ -88,19 +88,6 @@ def untar_node_manager(node_dist_file):
         logger.error(error)
         raise RuntimeError("Could not extract the ESG Node Manager file: {}".format(node_dist_file))
 
-def copy_node_manager_properties(node_manager_service_app_home):
-    '''Appends the node manager properties to esgf.properties'''
-    #----------------------------
-    # Property file fetching and token replacement...
-    #----------------------------
-    with pybash.pushd(os.path.join(node_manager_service_app_home, "WEB-INF/classes")):
-        with open("esgf-node-manager.properties.tmpl", "r") as node_manager_properties:
-            with open(config["property_file"], "a") as prop_file:
-                nm_props = node_manager_properties.read()
-                prop_file.write(nm_props)
-
-        os.chown(node_manager_service_app_home, pwd.getpwnam(config["tomcat_user"]).pw_uid, grp.getgrnam(config["tomcat_group"]).gr_gid)
-
 def setup_node_manager():
 
     print "*******************************"
@@ -150,8 +137,6 @@ def setup_node_manager():
             logger.info("Expanding war %s in %s", node_war_file, node_manager_service_app_home)
             with zipfile.ZipFile(node_war_file, 'r') as node_war:
                 node_war.extractall(node_manager_service_app_home)
-
-            copy_node_manager_properties(node_manager_service_app_home)
 
 
     write_node_manager_config()
@@ -259,9 +244,25 @@ def write_node_manager_config():
     esg_property_manager.set_property("db.host", config["postgress_host"])
     esg_property_manager.set_property("db.port", config["postgress_port"])
     esg_property_manager.set_property("db.user", config["postgress_user"])
-
-
-
+    esg_property_manager.set_property("mail.notification.messageTemplateFile", "notification.template")
+    esg_property_manager.set_property("mail.notification.initialDelay", "10")
+    esg_property_manager.set_property("mail.notification.period", "30")
+    esg_property_manager.set_property("metrics.initialDelay", "10")
+    esg_property_manager.set_property("metrics.period", "30")
+    esg_property_manager.set_property("metrics.query.limit", "100")
+    esg_property_manager.set_property("monitor.initialDelay", "10")
+    esg_property_manager.set_property("monitor.period", "30")
+    esg_property_manager.set_property("monitor.buffer.meminfo", "1058")
+    esg_property_manager.set_property("monitor.buffer.cpuinfo", "1250")
+    esg_property_manager.set_property("monitor.buffer.uptime", "23")
+    esg_property_manager.set_property("monitor.buffer.loadavg", "27")
+    esg_property_manager.set_property("monitor.query.limit", "100")
+    esg_property_manager.set_property("registry.initialDelay", "10")
+    esg_property_manager.set_property("registry.period", "600")
+    esg_property_manager.set_property("conn.ping.initialDelay", "5")
+    esg_property_manager.set_property("conn.ping.period", "30")
+    esg_property_manager.set_property("conn.mgr.initialDelay", "10")
+    esg_property_manager.set_property("conn.mgr.period", "30")
 
 #--------------------------------------
 # Clean / Uninstall this module...

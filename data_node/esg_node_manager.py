@@ -76,7 +76,6 @@ def delete_old_node_manager(node_dist_dir):
 
 def untar_node_manager(node_dist_file):
     print "unpacking {node_dist_file}...".format(node_dist_file=node_dist_file)
-    # This probably won't work, because the extension has already been stripped, no idea how this even worked in the bash code smh
     try:
         tar = tarfile.open(node_dist_file)
         tar.extractall()
@@ -86,20 +85,17 @@ def untar_node_manager(node_dist_file):
         raise RuntimeError("Could not extract the ESG Node Manager file: {}".format(node_dist_file))
 
 def copy_node_manager_properties(node_manager_service_app_home):
-    '''Copies the node manager properties to esgf.properties'''
+    '''Appends the node manager properties to esgf.properties'''
     #----------------------------
     # Property file fetching and token replacement...
     #----------------------------
-    # pushd WEB-INF/classes >& /dev/null
     with pybash.pushd("WEB-INF/classes"):
-        # cat ${fetch_file}.tmpl >> ${config_file}
         with open("esgf-node-manager.properties.tmpl", "r") as node_manager_properties:
             with open(config["property_file"], "a") as prop_file:
                 nm_props = node_manager_properties.read()
                 prop_file.write(nm_props)
 
         os.chown(node_manager_service_app_home, pwd.getpwnam(config["tomcat_user"]).pw_uid, grp.getgrnam(config["tomcat_group"]).gr_gid)
-    #----------------------------
 
 def setup_node_manager():
 

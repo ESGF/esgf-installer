@@ -76,9 +76,9 @@ class Installer(object):
             method.post_install()
         statuses = self.status_check()
 
-    def versions_installed(self):
+    def versions(self):
         print self.header.format("Checking versions")
         versions = {}
         for method in self.methods:
             versions.update(method.versions())
-        return versions
+        print json.dumps(versions, indent=2, sort_keys=True)

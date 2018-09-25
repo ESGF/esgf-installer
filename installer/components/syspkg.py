@@ -16,6 +16,5 @@ class SysPkgComponent(GenericComponent):
         except KeyError:
             pass
         else:
-            self.pkg_names = {}
             for pkg_tool in self.pkg_names:
                 self.pkg_names[pkg_tool] = populate(self.pkg_names[pkg_tool], self.replacements)

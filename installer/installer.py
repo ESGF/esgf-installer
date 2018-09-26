@@ -1,10 +1,15 @@
+''' Handle the installation, updating and general management of components '''
 import json
 import logging
 
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
-    # A class for handling the installation, updating and general management of components
+    '''
+    A class for handling the installation, updating and general management of components.
+    Takes a dictionary of methods with component assignments and a list of components names
+    that specify what components to install.
+    '''
     def __init__(self, requirements, name_spec):
         self.log = logging.getLogger(__name__)
         self.methods = []
@@ -31,7 +36,7 @@ class Installer(object):
 
 
     def status_check(self):
-        # Check the status of each component
+        ''' Check the installation status of each component '''
         print self.header.format("Checking status")
         statuses = {}
         for method in self.methods:
@@ -40,6 +45,7 @@ class Installer(object):
         return statuses
 
     def uninstall(self):
+        ''' Uninstall each component '''
         print self.header.format("Uninstalling")
         self.status_check()
         for method in self.methods:
@@ -47,6 +53,10 @@ class Installer(object):
         self.status_check()
 
     def install(self):
+        '''
+        Install each component, allow for each component to take action before and
+        after the primary install step via pre_install and post_install methods
+        '''
         print self.header.format("Installing")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
@@ -59,6 +69,7 @@ class Installer(object):
         statuses = self.status_check()
 
     def versions(self):
+        ''' Print the currently installed verison of each component '''
         print self.header.format("Checking versions")
         versions = {}
         for method in self.methods:
@@ -66,6 +77,7 @@ class Installer(object):
         print json.dumps(versions, indent=2, sort_keys=True)
 
     def start(self):
+        ''' Start each controlled component '''
         print self.header.format("Starting")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
@@ -76,6 +88,7 @@ class Installer(object):
             component.start()
 
     def stop(self):
+        ''' Stop each controlled component '''
         print self.header.format("Stopping")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
@@ -86,6 +99,7 @@ class Installer(object):
             component.stop()
 
     def restart(self):
+        ''' Restart each controlled component '''
         print self.header.format("Restarting")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]

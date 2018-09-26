@@ -24,22 +24,53 @@ _BASE = {
                 "yum": "postgresql-server-{version}"
             }
         },
-        "httpd-devel": {
-            "type": SysPkgComponent
-        },
-        "mod_ssl": {
-            "type": SysPkgComponent
-        },
-        "ant": {
-            "type": SysPkgComponent
-        },
         "java": {
             "type": SysPkgComponent,
             "version": "1.8.0",
             "pkg_names": {
                 "yum": "java-{version}-openjdk"
             }
-        }
+        },
+        "httpd-devel": {"type": SysPkgComponent},
+        "mod_ssl": {"type": SysPkgComponent},
+        "sqlite-devel": {"type": SysPkgComponent},
+        "freetype-devel": {"type": SysPkgComponent},
+        "curl-devel": {"type": SysPkgComponent},
+        "autoconf": {"type": SysPkgComponent},
+        "automake": {"type": SysPkgComponent},
+        "bison": {"type": SysPkgComponent},
+        "file": {"type": SysPkgComponent},
+        "flex": {"type": SysPkgComponent},
+        "uuid-devel": {"type": SysPkgComponent},
+        "libtool": {"type": SysPkgComponent},
+        "gettext-devel": {"type": SysPkgComponent},
+        "libuuid-devel": {"type": SysPkgComponent},
+        "libxml2": {"type": SysPkgComponent},
+        "libxml2-devel": {"type": SysPkgComponent},
+        "libxslt": {"type": SysPkgComponent},
+        "libxslt-devel": {"type": SysPkgComponent},
+        "lsof": {"type": SysPkgComponent},
+        "make": {"type": SysPkgComponent},
+        "openssl-devel": {"type": SysPkgComponent},
+        "pam-devel": {"type": SysPkgComponent},
+        "pax": {"type": SysPkgComponent},
+        "readline-devel": {"type": SysPkgComponent},
+        "tk-devel": {"type": SysPkgComponent},
+        "wget": {"type": SysPkgComponent},
+        "zlib-devel": {"type": SysPkgComponent},
+        "perl-Archive-Tar": {"type": SysPkgComponent},
+        "perl-XML-Parser": {"type": SysPkgComponent},
+        "libX11-devel": {"type": SysPkgComponent},
+        "libtool-ltdl-devel": {"type": SysPkgComponent},
+        "e2fsprogs-devel": {"type": SysPkgComponent},
+        "gcc-gfortran": {"type": SysPkgComponent},
+        "libicu-devel": {"type": SysPkgComponent},
+        "libgtextutils-devel": {"type": SysPkgComponent},
+        "libjpeg-turbo-devel": {"type": SysPkgComponent},
+        "*ExtUtils*": {"type": SysPkgComponent},
+        "readline-devel": {"type": SysPkgComponent},
+        "gcc-c++": {"type": SysPkgComponent},
+        "gcc": {"type": SysPkgComponent}
     },
     FileManager: {
         # "java": {
@@ -61,12 +92,39 @@ _BASE = {
             "type": FileComponent,
             "source": "https://github.com/ESGF/esgf-config.git",
             "dest": "/tmp/{name}"
+        }
+    },
+    Pip: {
+        "somepackage": {
+            "type": PipComponent
+        }
+    }
+}
+_DATA = {
+    FileManager: {
+        "thredds": {
+            "type": data.Thredds,
+            "version": "5.0.2",
+            "source": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
+            "dest": "/tmp/thredds"
         },
         "esgf-dashboard-git": {
             "type": FileComponent,
             "tag": "v1.5.20",
             "source": "https://github.com/ESGF/esgf-dashboard.git",
             "dest": "/tmp/{name}"
+        }
+    },
+    Pip: {
+        "esgcet": {
+            "type": PipComponent,
+            "requires": ["postgres"],
+            "version": "3.5.0",
+            "tag": "v{version}",
+            "repo": "https://github.com/ESGF/esg-publisher.git",
+            "egg": "{name}",
+            "subdirectory": "src/python/esgcet",
+            "pip_name": "git+{repo}@{tag}#egg={egg}&subdirectory={subdirectory}"
         }
     },
     EasyInstall: {
@@ -87,6 +145,8 @@ _BASE = {
             "extract": False
         }
     },
+}
+_INDEX = {
     Pip: {
         "mod-wsgi": {
             "type": PipComponent,
@@ -94,38 +154,16 @@ _BASE = {
             "version": "4.5.3",
             "pip_name": "{name}=={version}"
         },
-        "esgcet": {
-            "type": PipComponent,
-            "requires": ["postgres"],
-            "version": "3.5.0",
-            "tag": "v{version}",
-            "repo": "https://github.com/ESGF/esg-publisher.git",
-            "egg": "{name}",
-            "subdirectory": "src/python/esgcet",
-            "pip_name": "git+{repo}@{tag}#egg={egg}&subdirectory={subdirectory}"
-        },
         "django-openid-auth": {
             "type": PipComponent,
             "repo": "https://github.com/EarthSystemCoG/django-openid-auth.git",
             "egg": "{name}",
             "pip_name": "git+{repo}#egg={egg}"
-        },
-        "somepackage": {
-            "type": PipComponent
-        }
-    }
-}
-_DATA = {
-    FileManager: {
-        "thredds": {
-            "type": data.Thredds,
-            "version": "5.0.2",
-            "source": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
-            "dest": "/tmp/thredds"
         }
     }
 }
 ALL = {
     "base": _BASE,
-    "data": _DATA
+    "data": _DATA,
+    "index": _INDEX
 }

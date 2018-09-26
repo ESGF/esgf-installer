@@ -36,7 +36,14 @@ class Director(object):
                         requirements[method_type] = ALL[node_type][method_type]
                     else:
                         requirements[method_type].update(ALL[node_type][method_type])
-            component_spec = self.args.install or self.args.uninstall or None
+            component_spec = (
+                self.args.install or
+                self.args.uninstall or
+                self.args.start or
+                self.args.stop or
+                self.args.restart or
+                None
+            )
             installer = Installer(requirements, component_spec)
             if self.args.install is not None:
                 installer.install()

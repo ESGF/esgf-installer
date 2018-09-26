@@ -66,6 +66,7 @@ class Installer(object):
         print json.dumps(versions, indent=2, sort_keys=True)
 
     def start(self):
+        print self.header.format("Starting")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
         for component in self.controlled_components:
@@ -75,6 +76,7 @@ class Installer(object):
             component.start()
 
     def stop(self):
+        print self.header.format("Stopping")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
         for component in self.controlled_components:
@@ -84,6 +86,7 @@ class Installer(object):
             component.stop()
 
     def restart(self):
+        print self.header.format("Restarting")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
         for component in self.controlled_components:

@@ -8,44 +8,22 @@ class Installer(object):
     def __init__(self, requirements, name_spec):
         self.log = logging.getLogger(__name__)
         self.methods = []
-        dependencies = {}
-        for method_type in requirements:
+        method_order, component_order = self._resolve_order(requirements, name_spec)
+        for method_type in method_order:
             component_reqs = requirements[method_type]
+            name_order = component_order[method_type]
             components = []
-            for name in component_reqs:
+            for name in name_order:
                 if not name_spec or name in name_spec:
                     config = component_reqs[name]
-                    if "requires" in config:
-                        dependencies[name] = config["requires"]
                     component_type = config["type"]
                     components.append(component_type(name, config))
             if components:
                 method = method_type(components)
                 self.methods.append(method)
 
-        for name in dependencies:
-            resolved = []
-            seen = []
-            print name
-            self._dep_resolve(dependencies, name, resolved, seen)
-            print "resolved "+str(resolved)
-
         self.divider = "_"*30
         self.header = self.divider + "\n{}"
-
-    def _dep_resolve(self, components, name, resolved, seen):
-        seen.append(name)
-        try:
-            requires = components[name]
-        except KeyError:
-            resolved.append(name)
-            return
-        for dep in requires:
-            if dep not in resolved:
-                if dep in seen:
-                    raise Exception('Circular reference detected: %s->%s' % (name, dep))
-                self._dep_resolve(components, dep, resolved, seen)
-        resolved.append(name)
 
 
     def status_check(self):
@@ -82,3 +60,40 @@ class Installer(object):
         for method in self.methods:
             versions.update(method.versions())
         print json.dumps(versions, indent=2, sort_keys=True)
+
+    def _resolve_order(self, requirements, name_spec):
+        # method_order = []
+        component_order = {}
+        dependencies = {}
+        for method_type in requirements:
+            component_reqs = requirements[method_type]
+            # TODO discover true required order
+            component_order[method_type] = component_reqs.keys()
+            for name in component_reqs:
+                if not name_spec or name in name_spec:
+                    config = component_reqs[name]
+                    if "requires" in config:
+                        dependencies[name] = config["requires"]
+                    else:
+                        dependencies[name] = []
+        for name in dependencies:
+            resolved = []
+            seen = []
+            self._dep_resolve(dependencies, name, resolved, seen)
+            # print name, resolved
+        # TODO use the resolved information above to determine order
+        return (requirements.keys(), component_order)
+
+    def _dep_resolve(self, components, name, resolved, seen):
+        seen.append(name)
+        try:
+            requires = components[name]
+        except KeyError:
+            resolved.append(name)
+            return
+        for dep in requires:
+            if dep not in resolved:
+                if dep in seen:
+                    raise Exception('Circular reference detected: %s->%s' % (name, dep))
+                self._dep_resolve(components, dep, resolved, seen)
+        resolved.append(name)

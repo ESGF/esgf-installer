@@ -139,42 +139,25 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
         num_of_backups - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
     '''
     source_directory = readlinkf(path)
-    print "Backup - Creating a backup archive of %s" % (source_directory)
+    logger.info("Backup - Creating a backup archive of %s", source_directory)
     current_directory = os.getcwd()
 
-    os.chdir(source_directory)
-    pybash.mkdir_p(source_directory)
-
-    source_backup_name = re.search("\w+$", source_directory).group()
-    backup_filename = readlinkf(backup_dir) + "/" + source_backup_name + \
-        "." + str(datetime.date.today()) + ".tgz"
+    source_backup_name = source_directory.split("/")[-1]
+    backup_filename = os.path.join(backup_dir, source_backup_name+".{}.tgz".format(str(datetime.date.today())))
     try:
         with tarfile.open(backup_filename, "w:gz") as tar:
             tar.add(source_directory)
-    except:
-        print "ERROR: Problem with creating backup archive: {backup_filename}".format(backup_filename=backup_filename)
-        os.chdir(current_directory)
-        return 1
-    if os.path.isfile(backup_filename):
-        print "Created backup: %s" % (backup_filename)
+    except tarfile.TarError, error:
+        logger.error("Problem with creating backup archive: %s", backup_filename)
+        raise
     else:
-        "Could not locate backup file %s" % (backup_filename)
-        os.chdir(current_directory)
-        return 1
+        logger.info("Created backup: %s", backup_filename)
 
-    # Cleanup
-    if os.getcwd() != backup_dir:
-        os.chdir(backup_dir)
-    files = subprocess.Popen('ls -t | grep %s.\*.tgz | tail -n +$((%i+1)) | xargs' % (
-        source_backup_name, int(num_of_backups)), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    if len(files.stdout.readlines()) > 0:
-        print "Tidying up a bit..."
-        print "old backup files to remove: %s" % (''.join(files.stdout.readlines()))
-        for file_name in files.stdout.readlines():
-            os.remove(file_name)
-
-    os.chdir(current_directory)
-    return 0
+    with pybash.pushd(backup_dir):
+        files = glob.glob(os.path.join(backup_dir, source_backup_name+"*"))
+        if len(files) > num_of_backups:
+            oldest_backup = min(files, key=os.path.getctime)
+            os.remove(oldest_backup)
 
 
 def get_parent_directory(directory_path):
@@ -432,7 +415,7 @@ def check_shmmax(min_shmmax=48):
         pass
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
-    cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
+    cur_value_bytes = call_binary("sysctl", ["-q", "kernel.shmmax"]).split("=")[1]
     cur_value_bytes = cur_value_bytes.strip()
 
     if cur_value_bytes < set_value_bytes:

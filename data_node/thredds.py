@@ -422,7 +422,7 @@ def setup_thredds():
     esg_dist_url = esg_property_manager.get_property("esg.dist.url")
 
     thredds_url = "{}/thredds/5.0/{}/thredds.war".format(esg_dist_url, config["tds_version"])
-    esg_functions.call_binary("yum", ["install", "-y", "netcdf-4.4.1"])
+    # esg_functions.call_binary("yum", ["install", "-y", "netcdf-4.4.1"])
     download_thredds_war(thredds_url)
 
     with pybash.pushd("/usr/local/tomcat/webapps/thredds"):

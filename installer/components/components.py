@@ -6,12 +6,12 @@ from .pip import PipComponent
 from ..methods.distribution import FileManager
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
-# from .syspkg import PipComponent
+from ..controllers.service import Service
 
 _BASE = {
     PackageManager: {
         "httpd": {
-            "requires": ["thredds"],
+            "controller": Service,
             "type": base.HTTPD
         },
         "postgres": {

@@ -18,6 +18,9 @@ class Director(object):
         init_installer = (
             self.args.install is not None or
             self.args.uninstall is not None or
+            self.args.start is not None or
+            self.args.stop is not None or
+            self.args.restart is not None or
             self.args.freeze
         )
         if init_installer:
@@ -37,7 +40,14 @@ class Director(object):
             installer = Installer(requirements, component_spec)
             if self.args.install is not None:
                 installer.install()
+                installer.start()
             elif self.args.uninstall is not None:
                 installer.uninstall()
+            elif self.args.start is not None:
+                installer.start()
+            elif self.args.stop is not None:
+                installer.stop()
+            elif self.args.restart is not None:
+                installer.restart()
             elif self.args.freeze:
                 installer.versions()

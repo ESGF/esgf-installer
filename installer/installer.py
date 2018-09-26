@@ -8,6 +8,7 @@ class Installer(object):
     def __init__(self, requirements, name_spec):
         self.log = logging.getLogger(__name__)
         self.methods = []
+        self.controllers = []
         method_order, component_order = self._resolve_order(requirements, name_spec)
         for method_type in method_order:
             component_reqs = requirements[method_type]
@@ -18,6 +19,9 @@ class Installer(object):
                     config = component_reqs[name]
                     component_type = config["type"]
                     components.append(component_type(name, config))
+                    if "controller" in config:
+                        controller = config["controller"]
+                        self.controllers.append(controller(name, config))
             if components:
                 method = method_type(components)
                 self.methods.append(method)
@@ -60,6 +64,33 @@ class Installer(object):
         for method in self.methods:
             versions.update(method.versions())
         print json.dumps(versions, indent=2, sort_keys=True)
+
+    def start(self):
+        statuses = self.status_check()
+        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
+        for controller in self.controllers:
+            if controller.name in not_installed:
+                print "{} not installed, cannot start.".format(controller.name)
+                continue
+            controller.start()
+
+    def stop(self):
+        statuses = self.status_check()
+        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
+        for controller in self.controllers:
+            if controller.name in not_installed:
+                print "{} not installed, cannot stop.".format(controller.name)
+                continue
+            controller.stop()
+
+    def restart(self):
+        statuses = self.status_check()
+        not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
+        for controller in self.controllers:
+            if controller.name in not_installed:
+                print "{} not installed, cannot restart.".format(controller.name)
+                continue
+            controller.restart()
 
     def _resolve_order(self, requirements, name_spec):
         # method_order = []

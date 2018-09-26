@@ -943,8 +943,6 @@ def call_binary(binary_name, arguments=None, silent=False):
 
     for var in os.environ:
         local.env[var] = os.environ[var]
-    for var in local.env:
-        logger.debug("env: %s", str(var))
 
     if silent:
         if arguments is not None:

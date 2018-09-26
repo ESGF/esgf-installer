@@ -6,6 +6,7 @@ from .pip import PipComponent
 from ..methods.distribution import FileManager
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
+from ..methods.make import Make
 from ..controllers.service import Service
 
 _BASE = {
@@ -147,6 +148,13 @@ _DATA = {
     },
 }
 _INDEX = {
+    Make: {
+        "transfer_api_client_python-mkproxy": {
+            "source": "https://github.com/globusonline/transfer-api-client-python.git",
+            "dest": "/usr/local/cog/transfer-api-client-python",
+            "makd_dir": "{dest}/mkproxy"
+        }
+    },
     Pip: {
         "mod-wsgi": {
             "type": PipComponent,

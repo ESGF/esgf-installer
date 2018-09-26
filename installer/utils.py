@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 import errno
 from string import Formatter
@@ -48,3 +49,18 @@ def chown_R(fd, uid=-1, gid=-1):
             for name in files:
                 file_path = os.path.join(root, name)
                 os.chown(file_path, uid, gid)
+
+@contextmanager
+def pushd(new_dir):
+    '''
+        Mimic's Bash's pushd executable; Adds new_dir to the directory stack
+        Usage:
+        with pushd(some_dir):
+            print os.getcwd() # "some_dir"
+            some_actions
+        print os.getcwd() # "starting_directory"
+    '''
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    yield
+    os.chdir(previous_dir)

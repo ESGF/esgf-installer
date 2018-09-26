@@ -16,7 +16,7 @@ _BASE = {
         },
         "postgres": {
             "controller": Service,
-            "service_name": "postgresql-server",
+            "service_name": "postgresql",
             "type": base.Postgres,
             "requires": ["httpd", "thredds"],
             "version": "8.4.20",

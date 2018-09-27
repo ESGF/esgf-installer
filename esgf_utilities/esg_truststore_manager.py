@@ -76,7 +76,7 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
-        keytool_binary = "{}/bin/keytool".format(java_install_dir)
+        keytool_binary = "{}/bin/keytool".format(config["java_install_dir"])
         extract_cert_options = ["-export", "-alias", keystore_alias, "-file", "{}.cer".format(keystore_file), "-storepass", keystore_password]
         try:
             esg_functions.call_binary(keytool_binary, extract_cert_options)
@@ -166,7 +166,6 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         except ProcessExecutionError, error:
             if "does not exist" in error.stdout:
                 logger.debug("No existing cert with alias %s found", cert_hash)
-                pass
         else:
             logger.info("Deleted %s from truststore %s", cert_hash, truststore_file)
 

@@ -46,7 +46,7 @@ def check_existing_pg_version(psql_path):
     else:
         try:
             postgres_version_found = esg_functions.call_binary("psql", ["--version"])
-            postgres_version_number = re.search("\d.*", postgres_version_found).group()
+            postgres_version_number = re.search(r"\d.*", postgres_version_found).group()
             if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0:
                 logger.info("Found acceptible Postgres version")
                 return True
@@ -311,7 +311,7 @@ def write_postgress_install_log():
         logger.error(err)
         raise
     else:
-        postgres_version_number = re.search("\d.*", postgres_version_found).group()
+        postgres_version_number = re.search(r"\d.*", postgres_version_found).group()
         esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
 
 #----------------------------------------------------------

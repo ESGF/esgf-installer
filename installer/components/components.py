@@ -3,6 +3,7 @@ import data
 from .files import FileComponent
 from .syspkg import SysPkgComponent
 from .pip import PipComponent
+from .make import MakeComponent
 from ..methods.distribution import FileManager
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
@@ -150,9 +151,10 @@ _DATA = {
 _INDEX = {
     Make: {
         "transfer_api_client_python-mkproxy": {
+            "type": MakeComponent,
             "source": "https://github.com/globusonline/transfer-api-client-python.git",
             "dest": "/usr/local/cog/transfer-api-client-python",
-            "makd_dir": "{dest}/mkproxy"
+            "make_dir": "{dest}/mkproxy"
         }
     },
     Pip: {

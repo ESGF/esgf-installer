@@ -39,8 +39,6 @@ _BASE = {
         "sqlite-devel": {"type": SysPkgComponent},
         "freetype-devel": {"type": SysPkgComponent},
         "curl-devel": {"type": SysPkgComponent},
-        "autoconf": {"type": SysPkgComponent},
-        "automake": {"type": SysPkgComponent},
         "bison": {"type": SysPkgComponent},
         "file": {"type": SysPkgComponent},
         "flex": {"type": SysPkgComponent},
@@ -53,13 +51,11 @@ _BASE = {
         "libxslt": {"type": SysPkgComponent},
         "libxslt-devel": {"type": SysPkgComponent},
         "lsof": {"type": SysPkgComponent},
-        "make": {"type": SysPkgComponent},
         "openssl-devel": {"type": SysPkgComponent},
         "pam-devel": {"type": SysPkgComponent},
         "pax": {"type": SysPkgComponent},
         "readline-devel": {"type": SysPkgComponent},
         "tk-devel": {"type": SysPkgComponent},
-        "wget": {"type": SysPkgComponent},
         "zlib-devel": {"type": SysPkgComponent},
         "perl-Archive-Tar": {"type": SysPkgComponent},
         "perl-XML-Parser": {"type": SysPkgComponent},
@@ -71,9 +67,7 @@ _BASE = {
         "libgtextutils-devel": {"type": SysPkgComponent},
         "libjpeg-turbo-devel": {"type": SysPkgComponent},
         "*ExtUtils*": {"type": SysPkgComponent},
-        "readline-devel": {"type": SysPkgComponent},
-        "gcc-c++": {"type": SysPkgComponent},
-        "gcc": {"type": SysPkgComponent}
+        "readline-devel": {"type": SysPkgComponent}
     },
     FileManager: {
         # "java": {

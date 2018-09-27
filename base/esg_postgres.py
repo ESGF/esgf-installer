@@ -2,6 +2,7 @@ import os
 import pwd
 import shutil
 import re
+from time import sleep
 import datetime
 import ConfigParser
 import logging
@@ -221,7 +222,8 @@ def start_postgres():
         initialize_postgres()
 
     esg_functions.call_binary("service", ["postgresql", "start"])
-
+    sleep(1)
+    
     if postgres_status():
         return True
 
@@ -256,7 +258,7 @@ def restart_postgres():
         logger.error("Restarting Postgres failed")
         logger.error(err)
         raise
-
+    sleep(1)
     postgres_status()
 
 

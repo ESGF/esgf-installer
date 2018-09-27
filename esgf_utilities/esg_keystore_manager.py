@@ -375,9 +375,10 @@ def create_certificate_chain_list():
 
     if cert_files:
         cert_files_list = cert_files.strip().split(",")
+        logger.info("cert_files_list: %s", cert_files_list)
         for filename in cert_files_list:
             if not os.path.isfile(filename):
-                logger.error("%s does not exist.")
+                logger.error("%s does not exist.", filename)
                 raise OSError
     else:
         print "Adding default certificate chain file {}".format(default_cachain)

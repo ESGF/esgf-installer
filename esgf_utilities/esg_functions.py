@@ -625,7 +625,7 @@ def _check_keystore_password(keystore_password):
     keystore_password = get_java_keystore_password()
     keytool_options = ["-list", "-keystore", config['ks_secret_file'], "-storepass", keystore_password]
     try:
-        call_binary("{}/bin/keytool".format(config["java_install_dir"]), keytool_list_command)
+        call_binary("{}/bin/keytool".format(config["java_install_dir"]), keytool_options)
     except ProcessExecutionError:
         logger.error(
             "Could not access private keystore %s with provided password. Try again...", config['ks_secret_file'])
@@ -924,8 +924,6 @@ def call_binary(binary_name, arguments=None):
 
     for var in os.environ:
         local.env[var] = os.environ[var]
-    for var in local.env:
-        logger.debug("env: %s", str(var))
 
     if arguments is not None:
         output = command.__getitem__(arguments) & TEE

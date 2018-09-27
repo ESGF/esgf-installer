@@ -77,7 +77,7 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
         keytool_binary = "{}/bin/keytool".format(config["java_install_dir"])
-        extract_cert_options = ["-export", "-alias", keystore_alias, "-file", "{}.cer".format(keystore_file), "-storepass", keystore_password]
+        extract_cert_options = ["-export", "-alias", keystore_alias, "-keystore", keystore_file, "-file", "{}.cer".format(keystore_file), "-storepass", keystore_password]
         try:
             esg_functions.call_binary(keytool_binary, extract_cert_options)
         except ProcessExecutionError:

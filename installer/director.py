@@ -49,7 +49,7 @@ class Director(object):
             installer = Installer(requirements, component_spec, is_control=is_control_cmd)
             if self.args.install is not None:
                 installer.install()
-                installer.start()
+                # installer.start()
             elif self.args.uninstall is not None:
                 installer.uninstall()
             elif self.args.start is not None:

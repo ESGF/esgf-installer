@@ -13,6 +13,7 @@ import tarfile
 import hashlib
 import shlex
 import socket
+import glob
 import errno
 import json
 import pwd
@@ -347,7 +348,7 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
     ''' Verify that the local script matches the remote script on the distribution mirror '''
     python_script_name = os.path.basename(__file__)
     python_script_md5_name = re.sub(r'_', "-", python_script_name)
-    python_script_md5_name = re.search("\w*-\w*", python_script_md5_name)
+    python_script_md5_name = re.search(r"\w*-\w*", python_script_md5_name)
     logger.info("python_script_name: %s", python_script_md5_name)
 
     remote_file_md5 = requests.get("{esg_dist_url_root}/esgf-installer/{script_maj_version}/{python_script_md5_name}.md5".format(

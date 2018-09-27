@@ -54,7 +54,6 @@ _BASE = {
         "openssl-devel": {"type": SysPkgComponent},
         "pam-devel": {"type": SysPkgComponent},
         "pax": {"type": SysPkgComponent},
-        "readline-devel": {"type": SysPkgComponent},
         "tk-devel": {"type": SysPkgComponent},
         "zlib-devel": {"type": SysPkgComponent},
         "perl-Archive-Tar": {"type": SysPkgComponent},

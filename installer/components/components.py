@@ -33,6 +33,7 @@ _BASE = {
                 "yum": "java-{version}-openjdk"
             }
         },
+        "postgresql-devel": {"type": SysPkgComponent},
         "httpd-devel": {"type": SysPkgComponent},
         "mod_ssl": {"type": SysPkgComponent},
         "sqlite-devel": {"type": SysPkgComponent},

@@ -377,7 +377,7 @@ def create_certificate_chain_list():
         cert_files_list = cert_files.strip().split(",")
         logger.info("cert_files_list: %s", cert_files_list)
         for filename in cert_files_list:
-            if not os.path.isfile(filename):
+            if not os.path.isfile(filename.strip()):
                 logger.error("%s does not exist.", filename)
                 raise OSError
     else:

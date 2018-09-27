@@ -7,37 +7,38 @@ from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 class Installer(object):
     '''
     A class for handling the installation, updating and general management of components.
-    Takes a dictionary of methods with component assignments and a list of components names
+    Takes a dictionary of components and find their assignments and a list of components names
     that specify what components to install.
     '''
     def __init__(self, requirements, name_spec, is_control=False):
         self.log = logging.getLogger(__name__)
         self.methods = []
         self.controlled_components = []
-        method_order, component_order = self._resolve_order(requirements, name_spec)
-        for method_type in method_order:
-            component_reqs = requirements[method_type]
-            name_order = component_order[method_type]
-            components = []
-            for name in name_order:
-                # Filter out components that were not specified
-                if name_spec and name not in name_spec:
-                    continue
-                # The configuartion details for this component
-                config = component_reqs[name]
-                # If doing a control cmd (start, stop, restart) only init controlled components
-                if is_control and "controller" not in config:
-                    continue
-                # Get the type. This is required.
-                component_type = config["type"]
-                # Add the initialized component to the list of components
-                components.append(component_type(name, config))
-                if "controller" in config:
-                    controller = config["controller"]
-                    self.controlled_components.append(controller(name, config))
-            if components:
-                method = method_type(components)
-                self.methods.append(method)
+        self.assignments = {}
+        # method_order, component_order = self._resolve_order(requirements, name_spec)
+        for name in requirements:
+            if name_spec and name not in name_spec:
+                continue
+            # The configuartion details for this component
+            config = requirements[name]
+            # If doing a control cmd (start, stop, restart) only init controlled components
+            if is_control and "controller" not in config:
+                continue
+            method_type = config["method"]
+            component_type = config["type"]
+            if method_type not in self.assignments:
+                self.assignments[method_type] = []
+            # Assign and initialize this component
+            self.assignments[method_type].append(component_type(name, config))
+
+            if "controller" in config:
+                controller = config["controller"]
+                self.controlled_components.append(controller(name, config))
+
+        # Initialize methods with components
+        for method in self.assignments:
+            components = self.assignments[method]
+            self.methods.append(method(components))
 
         self.divider = "_"*30
         self.header = self.divider + "\n{}"

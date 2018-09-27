@@ -36,11 +36,8 @@ class Director(object):
             else:
                 node_types = ALL.keys()
             for node_type in node_types:
-                for method_type in ALL[node_type]:
-                    if method_type not in requirements:
-                        requirements[method_type] = ALL[node_type][method_type]
-                    else:
-                        requirements[method_type].update(ALL[node_type][method_type])
+                requirements.update(ALL[node_type])
+
             component_spec = (
                 self.args.install or
                 self.args.uninstall or

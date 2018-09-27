@@ -23,6 +23,11 @@ class Director(object):
             self.args.restart is not None or
             self.args.freeze
         )
+        is_control_cmd = (
+            self.args.start is not None or
+            self.args.stop is not None or
+            self.args.restart is not None
+        )
         if init_installer:
             # Find required methods and components
             requirements = {}
@@ -44,7 +49,7 @@ class Director(object):
                 self.args.restart or
                 None
             )
-            installer = Installer(requirements, component_spec)
+            installer = Installer(requirements, component_spec, is_control=is_control_cmd)
             if self.args.install is not None:
                 installer.install()
                 installer.start()

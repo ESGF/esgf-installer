@@ -10,7 +10,7 @@ class Installer(object):
     Takes a dictionary of methods with component assignments and a list of components names
     that specify what components to install.
     '''
-    def __init__(self, requirements, name_spec):
+    def __init__(self, requirements, name_spec, is_control=False):
         self.log = logging.getLogger(__name__)
         self.methods = []
         self.controlled_components = []
@@ -20,13 +20,21 @@ class Installer(object):
             name_order = component_order[method_type]
             components = []
             for name in name_order:
-                if not name_spec or name in name_spec:
-                    config = component_reqs[name]
-                    component_type = config["type"]
-                    components.append(component_type(name, config))
-                    if "controller" in config:
-                        controller = config["controller"]
-                        self.controlled_components.append(controller(name, config))
+                # Filter out components that were not specified
+                if name_spec and name not in name_spec:
+                    continue
+                # The configuartion details for this component
+                config = component_reqs[name]
+                # If doing a control cmd (start, stop, restart) only init controlled components
+                if is_control and "controller" not in config:
+                    continue
+                # Get the type. This is required.
+                component_type = config["type"]
+                # Add the initialized component to the list of components
+                components.append(component_type(name, config))
+                if "controller" in config:
+                    controller = config["controller"]
+                    self.controlled_components.append(controller(name, config))
             if components:
                 method = method_type(components)
                 self.methods.append(method)

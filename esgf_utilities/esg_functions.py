@@ -415,16 +415,14 @@ def check_shmmax(min_shmmax=48):
         pass
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
-    cur_value_bytes = call_binary("sysctl", ["-q", "kernel.shmmax"]).split("=")[1]
+    kernel_shmmax_setting = call_binary("sysctl", ["-q", "kernel.shmmax"])
+    cur_value_bytes = kernel_shmmax_setting.split("=")[1]
     cur_value_bytes = cur_value_bytes.strip()
 
     if cur_value_bytes < set_value_bytes:
         print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes=cur_value_bytes, set_value_bytes=set_value_bytes)
-        call_subprocess(
-            "sysctl -w kernel.shmmax={set_value_bytes}".format(set_value_bytes=set_value_bytes))
-        # TODO: replace with Python to update file
-        call_subprocess(
-            "sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
+        call_binary("sysctl", ["-w", "kernel.shmmax={}".format(set_value_bytes)])
+        replace_string_in_file("/etc/sysctl.conf", kernel_shmmax_setting, "kernel.shmmax={}".format(set_value_bytes))
         esg_property_manager.set_property("kernal_shmmax", set_value_mb)
 
 
@@ -624,17 +622,14 @@ def get_java_keystore_password():
 
 def _check_keystore_password(keystore_password):
     '''Utility function to check that a given password is valid for the global scoped {keystore_file} '''
-    if not os.path.isfile(config['ks_secret_file']):
-        logger.error("$([FAIL]) No keystore file present [%s]", config['ks_secret_file'])
-        return False
     keystore_password = get_java_keystore_password()
-    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(
-        java_install_dir=config["java_install_dir"], keystore_file=config['ks_secret_file'], keystore_password=keystore_password)
-    keytool_list_process = call_subprocess(keytool_list_command)
-    if keytool_list_process["returncode"] != 0:
+    keytool_options = ["-list", "-keystore", config['ks_secret_file'], "-storepass", keystore_password]
+    try:
+        call_binary("{}/bin/keytool".format(java_install_dir), keytool_list_command)
+    except ProcessExecutionError:
         logger.error(
-            "$([FAIL]) Could not access private keystore %s with provided password. Try again...", config['ks_secret_file'])
-        return False
+            "Could not access private keystore %s with provided password. Try again...", config['ks_secret_file'])
+        raise
     return True
 
 
@@ -672,20 +667,24 @@ def get_tomcat_group_id():
 
 
 def add_unix_group(group_name):
-    '''Use subprocess to add Unix group'''
+    '''Add a Unix group'''
     try:
-        stream_subprocess_output("sudo groupadd {group_name}".format(group_name=group_name))
-    except SubprocessError, error:
-        logger.info("Could not add group %s", group_name)
-        logger.error(error)
+        call_binary("groupadd", [group_name])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
 
 def add_unix_user(user_name):
-    '''Use subprocess to add Unix user'''
+    '''Add a Unix user'''
     try:
-        stream_subprocess_output("sudo useradd {user_name}".format(user_name=user_name))
-    except SubprocessError, error:
-        logger.info("Could not add user %s", user_name)
-        logger.error(error)
+        call_binary("useradd", [user_name])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
 
 
 def get_dir_owner_and_group(path):

@@ -3,9 +3,12 @@ import logging
 import os
 
 from installer.director import Director
+from installer.utils import mkdir_p
 
 def main():
-    log_name = os.path.join("logs", "sample.log")
+    log_dir = "logs"
+    mkdir_p(log_dir)
+    log_name = os.path.join(log_dir, "sample.log")
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s [%(name)s] [%(levelname)-5.5s]  %(message)s",

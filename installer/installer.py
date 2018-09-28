@@ -28,39 +28,11 @@ class Installer(object):
             ordered, unordered = self._resolve_order(requirements, names)
         else:
             ordered, unordered = ([], names)
-        assignments = {}
-        for name in unordered:
-            config = requirements[name]
-            method_type = config["method"]
-            component_type = config["type"]
-            if method_type not in assignments:
-                assignments[method_type] = []
-            # Assign and initialize this component
-            assignments[method_type].append(component_type(name, config))
-            if "controller" in config:
-                controller = config["controller"]
-                self.controlled_components.append(controller(name, config))
-        # Initialize methods with components
-        for method in assignments:
-            components = assignments[method]
-            self.methods.append(method(components))
 
-        prev_method_type = None
-        common_method_type = []
-        for name in ordered:
-            config = requirements[name]
-            method_type = config["method"]
-            component_type = config["type"]
-            if prev_method_type and prev_method_type == method_type:
-                common_method_type.append(component_type(name, config))
-            elif not common_method_type:
-                common_method_type = [component_type(name, config)]
-            else:
-                self.methods.append(prev_method_type(common_method_type))
-                common_method_type = [component_type(name, config)]
-            prev_method_type = method_type
+        if unordered:
+            self._init_unordered(requirements, unordered)
         if ordered:
-            self.methods.append(prev_method_type(common_method_type))
+            self._init_ordered(requirements, ordered)
 
         self.divider = "_"*30
         self.header = self.divider + "\n{}"
@@ -139,6 +111,44 @@ class Installer(object):
                 print "{} not installed, cannot restart.".format(component.name)
                 continue
             component.restart()
+
+    def _init_ordered(self, requirements, ordered):
+        prev_method_type = None
+        common_method_type = []
+        for name in ordered:
+            config = requirements[name]
+            if "controller" in config:
+                controller = config["controller"]
+                self.controlled_components.append(controller(name, config))
+            method_type = config["method"]
+            component_type = config["type"]
+            if prev_method_type and prev_method_type == method_type:
+                common_method_type.append(component_type(name, config))
+            elif not common_method_type:
+                common_method_type = [component_type(name, config)]
+            else:
+                self.methods.append(prev_method_type(common_method_type))
+                common_method_type = [component_type(name, config)]
+            prev_method_type = method_type
+        self.methods.append(prev_method_type(common_method_type))
+
+    def _init_unordered(self, requirements, unordered):
+        assignments = {}
+        for name in unordered:
+            config = requirements[name]
+            method_type = config["method"]
+            component_type = config["type"]
+            if method_type not in assignments:
+                assignments[method_type] = []
+            # Assign and initialize this component
+            assignments[method_type].append(component_type(name, config))
+            if "controller" in config:
+                controller = config["controller"]
+                self.controlled_components.append(controller(name, config))
+        # Initialize methods with components
+        for method in assignments:
+            components = assignments[method]
+            self.methods.append(method(components))
 
     def _resolve_order(self, requirements, names):
         dependencies = {}

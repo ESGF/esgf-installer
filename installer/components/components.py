@@ -46,130 +46,130 @@ _BASE = {
         "method": PackageManager,
         "type": SysPkgComponent
     },
-    "sqlite-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "freetype-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "curl-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "bison": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "file": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "flex": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "uuid-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libtool": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "gettext-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libuuid-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libxml2": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libxml2-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libxslt": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libxslt-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "lsof": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "openssl-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "pam-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "pax": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "tk-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "zlib-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "perl-Archive-Tar": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "perl-XML-Parser": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libX11-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libtool-ltdl-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "e2fsprogs-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "gcc-gfortran": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libicu-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libgtextutils-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "libjpeg-turbo-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "*ExtUtils*": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
-    "readline-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
-    },
+    # "sqlite-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "freetype-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "curl-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "bison": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "file": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "flex": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "uuid-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libtool": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "gettext-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libuuid-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libxml2": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libxml2-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libxslt": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libxslt-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "lsof": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "openssl-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "pam-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "pax": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "tk-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "zlib-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "perl-Archive-Tar": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "perl-XML-Parser": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libX11-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libtool-ltdl-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "e2fsprogs-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "gcc-gfortran": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libicu-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libgtextutils-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "libjpeg-turbo-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "*ExtUtils*": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
+    # "readline-devel": {
+    #     "method": PackageManager,
+    #     "type": SysPkgComponent
+    # },
     # "java": {
     #     "type": base.Java,
     #     "version": "1.8.0_162",

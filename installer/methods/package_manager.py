@@ -19,7 +19,7 @@ class PackageManager(Generic):
             "yum": {
                 "install_y": ["install", "-y"],
                 "name_scheme": '"{name}-{version}"',
-                "uninstall": ["erase", "-y"]
+                "uninstall": ["remove", "-y"]
             },
             "apt": {
                 "install_y": ["install", "-y"],

@@ -16,6 +16,6 @@ class Make(FileManager):
         for component in self.components:
             if component.name not in names:
                 continue
-            with pushd(component.makd_dir):
+            with pushd(component.make_dir):
                 self.make.run_tee()
                 self.make.__getitem__(self.install_arg) & TEE

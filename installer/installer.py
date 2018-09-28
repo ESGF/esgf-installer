@@ -10,7 +10,7 @@ class Installer(object):
     Takes a dictionary of components and find their assignments and a list of components names
     that specify what components to install.
     '''
-    def __init__(self, requirements, name_spec, is_control=False):
+    def __init__(self, requirements, name_spec, is_control=False, is_install=False):
         self.log = logging.getLogger(__name__)
         self.methods = []
         self.controlled_components = []
@@ -24,8 +24,10 @@ class Installer(object):
             if is_control and "controller" not in config:
                 continue
             names.append(name)
-
-        ordered, unordered = self._resolve_order(requirements, names)
+        if is_install:
+            ordered, unordered = self._resolve_order(requirements, names)
+        else:
+            ordered, unordered = ([], names)
         assignments = {}
         for name in unordered:
             config = requirements[name]

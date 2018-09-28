@@ -46,7 +46,12 @@ class Director(object):
                 self.args.restart or
                 None
             )
-            installer = Installer(requirements, component_spec, is_control=is_control_cmd)
+            installer = Installer(
+                requirements,
+                component_spec,
+                is_control=is_control_cmd,
+                is_install=self.args.install
+            )
             if self.args.install is not None:
                 installer.install()
                 # installer.start()

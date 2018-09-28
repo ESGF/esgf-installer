@@ -21,7 +21,6 @@ _BASE = {
         "controller": Service,
         "service_name": "postgresql",
         "type": base.Postgres,
-        "requires": ["httpd", "thredds"],
         "version": "8.4.20",
         "pkg_names": {
             "yum": "postgresql-server-{version}"
@@ -181,7 +180,6 @@ _BASE = {
     "tomcat": {
         "method": FileManager,
         "type": FileComponent,
-        "requires": ["esgf_dashboard.egg", "esgf_node_manager.egg"],
         "version": "8.5.20",
         "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
         "dest": "/tmp/tomcat",
@@ -212,7 +210,7 @@ _DATA = {
     "esgcet": {
         "method": Pip,
         "type": PipComponent,
-        "requires": ["postgres"],
+        "requires": ["postgres", "postgresql-devel"],
         "version": "3.5.0",
         "tag": "v{version}",
         "repo": "https://github.com/ESGF/esg-publisher.git",
@@ -223,7 +221,6 @@ _DATA = {
     "esgf-dashboard": {
         "method": EasyInstall,
         "type": FileComponent,
-        "requires": ["httpd", "postgres"],
         "version": "0.0.2",
         "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
         "dest": "/tmp/esgf_dashboard/esgf_dashboard.egg",
@@ -232,7 +229,6 @@ _DATA = {
     "esgf-node-manager": {
         "method": EasyInstall,
         "type": FileComponent,
-        "requires": ["esgf_dashboard.egg"],
         "version": "0.1.5",
         "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
         "dest": "/tmp/esgf_node_manager/esgf_node_manager.egg",

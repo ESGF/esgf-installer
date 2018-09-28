@@ -57,7 +57,8 @@ class Installer(object):
                 self.methods.append(prev_method_type(common_method_type))
                 common_method_type = [component_type(name, config)]
             prev_method_type = method_type
-        self.methods.append(prev_method_type(common_method_type))
+        if ordered:
+            self.methods.append(prev_method_type(common_method_type))
 
         self.divider = "_"*30
         self.header = self.divider + "\n{}"

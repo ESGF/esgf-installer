@@ -15,7 +15,7 @@ class Installer(object):
         self.methods = []
         self.controlled_components = []
         self.assignments = {}
-        ordered, unordered = self._resolve_order(requirements, name_spec)
+        names = []
         for name in requirements:
             if name_spec and name not in name_spec:
                 continue
@@ -24,6 +24,11 @@ class Installer(object):
             # If doing a control cmd (start, stop, restart) only init controlled components
             if is_control and "controller" not in config:
                 continue
+            names.append(name)
+
+        ordered, unordered = self._resolve_order(requirements, names)
+        for name in names:
+            config = requirements[name]
             method_type = config["method"]
             component_type = config["type"]
             if method_type not in self.assignments:
@@ -118,18 +123,11 @@ class Installer(object):
                 continue
             component.restart()
 
-    def _resolve_order(self, requirements, name_spec):
-        # method_order = []
+    def _resolve_order(self, requirements, names):
         unordered = []
         dependencies = {}
-        for name in requirements:
-            if name_spec and name not in name_spec:
-                continue
-            # The configuartion details for this component
+        for name in names:
             config = requirements[name]
-            # If doing a control cmd (start, stop, restart) only init controlled components
-            if is_control and "controller" not in config:
-                continue
             try:
                 dependencies[name] = config["requires"]
             except KeyError:

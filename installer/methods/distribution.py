@@ -33,9 +33,16 @@ class FileManager(Generic):
             filepath = self._extract(source, component)
 
             try:
-                chown_R(filepath, component.owner_uid, component.owner_gid)
+                owner_user = component.owner_user
             except AttributeError:
-                pass
+                owner_user = None
+            try:
+                owner_group = component.owner_group
+            except AttributeError:
+                owner_group = None
+            if owner_group is not None or owner_user is not None:
+                chown_R(filepath, owner_user, owner_group)
+
 
     def _get_remote(self, component):
         url = component.source

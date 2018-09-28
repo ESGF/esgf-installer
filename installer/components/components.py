@@ -4,10 +4,12 @@ from .files import FileComponent
 from .syspkg import SysPkgComponent
 from .pip import PipComponent
 from .make import MakeComponent
+from .users_groups import UserComponent, GroupComponent
 from ..methods.distribution import FileManager
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
 from ..methods.make import Make
+from ..methods.users_groups import UserMethod, GroupMethod
 from ..controllers.service import Service
 
 _BASE = {
@@ -177,13 +179,29 @@ _BASE = {
     #     "extract_dir": "/tmp/java",
     #     "tar_root_dir": "jdk{version}"
     # },
+    "tomcat-group": {
+        "method": GroupMethod,
+        "type": GroupComponent,
+        "groupname": "tomcat"
+    },
+    "tomcat-user": {
+        "method": UserMethod,
+        "type": UserComponent,
+        "reqires": ["tomcat-group"],
+        "username": "tomcat"
+    },
     "tomcat": {
         "method": FileManager,
         "type": FileComponent,
+        "requires": ["tomcat-user", "tomcat-group"],
         "version": "8.5.20",
         "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
         "dest": "/tmp/tomcat",
-        "tar_root_dir": "apache-tomcat-{version}"
+        "tar_root_dir": "apache-tomcat-{version}",
+        "owner": {
+            "user": "tomcat",
+            "group": "tomcat"
+        }
     },
     "esgf-config-git": {
         "method": FileManager,

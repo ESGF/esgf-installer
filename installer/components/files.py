@@ -1,6 +1,5 @@
-import grp
+
 import logging
-import pwd
 
 from .generic import GenericComponent
 
@@ -23,13 +22,12 @@ class FileComponent(GenericComponent):
         except KeyError:
             pass
         try:
-            self.owner = self.config["owner"]
+            owner = self.config["owner"]
         except KeyError:
             pass
         else:
-            if isinstance(self.owner, basestring):
-                self.owner_uid = pwd.getpwnam(self.owner).pw_uid
-                self.owner_gid = -1
-            elif isinstance(self.owner, dict):
-                self.owner_uid = pwd.getpwnam(self.owner["user"]).pw_uid
-                self.owner_gid = grp.getgrnam(self.owner["group"]).gr_gid
+            if isinstance(owner, basestring):
+                self.owner_user = owner
+            elif isinstance(owner, dict):
+                self.owner_user = owner["user"]
+                self.owner_group = owner["group"]

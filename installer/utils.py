@@ -1,5 +1,7 @@
 from contextlib import contextmanager
+import grp
 import os
+import pwd
 import errno
 from string import Formatter
 
@@ -39,7 +41,15 @@ def mkdir_p(path, mode=0777):
         if exc.errno != errno.EEXIST or not os.path.isdir(path):
             raise
 
-def chown_R(fd, uid=-1, gid=-1):
+def chown_R(fd, user=None, group=None):
+    if user is not None:
+        uid = pwd.getpwnam(user).pw_uid
+    else:
+        uid = -1
+    if group is not None:
+        gid = grp.getgrnam(group).gr_gid
+    else:
+        gid = -1
     if os.path.isfile(fd):
         os.chown(fd, uid, gid)
     elif os.path.isdir(fd):

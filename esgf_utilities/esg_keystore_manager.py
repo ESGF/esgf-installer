@@ -374,7 +374,7 @@ def create_certificate_chain_list():
         cert_files = raw_input("Enter certificate chain file name: ")
 
     if cert_files:
-        cert_files_list = cert_files.strip().split(",")
+        cert_files_list = [cert_path.strip() for cert_path in cert_files.split(",")]
         logger.info("cert_files_list: %s", cert_files_list)
         for filename in cert_files_list:
             if not os.path.isfile(filename.strip()):

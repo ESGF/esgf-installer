@@ -46,6 +46,7 @@ class Installer(object):
         prev_method_type = None
         common_method_type = []
         for name in ordered:
+            config = requirements[name]
             method_type = config["method"]
             component_type = config["type"]
             if prev_method_type and prev_method_type == method_type:
@@ -137,14 +138,13 @@ class Installer(object):
             component.restart()
 
     def _resolve_order(self, requirements, names):
-        unordered = []
         dependencies = {}
         for name in names:
             config = requirements[name]
             try:
                 dependencies[name] = config["requires"]
             except KeyError:
-                unordered.append(name)
+                pass
         # Get components that no other components depend on
         root_names = []
         for name_a in dependencies:
@@ -161,6 +161,8 @@ class Installer(object):
         seen = []
         self._dep_resolve(dependencies, None, ordered, seen)
         print ordered
+        unordered = set(names) - (set(names) & set(ordered))
+
         # Return a list in a required order, and a list with no required ordered
         # Exclude the last element as it is the psuedo-component None used above
         return (ordered[:-1], unordered)

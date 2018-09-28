@@ -160,12 +160,12 @@ class Installer(object):
         ordered = []
         seen = []
         self._dep_resolve(dependencies, None, ordered, seen)
-        print ordered
+        ordered = ordered[:-1]
         unordered = set(names) - (set(names) & set(ordered))
 
         # Return a list in a required order, and a list with no required ordered
         # Exclude the last element as it is the psuedo-component None used above
-        return (ordered[:-1], unordered)
+        return (ordered, unordered)
 
     def _dep_resolve(self, components, name, resolved, seen):
         seen.append(name)

@@ -15,7 +15,7 @@ class Installer(object):
         self.methods = []
         self.controlled_components = []
         self.assignments = {}
-        # method_order, component_order = self._resolve_order(requirements, name_spec)
+        ordered, unordered = self._resolve_order(requirements, name_spec)
         for name in requirements:
             if name_spec and name not in name_spec:
                 continue
@@ -120,26 +120,38 @@ class Installer(object):
 
     def _resolve_order(self, requirements, name_spec):
         # method_order = []
-        component_order = {}
+        unordered = []
         dependencies = {}
-        for method_type in requirements:
-            component_reqs = requirements[method_type]
-            # TODO discover true required order
-            component_order[method_type] = component_reqs.keys()
-            for name in component_reqs:
-                if not name_spec or name in name_spec:
-                    config = component_reqs[name]
-                    if "requires" in config:
-                        dependencies[name] = config["requires"]
-                    else:
-                        dependencies[name] = []
-        for name in dependencies:
-            resolved = []
-            seen = []
-            self._dep_resolve(dependencies, name, resolved, seen)
-            # print name, resolved
+        for name in requirements:
+            if name_spec and name not in name_spec:
+                continue
+            # The configuartion details for this component
+            config = requirements[name]
+            # If doing a control cmd (start, stop, restart) only init controlled components
+            if is_control and "controller" not in config:
+                continue
+            try:
+                dependencies[name] = config["requires"]
+            except KeyError:
+                unordered.append(name)
+        # Get components that no other components depend on
+        root_names = []
+        for name_a in dependencies:
+            is_root = True
+            for name_b in dependencies:
+                if name_a in dependencies[name_b]:
+                    is_root = False
+                    break
+            if is_root:
+                root_names.append(name_a)
+
+        dependencies[None] = root_names
+        ordered = []
+        seen = []
+        self._dep_resolve(dependencies, None, ordered, seen)
+        print ordered
         # TODO use the resolved information above to determine order
-        return (requirements.keys(), component_order)
+        return (ordered, unordered)
 
     def _dep_resolve(self, components, name, resolved, seen):
         seen.append(name)

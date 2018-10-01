@@ -1,3 +1,7 @@
+'''
+Build the string for myproxy-server to use in myproxy-logon,
+See http://grid.ncsa.illinois.edu/myproxy/man/myproxy-server.config.5.html
+'''
 import argparse
 import ConfigParser
 import logging
@@ -8,8 +12,10 @@ import OpenSSL
 import psycopg2
 
 def get_openid(args, config_parser, esgf_home):
-
+    ''' Retrieve the OpenID for a specified username '''
+    logging.info("Fetching OpenID for %s", args.username)
     pass_file = os.path.join(esgf_home, "config", ".esg_pg_pass")
+    logging.info("Retrieving pg pass from %s", pass_file)
     with open(pass_file, "rb") as filep:
         password = filep.read().strip()
 
@@ -22,10 +28,17 @@ def get_openid(args, config_parser, esgf_home):
     esgf_host = config_parser.get(section, "esgf.host")
     gateway = "https://{}/esgf-idp/openid/%".format(esgf_host)
 
-    cs = "dbname=%s user=%s password=%s host=%s port=%s" % (db, user, password, host, port)
-    cs_no_pass = "dbname=%s user=%s host=%s port=%s" % (db, user, host, port)
-    logging.info(cs_no_pass)
-    conn = psycopg2.connect(cs)
+    connection_params = (
+        "dbname=%s user=%s password=%s host=%s port=%s" %
+        (db, user, password, host, port)
+    )
+    connection_params_no_pass = (
+        "dbname=%s user=%s host=%s port=%s" %
+        (db, user, host, port)
+    )
+    logging.info(connection_params_no_pass)
+
+    conn = psycopg2.connect(connection_params)
     cur = conn.cursor()
     query = "SELECT DISTINCT openid FROM esgf_security.user"
     query += " WHERE username=%(username)s AND openid LIKE %(gateway)s "
@@ -45,7 +58,7 @@ def get_openid(args, config_parser, esgf_home):
     return result[0]
 
 def get_subject_line(args):
-
+    ''' Retrieve the subject line from the specified certificate file '''
     logging.info("Loading cert file: %s", args.cert_file)
     with open(args.cert_file) as cert:
         cert_contents = cert.read()
@@ -53,12 +66,15 @@ def get_subject_line(args):
     return cert.get_subject()
 
 def main():
-
+    '''
+    Parse arguments, setup logging, retrieve properties,
+    call needed functions and write new subject line to stdout
+    '''
     parser = argparse.ArgumentParser(
         description="A script for querying the esgcet database for an OpenID, given a username"
     )
-    parser.add_argument("username",  help="The username for which to query for the OpenID")
-    parser.add_argument("cert_file",  help="The username for which to query for the OpenID")
+    parser.add_argument("username", help="The username for which to query for the OpenID")
+    parser.add_argument("cert_file", help="The path to cert file to read the subject line from")
     args = parser.parse_args()
 
     try:

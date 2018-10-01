@@ -161,6 +161,7 @@ def backup_previous_keystore(keystore_name):
 def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider):
     '''Imports a signed Certificate into the keystore'''
 
+    os.environ["JAVA_HOME"] = "/usr/local/java"
     idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
     extkeytool_executable = os.path.join(idptools_install_dir, "bin", "extkeytool")
     if not os.path.isfile(extkeytool_executable):
@@ -205,6 +206,7 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
             logger.debug("%s and /etc/certs/hostkey.pem are the same file", private_key)
         else:
             logger.exception("Error copying private key.")
+            raise
     try:
         shutil.copyfile(public_cert, "/etc/certs/hostcert.pem")
     except shutil.Error:
@@ -212,6 +214,7 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
             logger.debug("%s and /etc/certs/hostcert.pem are the same file", public_cert)
         else:
             logger.exception("Error copying host cert.")
+            raise
 
     cert_files = create_certificate_chain_list()
     create_certificate_chain(cert_files)
@@ -219,6 +222,12 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
     os.chmod("/etc/certs/hostkey.pem", 0400)
     os.chmod("/etc/certs/hostcert.pem", 0644)
     os.chmod("/etc/certs/cachain.pem", 0644)
+
+    try:
+        esg_functions.call_binary("openssl",  ["verify", "-verbose", "-purpose", "sslserver", "-CAfile", "/etc/certs/cachain.pem", "/etc/certs/hostcert.pem"])
+    except ProcessExecutionError:
+        logger.error("Incomplete or incorrect chain. Try again")
+        raise
 
 
     generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cert_files)
@@ -262,10 +271,13 @@ def copy_cert_to_tomcat_conf(public_cert):
             shutil.copyfile(public_cert, esgf_cert_name)
     except IOError:
         logger.exception("Error while copying public cert")
+        raise
     except OSError, error:
         if error.errno == errno.ENOENT:
             logger.info("Existing cert %s not found.  Copying public cert to Tomcat config directory: %s", esgf_cert_name, config["tomcat_conf_dir"])
             shutil.copyfile(public_cert, esgf_cert_name)
+        else:
+            raise
 
 def convert_pem_to_dem(private_key, key_output_dir):
     '''Convert your private key into from PEM to DER format that java likes'''

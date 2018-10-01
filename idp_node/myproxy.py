@@ -277,9 +277,8 @@ def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.c
 def copy_myproxy_certificate_mapapp():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
-
-    mapapp_file = "mapapp/myproxy-certificate-mapapp"
-    retriever_file = "mapapp/openid_retriever.py"
+    mapapp_file = os.path.join(os.path.dirname(__file__), "mapapp", "myproxy-certificate-mapapp")
+    retriever_file = os.path.join(os.path.dirname(__file__), "mapapp", "openid_retriever.py")
 
     os.chmod(mapapp_file, 0751)
 

@@ -1,11 +1,12 @@
 import os
 import shutil
 import logging
+import ConfigParser
 import yaml
-import pip
 from git import Repo, GitCommandError
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
+from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 
 
@@ -37,21 +38,8 @@ def clone_cog_repo(COG_INSTALL_DIR, COG_TAG="master"):
 
     # Repo.clone_from("https://github.com/EarthSystemCoG/COG.git", COG_INSTALL_DIR, progress=Progress())
     Repo.clone_from("https://github.com/William-Hill/COG.git", COG_INSTALL_DIR, progress=Progress())
-    checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
-
-#TODO:Probably need to add a force_install param to force an update
-def setup_django_openid_auth(target_directory):
-    print "\n*******************************"
-    print "Setting up Django OpenID Auth"
-    print "******************************* \n"
-
-    if os.path.isdir(target_directory):
-        logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
-    else:
-        Repo.clone_from("https://github.com/EarthSystemCoG/django-openid-auth.git", target_directory)
-
-    with esg_bash2py.pushd(target_directory):
-        esg_functions.stream_subprocess_output("python setup.py install")
+    # checkout_cog_branch(COG_INSTALL_DIR, COG_TAG)
+    checkout_cog_branch(COG_INSTALL_DIR, "ESGF_3.0")
 
 def transfer_api_client_python(target_directory):
     print "\n*******************************"
@@ -61,15 +49,12 @@ def transfer_api_client_python(target_directory):
         logger.info("target_directory %s already exists. Skipping cloning from Github", target_directory)
     else:
         Repo.clone_from("https://github.com/globusonline/transfer-api-client-python.git", target_directory)
-
-    with esg_bash2py.pushd(target_directory):
-        # esg_functions.stream_subprocess_output("python setup.py install")
+    with pybash.pushd(target_directory):
         repo = Repo(os.path.join(target_directory))
         git = repo.git
         git.pull()
-        with esg_bash2py.pushd("mkproxy"):
-            esg_functions.stream_subprocess_output("make")
-            shutil.copyfile("mkproxy", "/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/globusonline/transfer/api_client/x509_proxy/mkproxy")
+        with pybash.pushd("mkproxy"):
+            esg_functions.stream_subprocess_output("make install")
 
 def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     # change ownership of COG_CONFIG_DIR/site_media
@@ -83,63 +68,73 @@ def change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR):
     esg_functions.change_ownership_recursive("{PYTHON_EGG_CACHE_DIR}".format(PYTHON_EGG_CACHE_DIR=PYTHON_EGG_CACHE_DIR), apache_user, apache_group)
 
 def setup_cog(COG_DIR="/usr/local/cog"):
+    if os.path.isdir("/usr/local/cog"):
+        print "Cog directory found."
+        try:
+            setup_cog_answer = esg_property_manager.get_property("update.cog")
+        except ConfigParser.NoOptionError:
+            setup_cog_answer = raw_input(
+                "Do you want to contine the CoG installation [y/N]: ") or "no"
+        if setup_cog_answer.lower() in ["no", "n"]:
+            print "Using existing CoG setup. Skipping installation"
+            return False
+
     # choose CoG version
-    COG_TAG = "v3.9.7"
+    COG_TAG = "v3.10.1"
     # setup CoG environment
-    esg_bash2py.mkdir_p(COG_DIR)
+    pybash.mkdir_p(COG_DIR)
 
     COG_CONFIG_DIR = "{COG_DIR}/cog_config".format(COG_DIR=COG_DIR)
-    esg_bash2py.mkdir_p(COG_CONFIG_DIR)
+    pybash.mkdir_p(COG_CONFIG_DIR)
 
     COG_INSTALL_DIR= "{COG_DIR}/cog_install".format(COG_DIR=COG_DIR)
-    esg_bash2py.mkdir_p(COG_INSTALL_DIR)
+    pybash.mkdir_p(COG_INSTALL_DIR)
 
     os.environ["LD_LIBRARY_PATH"] = "/usr/local/lib"
     try:
-        clone_cog_repo(COG_INSTALL_DIR)
+        clone_cog_repo(COG_INSTALL_DIR, COG_TAG)
     except GitCommandError, error:
         logger.exception("Failed to clone COG repo: \n %s", error)
 
+    # XXX The git url for django openid auth is a fork at v0.7
+    #  of the real project. The real project is now at v0.14,
+    #  but has very little development currently
+    esg_functions.pip_install_git(
+        "https://github.com/EarthSystemCoG/django-openid-auth.git",
+        "django-openid-auth"
+    )
     # install CoG dependencies
-    with esg_bash2py.pushd(COG_INSTALL_DIR):
+    with pybash.pushd(COG_INSTALL_DIR):
         # "pip install -r requirements.txt"
-        with open("requirements.txt", "r") as req_file:
-            requirements = req_file.readlines()
-        for req in requirements:
-            pip.main(["install", req.strip()])
+        esg_functions.pip_install("requirements.txt", req_file=True)
 
-        # esg_functions.stream_subprocess_output("pip install -r requirements.txt")
-        # setup CoG database and configuration
-        esg_functions.stream_subprocess_output("python setup.py install")
-        # manually install additional dependencies
+        # Build and install mkproxy
         transfer_api_client_python(os.path.join(COG_DIR, "transfer-api-client-python"))
 
-        setup_django_openid_auth(os.path.join(COG_DIR, "django-openid-auth"))
+        # setup CoG database and configuration
+        esg_functions.stream_subprocess_output("python setup.py install")
 
         # create or upgrade CoG installation
         esg_functions.stream_subprocess_output("python setup.py setup_cog --esgf=true")
 
         # collect static files to ./static directory
-        # must use a minimal settings file (configured with sqllite3 database)
-        shutil.copyfile(os.path.join(current_directory, "cog_conf/cog_settings.cfg"), "{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
         esg_functions.stream_subprocess_output("python manage.py collectstatic --no-input")
-        # os.remove("{COG_DIR}/cog_config/cog_settings.cfg".format(COG_DIR=COG_DIR))
 
     # create non-privileged user to run django
     try:
         esg_functions.stream_subprocess_output("groupadd -r cogadmin")
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
     try:
         esg_functions.stream_subprocess_output("useradd -r -g cogadmin cogadmin")
     except SubprocessError, error:
-        logger.debug(error[0]["returncode"])
-        if error[0]["returncode"] == 9:
+        logger.debug(error.__dict__["data"]["returncode"])
+        if error.__dict__["data"]["returncode"] == 9:
             pass
 
-    esg_bash2py.mkdir_p("~cogadmin")
+    pybash.mkdir_p("~cogadmin")
     esg_functions.stream_subprocess_output("chown cogadmin:cogadmin ~cogadmin")
 
     # change user prompt
@@ -147,10 +142,6 @@ def setup_cog(COG_DIR="/usr/local/cog"):
         cogadmin_bashrc.write('export PS1="[\u@\h]\$ "')
 
     change_cog_dir_owner(COG_DIR, COG_CONFIG_DIR)
-
-    # startup
-    shutil.copyfile(os.path.join(current_directory, "cog_scripts/wait_for_postgres.sh"), "/usr/local/bin/wait_for_postgres.sh")
-    shutil.copyfile(os.path.join(current_directory, "cog_scripts/process_esgf_config_archive.sh"), "/usr/local/bin/process_esgf_config_archive.sh")
 
 def main():
     setup_cog()

@@ -10,7 +10,7 @@
 
     <abstract>Scientific Data</abstract>
     <keywords>meteorology, atmosphere, climate, ocean, earth science</keywords>
-    
+
     <contact>
       <name>Support</name>
       <organization>My Group</organization>
@@ -81,7 +81,7 @@
     <allowRemote>false</allowRemote>
   </CatalogServices>
   <!--@@esg_end_comment@@-->
-  
+
   <!--
   Configuring the CDM (netcdf-java library)
   see http://www.unidata.ucar.edu/software/netcdf-java/reference/RuntimeLoading.html
@@ -175,7 +175,7 @@
     <binLimit>500</binLimit>
     <serverVersion>opendap/3.7</serverVersion>
   </Opendap>
-  
+
   <!--
   The WCS Service is off by default.
   Also, off by default (and encouraged) is operating on a remote dataset.

@@ -19,11 +19,12 @@
 import os
 import sys
 import sphinx_rtd_theme
-sys.path.insert(0, os.path.abspath('../installer'))
+sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../esgf_utilities'))
 sys.path.insert(0, os.path.abspath('../data_node'))
 sys.path.insert(0, os.path.abspath('../base'))
 sys.path.insert(0, os.path.abspath('../index_node'))
+sys.path.insert(0, os.path.abspath('../idp_node'))
 
 
 # -- General configuration ------------------------------------------------

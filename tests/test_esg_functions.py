@@ -7,10 +7,12 @@ import logging
 import datetime
 from context import esgf_utilities
 from esgf_utilities import esg_functions
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities.esg_exceptions import SubprocessError
 import yaml
+import distutils.spawn
+
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -27,10 +29,19 @@ class test_ESG_Functions(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        print "\n*******************************"
+        print "Tearing down test_ESG_Functions"
+        print "******************************* \n"
         try:
-            esg_functions.call_subprocess("groupdel test_esgf_group")
+            esg_functions.stream_subprocess_output("groupdel test_esgf_group")
         except SubprocessError:
             pass
+
+        try:
+            esg_functions.stream_subprocess_output("groupdel cogadmin")
+        except SubprocessError:
+            pass
+
         try:
             shutil.rmtree("/esg/test_backup")
         except OSError:
@@ -51,16 +62,12 @@ class test_ESG_Functions(unittest.TestCase):
 
     def test_backup(self):
         test_backup_dir = "/esg/test_backup"
-        esg_bash2py.mkdir_p(test_backup_dir)
+        pybash.mkdir_p(test_backup_dir)
         output = esg_functions.backup(os.getcwd(), backup_dir=test_backup_dir)
         self.assertEqual(output, 0)
 
-    # def test_subprocess_pipe_commands(self):
-    #     output = esg_functions.subprocess_pipe_commands("/bin/ps -elf | grep grep")
-    #     self.assertIsNotNone(output)
-
     def test_is_in_git_repo(self):
-        output = esg_functions.is_in_git_repo(os.getcwd())
+        output = esg_functions.is_in_git_repo(__file__)
         self.assertTrue(output)
 
     def test_add_unix_group(self):
@@ -71,12 +78,15 @@ class test_ESG_Functions(unittest.TestCase):
     def test_write_to_install_manifest(self):
         esg_functions.write_to_install_manifest("foo_app", "/tmp/foo", "1.0", "/tmp/install_manifest")
         self.assertTrue(os.path.isfile("/tmp/install_manifest"))
-        prop = esg_property_manager.get_property("foo_app", config_file="/tmp/install_manifest", section_name=datetime.date.today().strftime("%B %d, %Y"))
+        prop = esg_functions.get_version_from_install_manifest("foo_app", manifest_file="/tmp/install_manifest")
+        logger.info("prop: %s", prop)
         self.assertTrue("1.0" in prop)
 
+    def test_is_valid_password(self):
+        self.assertTrue(esg_functions.is_valid_password("Esgf4Dev"))
 
     def test_setup_whitelist_files(self):
-        esg_functions.setup_whitelist_files("http://aims1.llnl.gov/esgf/dist", whitelist_file_dir="/tmp")
+        esg_functions.setup_whitelist_files(whitelist_file_dir="/tmp")
         self.assertTrue(os.path.isfile("/tmp/esgf_ats.xml"))
 
     def test_stream_subprocess_output(self):
@@ -85,6 +95,13 @@ class test_ESG_Functions(unittest.TestCase):
         except SubprocessError, error:
             print "error:", error
 
+    def test_call_binary(self):
+        esg_functions.call_binary("yum", ["install", "-y", "nano"])
+        self.assertTrue(distutils.spawn.find_executable("nano"))
+
+
+
+
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

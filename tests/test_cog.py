@@ -6,14 +6,14 @@ import os
 from context import esgf_utilities
 from context import base
 from context import index_node
-from esgf_utilities import esg_purge
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_cert_manager
 from esgf_utilities import esg_functions
 from base import esg_tomcat_manager
 from base import esg_apache_manager
-from base import esg_setup
+from base import esg_java
 from index_node import esg_cog
+from esgf_utilities.esg_exceptions import SubprocessError
 
 class test_Cog(unittest.TestCase):
 
@@ -22,12 +22,17 @@ class test_Cog(unittest.TestCase):
         print "\n*******************************"
         print "Setting up COG Test Fixture"
         print "******************************* \n"
-        esg_functions.call_subprocess("groupadd tomcat")
-        esg_functions.call_subprocess("useradd tomcat")
-        esg_setup.setup_java()
+        try:
+            esg_functions.call_subprocess("groupadd tomcat")
+        except SubprocessError:
+            pass
+        try:
+            esg_functions.call_subprocess("useradd tomcat")
+        except SubprocessError:
+            pass
+        esg_java.setup_java()
         esg_cert_manager.main()
         esg_apache_manager.main()
-        pass
 
 
     @classmethod

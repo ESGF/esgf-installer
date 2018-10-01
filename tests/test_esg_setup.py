@@ -21,49 +21,11 @@ logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 class test_ESG_Setup(unittest.TestCase):
 
-    @classmethod
-    def tearDownClass(cls):
-        try:
-            os.remove("/tmp/Miniconda2-latest-Linux-x86_64.sh")
-        except OSError, error:
-            if error.errno == errno.EEXIST:
-                pass
-        esg_functions.stream_subprocess_output(
-            "/usr/local/testConda/bin/conda install -y anaconda-clean")
-        esg_functions.stream_subprocess_output("/usr/local/testConda/bin/anaconda-clean --yes")
-        try:
-            shutil.rmtree("/usr/local/testConda")
-        except OSError, error:
-            if error.errno == errno.EEXIST:
-                pass
+    def test_check_os(self):
+        self.assertTrue(esg_setup.check_os())
 
-        print "\n*******************************"
-        print "Purging Java"
-        print "******************************* \n"
-
-        try:
-            shutil.rmtree("/usr/local/java")
-        except OSError:
-            logger.exception("No Java installation found to delete")
-
-        try:
-            shutil.rmtree("/usr/bin/java")
-        except OSError:
-            logger.exception("No Java installation found to delete at /usr/bin/java")
-
-
-    def test_setup_cdat(self):
-        self.assertTrue(esg_setup.setup_cdat())
-
-    def test_check_for_existing_java(self):
-        output = esg_setup.check_for_existing_java()
-        self.assertIsNotNone(output)
-
-    def test_setup_java(self):
-        esg_setup.setup_java()
-        self.assertTrue(os.path.exists("/usr/local/java"))
-        self.assertTrue(find_executable("java"))
-
+    def test_check_if_root(self):
+        self.assertTrue(esg_setup.check_if_root())
 
 if __name__ == '__main__':
     unittest.main()

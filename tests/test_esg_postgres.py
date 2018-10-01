@@ -7,8 +7,9 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from context import esgf_utilities
 from context import base
 from base import esg_postgres
-from esgf_utilities.esg_exceptions import SubprocessError
-from esgf_utilities.esg_purge import purge_postgres
+from esg_purge import purge_postgres
+from esgf_utilities import esg_functions
+from plumbum.commands import ProcessExecutionError
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -17,18 +18,14 @@ with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as
 
 class test_ESG_postgres(unittest.TestCase):
 
-    # def test_check_for_postgres_db_user(self):
-    #     esg_postgres.stop_postgress()
-    #     esg_postgres.check_for_postgres_db_user()
-
     @classmethod
     def setUpClass(cls):
         print "\n*******************************"
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
         try:
-            esg_postgres.stop_postgress()
-        except SubprocessError, error:
+            esg_postgres.stop_postgres()
+        except ProcessExecutionError:
             pass
         purge_postgres()
         esg_postgres.download_postgres()
@@ -59,7 +56,7 @@ class test_ESG_postgres(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
-        esg_postgres.stop_postgress()
+        esg_postgres.stop_postgres()
         purge_postgres()
         esg_postgres.download_postgres()
         esg_postgres.start_postgres()
@@ -139,7 +136,7 @@ class test_ESG_postgres(unittest.TestCase):
         self.assertIsNotNone(schemas_list)
 
     def test_add_schema_from_file(self):
-        esg_postgres.setup_db_schemas(False, publisher_password="changeit")
+        esg_postgres.setup_db_schemas(publisher_password="changeit")
         db_schemas = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
         print "db_schemas:", db_schemas
         self.assertTrue("esgf_security" in db_schemas)
@@ -156,6 +153,5 @@ class test_ESG_postgres(unittest.TestCase):
 
 
 
-
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

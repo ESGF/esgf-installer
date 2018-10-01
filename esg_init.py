@@ -11,6 +11,8 @@ logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
 def init():
     """ Return a list of all local variables."""
+    # TODO make this esgf-test or esgf-prod as specified
+    esgf_config_repo = "https://raw.githubusercontent.com/ESGF/esgf-config/master/esgf-test"
     #--------------
     # User Defined / Settable (public)
     #--------------
@@ -23,51 +25,69 @@ def init():
     pub_secret_file = os.path.join(esg_config_dir, ".esg_pg_publisher_pass")
     ks_secret_file = os.path.join(esg_config_dir, ".esg_keystore_pass")
     install_manifest = os.path.join(esg_root_dir, "esgf-install-manifest")
+    envfile = "/etc/esg.env"
 
     #--------------------------------
     # Internal esgf node code versions
     #--------------------------------
-    apache_frontend_version = "v1.02"
-    cdat_version = "2.2.0"
-    # cdat_tag = "1.5.1.esgf-v1.7.0"
-    esgcet_version = "3.4.0a1"
-    publisher_tag = "v3.4.0a1"
-    # see esgf-node-manager project:
-    esgf_node_manager_version = "0.7.16"
-    esgf_node_manager_db_version = "0.1.5"
-    # see esgf-security project:
-    esgf_security_version = "2.7.6"
-    esgf_security_db_version = "0.1.5"
-    # see esg-orp project:
-    esg_orp_version = "2.8.10"
-    # see esgf-idp project:
-    esgf_idp_version = "2.7.2"
-    # see esg-search project:
-    esg_search_version = "4.8.4"
-    # see esgf-web-fe project:
-    esgf_web_fe_version = "2.6.5"
-    # see esgf-dashboard project:
-    esgf_dashboard_version = "1.3.18"
-    esgf_dashboard_db_version = "0.01"
-    # see esgf-desktop project:
-    esgf_desktop_version = "0.0.20"
 
+    apache_frontend_version = "1.0.9"
+    apache_frontend_tag = "v1.12"
+
+    cdat_version = "2.2.0"
+
+    esgcet_version = "3.5.0"
+    publisher_tag = "v3.5.0"
+
+    esgprep_version="2.8.1"
+    cmor_version="3.3.2"
+
+    #see esgf-node-manager project:
+    esgf_node_manager_version = "1.0.1"
+
+    esgf_node_manager_db_version = "0.1.5"
+
+    #see esgf-security project:
+    esgf_security_version = "2.7.17"
+    esgf_security_db_version = "0.1.5"
+
+    #see esg-orp project:
+    esg_orp_version = "2.9.10"
+
+    #see esgf-idp project:
+    esgf_idp_version = "2.7.14"
+
+    #see esg-search project:
+    esg_search_version = "4.15.8"
+
+    #see esgf-web-fe project:
+
+    #see esgf-dashboard project:
+    esgf_dashboard_version = "1.5.19"
+    esgf_dashboard_db_version = "0.0.2"
+
+    #see esgf-desktop project:
+    esgf_desktop_version = "0.0.22"
+
+    esgf_stats_api_version = "1.0.5"
     #--------------------------------
     # External programs' versions
     #--------------------------------
     openssl_version = "0.9.8r"
     openssl_min_version = "0.9.8e"
     openssl_max_version = "0.9.9z"
-    java_version = "1.8.0_112"
-    java_min_version = "1.8.0_112"
+    java_version = "1.8.0_162"
+    java_min_version = "1.8.0_162"
     ant_version = "1.9.1"
     ant_min_version = "1.9.1"
     postgress_version = "8.4.20"
     postgress_min_version = "8.4.20"
     tomcat_version = "8.5.9"
     tomcat_min_version = "8.5.9"
-    tds_version = "5.0.0"
-    tds_min_version = "5.0.0"
+    tds_version = "5.0.2"
+    tds_min_version = "5.0.2"
+    sqlalchemy_version = "0.7.10"
+    sqlalchemy_min_version = "0.7.10"
     python_version = "2.7"
 
     #--------------------------------
@@ -101,7 +121,9 @@ def init():
     tomcat_user = "tomcat"
     tomcat_group = tomcat_user
     globus_location = os.path.join(install_prefix, "globus")
-    mail_smtp_host = "smtp."+socket.getfqdn().split('.', 1)[1]
+    socket_fqdn = socket.getfqdn().split('.', 1)
+    if len(socket_fqdn) > 1:
+        mail_smtp_host = "smtp."+socket_fqdn[1]
     mail_admin_address = ""
     publisher_home = ""
     publisher_config = ""
@@ -145,13 +167,9 @@ def init():
         install_prefix + "/geoip/lib:/usr/lib64:/usr/lib"
 
     os.environ["PATH"] = myPATH + ':' + os.environ["PATH"]
-    os.environ["LD_LIBRARY_PATH"] = ""
-    try:
-        os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH + \
-            ':' + os.environ["LD_LIBRARY_PATH"]
-    except KeyError:
-        logger.exception("LD_LIBRARY_PATH not found initially")
-        os.environ["LD_LIBRARY_PATH"] = myLD_LIBRARY_PATH
+    PATH = myPATH + ':' + os.environ["PATH"]
+
+    LD_LIBRARY_PATH = "/usr/local/conda/envs/esgf-pub/lib/:/usr/local/conda/envs/esgf-pub/lib/python2.7/:/usr/local/conda/envs/esgf-pub/lib/python2.7/site-packages/mod_wsgi/server"
 
     #--------------
     # ID Setting
@@ -195,11 +213,11 @@ def init():
     certificate_extensions = "pem|crt|cert|key"
     openssl_dist_url = os.path.join("http://www.openssl.org/source/openssl-",
                                     openssl_version, ".tar.gz")
-    esgf_dist_mirror = os.path.join("aims1.llnl.gov", "esgf")
+    esgf_dist_mirror = os.path.join("http://aims1.llnl.gov", "esgf")
     esg_dist_url_root = os.path.join(esgf_dist_mirror, "dist")
     esgf_coffee_dist_mirror = "distrib-coffee.ipsl.jussieu.fr/pub/esgf"
     esg_coffee_dist_url_root = os.path.join(esgf_coffee_dist_mirror, "dist")
-    java_dist_url = "%s/java/$%s/jdk%s-%s.tar.gz" % (
+    java_dist_url = "%s/java/%s/jdk%s-%s.tar.gz" % (
         esg_dist_url_root, java_version, java_version, word_size)
     java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
         esg_dist_url_root, java_version)
@@ -226,7 +244,6 @@ def init():
     tomcat_pid_file = "/var/run/tomcat-jsvc.pid"
     thredds_content_dir = os.path.join(esg_root_dir, "content")
     # #NOTE: This root dir should match a root set in the thredds setup
-    # thredds_root_dir=${esg_root_dir}/data
     thredds_root_dir = os.path.join(esg_root_dir, "data")
     thredds_replica_dir = os.path.join(thredds_root_dir, "replica")
     # #NOTE: This is another RedHat/CentOS specific portion!!! it will break on another OS!
@@ -236,9 +253,7 @@ def init():
     esg_installarg_file = os.path.join(scripts_dir, "esg-installarg")
     no_globus = False
     force_install = False
-    # extkeytool_download_url=${esg_dist_url}/etc/idptools.tar.gz
-    # extkeytool_download_url= esg_dist_url + "/etc/idptools.tar.gz"
-    # tomcat_users_file=${tomcat_conf_dir}/tomcat-users.xml
+    extkeytool_download_url= esg_dist_url_root + "/etc/idptools.tar.gz"
     tomcat_users_file = os.path.join(tomcat_conf_dir, "tomcat-users.xml")
     keystore_file = os.path.join(tomcat_conf_dir, "keystore-tomcat")
     keystore_alias = "my_esgf_node"
@@ -251,7 +266,7 @@ def init():
     # allow prompting of user for fields!
     # zoiks: allow this to be empty to allow prompting of user for fields!
     default_distinguished_name = "OU=ESGF.ORG, O=ESGF"
-    config_file = os.path.join(esg_config_dir, "esgf.properties")
+    property_file = os.path.join(esg_config_dir, "esgf.properties")
     index_config = "master slave"
 
 

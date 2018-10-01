@@ -14,21 +14,25 @@ import hashlib
 import shlex
 import socket
 import errno
+import json
 import pwd
 import grp
 import stat
 import getpass
 import ConfigParser
-from time import sleep
 from distutils.spawn import find_executable
 import requests
 import yaml
 import netifaces
 from clint.textui import progress
 from lxml import etree
-from esg_exceptions import UnverifiedScriptError, SubprocessError
-import esg_bash2py
+from esg_exceptions import UnverifiedScriptError, SubprocessError, NoNodeTypeError
+import pybash
 import esg_property_manager
+from plumbum import local
+from plumbum import TEE
+from plumbum import BG
+from plumbum.commands import ProcessExecutionError
 
 with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
@@ -36,25 +40,6 @@ with open(os.path.join(os.path.dirname(__file__), os.pardir, 'esg_config.yaml'),
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 
 
-def exit_with_error(error=None):
-    print(
-        ""
-        "Sorry... \n"
-        "This action did not complete successfully\n")
-    if error:
-        print "The following error occurred:\n", error
-    print(
-        "Also please review the installation FAQ it may assist you\n"
-        "https://github.com/ESGF/esgf.github.io/wiki/ESGFNode%7CFAQ"
-        ""
-    )
-    # Move back to starting directory
-    os.chdir(config["install_prefix"])
-    sys.exit()
-
-#-------------------------------
-# Process checking utility functions
-#-------------------------------
 
 #----------------------------------------------------------
 # Process Launching and Checking...
@@ -102,9 +87,6 @@ def path_unique(path_string=os.environ["PATH"], path_separator=":"):
     split_path = path_string.split(path_separator)
     return ":".join(sorted(set(split_path), key=split_path.index))
 
-# TODO: Maybe move this to esg_bash2py
-
-
 def readlinkf(file_name):
     '''
     This is a portable implementation of GNU's "readlink -f" in
@@ -116,7 +98,6 @@ def readlinkf(file_name):
     maximum length.
     '''
     return os.path.realpath(file_name)
-
 
 #----------------------------------------------------------
 # File reading and writing...
@@ -163,7 +144,7 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
     current_directory = os.getcwd()
 
     os.chdir(source_directory)
-    esg_bash2py.mkdir_p(source_directory)
+    pybash.mkdir_p(source_directory)
 
     source_backup_name = re.search("\w+$", source_directory).group()
     backup_filename = readlinkf(backup_dir) + "/" + source_backup_name + \
@@ -197,40 +178,13 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
     return 0
 
 
-# TODO: No uses found
-def git_tagrelease():
-    '''
-        Makes a commit to the current git repository updating the
-        release version string and codename, tags that commit with the
-        version string, and then immediately makes another commit
-        appending "-devel" to the version string.
-
-        This is to prepare for a release merge.  Note that the tag will
-        not be against the correct revision after a merge to the release
-        branch if it was not a fast-forward merge, so ensure that there
-        are no unmerged changes from the release branch before using.
-
-        If that happens, delete the tag, issue a git reset --hard
-        against the last commit before the tag, merge the release
-        branch, and try again.
-
-        Arguments:
-        $1: the release version string (mandatory)
-        $2: the release codename (optional)
-
-        Examples:
-          git-tagrelease v4.5.6 AuthenticGreekPizzaEdition
-        or just
-          git-tagrelease v4.5.6
-    '''
-    pass
-
-
 def get_parent_directory(directory_path):
-    return os.path.join(directory_path, os.pardir)
+    '''Returns the parent directory of directory_path'''
+    return os.path.abspath(os.path.join(directory_path, os.pardir))
 
 
 def is_in_git_repo(file_name):
+    #TODO: this may get deprecated as we are moving most things to live in repos
     '''
      This determines if a specified file is in a git repository.
      This function will resolve symlinks and check for a .git
@@ -249,21 +203,21 @@ def is_in_git_repo(file_name):
         print "Git is not installed"
         return False
 
-    print "DEBUG: Checking to see if %s is in a git repository..." % (file_name)
+    logger.debug("Checking to see if %s is in a git repository...", file_name)
     absolute_path = readlinkf(file_name)
     one_directory_up = os.path.abspath(os.path.join(absolute_path, os.pardir))
     two_directories_up = os.path.abspath(os.path.join(one_directory_up, os.pardir))
 
     if not os.path.isfile(file_name):
-        print "DEBUG: %s does not exist yet, allowing creation" % (file_name)
+        logger.debug("%s does not exist yet, allowing creation", file_name)
         return False
 
     if os.path.isdir(one_directory_up + "/.git"):
-        print "%s is in a git repository" % file_name
+        logger.info("%s is in a git repository", file_name)
         return True
 
     if os.path.isdir(two_directories_up + "/.git"):
-        print "%s is in a git repository" % file_name
+        logger.info("%s is in a git repository", file_name)
         return True
 
 
@@ -286,10 +240,9 @@ def check_for_update(filename_1, filename_2=None):
         remote_file = filename_2
 
     if not os.path.isfile(local_file):
-        print " WARNING: Could not find local file %s" % (local_file)
+        logger.warning("Could not find local file %s", local_file)
         return 0
     if not os.access(local_file, os.X_OK):
-        print " WARNING: local file %s not executible" % (local_file)
         os.chmod(local_file, 0755)
 
     remote_file_md5 = requests.get(remote_file + '.md5').content
@@ -301,7 +254,7 @@ def check_for_update(filename_1, filename_2=None):
         return 0
     return 1
 
-
+#TODO: rename to download_from_mirror
 def download_update(local_file, remote_file=None, force_download=False, make_backup_file=False, use_local_files=False):
     '''
 
@@ -334,11 +287,8 @@ def download_update(local_file, remote_file=None, force_download=False, make_bac
     if remote_file is None:
         remote_file = local_file
         # Get the last subpath from the absolute path
-        # TODO: use esg_bash2py.trim_from_head() here
+        # TODO: use pybash.trim_from_head() here
         local_file = local_file.split("/")[-1]
-
-    logger.debug("local file : %s", local_file)
-    logger.debug("remote file: %s", remote_file)
 
     if is_in_git_repo(local_file):
         print "%s is controlled by Git, not updating" % (local_file)
@@ -374,20 +324,21 @@ def fetch_remote_file(local_file, remote_file):
 
     try:
         remote_file_request = requests.get(remote_file, stream=True)
+        remote_file_request.raise_for_status()
         with open(local_file, "wb") as downloaded_file:
             total_length = int(remote_file_request.headers.get('content-length'))
             for chunk in progress.bar(remote_file_request.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):
                 if chunk:
                     downloaded_file.write(chunk)
                     downloaded_file.flush()
-    except requests.exceptions.RequestException, error:
+    except requests.exceptions.RequestException:
         logger.exception("Could not download %s", remote_file)
         sys.exit()
 
 
 def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.date.today())):
     '''Create a backup of a file using the given backup extension'''
-    backup_file_name = os.path.join(file_name, backup_extension)
+    backup_file_name = file_name + date + "."+ backup_extension
     try:
         shutil.copyfile(file_name, backup_file_name)
         os.chmod(backup_file_name, 600)
@@ -396,16 +347,17 @@ def create_backup_file(file_name, backup_extension=".bak", date=str(datetime.dat
 
 
 def verify_checksum(local_file, remote_file):
+    '''Verify md5 checksum of file downloaded from distribution mirror'''
     remote_file_md5 = requests.get(remote_file + '.md5').content
     remote_file_md5 = remote_file_md5.split()[0].strip()
 
     local_file_md5 = get_md5sum(local_file)
 
     if local_file_md5 != remote_file_md5:
-        print " WARNING: Could not verify this file! %s" % (local_file)
+        logger.warning("Could not verify this file! %s", local_file)
         return False
     else:
-        print "{local_file} checksum [VERIFIED]".format(local_file=local_file)
+        logger.info("%s checksum [VERIFIED]", local_file)
         return True
 
 
@@ -432,26 +384,22 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
 def stream_subprocess_output(command_string):
     ''' Print out the stdout of the subprocess in real time '''
     try:
-        process = subprocess.Popen(shlex.split(command_string), stdout=subprocess.PIPE)
+        logger.debug("Streaming subprocess stdout")
+        logger.debug("Raw command string: %s", command_string)
+        shlexsplit = shlex.split(command_string)
+        logger.debug("shlex.split %s", str(shlexsplit))
+        process = subprocess.Popen(shlexsplit, stdout=subprocess.PIPE)
         with process.stdout:
             for line in iter(process.stdout.readline, b''):
                 print line,
         # wait for the subprocess to exit
         process.wait()
         if process.returncode != 0:
-            print "\n{command_string} process returncode:".format(command_string=command_string), process.returncode
-            logger.debug("stderr %s", process.stderr)
-            if process.stderr:
-                raise SubprocessError({"stderr": process.stderr, "returncode": process.returncode})
-            else:
-                raise SubprocessError({"stdout": process.stdout, "returncode": process.returncode})
+            raise SubprocessError({"stdout": process.stdout, "stderr": process.stderr, "returncode": process.returncode})
     except (OSError, ValueError), error:
-        # logger.exception("Could not stream subprocess output")
         print "Could not stream subprocess output"
         print "stream_subprocess_output error:", error
         raise
-        exit_with_error(error)
-
 
 def call_subprocess(command_string, command_stdin=None):
     ''' Mimics subprocess.call; Need this on CentOS 6 because system Python is 2.6, which doesn't have subprocess.call() '''
@@ -465,45 +413,24 @@ def call_subprocess(command_string, command_stdin=None):
         else:
             command_process_stdout, command_process_stderr = command_process.communicate()
     except (OSError, ValueError), error:
-        logger.exception("Error with subprocess")
-        # exit_with_error(error)
         raise SubprocessError(error)
     else:
         logger.debug("command_process_stdout: %s", command_process_stdout)
         logger.debug("command_process_stderr: %s", command_process_stderr)
         logger.debug("command_process.returncode: %s", command_process.returncode)
-        if command_process.returncode !=0:
-            raise SubprocessError(command_process_stderr)
+        if command_process.returncode != 0:
+            raise SubprocessError({"stdout": command_process_stdout, "stderr": command_process_stderr, "returncode": command_process.returncode})
         return {"stdout": command_process_stdout, "stderr": command_process_stderr, "returncode": command_process.returncode}
-
-
-def subprocess_pipe_commands(command_list):
-    subprocess_list = []
-    for index, command in enumerate(command_list):
-        print "index:", index
-        print "command:", command
-        if index > 0:
-            subprocess_command = subprocess.Popen(
-                command, stdin=subprocess_list[index - 1].stdout, stdout=subprocess.PIPE)
-            subprocess_list.append(subprocess_command)
-        else:
-            subprocess_command = subprocess.Popen(command, stdout=subprocess.PIPE)
-            subprocess_list.append(subprocess_command)
-    subprocess_list_length = len(subprocess_list)
-    for index, process in enumerate(subprocess_list):
-        if index != subprocess_list_length - 1:
-            process.stdout.close()
-        else:
-            subprocess_stdout, subprocess_stderr = process.communicate()
-    return subprocess_stdout
-
 
 def check_shmmax(min_shmmax=48):
     '''
        NOTE: This is another **RedHat/CentOS** specialty thing (sort of)
        arg1 - min value of shmmax in MB (see: /etc/sysctl.conf)
     '''
-    kernel_shmmax = esg_property_manager.get_property("kernel.shmmax")
+    try:
+        kernel_shmmax = esg_property_manager.get_property("kernel.shmmax")
+    except ConfigParser.NoOptionError:
+        pass
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
     cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
@@ -517,14 +444,6 @@ def check_shmmax(min_shmmax=48):
         call_subprocess(
             "sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
         esg_property_manager.set_property("kernal_shmmax", set_value_mb)
-
-
-def get_esg_root_id():
-    try:
-        esg_root_id = config["esg_root_id"]
-    except KeyError:
-        esg_root_id = esg_property_manager.get_property("esg.root.id")
-    return esg_root_id
 
 
 def get_esgf_host():
@@ -544,7 +463,7 @@ def get_security_admin_password():
             security_admin_password = password_file.read().strip()
     except IOError, error:
         if error.errno == errno.ENOENT:
-            logger.error("File doesn't exist %s", config["esgf_secret_file"])
+            raise
         else:
             logger.exception("Could not get password from file")
     else:
@@ -569,7 +488,7 @@ def set_security_admin_password(updated_password, password_file=config['esgf_sec
     os.chmod(config['esgf_secret_file'], 0640)
     try:
         os.chown(config['esgf_secret_file'], config[
-                 "installer_uid"], tomcat_group_id)
+            "installer_uid"], tomcat_group_id)
     except OSError:
         logger.exception("Unable to change ownership of %s", password_file)
 
@@ -582,7 +501,7 @@ def get_publisher_password():
     '''Gets the publisher database user's password'''
     try:
         with open(config['pub_secret_file'], "r") as secret_file:
-            publisher_db_user_passwd = secret_file.read()
+            publisher_db_user_passwd = secret_file.read().strip()
         return publisher_db_user_passwd
     except IOError:
         logger.exception("%s not found", config['pub_secret_file'])
@@ -608,9 +527,8 @@ def set_publisher_password(password=None):
             secret_file.write(password)
         print "Updated password for database {db_user}".format(db_user=config["postgress_user"])
     except IOError, error:
-        logger.exception("Could not update password for %s", config["postgress_user"])
-        print "error:", error
-        exit_with_error(error)
+        logger.error("Could not update password for %s", config["postgress_user"])
+        raise
 
 
 def set_postgres_password(password):
@@ -642,7 +560,7 @@ def get_postgres_password():
     pg_password = None
     try:
         with open(config['pg_secret_file'], "r") as secret_file:
-            pg_password = secret_file.read()
+            pg_password = secret_file.read().strip()
     except IOError:
         logger.exception("Could not open %s", config['pg_secret_file'])
 
@@ -660,14 +578,19 @@ def confirm_password(password_input, password_confirmation):
 
 
 def is_valid_password(password_input):
-    if not password_input or not str.isalnum(password_input):
-        print "Invalid password... "
+    '''Check that password_input meets the valid password requirements:
+    an alphanumeric string greater than 6 characters long'''
+    if not password_input:
+        print "Password cannot be blank"
         return False
-    if not password_input or len(password_input) < 6:
+    if not str.isalnum(password_input):
+        print "The password can only contain alphanumeric characters"
+        return False
+    if len(password_input) < 6:
         print "Sorry password must be at least six characters :-( "
         return False
-    else:
-        return True
+
+    return True
 
 
 def set_java_keystore_password(keystore_password=None):
@@ -733,59 +656,6 @@ def _check_keystore_password(keystore_password):
     return True
 
 
-def verify_esg_node_script(esg_node_filename, esg_dist_url_root, script_version, script_maj_version, devel, update_action=None):
-    ''' Verify the esg_node script is the most current version '''
-    # Test to see if the esg-node script is currently being pulled from git, and if so skip verification
-    logger.info("esg_node_filename: %s", esg_node_filename)
-    if is_in_git_repo(esg_node_filename):
-        logger.info("Git repository detected; not checking checksum of esg-node")
-        return
-
-    if "devel" in script_version:
-        devel = True
-        remote_url = "{esg_dist_url_root}/esgf-installer/{script_maj_version}".format(
-            esg_dist_url_root=esg_dist_url_root, script_maj_version=script_maj_version)
-    else:
-        devel = False
-        remote_url = "{esg_dist_url_root}/devel/esgf-installer/{script_maj_version}".format(
-            esg_dist_url_root=esg_dist_url_root, script_maj_version=script_maj_version)
-    try:
-        _verify_against_mirror(remote_url, script_maj_version)
-    except UnverifiedScriptError:
-        logger.info('''WARNING: %s could not be verified!! \n(This file, %s, may have been tampered
-            with or there is a newer version posted at the distribution server.
-            \nPlease update this script.)\n\n''', os.path.basename(__file__), os.path.basename(__file__))
-
-        if update_action is None:
-            update_action = raw_input(
-                "Do you wish to Update and exit [u], continue anyway [c] or simply exit [x]? [u/c/X]: ")
-
-        if update_action in ["C".lower(), "Y".lower()]:
-            print "Continuing..."
-            return
-        elif update_action in ["U".lower(), "update", "--update"]:
-            print "Updating local script with script from distribution server..."
-
-            if devel is True:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap --devel"
-            else:
-                bootstrap_path = "/usr/local/bin/esg-bootstrap"
-            invoke_bootstrap = subprocess.Popen(
-                bootstrap_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            invoke_bootstrap.communicate()
-
-            print "Please re-run this updated script: {current_script_name}".format(current_script_name=esg_node_filename)
-            sys.exit(invoke_bootstrap.returncode)
-        elif update_action is "X".lower():
-            print "Exiting..."
-            sys.exit(1)
-        else:
-            print "Unknown option: {update_action} - Exiting".format(update_action=update_action)
-            sys.exit(1)
-
-    return True
-
-
 def get_group_list():
     '''Returns a list of the Unix groups on the system'''
     return [group.gr_name for group in grp.getgrall()]
@@ -806,22 +676,6 @@ def get_user_id(user_name):
     return pwd.getpwnam(user_name).pw_uid
 
 
-def add_group(group_name):
-    '''Add a Unix user group'''
-    call_subprocess("groupadd {group_name}".format(group_name=group_name))
-
-
-# def add_user(user_name, sys_acct=False, comment=None, home_dir=None, groups=None, password=None, shell=None):
-def add_user(name, password="", group="", full_name ="", home_dir="", shell=""):
-    '''Add Unix user'''
-    #check if root_user
-    existing_user_ids = [user.pw_uid for user in pwd.getpwall()]
-    uid = max(existing_user_ids)+1
-    user_string = "{}:{}:{}:{}:{}:{}:{}".format(name,password,uid,group,full_name,home_dir,shell)
-
-    pass
-
-
 def get_tomcat_user_id():
     ''' Returns the id of the Tomcat user '''
     return pwd.getpwnam("tomcat").pw_uid
@@ -836,19 +690,20 @@ def get_tomcat_group_id():
 
 
 def add_unix_group(group_name):
+    '''Use subprocess to add Unix group'''
     try:
-        call_subprocess("groupadd {group_name}".format(group_name=group_name))
-    except Exception, error:
-        print "Could not add group {group_name}".format(group_name=group_name)
-        exit_with_error(error)
-
+        stream_subprocess_output("sudo groupadd {group_name}".format(group_name=group_name))
+    except SubprocessError, error:
+        logger.info("Could not add group %s", group_name)
+        logger.error(error)
 
 def add_unix_user(user_name):
+    '''Use subprocess to add Unix user'''
     try:
-        stream_subprocess_output("useradd {user_name}".format(user_name=user_name))
-    except Exception, error:
-        print "Could not add user {user_name}".format(user_name=user_name)
-        exit_with_error(error)
+        stream_subprocess_output("sudo useradd {user_name}".format(user_name=user_name))
+    except SubprocessError, error:
+        logger.info("Could not add user %s", user_name)
+        logger.error(error)
 
 
 def get_dir_owner_and_group(path):
@@ -856,7 +711,6 @@ def get_dir_owner_and_group(path):
     stat_info = os.stat(path)
     uid = stat_info.st_uid
     gid = stat_info.st_gid
-    # print uid, gid
 
     user = pwd.getpwuid(uid)[0]
     group = grp.getgrgid(gid)[0]
@@ -871,6 +725,7 @@ def track_extraction_progress(members):
 
 
 def extract_tarball(tarball_name, dest_dir="."):
+    '''Extract a tarball to the given dest_dir'''
     if dest_dir == ".":
         dest_dir_name = os.getcwd()
     else:
@@ -882,11 +737,10 @@ def extract_tarball(tarball_name, dest_dir="."):
         tar.extractall(dest_dir, members=track_extraction_progress(tar))
         tar.close()
     except tarfile.TarError, error:
-        logger.exception("Could not extract the tarfile: %s", tarball_name)
-        exit_with_error(error)
+        logger.error("Could not extract the tarfile: %s", tarball_name)
+        raise
 
-
-def change_ownership_recursive(directory_path, uid=None, gid=None):
+def change_ownership_recursive(directory_path, uid=-1, gid=-1):
     '''Recursively changes ownership on a directory and its subdirectories; Mimics chown -R'''
     for root, dirs, files in os.walk(readlinkf(directory_path)):
         for directory in dirs:
@@ -929,14 +783,15 @@ def get_config_ip(interface_value):
     #     "eth0" or "lo", etc...
     #     '''
     netifaces.ifaddresses(interface_value)
-    ip = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
-    return ip
+    ip_address = netifaces.ifaddresses(interface_value)[netifaces.AF_INET][0]['addr']
+    return ip_address
 
 
 def bump_git_tag(bump_level="patch", commit_message=None):
+    '''Update git tag version'''
     import semver
     from git import Repo
-    '''Bump the git tag version when a new release cut'''
+    #Bump the git tag version when a new release cut
     if not find_executable("git"):
         print "Git is not installed"
         return False
@@ -952,15 +807,17 @@ def bump_git_tag(bump_level="patch", commit_message=None):
     new_tag = repo.create_tag(current_tag, message='Automatic tag "{0}"'.format(current_tag))
     repo.remotes.origin.push(new_tag)
 
+def write_security_lib_install_log():
+    '''Write esgf-security library info to install manifest'''
+    security_library_path = "/usr/local/tomcat/webapps/esg-orp/WEB-INF/lib/esgf-security-{}.jar".format(config["esgf_security_version"])
+    write_to_install_manifest("esgf->library:esg-security", security_library_path, config["esgf_security_version"])
+
 def write_to_install_manifest(component, install_path, version, manifest_file="/esg/esgf-install-manifest"):
-    # from configobj import ConfigObj
-    # config = ConfigObj("/esg/esgf-install-manifest")
-    # config.filename = filename
-    parser = ConfigParser.SafeConfigParser()
+    '''Write component info to install manifest'''
+    parser = ConfigParser.ConfigParser()
     parser.read(manifest_file)
 
     try:
-        # parser.add_section(datetime.date.today().strftime("%B %d, %Y"))
         parser.add_section("install_manifest")
     except ConfigParser.DuplicateSectionError:
         logger.debug("section already exists")
@@ -969,7 +826,8 @@ def write_to_install_manifest(component, install_path, version, manifest_file="/
     with open(manifest_file, "w") as config_file_object:
         parser.write(config_file_object)
 
-def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
+def get_version_from_install_manifest(component, manifest_file="/esg/esgf-install-manifest", section_name="install_manifest"):
+    '''Get component version info from install manifest'''
     parser = ConfigParser.SafeConfigParser()
     parser.read(manifest_file)
 
@@ -982,7 +840,7 @@ def get_version_from_manifest(component, manifest_file="/esg/esgf-install-manife
 
 
 def update_fileupload_jar():
-    #quick-fix for removing insecure commons-fileupload jar file
+    '''quick-fix for removing insecure commons-fileupload jar file'''
     try:
         os.remove("/usr/local/solr/server/solr-webapp/webapp/WEB-INF/lib/commons-fileupload-1.2.1.jar")
     except OSError, error:
@@ -997,13 +855,18 @@ def update_fileupload_jar():
             logger.exception(error)
 
 
-def update_idp_static_xml_permissions(whitelist_file_dir=config["esg_config_dir"]):
-    xml_file_path = os.path.join(whitelist_file_dir, "esgf_idp_static.xml")
-    current_mode = os.stat(xml_file_path)
-    os.chmod(xml_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_config_dir"]):
-    '''Setups up whitelist XML files from the distribution mirror'''
+def setup_whitelist_files(whitelist_file_dir=config["esg_config_dir"]):
+    '''Setups up whitelist XML files from the distribution mirror
+       Downloads the XML files and edits the placeholder string with the esgf hostname
+       Formerly called setup_sensible_confs
+    '''
+
+    update_fileupload_jar()
+
+    print "*******************************"
+    print "Setting up The ESGF whitelist files"
+    print "*******************************"
 
     conf_file_list = ["esgf_ats.xml.tmpl", "esgf_azs.xml.tmpl", "esgf_idp.xml.tmpl"]
 
@@ -1012,19 +875,21 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
     for file_name in conf_file_list:
         local_file_name = file_name.split(".tmpl")[0]
         local_file_path = os.path.join(whitelist_file_dir, local_file_name)
-        remote_file_url = "https://aims1.llnl.gov/esgf/dist/confs/{file_name}".format(file_name=file_name)
+        esg_root_url = esg_property_manager.get_property("esg.root.url")
+        remote_file_url = "{esg_root_url}/confs/{file_name}".format(esg_root_url=esg_root_url, file_name=file_name)
 
         download_update(local_file_path, remote_file_url)
 
         #replace placeholder.fqdn
         tree = etree.parse(local_file_path)
         #Had to use {http://www.esgf.org/whitelist} in search because the xml has it listed as the namespace
+        esgf_host = get_esgf_host()
         if file_name == "esgf_ats.xml.tmpl":
             placeholder_string = tree.find('.//{http://www.esgf.org/whitelist}attribute').get("attributeService")
-            updated_string = placeholder_string.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            updated_string = placeholder_string.replace("placeholder.fqdn", esgf_host)
             tree.find('.//{http://www.esgf.org/whitelist}attribute').set("attributeService", updated_string)
         else:
-            updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", "esgf-dev2.llnl.gov")
+            updated_string = tree.find('.//{http://www.esgf.org/whitelist}value').text.replace("placeholder.fqdn", esgf_host)
             tree.find('.//{http://www.esgf.org/whitelist}value').text = updated_string
         tree.write(local_file_path)
 
@@ -1033,9 +898,129 @@ def setup_whitelist_files(esg_dist_url_root, whitelist_file_dir=config["esg_conf
         #add read permissions to all, i.e. chmod a+r
         os.chmod(local_file_path, current_mode.st_mode | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
-    # update_idp_static_xml_permissions(whitelist_file_dir)
+def convert_hash_to_hex(subject_name_hash):
+    '''Converts the subject_name_hash from a long to a hex string'''
+    return format(subject_name_hash, 'x')
+
+def get_node_type(config_file=config["esg_config_type_file"]):
+    '''
+        Helper method for reading the last state of node type config from config dir file "config_type"
+        Every successful, explicit call to --type|-t gets recorded in the "config_type" file
+        If the configuration type is not explicity set the value is read from this file.
+    '''
+    try:
+        last_config_type = open(config_file, "r")
+        node_type_list = last_config_type.read().split()
+        if node_type_list:
+            return node_type_list
+        else:
+            raise NoNodeTypeError
+    except IOError:
+        raise NoNodeTypeError
+    except NoNodeTypeError:
+        logger.exception('''No node type selected nor available! \n Consult usage with --help flag... look for the \"--type\" flag
+        \n(must come BEFORE \"[start|stop|restart|update]\" args)\n\n''')
+        sys.exit(1)
+
+def esgf_node_info():
+    '''Print basic info about ESGF installation'''
+    with open(os.path.join(os.path.dirname(__file__), 'docs', 'esgf_node_info.txt'), 'r') as info_file:
+        print info_file.read()
+
+
+def call_binary(binary_name, arguments=None, silent=False):
+    '''Uses plumbum to make a call to a CLI binary.  The arguments should be passed as a list of strings'''
+    RETURN_CODE = 0
+    STDOUT = 1
+    STDERR = 2
+    logger.debug("binary_name: %s", binary_name)
+    logger.debug("arguments: %s", arguments)
+    try:
+        command = local[binary_name]
+    except ProcessExecutionError:
+        logger.error("Could not find %s executable", binary_name)
+        raise
+
+    for var in os.environ:
+        local.env[var] = os.environ[var]
+    for var in local.env:
+        logger.debug("env: %s", str(var))
+
+    if silent:
+        if arguments is not None:
+            cmd_future = command.__getitem__(arguments) & BG
+        else:
+            cmd_future = command.run_bg()
+        cmd_future.wait()
+        output = [cmd_future.returncode, cmd_future.stdout, cmd_future.stderr]
+    else:
+        if arguments is not None:
+            output = command.__getitem__(arguments) & TEE
+        else:
+            output = command.run_tee()
+
+    #special case where checking java version is displayed via stderr
+    if command.__str__() == '/usr/local/java/bin/java' and output[RETURN_CODE] == 0:
+        return output[STDERR]
+
+    #Check for non-zero return code
+    if output[RETURN_CODE] != 0:
+        logger.error("Error occurred when executing %s %s", binary_name, " ".join(arguments))
+        logger.error("STDERR: %s", output[STDERR])
+        raise ProcessExecutionError
+    else:
+        return output[STDOUT]
+
+def pip_install(pkg, req_file=False):
+    ''' pip installs a package to the current python environment '''
+    # TODO: Fine tune options such as --log, --retries and --timeout
+    args = ["install"]
+    if req_file:
+        args.append("-r")
+    args.append(pkg)
+    return call_binary("pip", args)
+
+def pip_install_git(repo, name, tag=None, subdir=None):
+    ''' Builds a properly formatted string to pip install from a git repo '''
+    git_pkg = "git+{repo}{tag}#egg={name}{subdir}".format(
+        repo=repo if repo.endswith(".git") else repo+".git",
+        name=name,
+        tag="@"+tag if tag is not None else "",
+        subdir="&subdirectory="+subdir if subdir is not None else ""
+    )
+    return pip_install(git_pkg)
+
+def pip_version(pkg_name):
+    ''' Get the version of a package installed with pip, return None if not installed '''
+    info = call_binary("pip", ["list", "--format=json"])
+    info = json.loads(info)
+    # Get the dictionary with "name" matching pkg_name, if not present get None
+    pkg = next((pkg for pkg in info if pkg["name"] == pkg_name), None)
+    if pkg is None:
+        print "{} not found in pip list".format(pkg_name)
+        return None
+    else:
+        print "Found version {} of {} in pip list".format(str(pkg['version']), pkg_name)
+        return str(pkg['version'])
+
+def insert_file_at_pattern(target_file, input_file, pattern):
+    '''Replace a pattern inside the target file with the contents of the input file'''
+    target_file_object = open(target_file)
+    target_file_string = target_file_object.read()
+    target_file_object.close()
+
+    input_file_object = open(input_file)
+    input_file_string = input_file_object.read()
+    input_file_object.close()
+
+    target_file_string = target_file_string.replace(pattern, input_file_string)
+
+    target_file_object = open(target_file, 'w')
+    target_file_object.write(target_file_string)
+    target_file_object.close()
 
 def main():
+    '''Main function'''
     import esg_logging_manager
 
     esg_logging_manager.main()

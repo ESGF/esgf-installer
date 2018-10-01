@@ -10,5 +10,13 @@ class UnverifiedScriptError(Exception):
 class NoNodeTypeError(Exception):
     pass
 
-class SubprocessError(Exception):
+class InvalidNodeTypeError(Exception):
     pass
+
+class SubprocessError(Exception):
+    def __init__(self, data):
+        self.data = data
+    def __str__(self):
+        return repr(self.data)
+    def __repr__(self):
+        return dict(self.data)

@@ -1,0 +1,42 @@
+version: 2
+
+aliases:
+   - &create_esgf_pub_env
+     name: create_esgf_pub_env
+     command: |
+        git status
+        chmod 777 esg_bootstrap.sh
+        ./esg_bootstrap.sh
+
+   - &run_tests
+     name: run_tests
+     command: |
+        id
+        pwd
+        ls
+        source /usr/local/conda/bin/activate esgf-pub
+        type python
+        pwd
+        ls
+        ls tests
+        # python tests/test_esg_apache.py
+        #python ./tests/test_CA.py
+        source /usr/local/conda/bin/deactivate
+
+jobs:
+   centos_build:
+      docker:
+         # - image: hill119/esgf_centos6
+         #- image: muryanto1/mycentos:latest
+         - image: muryanto1/centos_for_esgf_installer_root:latest
+      working_directory: workspace
+      steps:
+         - checkout
+         - run: *create_esgf_pub_env
+         - run: *run_tests
+
+workflows:
+   version: 2
+   esgf_installer:
+      jobs:
+         - centos_build

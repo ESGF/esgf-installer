@@ -6,7 +6,7 @@ import glob
 import pwd
 import yaml
 import requests
-from esgf_utilities import esg_bash2py
+from esgf_utilities import pybash
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
@@ -46,11 +46,11 @@ def setup_node_manager_old():
     print "\n*******************************"
     print "Setting up ESGF Node Manager (old)"
     print "******************************* \n"
-    esg_bash2py.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
+    pybash.mkdir_p("/usr/local/tomcat/webapps/esgf-node-manager")
     node_manager_url = os.path.join("http://", config["esgf_dist_mirror"], "dist", "devel", "esgf-node-manager", "esgf-node-manager.war")
     download_node_manager_war(node_manager_url)
 
-    with esg_bash2py.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
+    with pybash.pushd("/usr/local/tomcat/webapps/esgf-node-manager/"):
         with zipfile.ZipFile("/usr/local/tomcat/webapps/esgf-node-manager/esgf-node-manager.war", 'r') as zf:
             zf.extractall()
         os.remove("esgf-node-manager.war")
@@ -66,7 +66,7 @@ def setup_node_manager_old():
 
 force_install = False
 
-esg_dist_url = "http://distrib-coffee.ipsl.jussieu.fr/pub/esgf/dist"
+esg_dist_url = esg_property_manager.get_property("esg.dist.url")
 esgf_host = esg_functions.get_esgf_host()
 
 node_manager_app_context_root = "esgf-node-manager"
@@ -202,32 +202,31 @@ def setup_node_manager(mode="install"):
             # TODO: Implement this
             # esg_postgres.backup_db() -db ${node_db_name} -s node_manager
 
-    esg_bash2py.mkdir_p(config["workdir"])
-    with esg_bash2py.pushd(config["workdir"]):
+    pybash.mkdir_p(config["workdir"])
+    with pybash.pushd(config["workdir"]):
         logger.debug("changed directory to : %s", os.getcwd())
 
         # strip off .tar.gz at the end
         #(Ex: esgf-node-manager-0.9.0.tar.gz -> esgf-node-manager-0.9.0)
-        node_dist_file = esg_bash2py.trim_string_from_head(node_dist_url)
+        node_dist_file = pybash.trim_string_from_head(node_dist_url)
         logger.debug("node_dist_file: %s", node_dist_file)
         # Should just be esgf-node-manager-x.x.x
         node_dist_dir = node_dist_file
 
         # checked_get ${node_dist_file} ${node_dist_url} $((force_install))
         if not esg_functions.download_update(node_dist_file, node_dist_url, force_download=force_install):
-            print "ERROR: Could not download {node_dist_url} :-(".format(node_dist_url=node_dist_url)
-            esg_functions.exit_with_error(1)
+            raise RuntimeError("Could not download {} :-(".format(node_dist_file))
 
         # make room for new install
         if force_install:
             print "Removing Previous Installation of the ESGF Node Manager... ({node_dist_dir})".format(node_dist_dir=node_dist_dir)
             try:
                 shutil.rmtree(node_dist_dir)
-                logger.info("Deleted directory: %s", node_dist_dir)
             except IOError, error:
-                logger.error(error)
                 logger.error("Could not delete directory: %s", node_dist_dir)
-                esg_functions.exit_with_error(1)
+                raise
+            else:
+                logger.info("Deleted directory: %s", node_dist_dir)
 
             clean_node_manager_webapp_subsystem()
 
@@ -239,11 +238,10 @@ def setup_node_manager(mode="install"):
             tar.close()
         except Exception, error:
             logger.error(error)
-            print "ERROR: Could not extract the ESG Node: {node_dist_file}".format(node_dist_file=node_dist_file)
-            esg_functions.exit_with_error(1)
+            raise RuntimeError("Could not extract the ESG Node Manager file: {}".format(node_dist_file))
 
         # pushd ${node_dist_dir} >& /dev/null
-        with esg_bash2py.pushd(node_dist_dir):
+        with pybash.pushd(node_dist_dir):
             logger.debug("changed directory to : %s", os.getcwd())
             stop_tomcat()
 
@@ -263,7 +261,7 @@ def setup_node_manager(mode="install"):
                 set_aside_web_app(node_manager_service_app_home)
             #----------------------------
             # mkdir -p ${node_manager_service_app_home}
-            esg_bash2py.mkdir_p(node_manager_service_app_home)
+            pybash.mkdir_p(node_manager_service_app_home)
             # cd ${node_manager_service_app_home}
             os.chdir(node_manager_service_app_home)
             logger.debug("changed directory to : %s", os.getcwd())
@@ -291,19 +289,18 @@ def setup_node_manager(mode="install"):
                 tar = tarfile.open(node_war_file)
                 tar.extractall()
                 tar.close()
-            except Exception, error:
-                logger.error(error)
-                print "ERROR: Could not extract the ESG Node: {node_war_file}".format(node_war_file=node_war_file)
-                esg_functions.exit_with_error(1)
+            except tarfile.TarError, error:
+                logger.error("Could not extract the ESG Node Manager war file: %s", node_war_file)
+                raise
 
             #----------------------------
             # Property file fetching and token replacement...
             #----------------------------
             # pushd WEB-INF/classes >& /dev/null
-            with esg_bash2py.pushd("WEB-INF/classes"):
+            with pybash.pushd("WEB-INF/classes"):
                 # cat ${fetch_file}.tmpl >> ${config_file}
                 with open(download_file_name + ".tmpl", "r") as download_file:
-                    with open(config["config_file"], "w") as config_file:
+                    with open(config["property_file"], "w") as config_file:
                         download_file_contents = download_file.read()
                         config_file.write(download_file_contents)
 
@@ -330,7 +327,7 @@ def setup_node_manager(mode="install"):
 
     if db_set > 0:
         if write_node_manager_config() != 0 or configure_postgress() != 0:
-            esg_functions.exit_with_error(1)
+            raise RuntimeError
 
     touch_generated_whitelist_files()
     write_node_manager_install_log()
@@ -343,7 +340,6 @@ def setup_node_manager(mode="install"):
 
     setup_nm_repo()
 
-    esg_functions.exit_with_error(0)
 
 
 def setup_nm_repo():

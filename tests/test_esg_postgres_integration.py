@@ -1,11 +1,14 @@
 import unittest
 import os
-from base import esg_postgres
+import ConfigParser
+import re
 import yaml
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from context import esgf_utilities
-from esgf_utilities.esg_purge import purge_postgres
-from esgf_utilities import esg_bash2py
+from context import base
+from base import esg_postgres
+from esg_purge import purge_postgres
+from esgf_utilities import pybash, esg_functions
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -19,9 +22,9 @@ class test_ESG_postgres_integration(unittest.TestCase):
         print "\n*******************************"
         print "Setting up ESGF Postgres Test Fixture"
         print "******************************* \n"
-        esg_postgres.stop_postgress()
+        esg_postgres.stop_postgres()
         purge_postgres()
-        esg_bash2py.mkdir_p(config["esg_config_dir"])
+        pybash.mkdir_p(config["esg_config_dir"])
 
     @classmethod
     def tearDownClass(cls):
@@ -48,6 +51,15 @@ class test_ESG_postgres_integration(unittest.TestCase):
     def test_setup_postgres(self):
         '''Tests the entire postgres setup; Essentially an integration test'''
         esg_postgres.setup_postgres(default_continue_install = "Y")
+        postgres_version_found = esg_functions.call_subprocess("psql --version")["stdout"]
+        postgres_version_number = re.search("\d.*", postgres_version_found).group()
+        self.assertTrue("8.4.20" == postgres_version_number)
+        parser = ConfigParser.ConfigParser()
+        parser.read("/esg/config/esgf.properties")
+        self.assertTrue("installer.properties", "db.user")
+        self.assertTrue("installer.properties", "db.host")
+        self.assertTrue("installer.properties", "db.database")
+
 
 
 

@@ -4,10 +4,11 @@ import unittest
 import os
 import errno
 import shutil
+import logging
 from context import esgf_utilities
 from context import base
 from base import esg_apache_manager
-from esgf_utilities import esg_functions
+from esgf_utilities import esg_functions, pybash
 import yaml
 import pip
 
@@ -16,12 +17,18 @@ current_directory = os.path.join(os.path.dirname(__file__))
 with open(os.path.join(current_directory, os.pardir, 'esg_config.yaml'), 'r') as config_file:
     config = yaml.load(config_file)
 
+logger = logging.getLogger("esgf_logger" + "." + __name__)
+
 class test_ESG_apache(unittest.TestCase):
 
     @classmethod
+    def setUpClass(cls):
+        pybash.mkdir_p("/etc/tempcerts")
+        pybash.touch("/etc/tempcerts/cacert.pem")
+
+    @classmethod
     def tearDownClass(cls):
-        esg_functions.stream_subprocess_output("yum remove -y httpd")
-        pip.main(["uninstall", "mod_wsgi"])
+        esg_functions.call_binary("yum", ["-y", "remove", "httpd"])
         try:
             shutil.rmtree("/var/www/.python-eggs")
             shutil.rmtree('/var/www/html/')
@@ -33,10 +40,16 @@ class test_ESG_apache(unittest.TestCase):
                 print "error:", error
         # os.unlink("/etc/httpd/modules/mod_wsgi-py27.so")
 
+    def test_start_apache(self):
+        try:
+            esg_apache_manager.start_apache()
+        except Exception, err:
+            logger.error("Error occurred starting apache: %s", err)
+            self.fail("start_apache() failed")
 
     def test_install_apache_httpd(self):
         esg_apache_manager.install_apache_httpd()
-        output = esg_functions.call_subprocess("httpd -version")["stdout"]
+        output = esg_functions.call_binary("httpd", ["-version"])
         print "output:", output
         self.assertIsNotNone(output)
 
@@ -52,7 +65,6 @@ class test_ESG_apache(unittest.TestCase):
         self.assertEqual(group, "apache")
 
         esg_apache_manager.copy_apache_conf_files()
-        self.assertTrue(os.path.isfile("/etc/httpd/conf.d/httpd.conf"))
         self.assertTrue(os.path.isfile("/etc/httpd/conf.d/ssl.conf"))
         self.assertTrue(os.listdir("/var/www/html/"))
         self.assertTrue(os.listdir("/etc/certs"))
@@ -60,4 +72,4 @@ class test_ESG_apache(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

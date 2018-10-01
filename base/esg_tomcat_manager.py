@@ -105,7 +105,11 @@ def setup_root_app():
     except IOError:
         print "Don't see ESGF ROOT web application"
 
-    esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
+    try:
+        esg_functions.backup("/usr/local/tomcat/webapps/ROOT")
+    except OSError, error:
+        if error.errno == errno.ENOENT:
+            pass
 
 
     print "*******************************"
@@ -118,12 +122,12 @@ def setup_root_app():
         root_app_dist_url = "{}/ROOT.tgz".format(esg_root_url)
         esg_functions.download_update("ROOT.tgz", root_app_dist_url)
 
-        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/webapps")
+        esg_functions.extract_tarball("ROOT.tgz", "/usr/local/tomcat/webapps")
 
         if os.path.exists("/usr/local/tomcat/webapps/esgf-node-manager"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.nm")
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.nm", "/usr/local/tomcat/webapps/ROOT/index.html")
         if os.path.exists("/usr/local/tomcat/webapps/esgf-web-fe"):
-            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html", "/usr/local/tomcat/webapps/ROOT/index.html.fe")
+            shutil.copyfile("/usr/local/tomcat/webapps/ROOT/index.html.fe", "/usr/local/tomcat/webapps/ROOT/index.html")
 
         esg_functions.change_ownership_recursive("/usr/local/tomcat/webapps/ROOT", esg_functions.get_user_id("tomcat"), esg_functions.get_group_id("tomcat"))
         print "ROOT application \"installed\""

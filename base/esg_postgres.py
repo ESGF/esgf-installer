@@ -81,7 +81,7 @@ def setup_postgres(default_continue_install="N"):
             # There are no purges, uninstalls, or deletes happening so a db backup is unneeded
             #   as nothing will happen. If we want to purge the old install that will require
             #   a bit more functionality to be added here.
-            backup_db("postgres", "postgres")
+            backup_db("postgres")
 
     pg_name = "postgresql-server-{}".format(config["postgress_version"])
     pg_devel = "postgresql-devel-{}".format(config["postgress_version"])
@@ -134,7 +134,7 @@ def create_pg_publisher_user(cursor, db_user_password):
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
-def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
+def backup_db(db_name, backup_dir="/etc/esgf_db_backup"):
     '''Backup database to directory specified by backup_dir'''
     try:
         backup_db_input = esg_property_manager.get_property("backup.database")

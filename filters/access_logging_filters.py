@@ -87,18 +87,12 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
     print "Filter entry pattern = {}".format(esg_filter_entry_pattern)
 
     #pre-checking... make sure the files we need in ${service_name}'s dir are there....
-    if not os.path.exists(os.path.join(dest_dir, "WEB-INF")):
-        logger.error("Could not find %s's installation dir - Filter Not Applied", service_name)
-        return False
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
         logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
-        return False
-    if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "lib")):
-        logger.error("Could not find WEB-INF/lib installation dir - Filter Not Applied")
-        return False
+        raise OSError
     if not os.path.exists(os.path.join(dest_dir, "WEB-INF", "web.xml")):
         logger.error("No web.xml file found for %s - Filter Not Applied", service_name)
-        return False
+        raise OSError
 
     esg_tomcat_manager.stop_tomcat()
 
@@ -120,14 +114,6 @@ def install_access_logging_filter(dest_dir="/usr/local/tomcat/webapps/thredds", 
 def get_node_manager_libs(dest_dir, esg_dist_url):
     '''Get libraries need for Node Manager; formerly called get_mgr_libs()'''
     print "Checking for / Installing required jars..."
-
-    node_manager_app_home = "/usr/local/tomcat/webapps/esgf-node-manager"
-    src_dir = os.path.join(node_manager_app_home, "WEB-INF", "lib")
-
-    if not os.path.exists(src_dir):
-        logger.warning("Cannot copy jars from Node Manager because the Node Manager is not installed. Skipping.")
-        return
-
     #Jar versions...
     commons_dbcp_version = "1.4"
     commons_dbutils_version = "1.3"
@@ -139,15 +125,15 @@ def get_node_manager_libs(dest_dir, esg_dist_url):
     dbcp_jar = "commons-dbcp-{}.jar".format(commons_dbcp_version)
     dbutils_jar = "commons-dbutils-{}.jar".format(commons_dbutils_version)
     pool_jar = "commons-pool-{}.jar".format(commons_pool_version)
-    postgress_jar = "postgresql-9.4-1201.jdbc41.jar"
+    postgress_jar = "postgresql-8.4-703.jdbc3.jar"
 
     #move over libraries...
-    print "getting (copying) library jars from the Node Manager App to {} ...".format(dest_dir)
+    logger.info("getting (copying) library jars to %s", dest_dir)
 
-    shutil.copyfile(os.path.join(src_dir, dbcp_jar), os.path.join(dest_dir, dbcp_jar))
-    shutil.copyfile(os.path.join(src_dir, dbutils_jar), os.path.join(dest_dir, dbutils_jar))
-    shutil.copyfile(os.path.join(src_dir, pool_jar), os.path.join(dest_dir, pool_jar))
-    shutil.copyfile(os.path.join(src_dir, postgress_jar), os.path.join(dest_dir, postgress_jar))
+    shutil.copyfile(os.path.join(current_directory, "jars", dbcp_jar), os.path.join(dest_dir, dbcp_jar))
+    shutil.copyfile(os.path.join(current_directory, "jars", dbutils_jar), os.path.join(dest_dir, dbutils_jar))
+    shutil.copyfile(os.path.join(current_directory, "jars", pool_jar), os.path.join(dest_dir, pool_jar))
+    shutil.copyfile(os.path.join(current_directory, "jars", postgress_jar), os.path.join(dest_dir, postgress_jar))
 
     #----------------------------
     #Fetching Node Manager Jars from Distribution Site...

@@ -207,7 +207,7 @@ _BASE = {
         "method": FileManager,
         "type": FileComponent,
         "source": "https://github.com/ESGF/esgf-config.git",
-        "dest": "/tmp/{name}"
+        "dest": "/tmp/esgf-config"
     }
 }
 _DATA = {
@@ -223,7 +223,7 @@ _DATA = {
         "type": FileComponent,
         "tag": "v1.5.20",
         "source": "https://github.com/ESGF/esgf-dashboard.git",
-        "dest": "/tmp/{name}"
+        "dest": "/tmp/esgf-dashboard"
     },
     "esgcet": {
         "method": Pip,

@@ -1,3 +1,4 @@
+import errno
 import logging
 import os
 import shutil
@@ -57,6 +58,8 @@ class FileManager(Generic):
             except AttributeError:
                 pass
             filename = os.path.join(self.tmp, component.name)
+            if os.path.isdir(filename):
+                shutil.rmtree(filename)
             args += [component.source, filename]
             result = git.__getitem__(args) & TEE
         # If it is just a file
@@ -90,11 +93,16 @@ class FileManager(Generic):
             with zipfile.ZipFile(filepath, "r") as archive:
                 archive.extractall(component.dest)
             return component.dest
-        else:
+        elif os.path.isdir(filepath):
             # Not a tar or zip file or do not extract
-            dest_dir, dest_file = os.path.split(component.dest)
+            dest_dir = os.path.dirname(component.dest.rstrip(os.sep))
             mkdir_p(dest_dir)
-            shutil.copy2(filepath, component.dest)
+            shutil.copytree(filepath, component.dest)
+            return component.dest
+        elif os.path.isfile(filepath):
+            dest_dir = os.path.dirname(component.dest.rstrip(os.sep))
+            mkdir_p(dest_dir)
+            shutil.copy(filepath, component.dest)
             return component.dest
 
     def _versions(self):

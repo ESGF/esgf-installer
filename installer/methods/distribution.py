@@ -94,7 +94,7 @@ class FileManager(Generic):
             # Not a tar or zip file or do not extract
             dest_dir, dest_file = os.path.split(component.dest)
             mkdir_p(dest_dir)
-            shutil.move(filepath, component.dest)
+            shutil.copy2(filepath, component.dest)
             return component.dest
 
     def _versions(self):

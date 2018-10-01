@@ -46,6 +46,7 @@ def get_openid(args, config_parser, esgf_home):
 
 def get_subject_line(args):
 
+    logging.info("Loading cert file: %s", args.cert_file)
     with open(args.cert_file) as cert:
         cert_contents = cert.read()
     cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, cert_contents)

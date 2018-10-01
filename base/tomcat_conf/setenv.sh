@@ -2,7 +2,7 @@
 # script containing env variables for starting ESGF Tomcat
 
 export JAVA_OPTS="-Dtds.content.root.path=/esg/content"
-
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/conda/envs/esgf-pub/lib"
 #Sets the Java binary for Tomcat to use
 export JAVA_HOME="/usr/local/java"
 

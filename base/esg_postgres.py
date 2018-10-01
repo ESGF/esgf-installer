@@ -2,7 +2,6 @@ import os
 import pwd
 import shutil
 import re
-from time import sleep
 import datetime
 import ConfigParser
 import logging
@@ -83,9 +82,8 @@ def setup_postgres(default_continue_install="N"):
             #   a bit more functionality to be added here.
             backup_db("postgres", "postgres")
 
-    pg_name = "postgresql-server-{}".format(config["postgress_version"])
-    pg_devel = "postgresql-devel-{}".format(config["postgress_version"])
-    esg_functions.call_binary("yum", ["-y", "install", pg_name, pg_devel])
+    pkg_name = "postgresql-server-{}".format(config["postgress_version"])
+    esg_functions.call_binary("yum", ["-y", "install", pkg_name])
 
     initialize_postgres()
 
@@ -222,8 +220,7 @@ def start_postgres():
         initialize_postgres()
 
     esg_functions.call_binary("service", ["postgresql", "start"])
-    sleep(1)
-    
+
     if postgres_status():
         return True
 
@@ -258,7 +255,7 @@ def restart_postgres():
         logger.error("Restarting Postgres failed")
         logger.error(err)
         raise
-    sleep(1)
+
     postgres_status()
 
 

@@ -138,7 +138,8 @@ def run_dashboard_script():
     DashDir = "/usr/local/esgf-dashboard-ip"
     GeoipDir = "/usr/local/geoip"
     Fed="no"
-    esg_functions.call_binary("yum", ["install", "-y", "geoip-devel"])
+    pg_devel = "postgresql-devel-{}".format(config["postgress_version"])
+    esg_functions.call_binary("yum", ["install", "-y", pg_devel, "geoip-devel"])
     with pybash.pushd("/usr/local"):
         clone_dashboard_repo()
         os.chdir("esgf-dashboard")

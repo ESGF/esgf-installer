@@ -186,7 +186,7 @@ def config_myproxy_server(globus_location, install_mode="install"):
             esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGOpenIDRetriever.java"])
             esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGGroupRetriever.java"])
 
-        fetch_myproxy_certificate_mapapp()
+        copy_myproxy_certificate_mapapp()
         edit_pam_pgsql_conf()
         #--------------------
         # Fetch -> pam resource file used for myproxy
@@ -274,20 +274,17 @@ def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.c
 # Configuration File Editing Functions
 ############################################
 
-def fetch_myproxy_certificate_mapapp():
+def copy_myproxy_certificate_mapapp():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
-    with pybash.pushd(myproxy_config_dir):
-        mapapp_file = "myproxy-certificate-mapapp"
-        print "Downloading configuration file: {}".format(mapapp_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        try:
-            esg_functions.download_update(mapapp_file, myproxy_dist_url_base+"/{}".format(mapapp_file))
-        except HTTPError:
-            raise
 
-        os.chmod(mapapp_file, 0751)
-        esg_functions.replace_string_in_file(mapapp_file, "/root/.globus/simpleCA/cacert.pem", "/var/lib/globus-connect-server/myproxy-ca/cacert.pem")
+    mapapp_file = "mapapp/myproxy-certificate-mapapp"
+    retriever_file = "mapapp/openid_retriever.py"
+
+    os.chmod(mapapp_file, 0751)
+
+    shutil.copy2(mapapp_file, myproxy_config_dir)
+    shutil.copy2(retriever_file, myproxy_config_dir)
 
 def edit_pam_pgsql_conf():
     with pybash.pushd("/etc"):

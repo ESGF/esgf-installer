@@ -1125,7 +1125,7 @@ setup_esgcet() {
     fi
 
     $pipcmd sqlalchemy_migrate
-    $pipcmd cdf2cim==0.2.3.0
+    $pipcmd cdf2cim==0.3.0.0
     $pipcmd cf-python==2.2.1
     $pipcmd hurry
     $pipcmd psycopg2-binary

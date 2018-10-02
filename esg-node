@@ -5553,9 +5553,14 @@ start() {
     echo "$(echo_strong "starting services...") ($sel)"
     run_startup_hooks
 
-    service ntpd status &>/dev/null || service chronyd status &>/dev/null
+    if rpm -q chrony &>/dev/null ; then
+        local time_sync_svc=chronyd
+    else
+        local time_sync_svc=ntpd
+    fi
+    service ${time_sync_svc} status &>/dev/null
     if [ $? != 0 ]; then
-        service ntpd start
+        service ${time_sync_svc} start
     fi
 
     [ $((sel & ALL_BIT)) != 0 ] && start_postgress

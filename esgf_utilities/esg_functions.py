@@ -678,10 +678,12 @@ def add_unix_group(group_name):
         else:
             raise
 
-def add_unix_user(user_name):
-    '''Add a Unix user'''
+def add_unix_user(user_add_options):
+    '''Use subprocess to add Unix user'''
+    if isinstance(user_add_options, str):
+        user_add_options = [user_add_options]
     try:
-        call_binary("useradd", [user_name])
+        call_binary("useradd", user_add_options)
     except ProcessExecutionError, err:
         if err.retcode == 9:
             pass

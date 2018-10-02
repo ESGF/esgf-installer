@@ -183,13 +183,7 @@ def create_tomcat_user():
         create_tomcat_group()
 
     useradd_options = ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat", "tomcat"]
-    try:
-        esg_functions.call_binary("useradd", useradd_options)
-    except ProcessExecutionError, err:
-        if err.retcode == 9:
-            pass
-        else:
-            raise
+    esg_functions.add_unix_user(useradd_options)
 
     tomcat_directory = "/usr/local/apache-tomcat-{TOMCAT_VERSION}".format(
         TOMCAT_VERSION=TOMCAT_VERSION)

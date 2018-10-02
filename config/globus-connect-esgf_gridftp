@@ -1,0 +1,9 @@
+port_range 50000,51000
+$GLOBUS_TCP_SOURCE_RANGE 50000,51000
+restrict_paths R/,N/etc,N/tmp,N/dev
+$GRIDMAP "/etc/grid-security/grid-mapfile"
+$X509_USER_CERT "/etc/grid-security/hostcert.pem"
+$X509_USER_KEY "/etc/grid-security/hostkey.pem"
+log_single /var/log/gridftp.log
+log_level ALL
+$X509_CERT_DIR "/etc/grid-security/certificates"

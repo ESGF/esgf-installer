@@ -692,18 +692,24 @@ def get_tomcat_group_id():
 def add_unix_group(group_name):
     '''Use subprocess to add Unix group'''
     try:
-        stream_subprocess_output("sudo groupadd {group_name}".format(group_name=group_name))
-    except SubprocessError, error:
-        logger.info("Could not add group %s", group_name)
-        logger.error(error)
+        call_binary("groupadd", [group_name])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
 
-def add_unix_user(user_name):
+def add_unix_user(user_add_options):
     '''Use subprocess to add Unix user'''
+    if isinstance(user_add_options, str):
+        user_add_options = [user_add_options]
     try:
-        stream_subprocess_output("sudo useradd {user_name}".format(user_name=user_name))
-    except SubprocessError, error:
-        logger.info("Could not add user %s", user_name)
-        logger.error(error)
+        call_binary("useradd", user_add_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
 
 
 def get_dir_owner_and_group(path):

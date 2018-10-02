@@ -36,7 +36,7 @@ def db_connection(config_parser, esgf_home):
     return psycopg2.connect(connection_params)
 
 def build_grouprole(args, config_parser, esgf_home):
-    ''' Build the group and  for a specified username '''
+    ''' Build the group and role string for a specified username '''
     logging.info("Fetching groups and roles for %s", args.username)
 
     section = "installer.properties"
@@ -68,11 +68,10 @@ def build_grouprole(args, config_parser, esgf_home):
     #         //    ORNL OBS       | User
     if not result:
         return None
-    grouprole_string = ""
-    for row in result:
-        print row
-        grouprole_string += str(row)
-    return grouprole_string
+    grouprole_elements = []
+    for group, role in result:
+        grouprole_elements.append("group_" + group + "_role_" + role)
+    return ";".join(grouprole_elements)
 
 def get_openid(args, config_parser, esgf_home):
     ''' Retrieve the OpenID for a specified username '''
@@ -162,7 +161,7 @@ def main():
     elif args.extapp:
         grouprole = build_grouprole(args, config_parser, esgf_home)
         if grouprole is not None:
-            grouprole = "esg.vo.group={}".format(grouprole)
+            grouprole = "esg.vo.group.roles={}".format(grouprole)
         else:
             grouprole = "null"
         openid = get_openid(args, config_parser, esgf_home)

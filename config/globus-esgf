@@ -1,0 +1,9 @@
+chroot_path /esg/gridftp_root
+usage_stats_id 2811
+
+usage_stats_target usage-stats.globus.org:4810
+acl customgsiauthzinterface
+$GLOBUS_USAGE_DEBUG "MESSAGES,/esg/log/esg-server-usage-gridftp.log"
+$GSI_AUTHZ_CONF "/etc/grid-security/authz_callouts_esgsaml.conf"
+#$GLOBUS_GSI_AUTHZ_DEBUG_LEVEL "10"
+#$GLOBUS_GSI_AUTHZ_DEBUG_FILE "/var/log/gridftp-debug.log"

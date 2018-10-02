@@ -4,7 +4,7 @@ if [ X"$username" = X ]; then
     # no username given
     exit 1
 fi
-cert_file="/var/lib/globus-connect-server/myproxy-ca/cacert.pem"
+
 # activate virtual env
 source /usr/local/conda/bin/activate esgf-pub && \
-    python /esg/config/myproxy/retriever.py $username --cert_file $cert_file --mapapp
+    python /esg/config/myproxy/retriever.py $username --extapp

@@ -87,14 +87,14 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     server_directory = "{}/server".format(SOLR_INSTALL_DIR)
     solr_solr_home = "{}/{}-{}".format(SOLR_HOME, solr_config_type, port_number)
     start_solr_options = ["start", "-d", server_directory, "-s", solr_solr_home, "-p", port_number, "-a", enable_nodes, "-m", "512m"]
-    esg_functions.call_binary("/usr/local/bin/solr", start_solr_options)
+    esg_functions.call_binary("/usr/local/solr/bin/solr", start_solr_options)
 
     solr_status(SOLR_INSTALL_DIR)
 
 def solr_status(SOLR_INSTALL_DIR):
     '''Check the status of solr'''
     try:
-        esg_functions.call_binary("/usr/local/bin/solr", ["status"])
+        esg_functions.call_binary("/usr/local/solr/bin/solr", ["status"])
     except ProcessExecutionError:
         logger.error("Error checking solr status")
         raise

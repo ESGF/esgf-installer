@@ -458,7 +458,6 @@ def main():
         migrate_tomcat_credentials_to_esgf()
         # start_tomcat()
         write_tomcat_install_log()
-        esg_cert_manager.check_for_commercial_ca()
 
 
 if __name__ == '__main__':

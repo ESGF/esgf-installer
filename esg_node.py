@@ -428,6 +428,7 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     esg_functions.setup_whitelist_files()
 
     esg_cli_argument_manager.start(node_type_list)
+    esg_cert_manager.check_for_commercial_ca()
     install_bash_completion_file(esg_dist_url)
     done_remark(node_type_list)
     write_script_version_file(script_version)

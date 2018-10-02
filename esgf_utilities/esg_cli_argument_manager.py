@@ -17,9 +17,10 @@ from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
 from data_node import esg_publisher, orp
-from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError, SubprocessError
+from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
 from idp_node import globus, gridftp, myproxy, esg_security
 from index_node import solr, esg_search
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
 
@@ -70,32 +71,32 @@ def start(node_types):
     #base components
     try:
         esg_apache_manager.start_apache()
-    except SubprocessError, error:
+    except ProcessExecutionError, error:
         logger.error("Could not start Apache httpd: %s", error)
         raise
 
     try:
         esg_tomcat_manager.start_tomcat()
-    except SubprocessError, error:
+    except ProcessExecutionError, error:
         logger.error("Could not start Tomcat: %s", error)
         raise
     try:
         esg_postgres.start_postgres()
-    except SubprocessError, error:
+    except ProcessExecutionError, error:
         logger.error("Could not start Postgres: %s", error)
         raise
 
     if "DATA" in node_types:
         try:
             globus.start_globus("DATA")
-        except SubprocessError, error:
+        except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
             raise
 
     if "IDP" in node_types:
         try:
             globus.start_globus("IDP")
-        except SubprocessError, error:
+        except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
 
     if "INDEX" in node_types:
@@ -141,7 +142,7 @@ def get_node_status():
         postgres_status = esg_postgres.postgres_status()
         if not postgres_status:
             node_running = False
-    except SubprocessError, error:
+    except ProcessExecutionError, error:
         print "Postgres is stopped"
         logger.info(error)
 

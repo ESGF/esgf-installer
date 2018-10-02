@@ -7,4 +7,4 @@ fi
 
 # activate virtual env
 source /usr/local/conda/bin/activate esgf-pub && \
-    python /esg/config/myproxy/openid_retriever.py $username --extapp
+    python /esg/config/myproxy/retriever.py $username --extapp

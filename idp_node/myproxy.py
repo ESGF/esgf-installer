@@ -278,11 +278,14 @@ def copy_myproxy_certificate_mapapp():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
     mapapp_file = os.path.join(os.path.dirname(__file__), "mapapp", "myproxy-certificate-mapapp")
-    retriever_file = os.path.join(os.path.dirname(__file__), "mapapp", "openid_retriever.py")
+    extapp_file = os.path.join(os.path.dirname(__file__), "mapapp", "esg_attribute_callout_app")
+    retriever_file = os.path.join(os.path.dirname(__file__), "mapapp", "retriever.py")
 
     os.chmod(mapapp_file, 0751)
+    os.chmod(extapp_file, 0751)
 
     shutil.copy2(mapapp_file, myproxy_config_dir)
+    shutil.copy2(extapp_file, myproxy_config_dir)
     shutil.copy2(retriever_file, myproxy_config_dir)
 
 def edit_pam_pgsql_conf():

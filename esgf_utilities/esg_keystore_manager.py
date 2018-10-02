@@ -12,7 +12,7 @@ import pybash
 import esg_functions
 import esg_property_manager
 import esg_truststore_manager
-from esg_exceptions import SubprocessError
+from plumbum.commands import ProcessExecutionError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -81,7 +81,7 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
     #-------------
     #Convert your private key into from PEM to DER format that java likes
     #-------------
-    derkey = convert_per_to_dem(private_key, idptools_install_dir)
+    derkey = convert_pem_to_dem(private_key, idptools_install_dir)
 
     #-------------
     #Now we gather up all the other keys in the key chain...
@@ -93,17 +93,17 @@ def generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_
 
     #Check keystore output
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
-    #TODO: Look at using pyjks to list Owner, Issuer, MD5, SHA1, and Serial Number
-    check_keystore_command = "{java_keytool_executable} -v -list -keystore {keystore_name} -storepass {store_password}".format(java_keytool_executable=java_keytool_executable, keystore_name=keystore_name, store_password=keystore_password)
-    print "check_keystore_command:", check_keystore_command
-    keystore_output = esg_functions.call_subprocess(check_keystore_command)
-    if keystore_output["returncode"] == 0:
+    check_keystore_options = ["-v", "-list", "-keystore", keystore_name, "-storepass", keystore_password]
+    try:
+        esg_functions.call_binary(java_keytool_executable, check_keystore_options)
+    except ProcessExecutionError:
+        logger.error("Failed to check keystore")
+        raise
+    else:
         print "Mmmm, freshly baked keystore!"
         print "If Everything looks good... then replace your current tomcat keystore with {keystore_name}, if necessary.".format(keystore_name=keystore_name)
         print "Don't forget to change your tomcat's server.xml entry accordingly :-)"
         print "Remember: Keep your private key {private_key} and signed cert {public_cert} in a safe place!!!".format(private_key=private_key, public_cert=public_cert)
-    else:
-        raise RuntimeError("Failed to check keystore")
 
 def check_associate_cert_with_private_key(cert, private_key):
     """
@@ -143,15 +143,14 @@ def check_keystore(keystore_name, keystore_password):
 def create_empty_java_keystore(keystore_name, keystore_alias, keystore_password, distinguished_name):
     '''Create a new empty Java Keystore using the JDK's keytool'''
     java_keytool_executable = "{java_install_dir}/bin/keytool".format(java_install_dir=config["java_install_dir"])
-    generate_keystore_string = "{java_keytool_executable} -genkey -keyalg RSA -alias {keystore_alias} -keystore {keystore_name} -storepass {keystore_password} -keypass {keystore_password} -validity 360 -dname {distinguished_name} -noprompt".format(java_keytool_executable=java_keytool_executable, keystore_alias=keystore_alias, keystore_name=keystore_name, keystore_password=keystore_password, distinguished_name=distinguished_name)
+    generate_keystore_options = ["-genkey", "-keyalg", "RSA", "-alias", keystore_alias, "-keystore", keystore_name, "-storepass", keystore_password, "-keypass", keystore_password, "-validity", "360", "-dname", distinguished_name, "-noprompt"]
     try:
-        keystore_output = esg_functions.call_subprocess(generate_keystore_string)
-    except SubprocessError:
+        esg_functions.call_binary(java_keytool_executable, generate_keystore_options)
+    except ProcessExecutionError:
         logger.error("Could not create new empty Java Keystore")
         raise
     else:
-        if keystore_output["returncode"] != 0:
-            raise RuntimeError("Problem with generating initial keystore...Exiting.")
+        logger.info("Created new empty Java keystore")
 
 
 def backup_previous_keystore(keystore_name):
@@ -162,15 +161,21 @@ def backup_previous_keystore(keystore_name):
 def import_cert_into_keystore(keystore_name, keystore_alias, keystore_password, derkey, cert_bundle, provider):
     '''Imports a signed Certificate into the keystore'''
 
+    os.environ["JAVA_HOME"] = "/usr/local/java"
     idptools_install_dir = os.path.join(config["esg_tools_dir"], "idptools")
     extkeytool_executable = os.path.join(idptools_install_dir, "bin", "extkeytool")
     if not os.path.isfile(extkeytool_executable):
         install_extkeytool()
 
-    command = "{extkeytool} -importkey -keystore {keystore_name} -alias {keystore_alias} -storepass {keystore_password} -keypass {keystore_password} -keyfile {derkey} -certfile {cert_bundle} -provider {provider}".format(extkeytool=extkeytool_executable, keystore_name=keystore_name, keystore_alias=keystore_alias, keystore_password=keystore_password, derkey=derkey, cert_bundle=cert_bundle, provider=provider)
-    construct_keystore_output = esg_functions.call_subprocess(command)
-    if construct_keystore_output["returncode"] != 0:
-        print "Could not import cert %s into keystore %s" % (cert_bundle, keystore_name)
+    extkeytool_options = ["-importkey", "-keystore", keystore_name, "-alias", keystore_alias, "-storepass", keystore_password, "-keypass", keystore_password, "-keyfile", derkey, "-certfile", cert_bundle, "-provider", provider]
+    try:
+        esg_functions.call_binary(extkeytool_executable, extkeytool_options)
+    except ProcessExecutionError:
+        logger.error("Error importing %s into keystore %s", cert_bundle, keystore_name)
+        raise
+    else:
+        logger.info("Imported %s into %s", cert_bundle, keystore_name)
+
 
 def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/esgfcerts/hostcert.pem", keystore_name=config["keystore_file"], keystore_alias=config["keystore_alias"]):
     '''
@@ -201,6 +206,7 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
             logger.debug("%s and /etc/certs/hostkey.pem are the same file", private_key)
         else:
             logger.exception("Error copying private key.")
+            raise
     try:
         shutil.copyfile(public_cert, "/etc/certs/hostcert.pem")
     except shutil.Error:
@@ -208,6 +214,7 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
             logger.debug("%s and /etc/certs/hostcert.pem are the same file", public_cert)
         else:
             logger.exception("Error copying host cert.")
+            raise
 
     cert_files = create_certificate_chain_list()
     create_certificate_chain(cert_files)
@@ -215,6 +222,12 @@ def install_keypair(private_key="/etc/esgfcerts/hostkey.pem", public_cert="/etc/
     os.chmod("/etc/certs/hostkey.pem", 0400)
     os.chmod("/etc/certs/hostcert.pem", 0644)
     os.chmod("/etc/certs/cachain.pem", 0644)
+
+    try:
+        esg_functions.call_binary("openssl",  ["verify", "-verbose", "-purpose", "sslserver", "-CAfile", "/etc/certs/cachain.pem", "/etc/certs/hostcert.pem"])
+    except ProcessExecutionError:
+        logger.error("Incomplete or incorrect chain. Try again")
+        raise
 
 
     generate_tomcat_keystore(keystore_name, keystore_alias, private_key, public_cert, cert_files)
@@ -258,25 +271,28 @@ def copy_cert_to_tomcat_conf(public_cert):
             shutil.copyfile(public_cert, esgf_cert_name)
     except IOError:
         logger.exception("Error while copying public cert")
+        raise
     except OSError, error:
         if error.errno == errno.ENOENT:
             logger.info("Existing cert %s not found.  Copying public cert to Tomcat config directory: %s", esgf_cert_name, config["tomcat_conf_dir"])
             shutil.copyfile(public_cert, esgf_cert_name)
+        else:
+            raise
 
-def convert_per_to_dem(private_key, key_output_dir):
+def convert_pem_to_dem(private_key, key_output_dir):
     '''Convert your private key into from PEM to DER format that java likes'''
     print "\n*******************************"
     print "converting private key from PEM to DER... "
     print "******************************* \n"
     derkey = os.path.join(key_output_dir, "key.der")
+    convert_options = ["pkcs8", "-topk8", "-nocrypt", "-inform", "PEM", "-in", private_key, "-outform", "DER", "-out", derkey]
     try:
-        convert_to_der = esg_functions.call_subprocess("openssl pkcs8 -topk8 -nocrypt -inform PEM -in {private_key} -outform DER -out {derkey}".format(private_key=private_key, derkey=derkey))
-    except SubprocessError:
+        esg_functions.call_binary("openssl", convert_options)
+    except ProcessExecutionError:
         logger.error("Could not convert the private key from pem to der format")
         raise
     else:
-        if convert_to_der["returncode"] != 0:
-            raise RuntimeError("Could not convert the private key from pem to der format")
+        logger.info("Converted %s from pem to der format", private_key)
     return derkey
 
 
@@ -284,14 +300,14 @@ def check_cachain_validity(ca_chain_bundle):
     '''Verify that the CA chain is valid'''
     print "checking that chain is valid... "
     if os.path.isfile(ca_chain_bundle):
+        check_cachain_options = ["verify", "-CAfile", ca_chain_bundle, ca_chain_bundle]
         try:
-            valid_chain = esg_functions.call_subprocess("openssl verify -CAfile {ca_chain_bundle} {ca_chain_bundle}".format(ca_chain_bundle=ca_chain_bundle))
-            if "error" in valid_chain['stdout'] or "error" in valid_chain['stderr']:
-                print "The chain is not valid.  (hint: did you include the root cert for the chain?)"
-            else:
-                print "{ca_chain_bundle} is valid.".format(ca_chain_bundle=ca_chain_bundle)
-        except SubprocessError, error:
-            print "Error verifying cachain:", error
+            esg_functions.call_binary("openssl", check_cachain_options)
+        except ProcessExecutionError:
+            logger.error("Error verifying cachain: Did you include the root cert for the chain?")
+            raise
+        else:
+            logger.info("%s is valid", ca_chain_bundle)
     else:
         print "Hmmm... no chain provided [{ca_chain_bundle}], skipping this check..."
 
@@ -370,10 +386,11 @@ def create_certificate_chain_list():
         cert_files = raw_input("Enter certificate chain file name: ")
 
     if cert_files:
-        cert_files_list = cert_files.strip().split(",")
+        cert_files_list = [cert_path.strip() for cert_path in cert_files.split(",")]
+        logger.info("cert_files_list: %s", cert_files_list)
         for filename in cert_files_list:
-            if not os.path.isfile(filename):
-                logger.error("%s does not exist.")
+            if not os.path.isfile(filename.strip()):
+                logger.error("%s does not exist.", filename)
                 raise OSError
     else:
         print "Adding default certificate chain file {}".format(default_cachain)

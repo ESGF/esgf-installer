@@ -14,7 +14,7 @@ import pybash
 import esg_functions
 import esg_property_manager
 import esg_keystore_manager
-from esg_exceptions import SubprocessError
+from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" + "." + __name__)
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -394,11 +394,11 @@ def extract_openssl_dn(public_cert="/etc/grid-security/hostcert.pem"):
 def extract_keystore_dn():
     '''Returns the distinguished name from the Java keystore'''
     try:
-        keystore_info = esg_functions.call_subprocess(
-            "/usr/local/java/bin/keytool -list -v -keystore /esg/config/tomcat/keystore-tomcat")
-    except SubprocessError:
-        logger.exception("Could not extract distinguished name from keystore")
-    keystore_owner = re.search("Owner:.*", keystore_info["stdout"]).group()
+        keystore_info = esg_functions.call_binary("/usr/local/java/bin/keytool", ["-list", "-v", "-keystore", "/esg/config/tomcat/keystore-tomcat"])
+    except ProcessExecutionError:
+        logger.error("Could not extract distinguished name from keystore")
+        raise
+    keystore_owner = re.search("Owner:.*", keystore_info)
     distinguished_name = keystore_owner.split()[1]
     return distinguished_name
 

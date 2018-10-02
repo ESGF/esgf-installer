@@ -10,7 +10,7 @@ import OpenSSL
 import pybash
 import esg_functions
 from esgf_utilities import esg_property_manager
-from esgf_utilities.esg_exceptions import SubprocessError
+from plumbum.commands import ProcessExecutionError
 
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -76,26 +76,25 @@ def add_my_cert_to_truststore(truststore_file=config["truststore_file"], keystor
         print "Re-Integrating keystore's certificate into truststore.... "
         print "Extracting keystore's certificate... "
         keystore_password = esg_functions.get_java_keystore_password()
+        keytool_binary = "{}/bin/keytool".format(config["java_install_dir"])
+        extract_cert_options = ["-export", "-alias", keystore_alias, "-keystore", keystore_file, "-file", "{}.cer".format(keystore_file), "-storepass", keystore_password]
         try:
-            extract_cert_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -export -alias {keystore_alias} -file {keystore_file}.cer -keystore {keystore_file} -storepass {keystore_password}".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password))
-        except SubprocessError:
+            esg_functions.call_binary(keytool_binary, extract_cert_options)
+        except ProcessExecutionError:
             logger.error("Error extracting the certificate from the keystore %s", keystore_alias)
             raise
         else:
-            if extract_cert_output["returncode"] != 0:
-                logger.error(extract_cert_output)
-                raise RuntimeError("Could not extract certificate from keystore")
+            logger.info("Extracted %s from %s", "{}.cer".format(keystore_file), keystore_alias)
 
         print "Importing keystore's certificate into truststore... "
+        import_keystore_options = ["-import", "-v", "-trustcacerts", "-alias", keystore_alias, "-keypass", keystore_password, "-file", "{}.cer".format(keystore_file), "-keystore", config["truststore_file"], "-storepass", config["truststore_password"], "-noprompt"]
         try:
-            import_to_truststore_output = esg_functions.call_subprocess("{java_install_dir}/bin/keytool -import -v -trustcacerts -alias {keystore_alias} -keypass {keystore_password} -file {keystore_file}.cer -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(java_install_dir=config["java_install_dir"], keystore_alias=keystore_alias, keystore_file=keystore_file, keystore_password=keystore_password, truststore_file=config["truststore_file"], truststore_password=config["truststore_password"]))
-        except SubprocessError:
-            logger.error("Error import certificate into truststore %s", config["truststore_file"])
+            esg_functions.call_binary(keytool_binary, import_keystore_options)
+        except ProcessExecutionError:
+            logger.error("Error importing certificate %s into truststore %s", "{}.cer".format(keystore_file), config["truststore_file"])
             raise
         else:
-            if import_to_truststore_output["returncode"] != 0:
-                logger.error(import_to_truststore_output)
-                raise RuntimeError("Could not import the certificate into the truststore")
+            logger.info("Imported %s into truststore %s", "{}.cer".format(keystore_file), config["truststore_file"])
 
         sync_with_java_truststore(truststore_file)
 
@@ -161,19 +160,23 @@ def _insert_cert_into_truststore(cert_file, truststore_file, tmp_dir):
         logger.debug("truststore_password: %s", config["truststore_password"])
 
         #If cert is already in truststore, delete existing cert and replace it with updated cert
+        check_for_cert_options = ["-delete", "-alias", cert_hash, "-keystore", truststore_file, "-storepass", config["truststore_password"]]
         try:
-            output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -delete -alias {cert_hash} -keystore {truststore_file} -storepass {truststore_password}".format(cert_hash=cert_hash, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
-        except SubprocessError, error:
-            if "does not exist" in error.__dict__["data"]["stdout"]:
+            esg_functions.call_binary("/usr/local/java/bin/keytool", check_for_cert_options)
+        except ProcessExecutionError, error:
+            if "does not exist" in error.stdout:
                 logger.debug("No existing cert with alias %s found", cert_hash)
-                pass
         else:
-            if output["returncode"] == 0:
-                print "Deleted cert hash"
+            logger.info("Deleted %s from truststore %s", cert_hash, truststore_file)
 
-        output = esg_functions.call_subprocess("/usr/local/java/bin/keytool -import -alias {cert_hash} -file {der_file} -keystore {truststore_file} -storepass {truststore_password} -noprompt".format(cert_hash=cert_hash, der_file=der_file, truststore_file=truststore_file, truststore_password=config["truststore_password"]))
-        if output["returncode"] == 0:
-            print "added {der_file} to {truststore_file}".format(der_file=der_file, truststore_file=truststore_file)
+        import_cert_options = ["-import", "-alias", cert_hash, "-file", der_file, "-keystore", truststore_file, "-storepass", config["truststore_password"], "-noprompt"]
+        try:
+            esg_functions.call_binary("/usr/local/java/bin/keytool", import_cert_options)
+        except ProcessExecutionError:
+            logger.error("Could not import %s into truststore %s", cert_hash, truststore_file)
+        else:
+            logger.info("Imported %s into truststore %s", cert_hash, truststore_file)
+
         os.remove(der_file)
 
 def add_simpleca_cert_to_globus(globus_certs_dir="/etc/grid-security/certificates"):

@@ -132,7 +132,7 @@ class Pip(Generic):
         info = json.loads(result[1])
         for component in self.components:
             # Get the dictionary with "name" matching pkg_name, if not present get None
-            pkg = next((pkg for pkg in info if pkg["name"] == component.name), None)
+            pkg = next((pkg for pkg in info if pkg["name"].lower() == component.name.lower()), None)
             if pkg is None:
                 versions[component.name] = None
             else:

@@ -11,16 +11,11 @@ aliases:
    - &run_tests
      name: run_tests
      command: |
-        id
-        pwd
-        ls
         source /usr/local/conda/bin/activate esgf-pub
-        type python
-        pwd
-        ls
-        ls tests
-        # python tests/test_esg_apache.py
-        #python ./tests/test_CA.py
+        python tests/test_cog.py
+ 	python tests/test_dashboard.py
+	python tests/test_esg_cert_manager.py
+	python tests/test_env_writer.py
         source /usr/local/conda/bin/deactivate
 
 jobs:

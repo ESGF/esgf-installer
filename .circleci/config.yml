@@ -13,9 +13,9 @@ aliases:
      command: |
         source /usr/local/conda/bin/activate esgf-pub
         python tests/test_cog.py
- 	python tests/test_dashboard.py
-	python tests/test_esg_cert_manager.py
-	python tests/test_env_writer.py
+        python tests/test_dashboard.py
+        python tests/test_esg_cert_manager.py
+        python tests/test_env_writer.py
         source /usr/local/conda/bin/deactivate
 
 jobs:

@@ -78,11 +78,11 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
         return
 
     if solr_config_type == "master":
-        enable_nodes = "'-Denable.master=true'"
+        enable_nodes = "-Denable.master=true"
     elif solr_config_type == "localhost":
-        enable_nodes = "'-Denable.localhost=true'"
+        enable_nodes = "-Denable.localhost=true"
     else:
-        enable_nodes = "'-Denable.master=true -Denable.slave=true'"
+        enable_nodes = "-Denable.master=true -Denable.slave=true"
 
     server_directory = "{}/server".format(SOLR_INSTALL_DIR)
     solr_solr_home = "{}/{}-{}".format(SOLR_HOME, solr_config_type, port_number)

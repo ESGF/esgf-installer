@@ -1,12 +1,9 @@
-import errno
 import logging
 import os
 import shutil
 import tarfile
 import zipfile
 
-from plumbum import local
-from plumbum import TEE
 import requests
 
 from ..utils import mkdir_p, chown_R
@@ -20,7 +17,6 @@ class FileManager(Generic):
         self.tmp = os.path.join(os.sep, "tmp")
         self.chunk_size = 1*1024
 
-
     def _install(self, names):
         for component in self.components:
             if component.name not in names:
@@ -32,44 +28,31 @@ class FileManager(Generic):
                 source = component.source
 
             filepath = self._extract(source, component)
+            self._chown(component, filepath)
 
-            try:
-                owner_user = component.owner_user
-            except AttributeError:
-                owner_user = None
-            try:
-                owner_group = component.owner_group
-            except AttributeError:
-                owner_group = None
-            if owner_group is not None or owner_user is not None:
-                chown_R(filepath, owner_user, owner_group)
-
+    def _chown(self, component, filepath):
+        try:
+            owner_user = component.owner_user
+        except AttributeError:
+            owner_user = None
+        try:
+            owner_group = component.owner_group
+        except AttributeError:
+            owner_group = None
+        if owner_group is not None or owner_user is not None:
+            chown_R(filepath, owner_user, owner_group)
 
     def _get_remote(self, component):
         url = component.source
         # Get the name of the remote file
         remote_file = url.rstrip("/").rsplit('/', 1)[-1]
-        # If it is a git repository
-        if remote_file.endswith(".git"):
-            git = local["git"]
-            args = ["clone", "--depth", "1"]
-            try:
-                args += ["--branch", component.tag]
-            except AttributeError:
-                pass
-            filename = os.path.join(self.tmp, component.name)
-            if os.path.isdir(filename):
-                shutil.rmtree(filename)
-            args += [component.source, filename]
-            result = git.__getitem__(args) & TEE
-        # If it is just a file
-        else:
-            filename = os.path.join(self.tmp, remote_file)
-            #if not os.path.isfile(filename):
-            response = requests.get(url, stream=True)
-            with open(filename, 'wb') as localfile:
-                for chunk in response.iter_content(chunk_size=self.chunk_size):
-                    localfile.write(chunk)
+        # Download to temp directory
+        filename = os.path.join(self.tmp, remote_file)
+        #if not os.path.isfile(filename):
+        response = requests.get(url, stream=True)
+        with open(filename, 'wb') as localfile:
+            for chunk in response.iter_content(chunk_size=self.chunk_size):
+                localfile.write(chunk)
         return filename
 
     def _extract(self, filepath, component):
@@ -92,12 +75,6 @@ class FileManager(Generic):
         elif not os.path.isdir(filepath) and extract_file and zipfile.is_zipfile(filepath):
             with zipfile.ZipFile(filepath, "r") as archive:
                 archive.extractall(component.dest)
-            return component.dest
-        elif os.path.isdir(filepath):
-            # Not a tar or zip file or do not extract
-            dest_dir = os.path.dirname(component.dest.rstrip(os.sep))
-            mkdir_p(dest_dir)
-            shutil.copytree(filepath, component.dest)
             return component.dest
         elif os.path.isfile(filepath):
             dest_dir = os.path.dirname(component.dest.rstrip(os.sep))

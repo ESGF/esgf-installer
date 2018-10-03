@@ -6,6 +6,7 @@ from .pip import PipComponent
 from .make import MakeComponent
 from .users_groups import UserComponent, GroupComponent
 from ..methods.distribution import FileManager
+from ..methods.git import Git
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
 from ..methods.make import Make
@@ -204,7 +205,7 @@ _BASE = {
         }
     },
     "esgf-config-git": {
-        "method": FileManager,
+        "method": Git,
         "type": FileComponent,
         "source": "https://github.com/ESGF/esgf-config.git",
         "dest": "/tmp/esgf-config"
@@ -219,7 +220,7 @@ _DATA = {
         "dest": "/tmp/thredds"
     },
     "esgf-dashboard-git": {
-        "method": FileManager,
+        "method": Git,
         "type": FileComponent,
         "tag": "v1.5.20",
         "source": "https://github.com/ESGF/esgf-dashboard.git",

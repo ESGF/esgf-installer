@@ -186,13 +186,12 @@ def config_myproxy_server(globus_location, install_mode="install"):
             esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGOpenIDRetriever.java"])
             esg_functions.call_binary("javac", ["-classpath", java_class_path_string, "ESGGroupRetriever.java"])
 
-        copy_myproxy_certificate_mapapp()
+        copy_myproxy_certificate_apps()
         edit_pam_pgsql_conf()
         #--------------------
         # Fetch -> pam resource file used for myproxy
         #--------------------
         fetch_etc_pam_d_myproxy()
-        fetch_esg_attribute_callout_app()
         #--------------------
         # Create /esg/config/myproxy/myproxy-server.config
         #--------------------
@@ -274,7 +273,7 @@ def copy_myproxy_server_config(config_path="/esg/config/myproxy/myproxy-server.c
 # Configuration File Editing Functions
 ############################################
 
-def copy_myproxy_certificate_mapapp():
+def copy_myproxy_certificate_apps():
     myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
     pybash.mkdir_p(myproxy_config_dir)
     mapapp_file = os.path.join(os.path.dirname(__file__), "mapapp", "myproxy-certificate-mapapp")
@@ -323,19 +322,6 @@ def fetch_etc_pam_d_myproxy():
             esg_functions.download_update(myproxy_file, myproxy_dist_url_base+"/etc_pam.d_{}".format(myproxy_file))
         except HTTPError:
             raise
-
-def fetch_esg_attribute_callout_app():
-    myproxy_config_dir = os.path.join(config["esg_config_dir"], "myproxy")
-    pybash.mkdir_p(myproxy_config_dir)
-    with pybash.pushd(myproxy_config_dir):
-        callout_app_file = "esg_attribute_callout_app"
-        print "Downloading configuration file: {}".format(callout_app_file)
-        myproxy_dist_url_base = "{}/globus/myproxy".format(esg_property_manager.get_property("esg.root.url"))
-        try:
-            esg_functions.download_update(callout_app_file, myproxy_dist_url_base+"/{}".format(callout_app_file))
-        except HTTPError:
-            raise
-        os.chmod(callout_app_file, 0751)
 
 def edit_etc_myproxyd(myproxy_esgf_path="/etc/myproxy.d/myproxy-esgf"):
     shutil.copyfile(os.path.join(current_directory, "../config/myproxy-esgf"), myproxy_esgf_path)

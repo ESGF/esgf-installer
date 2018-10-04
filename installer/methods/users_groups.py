@@ -54,7 +54,7 @@ class UserMethod(Generic):
                 versions[component.name] = None
             else:
                 versions[component.name] = "1"
-
+        return versions
 
 
 class GroupMethod(Generic):
@@ -103,3 +103,4 @@ class GroupMethod(Generic):
                 versions[component.name] = None
             else:
                 versions[component.name] = "1"
+        return versions

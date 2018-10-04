@@ -8,7 +8,7 @@ import logging
 from context import esgf_utilities
 from context import base
 from base import esg_apache_manager
-from esgf_utilities import esg_functions, pybash
+from esgf_utilities import esg_functions, pybash, CA
 import yaml
 import pip
 from plumbum.commands import ProcessExecutionError
@@ -31,8 +31,7 @@ class test_ESG_apache(unittest.TestCase):
                 esg_functions.call_binary("yum", ["-y", "remove", "httpd"])
         except CommandNotFound:
             pass
-        pybash.mkdir_p("/etc/tempcerts")
-        pybash.touch("/etc/tempcerts/cacert.pem")
+        CA.setup_temp_ca()
 
     @classmethod
     def tearDownClass(cls):

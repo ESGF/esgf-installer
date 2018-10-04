@@ -11,6 +11,7 @@ from base import esg_apache_manager
 from esgf_utilities import esg_functions, pybash
 import yaml
 import pip
+from plumbum.commands import ProcessExecutionError
 
 current_directory = os.path.join(os.path.dirname(__file__))
 
@@ -43,7 +44,7 @@ class test_ESG_apache(unittest.TestCase):
     def test_start_apache(self):
         try:
             esg_apache_manager.start_apache()
-        except Exception, err:
+        except ProcessExecutionError, err:
             logger.error("Error occurred starting apache: %s", err)
             self.fail("start_apache() failed")
 
@@ -68,8 +69,6 @@ class test_ESG_apache(unittest.TestCase):
         self.assertTrue(os.path.isfile("/etc/httpd/conf.d/ssl.conf"))
         self.assertTrue(os.listdir("/var/www/html/"))
         self.assertTrue(os.listdir("/etc/certs"))
-
-
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

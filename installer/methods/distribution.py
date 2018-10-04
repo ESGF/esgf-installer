@@ -61,20 +61,24 @@ class FileManager(Generic):
         except AttributeError:
             extract_file = True
         if not os.path.isdir(filepath) and extract_file and tarfile.is_tarfile(filepath):
+            if os.path.isdir(component.dest):
+                shutil.rmtree(component.dest)
             try:
                 tar_root_dir = component.tar_root_dir
             except AttributeError:
+                mkdir_p(component.dest)
                 with tarfile.open(filepath) as archive:
                     archive.extractall(component.dest)
             else:
                 with tarfile.open(filepath) as archive:
                     archive.extractall(self.tmp)
                 tmp_filepath = os.path.join(self.tmp, tar_root_dir)
-                if os.path.isdir(component.dest) and not os.path.listdir(component.dest):
-                    shutil.rmtree(component.dest)
                 shutil.move(tmp_filepath, component.dest)
             return component.dest
         elif not os.path.isdir(filepath) and extract_file and zipfile.is_zipfile(filepath):
+            if os.path.isdir(component.dest):
+                shutil.rmtree(component.dest)
+            mkdir_p(component.dest)
             with zipfile.ZipFile(filepath, "r") as archive:
                 archive.extractall(component.dest)
             return component.dest

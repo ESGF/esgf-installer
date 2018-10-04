@@ -25,8 +25,11 @@ class test_ESG_apache(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         logger.info("Setting up esg_apache_manager test harness")
-        if esg_functions.call_binary("httpd", ["-version"]):
-            esg_functions.call_binary("yum", ["-y", "remove", "httpd"])
+        try:
+            if esg_functions.call_binary("httpd", ["-version"]):
+                esg_functions.call_binary("yum", ["-y", "remove", "httpd"])
+        except CommandNotFound:
+            pass
         pybash.mkdir_p("/etc/tempcerts")
         pybash.touch("/etc/tempcerts/cacert.pem")
 

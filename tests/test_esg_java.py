@@ -40,11 +40,6 @@ class test_esg_java(unittest.TestCase):
         self.assertTrue(os.path.exists("/usr/bin/ant"))
 
 
-    def test_check_java_version(self):
-        output = esg_java.check_java_version()
-        logger.debug("output: %s", output)
-        self.assertTrue(output)
-
     def test_setup_java(self):
         esg_java.setup_java()
         self.assertTrue(esg_java.check_java_version())

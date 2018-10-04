@@ -228,6 +228,11 @@ _DATA = {
         "source": "https://github.com/ESGF/esgf-dashboard.git",
         "dest": "/tmp/esgf-dashboard"
     },
+    "cdutil": {
+        "method": Conda,
+        "type": CondaComponent,
+        "channels": ["conda-forge"]
+    },
     "cmor": {
         "method": Conda,
         "type": CondaComponent,

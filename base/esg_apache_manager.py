@@ -136,7 +136,6 @@ def main():
     install_mod_wsgi()
     make_python_eggs_dir()
     copy_apache_conf_files()
-    start_apache()
 
 
 if __name__ == '__main__':

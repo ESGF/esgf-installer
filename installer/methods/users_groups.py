@@ -36,13 +36,13 @@ class UserMethod(Generic):
             except AttributeError:
                 args = []
             args += self.create_cmds[self.create_cmd_name]["create_args"]
-            args += component.username
+            args += [component.username]
             result = self.create_user.__getitem__(args) & TEE
 
     def _uninstall(self):
         for component in self.components:
             args = self.del_cmds[self.delete_cmd_name]["delete_args"]
-            args += component.username
+            args += [component.username]
             result = self.delete_user.__getitem__(args) & TEE
 
     def _versions(self):
@@ -85,13 +85,13 @@ class GroupMethod(Generic):
             except AttributeError:
                 args = []
             args += self.create_cmds[self.create_cmd_name]["create_args"]
-            args += component.groupname
+            args += [component.groupname]
             result = self.create_group.__getitem__(args) & TEE
 
     def _uninstall(self):
         for component in self.components:
             args = self.del_cmds[self.delete_cmd_name]["delete_args"]
-            args += component.groupname
+            args += [component.groupname]
             result = self.delete_group.__getitem__(args) & TEE
 
     def _versions(self):

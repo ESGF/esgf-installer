@@ -61,7 +61,8 @@ install_dependencies_pip(){
   source ${CDAT_HOME}/bin/activate esgf-pub && \
 
   # install other python pre-requisites
-      pip install plumbum psycopg2
+      pip install --upgrade pip
+      pip install plumbum psycopg2 requests
 
   source deactivate
 

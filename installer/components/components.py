@@ -3,10 +3,12 @@ import data
 from .files import FileComponent
 from .syspkg import SysPkgComponent
 from .pip import PipComponent
+from .conda import CondaComponent
 from .make import MakeComponent
 from .users_groups import UserComponent, GroupComponent
 from ..methods.distribution import FileManager
 from ..methods.git import Git
+from ..methods.conda import Conda
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
 from ..methods.make import Make
@@ -225,6 +227,11 @@ _DATA = {
         "tag": "v1.5.20",
         "source": "https://github.com/ESGF/esgf-dashboard.git",
         "dest": "/tmp/esgf-dashboard"
+    },
+    "cmor": {
+        "method": Conda,
+        "type": CondaComponent,
+        "channels": ["conda-forge"]
     },
     "esgcet": {
         "method": Pip,

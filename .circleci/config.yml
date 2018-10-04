@@ -20,6 +20,8 @@ aliases:
         ls
         ls tests
         python tests/test_esg_apache.py
+        python tests/test_esg_java.py
+        python tests/test_esg_postgres.py
         #python ./tests/test_CA.py
         source /usr/local/conda/bin/deactivate
 

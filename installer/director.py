@@ -50,7 +50,7 @@ class Director(object):
                 requirements,
                 component_spec,
                 is_control=is_control_cmd,
-                is_install=self.args.install
+                is_install=self.args.install is not None
             )
             if self.args.install is not None:
                 installer.install()

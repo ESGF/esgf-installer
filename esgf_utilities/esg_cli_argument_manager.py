@@ -54,11 +54,11 @@ def run_startup_hooks(node_type_list):
         esg_property_manager.set_property("node_auto_fetch_certs", "true")
 
     if esg_property_manager.get_property("node_auto_fetch_certs") == "true":
-         print "Fetching federation certificates... "
-         esg_truststore_manager.fetch_esgf_certificates()
+        print "Fetching federation certificates... "
+        esg_truststore_manager.fetch_esgf_certificates()
 
-         print "Fetching federation truststore..... "
-         esg_truststore_manager.fetch_esgf_truststore()
+        print "Fetching federation truststore..... "
+        esg_truststore_manager.fetch_esgf_truststore()
 
 def start(node_types):
     '''Start ESGF Services'''

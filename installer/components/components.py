@@ -1,3 +1,6 @@
+import os
+import os.path as path
+
 import base
 import data
 from .files import FileComponent
@@ -15,11 +18,26 @@ from ..methods.make import Make
 from ..methods.users_groups import UserMethod, GroupMethod
 from ..controllers.service import Service
 
+_CONF_DIR = path.join(path.dirname(__file__), "config")
+
 _BASE = {
     "httpd": {
         "method": PackageManager,
         "controller": Service,
         "type": base.HTTPD
+    },
+    "esgf-httpd.conf": {
+        "method": FileManager,
+        "type": FileComponent,
+        "requires": ["httpd"],
+        "source": path.join(_CONF_DIR, "httpd", "{name}"),
+        "dest": path.join(os.sep, "etc", "httpd", "conf", "httpd.conf")
+    },
+    "esgf-ca-bundle.crt": {
+        "method": FileManager,
+        "type": FileComponent,
+        "source": path.join(_CONF_DIR, "httpd", "{name}"),
+        "dest": path.join(os.sep, "etc", "certs", "{name}")
     },
     "postgres": {
         "method": PackageManager,
@@ -29,6 +47,28 @@ _BASE = {
         "version": "8.4.20",
         "pkg_names": {
             "yum": "postgresql-server-{version}"
+        }
+    },
+    "postgresql.conf": {
+        "method": FileManager,
+        "type": FileComponent,
+        "reqires": ["postgres"],
+        "source": path.join(_CONF_DIR, "postgres", "{name}"),
+        "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
+        "owner": {
+            "user": "postgres",
+            "group": "postgres"
+        }
+    },
+    "pg_hba.conf": {
+        "method": FileManager,
+        "type": FileComponent,
+        "reqires": ["postgres"],
+        "source": path.join(_CONF_DIR, "postgres", "{name}"),
+        "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
+        "owner": {
+            "user": "postgres",
+            "group": "postgres"
         }
     },
     "java": {
@@ -191,6 +231,7 @@ _BASE = {
         "method": UserMethod,
         "type": UserComponent,
         "reqires": ["tomcat-group"],
+        "options": ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat"],
         "username": "tomcat"
     },
     "tomcat": {
@@ -205,13 +246,13 @@ _BASE = {
             "user": "tomcat",
             "group": "tomcat"
         }
-    },
-    "esgf-config-git": {
-        "method": Git,
-        "type": FileComponent,
-        "source": "https://github.com/ESGF/esgf-config.git",
-        "dest": "/tmp/esgf-config"
     }
+    # "esgf-config-git": {
+    #     "method": Git,
+    #     "type": FileComponent,
+    #     "source": "https://github.com/ESGF/esgf-config.git",
+    #     "dest": "/tmp/esgf-config"
+    # }
 }
 _DATA = {
     "thredds": {

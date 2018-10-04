@@ -61,7 +61,5 @@ class test_ESG_postgres_integration(unittest.TestCase):
         self.assertTrue("installer.properties", "db.database")
 
 
-
-
 if __name__ == '__main__':
     unittest.main()

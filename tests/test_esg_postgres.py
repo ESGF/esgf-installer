@@ -28,7 +28,7 @@ class test_ESG_postgres(unittest.TestCase):
         except ProcessExecutionError:
             pass
         purge_postgres()
-        esg_postgres.download_postgres()
+        esg_postgres.setup_postgres()
         esg_postgres.start_postgres()
         esg_postgres.setup_hba_conf_file()
         esg_postgres.restart_postgres()
@@ -52,57 +52,23 @@ class test_ESG_postgres(unittest.TestCase):
         conn.close()
         purge_postgres()
 
-    def test_setup(self):
-        print "\n*******************************"
-        print "Setting up ESGF Postgres Test Fixture"
-        print "******************************* \n"
-        esg_postgres.stop_postgres()
-        purge_postgres()
-        esg_postgres.download_postgres()
-        esg_postgres.start_postgres()
-
-    def test_tear_down(self):
-        print "\n*******************************"
-        print "Tearing down ESGF Postgres Test Fixture"
-        print "******************************* \n"
-        conn = esg_postgres.connect_to_db("postgres","postgres")
-        users_list = esg_postgres.list_users(conn=conn)
-        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = conn.cursor()
-        cur.execute("DROP USER IF EXISTS testuser;")
-        # if "testuser" in users_list:
-        #     cur.execute("DROP USER testuser;")
-        if "dbsuper" in users_list:
-            cur.execute("DROP USER dbsuper;")
-        if "esgcet" in users_list:
-            cur.execute("DROP USER esgcet;")
-        cur.execute("DROP DATABASE IF EXISTS unittestdb;")
-        cur.execute("DROP DATABASE IF EXISTS esgcet;")
-        conn.close()
-        purge_postgres()
-
     def test_connect_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
-        try:
-            cur.execute("CREATE DATABASE unittestdb;")
-        except Exception, error:
-            print "error:", error
+        cur.execute("CREATE DATABASE unittestdb;")
         cur.execute("""SELECT datname from pg_database;""")
         rows = cur.fetchall()
         print "\nRows: \n"
         print rows
+        self.assertTrue("unittestdb" in rows)
         self.assertIsNotNone(rows)
         conn.close()
 
     def test_add_user_to_db(self):
         conn = esg_postgres.connect_to_db("postgres","postgres")
         cur = conn.cursor()
-        try:
-            cur.execute("CREATE USER testuser with CREATEROLE superuser PASSWORD 'password';")
-        except Exception, error:
-            print "error:", error
+        cur.execute("CREATE USER testuser with CREATEROLE superuser PASSWORD 'password';")
         conn.commit()
         conn.close()
         cur.close()
@@ -114,9 +80,9 @@ class test_ESG_postgres(unittest.TestCase):
         print "\nUsers: \n"
         print users
         self.assertIsNotNone(users)
+        self.assertTrue("testuser" in users)
         conn2.close()
         cur2.close()
-        # self.test_tear_down()
 
     def test_list_users(self):
         user_list = esg_postgres.list_users(user_name="postgres", db_name="postgres")
@@ -134,12 +100,6 @@ class test_ESG_postgres(unittest.TestCase):
         schemas_list = esg_postgres.postgres_list_db_schemas(conn=conn)
         print "schemas_list:", schemas_list
         self.assertIsNotNone(schemas_list)
-
-    def test_add_schema_from_file(self):
-        esg_postgres.setup_db_schemas(publisher_password="changeit")
-        db_schemas = esg_postgres.postgres_list_db_schemas(user_name="dbsuper", db_name="esgcet", password="changeit")
-        print "db_schemas:", db_schemas
-        self.assertTrue("esgf_security" in db_schemas)
 
     def test_create_pg_pass_file(self):
         esg_postgres.create_pg_pass_file()

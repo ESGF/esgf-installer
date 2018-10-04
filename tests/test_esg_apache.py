@@ -12,6 +12,7 @@ from esgf_utilities import esg_functions, pybash
 import yaml
 import pip
 from plumbum.commands import ProcessExecutionError
+from plumbum.commands import CommandNotFound
 
 current_directory = os.path.join(os.path.dirname(__file__))
 

@@ -70,7 +70,7 @@ def purge_tomcat():
     # Tomcat may leave stuck java processes.  Kill them with extreme prejudice
     try:
         esg_functions.call_binary("pkill", ["-9", "-f", "'java.*/usr/local/tomcat'"])
-    except ProcessExecutionError:
+    except ProcessExecutionError, OSError:
         pass
 
 def purge_java():

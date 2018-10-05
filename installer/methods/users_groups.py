@@ -5,6 +5,7 @@ import pwd
 
 from plumbum import local
 from plumbum import TEE
+from plumbum.commands import ProcessExecutionError
 
 from .generic import Generic
 
@@ -43,7 +44,11 @@ class UserMethod(Generic):
         for component in self.components:
             args = self.del_cmds[self.delete_cmd_name]["delete_args"]
             args += [component.username]
-            result = self.delete_user.__getitem__(args) & TEE
+            try:
+                result = self.delete_user.__getitem__(args) & TEE
+            except ProcessExecutionError:
+                print result[1]
+                print result[2]
 
     def _versions(self):
         versions = {}
@@ -92,7 +97,11 @@ class GroupMethod(Generic):
         for component in self.components:
             args = self.del_cmds[self.delete_cmd_name]["delete_args"]
             args += [component.groupname]
-            result = self.delete_group.__getitem__(args) & TEE
+            try:
+                result = self.delete_group.__getitem__(args) & TEE
+            except ProcessExecutionError:
+                print result[1]
+                print result[2]
 
     def _versions(self):
         versions = {}

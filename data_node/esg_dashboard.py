@@ -130,9 +130,10 @@ def clone_dashboard_repo():
 
 def run_dashboard_script():
     #default values
-    DashDir = "/usr/local/esgf-dashboard-ip"
-    GeoipDir = "/usr/local/geoip"
-    Fed="no"
+    dashdir = "/usr/local/esgf-dashboard-ip"
+    esg_property_manager.set_property("dashboard.ip.app.home", dashdir)
+    geoipdir = "/usr/local/geoip"
+    fed = "no"
     esg_functions.call_binary("yum", ["install", "-y", "geoip-devel"])
     with pybash.pushd("/usr/local"):
         clone_dashboard_repo()
@@ -147,7 +148,7 @@ def run_dashboard_script():
         print "Running ESGF Dashboard Script"
         print "******************************* \n"
 
-        esg_functions.stream_subprocess_output("./configure --prefix={DashDir} --with-geoip-prefix-path={GeoipDir} --with-allow-federation={Fed}".format(DashDir=DashDir, GeoipDir=GeoipDir, Fed=Fed))
+        esg_functions.stream_subprocess_output("./configure --prefix={} --with-geoip-prefix-path={} --with-allow-federation={}".format(dashdir, geoipdir, fed))
         print "make"
         esg_functions.call_binary("make", silent=True)
         print "make install"

@@ -102,6 +102,21 @@ def setup_dashboard():
     remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
     migration_egg(remote, "esgf_dashboard_initialize", args)
 
+    # Required properties for ip.service start, copied from 2.x
+    # TODO Figure out what these do and if they are valid
+    registration_xml_path = "/esg/config/dashboard"
+    pybash.mkdir_p(registration_xml_path)
+    esg_property_manager.set_property(
+        "esgf.registration.xml.path",
+        registration_xml_path
+    )
+    esgf_host = esg_property_manager.get_property("esgf.host")
+    registration_xml_download_url = "http://{}/esgf-nm/registration.xml".format(esgf_host)
+    esg_property_manager.set_property(
+        "esgf.registration.xml.download.url",
+        registration_xml_download_url
+    )
+
     start_dashboard_service()
 
 def start_dashboard_service():
@@ -131,6 +146,8 @@ def clone_dashboard_repo():
 def run_dashboard_script():
     #default values
     dashdir = "/usr/local/esgf-dashboard-ip"
+    # Required property for ip.service start, copied from 2.x
+    # TODO Figure out what this does and if it is valid
     esg_property_manager.set_property("dashboard.ip.app.home", dashdir)
     geoipdir = "/usr/local/geoip"
     fed = "no"

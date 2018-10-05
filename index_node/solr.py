@@ -88,7 +88,7 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
 def solr_status():
     '''Check the status of solr'''
     try:
-        result = esg_functions.call_binary("/usr/local/solr/bin/solr", ["status"])
+        esg_functions.call_binary("/usr/local/solr/bin/solr", ["status"])
     except ProcessExecutionError as error:
         # 3 is the return code if not running
         if error.retcode==3:

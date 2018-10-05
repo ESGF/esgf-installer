@@ -1,3 +1,4 @@
+import json
 import os
 
 from plumbum import local
@@ -12,6 +13,7 @@ class Conda(Pip):
         self.conda = local.get(os.environ["CONDA_EXE"])
         self.install_args = ["install", "-y"]
         self.uninstall_args = ["uninstall", "-y"]
+        self.version_args = ["list", "--json"]
 
     def _install(self, names):
         conda_list = []
@@ -44,3 +46,15 @@ class Conda(Pip):
         if conda_list:
             args = self.uninstall_args + conda_list
             result = self.conda.__getitem__(args) & TEE
+
+    def _versions(self):
+        versions = {}
+        result = self.pip.run(self.version_args)
+        info = json.loads(result[1])
+        for component in self.components:
+            # Get the version with "name" matching pkg_name, if not present get None
+            versions[component.name] = next(
+                (pkg["version"] for pkg in info if pkg["name"].lower() == component.name.lower()),
+                None
+            )
+        return versions

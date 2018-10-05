@@ -44,6 +44,6 @@ def set_property(property_name, property_value=None, property_file=config["prope
     parser.read(property_file)
     if section_name not in parser:
         parser[section_name] = {}
-    parser[section_name][property_name] = property_value
+    parser[section_name][property_name] = str(property_value)
     with open(property_file, "w") as file_object:
         parser.write(file_object, space_around_delimiters=False)

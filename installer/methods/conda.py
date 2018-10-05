@@ -49,7 +49,7 @@ class Conda(Pip):
 
     def _versions(self):
         versions = {}
-        result = self.pip.run(self.version_args)
+        result = self.conda.run(self.version_args)
         info = json.loads(result[1])
         for component in self.components:
             # Get the version with "name" matching pkg_name, if not present get None

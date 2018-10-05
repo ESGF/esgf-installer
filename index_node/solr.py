@@ -13,7 +13,6 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
-from esgf_utilities.esg_exceptions import SubprocessError
 from plumbum.commands import ProcessExecutionError
 
 current_directory = os.path.join(os.path.dirname(__file__))
@@ -74,9 +73,6 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     # -a Start Solr with additional JVM parameters,
     # -m Start Solr with the defined value as the min (-Xms) and max (-Xmx) heap size for the JVM
 
-    if check_solr_process(solr_config_type, port_number):
-        return
-
     if solr_config_type == "master":
         enable_nodes = "-Denable.master=true"
     elif solr_config_type == "localhost":
@@ -89,15 +85,16 @@ def start_solr(solr_config_type, port_number, SOLR_INSTALL_DIR="/usr/local/solr"
     start_solr_options = ["start", "-d", server_directory, "-s", solr_solr_home, "-p", port_number, "-a", enable_nodes, "-m", "512m"]
     esg_functions.call_binary("/usr/local/solr/bin/solr", start_solr_options)
 
-    solr_status(SOLR_INSTALL_DIR)
-
-def solr_status(SOLR_INSTALL_DIR):
+def solr_status():
     '''Check the status of solr'''
     try:
-        esg_functions.call_binary("/usr/local/solr/bin/solr", ["status"])
-    except ProcessExecutionError:
-        logger.error("Error checking solr status")
+        result = esg_functions.call_binary("/usr/local/solr/bin/solr", ["status"])
+    except ProcessExecutionError as error:
+        # 3 is the return code if not running
+        if error.retcode==3:
+            return False
         raise
+    return True
 
 #TODO: fix and test
 def check_solr_process(solr_config_type="master", port=8984):
@@ -127,7 +124,7 @@ def stop_solr(SOLR_INSTALL_DIR="/usr/local/solr", port="-all"):
     except OSError:
         pass
 
-    check_solr_process()
+    solr_status()
 
 
 def commit_shard_config(config_type, port_number, config_file="/esg/config/esgf_shards.config"):

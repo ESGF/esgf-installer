@@ -4,20 +4,18 @@ import shutil
 import logging
 import argparse
 import psutil
-import pprint
 import ConfigParser
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager, esg_truststore_manager
+from esgf_utilities import esg_truststore_manager
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
 from data_node import esg_publisher, orp
-from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
+from esgf_utilities.esg_exceptions import InvalidNodeTypeError
 from idp_node import globus, gridftp, myproxy, esg_security
 from index_node import solr, esg_search
 from plumbum.commands import ProcessExecutionError
@@ -190,7 +188,7 @@ def get_node_status():
         print "\n*******************************"
         print "Solr status"
         print "******************************* \n"
-        if not solr.check_solr_process():
+        if not solr.solr_status():
             node_running = False
 
     print "\n*******************************"

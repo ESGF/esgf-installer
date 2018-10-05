@@ -15,12 +15,13 @@ class _EnvWriter(object):
             self.exports = existing_env["exports"]
         except IOError:
             # File does not exist, init empty sources and exports
-            self.sources = set()
+            self.sources = []
             self.exports = {}
 
     def add_source(self, source_env):
         ''' When envfile is sourced, source_env will also be sourced '''
-        self.sources.add(source_env)
+        if source_env not in self.sources:
+            self.sources.append(source_env)
         self._rewrite()
 
     def export(self, variable, value):

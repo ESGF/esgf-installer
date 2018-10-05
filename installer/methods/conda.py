@@ -4,12 +4,12 @@ import os
 from plumbum import local
 from plumbum import TEE
 
-from .package_manager import Pip
+from .generic import Generic
 
-class Conda(Pip):
+class Conda(Generic):
     ''' Install components using the pip command line tool '''
     def __init__(self, components):
-        Pip.__init__(self, components)
+        Generic.__init__(self, components)
         self.conda = local.get(os.environ["CONDA_EXE"])
         self.install_args = ["install", "-y"]
         self.uninstall_args = ["uninstall", "-y"]

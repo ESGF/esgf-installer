@@ -52,7 +52,7 @@ _BASE = {
     "postgresql.conf": {
         "method": FileManager,
         "type": FileComponent,
-        "reqires": ["postgres"],
+        "requires": ["postgres"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
         "owner": {
@@ -63,7 +63,7 @@ _BASE = {
     "pg_hba.conf": {
         "method": FileManager,
         "type": FileComponent,
-        "reqires": ["postgres"],
+        "requires": ["postgres"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
         "owner": {
@@ -230,7 +230,7 @@ _BASE = {
     "tomcat-user": {
         "method": UserMethod,
         "type": UserComponent,
-        "reqires": ["tomcat-group"],
+        "requires": ["tomcat-group"],
         "options": ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat"],
         "username": "tomcat"
     },

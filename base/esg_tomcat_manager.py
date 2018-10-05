@@ -400,7 +400,7 @@ def configure_tomcat():
             server_tmpl = template.read()
             server_xml = server_tmpl.format(
                 proxyName=esg_functions.get_esgf_host(),
-                tspass=esg_functions.get_java_keystore_password(),
+                tspass="changeit",
                 kspass=esg_functions.get_java_keystore_password()
             )
         with open("/usr/local/tomcat/conf/server.xml", "w") as xml_file:

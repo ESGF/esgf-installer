@@ -11,6 +11,7 @@ from clint.textui import progress
 from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
+from esgf_utilities.esg_env_manager import EnvWriter
 from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -104,8 +105,8 @@ def setup_dashboard():
     start_dashboard_service()
 
 def start_dashboard_service():
-    # TODO Have a better system for LD_LIBRARY_PATH
-    os.environ["LD_LIBRARY_PATH"] = "/usr/local/conda/envs/esgf-pub/lib"
+
+    EnvWriter.prepend_to_path("LD_LIBRARY_PATH", "/usr/local/conda/envs/esgf-pub/lib")
     os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
     esg_functions.stream_subprocess_output("/usr/local/esgf-dashboard-ip/bin/ip.service start")
 

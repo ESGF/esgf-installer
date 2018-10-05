@@ -208,7 +208,7 @@ def setup_temp_ca(temp_ca_dir="/etc/tempcerts"):
     	# cp openssl.cnf /etc/certs/
         shutil.copyfile(os.path.join(current_directory, "openssl.cnf"), "/etc/certs/openssl.cnf")
     	# cp host*.pem /etc/certs/
-        host_pem_files = glob.glob('new*.pem')
+        host_pem_files = glob.glob('host*.pem')
         for pem_file in host_pem_files:
             shutil.copyfile(pem_file, "/etc/certs/{}".format(pem_file))
     	# cp cacert.pem /etc/certs/cachain.pem

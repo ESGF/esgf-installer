@@ -246,13 +246,7 @@ def create_globus_account(globus_sys_acct):
     globus_sys_acct_passwd = esg_functions.get_security_admin_password()
 
     useradd_options = ["-r", "-c", "Globus System User", "-g", "globus", "-p", globus_sys_acct_passwd, "-s", "/bin/bash", globus_sys_acct]
-    try:
-        esg_functions.call_binary("useradd", useradd_options)
-    except ProcessExecutionError, err:
-        if err.retcode == 9:
-            pass
-        else:
-            raise
+    esg_functions.add_unix_user(useradd_options)
 
 def globus_check_certificates():
     '''Check if globus certificates are valid'''

@@ -74,15 +74,9 @@ def setup_dashboard():
 
     # create non-privileged user to run the dashboard application
     esg_functions.add_unix_group("dashboard")
-    # TODO Create a function for adding a user that is cross-platform
     useradd_options = ["-s", "/sbin/nologin", "-g", "dashboard", "-d", "/usr/local/dashboard", "dashboard"]
-    try:
-        esg_functions.call_binary("useradd", useradd_options)
-    except ProcessExecutionError, err:
-        if err.retcode == 9:
-            pass
-        else:
-            raise
+    esg_functions.add_unix_user(useradd_options)
+
     DASHBOARD_USER_ID = pwd.getpwnam("dashboard").pw_uid
     DASHBOARD_GROUP_ID = grp.getgrnam("dashboard").gr_gid
     esg_functions.change_ownership_recursive("/usr/local/esgf-dashboard-ip", DASHBOARD_USER_ID, DASHBOARD_GROUP_ID)

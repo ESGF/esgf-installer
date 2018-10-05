@@ -13,6 +13,7 @@ import tarfile
 import hashlib
 import shlex
 import socket
+import glob
 import errno
 import json
 import pwd
@@ -140,42 +141,25 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
         num_of_backups - the number of backup files you wish to have present in destination directory (default num_backups_to_keep:-7)
     '''
     source_directory = readlinkf(path)
-    print "Backup - Creating a backup archive of %s" % (source_directory)
+    logger.info("Backup - Creating a backup archive of %s", source_directory)
     current_directory = os.getcwd()
 
-    os.chdir(source_directory)
-    pybash.mkdir_p(source_directory)
-
-    source_backup_name = re.search("\w+$", source_directory).group()
-    backup_filename = readlinkf(backup_dir) + "/" + source_backup_name + \
-        "." + str(datetime.date.today()) + ".tgz"
+    source_backup_name = source_directory.split("/")[-1]
+    backup_filename = os.path.join(backup_dir, source_backup_name+".{}.tgz".format(str(datetime.date.today())))
     try:
         with tarfile.open(backup_filename, "w:gz") as tar:
             tar.add(source_directory)
-    except:
-        print "ERROR: Problem with creating backup archive: {backup_filename}".format(backup_filename=backup_filename)
-        os.chdir(current_directory)
-        return 1
-    if os.path.isfile(backup_filename):
-        print "Created backup: %s" % (backup_filename)
+    except tarfile.TarError, error:
+        logger.error("Problem with creating backup archive: %s", backup_filename)
+        raise
     else:
-        "Could not locate backup file %s" % (backup_filename)
-        os.chdir(current_directory)
-        return 1
+        logger.info("Created backup: %s", backup_filename)
 
-    # Cleanup
-    if os.getcwd() != backup_dir:
-        os.chdir(backup_dir)
-    files = subprocess.Popen('ls -t | grep %s.\*.tgz | tail -n +$((%i+1)) | xargs' % (
-        source_backup_name, int(num_of_backups)), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    if len(files.stdout.readlines()) > 0:
-        print "Tidying up a bit..."
-        print "old backup files to remove: %s" % (''.join(files.stdout.readlines()))
-        for file_name in files.stdout.readlines():
-            os.remove(file_name)
-
-    os.chdir(current_directory)
-    return 0
+    with pybash.pushd(backup_dir):
+        files = glob.glob(os.path.join(backup_dir, source_backup_name+"*"))
+        if len(files) > num_of_backups:
+            oldest_backup = min(files, key=os.path.getctime)
+            os.remove(oldest_backup)
 
 
 def get_parent_directory(directory_path):
@@ -365,7 +349,7 @@ def _verify_against_mirror(esg_dist_url_root, script_maj_version):
     ''' Verify that the local script matches the remote script on the distribution mirror '''
     python_script_name = os.path.basename(__file__)
     python_script_md5_name = re.sub(r'_', "-", python_script_name)
-    python_script_md5_name = re.search("\w*-\w*", python_script_md5_name)
+    python_script_md5_name = re.search(r"\w*-\w*", python_script_md5_name)
     logger.info("python_script_name: %s", python_script_md5_name)
 
     remote_file_md5 = requests.get("{esg_dist_url_root}/esgf-installer/{script_maj_version}/{python_script_md5_name}.md5".format(
@@ -433,16 +417,14 @@ def check_shmmax(min_shmmax=48):
         pass
     set_value_mb = min_shmmax
     set_value_bytes = set_value_mb * 1024 * 1024
-    cur_value_bytes = call_subprocess("sysctl -q kernel.shmmax")["stdout"].split("=")[1]
+    kernel_shmmax_setting = call_binary("sysctl", ["-q", "kernel.shmmax"])
+    cur_value_bytes = kernel_shmmax_setting.split("=")[1]
     cur_value_bytes = cur_value_bytes.strip()
 
     if cur_value_bytes < set_value_bytes:
         print "Current system shared mem value too low [{cur_value_bytes} bytes] changing to [{set_value_bytes} bytes]".format(cur_value_bytes=cur_value_bytes, set_value_bytes=set_value_bytes)
-        call_subprocess(
-            "sysctl -w kernel.shmmax={set_value_bytes}".format(set_value_bytes=set_value_bytes))
-        # TODO: replace with Python to update file
-        call_subprocess(
-            "sed -i.bak 's/\(^[^# ]*[ ]*kernel.shmmax[ ]*=[ ]*\)\(.*\)/\1'${set_value_bytes}'/g' /etc/sysctl.conf")
+        call_binary("sysctl", ["-w", "kernel.shmmax={}".format(set_value_bytes)])
+        replace_string_in_file("/etc/sysctl.conf", kernel_shmmax_setting, "kernel.shmmax={}".format(set_value_bytes))
         esg_property_manager.set_property("kernal_shmmax", set_value_mb)
 
 
@@ -642,17 +624,14 @@ def get_java_keystore_password():
 
 def _check_keystore_password(keystore_password):
     '''Utility function to check that a given password is valid for the global scoped {keystore_file} '''
-    if not os.path.isfile(config['ks_secret_file']):
-        logger.error("$([FAIL]) No keystore file present [%s]", config['ks_secret_file'])
-        return False
     keystore_password = get_java_keystore_password()
-    keytool_list_command = "{java_install_dir}/bin/keytool -list -keystore {keystore_file} -storepass {keystore_password}".format(
-        java_install_dir=config["java_install_dir"], keystore_file=config['ks_secret_file'], keystore_password=keystore_password)
-    keytool_list_process = call_subprocess(keytool_list_command)
-    if keytool_list_process["returncode"] != 0:
+    keytool_options = ["-list", "-keystore", config['ks_secret_file'], "-storepass", keystore_password]
+    try:
+        call_binary("{}/bin/keytool".format(config["java_install_dir"]), keytool_options)
+    except ProcessExecutionError:
         logger.error(
-            "$([FAIL]) Could not access private keystore %s with provided password. Try again...", config['ks_secret_file'])
-        return False
+            "Could not access private keystore %s with provided password. Try again...", config['ks_secret_file'])
+        raise
     return True
 
 
@@ -690,20 +669,26 @@ def get_tomcat_group_id():
 
 
 def add_unix_group(group_name):
-    '''Use subprocess to add Unix group'''
+    '''Add a Unix group'''
     try:
-        stream_subprocess_output("sudo groupadd {group_name}".format(group_name=group_name))
-    except SubprocessError, error:
-        logger.info("Could not add group %s", group_name)
-        logger.error(error)
+        call_binary("groupadd", [group_name])
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
 
-def add_unix_user(user_name):
+def add_unix_user(user_add_options):
     '''Use subprocess to add Unix user'''
+    if isinstance(user_add_options, str):
+        user_add_options = [user_add_options]
     try:
-        stream_subprocess_output("sudo useradd {user_name}".format(user_name=user_name))
-    except SubprocessError, error:
-        logger.info("Could not add user %s", user_name)
-        logger.error(error)
+        call_binary("useradd", user_add_options)
+    except ProcessExecutionError, err:
+        if err.retcode == 9:
+            pass
+        else:
+            raise
 
 
 def get_dir_owner_and_group(path):
@@ -943,8 +928,6 @@ def call_binary(binary_name, arguments=None, silent=False):
 
     for var in os.environ:
         local.env[var] = os.environ[var]
-    for var in local.env:
-        logger.debug("env: %s", str(var))
 
     if silent:
         if arguments is not None:

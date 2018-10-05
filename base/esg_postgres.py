@@ -47,7 +47,7 @@ def check_existing_pg_version(psql_path):
     else:
         try:
             postgres_version_found = esg_functions.call_binary("psql", ["--version"])
-            postgres_version_number = re.search("\d.*", postgres_version_found).group()
+            postgres_version_number = re.search(r"\d.*", postgres_version_found).group()
             if semver.compare(postgres_version_number, config["postgress_min_version"]) >= 0:
                 logger.info("Found acceptible Postgres version")
                 return True
@@ -81,7 +81,7 @@ def setup_postgres(default_continue_install="N"):
             # There are no purges, uninstalls, or deletes happening so a db backup is unneeded
             #   as nothing will happen. If we want to purge the old install that will require
             #   a bit more functionality to be added here.
-            backup_db("postgres", "postgres")
+            backup_db("postgres")
 
     pg_name = "postgresql-server-{}".format(config["postgress_version"])
     pg_devel = "postgresql-devel-{}".format(config["postgress_version"])
@@ -134,7 +134,7 @@ def create_pg_publisher_user(cursor, db_user_password):
         if error.pgcode == "42710":
             print "{publisher_db_user} role already exists. Skipping creation".format(publisher_db_user=publisher_db_user)
 
-def backup_db(db_name, user_name, backup_dir="/etc/esgf_db_backup"):
+def backup_db(db_name, backup_dir="/etc/esgf_db_backup"):
     '''Backup database to directory specified by backup_dir'''
     try:
         backup_db_input = esg_property_manager.get_property("backup.database")
@@ -314,7 +314,7 @@ def write_postgress_install_log():
         logger.error(err)
         raise
     else:
-        postgres_version_number = re.search("\d.*", postgres_version_found).group()
+        postgres_version_number = re.search(r"\d.*", postgres_version_found).group()
         esg_functions.write_to_install_manifest("postgres", config["postgress_install_dir"], postgres_version_number)
 
 #----------------------------------------------------------

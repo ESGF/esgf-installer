@@ -177,11 +177,12 @@ def system_component_installation(esg_dist_url, node_type_list):
         print "Installing Data Node Components"
         print "******************************* \n"
         esg_publisher.main()
-        from data_node import orp, thredds
+        from data_node import orp, thredds, esg_node_manager
         from idp_node import globus
         from data_node import esg_dashboard
-        esg_dashboard.main()
         thredds.main()
+        esg_node_manager.main()
+        esg_dashboard.main()
         orp.main()
         access_logging_filters.install_access_logging_filter()
         esg_security_tokenless_filters.setup_security_tokenless_filters()
@@ -343,6 +344,8 @@ def sanity_check_web_xmls():
             authorization_service_root = esg_functions.get_esgf_host()
 
         for app in webapps:
+            if not os.path.exists(os.path.join(app, "WEB-INF")):
+                continue
             with pybash.pushd(os.path.join(app, "WEB-INF")):
                 print " |--setting ownership of web.xml files... to ${tomcat_user}.${tomcat_group}"
                 os.chown("web.xml", tomcat_user, tomcat_group)
@@ -363,7 +366,7 @@ def sanity_check_web_xmls():
                         logger.debug("%s/web.xml file was edited. Reboot needed", os.getcwd())
                         instruct_to_reboot = True
                 except OSError, error:
-                    logger.exception(error)
+                    pass
 
         if instruct_to_reboot:
             print '''-------------------------------------------------------------------------------------------------
@@ -424,7 +427,10 @@ def system_launch(esg_dist_url, node_type_list, script_version, script_release):
     esg_functions.update_fileupload_jar()
     esg_functions.setup_whitelist_files()
 
+    esg_cli_argument_manager.run_startup_hooks(node_type_list)
+    esg_cert_manager.check_for_commercial_ca()
     esg_cli_argument_manager.start(node_type_list)
+
     install_bash_completion_file(esg_dist_url)
     done_remark(node_type_list)
     write_script_version_file(script_version)

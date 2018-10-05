@@ -1,0 +1,10 @@
+#!/bin/bash
+username=$1
+if [ X"$username" = X ]; then
+    # no username given
+    exit 1
+fi
+
+# activate virtual env
+source /usr/local/conda/bin/activate esgf-pub && \
+    python /esg/config/myproxy/retriever.py $username --extapp

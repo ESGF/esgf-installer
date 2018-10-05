@@ -1,0 +1,15 @@
+#This file contains the mappings of contributed shell commands that
+#are to be loaded into the esgf-sh shell
+#Entries are of the form:
+
+#[implmentation_language]
+#command1 -> resource1
+#command2 = resource2
+
+#Depending on the resource value specifies the resource to load given
+#the implementation language specified.  For example for commands
+#implemented in Java the resource is the fully qualified class name of
+#the implementing class.
+
+[java]
+test -> esg.common.shell.cmds.ESGFtest

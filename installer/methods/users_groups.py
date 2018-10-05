@@ -46,9 +46,9 @@ class UserMethod(Generic):
             args += [component.username]
             try:
                 result = self.delete_user.__getitem__(args) & TEE
-            except ProcessExecutionError:
-                print result[1]
-                print result[2]
+            except ProcessExecutionError as error:
+                print error
+
 
     def _versions(self):
         versions = {}
@@ -99,9 +99,8 @@ class GroupMethod(Generic):
             args += [component.groupname]
             try:
                 result = self.delete_group.__getitem__(args) & TEE
-            except ProcessExecutionError:
-                print result[1]
-                print result[2]
+            except ProcessExecutionError as error:
+                print error
 
     def _versions(self):
         versions = {}

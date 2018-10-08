@@ -8,6 +8,7 @@ from context import esgf_utilities
 from context import base
 from context import data_node
 from base import esg_tomcat_manager
+from esgf_utilities import pybash
 from data_node import thredds
 import yaml
 
@@ -38,12 +39,29 @@ class test_Thredds(unittest.TestCase):
         except OSError:
             pass
 
+        if not os.path.isfile("/esg/config/esgf.properties"):
+            pybash.mkdir_p("/esg/config")
+            shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_esgf.properties"), "/esg/config/esgf.properties")
+
     @classmethod
     def tearDownClass(cls):
         print "\n*******************************"
         print "Cleaning up ESGF Subsystem Test Fixture"
         print "******************************* \n"
-        pass
+        try:
+            os.remove("/tmp/mock_esg.ini")
+        except OSError:
+            pass
+
+        try:
+            os.remove("/tmp/mock_tomcat_users.xml")
+        except OSError:
+            pass
+
+        try:
+            os.remove("/esg/config/esgf.properties")
+        except OSError:
+            pass
 
     def test_setup_thredds(self):
         thredds.setup_thredds()

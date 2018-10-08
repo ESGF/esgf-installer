@@ -53,7 +53,7 @@ class PackageManager(Generic):
             except KeyError:
                 version = None
             try:
-                pkg_name = component["pkg_names"][self.installer_name]
+                pkg_name = component[self.installer_name]
             except KeyError:
                 scheme = self.installers[self.installer_name]["name_scheme"]
                 if version is not None:
@@ -70,7 +70,7 @@ class PackageManager(Generic):
         versions = {}
         for component in self.components:
             try:
-                pkg_name = component["pkg_names"][self.installer_name]
+                pkg_name = component[self.installer_name]
             except KeyError:
                 pkg_name = component["name"]
             args = self.queries[self.query_name]["version"] + [pkg_name]
@@ -90,7 +90,7 @@ class PackageManager(Generic):
             except KeyError:
                 version = None
             try:
-                pkg_name = component["pkg_names"][self.installer_name]
+                pkg_name = component[self.installer_name]
             except KeyError:
                 scheme = self.installers[self.installer_name]["name_scheme"]
                 if version is not None:

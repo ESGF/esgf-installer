@@ -43,9 +43,7 @@ _BASE = {
         "controller": Service,
         "service_name": "postgresql",
         "version": "8.4.20",
-        "pkg_names": {
-            "yum": "postgresql-server-{version}"
-        }
+        "yum": "postgresql-server-{version}"
     },
     "postgres-init": {
         "method": Command,
@@ -58,27 +56,21 @@ _BASE = {
         "requires": ["postgres-init"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
-        "owner": {
-            "user": "postgres",
-            "group": "postgres"
-        }
+        "owner_user": "postgres",
+        "owner_group": "postgres"
     },
     "pg_hba.conf": {
         "method": FileManager,
         "requires": ["postgres-init"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
-        "owner": {
-            "user": "postgres",
-            "group": "postgres"
-        }
+        "owner_user": "postgres",
+        "owner_group": "postgres"
     },
     "java": {
         "method": PackageManager,
         "version": "1.8.0",
-        "pkg_names": {
-            "yum": "java-{version}-openjdk"
-        }
+        "yum": "java-{version}-openjdk"
     },
     "postgresql-devel": {
         "method": PackageManager
@@ -199,10 +191,8 @@ _BASE = {
         "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
         "dest": "/tmp/tomcat",
         "tar_root_dir": "apache-tomcat-{version}",
-        "owner": {
-            "user": "tomcat",
-            "group": "tomcat"
-        }
+        "owner_user": "tomcat",
+        "owner_group": "tomcat"
     }
     # "esgf-config-git": {
     #     "method": Git,

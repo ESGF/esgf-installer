@@ -12,6 +12,8 @@ from esgf_utilities import esg_functions
 from esgf_utilities import esg_property_manager
 from esgf_utilities import pybash
 from esgf_utilities.esg_env_manager import EnvWriter
+from plumbum import BG
+from plumbum import local
 from plumbum.commands import ProcessExecutionError
 
 logger = logging.getLogger("esgf_logger" +"."+ __name__)
@@ -121,8 +123,8 @@ def start_dashboard_service():
 
     EnvWriter.prepend_to_path("LD_LIBRARY_PATH", "/usr/local/conda/envs/esgf-pub/lib")
     os.chmod("/usr/local/esgf-dashboard-ip/bin/ip.service", 0555)
-    esg_functions.stream_subprocess_output("/usr/local/esgf-dashboard-ip/bin/ip.service start")
-
+    ip_service = local.get("/usr/local/esgf-dashboard-ip/bin/ip.service")
+    result = ip_service.__getitem__(["start"]) & BG
 
 def clone_dashboard_repo():
     ''' Clone esgf-dashboard repo from Github'''

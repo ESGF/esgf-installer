@@ -145,6 +145,7 @@ def backup(path, backup_dir=config["esg_backup_dir"], num_of_backups=config["num
     current_directory = os.getcwd()
 
     source_backup_name = source_directory.split("/")[-1]
+    pybash.mkdir_p(backup_dir)
     backup_filename = os.path.join(backup_dir, source_backup_name+".{}.tgz".format(str(datetime.date.today())))
     try:
         with tarfile.open(backup_filename, "w:gz") as tar:

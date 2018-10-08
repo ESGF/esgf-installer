@@ -9,6 +9,7 @@ from context import esgf_utilities
 from context import base
 from base import esg_tomcat_manager
 from esg_purge import purge_tomcat
+from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import pybash
 import yaml
 
@@ -35,7 +36,10 @@ class test_ESG_tomcat(unittest.TestCase):
     def test_main(self):
         esg_tomcat_manager.main()
         self.assertTrue(os.path.isdir("/usr/local/tomcat"))
-        esg_tomcat_manager.run_tomcat_config_test()
+        try:
+            esg_tomcat_manager.run_tomcat_config_test()
+        except SubprocessError:
+            self.fail("Config Test failed")
 
         # esg_tomcat_manager.start_tomcat()
         # output = esg_tomcat_manager.check_tomcat_status()

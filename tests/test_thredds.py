@@ -47,12 +47,15 @@ class test_Thredds(unittest.TestCase):
             pybash.mkdir_p("/esg/config/esgcet")
             shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_esg.ini"), "/esg/config/esgcet/esg.ini")
 
+        with open("/esg/config/.esgf_pass", "w") as pass_file:
+            pass_file.write("foobar")
+
 
 
     @classmethod
     def tearDownClass(cls):
         print "\n*******************************"
-        print "Cleaning up ESGF Subsystem Test Fixture"
+        print "Cleaning up Thredds Test Fixture"
         print "******************************* \n"
         try:
             os.remove("/tmp/mock_esg.ini")
@@ -69,12 +72,15 @@ class test_Thredds(unittest.TestCase):
         except OSError:
             pass
 
+        try:
+            os.remove("/esg/config/.esgf_pass")
+        except OSError:
+            pass
+
+
     def test_setup_thredds(self):
         thredds.setup_thredds()
         self.assertTrue(os.path.isdir("/usr/local/tomcat/webapps/thredds"))
-    def test_check_thredds_version(self):
-        output = thredds.check_thredds_version()
-        self.assertEqual(output, "5.0")
 
     def test_verify_thredds_credentials(self):
         if not os.path.isfile("/tmp/mock_esg.ini"):

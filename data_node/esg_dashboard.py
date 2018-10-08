@@ -162,6 +162,8 @@ def run_dashboard_script():
         print "\n*******************************"
         print "Running ESGF Dashboard Script"
         print "******************************* \n"
+        print "automake"
+        esg_functions.call_binary("automake", silent=True)
 
         esg_functions.stream_subprocess_output("./configure --prefix={} --with-geoip-prefix-path={} --with-allow-federation={}".format(dashdir, geoipdir, fed))
         print "make"

@@ -18,22 +18,22 @@ class Git(FileManager):
 
     def _install(self, names):
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             args = []
             args += self.clone_args
             try:
-                args += ["--branch", component.tag]
-            except AttributeError:
+                args += ["--branch", component["tag"]]
+            except KeyError:
                 pass
 
-            if os.path.isdir(component.dest):
-                shutil.rmtree(component.dest)
+            if os.path.isdir(component["dest"]):
+                shutil.rmtree(component["dest"])
 
-            dest_dir = os.path.dirname(component.dest.rstrip(os.sep))
+            dest_dir = os.path.dirname(component["dest"].rstrip(os.sep))
             mkdir_p(dest_dir)
 
-            args += [component.source, component.dest]
+            args += [component["source"], component["dest"]]
             result = self.git.__getitem__(args) & TEE
 
-            FileManager._chown(self, component, component.dest)
+            FileManager._chown(self, component, component["dest"])

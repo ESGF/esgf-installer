@@ -30,20 +30,20 @@ class UserMethod(Generic):
 
     def _install(self, names):
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             try:
-                args = component.options
-            except AttributeError:
+                args = component["options"]
+            except KeyError:
                 args = []
             args += self.create_cmds[self.create_cmd_name]["create_args"]
-            args += [component.username]
+            args += [component["username"]]
             result = self.create_user.__getitem__(args) & TEE
 
     def _uninstall(self):
         for component in self.components:
             args = self.del_cmds[self.delete_cmd_name]["delete_args"]
-            args += [component.username]
+            args += [component["username"]]
             try:
                 result = self.delete_user.__getitem__(args) & TEE
             except ProcessExecutionError as error:
@@ -54,11 +54,11 @@ class UserMethod(Generic):
         versions = {}
         for component in self.components:
             try:
-                pwd.getpwnam(component.username)
+                pwd.getpwnam(component["username"])
             except KeyError:
-                versions[component.name] = None
+                versions[component["name"]] = None
             else:
-                versions[component.name] = "1"
+                versions[component["name"]] = "1"
         return versions
 
 
@@ -83,11 +83,11 @@ class GroupMethod(Generic):
 
     def _install(self, names):
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             try:
-                args = component.options
-            except AttributeError:
+                args = component["options"]
+            except KeyError:
                 args = []
             args += self.create_cmds[self.create_cmd_name]["create_args"]
             args += [component.groupname]
@@ -108,7 +108,7 @@ class GroupMethod(Generic):
             try:
                 grp.getgrnam(component.groupname)
             except KeyError:
-                versions[component.name] = None
+                versions[component["name"]] = None
             else:
-                versions[component.name] = "1"
+                versions[component["name"]] = "1"
         return versions

@@ -14,7 +14,7 @@ class Make(FileManager):
     def _install(self, names):
         FileManager._install(self, names)
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             with pushd(component.make_dir):
                 self.make.run_tee()

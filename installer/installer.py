@@ -63,12 +63,10 @@ class Installer(object):
         print self.header.format("Installing")
         statuses = self.status_check()
         not_installed = [name for name in statuses if statuses[name] == NOT_INSTALLED]
-        for method in self.methods:
-            method.pre_install()
+
         for method in self.methods:
             method.install(not_installed)
-        for method in self.methods:
-            method.post_install()
+
         statuses = self.status_check()
 
     def versions(self):
@@ -117,18 +115,18 @@ class Installer(object):
         common_method_type = []
         for name in ordered:
             config = requirements[name]
+            config["name"] = name
             if "controller" in config:
                 controller = config["controller"]
                 self.controlled_components.append(controller(name, config))
             method_type = config["method"]
-            component_type = config["type"]
             if prev_method_type and prev_method_type == method_type:
-                common_method_type.append(component_type(name, config))
+                common_method_type.append(config)
             elif not common_method_type:
-                common_method_type = [component_type(name, config)]
+                common_method_type = [config]
             else:
                 self.methods.append(prev_method_type(common_method_type))
-                common_method_type = [component_type(name, config)]
+                common_method_type = [name, config]
             prev_method_type = method_type
         self.methods.append(prev_method_type(common_method_type))
 
@@ -136,12 +134,12 @@ class Installer(object):
         assignments = {}
         for name in unordered:
             config = requirements[name]
+            config["name"] = name
             method_type = config["method"]
-            component_type = config["type"]
             if method_type not in assignments:
                 assignments[method_type] = []
             # Assign and initialize this component
-            assignments[method_type].append(component_type(name, config))
+            assignments[method_type].append(config)
             if "controller" in config:
                 controller = config["controller"]
                 self.controlled_components.append(controller(name, config))

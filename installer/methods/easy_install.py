@@ -14,9 +14,9 @@ class EasyInstall(Pip, FileManager):
     def _install(self, names):
         FileManager._install(self, names)
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
-            args = [component.dest]
+            args = [component["dest"]]
             result = self.easy_install.__getitem__(args) & TEE
 
     def _uninstall(self):

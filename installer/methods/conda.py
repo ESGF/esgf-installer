@@ -19,17 +19,17 @@ class Conda(Generic):
         conda_list = []
         channels = set()
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             try:
-                for channel in component.channels:
+                for channel in component["channels"]:
                     channels.add(channel)
-            except AttributeError:
+            except KeyError:
                 pass
             try:
-                conda_name = component.conda_name
-            except AttributeError:
-                conda_name = component.name
+                conda_name = component["conda_name"]
+            except KeyError:
+                conda_name = component["name"]
             conda_list.append(conda_name)
         if conda_list:
             if channels:
@@ -42,7 +42,7 @@ class Conda(Generic):
             result = self.conda.__getitem__(args) & TEE
 
     def _uninstall(self):
-        conda_list = [component.name for component in self.components]
+        conda_list = [component["name"] for component in self.components]
         if conda_list:
             args = self.uninstall_args + conda_list
             result = self.conda.__getitem__(args) & TEE
@@ -53,8 +53,8 @@ class Conda(Generic):
         info = json.loads(result[1])
         for component in self.components:
             # Get the version with "name" matching pkg_name, if not present get None
-            versions[component.name] = next(
-                (pkg["version"] for pkg in info if pkg["name"].lower() == component.name.lower()),
+            versions[component["name"]] = next(
+                (pkg["version"] for pkg in info if pkg["name"].lower() == component["name"].lower()),
                 None
             )
         return versions

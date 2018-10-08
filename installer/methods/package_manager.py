@@ -46,20 +46,20 @@ class PackageManager(Generic):
         ''' A realization of an install process '''
         pkg_list = []
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             try:
-                version = component.req_version
-            except AttributeError:
+                version = component["version"]
+            except KeyError:
                 version = None
             try:
-                pkg_name = component.pkg_names[self.installer_name]
-            except AttributeError:
+                pkg_name = component["pkg_names"][self.installer_name]
+            except KeyError:
                 scheme = self.installers[self.installer_name]["name_scheme"]
                 if version is not None:
-                    pkg_name = scheme.format(name=component.name, version=version)
+                    pkg_name = scheme.format(name=component["name"], version=version)
                 else:
-                    pkg_name = component.name
+                    pkg_name = component["name"]
             pkg_list.append(pkg_name)
         if pkg_list:
             args = self.installers[self.installer_name]["install_y"] + pkg_list
@@ -70,33 +70,33 @@ class PackageManager(Generic):
         versions = {}
         for component in self.components:
             try:
-                pkg_name = component.pkg_names[self.installer_name]
-            except AttributeError:
-                pkg_name = component.name
+                pkg_name = component["pkg_names"][self.installer_name]
+            except KeyError:
+                pkg_name = component["name"]
             args = self.queries[self.query_name]["version"] + [pkg_name]
             try:
                 result = self.query.run(args)
             except ProcessExecutionError:
-                versions[component.name] = None
+                versions[component["name"]] = None
             else:
-                versions[component.name] = str(result[1]).strip()
+                versions[component["name"]] = str(result[1]).strip()
         return versions
 
     def _uninstall(self):
         pkg_list = []
         for component in self.components:
             try:
-                version = component.req_version
-            except AttributeError:
+                version = component["version"]
+            except KeyError:
                 version = None
             try:
-                pkg_name = component.pkg_names[self.installer_name]
-            except AttributeError:
+                pkg_name = component["pkg_names"][self.installer_name]
+            except KeyError:
                 scheme = self.installers[self.installer_name]["name_scheme"]
                 if version is not None:
-                    pkg_name = scheme.format(name=component.name, version=version)
+                    pkg_name = scheme.format(name=component["name"], version=version)
                 else:
-                    pkg_name = component.name
+                    pkg_name = component["name"]
             pkg_list.append(pkg_name)
         if pkg_list:
             args = self.installers[self.installer_name]["uninstall"] + pkg_list
@@ -114,12 +114,12 @@ class Pip(Generic):
     def _install(self, names):
         pip_list = []
         for component in self.components:
-            if component.name not in names:
+            if component["name"] not in names:
                 continue
             try:
-                pip_name = component.pip_name
-            except AttributeError:
-                pip_name = component.name
+                pip_name = component["pip_name"]
+            except KeyError:
+                pip_name = component["name"]
             pip_list.append(pip_name)
         if pip_list:
             args = self.install_cmd + pip_list
@@ -132,17 +132,17 @@ class Pip(Generic):
         info = json.loads(result[1])
         for component in self.components:
             # Get the dictionary with "name" matching pkg_name, if not present get None
-            pkg = next((pkg for pkg in info if pkg["name"].lower() == component.name.lower()), None)
+            pkg = next((pkg for pkg in info if pkg["name"].lower() == component["name"].lower()), None)
             if pkg is None:
-                versions[component.name] = None
+                versions[component["name"]] = None
             else:
-                versions[component.name] = str(pkg['version'])
+                versions[component["name"]] = str(pkg['version'])
         return versions
 
     def _uninstall(self):
         pip_list = []
         for component in self.components:
-            pip_list.append(component.name)
+            pip_list.append(component["name"])
         if pip_list:
             args = self.uninstall_cmd + pip_list
             result = self.pip.__getitem__(args) & TEE

@@ -16,7 +16,7 @@ from esgf_utilities import esg_cert_manager, esg_truststore_manager
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
-from data_node import esg_publisher, orp
+from data_node import esg_dashboard, esg_publisher, orp
 from esgf_utilities.esg_exceptions import NoNodeTypeError, InvalidNodeTypeError
 from idp_node import globus, gridftp, myproxy, esg_security
 from index_node import solr, esg_search
@@ -91,6 +91,11 @@ def start(node_types):
             globus.start_globus("DATA")
         except ProcessExecutionError, error:
             logger.error("Could not start globus: %s", error)
+            raise
+        try:
+            esg_dashboard.start_dashboard_service()
+        except ProcessExecutionError, error:
+            logger.error("Could not start esgf-dashboard-ip: %s", error)
             raise
 
     if "IDP" in node_types:

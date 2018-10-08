@@ -95,11 +95,11 @@ def setup_dashboard():
     args = ["--dburl", dburl, "-c"]
 
     egg_file = "esgf_node_manager-0.1.5-py2.7.egg"
-    remote = "{}/{}/{}".format(dist_root_url, "esgf-node-manager", egg_file)
+    remote = "{}/{}/{}".format(dist_url, "esgf-node-manager", egg_file)
     migration_egg(remote, "esgf_node_manager_initialize", args)
 
     egg_file = "esgf_dashboard-0.0.2-py2.7.egg"
-    remote = "{}/{}/{}".format(dist_root_url, "esgf-dashboard", egg_file)
+    remote = "{}/{}/{}".format(dist_url, "esgf-dashboard", egg_file)
     migration_egg(remote, "esgf_dashboard_initialize", args)
 
     # Required properties for ip.service start, copied from 2.x
@@ -116,8 +116,6 @@ def setup_dashboard():
         "esgf.registration.xml.download.url",
         registration_xml_download_url
     )
-
-    start_dashboard_service()
 
 def start_dashboard_service():
 
@@ -157,7 +155,7 @@ def run_dashboard_script():
         os.chdir("esgf-dashboard")
 
         dashboard_repo_local = Repo(".")
-        dashboard_repo_local.git.checkout("work_plana")
+        dashboard_repo_local.git.checkout("v1.5.19")
 
         os.chdir("src/c/esgf-dashboard-ip")
 

@@ -25,19 +25,16 @@ _CONF_DIR = path.join(path.dirname(__file__), "config")
 _BASE = {
     "httpd": {
         "method": PackageManager,
-        "controller": Service,
-        "type": base.HTTPD
+        "controller": Service
     },
     "esgf-httpd.conf": {
         "method": FileManager,
-        "type": FileComponent,
         "requires": ["httpd"],
         "source": path.join(_CONF_DIR, "httpd", "{name}"),
         "dest": path.join(os.sep, "etc", "httpd", "conf", "httpd.conf")
     },
     "esgf-ca-bundle.crt": {
         "method": FileManager,
-        "type": FileComponent,
         "source": path.join(_CONF_DIR, "httpd", "{name}"),
         "dest": path.join(os.sep, "etc", "certs", "{name}")
     },
@@ -45,7 +42,6 @@ _BASE = {
         "method": PackageManager,
         "controller": Service,
         "service_name": "postgresql",
-        "type": base.Postgres,
         "version": "8.4.20",
         "pkg_names": {
             "yum": "postgresql-server-{version}"
@@ -53,14 +49,12 @@ _BASE = {
     },
     "postgres-init": {
         "method": Command,
-        "type": CommandComponent,
         "requires": "postgres",
         "command": "service",
         "args": ["postgresql", "initdb"]
     },
     "postgresql.conf": {
         "method": FileManager,
-        "type": FileComponent,
         "requires": ["postgres-init"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
@@ -71,7 +65,6 @@ _BASE = {
     },
     "pg_hba.conf": {
         "method": FileManager,
-        "type": FileComponent,
         "requires": ["postgres-init"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
@@ -82,170 +75,125 @@ _BASE = {
     },
     "java": {
         "method": PackageManager,
-        "type": SysPkgComponent,
         "version": "1.8.0",
         "pkg_names": {
             "yum": "java-{version}-openjdk"
         }
     },
     "postgresql-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
+        "method": PackageManager
     },
     "httpd-devel": {
-        "method": PackageManager,
-        "type": SysPkgComponent
+        "method": PackageManager
     },
     "mod_ssl": {
-        "method": PackageManager,
-        "type": SysPkgComponent
+        "method": PackageManager
     },
     # "sqlite-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "freetype-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "curl-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "bison": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "file": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "flex": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "uuid-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libtool": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "gettext-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libuuid-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libxml2": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libxml2-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libxslt": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libxslt-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "lsof": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "openssl-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "pam-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "pax": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "tk-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "zlib-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "perl-Archive-Tar": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "perl-XML-Parser": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libX11-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libtool-ltdl-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "e2fsprogs-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "gcc-gfortran": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libicu-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libgtextutils-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "libjpeg-turbo-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "*ExtUtils*": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
+    #     "method": PackageManager
     # },
     # "readline-devel": {
-    #     "method": PackageManager,
-    #     "type": SysPkgComponent
-    # },
-    # "java": {
-    #     "type": base.Java,
-    #     "version": "1.8.0_162",
-    #     "url": "http://aims1.llnl.gov/esgf/dist/2.6/8/java/{version}/jdk{version}-64.tar.gz",
-    #     "extract_dir": "/tmp/java",
-    #     "tar_root_dir": "jdk{version}"
+    #     "method": PackageManager
     # },
     "tomcat-group": {
         "method": GroupMethod,
-        "type": GroupComponent,
         "groupname": "tomcat"
     },
     "tomcat-user": {
         "method": UserMethod,
-        "type": UserComponent,
         "requires": ["tomcat-group"],
         "options": ["-s", "/sbin/nologin", "-g", "tomcat", "-d", "/usr/local/tomcat"],
         "username": "tomcat"
     },
     "tomcat": {
         "method": FileManager,
-        "type": FileComponent,
         "requires": ["tomcat-user", "tomcat-group"],
         "version": "8.5.20",
         "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
@@ -258,7 +206,6 @@ _BASE = {
     }
     # "esgf-config-git": {
     #     "method": Git,
-    #     "type": FileComponent,
     #     "source": "https://github.com/ESGF/esgf-config.git",
     #     "dest": "/tmp/esgf-config"
     # }
@@ -266,31 +213,26 @@ _BASE = {
 _DATA = {
     "thredds": {
         "method": FileManager,
-        "type": data.Thredds,
         "version": "5.0.2",
         "source": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
         "dest": "/tmp/thredds"
     },
     "esgf-dashboard-git": {
         "method": Git,
-        "type": FileComponent,
         "tag": "v1.5.20",
         "source": "https://github.com/ESGF/esgf-dashboard.git",
         "dest": "/tmp/esgf-dashboard"
     },
     "cdutil": {
         "method": Conda,
-        "type": CondaComponent,
         "channels": ["conda-forge"]
     },
     "cmor": {
         "method": Conda,
-        "type": CondaComponent,
         "channels": ["conda-forge"]
     },
     "esgcet": {
         "method": Pip,
-        "type": PipComponent,
         "requires": ["postgres", "postgresql-devel"],
         "version": "3.5.0",
         "tag": "v{version}",
@@ -301,7 +243,6 @@ _DATA = {
     },
     "esgf-dashboard": {
         "method": EasyInstall,
-        "type": FileComponent,
         "version": "0.0.2",
         "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
         "dest": "/tmp/esgf_dashboard/esgf_dashboard.egg",
@@ -309,7 +250,6 @@ _DATA = {
     },
     "esgf-node-manager": {
         "method": EasyInstall,
-        "type": FileComponent,
         "version": "0.1.5",
         "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
         "dest": "/tmp/esgf_node_manager/esgf_node_manager.egg",
@@ -319,21 +259,18 @@ _DATA = {
 _INDEX = {
     "transfer_api_client_python-mkproxy": {
         "method": Make,
-        "type": MakeComponent,
         "source": "https://github.com/globusonline/transfer-api-client-python.git",
         "dest": "/usr/local/cog/transfer-api-client-python",
         "make_dir": "{dest}/mkproxy"
     },
     "mod-wsgi": {
         "method": Pip,
-        "type": PipComponent,
         "requires": ["httpd"],
         "version": "4.5.3",
         "pip_name": "{name}=={version}"
     },
     "django-openid-auth": {
         "method": Pip,
-        "type": PipComponent,
         "repo": "https://github.com/EarthSystemCoG/django-openid-auth.git",
         "egg": "{name}",
         "pip_name": "git+{repo}#egg={egg}"

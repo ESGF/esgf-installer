@@ -406,7 +406,7 @@ def setup_thredds():
     print "Setting up Thredds"
     print "******************************* \n"
 
-    if os.path.isdir("/usr/local/tomcat/webapps/thredds"):
+    if os.path.isdir("/usr/local/tomcat/webapps/thredds") and os.listdir("/usr/local/tomcat/webapps/thredds"):
         try:
             thredds_install = esg_property_manager.get_property("update.thredds")
         except ConfigParser.NoOptionError:

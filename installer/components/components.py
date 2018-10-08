@@ -8,9 +8,11 @@ from .syspkg import SysPkgComponent
 from .pip import PipComponent
 from .conda import CondaComponent
 from .make import MakeComponent
+from .command import CommandComponent
 from .users_groups import UserComponent, GroupComponent
 from ..methods.distribution import FileManager
 from ..methods.git import Git
+from ..methods.command import Command
 from ..methods.conda import Conda
 from ..methods.package_manager import PackageManager, Pip
 from ..methods.easy_install import EasyInstall
@@ -49,10 +51,17 @@ _BASE = {
             "yum": "postgresql-server-{version}"
         }
     },
+    "postgres-init": {
+        "method": Command,
+        "type": CommandComponent,
+        "requires": "postgres",
+        "command": "service",
+        "args": ["postgresql", "initdb"]
+    },
     "postgresql.conf": {
         "method": FileManager,
         "type": FileComponent,
-        "requires": ["postgres"],
+        "requires": ["postgres-init"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
         "owner": {
@@ -63,7 +72,7 @@ _BASE = {
     "pg_hba.conf": {
         "method": FileManager,
         "type": FileComponent,
-        "requires": ["postgres"],
+        "requires": ["postgres-init"],
         "source": path.join(_CONF_DIR, "postgres", "{name}"),
         "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
         "owner": {

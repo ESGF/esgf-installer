@@ -43,7 +43,7 @@ class test_Thredds(unittest.TestCase):
             pybash.mkdir_p("/esg/config")
             shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_esgf.properties"), "/esg/config/esgf.properties")
 
-        if not os.path.isfile("/esg/config/esgcet/esg.ini")
+        if not os.path.isfile("/esg/config/esgcet/esg.ini"):
             pybash.mkdir_p("/esg/config/esgcet")
             shutil.copyfile(os.path.join(current_directory, "mock_files", "mock_esg.ini"), "/esg/config/esgcet/esg.ini")
 

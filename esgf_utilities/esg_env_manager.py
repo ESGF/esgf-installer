@@ -47,7 +47,7 @@ class _EnvWriter(object):
         except KeyError:
             self.export(path_var, value)
         else:
-            path_elements.prepend(value)
+            path_elements.insert(0, value)
             new_value = ":".join(path_elements)
             self.export(path_var, new_value)
 

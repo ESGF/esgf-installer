@@ -7,7 +7,7 @@ import logging
 from distutils.spawn import find_executable
 from context import esgf_utilities
 from context import base
-from base import esg_tomcat_manager
+from base import esg_tomcat_manager, esg_java
 from esg_purge import purge_tomcat
 from esgf_utilities.esg_exceptions import SubprocessError
 from esgf_utilities import pybash
@@ -25,6 +25,8 @@ class test_ESG_tomcat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         logger.info("Setting up esg_tomcat test harness")
+        if not os.path.exists("/usr/local/java"):
+            esg_java.setup_java()
         if os.path.exists("/usr/local/tomcat"):
             purge_tomcat()
 

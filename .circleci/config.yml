@@ -26,7 +26,12 @@ aliases:
         python tests/test_esg_publisher.py
         python tests/test_orp.py
         python tests/test_thredds.py
-        #python ./tests/test_CA.py
+        python tests/test_CA.py
+        python tests/test_env_writer.py
+        python tests/test_property_manager.py
+        python tests/test_mirror_manager.py
+        python tests/test_pybash.py
+        python tests/test_pip.py
         source /usr/local/conda/bin/deactivate
 
 jobs:

@@ -97,7 +97,5 @@ class test_CA(unittest.TestCase):
             self.assertEquals(subject_string, subject_string_expected)
 
 
-
-
 if __name__ == '__main__':
     unittest.main(verbosity=2)

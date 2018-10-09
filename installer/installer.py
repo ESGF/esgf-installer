@@ -161,7 +161,7 @@ class Installer(object):
             try:
                 resolved = []
                 self._dep_resolve(all_requires, name, resolved, [])
-                dependencies[name] = resolved
+                dependencies[name] = resolved[:-1]
             except KeyError:
                 pass
         # Get components that no other components depend on

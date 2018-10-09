@@ -89,14 +89,14 @@ class Generic(object):
         versions = self.versions()
         statuses = {}
         for component in self.components:
-            name = component.name
+            name = component["name"]
             version = versions[name]
             if version is None:
                 statuses[name] = NOT_INSTALLED
             else:
                 try:
-                    statuses[name] = OK if component.req_version == version else BAD_VERSION
-                except AttributeError:
+                    statuses[name] = OK if component["version"] == version else BAD_VERSION
+                except KeyError:
                     statuses[name] = OK
         return statuses
 

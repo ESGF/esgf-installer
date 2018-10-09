@@ -90,13 +90,13 @@ class GroupMethod(Generic):
             except KeyError:
                 args = []
             args += self.create_cmds[self.create_cmd_name]["create_args"]
-            args += [component.groupname]
+            args += [component["groupname"]]
             result = self.create_group.__getitem__(args) & TEE
 
     def _uninstall(self):
         for component in self.components:
             args = self.del_cmds[self.delete_cmd_name]["delete_args"]
-            args += [component.groupname]
+            args += [component["groupname"]]
             try:
                 result = self.delete_group.__getitem__(args) & TEE
             except ProcessExecutionError as error:
@@ -106,7 +106,7 @@ class GroupMethod(Generic):
         versions = {}
         for component in self.components:
             try:
-                grp.getgrnam(component.groupname)
+                grp.getgrnam(component["groupname"])
             except KeyError:
                 versions[component["name"]] = None
             else:

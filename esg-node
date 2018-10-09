@@ -1668,7 +1668,7 @@ update_apache_conf() {
 		popd
 	fi
 	pushd apache_frontend/apache-frontend;
-	if [ $devel -eq 1 ]; then
+	if [ $devel -eq 0 ]; then
 		git checkout $apache_frontend_tag;
 	else
 		git checkout master;
@@ -1784,7 +1784,7 @@ setup_apache_frontend() {
 	git clone ${apache_frontend_repo}
 	if [ $? -eq 0 ]; then
 		cd apache-frontend;
-		if [ $devel -eq 1 ]; then
+		if [ $devel -eq 0 ]; then
 			git checkout $apache_frontend_tag;
 			else
 			git checkout master;

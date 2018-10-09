@@ -149,11 +149,19 @@ class Installer(object):
             self.methods.append(method(components))
 
     def _resolve_order(self, requirements, names):
-        dependencies = {}
-        for name in names:
+        all_requires = {}
+        for name in requirements:
             config = requirements[name]
             try:
-                dependencies[name] = config["requires"]
+                all_requires[name] = config["requires"]
+            except KeyError:
+                pass
+        dependencies = {}
+        for name in names:
+            try:
+                resolved = []
+                self._dep_resolve(all_requires, name, resolved, [])
+                dependencies[name] = resolved
             except KeyError:
                 pass
         # Get components that no other components depend on

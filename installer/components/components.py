@@ -1,15 +1,6 @@
 import os
 import os.path as path
 
-import base
-import data
-from .files import FileComponent
-from .syspkg import SysPkgComponent
-from .pip import PipComponent
-from .conda import CondaComponent
-from .make import MakeComponent
-from .command import CommandComponent
-from .users_groups import UserComponent, GroupComponent
 from ..methods.distribution import FileManager
 from ..methods.git import Git
 from ..methods.command import Command

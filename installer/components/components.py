@@ -47,7 +47,7 @@ _BASE = {
     },
     "postgres-init": {
         "method": Command,
-        "requires": "postgres",
+        "requires": ["postgres"],
         "command": "service",
         "args": ["postgresql", "initdb"]
     },

@@ -174,7 +174,7 @@ class Installer(object):
             if is_root:
                 root_names.append(name_a)
 
-        dependencies[None] = root_names
+        all_requires[None] = root_names
         ordered = []
         seen = []
         self._dep_resolve(all_requires, None, ordered, seen)

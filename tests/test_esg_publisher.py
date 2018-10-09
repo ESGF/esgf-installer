@@ -53,16 +53,6 @@ class test_ESG_publisher(unittest.TestCase):
         except OSError, error:
             print "Error deleting /esg/config/esgcet", error
 
-    def test_clone_publisher_repo(self):
-        esg_publisher.clone_publisher_repo("/tmp/esg-publisher")
-        self.assertTrue(os.path.isdir("/tmp/esg-publisher/.git"))
-
-        repo = esg_publisher.checkout_publisher_branch("/tmp/esg-publisher", "devel")
-        branch = repo.active_branch
-        print "active branch:", branch.name
-        self.assertEquals(branch.name, "devel")
-
-        self.purge_publisher()
 
     def test_setup_publisher(self):
         esg_publisher.setup_publisher()
@@ -82,12 +72,6 @@ class test_ESG_publisher(unittest.TestCase):
         self.assertTrue(os.path.isfile("/esg/config/esgcet/esg.ini"))
 
         os.environ["ESGINI"] = "/esg/config/esgcet/esg.ini"
-        esg_publisher.run_esginitialize()
-
-    def test_generate_esgsetup_options(self):
-        output = esg_publisher.generate_esgsetup_options()
-        print "output:", output
-        self.assertTrue(output)
 
 
 if __name__ == '__main__':

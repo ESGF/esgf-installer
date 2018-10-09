@@ -22,6 +22,10 @@ aliases:
         python tests/test_esg_apache.py
         python tests/test_esg_java.py
         python tests/test_esg_postgres.py
+        python tests/test_dashboard.py
+        python tests/test_esg_publisher.py
+        python tests/test_orp.py
+        python tests/test_thredds.py
         #python ./tests/test_CA.py
         source /usr/local/conda/bin/deactivate
 

@@ -16,31 +16,16 @@ class test_Dashboard(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print "\n*******************************"
-        print "Setting up ESGF Subsystem Test Fixture"
+        print "Setting up ESGF Dashboard Test Fixture"
         print "******************************* \n"
         esg_tomcat_manager.main()
-    # def setUp(self):
-    #     # purge_and_clone_fresh_repos.main(os.path.join(os.environ["HOME"], "Development", "ESGF"))
-    #     pass
 
     @classmethod
     def tearDownClass(cls):
         print "\n*******************************"
-        print "Cleaning up ESGF Subsystem Test Fixture"
+        print "Cleaning up ESGF Dashboard Test Fixture"
         print "******************************* \n"
-        try:
-            shutil.rmtree("/usr/local/esgf-dashboard")
-        except OSError, error:
-            print "error:", error
-        try:
-            shutil.rmtree("/esg")
-        except OSError, error:
-            print "error deleting /esg:", error
-
-        try:
-            shutil.rmtree("/tmp/cog")
-        except OSError, error:
-            print "error deleting /tmp/cog:", error
+        pass
 
 
     def test_clone_dashboard_repo(self):

@@ -76,8 +76,8 @@ def init():
     openssl_version = "0.9.8r"
     openssl_min_version = "0.9.8e"
     openssl_max_version = "0.9.9z"
-    java_version = "1.8.0_162"
-    java_min_version = "1.8.0_162"
+    java_version = "1.8.0_181"
+    java_min_version = "1.8.0_181"
     ant_version = "1.9.1"
     ant_min_version = "1.9.1"
     postgress_version = "8.4.20"
@@ -219,7 +219,7 @@ def init():
     esg_coffee_dist_url_root = os.path.join(esgf_coffee_dist_mirror, "dist")
     java_dist_url = "%s/java/%s/jdk%s-%s.tar.gz" % (
         esg_dist_url_root, java_version, java_version, word_size)
-    java_rpm_url = "{0}/java/{1}/jdk-8u112-linux-x64.rpm".format(
+    java_rpm_url = "{0}/java/{1}/jdk-8u181-linux-x64.rpm".format(
         esg_dist_url_root, java_version)
     ant_dist_url = "http://archive.apache.org/dist/ant/binaries/apache-ant-" + \
         ant_version + "-bin.tar.gz"

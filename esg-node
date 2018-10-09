@@ -1689,7 +1689,7 @@ update_apache_conf() {
     fi
 
 	quotedwsgipath=`echo "/opt/esgf/python/lib/python2.7/site-packages/mod_wsgi/server/mod_wsgi-py27.so"|sed 's/[./*?|"]/\\\\&/g'`
-	allowedips=`sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf|grep Allow|sort -u`;
+	allowedips=`sed -n '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/p' /etc/httpd/conf/esgf-httpd.conf|grep -E '(Allow from|Require ip)'|sort -u`;
 	sed "s/\#permitted-ips-end-here/\#permitted-ips-end-here\n\t\#insert-permitted-ips-here/" /etc/httpd/conf/esgf-httpd.conf >etc/httpd/conf/esgf-httpd.conf;
 	sed -i '/\#permitted-ips-start-here/,/\#permitted-ips-end-here/d' etc/httpd/conf/esgf-httpd.conf;
 	sed -i "s/\(.*\)LoadModule wsgi_module $quotedwsgipath\(.*\)/\1LoadModule wsgi_module placeholder_so\2/" etc/httpd/conf/esgf-httpd.conf;
@@ -1808,9 +1808,14 @@ setup_apache_frontend() {
 			fi
 			ct=`expr $ct + 1`;
 		done
+		if grep -q systemd_module /etc/httpd/conf/esgf-httpd.conf ; then
+			allowipbase="Require ip"
+		else
+			allowipbase="Allow from"
+		fi
 		allowipstr=""
 		for i in ${ips[@]}; do
-			allowipstr=${allowipstr}"\tAllow from $i\n";
+			allowipstr=${allowipstr}"\t${allowipbase} $i\n";
 		done
 		sed -i "s/\#insert-permitted-ips-here/\#permitted-ips-start-here\n$allowipstr\t\#permitted-ips-end-here/" /etc/httpd/conf/esgf-httpd.conf
 		cat /etc/tempcerts/cacert.pem >>/etc/certs/esgf-ca-bundle.crt;

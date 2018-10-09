@@ -126,7 +126,7 @@ class Installer(object):
                 common_method_type = [config]
             else:
                 self.methods.append(prev_method_type(common_method_type))
-                common_method_type = [name, config]
+                common_method_type = [config]
             prev_method_type = method_type
         self.methods.append(prev_method_type(common_method_type))
 

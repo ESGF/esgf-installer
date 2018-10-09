@@ -158,10 +158,9 @@ class Installer(object):
                 pass
         dependencies = {}
         for name in names:
+            config = requirements[name]
             try:
-                resolved = []
-                self._dep_resolve(all_requires, name, resolved, [])
-                dependencies[name] = resolved[:-1]
+                dependencies[name] = config["requires"]
             except KeyError:
                 pass
         # Get components that no other components depend on
@@ -178,7 +177,7 @@ class Installer(object):
         dependencies[None] = root_names
         ordered = []
         seen = []
-        self._dep_resolve(dependencies, None, ordered, seen)
+        self._dep_resolve(all_requires, None, ordered, seen)
         ordered = ordered[:-1]
         unordered = set(names) - (set(names) & set(ordered))
 

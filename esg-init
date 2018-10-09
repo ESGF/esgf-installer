@@ -43,28 +43,28 @@ init() {
     esgf_node_manager_db_version=${esgf_node_manager_db_version:-"0.1.5"}
 
     #see esgf-security project:
-    esgf_security_version=${esgf_security_version:-"2.7.18"}
+    esgf_security_version=${esgf_security_version:-"2.8.1-rc1"}
     esgf_security_db_version=${esgf_security_db_version:-"0.1.5"}
 
     #see esg-orp project:
-    esg_orp_version=${esg_orp_version:-"2.9.10"}
+    esg_orp_version=${esg_orp_version:-"2.10.1-rc2"}
 
     #see esgf-idp project:
-    esgf_idp_version=${esgf_idp_version:-"2.7.14"}
+    esgf_idp_version=${esgf_idp_version:-"2.8.2-rc2"}
 
     #see esg-search project:
-    esg_search_version=${esg_search_version:-"4.16.0"}
+    esg_search_version=${esg_search_version:-"4.17.1-rc2"}
 
     #see esgf-web-fe project:
 
     #see esgf-dashboard project:
-    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.19"}
+    esgf_dashboard_version=${esgf_dashboard_version:-"1.5.22"}
     esgf_dashboard_db_version=${esgf_dashboard_db_version:-"0.0.2"}
 
     #see esgf-desktop project:
     esgf_desktop_version=${esgf_desktop_version:-"0.0.22"}
 
-    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.5"}
+    esgf_stats_api_version=${esgf_stats_api_version:-"1.0.7"}
 
     #--------------------------------
     # External programs' versions

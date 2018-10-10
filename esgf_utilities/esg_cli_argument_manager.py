@@ -98,9 +98,7 @@ def start(node_types):
             logger.error("Could not start globus: %s", error)
 
     if "INDEX" in node_types:
-        solr_shards = solr.read_shard_config()
-        for config_type, port_number in solr_shards:
-            solr.start_solr(config_type, port_number)
+        solr.start_search_services()
 
     return get_node_status()
 

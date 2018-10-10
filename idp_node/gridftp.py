@@ -271,6 +271,7 @@ def copy_gcs_esgf_conf(gcs_esgf_path="/etc/globus-connect-server-esgf.conf"):
     shutil.copyfile(os.path.join(current_directory, "../config/globus-connect-server-esgf.conf"), gcs_esgf_path)
 
     parser = ConfigParser.SafeConfigParser(allow_no_value=True)
+    parser.optionxform = lambda option: option
     parser.read(gcs_esgf_path)
 
     try:

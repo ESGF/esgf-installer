@@ -36,6 +36,10 @@ class _EnvWriter(object):
         except KeyError:
             self.export(path_var, value)
         else:
+            if path_elements[-1] == value:
+                return
+            if value in path_elements:
+                path_elements = [elem for elem in path_elements if elem != value]
             path_elements.append(value)
             new_value = ":".join(path_elements)
             self.export(path_var, new_value)
@@ -47,6 +51,10 @@ class _EnvWriter(object):
         except KeyError:
             self.export(path_var, value)
         else:
+            if path_elements[0] == value:
+                return
+            if value in path_elements:
+                path_elements = [elem for elem in path_elements if elem != value]
             path_elements.insert(0, value)
             new_value = ":".join(path_elements)
             self.export(path_var, new_value)

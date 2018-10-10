@@ -301,12 +301,6 @@ def copy_gcs_esgf_conf(gcs_esgf_path="/etc/globus-connect-server-esgf.conf"):
         gridftp_chroot_jail = "{}/gridftp_root".format(config["esg_root_dir"])
         parser.set('GridFTP', "SharingStateDir", os.path.join(gridftp_chroot_jail, "etc", "grid-security", "sharing", globus_user))
 
-        try:
-            myproxy_hostname = esg_property_manager.get_property("myproxy.endpoint")
-        except ConfigParser.NoOptionError:
-            myproxy_hostname = esg_functions.get_esgf_host()
-        parser.set('MyProxy', "Server", myproxy_hostname)
-
         with open(gcs_esgf_path, "w") as conf_file:
             parser.write(conf_file)
 

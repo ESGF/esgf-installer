@@ -21,20 +21,20 @@ _BASE = {
     "esgf-httpd.conf": {
         "method": FileManager,
         "requires": ["httpd"],
-        "source": path.join(_CONF_DIR, "httpd", "{name}"),
+        "source": path.join(_CONF_DIR, "httpd", "${name}"),
         "dest": path.join(os.sep, "etc", "httpd", "conf", "httpd.conf")
     },
     "esgf-ca-bundle.crt": {
         "method": FileManager,
-        "source": path.join(_CONF_DIR, "httpd", "{name}"),
-        "dest": path.join(os.sep, "etc", "certs", "{name}")
+        "source": path.join(_CONF_DIR, "httpd", "${name}"),
+        "dest": path.join(os.sep, "etc", "certs", "${name}")
     },
     "postgres": {
         "method": PackageManager,
         "controller": Service,
         "service_name": "postgresql",
         "version": "8.4.20",
-        "yum": "postgresql-server-{version}"
+        "yum": "postgresql-server-${version}"
     },
     "postgres-init": {
         "method": Command,
@@ -45,23 +45,23 @@ _BASE = {
     "postgresql.conf": {
         "method": FileManager,
         "requires": ["postgres-init"],
-        "source": path.join(_CONF_DIR, "postgres", "{name}"),
-        "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
+        "source": path.join(_CONF_DIR, "postgres", "${name}"),
+        "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "${name}"),
         "owner_user": "postgres",
         "owner_group": "postgres"
     },
     "pg_hba.conf": {
         "method": FileManager,
         "requires": ["postgres-init"],
-        "source": path.join(_CONF_DIR, "postgres", "{name}"),
-        "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "{name}"),
+        "source": path.join(_CONF_DIR, "postgres", "${name}"),
+        "dest": path.join(os.sep, "var", "lib", "pgsql", "data", "${name}"),
         "owner_user": "postgres",
         "owner_group": "postgres"
     },
     "java": {
         "method": PackageManager,
         "version": "1.8.0",
-        "yum": "java-{version}-openjdk"
+        "yum": "java-${version}-openjdk"
     },
     "postgresql-devel": {
         "method": PackageManager
@@ -179,9 +179,9 @@ _BASE = {
         "method": FileManager,
         "requires": ["tomcat-user", "tomcat-group"],
         "version": "8.5.20",
-        "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v{version}/bin/apache-tomcat-{version}.tar.gz",
+        "source": "http://archive.apache.org/dist/tomcat/tomcat-8/v${version}/bin/apache-tomcat-${version}.tar.gz",
         "dest": "/tmp/tomcat",
-        "tar_root_dir": "apache-tomcat-{version}",
+        "tar_root_dir": "apache-tomcat-${version}",
         "owner_user": "tomcat",
         "owner_group": "tomcat"
     }
@@ -195,7 +195,7 @@ _DATA = {
     "thredds": {
         "method": FileManager,
         "version": "5.0.2",
-        "source": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/{version}/thredds.war",
+        "source": "https://aims1.llnl.gov/esgf/dist/2.6/8/thredds/5.0/${version}/thredds.war",
         "dest": "/tmp/thredds"
     },
     "esgf-dashboard-git": {
@@ -216,23 +216,23 @@ _DATA = {
         "method": Pip,
         "requires": ["postgres", "postgresql-devel"],
         "version": "3.5.0",
-        "tag": "v{version}",
+        "tag": "v${version}",
         "repo": "https://github.com/ESGF/esg-publisher.git",
-        "egg": "{name}",
+        "egg": "${name}",
         "subdirectory": "src/python/esgcet",
-        "pip_name": "git+{repo}@{tag}#egg={egg}&subdirectory={subdirectory}"
+        "pip_name": "git+${repo}@${tag}#egg=${egg}&subdirectory=${subdirectory}"
     },
     "esgf-dashboard": {
         "method": EasyInstall,
         "version": "0.0.2",
-        "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-{version}-py2.7.egg",
+        "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-dashboard/esgf_dashboard-${version}-py2.7.egg",
         "dest": "/tmp/esgf_dashboard/esgf_dashboard.egg",
         "extract": False
     },
     "esgf-node-manager": {
         "method": EasyInstall,
         "version": "0.1.5",
-        "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-{version}-py2.7.egg",
+        "source": "http://aims1.llnl.gov/esgf/dist/2.6/8/esgf-node-manager/esgf_node_manager-${version}-py2.7.egg",
         "dest": "/tmp/esgf_node_manager/esgf_node_manager.egg",
         "extract": False
     }
@@ -242,19 +242,19 @@ _INDEX = {
         "method": Make,
         "source": "https://github.com/globusonline/transfer-api-client-python.git",
         "dest": "/usr/local/cog/transfer-api-client-python",
-        "make_dir": "{dest}/mkproxy"
+        "make_dir": "${dest}/mkproxy"
     },
     "mod-wsgi": {
         "method": Pip,
         "requires": ["httpd"],
         "version": "4.5.3",
-        "pip_name": "{name}=={version}"
+        "pip_name": "${name}==${version}"
     },
     "django-openid-auth": {
         "method": Pip,
         "repo": "https://github.com/EarthSystemCoG/django-openid-auth.git",
-        "egg": "{name}",
-        "pip_name": "git+{repo}#egg={egg}"
+        "egg": "${name}",
+        "pip_name": "git+${repo}#egg=${egg}"
     }
 }
 ALL = {

@@ -2,6 +2,8 @@
 import json
 import logging
 
+from backports import configparser
+
 from .install_codes import OK, NOT_INSTALLED, BAD_VERSION
 
 class Installer(object):
@@ -14,6 +16,9 @@ class Installer(object):
         self.log = logging.getLogger(__name__)
         self.methods = []
         self.controlled_components = []
+
+        requirements = self._interpolate(requirements)
+        # print json.dumps(requirements, indent=2, sort_keys=True)
         names = []
         for name in requirements:
             if name_spec and name not in name_spec:
@@ -198,3 +203,22 @@ class Installer(object):
                     raise Exception('Circular reference detected: %s->%s' % (name, dep))
                 self._dep_resolve(components, dep, resolved, seen)
         resolved.append(name)
+
+    def _interpolate(self, requirements):
+
+        string_only = {}
+        for name in requirements:
+            config = requirements[name]
+            string_only[name] = {"name": name}
+            for param in config:
+                if isinstance(param, basestring):
+                    string_only[name][param] = config[param]
+
+        parser = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        parser.read_dict(string_only)
+
+        for name in parser:
+            for param in parser[name]:
+                requirements[name][param] = parser[name][param]
+
+        return requirements

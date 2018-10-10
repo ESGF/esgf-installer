@@ -3,35 +3,6 @@ import grp
 import os
 import pwd
 import errno
-from string import Formatter
-
-def check_populatable(name, template, keys):
-    fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
-    if name in fieldnames:
-        raise Exception #TODO make a real exception for recursive templating
-    for field in fieldnames:
-        if field not in keys:
-            raise Exception #TODO make a real exception for unsupported template keywords
-
-def populated(template):
-    fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
-    if fieldnames:
-        return False
-    return True
-
-def populate(template, values):
-    fieldnames = [fname for _, fname, _, _ in Formatter().parse(template) if fname]
-    if not fieldnames:
-        return template
-    replacements = {}
-    for field in fieldnames:
-        if field in values:
-            replacements[field] = values[field]
-        else:
-            return template
-
-    return template.format(**replacements)
-
 
 def mkdir_p(path, mode=0777):
     ''' Creates the directory and any subdirectories listed in path '''

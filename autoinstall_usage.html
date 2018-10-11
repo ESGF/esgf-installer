@@ -173,6 +173,61 @@
   <p>The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.</p>
 <div class="section" id="autoinstaller-configuration-options">
 <h1>Autoinstaller Configuration Options<a class="headerlink" href="#autoinstaller-configuration-options" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="77%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">&#160;</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>esg.root.url</td>
+<td><ul class="first last simple">
+<li>The URL of the distribution mirror that will be used to fetch ESGF resources</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>esgf.host.ip</td>
+<td><ul class="first last simple">
+<li>The IP address of the node</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>esgf.host</td>
+<td><ul class="first last simple">
+<li>The fully qualified domain name (fqdn) of your server</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>node.short.name</td>
+<td><ul class="first last simple">
+<li>Used to set the the Endpoint name in the Globus configuration (see: <a class="reference external" href="https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf">https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf</a>)</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>node.long.name</td>
+<td><ul class="first last simple">
+<li>More descriptive name of ESGF node (DEPRECATED)</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>node.namespace</td>
+<td><ul class="first last simple">
+<li>Set to your reverse fqdn - Ex: gov.llnl (DEPRECATED)</li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td>node.peer.group &lt;esgf-test | esgf-dev | esgf-prod&gt;</td>
+<td><ul class="first last simple">
+<li>Determines the node’s peer group, i.e which federation the node will belong to</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 

@@ -2,9 +2,9 @@ The autoinstaller file, esgf.properties, can be used to configure options pre-in
 
 Autoinstaller Configuration Options
 ******************************************
-==============                                      =====
+==================================================  =====
 
-==============                                      =====
+==================================================  =====
 esg.root.url                                        - The URL of the distribution mirror that will be used to fetch ESGF resources
 esgf.host.ip                                        - The IP address of the node
 esgf.host                                           - The fully qualified domain name (fqdn) of your server
@@ -12,4 +12,4 @@ node.short.name                                     - Used to set the the Endpoi
 node.long.name                                      - More descriptive name of ESGF node (DEPRECATED)
 node.namespace                                      - Set to your reverse fqdn - Ex: gov.llnl (DEPRECATED)
 node.peer.group <esgf-test | esgf-dev | esgf-prod>  - Determines the node's peer group, i.e which federation the node will belong to
-==============                                      =====
+==================================================  =====

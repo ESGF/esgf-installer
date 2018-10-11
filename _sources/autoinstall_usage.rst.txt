@@ -8,7 +8,7 @@ col 1                        col 2
 esg.root.url                 - The URL of the distribution mirror that will be used to fetch ESGF resources
 esgf.host.ip                 - The IP address of the node
 
-==============               =======
+==============               =====
 
 esgf.host        - The fully qualified domain name (fqdn) of your server
 node.short.name  - Used to set the the Endpoint name in the Globus configuration (see: https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf)

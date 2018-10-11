@@ -3,7 +3,7 @@ The autoinstaller file, esgf.properties, can be used to configure options pre-in
 Autoinstaller Configuration Options
 ******************************************
 ==============               =====
-col 1                        col 2
+
 ==============               =====
 esg.root.url                 - The URL of the distribution mirror that will be used to fetch ESGF resources
 esgf.host.ip                 - The IP address of the node

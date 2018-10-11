@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 import logging
+import random
 import tarfile
 import OpenSSL
 import errno
@@ -85,7 +86,7 @@ def sign_request(ca_req):
         logger.exception("Certificate is not correct.")
         raise
 
-    newcert = esg_cert_manager.create_certificate(ca_req, (ca_cert, private_cakey), 0, (0, 60*60*24*365*5))
+    newcert = esg_cert_manager.create_certificate(ca_req, (ca_cert, private_cakey), random.randint(1, pow(2, 30)), (0, 60*60*24*365*5))
 
     with open('newcert.pem', 'w') as ca:
         ca.write(

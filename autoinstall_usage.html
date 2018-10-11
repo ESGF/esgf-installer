@@ -28,7 +28,9 @@
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Base Components" href="api.html" />
+    <link rel="prev" title="ESGF CLI" href="cli.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -82,12 +84,13 @@
             
             
               <p class="caption"><span class="caption-text">Installation</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">ESGF CLI</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Autoinstaller Configuration Options</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
@@ -170,8 +173,8 @@
   <p>The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.</p>
 <div class="section" id="autoinstaller-configuration-options">
 <h1>Autoinstaller Configuration Options<a class="headerlink" href="#autoinstaller-configuration-options" title="Permalink to this headline">¶</a></h1>
-<p>esg.root.url     - The URL of the distribution mirror that will be used to fetch ESGF resources
-esgf.host.ip     - The IP address of the node
+<p>esg.root.url                 - The URL of the distribution mirror that will be used to fetch ESGF resources
+esgf.host.ip                 - The IP address of the node
 esgf.host        - The fully qualified domain name (fqdn) of your server
 node.short.name  - Used to set the the Endpoint name in the Globus configuration (see: <a class="reference external" href="https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf">https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf</a>)
 node.long.name   - More descriptive name of ESGF node (DEPRECATED)
@@ -222,6 +225,15 @@ cachain.path                             - A comma separated list of the absolut
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="Base Components" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="cli.html" class="btn btn-neutral" title="ESGF CLI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

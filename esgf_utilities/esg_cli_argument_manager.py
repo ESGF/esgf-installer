@@ -4,15 +4,13 @@ import shutil
 import logging
 import argparse
 import psutil
-import pprint
 import ConfigParser
 from time import sleep
 import yaml
 from esgf_utilities import esg_functions
-from esgf_utilities import pybash
 from esgf_utilities import esg_property_manager
 from esgf_utilities import esg_version_manager
-from esgf_utilities import esg_cert_manager, esg_truststore_manager
+from esgf_utilities import esg_truststore_manager
 from base import esg_apache_manager
 from base import esg_tomcat_manager
 from base import esg_postgres
@@ -195,7 +193,7 @@ def get_node_status():
         print "\n*******************************"
         print "Solr status"
         print "******************************* \n"
-        if not solr.check_solr_process():
+        if not solr.solr_status():
             node_running = False
 
     print "\n*******************************"

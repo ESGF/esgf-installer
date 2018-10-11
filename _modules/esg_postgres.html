@@ -302,7 +302,7 @@
         <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">pgcode</span> <span class="o">==</span> <span class="s2">&quot;42710&quot;</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{publisher_db_user}</span><span class="s2"> role already exists. Skipping creation&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">publisher_db_user</span><span class="o">=</span><span class="n">publisher_db_user</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="backup_db"><a class="viewcode-back" href="../api.html#esg_postgres.backup_db">[docs]</a><span class="k">def</span> <span class="nf">backup_db</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="n">backup_dir</span><span class="o">=</span><span class="s2">&quot;/etc/esgf_db_backup&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="backup_db"><a class="viewcode-back" href="../api.html#esg_postgres.backup_db">[docs]</a><span class="k">def</span> <span class="nf">backup_db</span><span class="p">(</span><span class="n">db_name</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backup_dir</span><span class="o">=</span><span class="s2">&quot;/etc/esgf_db_backup&quot;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Backup database to directory specified by backup_dir&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">backup_db_input</span> <span class="o">=</span> <span class="n">esg_property_manager</span><span class="o">.</span><span class="n">get_property</span><span class="p">(</span><span class="s2">&quot;backup.database&quot;</span><span class="p">)</span>
@@ -320,6 +320,9 @@
     <span class="n">pg_dump</span> <span class="o">=</span> <span class="n">local</span><span class="p">[</span><span class="s2">&quot;pg_dump&quot;</span><span class="p">]</span>
     <span class="n">local</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PGPASSWORD&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">esg_functions</span><span class="o">.</span><span class="n">get_publisher_password</span><span class="p">()</span>
     <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">db_name</span><span class="p">,</span> <span class="s2">&quot;-U&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;postgress_user&quot;</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">schema</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-n&quot;</span><span class="p">)</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;schema&quot;</span><span class="p">)</span>
     <span class="c1"># This syntax is strange, but correct for plumbum redirection</span>
     <span class="p">(</span><span class="n">pg_dump</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">backup_file</span><span class="p">)()</span></div>
 
@@ -391,7 +394,7 @@
 
     <span class="n">esg_functions</span><span class="o">.</span><span class="n">call_binary</span><span class="p">(</span><span class="s2">&quot;service&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">])</span>
     <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="n">postgres_status</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 

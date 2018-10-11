@@ -1,0 +1,281 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Autoinstaller Configuration Options &mdash; esgf-installer alpha documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> esgf-installer
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.0.0-alpha
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#autoinstaller">Autoinstaller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cert_howto.html">ESGF Certificate Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">ESGF Command Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">ESGF CLI</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Base Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#data-node-components">Data Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#index-node-components">Index Node Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html#idp-node-components">IDP Node Components</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Issues</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="issues.html">ESGF Installer Issue Tracking Guidelines</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Contributing</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contribute_docs.html">Contributing to Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">esgf-installer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Autoinstaller Configuration Options</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/autoinstall_usage.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <p>The autoinstaller file, esgf.properties, can be used to configure options pre-installation so that the install script will run with no further user input. Below are descriptions of the configuration options.  If an option is left blank, the user will be prompted for input for that option unless otherwise denoted.</p>
+<div class="section" id="autoinstaller-configuration-options">
+<h1>Autoinstaller Configuration Options<a class="headerlink" href="#autoinstaller-configuration-options" title="Permalink to this headline">¶</a></h1>
+<p>esg.root.url     - The URL of the distribution mirror that will be used to fetch ESGF resources
+esgf.host.ip     - The IP address of the node
+esgf.host        - The fully qualified domain name (fqdn) of your server
+node.short.name  - Used to set the the Endpoint name in the Globus configuration (see: <a class="reference external" href="https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf">https://github.com/globus/globus-connect-server/blob/master/source/globus-connect-server.conf</a>)
+node.long.name   - More descriptive name of ESGF node (DEPRECATED)
+node.namespace   - Set to your reverse fqdn - Ex: gov.llnl (DEPRECATED)
+node.peer.group &lt;esgf-test | esgf-dev | esgf-prod&gt;  - Determines the node’s peer group, i.e which federation the node will belong to
+esgf.index.peer        - Hostname of the index peer you wish to publish to
+mail.admin.address     - Email address that will receive notifications from the ESGF server
+publisher.db.user      - Name that will be created as a low privilege user account in Postgres for the ESGF Publisher
+esg.org.name           - Organization name that is used as the root ID when running the esgsetup binary. Usually the name of the institution where the node is location (llnl, ipsl, etc.)</p>
+<p>#Base install third party components
+update.java &lt;y | yes | n | no&gt;  - Determines whether to update Java if previous Java installation is found
+update.ant &lt;y | yes | n | no&gt;  - Determines whether to update Ant if previous Ant installation is found
+backup.database &lt;y | yes | n | no&gt; - Determines whether to create a backup dump of the database if an existing Postgres installation is found
+update.postgres &lt;y | yes | n | no&gt;  - Determines whether to update Postgres if previous Postgres installation is found
+update.apache &lt;y | yes | n | no&gt;  - Determines whether to update Apache if previous Apache installation is found
+update.tomcat &lt;y | yes | n | no&gt;  - Determines whether to update Tomcat if previous Tomcat installation is found</p>
+<p>#Data Node components
+update.orp &lt;y | yes | n | no&gt;  - Determines whether to update ORP if previous ORP webapp installation is found
+update.node.manager &lt;y | yes | n | no&gt;  - Determines whether to update Node Manager if previous Node Manager webapp installation is found
+update.thredds &lt;y | yes | n | no&gt;  - Determines whether to update Thredds if previous Thredds webapp installation is found
+update.dashboard &lt;y | yes | n | no&gt;  - Determines whether to update Dashboard if previous Dashboard installation is found
+update.publisher &lt;y | yes | n | no&gt;  - Determines whether to update Publisher if previous Publisher installation is found
+gridftp-config [defaults to:bdm end-user] - Seems to be nonfunctional (DEPRECATED)
+tomcat.user                           - Name of tomcat user to be used with Thredds. Defaults to dnode_user if not populated
+add.another.user &lt;y | yes | n | no&gt;  - Determines whether to update ORP if previous ORP webapp installation is found</p>
+<p>#Index node components
+update.esg.search &lt;y | yes | n | no&gt;  - Determines whether to update ESG Search if previous ESG Search webapp installation is found
+update.cog &lt;y | yes | n | no&gt;  - Determines whether to update CoG if previous CoG installation is found
+update.solr &lt;y | yes | n | no&gt;  - Determines whether to update Solr if previous Solr installation is found</p>
+<p>#IDP node Components
+backup.idp &lt;y | yes | n | no&gt;  - Determines whether to update IDP if previous IDP webapp installation is found
+register.myproxy &lt;y | yes | n | no&gt; - Determines if the MyProxy server will be registered with Globus
+update.globus &lt;y | yes | n | no&gt;  - Determines whether to update Globus if previous Globus installation is found
+globus.user             - Your Globus Username
+globus.password         - Your Globus Password
+myproxy.endpoint        - Specifies the hostname of the myproxy-server
+register.gridftp &lt;y | yes | n | no&gt; - Determines if the GridFTP server will be registered with Globus
+update.slcs &lt;y | yes | n | no&gt;  - Determines whether to update SLCS if previous SLCS server installation is found</p>
+<p>#File paths for signed cert and public key
+install.signed.certs &lt;y | yes | n | no&gt;  - Determines whether to install a commercially signed SSL certificate
+commercial.key.path                      - Absolute path to commercial key
+commercial.cert.path                     - Absolute path to commercially signed cert
+cachain.path                             - A comma separated list of the absolute paths that make up the cachain</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, William Hill.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'alpha',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

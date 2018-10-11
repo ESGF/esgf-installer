@@ -98,7 +98,7 @@ def start(node_types):
             logger.error("Could not start globus: %s", error)
 
     if "INDEX" in node_types:
-        solr.start_search_services()
+        esg_search.start_search_services()
 
     return get_node_status()
 
